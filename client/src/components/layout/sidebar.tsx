@@ -53,8 +53,9 @@ export default function Sidebar() {
     { href: "/tasks", label: "Tasks", icon: <CheckSquare className="w-5 h-5 mr-3" /> },
     { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 mr-3" /> },
     { href: "/organizations", label: "Organizations", icon: <Building2 className="w-5 h-5 mr-3" /> },
-    { href: "/impact-metrics", label: "Impact Metrics", icon: <PieChart className="w-5 h-5 mr-3" /> },
+    { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 mr-3" /> },
     { href: "/sdg-mapping", label: "SDG Mapping", icon: <Globe className="w-5 h-5 mr-3" /> },
+    { href: "/mobile-data-collection", label: "Mobile Collection", icon: <Smartphone className="w-5 h-5 mr-3" /> },
     { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 mr-3" /> }
   ];
 

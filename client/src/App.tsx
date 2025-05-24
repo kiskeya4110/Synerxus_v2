@@ -6,6 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
+import SDGMapping from "@/pages/sdg-mapping";
+import ImpactVisualization from "@/pages/impact-visualization";
+import MobileDataCollection from "@/pages/mobile-data-collection";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 
@@ -14,6 +17,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/login" component={Login} />
+      <Route path="/sdg-mapping" component={SDGMapping} />
+      <Route path="/impact-visualization" component={ImpactVisualization} />
+      <Route path="/mobile-data-collection" component={MobileDataCollection} />
       <Route component={NotFound} />
     </Switch>
   );

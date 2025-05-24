@@ -1,0 +1,134 @@
+import { useState } from "react";
+import { useTheme } from "./theme-provider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  Bell, 
+  Search, 
+  Moon, 
+  Sun, 
+  Menu,
+  User,
+  Settings,
+  LogOut
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+
+export default function Header() {
+  const { theme, setTheme } = useTheme();
+  const { user, signOut } = useAuth();
+  const { toast } = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  return (
+    <header className="bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-20">
+      <div className="flex items-center justify-between h-16 px-4">
+        {/* Mobile Menu Button */}
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)} 
+          className="text-gray-500 dark:text-gray-400 focus:outline-none lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        
+        {/* Logo for mobile view */}
+        <div className="flex items-center lg:hidden">
+          <span className="text-primary-600 dark:text-primary-400 font-semibold text-lg">ImpactTrack</span>
+        </div>
+        
+        {/* Search Bar */}
+        <div className="hidden md:flex flex-grow max-w-2xl mx-4">
+          <div className="relative w-full">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            </div>
+            <Input 
+              type="text" 
+              className="pl-10 pr-3 py-2 w-full" 
+              placeholder="Search projects, tasks or volunteers..." 
+            />
+          </div>
+        </div>
+        
+        {/* Right Nav Items */}
+        <div className="flex items-center space-x-4">
+          {/* Dark Mode Toggle */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="text-gray-500 dark:text-gray-400 focus:outline-none"
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
+          
+          {/* Notifications */}
+          <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative">
+            <Bell className="h-5 w-5" />
+            <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0">
+              3
+            </Badge>
+          </Button>
+          
+          {/* User Menu */}
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center focus:outline-none">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150" alt="User avatar" />
+                    <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <span className="ml-2 text-sm font-medium hidden md:block">
+                    {user.displayName || user.email?.split('@')[0]}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}

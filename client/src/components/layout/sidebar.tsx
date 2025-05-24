@@ -11,7 +11,8 @@ import {
   Calendar,
   LayoutList,
   Smartphone,
-  Sparkles
+  Sparkles,
+  BarChart
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -59,6 +60,7 @@ export default function Sidebar() {
     { href: "/sdg-mapping", label: "SDG Mapping", icon: <Globe className="w-5 h-5 mr-3" /> },
     { href: "/mobile-data-collection", label: "Mobile Collection", icon: <Smartphone className="w-5 h-5 mr-3" /> },
     { href: "/impact-storytelling", label: "Impact Storytelling", icon: <Sparkles className="w-5 h-5 mr-3" /> },
+    { href: "/field-specific-metrics", label: "Field Metrics", icon: <BarChart className="w-5 h-5 mr-3" /> },
     { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 mr-3" /> }
   ];
 

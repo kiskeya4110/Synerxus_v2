@@ -10,6 +10,7 @@ import SDGMapping from "@/pages/sdg-mapping";
 import ImpactVisualization from "@/pages/impact-visualization";
 import MobileDataCollection from "@/pages/mobile-data-collection";
 import ImpactStorytelling from "@/pages/impact-storytelling";
+import FieldSpecificMetrics from "@/pages/field-specific-metrics";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/impact-visualization" component={ImpactVisualization} />
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
       <Route path="/impact-storytelling" component={ImpactStorytelling} />
+      <Route path="/field-specific-metrics" component={FieldSpecificMetrics} />
       <Route component={NotFound} />
     </Switch>
   );

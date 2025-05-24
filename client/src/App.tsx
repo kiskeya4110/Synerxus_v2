@@ -9,6 +9,7 @@ import Login from "@/pages/login";
 import SDGMapping from "@/pages/sdg-mapping";
 import ImpactVisualization from "@/pages/impact-visualization";
 import MobileDataCollection from "@/pages/mobile-data-collection";
+import ImpactStorytelling from "@/pages/impact-storytelling";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/sdg-mapping" component={SDGMapping} />
       <Route path="/impact-visualization" component={ImpactVisualization} />
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
+      <Route path="/impact-storytelling" component={ImpactStorytelling} />
       <Route component={NotFound} />
     </Switch>
   );

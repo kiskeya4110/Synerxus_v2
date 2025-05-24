@@ -9,7 +9,9 @@ import {
   PieChart, 
   Globe, 
   Calendar,
-  LayoutList
+  LayoutList,
+  Smartphone,
+  Sparkles
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -56,6 +58,7 @@ export default function Sidebar() {
     { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 mr-3" /> },
     { href: "/sdg-mapping", label: "SDG Mapping", icon: <Globe className="w-5 h-5 mr-3" /> },
     { href: "/mobile-data-collection", label: "Mobile Collection", icon: <Smartphone className="w-5 h-5 mr-3" /> },
+    { href: "/impact-storytelling", label: "Impact Storytelling", icon: <Sparkles className="w-5 h-5 mr-3" /> },
     { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 mr-3" /> }
   ];
 

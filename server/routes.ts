@@ -32,29 +32,35 @@ function handleValidationError(err: unknown) {
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
-  // Set up WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server: httpServer });
+  let wss: WebSocketServer | null = null;
   
-  wss.on("connection", (ws) => {
-    console.log("WebSocket client connected");
+  // Only set up WebSocket server in production to avoid conflicts with Vite's HMR
+  if (process.env.NODE_ENV === "production") {
+    wss = new WebSocketServer({ server: httpServer });
     
-    ws.on("message", (message) => {
-      console.log("Received message:", message);
+    wss.on("connection", (ws) => {
+      console.log("WebSocket client connected");
+      
+      ws.on("message", (message) => {
+        console.log("Received message:", message);
+      });
+      
+      ws.on("close", () => {
+        console.log("WebSocket client disconnected");
+      });
     });
-    
-    ws.on("close", () => {
-      console.log("WebSocket client disconnected");
-    });
-  });
+  }
 
-  // Broadcast updates to all connected clients
+  // Broadcast updates to all connected clients (only in production)
   const broadcastUpdate = (type: string, data: any) => {
-    const message = JSON.stringify({ type, data });
-    wss.clients.forEach((client) => {
-      if (client.readyState === 1) { // OPEN
-        client.send(message);
-      }
-    });
+    if (wss && process.env.NODE_ENV === "production") {
+      const message = JSON.stringify({ type, data });
+      wss.clients.forEach((client) => {
+        if (client.readyState === 1) { // OPEN
+          client.send(message);
+        }
+      });
+    }
   };
 
   // API Routes

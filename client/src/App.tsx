@@ -13,6 +13,7 @@ import ImpactStorytelling from "@/pages/impact-storytelling";
 import FieldSpecificMetrics from "@/pages/field-specific-metrics";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
+import { ThemeProvider } from "@/components/layout/theme-provider";
 
 function Router() {
   return (
@@ -32,14 +33,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Layout>
-            <Router />
-          </Layout>
-        </TooltipProvider>
-      </AuthProvider>
+      <ThemeProvider defaultTheme="light">
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Layout>
+              <Router />
+            </Layout>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -51,7 +51,7 @@ export default function Sidebar() {
   }, [isMobile]);
 
   const navItems = [
-    { href: "/", label: "Dashboard", icon: <Home className="w-5 h-5 mr-3" /> },
+    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 mr-3" /> },
     { href: "/projects", label: "Projects", icon: <LayoutList className="w-5 h-5 mr-3" /> },
     { href: "/tasks", label: "Tasks", icon: <CheckSquare className="w-5 h-5 mr-3" /> },
     { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 mr-3" /> },

@@ -136,55 +136,56 @@ export default function SDGMapping() {
   return (
     <>
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">SDG Mapping</h1>
-        <p className="text-gray-600 dark:text-gray-400">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Connect volunteer activities to Sustainable Development Goals and track impact
         </p>
       </div>
       
       {/* SDG Selection Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {sdgData.map(sdg => (
           <button
             key={sdg.id}
             onClick={() => setSelectedSDG(sdg.id)}
-            className={`p-4 rounded-lg border ${
+            className={`p-3 sm:p-4 rounded-lg border min-h-[120px] sm:min-h-auto active:scale-95 transition-all ${
               selectedSDG === sdg.id 
                 ? 'ring-2 ring-primary border-primary' 
                 : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
             style={{ backgroundColor: selectedSDG === sdg.id ? `${sdg.color}15` : '' }}
+            data-testid={`button-sdg-${sdg.id}`}
           >
             {SDGIcons[sdg.id] ? 
               <div className="flex justify-center">
-                {SDGIcons[sdg.id]({ width: 60, height: 60 })}
+                {SDGIcons[sdg.id]({ width: 50, height: 50 })}
               </div>
               :
               <div 
-                className="w-16 h-16 mx-auto rounded-full flex items-center justify-center text-white text-xl font-bold"
+                className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold"
                 style={{ backgroundColor: sdg.color }}
               >
                 {sdg.id}
               </div>
             }
-            <p className="mt-2 text-sm font-medium text-center">{sdg.title}</p>
+            <p className="mt-2 text-xs sm:text-sm font-medium text-center line-clamp-2">{sdg.title}</p>
           </button>
         ))}
       </div>
       
       {/* Selected SDG Detail View */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* SDG Information */}
         <Card className="lg:col-span-2">
-          <CardHeader style={{ backgroundColor: `${selectedData.color}15` }}>
-            <div className="flex items-center">
-              <div className="mr-4">
+          <CardHeader style={{ backgroundColor: `${selectedData.color}15` }} className="p-4 sm:p-6">
+            <div className="flex items-start sm:items-center flex-col sm:flex-row gap-3 sm:gap-0">
+              <div className="sm:mr-4">
                 {SDGIcons[selectedData.id] ? 
-                  SDGIcons[selectedData.id]({ width: 60, height: 60 }) 
+                  SDGIcons[selectedData.id]({ width: 50, height: 50 }) 
                   : 
                   <div 
-                    className="w-16 h-16 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold"
                     style={{ backgroundColor: selectedData.color }}
                   >
                     {selectedData.id}
@@ -193,7 +194,7 @@ export default function SDGMapping() {
               </div>
               <div>
                 <Badge 
-                  className="mb-2"
+                  className="mb-2 text-xs"
                   style={{ 
                     backgroundColor: selectedData.color,
                     color: 'white'
@@ -201,28 +202,28 @@ export default function SDGMapping() {
                 >
                   Goal {selectedData.id}
                 </Badge>
-                <CardTitle>{selectedData.title}</CardTitle>
-                <CardDescription className="mt-1">{selectedData.description}</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">{selectedData.title}</CardTitle>
+                <CardDescription className="mt-1 text-sm">{selectedData.description}</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Impact Metrics</h3>
+          <CardContent className="p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Impact Metrics</h3>
             <div className="space-y-4">
               {selectedData.metrics.map((metric, index) => (
                 <div key={index}>
-                  <div className="flex justify-between mb-1">
-                    <span className="text-sm font-medium">{metric.name}</span>
-                    <span className={`text-sm font-medium ${getMetricColor(metric.value, metric.target)}`}>
+                  <div className="flex justify-between mb-1 gap-2">
+                    <span className="text-xs sm:text-sm font-medium">{metric.name}</span>
+                    <span className={`text-xs sm:text-sm font-medium ${getMetricColor(metric.value, metric.target)} whitespace-nowrap`}>
                       {metric.value} / {metric.target} {metric.unit}
                     </span>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex items-center gap-2">
                     <Progress 
                       value={(metric.value / metric.target) * 100} 
                       className="h-2 flex-grow"
                     />
-                    <span className="ml-4 text-xs text-gray-500 dark:text-gray-400 min-w-[40px] text-right">
+                    <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[35px] text-right">
                       {Math.round((metric.value / metric.target) * 100)}%
                     </span>
                   </div>

@@ -35,7 +35,28 @@ The system uses a relational database structure with the following core entities
 - **Impact Metrics**: Quantifiable outcome measurements
 - **Project Impacts**: Linking projects to measurable results
 
+## Routing Structure
+
+### Public Routes (No Authentication Required)
+- **`/`** - Landing page showcasing platform features and capabilities
+- **`/login`** - User authentication (sign in/register)
+- **`/sdg-mapping`** - SDG mapping interface (accessible as demo)
+- **`/impact-visualization`** - Impact visualization tools (accessible as demo)
+- **`/mobile-data-collection`** - Mobile data collection forms (accessible as demo)
+- **`/impact-storytelling`** - AI storytelling features (accessible as demo)
+- **`/field-specific-metrics`** - Field metrics tracking (accessible as demo)
+
+### Protected Routes (Authentication Required)
+- **`/dashboard`** - Main dashboard (redirects to `/login` if not authenticated)
+
 ## Key Components
+
+### Landing Page
+- Hero section with platform value proposition
+- Feature showcase with 6 interactive cards
+- Benefits section highlighting key capabilities
+- Call-to-action buttons for signup and demo exploration
+- Fully accessible without authentication
 
 ### Dashboard System
 - Real-time statistics and KPI tracking
@@ -52,11 +73,13 @@ The system uses a relational database structure with the following core entities
 - Impact visualization by SDG category
 
 ### Mobile Data Collection
+- Tabbed interface for "Log Activity" and "Record Impact"
 - Offline-capable data entry forms
 - Activity logging with location tracking
 - Impact metric recording
 - Photo and media upload capabilities
 - Synchronization when connectivity is restored
+- Online/offline mode toggle for field work
 
 ### Impact Visualization
 - Before/after comparison tools with image sliders
@@ -134,8 +157,15 @@ The system uses a relational database structure with the following core entities
 
 ## Changelog
 
-Changelog:
-- July 02, 2025. Initial setup
+### October 12, 2025
+- **Added Landing Page**: Created new public landing page at `/` with feature showcase
+- **Updated Routing**: Moved dashboard from `/` to `/dashboard` (now requires authentication)
+- **Public Demo Access**: Made all feature pages accessible without login for demo purposes
+- **Fixed Mobile Data Collection**: Resolved React Tabs component structure issue where TabsContent was used outside Tabs wrapper
+- **Updated Navigation**: Modified sidebar navigation and login redirects to use new `/dashboard` route
+
+### July 02, 2025
+- Initial setup
 
 ## User Preferences
 

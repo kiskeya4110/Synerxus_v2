@@ -30,7 +30,7 @@ export default function Login() {
     try {
       setIsLoading(true);
       await signInWithGoogle();
-      setLocation("/");
+      setLocation("/dashboard");
       toast({
         title: "Welcome!",
         description: "You have successfully signed in with Google.",
@@ -57,7 +57,7 @@ export default function Login() {
     try {
       setIsLoading(true);
       await signInWithEmail(loginEmail, loginPassword);
-      setLocation("/");
+      setLocation("/dashboard");
       toast({
         title: "Welcome back!",
         description: "You have successfully signed in.",
@@ -93,7 +93,7 @@ export default function Login() {
     try {
       setIsLoading(true);
       await signUp(registerEmail, registerPassword);
-      setLocation("/");
+      setLocation("/dashboard");
       toast({
         title: "Account created",
         description: "Your account has been created successfully.",

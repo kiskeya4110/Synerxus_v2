@@ -12,15 +12,32 @@ export default function Layout({ children }: LayoutProps) {
   const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
   
-  // Redirect to login if user is not authenticated
+  // Public routes that don't require authentication
+  const publicRoutes = [
+    "/", 
+    "/login", 
+    "/sdg-mapping", 
+    "/impact-visualization", 
+    "/mobile-data-collection", 
+    "/impact-storytelling", 
+    "/field-specific-metrics"
+  ];
+  
+  // Protected routes that require authentication
+  const protectedRoutes = ["/dashboard"];
+  
+  const isPublicRoute = publicRoutes.includes(location);
+  const isProtectedRoute = protectedRoutes.some(route => location.startsWith(route));
+  
+  // Redirect to login if user is not authenticated and trying to access protected route
   useEffect(() => {
-    if (!loading && !user && location !== "/login") {
+    if (!loading && !user && isProtectedRoute) {
       setLocation("/login");
     }
-  }, [user, loading, location, setLocation]);
+  }, [user, loading, location, setLocation, isProtectedRoute]);
 
-  // If on login page, don't show layout
-  if (location === "/login") {
+  // Pages without layout (landing and login)
+  if (location === "/" || location === "/login") {
     return <>{children}</>;
   }
 

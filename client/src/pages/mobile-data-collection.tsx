@@ -317,15 +317,14 @@ export default function MobileDataCollection() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <Card>
-            <CardHeader>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <CardHeader>
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="activity">Log Activity</TabsTrigger>
                   <TabsTrigger value="impact">Record Impact</TabsTrigger>
                 </TabsList>
-              </Tabs>
-            </CardHeader>
-            <CardContent>
+              </CardHeader>
+              <CardContent>
               {isUploading && (
                 <div className="mb-6">
                   <div className="flex justify-between text-sm mb-1">
@@ -797,7 +796,8 @@ export default function MobileDataCollection() {
                   </form>
                 </Form>
               </TabsContent>
-            </CardContent>
+              </CardContent>
+            </Tabs>
           </Card>
         </div>
         

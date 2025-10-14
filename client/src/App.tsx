@@ -7,6 +7,11 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import Login from "@/pages/login";
+import Projects from "@/pages/projects";
+import Tasks from "@/pages/tasks";
+import Volunteers from "@/pages/volunteers";
+import Organizations from "@/pages/organizations";
+import Calendar from "@/pages/calendar";
 import SDGMapping from "@/pages/sdg-mapping";
 import ImpactVisualization from "@/pages/impact-visualization";
 import MobileDataCollection from "@/pages/mobile-data-collection";
@@ -22,6 +27,11 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/login" component={Login} />
+      <Route path="/projects" component={Projects} />
+      <Route path="/tasks" component={Tasks} />
+      <Route path="/volunteers" component={Volunteers} />
+      <Route path="/organizations" component={Organizations} />
+      <Route path="/calendar" component={Calendar} />
       <Route path="/sdg-mapping" component={SDGMapping} />
       <Route path="/impact-visualization" component={ImpactVisualization} />
       <Route path="/mobile-data-collection" component={MobileDataCollection} />

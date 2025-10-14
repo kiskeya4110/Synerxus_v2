@@ -104,6 +104,23 @@ export const projectImpacts = pgTable("project_impacts", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Calendar Event schema
+export const calendarEvents = pgTable("calendar_events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  projectId: integer("project_id").references(() => projects.id),
+  eventType: text("event_type").notNull(), // volunteer_shift, meeting, deadline, etc
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  location: text("location"),
+  attendees: integer("attendees").array(), // user IDs
+  isRecurring: boolean("is_recurring").default(false),
+  recurrenceRule: text("recurrence_rule"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -147,6 +164,12 @@ export const insertProjectImpactSchema = createInsertSchema(projectImpacts).omit
   updatedAt: true
 });
 
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -168,3 +191,6 @@ export type InsertImpactMetric = z.infer<typeof insertImpactMetricSchema>;
 
 export type ProjectImpact = typeof projectImpacts.$inferSelect;
 export type InsertProjectImpact = z.infer<typeof insertProjectImpactSchema>;
+
+export type CalendarEvent = typeof calendarEvents.$inferSelect;
+export type InsertCalendarEvent = z.infer<typeof insertCalendarEventSchema>;

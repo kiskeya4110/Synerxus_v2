@@ -51,17 +51,17 @@ export default function Sidebar() {
   }, [isMobile]);
 
   const navItems = [
-    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 mr-3" /> },
-    { href: "/projects", label: "Projects", icon: <LayoutList className="w-5 h-5 mr-3" /> },
-    { href: "/tasks", label: "Tasks", icon: <CheckSquare className="w-5 h-5 mr-3" /> },
-    { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 mr-3" /> },
-    { href: "/organizations", label: "Organizations", icon: <Building2 className="w-5 h-5 mr-3" /> },
-    { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 mr-3" /> },
-    { href: "/sdg-mapping", label: "SDG Mapping", icon: <Globe className="w-5 h-5 mr-3" /> },
-    { href: "/mobile-data-collection", label: "Mobile Collection", icon: <Smartphone className="w-5 h-5 mr-3" /> },
-    { href: "/impact-storytelling", label: "Impact Storytelling", icon: <Sparkles className="w-5 h-5 mr-3" /> },
-    { href: "/field-specific-metrics", label: "Field Metrics", icon: <PieChart className="w-5 h-5 mr-3" /> },
-    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 mr-3" /> }
+    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/projects", label: "Projects", icon: <LayoutList className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/tasks", label: "Tasks", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/organizations", label: "Organizations", icon: <Building2 className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/sdg-mapping", label: "SDG Mapping", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/mobile-data-collection", label: "Mobile Collection", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/impact-storytelling", label: "Impact Storytelling", icon: <Sparkles className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/field-specific-metrics", label: "Field Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];
 
   const projects = [
@@ -91,14 +91,16 @@ export default function Sidebar() {
                   key={item.href} 
                   href={item.href}
                   className={cn(
-                    "flex items-center px-4 py-2.5 text-sm font-medium rounded-lg",
+                    "flex items-center px-3 py-3 min-h-[44px] text-sm font-medium rounded-lg transition-colors",
                     location === item.href 
                       ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400" 
                       : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   )}
+                  onClick={() => isMobile && setSidebarOpen(false)}
+                  data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   {item.icon}
-                  <span>{item.label}</span>
+                  <span className="truncate">{item.label}</span>
                 </Link>
               ))}
             </div>
@@ -135,10 +137,12 @@ export default function Sidebar() {
       {/* Mobile menu button */}
       {isMobile && !sidebarOpen && (
         <button 
-          className="fixed bottom-4 right-4 p-3 bg-primary text-white rounded-full shadow-lg z-10 lg:hidden"
+          className="fixed bottom-6 right-6 p-4 min-h-[56px] min-w-[56px] bg-primary text-white rounded-full shadow-lg z-20 lg:hidden flex items-center justify-center hover:bg-primary/90 transition-colors"
           onClick={() => setSidebarOpen(true)}
+          aria-label="Open menu"
+          data-testid="mobile-menu-button"
         >
-          <LayoutList className="w-6 h-6" />
+          <LayoutList className="w-7 h-7" />
         </button>
       )}
     </>

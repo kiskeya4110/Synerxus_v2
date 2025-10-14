@@ -194,17 +194,21 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex space-x-2">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Button
           variant={activeTab === "generate" ? "default" : "outline"}
           onClick={() => setActiveTab("generate")}
+          className="w-full sm:w-auto min-h-[44px]"
+          data-testid="button-generate-new-story"
         >
           Generate New Story
         </Button>
         <Button
           variant={activeTab === "saved" ? "default" : "outline"}
           onClick={() => setActiveTab("saved")}
+          className="w-full sm:w-auto min-h-[44px]"
+          data-testid="button-saved-stories"
         >
           Saved Stories ({stories.length})
         </Button>
@@ -212,15 +216,15 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
 
       {activeTab === "generate" ? (
         <Card>
-          <CardHeader>
-            <CardTitle>AI Impact Storytelling</CardTitle>
-            <CardDescription>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">AI Impact Storytelling</CardTitle>
+            <CardDescription className="text-sm">
               Transform impact data into compelling narratives tailored to your audience
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6 p-4 sm:p-6 pt-0">
             <div>
-              <h3 className="text-lg font-medium mb-3">1. Select Project Data</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-3">1. Select Project Data</h3>
               <Select value={selectedProject} onValueChange={setSelectedProject}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a project" />
@@ -236,15 +240,15 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
               
               {selectedProjectData && (
                 <div className="mt-3 p-3 bg-muted rounded-md">
-                  <h4 className="font-medium">{selectedProjectData.name}</h4>
-                  <p className="text-sm text-muted-foreground mt-1">{selectedProjectData.description}</p>
+                  <h4 className="font-medium text-sm sm:text-base">{selectedProjectData.name}</h4>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">{selectedProjectData.description}</p>
                   <div className="mt-2">
-                    <h5 className="text-sm font-medium">Key Metrics:</h5>
+                    <h5 className="text-xs sm:text-sm font-medium">Key Metrics:</h5>
                     <ul className="mt-1 space-y-1">
                       {selectedProjectData.metrics.map((metric, idx) => (
-                        <li key={idx} className="text-sm flex justify-between">
-                          <span>{metric.label}:</span>
-                          <span className="font-medium">
+                        <li key={idx} className="text-xs sm:text-sm flex justify-between gap-2">
+                          <span className="truncate">{metric.label}:</span>
+                          <span className="font-medium whitespace-nowrap">
                             {metric.before} → {metric.after} {metric.unit}
                           </span>
                         </li>
@@ -256,11 +260,11 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
             </div>
             
             <div>
-              <h3 className="text-lg font-medium mb-3">2. Customize Your Story</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-3">2. Customize Your Story</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Target Audience</label>
+                  <label className="text-xs sm:text-sm font-medium">Target Audience</label>
                   <Select value={audience} onValueChange={setAudience}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select audience" />
@@ -276,7 +280,7 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Tone</label>
+                  <label className="text-xs sm:text-sm font-medium">Tone</label>
                   <Select value={tone} onValueChange={setTone}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select tone" />
@@ -291,7 +295,7 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Impact Focus</label>
+                  <label className="text-xs sm:text-sm font-medium">Impact Focus</label>
                   <Select value={focus} onValueChange={setFocus}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select focus" />
@@ -308,12 +312,12 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-medium">Additional Context or Notes (Optional)</label>
+                <label className="text-xs sm:text-sm font-medium">Additional Context or Notes (Optional)</label>
                 <Textarea 
                   placeholder="Add any specific details or context you'd like included in the story..."
                   value={customNotes}
                   onChange={(e) => setCustomNotes(e.target.value)}
-                  className="h-24"
+                  className="h-20 sm:h-24 text-sm"
                 />
               </div>
             </div>
@@ -322,7 +326,8 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
               <Button 
                 onClick={generateStory} 
                 disabled={!selectedProject || isGenerating}
-                className="w-full"
+                className="w-full min-h-[44px]"
+                data-testid="button-generate-impact-story"
               >
                 {isGenerating ? (
                   <>

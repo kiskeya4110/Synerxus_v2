@@ -87,10 +87,10 @@ export default function Landing() {
           </div>
           <div className="flex gap-2 sm:gap-3">
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="sm:size-default" data-testid="button-login">Log In</Button>
+              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto" data-testid="button-login">Log In</Button>
             </Link>
             <Link href="/login">
-              <Button size="sm" className="sm:size-default" data-testid="button-get-started">Get Started</Button>
+              <Button size="sm" className="min-h-[44px] sm:min-h-auto" data-testid="button-get-started">Get Started</Button>
             </Link>
           </div>
         </div>

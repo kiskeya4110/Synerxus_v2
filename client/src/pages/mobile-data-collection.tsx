@@ -291,11 +291,11 @@ export default function MobileDataCollection() {
   return (
     <>
       {/* Page Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Mobile Data Collection</h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <h1 className="text-xl sm:text-2xl font-bold">Mobile Data Collection</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Record volunteer activities and impact metrics from the field
             </p>
           </div>
@@ -303,9 +303,10 @@ export default function MobileDataCollection() {
             variant="outline"
             size="sm"
             onClick={toggleOnlineStatus}
-            className={`flex items-center gap-2 ${
+            className={`flex items-center gap-2 w-fit ${
               isOnline ? "text-green-500" : "text-amber-500"
             }`}
+            data-testid="button-toggle-online-status"
           >
             {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
             {isOnline ? "Online" : "Offline"}
@@ -314,20 +315,20 @@ export default function MobileDataCollection() {
       </div>
 
       {/* Main Content */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-2">
           <Card>
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <CardHeader>
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="activity">Log Activity</TabsTrigger>
-                  <TabsTrigger value="impact">Record Impact</TabsTrigger>
+              <CardHeader className="p-4 sm:p-6">
+                <TabsList className="grid w-full grid-cols-2 min-h-[44px]">
+                  <TabsTrigger value="activity" className="text-sm sm:text-base py-3" data-testid="tab-log-activity">Log Activity</TabsTrigger>
+                  <TabsTrigger value="impact" className="text-sm sm:text-base py-3" data-testid="tab-record-impact">Record Impact</TabsTrigger>
                 </TabsList>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0">
               {isUploading && (
-                <div className="mb-6">
-                  <div className="flex justify-between text-sm mb-1">
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex justify-between text-xs sm:text-sm mb-1">
                     <span>Uploading submission...</span>
                     <span>{uploadProgress}%</span>
                   </div>
@@ -340,9 +341,9 @@ export default function MobileDataCollection() {
                 <Form {...activityForm}>
                   <form 
                     onSubmit={activityForm.handleSubmit(onActivitySubmit)} 
-                    className="space-y-6"
+                    className="space-y-4 sm:space-y-6"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       <FormField
                         control={activityForm.control}
                         name="projectId"

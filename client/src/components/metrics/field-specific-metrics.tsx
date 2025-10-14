@@ -382,43 +382,43 @@ export default function FieldSpecificMetrics({
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <CardHeader className="p-4 sm:p-6">
+        <div className="flex flex-col gap-4">
           <div>
-            <CardTitle>Field-Specific Impact Metrics</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg sm:text-xl">Field-Specific Impact Metrics</CardTitle>
+            <CardDescription className="text-sm">
               Customize and track domain-specific impact measurements
             </CardDescription>
           </div>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
-              <TabsTrigger value="view">View Metrics</TabsTrigger>
-              <TabsTrigger value="add">
-                {editMode ? "Edit Metric" : "Add Metric"}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3 min-h-[44px]">
+              <TabsTrigger value="view" className="text-xs sm:text-sm py-3">View</TabsTrigger>
+              <TabsTrigger value="add" className="text-xs sm:text-sm py-3">
+                {editMode ? "Edit" : "Add"}
               </TabsTrigger>
-              <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="categories" className="text-xs sm:text-sm py-3">Categories</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </CardHeader>
       
-      <CardContent>
+      <CardContent className="p-4 sm:p-6 pt-0">
         {/* View Metrics Tab */}
         <TabsContent value="view" className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            <div className="flex gap-2 w-full sm:w-auto">
-              <div className="relative w-full sm:w-[300px]">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="relative flex-1 sm:max-w-[300px]">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search metrics..."
-                  className="pl-8"
+                  className="pl-8 text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
@@ -437,7 +437,8 @@ export default function FieldSpecificMetrics({
               <Button
                 variant="outline"
                 onClick={handleExportMetrics}
-                className="whitespace-nowrap"
+                className="flex-1 sm:flex-initial text-sm min-h-[44px]"
+                size="sm"
               >
                 <FileDown className="mr-2 h-4 w-4" />
                 Export
@@ -455,28 +456,30 @@ export default function FieldSpecificMetrics({
                   });
                   setActiveTab("add");
                 }}
+                className="flex-1 sm:flex-initial text-sm min-h-[44px]"
+                size="sm"
               >
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Metric
+                Add
               </Button>
             </div>
           </div>
           
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 text-xs sm:text-sm"
                     onClick={() => handleSort("name")}
                   >
-                    Metric Name
+                    Metric
                     {sortField === "name" && (
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 text-xs sm:text-sm hidden sm:table-cell"
                     onClick={() => handleSort("category")}
                   >
                     Category
@@ -484,22 +487,22 @@ export default function FieldSpecificMetrics({
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
                   </TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>SDG Goals</TableHead>
+                  <TableHead className="text-xs sm:text-sm hidden md:table-cell">Unit</TableHead>
+                  <TableHead className="text-xs sm:text-sm hidden lg:table-cell">SDG Goals</TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50 text-right"
+                    className="cursor-pointer hover:bg-muted/50 text-right text-xs sm:text-sm hidden sm:table-cell"
                     onClick={() => handleSort("dataPoints")}
                   >
-                    Data Points
+                    Data
                     {sortField === "dataPoints" && (
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}
                   </TableHead>
                   <TableHead 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-muted/50 text-xs sm:text-sm hidden md:table-cell"
                     onClick={() => handleSort("lastUpdated")}
                   >
-                    Last Updated
+                    Updated
                     {sortField === "lastUpdated" && (
                       <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
                     )}

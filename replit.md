@@ -157,6 +157,15 @@ The system uses a relational database structure with the following core entities
 
 ## Changelog
 
+### October 14, 2025
+- **Mobile Optimization**: Optimized all pages for mobile app friendliness
+  - Added responsive breakpoints (sm, md, lg) to all interactive pages
+  - Implemented touch-friendly UI with minimum 44px touch targets for all buttons and tabs
+  - Optimized typography with responsive text sizes (text-xs sm:text-sm patterns)
+  - Improved layout stacking on mobile devices with responsive grids and flexbox
+  - Made tables horizontally scrollable with hidden columns on smaller screens
+  - Enhanced spacing and padding for better mobile readability
+
 ### October 12, 2025
 - **Added Landing Page**: Created new public landing page at `/` with feature showcase
 - **Updated Routing**: Moved dashboard from `/` to `/dashboard` (now requires authentication)

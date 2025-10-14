@@ -321,8 +321,8 @@ export default function MobileDataCollection() {
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <CardHeader className="p-4 sm:p-6">
                 <TabsList className="grid w-full grid-cols-2 min-h-[44px]">
-                  <TabsTrigger value="activity" className="text-sm sm:text-base py-3" data-testid="tab-log-activity">Log Activity</TabsTrigger>
-                  <TabsTrigger value="impact" className="text-sm sm:text-base py-3" data-testid="tab-record-impact">Record Impact</TabsTrigger>
+                  <TabsTrigger value="activity" className="text-sm sm:text-base min-h-[44px]" data-testid="tab-log-activity">Log Activity</TabsTrigger>
+                  <TabsTrigger value="impact" className="text-sm sm:text-base min-h-[44px]" data-testid="tab-record-impact">Record Impact</TabsTrigger>
                 </TabsList>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">

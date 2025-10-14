@@ -132,9 +132,9 @@ export default function ImpactVisualization() {
       {/* Main Content */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 h-auto min-h-[44px]">
-          <TabsTrigger value="before-after" className="text-xs sm:text-sm py-3">Before & After</TabsTrigger>
-          <TabsTrigger value="outcomes" className="text-xs sm:text-sm py-3">Outcomes</TabsTrigger>
-          <TabsTrigger value="time-series" className="text-xs sm:text-sm py-3">Time Series</TabsTrigger>
+          <TabsTrigger value="before-after" className="text-xs sm:text-sm min-h-[44px]">Before & After</TabsTrigger>
+          <TabsTrigger value="outcomes" className="text-xs sm:text-sm min-h-[44px]">Outcomes</TabsTrigger>
+          <TabsTrigger value="time-series" className="text-xs sm:text-sm min-h-[44px]">Time Series</TabsTrigger>
         </TabsList>
 
         <TabsContent value="before-after" className="space-y-4 sm:space-y-6">
@@ -164,16 +164,16 @@ export default function ImpactVisualization() {
         </TabsContent>
 
         <TabsContent value="outcomes" className="space-y-4 sm:space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {projectOutcomes.map(project => (
-              <Card key={project.id}>
+              <Card key={project.id} className="min-h-[200px] w-full">
                 <CardHeader className="pb-3 p-4 sm:p-6">
                   <CardTitle className="text-base sm:text-lg">{project.title}</CardTitle>
                   <div className="flex gap-1 mt-2">
                     {project.sdgs.map(sdg => (
                       <div 
                         key={sdg}
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
                         style={{ 
                           backgroundColor: 
                             sdg === 3 ? "#4C9F38" : 
@@ -189,9 +189,9 @@ export default function ImpactVisualization() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
-                  <div className="space-y-2 sm:space-y-3">
+                  <div className="space-y-3">
                     {project.outcomes.map((outcome, idx) => (
-                      <div key={idx} className="flex justify-between items-center gap-2">
+                      <div key={idx} className="flex justify-between items-center gap-2 min-h-[24px]">
                         <span className="text-xs sm:text-sm">{outcome.metric}</span>
                         <span className="font-medium text-sm sm:text-base whitespace-nowrap">
                           {outcome.value} {outcome.unit}

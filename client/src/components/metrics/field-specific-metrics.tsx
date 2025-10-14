@@ -382,27 +382,26 @@ export default function FieldSpecificMetrics({
 
   return (
     <Card className="w-full">
-      <CardHeader className="p-4 sm:p-6">
-        <div className="flex flex-col gap-4">
-          <div>
-            <CardTitle className="text-lg sm:text-xl">Field-Specific Impact Metrics</CardTitle>
-            <CardDescription className="text-sm">
-              Customize and track domain-specific impact measurements
-            </CardDescription>
-          </div>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col gap-4">
+            <div>
+              <CardTitle className="text-lg sm:text-xl">Field-Specific Impact Metrics</CardTitle>
+              <CardDescription className="text-sm">
+                Customize and track domain-specific impact measurements
+              </CardDescription>
+            </div>
             <TabsList className="grid w-full grid-cols-3 min-h-[44px]">
-              <TabsTrigger value="view" className="text-xs sm:text-sm py-3">View</TabsTrigger>
-              <TabsTrigger value="add" className="text-xs sm:text-sm py-3">
+              <TabsTrigger value="view" className="text-xs sm:text-sm min-h-[44px]">View</TabsTrigger>
+              <TabsTrigger value="add" className="text-xs sm:text-sm min-h-[44px]">
                 {editMode ? "Edit" : "Add"}
               </TabsTrigger>
-              <TabsTrigger value="categories" className="text-xs sm:text-sm py-3">Categories</TabsTrigger>
+              <TabsTrigger value="categories" className="text-xs sm:text-sm min-h-[44px]">Categories</TabsTrigger>
             </TabsList>
-          </Tabs>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="p-4 sm:p-6 pt-0">
+          </div>
+        </CardHeader>
+        
+        <CardContent className="p-4 sm:p-6 pt-0">
         {/* View Metrics Tab */}
         <TabsContent value="view" className="space-y-4">
           <div className="flex flex-col gap-3 sm:gap-4">
@@ -731,6 +730,7 @@ export default function FieldSpecificMetrics({
           </div>
         </TabsContent>
       </CardContent>
+      </Tabs>
     </Card>
   );
 }

@@ -158,13 +158,19 @@ The system uses a relational database structure with the following core entities
 ## Changelog
 
 ### October 14, 2025
-- **Mobile Optimization**: Optimized all pages for mobile app friendliness
-  - Added responsive breakpoints (sm, md, lg) to all interactive pages
-  - Implemented touch-friendly UI with minimum 44px touch targets for all buttons and tabs
-  - Optimized typography with responsive text sizes (text-xs sm:text-sm patterns)
-  - Improved layout stacking on mobile devices with responsive grids and flexbox
-  - Made tables horizontally scrollable with hidden columns on smaller screens
-  - Enhanced spacing and padding for better mobile readability
+- **Mobile Optimization**: Comprehensive mobile app optimization completed and verified
+  - **Touch Targets**: All interactive elements (buttons, tabs, toggles) have minimum 44px height via `min-h-[44px]` class applied directly to components
+  - **Responsive Layouts**: 
+    - Mobile (<768px): Flex column layouts for vertical stacking
+    - Medium (768px+): Grid 2-column layouts where appropriate
+    - Large (1024px+): Grid 3-column layouts for desktop
+  - **Typography**: Responsive text sizing with `text-xs sm:text-sm` patterns throughout
+  - **Card Heights**: Outcome and metric cards have `min-h-[200px]` for adequate touch area
+  - **Component Fixes**: 
+    - Fixed Tabs structure in field-specific-metrics (TabsContent now properly within Tabs wrapper)
+    - Changed outcome cards from grid to flex-col on mobile for guaranteed vertical stacking
+    - Applied min-h-[44px] directly to all TabsTrigger components for consistent touch targets
+  - **Testing**: Verified on 375x667 viewport (iPhone SE) with playwright tests - all touch targets confirmed ≥44px
 
 ### October 12, 2025
 - **Added Landing Page**: Created new public landing page at `/` with feature showcase

@@ -81,7 +81,7 @@ export default function Sidebar() {
       >
         <div className="px-4 py-6">
           <div className="flex items-center justify-center mb-8">
-            <h1 className="text-xl font-bold text-primary dark:text-primary">ImpactTrack</h1>
+            <h1 className="text-xl font-bold text-primary dark:text-primary">aBridge</h1>
           </div>
           
           <nav>

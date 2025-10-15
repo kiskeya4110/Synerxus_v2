@@ -83,7 +83,7 @@ export default function Landing() {
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <span className="text-lg sm:text-xl font-bold">ImpactTrack</span>
+            <span className="text-lg sm:text-xl font-bold">aBridge</span>
           </div>
           <div className="flex gap-2 sm:gap-3">
             <Link href="/login">
@@ -100,13 +100,13 @@ export default function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center">
           <Badge className="mb-4 text-xs sm:text-sm" variant="secondary" data-testid="badge-platform-type">
-            Volunteer Impact Platform
+            aBridge AI Matching
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent leading-tight" data-testid="text-hero-title">
-            Measure What Matters. Tell Stories That Inspire.
+            Intelligent Bridges Connecting Global Volunteers with Meaningful Impact
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-2" data-testid="text-hero-description">
-            ImpactTrack helps organizations track, visualize, and communicate the real-world outcomes of their volunteer initiatives.
+            aBridge Global connects passionate volunteers with impactful opportunities across Africa, leveraging AI to match skills with needs for sustainable development.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
             <Link href="/login" className="w-full sm:w-auto">

@@ -1,8 +1,13 @@
-# ImpactTrack - Volunteer Impact Tracking Platform
+# aBridge - Africa's Bridge to Global Impact
 
 ## Overview
 
-ImpactTrack is a comprehensive volunteer impact tracking platform designed to help organizations measure, visualize, and communicate the outcomes of their volunteer initiatives. The platform connects volunteer activities to broader humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment and storytelling.
+**Organization:** aBridge Global  
+**Tagline:** "Africa's bridge to global impact"  
+**Tech Product:** aBridge AI Matching  
+**Positioning:** "Intelligent bridges connecting global volunteers with meaningful impact"
+
+aBridge is a comprehensive volunteer impact tracking and matching platform designed to help organizations measure, visualize, and communicate the outcomes of their volunteer initiatives across Africa and beyond. The platform leverages AI to intelligently match global volunteers with meaningful opportunities, connecting volunteer activities to broader humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment and storytelling.
 
 ## System Architecture
 

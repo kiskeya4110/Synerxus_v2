@@ -64,8 +64,14 @@ The system uses a relational database structure with the following core entities
 - Fully accessible without authentication
 
 ### Dashboard System
+- **Role-Based Dashboard Partitioning**: Separate views for organizations and volunteers
+  - **Volunteer View**: Personal metrics (My Hours, Tasks Completed, Active Projects, Impact Score)
+  - **Organization View**: Organizational metrics (Total Volunteers, Total Hours, Active Projects, People Impacted)
+- **Optimized Color Schemes** for clear KPI distinction:
+  - Impact Chart: Blue (#3B82F6) for hours, Green (#10B981) for impact
+  - SDG Chart: Official UN SDG colors (Cyan #26BDE2, Green #4C9F38, Red #C5192D, Gold #FCC30B)
 - Real-time statistics and KPI tracking
-- Interactive charts for volunteer hours and impact metrics
+- Interactive charts with responsive data based on user role
 - Project progress monitoring with visual indicators
 - Task management interface
 - Activity feed for recent updates
@@ -181,6 +187,20 @@ All features in ImpactTrack are designed to work together seamlessly:
 - Organization stats link to their projects and volunteers
 
 ## Changelog
+
+### October 15, 2025
+- **Dashboard Partitioning Implemented**: Created role-based dashboard views
+  - **Volunteer View**: Personal KPIs (My Hours: 32, Tasks: 12, Projects: 3, Impact Score: 94) with individual-scale data
+  - **Organization View**: Organizational KPIs (Total Volunteers: 245, Hours: 1,876, Projects: 12, People Impacted: 15.2K) with aggregated data
+  - Tab-based interface for seamless switching between views
+  - Each view shows contextually relevant projects, tasks, and activities
+- **Chart Color Optimization**: Implemented industry-standard color schemes for KPI distinction
+  - **Impact Chart**: Blue (#3B82F6) for hours vs Green (#10B981) for impact with enhanced visual elements (3px borders, gradients, hover states)
+  - **SDG Chart**: Official UN SDG colors - Cyan (#26BDE2), Green (#4C9F38), Red (#C5192D), Gold (#FCC30B) for authentic representation
+  - Added percentage values to SDG legend for better readability
+  - Charts dynamically adjust data scale based on user type (volunteer vs organization)
+- **Mobile Accessibility**: All dashboard tabs meet 44px minimum touch target requirements
+- **Testing**: Verified dashboard partitioning with playwright - all KPIs, charts, colors, and tab switching working correctly
 
 ### October 14, 2025
 - **Complete Feature Suite Developed**: Created all core management pages

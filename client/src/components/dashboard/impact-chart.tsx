@@ -4,7 +4,11 @@ import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function ImpactChart() {
+interface ImpactChartProps {
+  userType?: "volunteer" | "organization";
+}
+
+export default function ImpactChart({ userType = "volunteer" }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
@@ -19,29 +23,41 @@ export default function ImpactChart() {
           chartInstance.current.destroy();
         }
         
-        // Create new chart
+        // Create new chart with optimized colors for better KPI distinction
+        const isOrg = userType === "organization";
+        
         chartInstance.current = new Chart(ctx, {
           type: "line",
           data: {
             labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
             datasets: [
               {
-                label: "Volunteer Hours",
-                data: [120, 190, 230, 290, 320, 410, 450],
-                borderColor: "hsl(var(--chart-1))",
-                backgroundColor: "hsla(var(--chart-1) / 0.1)",
-                borderWidth: 2,
+                label: isOrg ? "Total Volunteer Hours" : "My Hours",
+                data: isOrg ? [1200, 1590, 1830, 2290, 2820, 3410, 3950] : [12, 19, 23, 29, 32, 41, 45],
+                borderColor: "#3B82F6", // Blue for hours
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                borderWidth: 3,
                 fill: true,
-                tension: 0.4
+                tension: 0.4,
+                pointBackgroundColor: "#3B82F6",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
               },
               {
                 label: "People Impacted",
-                data: [250, 310, 400, 550, 680, 720, 850],
-                borderColor: "hsl(var(--chart-2))",
-                backgroundColor: "hsla(var(--chart-2) / 0.1)",
-                borderWidth: 2,
+                data: isOrg ? [2500, 3810, 5400, 7550, 10680, 13720, 15850] : [25, 38, 54, 75, 106, 137, 158],
+                borderColor: "#10B981", // Green for impact
+                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                borderWidth: 3,
                 fill: true,
-                tension: 0.4
+                tension: 0.4,
+                pointBackgroundColor: "#10B981",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
               }
             ]
           },
@@ -87,7 +103,7 @@ export default function ImpactChart() {
         chartInstance.current = null;
       }
     };
-  }, [theme]);
+  }, [theme, userType]);
 
   return (
     <Card className="lg:col-span-2">

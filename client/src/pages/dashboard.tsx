@@ -1,4 +1,5 @@
-import { Users, Clock, CheckSquare, Globe } from "lucide-react";
+import { useState } from "react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
@@ -7,8 +8,11 @@ import TaskTable, { Task } from "@/components/dashboard/task-table";
 import ActivityFeed, { Activity } from "@/components/dashboard/activity-feed";
 import UpcomingEvents, { Event } from "@/components/dashboard/upcoming-events";
 import QuickActions from "@/components/dashboard/quick-actions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
+  const [dashboardType, setDashboardType] = useState<"volunteer" | "organization">("volunteer");
+
   // Sample data for projects
   const projects = [
     {
@@ -174,86 +178,183 @@ export default function Dashboard() {
         <p className="text-gray-600 dark:text-gray-400">Track and visualize your volunteer impact across projects</p>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard
-          title="Active Volunteers"
-          value="245"
-          icon={<Users className="h-5 w-5" />}
-          iconBgClass="bg-primary-100 dark:bg-primary-900/30"
-          iconColor="text-primary-500"
-          change={{ value: "12%", isPositive: true, label: "vs last month" }}
-        />
-        
-        <StatsCard
-          title="Hours Contributed"
-          value="1,876"
-          icon={<Clock className="h-5 w-5" />}
-          iconBgClass="bg-success-100 dark:bg-success-900/30"
-          iconColor="text-success-500"
-          change={{ value: "8%", isPositive: true, label: "vs last month" }}
-        />
-        
-        <StatsCard
-          title="Active Projects"
-          value="12"
-          icon={<CheckSquare className="h-5 w-5" />}
-          iconBgClass="bg-purple-100 dark:bg-purple-900/30"
-          iconColor="text-purple-500"
-          change={{ value: "Across 8 organizations", label: "" }}
-        />
-        
-        <StatsCard
-          title="SDGs Addressed"
-          value="7"
-          icon={<Globe className="h-5 w-5" />}
-          iconBgClass="bg-amber-100 dark:bg-amber-900/30"
-          iconColor="text-amber-500"
-          change={{ value: "2 new", isPositive: true, label: "this quarter" }}
-        />
-      </div>
+      {/* Dashboard Type Selector */}
+      <Tabs value={dashboardType} onValueChange={(value) => setDashboardType(value as "volunteer" | "organization")} className="mb-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2 min-h-[44px]">
+          <TabsTrigger value="volunteer" className="min-h-[44px]" data-testid="tab-volunteer-dashboard">
+            <Users className="h-4 w-4 mr-2" />
+            Volunteer View
+          </TabsTrigger>
+          <TabsTrigger value="organization" className="min-h-[44px]" data-testid="tab-organization-dashboard">
+            <Building2 className="h-4 w-4 mr-2" />
+            Organization View
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Impact Visualizations */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <ImpactChart />
-        <SDGChart />
-      </div>
+        {/* Volunteer Dashboard */}
+        <TabsContent value="volunteer" className="space-y-6 mt-6">
+          {/* Volunteer Quick Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatsCard
+              title="My Hours This Month"
+              value="32"
+              icon={<Clock className="h-5 w-5" />}
+              iconBgClass="bg-blue-100 dark:bg-blue-900/30"
+              iconColor="text-blue-600 dark:text-blue-400"
+              change={{ value: "8 hrs", isPositive: true, label: "vs last month" }}
+            />
+            
+            <StatsCard
+              title="Tasks Completed"
+              value="12"
+              icon={<CheckSquare className="h-5 w-5" />}
+              iconBgClass="bg-green-100 dark:bg-green-900/30"
+              iconColor="text-green-600 dark:text-green-400"
+              change={{ value: "5 tasks", isPositive: true, label: "this week" }}
+            />
+            
+            <StatsCard
+              title="Active Projects"
+              value="3"
+              icon={<Target className="h-5 w-5" />}
+              iconBgClass="bg-purple-100 dark:bg-purple-900/30"
+              iconColor="text-purple-600 dark:text-purple-400"
+              change={{ value: "1 new", isPositive: true, label: "this month" }}
+            />
+            
+            <StatsCard
+              title="Impact Score"
+              value="94"
+              icon={<Award className="h-5 w-5" />}
+              iconBgClass="bg-amber-100 dark:bg-amber-900/30"
+              iconColor="text-amber-600 dark:text-amber-400"
+              change={{ value: "+6 pts", isPositive: true, label: "this month" }}
+            />
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Projects & Tasks */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Active Projects</h2>
-              <a href="#" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
-            </div>
-            <div className="p-4">
-              <div className="space-y-4">
-                {projects.map(project => (
-                  <ProjectCard
-                    key={project.id}
-                    title={project.title}
-                    description={project.description}
-                    status={project.status}
-                    progress={project.progress}
-                    timeRemaining={project.timeRemaining}
-                    volunteers={project.volunteers}
-                  />
-                ))}
+          {/* Volunteer Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <ImpactChart userType="volunteer" />
+            <SDGChart userType="volunteer" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                  <h2 className="text-lg font-semibold">My Active Projects</h2>
+                  <a href="/projects" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+                </div>
+                <div className="p-4">
+                  <div className="space-y-4">
+                    {projects.slice(0, 2).map(project => (
+                      <ProjectCard
+                        key={project.id}
+                        title={project.title}
+                        description={project.description}
+                        status={project.status}
+                        progress={project.progress}
+                        timeRemaining={project.timeRemaining}
+                        volunteers={project.volunteers}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
+              
+              <TaskTable tasks={tasks.filter(t => t.assignee?.name === "Sarah Johnson")} />
+            </div>
+            
+            <div className="space-y-6">
+              <ActivityFeed activities={activities.filter(a => a.user?.name === "Sarah Johnson")} />
+              <UpcomingEvents events={events} />
+              <QuickActions />
             </div>
           </div>
-          
-          <TaskTable tasks={tasks} />
-        </div>
-        
-        {/* Sidebar Components */}
-        <div className="space-y-6">
-          <ActivityFeed activities={activities} />
-          <UpcomingEvents events={events} />
-          <QuickActions />
-        </div>
-      </div>
+        </TabsContent>
+
+        {/* Organization Dashboard */}
+        <TabsContent value="organization" className="space-y-6 mt-6">
+          {/* Organization Quick Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatsCard
+              title="Total Volunteers"
+              value="245"
+              icon={<Users className="h-5 w-5" />}
+              iconBgClass="bg-indigo-100 dark:bg-indigo-900/30"
+              iconColor="text-indigo-600 dark:text-indigo-400"
+              change={{ value: "12%", isPositive: true, label: "vs last month" }}
+            />
+            
+            <StatsCard
+              title="Total Hours"
+              value="1,876"
+              icon={<Clock className="h-5 w-5" />}
+              iconBgClass="bg-cyan-100 dark:bg-cyan-900/30"
+              iconColor="text-cyan-600 dark:text-cyan-400"
+              change={{ value: "18%", isPositive: true, label: "vs last month" }}
+            />
+            
+            <StatsCard
+              title="Active Projects"
+              value="12"
+              icon={<CheckSquare className="h-5 w-5" />}
+              iconBgClass="bg-teal-100 dark:bg-teal-900/30"
+              iconColor="text-teal-600 dark:text-teal-400"
+              change={{ value: "3 new", isPositive: true, label: "this quarter" }}
+            />
+            
+            <StatsCard
+              title="People Impacted"
+              value="15.2K"
+              icon={<TrendingUp className="h-5 w-5" />}
+              iconBgClass="bg-emerald-100 dark:bg-emerald-900/30"
+              iconColor="text-emerald-600 dark:text-emerald-400"
+              change={{ value: "24%", isPositive: true, label: "vs last quarter" }}
+            />
+          </div>
+
+          {/* Organization Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <ImpactChart userType="organization" />
+            <SDGChart userType="organization" />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                  <h2 className="text-lg font-semibold">All Active Projects</h2>
+                  <a href="/projects" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+                </div>
+                <div className="p-4">
+                  <div className="space-y-4">
+                    {projects.map(project => (
+                      <ProjectCard
+                        key={project.id}
+                        title={project.title}
+                        description={project.description}
+                        status={project.status}
+                        progress={project.progress}
+                        timeRemaining={project.timeRemaining}
+                        volunteers={project.volunteers}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
+              <TaskTable tasks={tasks} />
+            </div>
+            
+            <div className="space-y-6">
+              <ActivityFeed activities={activities} />
+              <UpcomingEvents events={events} />
+              <QuickActions />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

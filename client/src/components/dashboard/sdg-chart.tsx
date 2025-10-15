@@ -3,7 +3,11 @@ import { useTheme } from "@/components/layout/theme-provider";
 import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function SDGChart() {
+interface SDGChartProps {
+  userType?: "volunteer" | "organization";
+}
+
+export default function SDGChart({ userType = "volunteer" }: SDGChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
@@ -18,20 +22,24 @@ export default function SDGChart() {
           chartInstance.current.destroy();
         }
         
-        // Create new chart
+        // Create new chart with optimized SDG colors
+        const isOrg = userType === "organization";
+        
         chartInstance.current = new Chart(ctx, {
           type: "doughnut",
           data: {
             labels: ["Clean Water & Sanitation", "Good Health & Well-being", "Quality Education", "Others"],
             datasets: [{
-              data: [35, 25, 20, 20],
+              data: isOrg ? [35, 25, 20, 20] : [40, 30, 20, 10],
               backgroundColor: [
-                "hsl(var(--chart-1))", // Blue
-                "hsl(var(--chart-3))", // Red
-                "hsl(var(--chart-2))", // Green
-                "hsl(var(--chart-4))"  // Yellow
+                "#26BDE2", // SDG 6 - Clean Water (Cyan)
+                "#4C9F38", // SDG 3 - Good Health (Green)
+                "#C5192D", // SDG 4 - Quality Education (Red)
+                "#FCC30B"  // Others (Gold)
               ],
-              borderWidth: 0
+              borderWidth: 3,
+              borderColor: theme === "dark" ? "#1f2937" : "#ffffff",
+              hoverBorderWidth: 4
             }]
           },
           options: {
@@ -58,7 +66,7 @@ export default function SDGChart() {
         chartInstance.current = null;
       }
     };
-  }, [theme]);
+  }, [theme, userType]);
 
   return (
     <Card>
@@ -71,22 +79,34 @@ export default function SDGChart() {
         </div>
       </CardContent>
       <div className="px-4 pb-4 pt-2">
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          <div className="flex items-center mb-1">
-            <span className="w-3 h-3 bg-[hsl(var(--chart-1))] rounded-full mr-2"></span>
-            <span>SDG 6: Clean Water & Sanitation</span>
+        <div className="text-xs text-gray-600 dark:text-gray-400">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#26BDE2' }}></span>
+              <span>SDG 6: Clean Water & Sanitation</span>
+            </div>
+            <span className="font-semibold">{userType === "organization" ? "35%" : "40%"}</span>
           </div>
-          <div className="flex items-center mb-1">
-            <span className="w-3 h-3 bg-[hsl(var(--chart-3))] rounded-full mr-2"></span>
-            <span>SDG 3: Good Health & Well-being</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#4C9F38' }}></span>
+              <span>SDG 3: Good Health & Well-being</span>
+            </div>
+            <span className="font-semibold">{userType === "organization" ? "25%" : "30%"}</span>
           </div>
-          <div className="flex items-center mb-1">
-            <span className="w-3 h-3 bg-[hsl(var(--chart-2))] rounded-full mr-2"></span>
-            <span>SDG 4: Quality Education</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#C5192D' }}></span>
+              <span>SDG 4: Quality Education</span>
+            </div>
+            <span className="font-semibold">20%</span>
           </div>
-          <div className="flex items-center">
-            <span className="w-3 h-3 bg-[hsl(var(--chart-4))] rounded-full mr-2"></span>
-            <span>Others</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#FCC30B' }}></span>
+              <span>Others</span>
+            </div>
+            <span className="font-semibold">{userType === "organization" ? "20%" : "10%"}</span>
           </div>
         </div>
       </div>

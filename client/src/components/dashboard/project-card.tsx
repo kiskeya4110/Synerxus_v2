@@ -1,9 +1,11 @@
 import { CalendarIcon } from "lucide-react";
+import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
 interface ProjectCardProps {
+  projectId?: string;
   title: string;
   description: string;
   status: "Planning" | "In Progress" | "Completed" | "On Hold";
@@ -17,6 +19,7 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({
+  projectId,
   title,
   description,
   status,
@@ -39,8 +42,8 @@ export default function ProjectCard({
     }
   };
 
-  return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+  const CardContent = () => (
+    <>
       <div className="flex justify-between items-start">
         <div>
           <h3 className="font-medium text-lg">{title}</h3>
@@ -79,6 +82,22 @@ export default function ProjectCard({
           )}
         </div>
       </div>
+    </>
+  );
+  
+  if (projectId) {
+    return (
+      <Link href="/projects" data-testid={`link-project-${projectId}`}>
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary-500 hover:shadow-md transition-all duration-200 cursor-pointer">
+          <CardContent />
+        </div>
+      </Link>
+    );
+  }
+  
+  return (
+    <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+      <CardContent />
     </div>
   );
 }

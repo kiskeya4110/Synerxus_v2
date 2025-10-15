@@ -9,9 +9,12 @@ import ActivityFeed, { Activity } from "@/components/dashboard/activity-feed";
 import UpcomingEvents, { Event } from "@/components/dashboard/upcoming-events";
 import QuickActions from "@/components/dashboard/quick-actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
   const [dashboardType, setDashboardType] = useState<"volunteer" | "organization">("volunteer");
+  const [selectedProject, setSelectedProject] = useState<string>("all");
 
   // Sample data for projects
   const projects = [
@@ -170,6 +173,94 @@ export default function Dashboard() {
     }
   ];
 
+  // Filter data based on selected project
+  const filteredProjects = selectedProject === "all" 
+    ? projects 
+    : projects.filter(p => p.id === selectedProject);
+  
+  const filteredTasks = selectedProject === "all"
+    ? tasks
+    : tasks.filter(t => {
+        const project = projects.find(p => p.title === t.project);
+        return project?.id === selectedProject;
+      });
+  
+  const filteredActivities = selectedProject === "all"
+    ? activities
+    : activities.filter(a => {
+        const activityProject = projects.find(p => p.title === a.target);
+        return activityProject?.id === selectedProject;
+      });
+
+  // Calculate filtered KPIs
+  const getFilteredKPIs = (): Record<string, string> => {
+    if (dashboardType === "volunteer") {
+      if (selectedProject === "all") {
+        return {
+          hours: "32",
+          tasks: "12",
+          projects: "3",
+          impact: "94"
+        };
+      }
+      // Project-specific volunteer KPIs
+      const projectHours: Record<string, string> = {
+        "1": "18",
+        "2": "10",
+        "3": "4"
+      };
+      const projectTasks: Record<string, string> = {
+        "1": "7",
+        "2": "3",
+        "3": "2"
+      };
+      const projectImpact: Record<string, string> = {
+        "1": "88",
+        "2": "76",
+        "3": "45"
+      };
+      return {
+        hours: projectHours[selectedProject] ?? "0",
+        tasks: projectTasks[selectedProject] ?? "0",
+        projects: "1",
+        impact: projectImpact[selectedProject] ?? "0"
+      };
+    } else {
+      if (selectedProject === "all") {
+        return {
+          volunteers: "245",
+          hours: "1,876",
+          projects: "12",
+          impacted: "15.2K"
+        };
+      }
+      // Project-specific organization KPIs
+      const projectVolunteers: Record<string, string> = {
+        "1": "42",
+        "2": "28",
+        "3": "18"
+      };
+      const projectHours: Record<string, string> = {
+        "1": "856",
+        "2": "524",
+        "3": "142"
+      };
+      const projectImpacted: Record<string, string> = {
+        "1": "8.5K",
+        "2": "4.2K",
+        "3": "2.1K"
+      };
+      return {
+        volunteers: projectVolunteers[selectedProject] ?? "0",
+        hours: projectHours[selectedProject] ?? "0",
+        projects: "1",
+        impacted: projectImpacted[selectedProject] ?? "0"
+      };
+    }
+  };
+
+  const kpis = getFilteredKPIs();
+
   return (
     <>
       {/* Dashboard Header */}
@@ -191,13 +282,31 @@ export default function Dashboard() {
           </TabsTrigger>
         </TabsList>
 
+        {/* Project Filter */}
+        <div className="mt-4 mb-2">
+          <Label htmlFor="project-filter" className="text-sm font-medium mb-2 block">Filter by Project</Label>
+          <Select value={selectedProject} onValueChange={setSelectedProject}>
+            <SelectTrigger id="project-filter" className="w-full max-w-md min-h-[44px]" data-testid="select-project-filter">
+              <SelectValue placeholder="Select a project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map(project => (
+                <SelectItem key={project.id} value={project.id}>
+                  {project.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Volunteer Dashboard */}
         <TabsContent value="volunteer" className="space-y-6 mt-6">
           {/* Volunteer Quick Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="My Hours This Month"
-              value="32"
+              value={kpis.hours}
               icon={<Clock className="h-5 w-5" />}
               iconBgClass="bg-blue-100 dark:bg-blue-900/30"
               iconColor="text-blue-600 dark:text-blue-400"
@@ -206,7 +315,7 @@ export default function Dashboard() {
             
             <StatsCard
               title="Tasks Completed"
-              value="12"
+              value={kpis.tasks}
               icon={<CheckSquare className="h-5 w-5" />}
               iconBgClass="bg-green-100 dark:bg-green-900/30"
               iconColor="text-green-600 dark:text-green-400"
@@ -215,16 +324,16 @@ export default function Dashboard() {
             
             <StatsCard
               title="Active Projects"
-              value="3"
+              value={kpis.projects}
               icon={<Target className="h-5 w-5" />}
               iconBgClass="bg-purple-100 dark:bg-purple-900/30"
               iconColor="text-purple-600 dark:text-purple-400"
-              change={{ value: "1 new", isPositive: true, label: "this month" }}
+              change={{ value: selectedProject === "all" ? "1 new" : "selected", isPositive: true, label: selectedProject === "all" ? "this month" : "filter active" }}
             />
             
             <StatsCard
               title="Impact Score"
-              value="94"
+              value={kpis.impact}
               icon={<Award className="h-5 w-5" />}
               iconBgClass="bg-amber-100 dark:bg-amber-900/30"
               iconColor="text-amber-600 dark:text-amber-400"
@@ -234,8 +343,8 @@ export default function Dashboard() {
 
           {/* Volunteer Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ImpactChart userType="volunteer" />
-            <SDGChart userType="volunteer" />
+            <ImpactChart userType="volunteer" selectedProject={selectedProject} />
+            <SDGChart userType="volunteer" selectedProject={selectedProject} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -247,9 +356,10 @@ export default function Dashboard() {
                 </div>
                 <div className="p-4">
                   <div className="space-y-4">
-                    {projects.slice(0, 2).map(project => (
+                    {filteredProjects.slice(0, 2).map(project => (
                       <ProjectCard
                         key={project.id}
+                        projectId={project.id}
                         title={project.title}
                         description={project.description}
                         status={project.status}
@@ -262,11 +372,11 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <TaskTable tasks={tasks.filter(t => t.assignee?.name === "Sarah Johnson")} />
+              <TaskTable tasks={filteredTasks.filter(t => t.assignee?.name === "Sarah Johnson")} />
             </div>
             
             <div className="space-y-6">
-              <ActivityFeed activities={activities.filter(a => a.user?.name === "Sarah Johnson")} />
+              <ActivityFeed activities={filteredActivities.filter(a => a.user?.name === "Sarah Johnson")} />
               <UpcomingEvents events={events} />
               <QuickActions />
             </div>
@@ -279,7 +389,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatsCard
               title="Total Volunteers"
-              value="245"
+              value={kpis.volunteers ?? "0"}
               icon={<Users className="h-5 w-5" />}
               iconBgClass="bg-indigo-100 dark:bg-indigo-900/30"
               iconColor="text-indigo-600 dark:text-indigo-400"
@@ -288,7 +398,7 @@ export default function Dashboard() {
             
             <StatsCard
               title="Total Hours"
-              value="1,876"
+              value={kpis.hours ?? "0"}
               icon={<Clock className="h-5 w-5" />}
               iconBgClass="bg-cyan-100 dark:bg-cyan-900/30"
               iconColor="text-cyan-600 dark:text-cyan-400"
@@ -297,16 +407,16 @@ export default function Dashboard() {
             
             <StatsCard
               title="Active Projects"
-              value="12"
+              value={kpis.projects ?? "0"}
               icon={<CheckSquare className="h-5 w-5" />}
               iconBgClass="bg-teal-100 dark:bg-teal-900/30"
               iconColor="text-teal-600 dark:text-teal-400"
-              change={{ value: "3 new", isPositive: true, label: "this quarter" }}
+              change={{ value: selectedProject === "all" ? "3 new" : "selected", isPositive: true, label: selectedProject === "all" ? "this quarter" : "filter active" }}
             />
             
             <StatsCard
               title="People Impacted"
-              value="15.2K"
+              value={kpis.impacted ?? "0"}
               icon={<TrendingUp className="h-5 w-5" />}
               iconBgClass="bg-emerald-100 dark:bg-emerald-900/30"
               iconColor="text-emerald-600 dark:text-emerald-400"
@@ -316,8 +426,8 @@ export default function Dashboard() {
 
           {/* Organization Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ImpactChart userType="organization" />
-            <SDGChart userType="organization" />
+            <ImpactChart userType="organization" selectedProject={selectedProject} />
+            <SDGChart userType="organization" selectedProject={selectedProject} />
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -329,9 +439,10 @@ export default function Dashboard() {
                 </div>
                 <div className="p-4">
                   <div className="space-y-4">
-                    {projects.map(project => (
+                    {filteredProjects.map(project => (
                       <ProjectCard
                         key={project.id}
+                        projectId={project.id}
                         title={project.title}
                         description={project.description}
                         status={project.status}
@@ -344,11 +455,11 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              <TaskTable tasks={tasks} />
+              <TaskTable tasks={filteredTasks} />
             </div>
             
             <div className="space-y-6">
-              <ActivityFeed activities={activities} />
+              <ActivityFeed activities={filteredActivities} />
               <UpcomingEvents events={events} />
               <QuickActions />
             </div>

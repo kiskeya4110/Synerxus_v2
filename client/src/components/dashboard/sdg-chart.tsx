@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface SDGChartProps {
   userType?: "volunteer" | "organization";
+  selectedProject?: string;
 }
 
-export default function SDGChart({ userType = "volunteer" }: SDGChartProps) {
+export default function SDGChart({ userType = "volunteer", selectedProject = "all" }: SDGChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
@@ -25,12 +26,26 @@ export default function SDGChart({ userType = "volunteer" }: SDGChartProps) {
         // Create new chart with optimized SDG colors
         const isOrg = userType === "organization";
         
+        // Adjust SDG data based on selected project
+        const getSdgData = () => {
+          if (selectedProject === "all") {
+            return isOrg ? [35, 25, 20, 20] : [40, 30, 20, 10];
+          }
+          // Project-specific SDG distribution
+          if (selectedProject === "1") return [60, 20, 10, 10]; // Clean Water Initiative - mostly SDG 6
+          if (selectedProject === "2") return [10, 15, 65, 10]; // Education Access - mostly SDG 4
+          if (selectedProject === "3") return [15, 70, 10, 5];  // Medical Outreach - mostly SDG 3
+          return [25, 25, 25, 25]; // Default balanced
+        };
+        
+        const sdgData = getSdgData();
+        
         chartInstance.current = new Chart(ctx, {
           type: "doughnut",
           data: {
             labels: ["Clean Water & Sanitation", "Good Health & Well-being", "Quality Education", "Others"],
             datasets: [{
-              data: isOrg ? [35, 25, 20, 20] : [40, 30, 20, 10],
+              data: sdgData,
               backgroundColor: [
                 "#26BDE2", // SDG 6 - Clean Water (Cyan)
                 "#4C9F38", // SDG 3 - Good Health (Green)
@@ -66,7 +81,7 @@ export default function SDGChart({ userType = "volunteer" }: SDGChartProps) {
         chartInstance.current = null;
       }
     };
-  }, [theme, userType]);
+  }, [theme, userType, selectedProject]);
 
   return (
     <Card>
@@ -80,34 +95,51 @@ export default function SDGChart({ userType = "volunteer" }: SDGChartProps) {
       </CardContent>
       <div className="px-4 pb-4 pt-2">
         <div className="text-xs text-gray-600 dark:text-gray-400">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#26BDE2' }}></span>
-              <span>SDG 6: Clean Water & Sanitation</span>
-            </div>
-            <span className="font-semibold">{userType === "organization" ? "35%" : "40%"}</span>
-          </div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#4C9F38' }}></span>
-              <span>SDG 3: Good Health & Well-being</span>
-            </div>
-            <span className="font-semibold">{userType === "organization" ? "25%" : "30%"}</span>
-          </div>
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#C5192D' }}></span>
-              <span>SDG 4: Quality Education</span>
-            </div>
-            <span className="font-semibold">20%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#FCC30B' }}></span>
-              <span>Others</span>
-            </div>
-            <span className="font-semibold">{userType === "organization" ? "20%" : "10%"}</span>
-          </div>
+          {(() => {
+            const getSdgPercentages = () => {
+              if (selectedProject === "all") {
+                return userType === "organization" ? [35, 25, 20, 20] : [40, 30, 20, 10];
+              }
+              if (selectedProject === "1") return [60, 20, 10, 10];
+              if (selectedProject === "2") return [10, 15, 65, 10];
+              if (selectedProject === "3") return [15, 70, 10, 5];
+              return [25, 25, 25, 25];
+            };
+            const percentages = getSdgPercentages();
+            
+            return (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#26BDE2' }}></span>
+                    <span>SDG 6: Clean Water & Sanitation</span>
+                  </div>
+                  <span className="font-semibold">{percentages[0]}%</span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#4C9F38' }}></span>
+                    <span>SDG 3: Good Health & Well-being</span>
+                  </div>
+                  <span className="font-semibold">{percentages[1]}%</span>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#C5192D' }}></span>
+                    <span>SDG 4: Quality Education</span>
+                  </div>
+                  <span className="font-semibold">{percentages[2]}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#FCC30B' }}></span>
+                    <span>Others</span>
+                  </div>
+                  <span className="font-semibold">{percentages[3]}%</span>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
     </Card>

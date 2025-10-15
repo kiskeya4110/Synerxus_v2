@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface ImpactChartProps {
   userType?: "volunteer" | "organization";
+  selectedProject?: string;
 }
 
-export default function ImpactChart({ userType = "volunteer" }: ImpactChartProps) {
+export default function ImpactChart({ userType = "volunteer", selectedProject = "all" }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
@@ -26,6 +27,26 @@ export default function ImpactChart({ userType = "volunteer" }: ImpactChartProps
         // Create new chart with optimized colors for better KPI distinction
         const isOrg = userType === "organization";
         
+        // Adjust data based on selected project
+        const getChartData = () => {
+          if (selectedProject === "all") {
+            return {
+              hours: isOrg ? [1200, 1590, 1830, 2290, 2820, 3410, 3950] : [12, 19, 23, 29, 32, 41, 45],
+              impact: isOrg ? [2500, 3810, 5400, 7550, 10680, 13720, 15850] : [25, 38, 54, 75, 106, 137, 158]
+            };
+          }
+          // Project-specific data (scaled down for individual projects)
+          const scale = selectedProject === "1" ? 0.45 : selectedProject === "2" ? 0.30 : 0.25;
+          const baseHours = isOrg ? [1200, 1590, 1830, 2290, 2820, 3410, 3950] : [12, 19, 23, 29, 32, 41, 45];
+          const baseImpact = isOrg ? [2500, 3810, 5400, 7550, 10680, 13720, 15850] : [25, 38, 54, 75, 106, 137, 158];
+          return {
+            hours: baseHours.map(v => Math.round(v * scale)),
+            impact: baseImpact.map(v => Math.round(v * scale))
+          };
+        };
+        
+        const chartData = getChartData();
+        
         chartInstance.current = new Chart(ctx, {
           type: "line",
           data: {
@@ -33,7 +54,7 @@ export default function ImpactChart({ userType = "volunteer" }: ImpactChartProps
             datasets: [
               {
                 label: isOrg ? "Total Volunteer Hours" : "My Hours",
-                data: isOrg ? [1200, 1590, 1830, 2290, 2820, 3410, 3950] : [12, 19, 23, 29, 32, 41, 45],
+                data: chartData.hours,
                 borderColor: "#3B82F6", // Blue for hours
                 backgroundColor: "rgba(59, 130, 246, 0.1)",
                 borderWidth: 3,
@@ -47,7 +68,7 @@ export default function ImpactChart({ userType = "volunteer" }: ImpactChartProps
               },
               {
                 label: "People Impacted",
-                data: isOrg ? [2500, 3810, 5400, 7550, 10680, 13720, 15850] : [25, 38, 54, 75, 106, 137, 158],
+                data: chartData.impact,
                 borderColor: "#10B981", // Green for impact
                 backgroundColor: "rgba(16, 185, 129, 0.1)",
                 borderWidth: 3,
@@ -103,7 +124,7 @@ export default function ImpactChart({ userType = "volunteer" }: ImpactChartProps
         chartInstance.current = null;
       }
     };
-  }, [theme, userType]);
+  }, [theme, userType, selectedProject]);
 
   return (
     <Card className="lg:col-span-2">

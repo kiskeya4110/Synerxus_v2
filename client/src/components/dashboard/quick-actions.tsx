@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckSquare, Clock, UserPlus, LineChart } from "lucide-react";
+import { Link } from "wouter";
 
 interface QuickAction {
   id: string;
@@ -16,28 +17,28 @@ export default function QuickActions() {
       label: "Add Task",
       icon: <CheckSquare className="h-5 w-5 mb-1" />,
       color: "text-primary-500",
-      href: "#"
+      href: "/tasks"
     },
     {
       id: "log-hours",
       label: "Log Hours",
       icon: <Clock className="h-5 w-5 mb-1" />,
       color: "text-success-500",
-      href: "#"
+      href: "/mobile-data-collection"
     },
     {
       id: "add-volunteer",
       label: "Add Volunteer",
       icon: <UserPlus className="h-5 w-5 mb-1" />,
       color: "text-purple-500",
-      href: "#"
+      href: "/volunteers"
     },
     {
       id: "create-report",
       label: "Create Report",
       icon: <LineChart className="h-5 w-5 mb-1" />,
       color: "text-amber-500",
-      href: "#"
+      href: "/impact-storytelling"
     }
   ];
 
@@ -49,16 +50,20 @@ export default function QuickActions() {
       <CardContent className="p-4">
         <div className="grid grid-cols-2 gap-3">
           {actions.map((action) => (
-            <a 
+            <Link 
               key={action.id}
-              href={action.href} 
-              className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150"
+              href={action.href}
             >
-              <div className={action.color}>
-                {action.icon}
+              <div 
+                className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 cursor-pointer min-h-[44px]"
+                data-testid={`button-${action.id}`}
+              >
+                <div className={action.color}>
+                  {action.icon}
+                </div>
+                <span className="text-sm">{action.label}</span>
               </div>
-              <span className="text-sm">{action.label}</span>
-            </a>
+            </Link>
           ))}
         </div>
       </CardContent>

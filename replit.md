@@ -1,13 +1,13 @@
-# aBridge - Africa's Bridge to Global Impact
+# aBridge - Bridging Global Volunteers with Meaningful Impact
 
 ## Overview
 
 **Organization:** aBridge Global  
-**Tagline:** "Africa's bridge to global impact"  
+**Tagline:** "Bridging global volunteers with meaningful impact"  
 **Tech Product:** aBridge AI Matching  
-**Positioning:** "Intelligent bridges connecting global volunteers with meaningful impact"
+**Positioning:** "Intelligent connections for sustainable development worldwide"
 
-aBridge is a comprehensive volunteer impact tracking and matching platform designed to help organizations measure, visualize, and communicate the outcomes of their volunteer initiatives across Africa and beyond. The platform leverages AI to intelligently match global volunteers with meaningful opportunities, connecting volunteer activities to broader humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment and storytelling.
+aBridge is a comprehensive volunteer impact tracking and matching platform designed to help organizations measure, visualize, and communicate the outcomes of their volunteer initiatives worldwide. The platform leverages AI to intelligently match global volunteers with meaningful opportunities, connecting volunteer activities to broader humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment and storytelling.
 
 ## System Architecture
 

@@ -10,7 +10,7 @@ import {
   Target, 
   Users, 
   TrendingUp, 
-  Heart,
+  Link2,
   ArrowRight,
   CheckCircle2
 } from "lucide-react";
@@ -82,7 +82,7 @@ export default function Landing() {
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <Link2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             <span className="text-lg sm:text-xl font-bold">aBridge</span>
           </div>
           <div className="flex gap-2 sm:gap-3">
@@ -103,10 +103,10 @@ export default function Landing() {
             aBridge AI Matching
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent leading-tight" data-testid="text-hero-title">
-            Intelligent Bridges Connecting Global Volunteers with Meaningful Impact
+            Bridging Global Volunteers with Meaningful Impact Worldwide
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-2" data-testid="text-hero-description">
-            aBridge Global connects passionate volunteers with impactful opportunities across Africa, leveraging AI to match skills with needs for sustainable development.
+            aBridge Global intelligently connects passionate volunteers with impactful opportunities worldwide, leveraging AI to match skills with needs for sustainable development.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
             <Link href="/login" className="w-full sm:w-auto">

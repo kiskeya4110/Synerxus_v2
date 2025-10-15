@@ -111,7 +111,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary-600 dark:text-primary-400">aBridge</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Africa's bridge to global impact
+            Bridging global volunteers with meaningful impact
           </p>
         </div>
         

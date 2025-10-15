@@ -175,7 +175,7 @@ export default function Dashboard() {
       {/* Dashboard Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Impact Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400">Intelligent bridges connecting global volunteers with meaningful impact</p>
+        <p className="text-gray-600 dark:text-gray-400">Bridging global volunteers with meaningful impact worldwide</p>
       </div>
 
       {/* Dashboard Type Selector */}

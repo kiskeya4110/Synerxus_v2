@@ -44,7 +44,7 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
         <div className="space-y-4">
           {activities.map((activity) => (
             <Link key={activity.id} href={getActivityLink(activity)}>
-              <div className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1 rounded transition-colors cursor-pointer" data-testid={`activity-${activity.id}`}>
+              <a className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1 rounded transition-colors cursor-pointer no-underline" data-testid={`link-activity-${activity.id}`}>
                 <div className="flex-shrink-0 mr-3">
                   {activity.isSystem ? (
                     <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
@@ -67,13 +67,13 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
                 </div>
-              </div>
+              </a>
             </Link>
           ))}
         </div>
         <div className="mt-4 text-center">
           <Link href="/dashboard">
-            <span className="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer" data-testid="link-view-all-activity">View all activity</span>
+            <a className="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">View all activity</a>
           </Link>
         </div>
       </CardContent>

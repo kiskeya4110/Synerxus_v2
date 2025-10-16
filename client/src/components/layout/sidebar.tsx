@@ -26,9 +26,10 @@ export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
-  // Fetch current user to determine role (using hardcoded ID for now)
+  // Fetch current user to determine role
+  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/1"], // Hardcoded ID - TODO: Get from auth
+    queryKey: ["/api/users/me"],
     enabled: true
   });
 

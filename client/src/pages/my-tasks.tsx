@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Task, Project, ProjectAssignment } from "@shared/schema";
+import type { Task, Project, ProjectAssignment, User } from "@shared/schema";
 
 interface TaskWithProject extends Task {
   project?: Project;
@@ -15,8 +15,13 @@ interface TaskWithProject extends Task {
 export default function MyTasks() {
   const [activeTab, setActiveTab] = useState("tasks");
 
-  // TODO: Get volunteerId from auth context instead of hardcoded value
-  const volunteerId = 1;
+  // Fetch current user to get their ID
+  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/users/me"]
+  });
+
+  const volunteerId = currentUser?.id;
 
   // Fetch volunteer's task assignments
   const { data: tasks = [], isLoading: tasksLoading } = useQuery<Task[]>({
@@ -25,7 +30,8 @@ export default function MyTasks() {
       const response = await fetch("/api/tasks");
       const allTasks = await response.json();
       return allTasks.filter((task: Task) => task.assigneeId === volunteerId);
-    }
+    },
+    enabled: !!volunteerId
   });
 
   // Fetch volunteer's project assignments
@@ -34,7 +40,8 @@ export default function MyTasks() {
     queryFn: async () => {
       const response = await fetch(`/api/project-assignments?volunteerId=${volunteerId}`);
       return response.json();
-    }
+    },
+    enabled: !!volunteerId
   });
 
   // Fetch all projects to get details

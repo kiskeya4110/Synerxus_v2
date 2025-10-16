@@ -157,6 +157,9 @@ export class MemStorage implements IStorage {
 
     // Initialize with some common SDG-related impact metrics
     this.initializeImpactMetrics();
+    
+    // Initialize with seed data for testing
+    this.initializeSeedData();
   }
 
   private initializeImpactMetrics() {
@@ -200,6 +203,71 @@ export class MemStorage implements IStorage {
 
     initialMetrics.forEach(metric => {
       this.createImpactMetric(metric);
+    });
+  }
+
+  private async initializeSeedData() {
+    // Create a volunteer user (ID 1)
+    const volunteer = await this.createUser({
+      username: "volunteer_jane",
+      email: "jane@example.com",
+      firebaseUid: "volunteer_uid_1",
+      userType: "volunteer",
+      location: "San Francisco, CA",
+      languages: ["English", "Spanish"],
+      interests: ["education", "environment"],
+      skills: ["teaching", "project management"],
+      experience: "5 years of volunteer teaching experience",
+      availability: "weekends",
+      preferredCauses: ["education", "climate action"]
+    });
+
+    // Create an organization user (ID 2)
+    const organization = await this.createUser({
+      username: "org_globalimpact",
+      email: "contact@globalimpact.org",
+      firebaseUid: "org_uid_1",
+      userType: "organization",
+      organizationName: "Global Impact Foundation",
+      mission: "Creating sustainable change worldwide",
+      focusAreas: ["education", "health", "environment"],
+      isVerified: true
+    });
+
+    // Create a test project
+    const project = await this.createProject({
+      name: "Clean Water Initiative",
+      description: "Providing access to clean water in rural communities",
+      organizationId: organization.id,
+      status: "active",
+      location: "Rural Kenya"
+    });
+
+    // Create some test tasks
+    const task1 = await this.createTask({
+      title: "Survey water sources",
+      description: "Conduct survey of existing water sources in the region",
+      projectId: project.id,
+      status: "in progress",
+      assigneeId: volunteer.id
+    });
+
+    const task2 = await this.createTask({
+      title: "Install water filters",
+      description: "Install and test water filtration systems",
+      projectId: project.id,
+      status: "todo"
+    });
+
+    // Create a project assignment
+    await this.createProjectAssignment({
+      projectId: project.id,
+      volunteerId: volunteer.id,
+      role: "Field Coordinator",
+      status: "active",
+      hoursCommitted: 40,
+      hoursCompleted: 15,
+      assignmentDate: new Date()
     });
   }
 

@@ -75,6 +75,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // TODO: Implement proper session management and authentication
+  // This endpoint should return the currently authenticated user from the session
+  // For now, it returns user ID 1 as a placeholder
+  app.get("/api/users/me", async (req, res) => {
+    try {
+      // TODO: Get userId from session/JWT token instead of hardcoding
+      const userId = 1; // Temporary hardcoded value
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json(user);
+    } catch (err) {
+      console.error("Error fetching current user:", err);
+      res.status(500).json({ message: "Failed to fetch current user" });
+    }
+  });
+
   app.get("/api/users/:id", async (req, res) => {
     try {
       const userId = parseInt(req.params.id);

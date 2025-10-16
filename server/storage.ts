@@ -6,6 +6,7 @@ import {
   volunteerActivities, 
   impactMetrics, 
   projectImpacts,
+  projectAssignments,
   type User, 
   type InsertUser,
   type Organization,
@@ -19,7 +20,9 @@ import {
   type ImpactMetric,
   type InsertImpactMetric,
   type ProjectImpact,
-  type InsertProjectImpact
+  type InsertProjectImpact,
+  type ProjectAssignment,
+  type InsertProjectAssignment
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 
@@ -95,6 +98,15 @@ export interface IStorage {
 
   // Match score operations
   getMatchScore(opportunityId: number, volunteerId: number): Promise<any>;
+
+  // Project Assignment operations
+  getProjectAssignment(id: number): Promise<ProjectAssignment | undefined>;
+  createProjectAssignment(assignment: InsertProjectAssignment): Promise<ProjectAssignment>;
+  updateProjectAssignment(id: number, assignment: Partial<InsertProjectAssignment>): Promise<ProjectAssignment | undefined>;
+  listProjectAssignments(): Promise<ProjectAssignment[]>;
+  listProjectAssignmentsByProject(projectId: number): Promise<ProjectAssignment[]>;
+  listProjectAssignmentsByVolunteer(volunteerId: number): Promise<ProjectAssignment[]>;
+  deleteProjectAssignment(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -107,6 +119,7 @@ export class MemStorage implements IStorage {
   private projectImpacts: Map<number, ProjectImpact>;
   private opportunities: Map<number, any>;
   private applications: Map<number, any>;
+  private projectAssignments: Map<number, ProjectAssignment>;
 
   private userIdCounter: number;
   private organizationIdCounter: number;
@@ -117,6 +130,7 @@ export class MemStorage implements IStorage {
   private projectImpactIdCounter: number;
   private opportunityIdCounter: number;
   private applicationIdCounter: number;
+  private projectAssignmentIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -128,6 +142,7 @@ export class MemStorage implements IStorage {
     this.projectImpacts = new Map();
     this.opportunities = new Map();
     this.applications = new Map();
+    this.projectAssignments = new Map();
 
     this.userIdCounter = 1;
     this.organizationIdCounter = 1;
@@ -138,6 +153,7 @@ export class MemStorage implements IStorage {
     this.projectImpactIdCounter = 1;
     this.opportunityIdCounter = 1;
     this.applicationIdCounter = 1;
+    this.projectAssignmentIdCounter = 1;
 
     // Initialize with some common SDG-related impact metrics
     this.initializeImpactMetrics();
@@ -623,10 +639,66 @@ export class MemStorage implements IStorage {
     return {
       opportunityId,
       volunteerId,
-      score: matchResult.totalScore,
+      score: matchResult.score,
       matchReasons: matchResult.reasons,
       breakdown: matchResult.breakdown
     };
+  }
+
+  // Project Assignment operations
+  async getProjectAssignment(id: number): Promise<ProjectAssignment | undefined> {
+    return this.projectAssignments.get(id);
+  }
+
+  async createProjectAssignment(assignment: InsertProjectAssignment): Promise<ProjectAssignment> {
+    const id = this.projectAssignmentIdCounter++;
+    const now = new Date();
+    const newAssignment: ProjectAssignment = {
+      ...assignment,
+      id,
+      hoursCompleted: assignment.hoursCompleted ?? 0,
+      status: assignment.status || 'active',
+      assignedAt: assignment.assignedAt || now,
+      completedAt: assignment.completedAt || null,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.projectAssignments.set(id, newAssignment);
+    return newAssignment;
+  }
+
+  async updateProjectAssignment(id: number, assignment: Partial<InsertProjectAssignment>): Promise<ProjectAssignment | undefined> {
+    const existing = await this.getProjectAssignment(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: ProjectAssignment = {
+      ...existing,
+      ...assignment,
+      updatedAt: new Date()
+    };
+
+    this.projectAssignments.set(id, updated);
+    return updated;
+  }
+
+  async listProjectAssignments(): Promise<ProjectAssignment[]> {
+    return Array.from(this.projectAssignments.values());
+  }
+
+  async listProjectAssignmentsByProject(projectId: number): Promise<ProjectAssignment[]> {
+    return Array.from(this.projectAssignments.values())
+      .filter(assignment => assignment.projectId === projectId);
+  }
+
+  async listProjectAssignmentsByVolunteer(volunteerId: number): Promise<ProjectAssignment[]> {
+    return Array.from(this.projectAssignments.values())
+      .filter(assignment => assignment.volunteerId === volunteerId);
+  }
+
+  async deleteProjectAssignment(id: number): Promise<boolean> {
+    return this.projectAssignments.delete(id);
   }
 }
 

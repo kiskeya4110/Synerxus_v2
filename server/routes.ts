@@ -729,6 +729,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(sdgs);
   });
 
+  // === Project Assignments Routes ===
+  app.get("/api/project-assignments", async (req, res) => {
+    try {
+      const { projectId, volunteerId } = req.query;
+      
+      let assignments;
+      if (projectId) {
+        assignments = await storage.listProjectAssignmentsByProject(parseInt(projectId as string));
+      } else if (volunteerId) {
+        assignments = await storage.listProjectAssignmentsByVolunteer(parseInt(volunteerId as string));
+      } else {
+        assignments = await storage.listProjectAssignments();
+      }
+      
+      res.json(assignments);
+    } catch (err) {
+      console.error("Error fetching project assignments:", err);
+      res.status(500).json({ message: "Failed to fetch project assignments" });
+    }
+  });
+
+  app.get("/api/project-assignments/:id", async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.id);
+      const assignment = await storage.getProjectAssignment(assignmentId);
+      
+      if (!assignment) {
+        return res.status(404).json({ message: "Project assignment not found" });
+      }
+      
+      res.json(assignment);
+    } catch (err) {
+      console.error("Error fetching project assignment:", err);
+      res.status(500).json({ message: "Failed to fetch project assignment" });
+    }
+  });
+
+  app.post("/api/project-assignments", async (req, res) => {
+    try {
+      const assignmentData = req.body;
+      const newAssignment = await storage.createProjectAssignment(assignmentData);
+      
+      broadcastUpdate("project_assignment_created", newAssignment);
+      res.status(201).json(newAssignment);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/project-assignments/:id", async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.id);
+      const updatedAssignment = await storage.updateProjectAssignment(assignmentId, req.body);
+      
+      if (!updatedAssignment) {
+        return res.status(404).json({ message: "Project assignment not found" });
+      }
+      
+      broadcastUpdate("project_assignment_updated", updatedAssignment);
+      res.json(updatedAssignment);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/project-assignments/:id", async (req, res) => {
+    try {
+      const assignmentId = parseInt(req.params.id);
+      const deleted = await storage.deleteProjectAssignment(assignmentId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Project assignment not found" });
+      }
+      
+      broadcastUpdate("project_assignment_deleted", { id: assignmentId });
+      res.status(204).send();
+    } catch (err) {
+      console.error("Error deleting project assignment:", err);
+      res.status(500).json({ message: "Failed to delete project assignment" });
+    }
+  });
+
   // === Dashboard Summary Route ===
   app.get("/api/dashboard/summary", async (req, res) => {
     try {

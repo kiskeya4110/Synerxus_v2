@@ -76,10 +76,18 @@ export default function Sidebar() {
 
   return (
     <>
+      {/* Overlay when sidebar is open on mobile */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       <aside 
         id="sidebar"
         className={cn(
-          "fixed lg:static inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform lg:translate-x-0 z-10 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
+          "fixed lg:static inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform lg:translate-x-0 z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -129,19 +137,11 @@ export default function Sidebar() {
           </nav>
         </div>
       </aside>
-      
-      {/* Overlay when sidebar is open on mobile */}
-      {isMobile && sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-10 bg-black bg-opacity-50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
 
       {/* Mobile menu button */}
       {isMobile && !sidebarOpen && (
         <button 
-          className="fixed bottom-6 right-6 p-4 min-h-[56px] min-w-[56px] bg-primary text-white rounded-full shadow-lg z-20 lg:hidden flex items-center justify-center hover:bg-primary/90 transition-colors"
+          className="fixed bottom-6 right-6 p-4 min-h-[56px] min-w-[56px] bg-primary text-white rounded-full shadow-lg z-50 lg:hidden flex items-center justify-center hover:bg-primary/90 transition-colors active:scale-95"
           onClick={() => setSidebarOpen(true)}
           aria-label="Open menu"
           data-testid="mobile-menu-button"

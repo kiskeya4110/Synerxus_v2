@@ -14,14 +14,23 @@ import {
   Sparkles,
   BarChart,
   Briefcase,
-  Search
+  Search,
+  FolderKanban
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useQuery } from "@tanstack/react-query";
+import type { User } from "@shared/schema";
 
 export default function Sidebar() {
   const [location] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  // Fetch current user to determine role (using hardcoded ID for now)
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/users/1"], // Hardcoded ID - TODO: Get from auth
+    enabled: true
+  });
 
   // Set initial state based on screen size
   useEffect(() => {
@@ -52,27 +61,32 @@ export default function Sidebar() {
     }
   }, [isMobile]);
 
-  const navItems = [
+  const userType = currentUser?.userType || 'volunteer';
+
+  // Volunteer-specific navigation
+  const volunteerNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/my-tasks", label: "My Tasks", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
+  ];
+
+  // Organization-specific navigation
+  const organizationNavItems = [
+    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/opportunities", label: "Post Opportunities", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/projects", label: "Projects", icon: <LayoutList className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/tasks", label: "Tasks", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/organizations", label: "Organizations", icon: <Building2 className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/sdg-mapping", label: "SDG Mapping", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/mobile-data-collection", label: "Mobile Collection", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/impact-storytelling", label: "Impact Storytelling", icon: <Sparkles className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/field-specific-metrics", label: "Field Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/impact-visualization", label: "Impact Reports", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/sdg-mapping", label: "SDG Tracking", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/impact-storytelling", label: "Impact Stories", icon: <Sparkles className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/field-specific-metrics", label: "Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];
 
-  const projects = [
-    { name: "Clean Water Initiative", color: "bg-green-500" },
-    { name: "Education Access Program", color: "bg-blue-500" },
-    { name: "Medical Outreach", color: "bg-purple-500" }
-  ];
+  const navItems = userType === 'organization' ? organizationNavItems : volunteerNavItems;
 
   return (
     <>
@@ -115,24 +129,6 @@ export default function Sidebar() {
                   <span className="truncate">{item.label}</span>
                 </Link>
               ))}
-            </div>
-            
-            <div className="mt-10 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <h2 className="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                Your Projects
-              </h2>
-              <div className="space-y-1">
-                {projects.map((project) => (
-                  <Link 
-                    key={project.name}
-                    href="#" 
-                    className="flex items-center px-4 py-2 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <span className={`w-2 h-2 ${project.color} rounded-full mr-3`}></span>
-                    <span>{project.name}</span>
-                  </Link>
-                ))}
-              </div>
             </div>
           </nav>
         </div>

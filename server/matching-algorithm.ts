@@ -30,7 +30,7 @@ export function calculateMatchScore(
   const reasons: string[] = [];
 
   // 1. Skills Matching (35% weight) - Most important factor
-  if (volunteer.skills && opportunity.requiredSkills) {
+  if (volunteer.skills && volunteer.skills.length > 0 && opportunity.requiredSkills && opportunity.requiredSkills.length > 0) {
     const volunteerSkills = volunteer.skills.map(s => s.toLowerCase());
     const requiredSkills = opportunity.requiredSkills.map(s => s.toLowerCase());
     
@@ -48,6 +48,10 @@ export function calculateMatchScore(
     if (matchingSkills.length > 0) {
       reasons.push(`${matchingSkills.length} matching skill${matchingSkills.length > 1 ? 's' : ''}: ${matchingSkills.slice(0, 3).join(', ')}`);
     }
+  } else if (!opportunity.requiredSkills || opportunity.requiredSkills.length === 0) {
+    // No skills required - give baseline score
+    breakdown.skillMatch = 70;
+    reasons.push("No specific skills required");
   }
 
   // 2. Location Matching (25% weight)
@@ -89,15 +93,18 @@ export function calculateMatchScore(
         breakdown.availabilityMatch = 100;
         reasons.push("Sufficient availability");
       } else {
-        breakdown.availabilityMatch = (weeklyHours / requiredHours) * 100;
+        breakdown.availabilityMatch = Math.min((weeklyHours / requiredHours) * 100, 100);
       }
     } else {
       breakdown.availabilityMatch = 70; // Default if can't parse
     }
+  } else {
+    // Default score when availability data is missing
+    breakdown.availabilityMatch = 50;
   }
 
   // 4. Interest/Cause Matching (15% weight)
-  if (volunteer.profile?.preferredCauses && opportunity.category) {
+  if (volunteer.profile?.preferredCauses && volunteer.profile.preferredCauses.length > 0 && opportunity.category) {
     const causes = volunteer.profile.preferredCauses.map(c => c.toLowerCase());
     const category = opportunity.category.toLowerCase();
     
@@ -107,6 +114,9 @@ export function calculateMatchScore(
     } else {
       breakdown.interestMatch = 40;
     }
+  } else {
+    // Default when category/interest data is missing
+    breakdown.interestMatch = 50;
   }
 
   // 5. Experience Level Matching (5% weight)
@@ -120,6 +130,9 @@ export function calculateMatchScore(
     } else {
       breakdown.experienceMatch = 50;
     }
+  } else {
+    // Default when experience data is missing
+    breakdown.experienceMatch = 50;
   }
 
   // Calculate weighted final score

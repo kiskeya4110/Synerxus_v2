@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, MapPin, Clock, Users, Calendar, Briefcase } from "lucide-react";
 import { Opportunity } from "@shared/schema";
+import CreateOpportunityDialog from "@/components/opportunities/create-opportunity-dialog";
 
 export default function Opportunities() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Fetch opportunities
   const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
@@ -51,7 +53,10 @@ export default function Opportunities() {
             Manage and post volunteer opportunities
           </p>
         </div>
-        <Button data-testid="button-create-opportunity">
+        <Button 
+          data-testid="button-create-opportunity"
+          onClick={() => setCreateDialogOpen(true)}
+        >
           <Plus className="w-4 h-4 mr-2" />
           Post Opportunity
         </Button>
@@ -65,7 +70,10 @@ export default function Opportunities() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Start posting volunteer opportunities to connect with passionate volunteers worldwide
             </p>
-            <Button data-testid="button-post-first-opportunity">
+            <Button 
+              data-testid="button-post-first-opportunity"
+              onClick={() => setCreateDialogOpen(true)}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Post Your First Opportunity
             </Button>
@@ -140,6 +148,12 @@ export default function Opportunities() {
           ))}
         </div>
       )}
+
+      {/* Create Opportunity Dialog */}
+      <CreateOpportunityDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+      />
     </div>
   );
 }

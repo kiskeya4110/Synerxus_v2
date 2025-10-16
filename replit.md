@@ -42,3 +42,57 @@ Preferred communication style: Simple, everyday language.
 - **Database & Infrastructure**: Neon Database, Drizzle Kit
 - **UI & Visualization**: Radix UI, Chart.js, Tailwind CSS
 - **Development & Build Tools**: TypeScript, Vite, ESBuild
+
+## Changelog
+
+### October 16, 2025 (Latest)
+- **System Partitioning for Dual User Types**: Complete partition for volunteer and organization accounts
+  - **Dual Signup/Login Flow**: Users select account type (Volunteer vs Organization) during registration
+  - **Database Schema**: Added `userType` field to users table to distinguish account types
+  - **Organization Signup**: Additional field for organization name during registration process
+  - **Account Type Selection UI**: Clear, user-friendly buttons to choose between volunteer and organization signup
+- **Volunteer Opportunities System**: Full-featured opportunity posting and discovery platform
+  - **Opportunities Table**: New database table storing volunteer position details (title, description, skills, location, time commitment, etc.)
+  - **Applications Table**: Tracks volunteer applications with status tracking (pending, accepted, rejected, withdrawn)
+  - **Volunteer Profiles**: Extended profile table with location, languages, interests, experience, preferred causes
+  - **Organization Profiles**: Extended profile table with mission, focus areas, verification status
+- **AI Matching Algorithm**: Intelligent volunteer-opportunity matching system
+  - **Multi-Factor Scoring**: Calculates match scores (0-100) based on:
+    - Skills Match (35% weight): Compares volunteer skills with required skills
+    - Location Match (25% weight): Considers geographic proximity and remote options
+    - Availability Match (20% weight): Matches time commitment with volunteer availability
+    - Interest Match (15% weight): Aligns volunteer interests with opportunity category
+    - Experience Match (5% weight): Considers relevant experience
+  - **Match Reasons**: Provides specific reasons for match score (e.g., "3 matching skills", "Same location")
+  - **Top Recommendations**: Automatically surfaces best-fit opportunities for volunteers
+  - **Bidirectional Matching**: Works both ways - volunteers find opportunities AND organizations find volunteers
+- **Volunteer Application System**: Complete application workflow
+  - **Application Dialog**: Modal for submitting applications with cover letter
+  - **Match Score Display**: Shows AI-calculated match score and reasons during application
+  - **Application Tracking**: Tracks application status from submission to review
+  - **Cover Letter Requirement**: Ensures volunteers explain their interest and qualifications
+- **New Pages & Navigation**:
+  - **Discover Opportunities Page** (`/discover-opportunities`): Volunteers browse and apply to positions
+    - AI-powered recommendations section for top matches (70%+ match score)
+    - Search and filter by category, location, remote options
+    - Visual match badges (Excellent/Good/Fair) with match reasons
+    - One-click application with pre-filled match data
+  - **Opportunities Management Page** (`/opportunities`): Organizations post and manage volunteer positions
+    - Post new opportunities with full details
+    - View all posted opportunities with status indicators
+    - Track applicants and manage applications
+  - **Updated Sidebar**: Added "Find Opportunities" and "Post Opportunities" navigation items
+- **Lighter Theme Implementation**: Refreshed UI with brighter, more accessible colors
+  - **Background**: Changed to very light blue-gray (#F7F9FC) for reduced eye strain
+  - **Primary Color**: Bright blue (#2E7FEB) for better visibility and modern feel
+  - **Cards**: Pure white (#FFFFFF) cards for clean separation
+  - **Accent Colors**: Teal (#14B8A6) and cyan (#4FC3F7) for visual interest
+  - **Success/Destructive**: Softer green and red colors for better accessibility
+  - **Border/Input**: Lighter borders and input backgrounds for cleaner appearance
+  - **Chart Colors**: More vibrant colors for better data visualization
+- **Data Flow Optimization**:
+  - Seamless connection between volunteers and organizations through opportunities
+  - Applications link volunteers to specific opportunities
+  - Match scores calculated server-side using AI algorithm
+  - Real-time application status updates
+  - Efficient database queries with proper indexing on foreign keys

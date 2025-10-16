@@ -12,7 +12,9 @@ import {
   LayoutList,
   Smartphone,
   Sparkles,
-  BarChart
+  BarChart,
+  Briefcase,
+  Search
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -52,6 +54,8 @@ export default function Sidebar() {
 
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/opportunities", label: "Post Opportunities", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/projects", label: "Projects", icon: <LayoutList className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/tasks", label: "Tasks", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },

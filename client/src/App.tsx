@@ -17,6 +17,8 @@ import ImpactVisualization from "@/pages/impact-visualization";
 import MobileDataCollection from "@/pages/mobile-data-collection";
 import ImpactStorytelling from "@/pages/impact-storytelling";
 import FieldSpecificMetrics from "@/pages/field-specific-metrics";
+import Opportunities from "@/pages/opportunities";
+import DiscoverOpportunities from "@/pages/discover-opportunities";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -37,6 +39,8 @@ function Router() {
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
       <Route path="/impact-storytelling" component={ImpactStorytelling} />
       <Route path="/field-specific-metrics" component={FieldSpecificMetrics} />
+      <Route path="/opportunities" component={Opportunities} />
+      <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route component={NotFound} />
     </Switch>
   );

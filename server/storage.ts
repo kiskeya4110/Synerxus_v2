@@ -76,6 +76,24 @@ export interface IStorage {
   listProjectImpacts(): Promise<ProjectImpact[]>;
   listProjectImpactsByProject(projectId: number): Promise<ProjectImpact[]>;
   listProjectImpactsByMetric(metricId: number): Promise<ProjectImpact[]>;
+
+  // Opportunity operations
+  getOpportunity(id: number): Promise<any | undefined>;
+  createOpportunity(opportunity: any): Promise<any>;
+  updateOpportunity(id: number, opportunity: Partial<any>): Promise<any | undefined>;
+  listOpportunities(): Promise<any[]>;
+  listOpportunitiesByOrganization(organizationId: number): Promise<any[]>;
+
+  // Application operations
+  getApplication(id: number): Promise<any | undefined>;
+  createApplication(application: any): Promise<any>;
+  updateApplication(id: number, application: Partial<any>): Promise<any | undefined>;
+  listApplications(): Promise<any[]>;
+  listApplicationsByOpportunity(opportunityId: number): Promise<any[]>;
+  listApplicationsByVolunteer(volunteerId: number): Promise<any[]>;
+
+  // Match score operations
+  getMatchScore(opportunityId: number, volunteerId: number): Promise<any>;
 }
 
 export class MemStorage implements IStorage {
@@ -86,6 +104,8 @@ export class MemStorage implements IStorage {
   private volunteerActivities: Map<number, VolunteerActivity>;
   private impactMetrics: Map<number, ImpactMetric>;
   private projectImpacts: Map<number, ProjectImpact>;
+  private opportunities: Map<number, any>;
+  private applications: Map<number, any>;
 
   private userIdCounter: number;
   private organizationIdCounter: number;
@@ -94,6 +114,8 @@ export class MemStorage implements IStorage {
   private volunteerActivityIdCounter: number;
   private impactMetricIdCounter: number;
   private projectImpactIdCounter: number;
+  private opportunityIdCounter: number;
+  private applicationIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -103,6 +125,8 @@ export class MemStorage implements IStorage {
     this.volunteerActivities = new Map();
     this.impactMetrics = new Map();
     this.projectImpacts = new Map();
+    this.opportunities = new Map();
+    this.applications = new Map();
 
     this.userIdCounter = 1;
     this.organizationIdCounter = 1;
@@ -111,6 +135,8 @@ export class MemStorage implements IStorage {
     this.volunteerActivityIdCounter = 1;
     this.impactMetricIdCounter = 1;
     this.projectImpactIdCounter = 1;
+    this.opportunityIdCounter = 1;
+    this.applicationIdCounter = 1;
 
     // Initialize with some common SDG-related impact metrics
     this.initializeImpactMetrics();
@@ -481,6 +507,111 @@ export class MemStorage implements IStorage {
   async listProjectImpactsByMetric(metricId: number): Promise<ProjectImpact[]> {
     return Array.from(this.projectImpacts.values())
       .filter(impact => impact.metricId === metricId);
+  }
+
+  // Opportunity operations
+  async getOpportunity(id: number): Promise<any | undefined> {
+    return this.opportunities.get(id);
+  }
+
+  async createOpportunity(opportunity: any): Promise<any> {
+    const id = this.opportunityIdCounter++;
+    const now = new Date();
+    const newOpportunity = {
+      ...opportunity,
+      id,
+      createdAt: now,
+      updatedAt: now,
+      status: 'active'
+    };
+    this.opportunities.set(id, newOpportunity);
+    return newOpportunity;
+  }
+
+  async updateOpportunity(id: number, opportunity: Partial<any>): Promise<any | undefined> {
+    const existing = await this.getOpportunity(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated = {
+      ...existing,
+      ...opportunity,
+      updatedAt: new Date()
+    };
+
+    this.opportunities.set(id, updated);
+    return updated;
+  }
+
+  async listOpportunities(): Promise<any[]> {
+    return Array.from(this.opportunities.values());
+  }
+
+  async listOpportunitiesByOrganization(organizationId: number): Promise<any[]> {
+    return Array.from(this.opportunities.values())
+      .filter(opp => opp.organizationId === organizationId);
+  }
+
+  // Application operations
+  async getApplication(id: number): Promise<any | undefined> {
+    return this.applications.get(id);
+  }
+
+  async createApplication(application: any): Promise<any> {
+    const id = this.applicationIdCounter++;
+    const now = new Date();
+    const newApplication = {
+      ...application,
+      id,
+      status: 'pending',
+      createdAt: now,
+      updatedAt: now
+    };
+    this.applications.set(id, newApplication);
+    return newApplication;
+  }
+
+  async updateApplication(id: number, application: Partial<any>): Promise<any | undefined> {
+    const existing = await this.getApplication(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated = {
+      ...existing,
+      ...application,
+      updatedAt: new Date()
+    };
+
+    this.applications.set(id, updated);
+    return updated;
+  }
+
+  async listApplications(): Promise<any[]> {
+    return Array.from(this.applications.values());
+  }
+
+  async listApplicationsByOpportunity(opportunityId: number): Promise<any[]> {
+    return Array.from(this.applications.values())
+      .filter(app => app.opportunityId === opportunityId);
+  }
+
+  async listApplicationsByVolunteer(volunteerId: number): Promise<any[]> {
+    return Array.from(this.applications.values())
+      .filter(app => app.volunteerId === volunteerId);
+  }
+
+  // Match score operations
+  async getMatchScore(opportunityId: number, volunteerId: number): Promise<any> {
+    // For now, return a simple implementation
+    // In a real system, this would call the matching algorithm
+    return {
+      opportunityId,
+      volunteerId,
+      score: 0,
+      matchReasons: []
+    };
   }
 }
 

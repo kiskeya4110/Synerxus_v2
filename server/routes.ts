@@ -518,6 +518,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === Opportunities Routes ===
+  app.get("/api/opportunities", async (req, res) => {
+    try {
+      const { organizationId } = req.query;
+      
+      let opportunities;
+      if (organizationId) {
+        opportunities = await storage.listOpportunitiesByOrganization(parseInt(organizationId as string));
+      } else {
+        opportunities = await storage.listOpportunities();
+      }
+      
+      res.json(opportunities);
+    } catch (err) {
+      console.error("Error fetching opportunities:", err);
+      res.status(500).json({ message: "Failed to fetch opportunities" });
+    }
+  });
+
+  app.get("/api/opportunities/:id", async (req, res) => {
+    try {
+      const opportunityId = parseInt(req.params.id);
+      const opportunity = await storage.getOpportunity(opportunityId);
+      
+      if (!opportunity) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+      
+      res.json(opportunity);
+    } catch (err) {
+      console.error("Error fetching opportunity:", err);
+      res.status(500).json({ message: "Failed to fetch opportunity" });
+    }
+  });
+
+  app.post("/api/opportunities", async (req, res) => {
+    try {
+      const opportunityData = req.body;
+      const opportunity = await storage.createOpportunity(opportunityData);
+      
+      broadcastUpdate("opportunity_created", opportunity);
+      res.status(201).json(opportunity);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/opportunities/:id", async (req, res) => {
+    try {
+      const opportunityId = parseInt(req.params.id);
+      const opportunityData = req.body;
+      
+      const updatedOpportunity = await storage.updateOpportunity(opportunityId, opportunityData);
+      if (!updatedOpportunity) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+      
+      broadcastUpdate("opportunity_updated", updatedOpportunity);
+      res.json(updatedOpportunity);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // === Applications Routes ===
+  app.get("/api/applications", async (req, res) => {
+    try {
+      const { opportunityId, volunteerId } = req.query;
+      
+      let applications;
+      if (opportunityId) {
+        applications = await storage.listApplicationsByOpportunity(parseInt(opportunityId as string));
+      } else if (volunteerId) {
+        applications = await storage.listApplicationsByVolunteer(parseInt(volunteerId as string));
+      } else {
+        applications = await storage.listApplications();
+      }
+      
+      res.json(applications);
+    } catch (err) {
+      console.error("Error fetching applications:", err);
+      res.status(500).json({ message: "Failed to fetch applications" });
+    }
+  });
+
+  app.get("/api/applications/:id", async (req, res) => {
+    try {
+      const applicationId = parseInt(req.params.id);
+      const application = await storage.getApplication(applicationId);
+      
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      
+      res.json(application);
+    } catch (err) {
+      console.error("Error fetching application:", err);
+      res.status(500).json({ message: "Failed to fetch application" });
+    }
+  });
+
+  app.post("/api/applications", async (req, res) => {
+    try {
+      const applicationData = req.body;
+      const application = await storage.createApplication(applicationData);
+      
+      broadcastUpdate("application_created", application);
+      res.status(201).json(application);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/applications/:id", async (req, res) => {
+    try {
+      const applicationId = parseInt(req.params.id);
+      const applicationData = req.body;
+      
+      const updatedApplication = await storage.updateApplication(applicationId, applicationData);
+      if (!updatedApplication) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      
+      broadcastUpdate("application_updated", updatedApplication);
+      res.json(updatedApplication);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // === Match Score Route ===
+  app.get("/api/opportunities/:id/match-score", async (req, res) => {
+    try {
+      const opportunityId = parseInt(req.params.id);
+      const { volunteerId } = req.query;
+      
+      if (!volunteerId) {
+        return res.status(400).json({ message: "volunteerId is required" });
+      }
+      
+      const matchScore = await storage.getMatchScore(opportunityId, parseInt(volunteerId as string));
+      res.json(matchScore);
+    } catch (err) {
+      console.error("Error calculating match score:", err);
+      res.status(500).json({ message: "Failed to calculate match score" });
+    }
+  });
+
   // === SDG Information Route ===
   app.get("/api/sdgs", (req, res) => {
     // Return information about the SDGs for the SDG mapping feature

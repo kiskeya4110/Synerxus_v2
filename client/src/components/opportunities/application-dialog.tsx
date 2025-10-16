@@ -23,7 +23,7 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
   const applyMutation = useMutation({
     mutationFn: async (data: { opportunityId: number; coverLetter: string }) => {
       // TODO: Get volunteerId from authenticated session instead of hardcoded value
-      return await apiRequest(`/api/applications`, "POST", {
+      return await apiRequest("POST", "/api/applications", {
         ...data,
         volunteerId: 1 // Temporary hardcoded value - replace with auth
       });

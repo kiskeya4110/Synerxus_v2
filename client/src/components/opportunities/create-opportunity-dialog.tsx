@@ -54,7 +54,7 @@ export default function CreateOpportunityDialog({ open, onOpenChange }: CreateOp
         requiredSkills: data.requiredSkills ? data.requiredSkills.split(',').map(s => s.trim()).filter(Boolean) : [],
         organizationId: 1, // TODO: Get from auth context
       };
-      return await apiRequest("/api/opportunities", "POST", payload);
+      return await apiRequest("POST", "/api/opportunities", payload);
     },
     onSuccess: () => {
       toast({

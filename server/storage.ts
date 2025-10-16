@@ -21,6 +21,7 @@ import {
   type ProjectImpact,
   type InsertProjectImpact
 } from "@shared/schema";
+import { calculateMatchScore } from "./matching-algorithm";
 
 // Define the storage interface with CRUD operations for all entities
 export interface IStorage {
@@ -616,8 +617,7 @@ export class MemStorage implements IStorage {
       };
     }
 
-    // Import and use the actual matching algorithm
-    const { calculateMatchScore } = require('./matching-algorithm');
+    // Use the imported matching algorithm
     const matchResult = calculateMatchScore(volunteer, opportunity);
     
     return {

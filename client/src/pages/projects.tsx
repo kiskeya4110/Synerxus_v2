@@ -1,122 +1,125 @@
 import { useState } from "react";
-import { Plus, Search, Filter, Edit, Trash2, Users, Calendar } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { Plus, Search, Users, CheckSquare, Clock, TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Link } from "wouter";
+import { Progress } from "@/components/ui/progress";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import type { Project, Task, ProjectAssignment } from "@shared/schema";
+
+interface ProjectWithDetails extends Project {
+  tasks?: Task[];
+  assignments?: ProjectAssignment[];
+}
 
 export default function Projects() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
-  // Mock data - will be replaced with actual API calls
-  const projects = [
-    {
-      id: 1,
-      name: "Clean Water Initiative",
-      description: "Providing access to clean water in rural communities",
-      status: "active",
-      organization: "Water for All",
-      startDate: "2024-01-15",
-      endDate: "2024-12-31",
-      volunteers: 45,
-      tasks: 28,
-      sdgGoals: [6, 3],
-      progress: 65,
-      location: "Rural Kenya"
-    },
-    {
-      id: 2,
-      name: "Education Access Program",
-      description: "Building schools and providing educational resources",
-      status: "active",
-      organization: "Global Education Fund",
-      startDate: "2024-03-01",
-      endDate: "2025-02-28",
-      volunteers: 32,
-      tasks: 45,
-      sdgGoals: [4, 5, 10],
-      progress: 40,
-      location: "South Asia"
-    },
-    {
-      id: 3,
-      name: "Medical Outreach",
-      description: "Mobile health clinics serving underserved populations",
-      status: "active",
-      organization: "Healthcare for All",
-      startDate: "2024-02-10",
-      endDate: "2024-11-30",
-      volunteers: 28,
-      tasks: 35,
-      sdgGoals: [3, 10],
-      progress: 55,
-      location: "Sub-Saharan Africa"
-    },
-    {
-      id: 4,
-      name: "Urban Reforestation",
-      description: "Planting trees and creating green spaces in cities",
-      status: "planning",
-      organization: "Green Cities Alliance",
-      startDate: "2024-06-01",
-      endDate: "2025-05-31",
-      volunteers: 15,
-      tasks: 18,
-      sdgGoals: [13, 15, 11],
-      progress: 15,
-      location: "Metropolitan Areas"
-    }
-  ];
-
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
-    return matchesSearch && matchesStatus;
+  // Fetch projects for organization (hardcoded org ID for now)
+  const { data: projects = [], isLoading } = useQuery<ProjectWithDetails[]>({
+    queryKey: ["/api/projects"],
+    select: (data: Project[]) => data as ProjectWithDetails[]
   });
 
+  // Fetch all tasks
+  const { data: allTasks = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks"]
+  });
+
+  // Fetch all assignments
+  const { data: allAssignments = [] } = useQuery<ProjectAssignment[]>({
+    queryKey: ["/api/project-assignments"]
+  });
+
+  const toggleProject = (projectId: number) => {
+    const newExpanded = new Set(expandedProjects);
+    if (newExpanded.has(projectId)) {
+      newExpanded.delete(projectId);
+    } else {
+      newExpanded.add(projectId);
+    }
+    setExpandedProjects(newExpanded);
+  };
+
+  const getProjectTasks = (projectId: number) => {
+    return allTasks.filter(task => task.projectId === projectId);
+  };
+
+  const getProjectAssignments = (projectId: number) => {
+    return allAssignments.filter(assignment => assignment.projectId === projectId);
+  };
+
+  const getTaskAssignment = (taskId: number) => {
+    return allTasks.find(task => task.id === taskId)?.assigneeId;
+  };
+
+  const calculateProjectProgress = (projectId: number) => {
+    const projectTasks = getProjectTasks(projectId);
+    if (projectTasks.length === 0) return 0;
+    const completedTasks = projectTasks.filter(task => task.status === 'completed').length;
+    return Math.round((completedTasks / projectTasks.length) * 100);
+  };
+
+  const calculateAssignmentMetrics = (projectId: number) => {
+    const assignments = getProjectAssignments(projectId);
+    const totalCommitted = assignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
+    const totalCompleted = assignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
+    return { totalCommitted, totalCompleted, volunteers: assignments.length };
+  };
+
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "planning": return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      case "completed": return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-      default: return "bg-gray-100 text-gray-800";
+    switch (status?.toLowerCase()) {
+      case "active":
+      case "in progress":
+        return "bg-green-100 text-green-800";
+      case "completed":
+        return "bg-gray-100 text-gray-800";
+      case "planning":
+        return "bg-blue-100 text-blue-800";
+      case "on-hold":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  const getSDGColor = (goal: number) => {
-    const colors: Record<number, string> = {
-      3: "#4C9F38",
-      4: "#C5192D",
-      5: "#FF3A21",
-      6: "#26BDE2",
-      10: "#DD1367",
-      11: "#FD9D24",
-      13: "#3F7E44",
-      15: "#56C02B"
-    };
-    return colors[goal] || "#FCC30B";
+  const getTaskStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "in progress":
+        return "bg-blue-100 text-blue-800";
+      case "todo":
+      case "pending":
+        return "bg-gray-100 text-gray-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
   };
+
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading projects...</div>
+      </div>
+    );
+  }
 
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold mb-2">Projects</h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          Manage volunteer projects and track their impact
-        </p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
+        <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>
       </div>
 
-      {/* Filters and Actions */}
-      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+      <div className="mb-6 flex gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -127,134 +130,138 @@ export default function Projects() {
             data-testid="input-search-projects"
           />
         </div>
-        
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[180px] min-h-[44px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="planning">Planning</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="min-h-[44px]" data-testid="button-add-project">
-              <Plus className="h-5 w-5 mr-2" />
-              Add Project
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Project</DialogTitle>
-              <DialogDescription>
-                Add a new volunteer project to track its impact
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="project-name">Project Name</Label>
-                <Input id="project-name" placeholder="Enter project name" />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="project-description">Description</Label>
-                <Textarea id="project-description" placeholder="Describe the project goals and activities" rows={4} />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="start-date">Start Date</Label>
-                  <Input id="start-date" type="date" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="end-date">End Date</Label>
-                  <Input id="end-date" type="date" />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="Project location" />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={() => setIsDialogOpen(false)}>Create Project</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button className="min-h-[44px]" data-testid="button-add-project">
+          <Plus className="h-5 w-5 mr-2" />
+          New Project
+        </Button>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredProjects.map((project) => (
-          <Card key={project.id} className="hover:shadow-lg transition-shadow min-h-[200px]">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between mb-2">
-                <CardTitle className="text-lg">{project.name}</CardTitle>
-                <Badge className={getStatusColor(project.status)}>
-                  {project.status}
-                </Badge>
-              </div>
-              <CardDescription className="text-sm line-clamp-2">
-                {project.description}
-              </CardDescription>
-              <div className="flex gap-1 mt-2">
-                {project.sdgGoals.map(goal => (
-                  <div
-                    key={goal}
-                    className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                    style={{ backgroundColor: getSDGColor(goal) }}
-                  >
-                    {goal}
+      <div className="space-y-4">
+        {filteredProjects.map((project) => {
+          const tasks = getProjectTasks(project.id);
+          const metrics = calculateAssignmentMetrics(project.id);
+          const progress = calculateProjectProgress(project.id);
+          const isExpanded = expandedProjects.has(project.id);
+
+          return (
+            <Card key={project.id}>
+              <Collapsible open={isExpanded} onOpenChange={() => toggleProject(project.id)}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CardTitle className="text-xl">{project.name}</CardTitle>
+                        <Badge className={getStatusColor(project.status)}>
+                          {project.status}
+                        </Badge>
+                      </div>
+                      {project.description && (
+                        <p className="text-sm text-gray-600 ml-11">{project.description}</p>
+                      )}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Progress</span>
-                  <span className="font-medium">{project.progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full transition-all"
-                    style={{ width: `${project.progress}%` }}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                  <Link href="/volunteers" className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary">
-                    <Users className="h-4 w-4 mr-1" />
-                    {project.volunteers}
-                  </Link>
-                  <Link href="/tasks" className="flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-primary">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {project.tasks} tasks
-                  </Link>
-                </div>
-                
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1 min-h-[44px]">
-                    <Edit className="h-4 w-4 mr-1" />
-                    Edit
-                  </Button>
-                  <Button variant="outline" size="sm" className="min-h-[44px]">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 ml-11">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">
+                        {metrics.volunteers} volunteer{metrics.volunteers !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckSquare className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{tasks.length} tasks</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">
+                        {metrics.totalCompleted}/{metrics.totalCommitted} hrs
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{progress}% complete</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 ml-11">
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                </CardHeader>
+
+                <CollapsibleContent>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-semibold">Tasks</h3>
+                        <Button size="sm" variant="outline" data-testid={`button-add-task-${project.id}`}>
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Task
+                        </Button>
+                      </div>
+
+                      {tasks.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No tasks yet. Click "Add Task" to create one.
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {tasks.map((task) => (
+                            <div
+                              key={task.id}
+                              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-medium">{task.title}</h4>
+                                  <Badge className={getTaskStatusColor(task.status)} variant="outline">
+                                    {task.status}
+                                  </Badge>
+                                </div>
+                                {task.description && (
+                                  <p className="text-sm text-gray-600 mt-1">{task.description}</p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-4 ml-4">
+                                {task.assigneeId ? (
+                                  <span className="text-sm text-gray-600">
+                                    Assigned to volunteer #{task.assigneeId}
+                                  </span>
+                                ) : (
+                                  <Button size="sm" variant="outline">
+                                    Assign
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          );
+        })}
       </div>
 
       {filteredProjects.length === 0 && (
         <Card className="p-12 text-center">
-          <p className="text-gray-500 dark:text-gray-400">No projects found</p>
+          <p className="text-gray-500">No projects found</p>
+          <Button className="mt-4" data-testid="button-create-first-project">
+            <Plus className="h-5 w-5 mr-2" />
+            Create Your First Project
+          </Button>
         </Card>
       )}
     </>

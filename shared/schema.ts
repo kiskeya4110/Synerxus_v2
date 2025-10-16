@@ -194,6 +194,22 @@ export const organizationProfiles = pgTable("organization_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Project Assignments - Track volunteer-project relationships
+export const projectAssignments = pgTable("project_assignments", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  role: text("role"), // Team Lead, Contributor, Coordinator, etc.
+  status: text("status").notNull().default("active"), // active, completed, on-hold
+  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  hoursCommitted: integer("hours_committed"),
+  hoursCompleted: integer("hours_completed").default(0),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -267,6 +283,12 @@ export const insertOrganizationProfileSchema = createInsertSchema(organizationPr
   updatedAt: true
 });
 
+export const insertProjectAssignmentSchema = createInsertSchema(projectAssignments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -303,3 +325,6 @@ export type InsertVolunteerProfile = z.infer<typeof insertVolunteerProfileSchema
 
 export type OrganizationProfile = typeof organizationProfiles.$inferSelect;
 export type InsertOrganizationProfile = z.infer<typeof insertOrganizationProfileSchema>;
+
+export type ProjectAssignment = typeof projectAssignments.$inferSelect;
+export type InsertProjectAssignment = z.infer<typeof insertProjectAssignmentSchema>;

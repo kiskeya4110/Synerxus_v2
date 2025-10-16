@@ -22,7 +22,11 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
 
   const applyMutation = useMutation({
     mutationFn: async (data: { opportunityId: number; coverLetter: string }) => {
-      return await apiRequest(`/api/applications`, "POST", data);
+      // TODO: Get volunteerId from authenticated session instead of hardcoded value
+      return await apiRequest(`/api/applications`, "POST", {
+        ...data,
+        volunteerId: 1 // Temporary hardcoded value - replace with auth
+      });
     },
     onSuccess: () => {
       toast({

@@ -604,13 +604,28 @@ export class MemStorage implements IStorage {
 
   // Match score operations
   async getMatchScore(opportunityId: number, volunteerId: number): Promise<any> {
-    // For now, return a simple implementation
-    // In a real system, this would call the matching algorithm
+    const opportunity = await this.getOpportunity(opportunityId);
+    const volunteer = await this.getUser(volunteerId);
+    
+    if (!opportunity || !volunteer) {
+      return {
+        opportunityId,
+        volunteerId,
+        score: 0,
+        matchReasons: ['Unable to calculate match - missing data']
+      };
+    }
+
+    // Import and use the actual matching algorithm
+    const { calculateMatchScore } = require('./matching-algorithm');
+    const matchResult = calculateMatchScore(volunteer, opportunity);
+    
     return {
       opportunityId,
       volunteerId,
-      score: 0,
-      matchReasons: []
+      score: matchResult.totalScore,
+      matchReasons: matchResult.reasons,
+      breakdown: matchResult.breakdown
     };
   }
 }

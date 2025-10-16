@@ -652,6 +652,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === Discover Opportunities with Match Scores ===
+  app.get("/api/opportunities/discover", async (req, res) => {
+    try {
+      // TODO: Get volunteerId from authenticated session instead of hardcoded value
+      const volunteerId = 1; // Temporary hardcoded value - replace with auth
+      
+      const allOpportunities = await storage.listOpportunities();
+      
+      // Calculate match scores for all opportunities
+      const opportunitiesWithScores = await Promise.all(
+        allOpportunities.map(async (opp) => {
+          const matchData = await storage.getMatchScore(opp.id, volunteerId);
+          return {
+            ...opp,
+            matchScore: matchData.score,
+            matchReasons: matchData.matchReasons,
+            matchBreakdown: matchData.breakdown
+          };
+        })
+      );
+      
+      // Sort by match score (highest first)
+      opportunitiesWithScores.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+      
+      res.json(opportunitiesWithScores);
+    } catch (err) {
+      console.error("Error fetching opportunities with match scores:", err);
+      res.status(500).json({ message: "Failed to fetch opportunities" });
+    }
+  });
+
   // === Match Score Route ===
   app.get("/api/opportunities/:id/match-score", async (req, res) => {
     try {

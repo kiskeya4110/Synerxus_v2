@@ -15,6 +15,7 @@ export default function Login() {
   const { signInWithGoogle, signInWithEmail, signUp } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [userType, setUserType] = useState<"volunteer" | "organization" | null>(null);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -25,6 +26,7 @@ export default function Login() {
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [organizationName, setOrganizationName] = useState("");
 
   const handleGoogleSignIn = async () => {
     try {
@@ -111,7 +113,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary-600 dark:text-primary-400">aBridge</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Bridging global volunteers with meaningful impact
+            Bridging global volunteers with meaningful impact worldwide
           </p>
         </div>
         
@@ -125,8 +127,8 @@ export default function Login() {
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsTrigger value="login" data-testid="tab-login">Login</TabsTrigger>
+                <TabsTrigger value="register" data-testid="tab-register">Register</TabsTrigger>
               </TabsList>
               
               {/* Login Tab */}
@@ -177,72 +179,137 @@ export default function Login() {
               
               {/* Register Tab */}
               <TabsContent value="register">
-                <form onSubmit={handleSignUp}>
+                {!userType ? (
                   <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
-                      <div className="relative">
-                        <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                        <Input 
-                          id="name" 
-                          placeholder="John Doe" 
-                          className="pl-10"
-                          value={registerName}
-                          onChange={(e) => setRegisterName(e.target.value)}
-                          disabled={isLoading}
-                        />
+                    <p className="text-sm text-center text-gray-600 dark:text-gray-400 mb-4">
+                      Choose your account type to get started
+                    </p>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full h-20 text-left justify-start"
+                      onClick={() => setUserType("volunteer")}
+                      data-testid="button-register-volunteer"
+                    >
+                      <div>
+                        <div className="font-semibold text-base">I'm a Volunteer</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Find meaningful opportunities worldwide
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-email">Email</Label>
-                      <div className="relative">
-                        <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                        <Input 
-                          id="register-email" 
-                          type="email" 
-                          placeholder="m@example.com" 
-                          className="pl-10"
-                          value={registerEmail}
-                          onChange={(e) => setRegisterEmail(e.target.value)}
-                          disabled={isLoading}
-                        />
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full h-20 text-left justify-start"
+                      onClick={() => setUserType("organization")}
+                      data-testid="button-register-organization"
+                    >
+                      <div>
+                        <div className="font-semibold text-base">I'm an Organization</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Connect with global volunteers
+                        </div>
                       </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="register-password">Password</Label>
-                      <div className="relative">
-                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                        <Input 
-                          id="register-password" 
-                          type="password" 
-                          placeholder="••••••••" 
-                          className="pl-10"
-                          value={registerPassword}
-                          onChange={(e) => setRegisterPassword(e.target.value)}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirm Password</Label>
-                      <div className="relative">
-                        <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                        <Input 
-                          id="confirm-password" 
-                          type="password" 
-                          placeholder="••••••••" 
-                          className="pl-10"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "Creating account..." : "Create Account"}
                     </Button>
                   </div>
-                </form>
+                ) : (
+                  <form onSubmit={handleSignUp}>
+                    <div className="space-y-4">
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setUserType(null)}
+                        className="mb-2"
+                        data-testid="button-back-to-selection"
+                      >
+                        ← Back to account type selection
+                      </Button>
+                      
+                      {userType === "organization" && (
+                        <div className="space-y-2">
+                          <Label htmlFor="org-name">Organization Name</Label>
+                          <Input 
+                            id="org-name" 
+                            placeholder="Global Impact Foundation" 
+                            value={organizationName}
+                            onChange={(e) => setOrganizationName(e.target.value)}
+                            disabled={isLoading}
+                            data-testid="input-org-name"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="name">{userType === "volunteer" ? "Full Name" : "Contact Name"}</Label>
+                        <div className="relative">
+                          <FiUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                          <Input 
+                            id="name" 
+                            placeholder="John Doe" 
+                            className="pl-10"
+                            value={registerName}
+                            onChange={(e) => setRegisterName(e.target.value)}
+                            disabled={isLoading}
+                            data-testid="input-register-name"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="register-email">Email</Label>
+                        <div className="relative">
+                          <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                          <Input 
+                            id="register-email" 
+                            type="email" 
+                            placeholder="m@example.com" 
+                            className="pl-10"
+                            value={registerEmail}
+                            onChange={(e) => setRegisterEmail(e.target.value)}
+                            disabled={isLoading}
+                            data-testid="input-register-email"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="register-password">Password</Label>
+                        <div className="relative">
+                          <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                          <Input 
+                            id="register-password" 
+                            type="password" 
+                            placeholder="••••••••" 
+                            className="pl-10"
+                            value={registerPassword}
+                            onChange={(e) => setRegisterPassword(e.target.value)}
+                            disabled={isLoading}
+                            data-testid="input-register-password"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirm-password">Confirm Password</Label>
+                        <div className="relative">
+                          <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                          <Input 
+                            id="confirm-password" 
+                            type="password" 
+                            placeholder="••••••••" 
+                            className="pl-10"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            disabled={isLoading}
+                            data-testid="input-confirm-password"
+                          />
+                        </div>
+                      </div>
+                      <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-submit-register">
+                        {isLoading ? "Creating account..." : `Create ${userType === "volunteer" ? "Volunteer" : "Organization"} Account`}
+                      </Button>
+                    </div>
+                  </form>
+                )}
               </TabsContent>
             </Tabs>
             

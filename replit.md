@@ -96,3 +96,20 @@ Preferred communication style: Simple, everyday language.
   - Match scores calculated server-side using AI algorithm
   - Real-time application status updates
   - Efficient database queries with proper indexing on foreign keys
+- **Project-Task Hierarchy Architecture** (Latest Update): Restructured application with project-based workflow
+  - **Project Assignments Table**: New `projectAssignments` table linking volunteers to projects with tracking metrics
+    - Fields: role, status (active/completed/on-hold), hoursCommitted, hoursCompleted, assignmentDate
+    - Enables tracking volunteer contributions at project level with hours and role information
+  - **Task Hierarchy**: Tasks now belong to projects (projectId foreign key) with assignee tracking
+    - Tasks can be assigned to specific volunteers (assigneeId)
+    - Status tracking: todo/pending, in progress, completed
+    - Enables granular task management within projects
+  - **Role-Based Navigation**: Completely different navigation menus for volunteers vs organizations
+    - **Volunteer Menu**: Dashboard, Find Opportunities, My Tasks, My Impact, Calendar, Log Activity
+    - **Organization Menu**: Dashboard, Projects & Tasks, Post Opportunities, Volunteers, Impact Reports, SDG Tracking, Impact Stories, Metrics, Calendar
+    - Navigation dynamically changes based on userType field
+  - **New Pages**:
+    - **Projects Page** (`/projects`): Organization view showing all projects with collapsible task lists, assignment metrics (volunteers, hours, progress), and task management capabilities
+    - **My Tasks Page** (`/my-tasks`): Volunteer view with tabs for tasks (todo/in progress/completed) and projects, showing assignment details and progress tracking
+  - **Mobile Menu Fixes**: Fixed z-index layering (overlay z-30, sidebar z-40, button z-50) and added touch feedback for better mobile UX
+  - **Data Architecture**: Projects → Tasks → Volunteers flow with projectAssignments bridging volunteers to projects and tasks to individual assignments

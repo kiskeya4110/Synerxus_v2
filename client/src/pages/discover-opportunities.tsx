@@ -7,11 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Clock, Users, Calendar, Search, TrendingUp, Sparkles } from "lucide-react";
 import { Opportunity } from "@shared/schema";
+import ApplicationDialog from "@/components/opportunities/application-dialog";
 
 export default function DiscoverOpportunities() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [selectedOpportunity, setSelectedOpportunity] = useState<(Opportunity & { matchScore?: number; matchReasons?: string[] }) | null>(null);
+  const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
 
   // Fetch opportunities with AI matches
   const { data: opportunities = [], isLoading } = useQuery<Array<Opportunity & { matchScore?: number; matchReasons?: string[] }>>({
@@ -163,7 +166,14 @@ export default function DiscoverOpportunities() {
                         </div>
                       )}
                     </div>
-                    <Button className="w-full" data-testid={`button-apply-${opportunity.id}`}>
+                    <Button 
+                      className="w-full" 
+                      data-testid={`button-apply-${opportunity.id}`}
+                      onClick={() => {
+                        setSelectedOpportunity(opportunity);
+                        setApplicationDialogOpen(true);
+                      }}
+                    >
                       Apply Now
                     </Button>
                   </CardContent>
@@ -226,7 +236,15 @@ export default function DiscoverOpportunities() {
                       <Badge variant="secondary">{opportunity.category}</Badge>
                     )}
                   </div>
-                  <Button variant="outline" className="w-full" data-testid={`button-view-${opportunity.id}`}>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    data-testid={`button-view-${opportunity.id}`}
+                    onClick={() => {
+                      setSelectedOpportunity(opportunity);
+                      setApplicationDialogOpen(true);
+                    }}
+                  >
                     View Details
                   </Button>
                 </CardContent>
@@ -235,6 +253,15 @@ export default function DiscoverOpportunities() {
           </div>
         )}
       </div>
+
+      {/* Application Dialog */}
+      {selectedOpportunity && (
+        <ApplicationDialog
+          opportunity={selectedOpportunity}
+          open={applicationDialogOpen}
+          onOpenChange={setApplicationDialogOpen}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
@@ -352,7 +353,9 @@ export default function Dashboard() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                   <h2 className="text-lg font-semibold">My Active Projects</h2>
-                  <a href="/projects" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+                  <Link href="/projects">
+                    <span className="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer" data-testid="link-view-all-projects">View All</span>
+                  </Link>
                 </div>
                 <div className="p-4">
                   <div className="space-y-4">
@@ -435,7 +438,9 @@ export default function Dashboard() {
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                   <h2 className="text-lg font-semibold">All Active Projects</h2>
-                  <a href="/projects" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+                  <Link href="/projects">
+                    <span className="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer" data-testid="link-view-all-projects-org">View All</span>
+                  </Link>
                 </div>
                 <div className="p-4">
                   <div className="space-y-4">

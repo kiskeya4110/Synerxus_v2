@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Logo from "@/components/ui/logo";
 import { 
   Globe, 
   BarChart3, 
@@ -9,8 +10,7 @@ import {
   Sparkles, 
   Target, 
   Users, 
-  TrendingUp, 
-  Link2,
+  TrendingUp,
   ArrowRight,
   CheckCircle2
 } from "lucide-react";
@@ -81,10 +81,11 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Link2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <span className="text-lg sm:text-xl font-bold">aBridge</span>
-          </div>
+          <Link href="/">
+            <div className="cursor-pointer hover:opacity-80 transition-opacity">
+              <Logo size="md" />
+            </div>
+          </Link>
           <div className="flex gap-2 sm:gap-3">
             <Link href="/login">
               <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto" data-testid="button-login">Log In</Button>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
+import Logo from "@/components/ui/logo";
 import type { User } from "@shared/schema";
 
 export default function Sidebar() {
@@ -107,9 +108,11 @@ export default function Sidebar() {
         )}
       >
         <div className="px-4 py-6">
-          <div className="flex items-center justify-center mb-8">
-            <h1 className="text-xl font-bold text-primary dark:text-primary">aBridge</h1>
-          </div>
+          <Link href="/">
+            <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity" data-testid="logo-abridge">
+              <Logo size="md" />
+            </div>
+          </Link>
           
           <nav>
             <div className="space-y-1">

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, Users, CheckSquare, Clock, TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, Users, CheckSquare, Clock, TrendingUp, ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import type { Project, Task, ProjectAssignment } from "@shared/schema";
+import { CreateProjectDialog, EditProjectDialog, DeleteProjectDialog } from "@/components/projects/project-dialogs";
+import { CreateTaskDialog, EditTaskDialog, DeleteTaskDialog } from "@/components/projects/task-dialogs";
+import type { Project, Task, ProjectAssignment, User } from "@shared/schema";
 
 interface ProjectWithDetails extends Project {
   tasks?: Task[];
@@ -18,7 +20,14 @@ export default function Projects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
-  // Fetch projects for organization (hardcoded org ID for now)
+  // Fetch current user to get organization ID
+  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/users/me"],
+    enabled: true
+  });
+
+  // Fetch projects for organization
   const { data: projects = [], isLoading } = useQuery<ProjectWithDetails[]>({
     queryKey: ["/api/projects"],
     select: (data: Project[]) => data as ProjectWithDetails[]
@@ -130,10 +139,9 @@ export default function Projects() {
             data-testid="input-search-projects"
           />
         </div>
-        <Button className="min-h-[44px]" data-testid="button-add-project">
-          <Plus className="h-5 w-5 mr-2" />
-          New Project
-        </Button>
+        {currentUser?.organizationId && (
+          <CreateProjectDialog organizationId={currentUser.organizationId} />
+        )}
       </div>
 
       <div className="space-y-4">
@@ -167,6 +175,10 @@ export default function Projects() {
                       {project.description && (
                         <p className="text-sm text-gray-600 ml-11">{project.description}</p>
                       )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <EditProjectDialog project={project} />
+                      <DeleteProjectDialog project={project} />
                     </div>
                   </div>
 
@@ -203,10 +215,7 @@ export default function Projects() {
                     <div className="space-y-3">
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold">Tasks</h3>
-                        <Button size="sm" variant="outline" data-testid={`button-add-task-${project.id}`}>
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Task
-                        </Button>
+                        <CreateTaskDialog projectId={project.id} />
                       </div>
 
                       {tasks.length === 0 ? (
@@ -230,17 +239,15 @@ export default function Projects() {
                                 {task.description && (
                                   <p className="text-sm text-gray-600 mt-1">{task.description}</p>
                                 )}
-                              </div>
-                              <div className="flex items-center gap-4 ml-4">
-                                {task.assigneeId ? (
-                                  <span className="text-sm text-gray-600">
+                                {task.assigneeId && (
+                                  <span className="text-xs text-gray-500 mt-1 block">
                                     Assigned to volunteer #{task.assigneeId}
                                   </span>
-                                ) : (
-                                  <Button size="sm" variant="outline">
-                                    Assign
-                                  </Button>
                                 )}
+                              </div>
+                              <div className="flex items-center gap-2 ml-4">
+                                <EditTaskDialog task={task} />
+                                <DeleteTaskDialog task={task} />
                               </div>
                             </div>
                           ))}
@@ -255,13 +262,10 @@ export default function Projects() {
         })}
       </div>
 
-      {filteredProjects.length === 0 && (
+      {filteredProjects.length === 0 && currentUser?.organizationId && (
         <Card className="p-12 text-center">
-          <p className="text-gray-500">No projects found</p>
-          <Button className="mt-4" data-testid="button-create-first-project">
-            <Plus className="h-5 w-5 mr-2" />
-            Create Your First Project
-          </Button>
+          <p className="text-gray-500 mb-4">No projects found</p>
+          <CreateProjectDialog organizationId={currentUser.organizationId} />
         </Card>
       )}
     </>

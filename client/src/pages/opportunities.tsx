@@ -1,15 +1,17 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, MapPin, Clock, Users, Calendar, Briefcase } from "lucide-react";
-import { Opportunity } from "@shared/schema";
-import CreateOpportunityDialog from "@/components/opportunities/create-opportunity-dialog";
+import { MapPin, Clock, Users, Calendar, Briefcase } from "lucide-react";
+import { CreateOpportunityDialog, EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
+import type { Opportunity, User } from "@shared/schema";
 
 export default function Opportunities() {
-  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  // Fetch current user to get organization ID
+  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/users/me"],
+    enabled: true
+  });
 
   // Fetch opportunities
   const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
@@ -53,13 +55,9 @@ export default function Opportunities() {
             Manage and post volunteer opportunities
           </p>
         </div>
-        <Button 
-          data-testid="button-create-opportunity"
-          onClick={() => setCreateDialogOpen(true)}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Post Opportunity
-        </Button>
+        {currentUser?.organizationId && (
+          <CreateOpportunityDialog organizationId={currentUser.organizationId} />
+        )}
       </div>
 
       {opportunities.length === 0 ? (
@@ -70,13 +68,9 @@ export default function Opportunities() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Start posting volunteer opportunities to connect with passionate volunteers worldwide
             </p>
-            <Button 
-              data-testid="button-post-first-opportunity"
-              onClick={() => setCreateDialogOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Post Your First Opportunity
-            </Button>
+            {currentUser?.organizationId && (
+              <CreateOpportunityDialog organizationId={currentUser.organizationId} />
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -84,16 +78,21 @@ export default function Opportunities() {
           {opportunities.map((opportunity) => (
             <Card
               key={opportunity.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedOpportunity(opportunity)}
+              className="hover:shadow-lg transition-shadow"
               data-testid={`card-opportunity-${opportunity.id}`}
             >
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{opportunity.title}</CardTitle>
-                  <Badge className={getStatusColor(opportunity.status)}>
-                    {opportunity.status}
-                  </Badge>
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{opportunity.title}</CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(opportunity.status)}>
+                      {opportunity.status}
+                    </Badge>
+                    <EditOpportunityDialog opportunity={opportunity} />
+                    <DeleteOpportunityDialog opportunity={opportunity} />
+                  </div>
                 </div>
                 <CardDescription className="line-clamp-2">
                   {opportunity.description}
@@ -148,12 +147,6 @@ export default function Opportunities() {
           ))}
         </div>
       )}
-
-      {/* Create Opportunity Dialog */}
-      <CreateOpportunityDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
     </div>
   );
 }

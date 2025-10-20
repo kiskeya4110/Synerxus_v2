@@ -45,7 +45,27 @@ Preferred communication style: Simple, everyday language.
 
 ## Changelog
 
-### October 16, 2025 (Latest)
+### October 20, 2025 (Latest)
+- **Comprehensive CRUD Interfaces**: Full create, edit, and delete functionality for Projects, Tasks, and Opportunities
+  - **Project Management Dialogs**: Create/Edit/Delete dialogs with validation for project name, description, status (planning/active/on-hold/completed), SDG goals, and location
+  - **Task Management Dialogs**: Create/Edit/Delete/Assign dialogs supporting task title, description, status (todo/pending/in progress/completed), due dates, and volunteer assignment
+  - **Opportunity Management Dialogs**: Complete CRUD with all 16 opportunity fields including title, description, skills, location, remote options, time commitment, dates, volunteers needed, category, SDG goals, benefits, requirements, and status
+  - **Integration Pattern**: All dialogs use React Hook Form with Zod validation, TanStack Query mutations, and optimistic cache invalidation
+  - **Organization Context**: All CRUD operations fetch current user's organizationId from `/api/users/me` endpoint (currently hardcoded, auth pending)
+  - **API Consistency**: Corrected all API calls to use proper `apiRequest(method, url, data)` signature and proper schema field names (e.g., `sdgGoals` not `sdgs`)
+- **Optimized Logo Component**: SVG-based reusable Logo component with gradient text and Link2 icon
+  - **Size Options**: `sm`, `md`, `lg` sizes with responsive text scaling
+  - **Clickable Navigation**: Logo navigates to landing page (`/`) when clicked
+  - **Integration Points**: Deployed in sidebar, landing page navbar, and available for all pages
+- **Dashboard Interconnectivity**: Enhanced navigation with React Router Link components
+  - **Replaced Anchor Tags**: All `<a href>` replaced with `<Link href>` from wouter for proper SPA navigation
+  - **Quick Actions Widget**: Pre-configured links to tasks, mobile data collection, volunteers, and impact storytelling
+  - **View All Links**: Projects section includes "View All" links navigating to full Projects page
+  - **Navigation Pattern**: Consistent use of Link components throughout for seamless single-page app experience
+- **Mobile Menu Verification**: Confirmed proper z-index layering (overlay z-30, sidebar z-40, button z-50) with touch feedback
+- **Projects Page Enhancement**: Integrated all project and task CRUD dialogs with collapsible task lists, assignment metrics, and progress tracking
+
+### October 16, 2025
 - **System Partitioning for Dual User Types**: Complete partition for volunteer and organization accounts
   - **Dual Signup/Login Flow**: Users select account type (Volunteer vs Organization) during registration
   - **Database Schema**: Added `userType` field to users table to distinguish account types

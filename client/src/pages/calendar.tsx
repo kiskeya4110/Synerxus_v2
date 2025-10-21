@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { format } from "date-fns";
 
 // Form schema for adding events
 const eventFormSchema = z.object({
@@ -32,6 +33,7 @@ export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { toast } = useToast();
 
   // Fetch events from API
@@ -177,25 +179,50 @@ export default function Calendar() {
               const day = index + 1;
               const dayEvents = getEventsForDay(day);
               const isToday = new Date().toDateString() === new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
+              const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
               
               return (
                 <div
                   key={day}
-                  className={`bg-white dark:bg-gray-900 p-2 min-h-[100px] ${isToday ? 'ring-2 ring-primary-500' : ''}`}
+                  className={`bg-white dark:bg-gray-900 p-2 min-h-[100px] cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${isToday ? 'ring-2 ring-primary-500' : ''}`}
+                  onClick={() => {
+                    setSelectedDate(dayDate);
+                    const defaultStart = new Date(dayDate);
+                    defaultStart.setHours(9, 0, 0, 0);
+                    const defaultEnd = new Date(dayDate);
+                    defaultEnd.setHours(17, 0, 0, 0);
+                    form.reset({
+                      title: "",
+                      description: "",
+                      projectId: "",
+                      eventType: "volunteer_shift",
+                      startTime: format(defaultStart, "yyyy-MM-dd'T'HH:mm"),
+                      endTime: format(defaultEnd, "yyyy-MM-dd'T'HH:mm"),
+                      location: "",
+                    });
+                    setIsAddEventOpen(true);
+                  }}
+                  data-testid={`day-${day}`}
                 >
                   <div className={`text-sm font-medium mb-1 ${isToday ? 'text-primary-600 dark:text-primary-400 font-bold' : 'text-gray-700 dark:text-gray-300'}`}>
                     {day}
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1" onClick={(e) => e.stopPropagation()}>
                     {dayEvents.map((event: any) => (
                       <div
                         key={event.id}
                         className={`text-xs px-2 py-1 rounded ${getEventColor(event.eventType)} text-white cursor-pointer hover:opacity-80`}
                         onClick={() => setSelectedEvent(event)}
+                        data-testid={`event-${event.id}`}
                       >
                         {new Date(event.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} - {event.title}
                       </div>
                     ))}
+                    {dayEvents.length === 0 && (
+                      <div className="text-xs text-gray-400 dark:text-gray-500 italic py-2">
+                        Click to add event
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -208,7 +235,7 @@ export default function Calendar() {
       <Dialog open={isAddEventOpen} onOpenChange={setIsAddEventOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Add New Event</DialogTitle>
+            <DialogTitle>Add New Event{selectedDate && ` - ${format(selectedDate, 'MMMM d, yyyy')}`}</DialogTitle>
             <DialogDescription>
               Create a new calendar event for volunteers, meetings, or deadlines.
             </DialogDescription>

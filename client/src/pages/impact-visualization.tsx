@@ -1,7 +1,38 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import BeforeAfterComparison from "@/components/impact/before-after-comparison";
+import { Line, Bar, Radar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 // Sample data for before/after comparisons
 const beforeAfterData = [
@@ -64,60 +95,236 @@ const beforeAfterData = [
   }
 ];
 
-// Sample project outcomes data
-const projectOutcomes = [
-  {
-    id: "1",
-    title: "Clean Water Initiative",
-    sdgs: [6, 3],
-    outcomes: [
-      { metric: "Clean water access", value: 5000, unit: "people" },
-      { metric: "Reduction in water-borne diseases", value: 65, unit: "%" },
-      { metric: "Water filters installed", value: 650, unit: "filters" },
-      { metric: "Community water committees established", value: 12, unit: "committees" }
-    ]
-  },
-  {
-    id: "2",
-    title: "Education Access Program",
-    sdgs: [4, 5, 10],
-    outcomes: [
-      { metric: "Students enrolled", value: 850, unit: "students" },
-      { metric: "Girls in STEM education", value: 320, unit: "students" },
-      { metric: "Teacher training sessions", value: 45, unit: "sessions" },
-      { metric: "Digital devices distributed", value: 250, unit: "devices" }
-    ]
-  },
-  {
-    id: "3",
-    title: "Medical Outreach",
-    sdgs: [3, 10],
-    outcomes: [
-      { metric: "Patients treated", value: 1200, unit: "patients" },
-      { metric: "Vaccinations administered", value: 780, unit: "vaccinations" },
-      { metric: "Health workshops conducted", value: 35, unit: "workshops" },
-      { metric: "Community health workers trained", value: 60, unit: "workers" }
-    ]
-  }
-];
-
-// Sample time series data
-const timeSeriesData = {
-  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-  datasets: [
-    {
-      label: "2022",
-      data: [120, 150, 180, 220, 250, 280, 310, 340, 370, 400, 450, 500]
-    },
-    {
-      label: "2023",
-      data: [200, 250, 300, 380, 450, 520, 600, 650, 700, 780, 850, 920]
-    }
-  ]
-};
-
 export default function ImpactVisualization() {
   const [activeTab, setActiveTab] = useState("before-after");
+  const [selectedMetric, setSelectedMetric] = useState<any>(null);
+
+  // Fetch real data from API
+  const { data: projects = [] } = useQuery({ queryKey: ["/api/projects"] });
+  const { data: projectImpacts = [] } = useQuery({ queryKey: ["/api/project-impacts"] });
+  const { data: volunteerActivities = [] } = useQuery({ queryKey: ["/api/volunteer-activities"] });
+  const { data: impactMetrics = [] } = useQuery({ queryKey: ["/api/impact-metrics"] });
+
+  // Calculate aggregated metrics from real data
+  const aggregatedMetrics = useMemo(() => {
+    const totalPeople = projectImpacts.reduce((sum: number, impact: any) => {
+      const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
+      if (metric && (metric.category === "Health" || metric.category === "Education" || metric.category === "Water & Sanitation")) {
+        return sum + (impact.value || 0);
+      }
+      return sum;
+    }, 0);
+
+    const communitiesServed = new Set(projects.map((p: any) => p.location)).size;
+    const totalHours = volunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+    const uniqueSDGs = new Set();
+    projects.forEach((p: any) => {
+      if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
+        p.sdgGoals.forEach((sdg: number) => uniqueSDGs.add(sdg));
+      }
+    });
+
+    return {
+      totalPeople,
+      communitiesServed,
+      totalHours,
+      sdgsAddressed: uniqueSDGs.size,
+    };
+  }, [projects, projectImpacts, volunteerActivities, impactMetrics]);
+
+  // Process project outcomes from real data
+  const projectOutcomes = useMemo(() => {
+    return projects.slice(0, 3).map((project: any) => {
+      const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
+      const activities = volunteerActivities.filter((a: any) => a.projectId === project.id);
+      
+      const outcomes = impacts.map((impact: any) => {
+        const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
+        return {
+          metric: metric?.name || "Unknown Metric",
+          value: impact.value || 0,
+          unit: metric?.unit || "",
+        };
+      });
+
+      if (activities.length > 0) {
+        outcomes.push({
+          metric: "Volunteer Hours",
+          value: activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0),
+          unit: "hours",
+        });
+      }
+
+      return {
+        id: project.id,
+        title: project.name,
+        sdgs: project.sdgGoals || [],
+        outcomes,
+      };
+    });
+  }, [projects, projectImpacts, volunteerActivities, impactMetrics]);
+
+  // Prepare time series chart data
+  const impactOverTimeData = useMemo(() => {
+    const monthlyData = new Map();
+    projectImpacts.forEach((impact: any) => {
+      const date = new Date(impact.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthlyData.has(monthKey)) {
+        monthlyData.set(monthKey, 0);
+      }
+      monthlyData.set(monthKey, monthlyData.get(monthKey) + (impact.value || 0));
+    });
+
+    const sortedEntries = Array.from(monthlyData.entries()).sort();
+    const labels = sortedEntries.map(([month]) => {
+      const [year, monthNum] = month.split('-');
+      const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    });
+    const values = sortedEntries.map(([, value]) => value);
+
+    return {
+      labels,
+      datasets: [{
+        label: 'People Impacted',
+        data: values,
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4,
+      }],
+    };
+  }, [projectImpacts]);
+
+  // Prepare volunteer hours chart data
+  const volunteerHoursData = useMemo(() => {
+    const monthlyHours = new Map();
+    volunteerActivities.forEach((activity: any) => {
+      const date = new Date(activity.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthlyHours.has(monthKey)) {
+        monthlyHours.set(monthKey, 0);
+      }
+      monthlyHours.set(monthKey, monthlyHours.get(monthKey) + (activity.hours || 0));
+    });
+
+    const sortedEntries = Array.from(monthlyHours.entries()).sort();
+    const labels = sortedEntries.map(([month]) => {
+      const [year, monthNum] = month.split('-');
+      const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+      return date.toLocaleDateString('en-US', { month: 'short' });
+    });
+    const values = sortedEntries.map(([, value]) => value);
+
+    return {
+      labels,
+      datasets: [{
+        label: 'Hours',
+        data: values,
+        backgroundColor: 'rgba(147, 51, 234, 0.8)',
+      }],
+    };
+  }, [volunteerActivities]);
+
+  // Prepare SDG radar chart data
+  const sdgRadarData = useMemo(() => {
+    const sdgImpacts = new Map();
+    projects.forEach((project: any) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach((sdg: number) => {
+          if (!sdgImpacts.has(sdg)) {
+            sdgImpacts.set(sdg, 0);
+          }
+          const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
+          const totalImpact = impacts.reduce((sum: number, i: any) => sum + (i.value || 0), 0);
+          sdgImpacts.set(sdg, sdgImpacts.get(sdg) + totalImpact);
+        });
+      }
+    });
+
+    const sortedSDGs = Array.from(sdgImpacts.entries()).sort((a, b) => a[0] - b[0]);
+    const labels = sortedSDGs.map(([sdg]) => `SDG ${sdg}`);
+    const values = sortedSDGs.map(([, impact]) => impact);
+
+    return {
+      labels,
+      datasets: [{
+        label: 'Impact Score',
+        data: values,
+        backgroundColor: 'rgba(34, 197, 94, 0.2)',
+        borderColor: 'rgb(34, 197, 94)',
+        borderWidth: 2,
+      }],
+    };
+  }, [projects, projectImpacts]);
+
+  const handleMetricClick = (metricName: string, value: number) => {
+    let details: any = { title: metricName, items: [] };
+
+    switch (metricName) {
+      case "Total People Impacted":
+        details.items = projectImpacts
+          .filter((i: any) => {
+            const metric = impactMetrics.find((m: any) => m.id === i.metricId);
+            return metric && (metric.category === "Health" || metric.category === "Education" || metric.category === "Water & Sanitation");
+          })
+          .map((i: any) => {
+            const metric = impactMetrics.find((m: any) => m.id === i.metricId);
+            const project = projects.find((p: any) => p.id === i.projectId);
+            return {
+              label: metric?.name || "Unknown",
+              value: `${i.value} ${metric?.unit || ""}`,
+              project: project?.name || "Unknown Project",
+            };
+          });
+        break;
+      case "Communities Served":
+        const communities = new Map();
+        projects.forEach((p: any) => {
+          if (!communities.has(p.location)) {
+            communities.set(p.location, []);
+          }
+          communities.get(p.location).push(p.name);
+        });
+        details.items = Array.from(communities.entries()).map(([location, projectNames]) => ({
+          label: location,
+          value: `${projectNames.length} projects`,
+          project: projectNames.join(", "),
+        }));
+        break;
+      case "Volunteer Hours":
+        details.items = volunteerActivities.slice(0, 20).map((a: any) => {
+          const project = projects.find((p: any) => p.id === a.projectId);
+          return {
+            label: new Date(a.date).toLocaleDateString(),
+            value: `${a.hours} hours`,
+            project: project?.name || "Unknown Project",
+          };
+        });
+        break;
+      case "SDGs Addressed":
+        const sdgProjects = new Map();
+        projects.forEach((p: any) => {
+          if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
+            p.sdgGoals.forEach((sdg: number) => {
+              if (!sdgProjects.has(sdg)) {
+                sdgProjects.set(sdg, []);
+              }
+              sdgProjects.get(sdg).push(p.name);
+            });
+          }
+        });
+        details.items = Array.from(sdgProjects.entries()).map(([sdg, projectNames]) => ({
+          label: `SDG ${sdg}`,
+          value: `${projectNames.length} projects`,
+          project: projectNames.slice(0, 3).join(", ") + (projectNames.length > 3 ? "..." : ""),
+        }));
+        break;
+    }
+
+    setSelectedMetric(details);
+  };
 
   return (
     <>
@@ -170,7 +377,7 @@ export default function ImpactVisualization() {
                 <CardHeader className="pb-3 p-4 sm:p-6">
                   <CardTitle className="text-base sm:text-lg">{project.title}</CardTitle>
                   <div className="flex gap-1 mt-2">
-                    {project.sdgs.map(sdg => (
+                    {project.sdgs.map((sdg: number) => (
                       <div 
                         key={sdg}
                         className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
@@ -190,7 +397,7 @@ export default function ImpactVisualization() {
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
                   <div className="space-y-3">
-                    {project.outcomes.map((outcome, idx) => (
+                    {project.outcomes.map((outcome: any, idx: number) => (
                       <div key={idx} className="flex justify-between items-center gap-2 min-h-[24px]">
                         <span className="text-xs sm:text-sm">{outcome.metric}</span>
                         <span className="font-medium text-sm sm:text-base whitespace-nowrap">
@@ -207,29 +414,56 @@ export default function ImpactVisualization() {
           <Card>
             <CardHeader className="p-4 sm:p-6">
               <CardTitle className="text-lg sm:text-xl">Aggregated Impact Metrics</CardTitle>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Click on any metric to see detailed breakdown
+              </p>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                <div className="bg-primary/10 p-4 rounded-lg">
+                <Button
+                  variant="ghost"
+                  className="bg-primary/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-primary/20 transition-colors"
+                  onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
+                  data-testid="metric-people-impacted"
+                >
                   <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total People Impacted</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-primary mt-1">7,050</div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">+12% from last year</div>
-                </div>
-                <div className="bg-green-500/10 p-4 rounded-lg">
+                  <div className="text-2xl sm:text-3xl font-bold text-primary mt-1">
+                    {aggregatedMetrics.totalPeople.toLocaleString()}
+                  </div>
+                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="bg-green-500/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-green-500/20 transition-colors"
+                  onClick={() => handleMetricClick("Communities Served", aggregatedMetrics.communitiesServed)}
+                  data-testid="metric-communities"
+                >
                   <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Communities Served</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-green-500 mt-1">24</div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">+4 new communities</div>
-                </div>
-                <div className="bg-purple-500/10 p-4 rounded-lg">
+                  <div className="text-2xl sm:text-3xl font-bold text-green-500 mt-1">{aggregatedMetrics.communitiesServed}</div>
+                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="bg-purple-500/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-purple-500/20 transition-colors"
+                  onClick={() => handleMetricClick("Volunteer Hours", aggregatedMetrics.totalHours)}
+                  data-testid="metric-hours"
+                >
                   <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Volunteer Hours</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-purple-500 mt-1">12,480</div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">+18% from last year</div>
-                </div>
-                <div className="bg-amber-500/10 p-4 rounded-lg">
+                  <div className="text-2xl sm:text-3xl font-bold text-purple-500 mt-1">
+                    {aggregatedMetrics.totalHours.toLocaleString()}
+                  </div>
+                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="bg-amber-500/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-amber-500/20 transition-colors"
+                  onClick={() => handleMetricClick("SDGs Addressed", aggregatedMetrics.sdgsAddressed)}
+                  data-testid="metric-sdgs"
+                >
                   <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">SDGs Addressed</div>
-                  <div className="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">7</div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">+2 new SDGs</div>
-                </div>
+                  <div className="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">{aggregatedMetrics.sdgsAddressed}</div>
+                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -241,29 +475,20 @@ export default function ImpactVisualization() {
               <CardTitle className="text-lg sm:text-xl">Impact Growth Over Time</CardTitle>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
-              <div className="h-[300px] sm:h-[400px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md">
-                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 text-center px-4">
-                  [Line chart visualization showing impact metrics over time]
-                </p>
-                {/* In a real application, we would render a Chart.js line chart here */}
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6">
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">+82%</div>
-                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">People Impacted</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">+45%</div>
-                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Projects Completed</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">+63%</div>
-                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Volunteer Hours</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">+28%</div>
-                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Community Partners</div>
-                </div>
+              <div className="h-[300px] sm:h-[400px]">
+                <Line 
+                  data={impactOverTimeData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: true, position: 'top' },
+                    },
+                    scales: {
+                      y: { beginAtZero: true },
+                    },
+                  }}
+                />
               </div>
             </CardContent>
           </Card>
@@ -274,11 +499,20 @@ export default function ImpactVisualization() {
                 <CardTitle className="text-base sm:text-lg">Volunteer Hours by Month</CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
-                <div className="h-[250px] sm:h-[300px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center px-4">
-                    [Bar chart visualization showing volunteer hours by month]
-                  </p>
-                  {/* In a real application, we would render a Chart.js bar chart here */}
+                <div className="h-[250px] sm:h-[300px]">
+                  <Bar 
+                    data={volunteerHoursData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                      },
+                      scales: {
+                        y: { beginAtZero: true },
+                      },
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -288,17 +522,64 @@ export default function ImpactVisualization() {
                 <CardTitle className="text-base sm:text-lg">Impact by SDG</CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
-                <div className="h-[250px] sm:h-[300px] flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-md">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 text-center px-4">
-                    [Radar chart visualization showing impact across different SDGs]
-                  </p>
-                  {/* In a real application, we would render a Chart.js radar chart here */}
+                <div className="h-[250px] sm:h-[300px]">
+                  <Radar 
+                    data={sdgRadarData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: { display: false },
+                      },
+                      scales: {
+                        r: { beginAtZero: true },
+                      },
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Metric Detail Dialog */}
+      <Dialog open={!!selectedMetric} onOpenChange={(open) => !open && setSelectedMetric(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedMetric?.title}</DialogTitle>
+            <DialogDescription>
+              Detailed breakdown of {selectedMetric?.title.toLowerCase()}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedMetric?.items.map((item: any, index: number) => (
+              <div key={index} className="p-4 border rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium">{item.label}</h4>
+                    {item.project && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Project: {item.project}
+                      </p>
+                    )}
+                  </div>
+                  {item.value && (
+                    <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+                      {item.value}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+            {selectedMetric?.items.length === 0 && (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                No detailed data available for this metric
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -229,11 +229,15 @@ export const insertProjectSchema = createInsertSchema(projects).omit({
   updatedAt: true
 });
 
-export const insertTaskSchema = createInsertSchema(tasks).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+export const insertTaskSchema = createInsertSchema(tasks)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true
+  })
+  .extend({
+    dueDate: z.coerce.date().optional().nullable()
+  });
 
 export const insertVolunteerActivitySchema = createInsertSchema(volunteerActivities).omit({
   id: true,

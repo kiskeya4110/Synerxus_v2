@@ -15,7 +15,9 @@ import {
   BarChart,
   Briefcase,
   Search,
-  FolderKanban
+  FolderKanban,
+  UserCircle,
+  Settings
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
@@ -68,6 +70,7 @@ export default function Sidebar() {
   // Volunteer-specific navigation
   const volunteerNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/volunteer-profile", label: "Profile Settings", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/my-tasks", label: "My Tasks", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
@@ -78,6 +81,7 @@ export default function Sidebar() {
   // Organization-specific navigation
   const organizationNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/organization-profile", label: "Profile Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/opportunities", label: "Post Opportunities", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },

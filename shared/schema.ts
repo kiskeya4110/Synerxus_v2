@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, doublePrecision, sql } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -214,10 +214,10 @@ export const projectAssignments = pgTable("project_assignments", {
 export const volunteers = pgTable("volunteers", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  skills: text("skills").array().notNull().default([]),
-  interests: text("interests").array().notNull().default([]),
+  skills: text("skills").array().notNull(),
+  interests: text("interests").array().notNull(),
   location: text("location").notNull(),
-  sdgGoals: text("sdg_goals").array().notNull().default([]),
+  sdgGoals: integer("sdg_goals").array().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -227,8 +227,8 @@ export const matchableOrganizations = pgTable("matchable_organizations", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   mission: text("mission").notNull(),
-  needs: text("needs").array().notNull().default([]),
-  sdgFocus: text("sdg_focus").array().notNull().default([]),
+  needs: text("needs").array().notNull(),
+  sdgFocus: integer("sdg_focus").array().notNull(),
   location: text("location").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -329,11 +329,13 @@ export const insertProjectAssignmentSchema = createInsertSchema(projectAssignmen
 });
 
 export const insertVolunteerSchema = createInsertSchema(volunteers).omit({
+  id: true,
   createdAt: true,
   updatedAt: true
 });
 
 export const insertMatchableOrganizationSchema = createInsertSchema(matchableOrganizations).omit({
+  id: true,
   createdAt: true,
   updatedAt: true
 });

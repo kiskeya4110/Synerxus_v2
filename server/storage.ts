@@ -816,12 +816,14 @@ export class MemStorage implements IStorage {
 
   async createVolunteer(insertVolunteer: InsertVolunteer): Promise<Volunteer> {
     const now = new Date();
+    const id = crypto.randomUUID();
     const volunteer: Volunteer = {
       ...insertVolunteer,
+      id,
       createdAt: now,
       updatedAt: now
     };
-    this.volunteersMap.set(volunteer.id, volunteer);
+    this.volunteersMap.set(id, volunteer);
     return volunteer;
   }
 
@@ -856,12 +858,14 @@ export class MemStorage implements IStorage {
 
   async createMatchableOrganization(insertOrg: InsertMatchableOrganization): Promise<MatchableOrganization> {
     const now = new Date();
+    const id = crypto.randomUUID();
     const organization: MatchableOrganization = {
       ...insertOrg,
+      id,
       createdAt: now,
       updatedAt: now
     };
-    this.matchableOrganizationsMap.set(organization.id, organization);
+    this.matchableOrganizationsMap.set(id, organization);
     return organization;
   }
 
@@ -895,6 +899,17 @@ export class MemStorage implements IStorage {
   }
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
+    // Validate that volunteer and organization exist
+    const volunteer = await this.getVolunteer(insertMatch.volunteerId);
+    if (!volunteer) {
+      throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
+    }
+
+    const organization = await this.getMatchableOrganization(insertMatch.organizationId);
+    if (!organization) {
+      throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
+    }
+
     const id = this.matchIdCounter++;
     const now = new Date();
     const match: Match = {
@@ -911,6 +926,22 @@ export class MemStorage implements IStorage {
     const existing = await this.getMatch(id);
     if (!existing) {
       return undefined;
+    }
+
+    // Validate volunteer if being updated
+    if (matchData.volunteerId) {
+      const volunteer = await this.getVolunteer(matchData.volunteerId);
+      if (!volunteer) {
+        throw new Error(`Volunteer with id ${matchData.volunteerId} does not exist`);
+      }
+    }
+
+    // Validate organization if being updated
+    if (matchData.organizationId) {
+      const organization = await this.getMatchableOrganization(matchData.organizationId);
+      if (!organization) {
+        throw new Error(`Organization with id ${matchData.organizationId} does not exist`);
+      }
     }
 
     const updated: Match = {

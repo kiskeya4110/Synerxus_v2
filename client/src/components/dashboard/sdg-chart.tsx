@@ -1,57 +1,85 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useTheme } from "@/components/layout/theme-provider";
 import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface SDGChartProps {
-  userType?: "volunteer" | "organization";
-  selectedProject?: string;
+export interface SDGChartProps {
+  projects?: any[];
 }
 
-export default function SDGChart({ userType = "volunteer", selectedProject = "all" }: SDGChartProps) {
+const SDG_COLORS: Record<number, string> = {
+  1: "#E5243B",  // No Poverty
+  2: "#DDA63A",  // Zero Hunger
+  3: "#4C9F38",  // Good Health
+  4: "#C5192D",  // Quality Education
+  5: "#FF3A21",  // Gender Equality
+  6: "#26BDE2",  // Clean Water
+  7: "#FCC30B",  // Affordable Energy
+  8: "#A21942",  // Decent Work
+  9: "#FD6925",  // Industry Innovation
+  10: "#DD1367", // Reduced Inequalities
+  11: "#FD9D24", // Sustainable Cities
+  12: "#BF8B2E", // Responsible Consumption
+  13: "#3F7E44", // Climate Action
+  14: "#0A97D9", // Life Below Water
+  15: "#56C02B", // Life on Land
+  16: "#00689D", // Peace and Justice
+  17: "#19486A", // Partnerships
+};
+
+export default function SDGChart({ projects = [] }: SDGChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
+
+  // Process SDG data from projects
+  const sdgData = useMemo(() => {
+    const sdgCounts: Record<number, number> = {};
+    
+    projects.forEach((project: any) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach((goal: number) => {
+          sdgCounts[goal] = (sdgCounts[goal] || 0) + 1;
+        });
+      }
+    });
+
+    // Get top 5 SDGs
+    const topSDGs = Object.entries(sdgCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5);
+
+    if (topSDGs.length === 0) {
+      return {
+        labels: ["No data"],
+        values: [1],
+        colors: ["#CBD5E1"],
+      };
+    }
+
+    return {
+      labels: topSDGs.map(([sdg]) => `SDG ${sdg}`),
+      values: topSDGs.map(([, count]) => count),
+      colors: topSDGs.map(([sdg]) => SDG_COLORS[parseInt(sdg)] || "#CBD5E1"),
+    };
+  }, [projects]);
 
   useEffect(() => {
     if (chartRef.current) {
       const ctx = chartRef.current.getContext("2d");
       
       if (ctx) {
-        // Destroy previous chart instance if it exists
         if (chartInstance.current) {
           chartInstance.current.destroy();
         }
         
-        // Create new chart with optimized SDG colors
-        const isOrg = userType === "organization";
-        
-        // Adjust SDG data based on selected project
-        const getSdgData = () => {
-          if (selectedProject === "all") {
-            return isOrg ? [35, 25, 20, 20] : [40, 30, 20, 10];
-          }
-          // Project-specific SDG distribution
-          if (selectedProject === "1") return [60, 20, 10, 10]; // Clean Water Initiative - mostly SDG 6
-          if (selectedProject === "2") return [10, 15, 65, 10]; // Education Access - mostly SDG 4
-          if (selectedProject === "3") return [15, 70, 10, 5];  // Medical Outreach - mostly SDG 3
-          return [25, 25, 25, 25]; // Default balanced
-        };
-        
-        const sdgData = getSdgData();
-        
         chartInstance.current = new Chart(ctx, {
           type: "doughnut",
           data: {
-            labels: ["Clean Water & Sanitation", "Good Health & Well-being", "Quality Education", "Others"],
+            labels: sdgData.labels,
             datasets: [{
-              data: sdgData,
-              backgroundColor: [
-                "#26BDE2", // SDG 6 - Clean Water (Cyan)
-                "#4C9F38", // SDG 3 - Good Health (Green)
-                "#C5192D", // SDG 4 - Quality Education (Red)
-                "#FCC30B"  // Others (Gold)
-              ],
+              data: sdgData.values,
+              backgroundColor: sdgData.colors,
               borderWidth: 3,
               borderColor: theme === "dark" ? "#1f2937" : "#ffffff",
               hoverBorderWidth: 4
@@ -63,9 +91,13 @@ export default function SDGChart({ userType = "volunteer", selectedProject = "al
             cutout: "70%",
             plugins: {
               legend: {
-                display: false,
+                position: "bottom",
                 labels: {
-                  color: theme === "dark" ? "#f3f4f6" : "#1f2937"
+                  color: theme === "dark" ? "#f3f4f6" : "#1f2937",
+                  padding: 15,
+                  font: {
+                    size: 12
+                  }
                 }
               }
             }
@@ -74,74 +106,24 @@ export default function SDGChart({ userType = "volunteer", selectedProject = "al
       }
     }
     
-    // Cleanup function
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
         chartInstance.current = null;
       }
     };
-  }, [theme, userType, selectedProject]);
+  }, [theme, sdgData]);
 
   return (
     <Card>
-      <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700">
+      <CardHeader className="border-b border-gray-200 dark:border-gray-700">
         <CardTitle className="text-lg font-semibold">SDG Contributions</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <div className="chart-container">
-          <canvas ref={chartRef} id="sdgChart"></canvas>
+        <div className="h-[300px]">
+          <canvas ref={chartRef}></canvas>
         </div>
       </CardContent>
-      <div className="px-4 pb-4 pt-2">
-        <div className="text-xs text-gray-600 dark:text-gray-400">
-          {(() => {
-            const getSdgPercentages = () => {
-              if (selectedProject === "all") {
-                return userType === "organization" ? [35, 25, 20, 20] : [40, 30, 20, 10];
-              }
-              if (selectedProject === "1") return [60, 20, 10, 10];
-              if (selectedProject === "2") return [10, 15, 65, 10];
-              if (selectedProject === "3") return [15, 70, 10, 5];
-              return [25, 25, 25, 25];
-            };
-            const percentages = getSdgPercentages();
-            
-            return (
-              <>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#26BDE2' }}></span>
-                    <span>SDG 6: Clean Water & Sanitation</span>
-                  </div>
-                  <span className="font-semibold">{percentages[0]}%</span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#4C9F38' }}></span>
-                    <span>SDG 3: Good Health & Well-being</span>
-                  </div>
-                  <span className="font-semibold">{percentages[1]}%</span>
-                </div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#C5192D' }}></span>
-                    <span>SDG 4: Quality Education</span>
-                  </div>
-                  <span className="font-semibold">{percentages[2]}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="w-3 h-3 rounded-full mr-2" style={{ backgroundColor: '#FCC30B' }}></span>
-                    <span>Others</span>
-                  </div>
-                  <span className="font-semibold">{percentages[3]}%</span>
-                </div>
-              </>
-            );
-          })()}
-        </div>
-      </div>
     </Card>
   );
 }

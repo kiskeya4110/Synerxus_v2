@@ -1,61 +1,72 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useTheme } from "@/components/layout/theme-provider";
 import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface ImpactChartProps {
-  userType?: "volunteer" | "organization";
-  selectedProject?: string;
+export interface ImpactChartProps {
+  activities?: any[];
+  projectImpacts?: any[];
 }
 
-export default function ImpactChart({ userType = "volunteer", selectedProject = "all" }: ImpactChartProps) {
+export default function ImpactChart({ activities = [], projectImpacts = [] }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
+
+  // Process data for chart
+  const chartData = useMemo(() => {
+    // Group activities by month
+    const monthlyHours: Record<string, number> = {};
+    const monthlyImpact: Record<string, number> = {};
+    
+    activities.forEach((activity: any) => {
+      const date = new Date(activity.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      monthlyHours[monthKey] = (monthlyHours[monthKey] || 0) + (activity.hours || 0);
+    });
+
+    projectImpacts.forEach((impact: any) => {
+      const date = new Date(impact.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      monthlyImpact[monthKey] = (monthlyImpact[monthKey] || 0) + (impact.value || 0);
+    });
+
+    // Get last 7 months
+    const months: string[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+
+    return {
+      labels: months.map(m => {
+        const [year, month] = m.split('-');
+        return new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'short' });
+      }),
+      hours: months.map(m => monthlyHours[m] || 0),
+      impact: months.map(m => monthlyImpact[m] || 0),
+    };
+  }, [activities, projectImpacts]);
 
   useEffect(() => {
     if (chartRef.current) {
       const ctx = chartRef.current.getContext("2d");
       
       if (ctx) {
-        // Destroy previous chart instance if it exists
         if (chartInstance.current) {
           chartInstance.current.destroy();
         }
         
-        // Create new chart with optimized colors for better KPI distinction
-        const isOrg = userType === "organization";
-        
-        // Adjust data based on selected project
-        const getChartData = () => {
-          if (selectedProject === "all") {
-            return {
-              hours: isOrg ? [1200, 1590, 1830, 2290, 2820, 3410, 3950] : [12, 19, 23, 29, 32, 41, 45],
-              impact: isOrg ? [2500, 3810, 5400, 7550, 10680, 13720, 15850] : [25, 38, 54, 75, 106, 137, 158]
-            };
-          }
-          // Project-specific data (scaled down for individual projects)
-          const scale = selectedProject === "1" ? 0.45 : selectedProject === "2" ? 0.30 : 0.25;
-          const baseHours = isOrg ? [1200, 1590, 1830, 2290, 2820, 3410, 3950] : [12, 19, 23, 29, 32, 41, 45];
-          const baseImpact = isOrg ? [2500, 3810, 5400, 7550, 10680, 13720, 15850] : [25, 38, 54, 75, 106, 137, 158];
-          return {
-            hours: baseHours.map(v => Math.round(v * scale)),
-            impact: baseImpact.map(v => Math.round(v * scale))
-          };
-        };
-        
-        const chartData = getChartData();
-        
         chartInstance.current = new Chart(ctx, {
           type: "line",
           data: {
-            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
+            labels: chartData.labels,
             datasets: [
               {
-                label: isOrg ? "Total Volunteer Hours" : "My Hours",
+                label: "Volunteer Hours",
                 data: chartData.hours,
-                borderColor: "#3B82F6", // Blue for hours
+                borderColor: "#3B82F6",
                 backgroundColor: "rgba(59, 130, 246, 0.1)",
                 borderWidth: 3,
                 fill: true,
@@ -69,7 +80,7 @@ export default function ImpactChart({ userType = "volunteer", selectedProject = 
               {
                 label: "People Impacted",
                 data: chartData.impact,
-                borderColor: "#10B981", // Green for impact
+                borderColor: "#10B981",
                 backgroundColor: "rgba(16, 185, 129, 0.1)",
                 borderWidth: 3,
                 fill: true,
@@ -117,34 +128,22 @@ export default function ImpactChart({ userType = "volunteer", selectedProject = 
       }
     }
     
-    // Cleanup function
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
         chartInstance.current = null;
       }
     };
-  }, [theme, userType, selectedProject]);
+  }, [theme, chartData]);
 
   return (
-    <Card className="lg:col-span-2">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-gray-200 dark:border-gray-700">
+    <Card>
+      <CardHeader className="border-b border-gray-200 dark:border-gray-700">
         <CardTitle className="text-lg font-semibold">Impact Over Time</CardTitle>
-        <Select defaultValue="all">
-          <SelectTrigger className="h-8 w-[180px] text-sm bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
-            <SelectValue placeholder="Select Project" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Projects</SelectItem>
-            <SelectItem value="water">Clean Water Initiative</SelectItem>
-            <SelectItem value="education">Education Access Program</SelectItem>
-            <SelectItem value="medical">Medical Outreach</SelectItem>
-          </SelectContent>
-        </Select>
       </CardHeader>
       <CardContent className="p-4">
-        <div className="chart-container">
-          <canvas ref={chartRef} id="impactChart"></canvas>
+        <div className="h-[300px]">
+          <canvas ref={chartRef}></canvas>
         </div>
       </CardContent>
     </Card>

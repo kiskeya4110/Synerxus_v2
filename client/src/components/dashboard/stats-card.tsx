@@ -5,8 +5,10 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   icon: ReactNode;
-  iconBgClass: string;
-  iconColor: string;
+  iconBgClass?: string;
+  iconColor?: string;
+  trend?: string;
+  onClick?: () => void;
   change?: {
     value: string;
     isPositive?: boolean;
@@ -18,19 +20,31 @@ export default function StatsCard({
   title,
   value,
   icon,
-  iconBgClass,
-  iconColor,
+  iconBgClass = "bg-primary-100 dark:bg-primary-900",
+  iconColor = "text-primary-600 dark:text-primary-400",
+  trend,
+  onClick,
   change
 }: StatsCardProps) {
+  const cardClass = onClick 
+    ? "bg-white dark:bg-gray-800 rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
+    : "bg-white dark:bg-gray-800 rounded-lg shadow p-4";
+    
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-      <div className="flex items-center">
+    <div className={cardClass} onClick={onClick}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+          <p className="text-2xl font-bold mt-1">{value}</p>
+          {trend && (
+            <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center">
+              <ArrowUp className="h-3 w-3 mr-1" />
+              {trend}
+            </p>
+          )}
+        </div>
         <div className={`flex-shrink-0 p-3 rounded-lg ${iconBgClass} ${iconColor}`}>
           {icon}
-        </div>
-        <div className="ml-4">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-          <p className="text-xl font-semibold">{value}</p>
         </div>
       </div>
       {change && (

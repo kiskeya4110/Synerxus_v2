@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckSquare, Clock, UserPlus, LineChart } from "lucide-react";
+import { CheckSquare, Clock, UserPlus, LineChart, Calendar, Briefcase } from "lucide-react";
 import { Link } from "wouter";
 
 interface QuickAction {
@@ -10,15 +10,12 @@ interface QuickAction {
   href: string;
 }
 
-export default function QuickActions() {
-  const actions: QuickAction[] = [
-    {
-      id: "add-task",
-      label: "Add Task",
-      icon: <CheckSquare className="h-5 w-5 mb-1" />,
-      color: "text-primary-500",
-      href: "/tasks"
-    },
+interface QuickActionsProps {
+  userType?: "volunteer" | "organization";
+}
+
+export default function QuickActions({ userType = "volunteer" }: QuickActionsProps) {
+  const volunteerActions: QuickAction[] = [
     {
       id: "log-hours",
       label: "Log Hours",
@@ -27,8 +24,46 @@ export default function QuickActions() {
       href: "/mobile-data-collection"
     },
     {
-      id: "add-volunteer",
-      label: "Add Volunteer",
+      id: "my-tasks",
+      label: "My Tasks",
+      icon: <CheckSquare className="h-5 w-5 mb-1" />,
+      color: "text-primary-500",
+      href: "/my-tasks"
+    },
+    {
+      id: "find-opportunities",
+      label: "Find Opportunities",
+      icon: <Briefcase className="h-5 w-5 mb-1" />,
+      color: "text-purple-500",
+      href: "/discover-opportunities"
+    },
+    {
+      id: "view-calendar",
+      label: "View Calendar",
+      icon: <Calendar className="h-5 w-5 mb-1" />,
+      color: "text-amber-500",
+      href: "/calendar"
+    }
+  ];
+
+  const organizationActions: QuickAction[] = [
+    {
+      id: "add-project",
+      label: "Add Project",
+      icon: <Briefcase className="h-5 w-5 mb-1" />,
+      color: "text-primary-500",
+      href: "/projects"
+    },
+    {
+      id: "add-task",
+      label: "Add Task",
+      icon: <CheckSquare className="h-5 w-5 mb-1" />,
+      color: "text-success-500",
+      href: "/tasks"
+    },
+    {
+      id: "recruit-volunteers",
+      label: "Find Volunteers",
       icon: <UserPlus className="h-5 w-5 mb-1" />,
       color: "text-purple-500",
       href: "/volunteers"
@@ -41,6 +76,8 @@ export default function QuickActions() {
       href: "/impact-storytelling"
     }
   ];
+
+  const actions = userType === "volunteer" ? volunteerActions : organizationActions;
 
   return (
     <Card>

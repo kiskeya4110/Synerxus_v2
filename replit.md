@@ -24,10 +24,31 @@ Preferred communication style: Simple, everyday language.
 - **Profile Management**: Email-based profile linking with useEffect pattern for proper form initialization, handling race conditions between user authentication and form rendering.
 
 ### Feature Specifications
-- **Landing Page**: Publicly accessible, showcasing features and calls to action.
-- **Dashboard**: Role-based views (Volunteer and Organization) displaying KPIs, interactive charts, and project progress.
+- **Landing Page**: Publicly accessible, showcasing features and calls to action. Authenticated users are automatically redirected to their dashboard.
+- **Dashboard**: Fully database-integrated role-based views (Volunteer and Organization) with:
+  - Real-time KPIs pulling from volunteer activities, projects, tasks, and impact metrics
+  - Interactive KPI cards with click-through detail dialogs showing breakdowns
+  - Project filter dropdown that updates all KPIs, charts, projects list, tasks, and activities
+  - Impact Over Time chart displaying volunteer hours and people impacted from actual database records
+  - SDG Contributions chart showing top 5 SDGs from project data with official UN colors
+  - Role-specific Quick Actions (different actions for volunteers vs organizations)
+  - Recent activity feed with real volunteer activity data
+  - Upcoming events from calendar database
 - **SDG Mapping**: Visual representation and tracking of project alignment with UN SDGs.
-- **Mobile Data Collection**: Tabbed interface for activity logging and impact recording, with offline capabilities.
+- **Mobile Data Collection**: Fully functional tabbed interface with real database integration:
+  - Activity logging with project/task selection, hours tracking, skills, and descriptions
+  - Impact data recording with metric selection, values, and notes
+  - Recent entries history showing last 10 logged activities
+  - Form validation with Zod schemas
+  - Success/error toast notifications
+  - Data persists to volunteer_activities and project_impacts tables
+- **Calendar**: Full-featured calendar with working event management:
+  - Monthly calendar grid view with current day highlighting
+  - Add Event dialog with form validation (title, description, type, project, date/time, location)
+  - Event type color coding (volunteer shifts, meetings, deadlines, training)
+  - Click events to view details
+  - Events stored in calendar_events table
+  - Month navigation controls
 - **Impact Visualization**: Tools for before/after comparisons, interactive charts, and customizable metric dashboards.
 - **Impact Storytelling**: AI-powered narrative generation and social media sharing.
 - **Field-Specific Metrics**: Customizable KPIs for various domains.

@@ -279,11 +279,15 @@ export const insertTaskSchema = createInsertSchema(tasks)
     dueDate: z.coerce.date().optional().nullable()
   });
 
-export const insertVolunteerActivitySchema = createInsertSchema(volunteerActivities).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+export const insertVolunteerActivitySchema = createInsertSchema(volunteerActivities)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true
+  })
+  .extend({
+    date: z.coerce.date(),
+  });
 
 export const insertImpactMetricSchema = createInsertSchema(impactMetrics).omit({
   id: true,
@@ -291,17 +295,26 @@ export const insertImpactMetricSchema = createInsertSchema(impactMetrics).omit({
   updatedAt: true
 });
 
-export const insertProjectImpactSchema = createInsertSchema(projectImpacts).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+export const insertProjectImpactSchema = createInsertSchema(projectImpacts)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true
+  })
+  .extend({
+    date: z.coerce.date(),
+  });
 
-export const insertCalendarEventSchema = createInsertSchema(calendarEvents).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+export const insertCalendarEventSchema = createInsertSchema(calendarEvents)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true
+  })
+  .extend({
+    startTime: z.coerce.date(),
+    endTime: z.coerce.date(),
+  });
 
 export const insertOpportunitySchema = createInsertSchema(opportunities).omit({
   id: true,

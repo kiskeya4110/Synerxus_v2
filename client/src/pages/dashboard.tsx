@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -12,465 +13,493 @@ import QuickActions from "@/components/dashboard/quick-actions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Dashboard() {
-  const [dashboardType, setDashboardType] = useState<"volunteer" | "organization">("volunteer");
+  const { user } = useAuth();
   const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [selectedKPI, setSelectedKPI] = useState<{ title: string; data: any } | null>(null);
 
-  // Sample data for projects
-  const projects = [
-    {
-      id: "1",
-      title: "Clean Water Initiative",
-      description: "Installing water filters in rural communities",
-      status: "In Progress" as const,
-      progress: 75,
-      timeRemaining: "Ends in 14 days",
-      volunteers: [
-        { id: "1", name: "Sarah Johnson", avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" },
-        { id: "2", name: "Emily Chen", avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" },
-        { id: "3", name: "David Kim", avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" },
-        { id: "4", name: "Michael Brown" },
-        { id: "5", name: "Jessica Lee" }
-      ]
-    },
-    {
-      id: "2",
-      title: "Education Access Program",
-      description: "Digital literacy training for underserved communities",
-      status: "In Progress" as const,
-      progress: 45,
-      timeRemaining: "Ends in 45 days",
-      volunteers: [
-        { id: "6", name: "Lisa Wong", avatar: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" },
-        { id: "7", name: "John Smith", avatar: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" },
-        { id: "8", name: "Robert Taylor" }
-      ]
-    },
-    {
-      id: "3",
-      title: "Medical Outreach",
-      description: "Providing basic healthcare services to remote villages",
-      status: "Planning" as const,
-      progress: 15,
-      timeRemaining: "Starts in 7 days",
-      volunteers: [
-        { id: "9", name: "Thomas Wilson", avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" },
-        { id: "10", name: "Anna Garcia" }
-      ]
-    }
-  ];
+  // Fetch current user from database
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me"],
+  });
 
-  // Sample data for tasks
-  const tasks: Task[] = [
-    {
-      id: "1",
-      name: "Water quality testing",
-      project: "Clean Water Initiative",
-      dueDate: "Jul 28, 2023",
-      status: "In Progress",
-      assignee: {
-        id: "1",
-        name: "Sarah Johnson",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"
-      }
-    },
-    {
-      id: "2",
-      name: "Curriculum development",
-      project: "Education Access Program",
-      dueDate: "Jul 30, 2023",
-      status: "Completed",
-      assignee: {
-        id: "2",
-        name: "Emily Chen",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"
-      }
-    },
-    {
-      id: "3",
-      name: "Volunteer training",
-      project: "Medical Outreach",
-      dueDate: "Aug 5, 2023",
-      status: "Overdue",
-      assignee: {
-        id: "3",
-        name: "David Kim",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"
-      }
-    },
-    {
-      id: "4",
-      name: "Impact assessment",
-      project: "Clean Water Initiative",
-      dueDate: "Aug 10, 2023",
-      status: "To Do"
-    }
-  ];
+  // Determine dashboard type from user data
+  const dashboardType = currentUser?.userType || "volunteer";
 
-  // Sample data for activities
-  const activities: Activity[] = [
-    {
-      id: "1",
-      user: {
-        id: "1",
-        name: "Sarah Johnson",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"
-      },
-      action: "completed task",
-      target: "Water filter installation",
-      time: "30 minutes ago"
-    },
-    {
-      id: "2",
-      user: {
-        id: "2",
-        name: "Emily Chen",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"
-      },
-      action: "logged 8 hours on",
-      target: "Education Access Program",
-      time: "2 hours ago"
-    },
-    {
-      id: "3",
-      user: {
-        id: "3",
-        name: "David Kim",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100"
-      },
-      action: "created new project",
-      target: "Medical Outreach",
-      time: "Yesterday"
-    },
-    {
-      id: "4",
-      isSystem: true,
-      action: "generated impact report for",
-      target: "Q2 2023",
-      time: "2 days ago"
-    }
-  ];
+  // Fetch real data from API
+  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
+    queryKey: ["/api/dashboard/summary"],
+  });
 
-  // Sample data for events
-  const events: Event[] = [
-    {
-      id: "1",
-      title: "Volunteer Training Session",
-      dateTime: "Jul 27, 2023 • 2:00 PM",
-      type: "primary"
-    },
-    {
-      id: "2",
-      title: "Project Kickoff: Medical Outreach",
-      dateTime: "Aug 2, 2023 • 10:00 AM",
-      type: "success"
-    },
-    {
-      id: "3",
-      title: "Impact Assessment Workshop",
-      dateTime: "Aug 8, 2023 • 1:00 PM",
-      type: "info"
-    }
-  ];
+  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+    queryKey: ["/api/projects"],
+  });
+
+  const { data: tasks = [], isLoading: loadingTasks } = useQuery({
+    queryKey: ["/api/tasks"],
+  });
+
+  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery({
+    queryKey: ["/api/volunteer-activities"],
+  });
+
+  const { data: calendarEvents = [], isLoading: loadingEvents } = useQuery({
+    queryKey: ["/api/calendar-events"],
+  });
+
+  const { data: impactMetrics = [] } = useQuery({
+    queryKey: ["/api/impact-metrics"],
+  });
+
+  const { data: projectImpacts = [] } = useQuery({
+    queryKey: ["/api/project-impacts"],
+  });
 
   // Filter data based on selected project
-  const filteredProjects = selectedProject === "all" 
-    ? projects 
-    : projects.filter(p => p.id === selectedProject);
-  
-  const filteredTasks = selectedProject === "all"
-    ? tasks
-    : tasks.filter(t => {
-        const project = projects.find(p => p.title === t.project);
-        return project?.id === selectedProject;
-      });
-  
-  const filteredActivities = selectedProject === "all"
-    ? activities
-    : activities.filter(a => {
-        const activityProject = projects.find(p => p.title === a.target);
-        return activityProject?.id === selectedProject;
-      });
+  const filteredData = useMemo(() => {
+    const projectId = selectedProject === "all" ? null : parseInt(selectedProject);
 
-  // Calculate filtered KPIs
-  const getFilteredKPIs = (): Record<string, string> => {
-    if (dashboardType === "volunteer") {
-      if (selectedProject === "all") {
-        return {
-          hours: "32",
-          tasks: "12",
-          projects: "3",
-          impact: "94"
-        };
+    const filteredProjects = projectId 
+      ? projects.filter((p: any) => p.id === projectId)
+      : projects;
+
+    const filteredTasks = projectId
+      ? tasks.filter((t: any) => t.projectId === projectId)
+      : tasks;
+
+    const filteredActivities = projectId
+      ? volunteerActivities.filter((a: any) => a.projectId === projectId)
+      : volunteerActivities;
+
+    const filteredImpacts = projectId
+      ? projectImpacts.filter((i: any) => {
+          const project = projects.find((p: any) => p.id === i.projectId);
+          return project && project.id === projectId;
+        })
+      : projectImpacts;
+
+    return {
+      projects: filteredProjects,
+      tasks: filteredTasks,
+      activities: filteredActivities,
+      impacts: filteredImpacts,
+    };
+  }, [selectedProject, projects, tasks, volunteerActivities, projectImpacts]);
+
+  // Calculate KPIs from real data
+  const kpis = useMemo(() => {
+    const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
+    const filteredTotalTasks = filteredData.tasks.length;
+    const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status === "Completed").length;
+    const filteredActiveProjects = filteredData.projects.filter((p: any) => 
+      p.status === "In Progress" || p.status === "Active"
+    ).length;
+
+    // Calculate unique SDGs from filtered projects
+    const uniqueSDGs = new Set();
+    filteredData.projects.forEach((project: any) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach((goal: number) => uniqueSDGs.add(goal));
       }
-      // Project-specific volunteer KPIs
-      const projectHours: Record<string, string> = {
-        "1": "18",
-        "2": "10",
-        "3": "4"
-      };
-      const projectTasks: Record<string, string> = {
-        "1": "7",
-        "2": "3",
-        "3": "2"
-      };
-      const projectImpact: Record<string, string> = {
-        "1": "88",
-        "2": "76",
-        "3": "45"
-      };
+    });
+
+    // Calculate impact score (simplified version)
+    const impactScore = filteredData.impacts.reduce((sum: number, impact: any) => sum + (impact.value || 0), 0);
+
+    if (dashboardType === "volunteer") {
       return {
-        hours: projectHours[selectedProject] ?? "0",
-        tasks: projectTasks[selectedProject] ?? "0",
-        projects: "1",
-        impact: projectImpact[selectedProject] ?? "0"
+        hours: filteredHours.toString(),
+        tasks: filteredCompletedTasks.toString(),
+        projects: filteredActiveProjects.toString(),
+        impact: impactScore.toString(),
       };
     } else {
-      if (selectedProject === "all") {
-        return {
-          volunteers: "245",
-          hours: "1,876",
-          projects: "12",
-          impacted: "15.2K"
-        };
-      }
-      // Project-specific organization KPIs
-      const projectVolunteers: Record<string, string> = {
-        "1": "42",
-        "2": "28",
-        "3": "18"
-      };
-      const projectHours: Record<string, string> = {
-        "1": "856",
-        "2": "524",
-        "3": "142"
-      };
-      const projectImpacted: Record<string, string> = {
-        "1": "8.5K",
-        "2": "4.2K",
-        "3": "2.1K"
-      };
+      // Organization KPIs
+      const activeVolunteers = new Set(filteredData.activities.map((a: any) => a.userId)).size;
       return {
-        volunteers: projectVolunteers[selectedProject] ?? "0",
-        hours: projectHours[selectedProject] ?? "0",
-        projects: "1",
-        impacted: projectImpacted[selectedProject] ?? "0"
+        volunteers: activeVolunteers.toString(),
+        projects: filteredActiveProjects.toString(),
+        hours: filteredHours.toString(),
+        sdgs: uniqueSDGs.size.toString(),
       };
     }
+  }, [filteredData, dashboardType]);
+
+  // Transform activities for the activity feed
+  const formattedActivities: Activity[] = useMemo(() => {
+    return (filteredData.activities || []).slice(0, 10).map((activity: any) => {
+      const relativeTime = getRelativeTime(new Date(activity.createdAt));
+      const project = projects.find((p: any) => p.id === activity.projectId);
+      
+      return {
+        id: activity.id.toString(),
+        user: {
+          id: activity.userId?.toString() || "1",
+          name: "Volunteer",
+          avatar: undefined,
+        },
+        action: "logged " + activity.hours + " hours on",
+        target: project?.name || "Unknown Project",
+        time: relativeTime,
+      };
+    });
+  }, [filteredData.activities, projects]);
+
+  // Transform events for upcoming events
+  const formattedEvents: Event[] = useMemo(() => {
+    return (calendarEvents || [])
+      .filter((event: any) => new Date(event.startTime) > new Date())
+      .slice(0, 3)
+      .map((event: any) => ({
+        id: event.id.toString(),
+        title: event.title,
+        dateTime: formatDateTime(new Date(event.startTime)),
+        type: getEventType(event.eventType),
+      }));
+  }, [calendarEvents]);
+
+  // Handle KPI card click to show details
+  const handleKPIClick = (title: string, value: string) => {
+    let detailData: any = {};
+    
+    switch (title) {
+      case "Hours Contributed":
+        detailData = {
+          title: "Volunteer Hours Breakdown",
+          items: filteredData.activities.map((a: any) => ({
+            label: formatDate(new Date(a.date)),
+            value: `${a.hours} hours`,
+            project: projects.find((p: any) => p.id === a.projectId)?.name,
+          })),
+        };
+        break;
+      case "Tasks Completed":
+        detailData = {
+          title: "Completed Tasks",
+          items: filteredData.tasks.filter((t: any) => t.status === "Completed").map((t: any) => ({
+            label: t.title,
+            project: projects.find((p: any) => p.id === t.projectId)?.name,
+          })),
+        };
+        break;
+      case "Active Projects":
+        detailData = {
+          title: "Active Projects Details",
+          items: filteredData.projects.filter((p: any) => 
+            p.status === "In Progress" || p.status === "Active"
+          ).map((p: any) => ({
+            label: p.name,
+            value: p.status,
+            location: p.location,
+          })),
+        };
+        break;
+      default:
+        detailData = { title, items: [] };
+    }
+    
+    setSelectedKPI(detailData);
   };
 
-  const kpis = getFilteredKPIs();
+  if (loadingDashboard || loadingProjects || loadingTasks || loadingActivities) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-12 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <Skeleton className="h-96" />
+      </div>
+    );
+  }
 
   return (
-    <>
-      {/* Dashboard Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Impact Dashboard</h1>
-        <p className="text-gray-600 dark:text-gray-400">Bridging global volunteers with meaningful impact worldwide</p>
-      </div>
-
-      {/* Dashboard Type Selector */}
-      <Tabs value={dashboardType} onValueChange={(value) => setDashboardType(value as "volunteer" | "organization")} className="mb-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2 min-h-[44px]">
-          <TabsTrigger value="volunteer" className="min-h-[44px]" data-testid="tab-volunteer-dashboard">
-            <Users className="h-4 w-4 mr-2" />
-            Volunteer View
-          </TabsTrigger>
-          <TabsTrigger value="organization" className="min-h-[44px]" data-testid="tab-organization-dashboard">
-            <Building2 className="h-4 w-4 mr-2" />
-            Organization View
-          </TabsTrigger>
-        </TabsList>
-
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+            {dashboardType === "volunteer" ? "Volunteer" : "Organization"} Dashboard
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Track your impact and manage your {dashboardType === "volunteer" ? "volunteer activities" : "organization projects"}
+          </p>
+        </div>
+        
         {/* Project Filter */}
-        <div className="mt-4 mb-2">
-          <Label htmlFor="project-filter" className="text-sm font-medium mb-2 block">Filter by Project</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="project-filter" className="text-sm whitespace-nowrap">Filter by Project:</Label>
           <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger id="project-filter" className="w-full max-w-md min-h-[44px]" data-testid="select-project-filter">
-              <SelectValue placeholder="Select a project" />
+            <SelectTrigger id="project-filter" className="w-[200px]">
+              <SelectValue placeholder="All Projects" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Projects</SelectItem>
-              {projects.map(project => (
-                <SelectItem key={project.id} value={project.id}>
-                  {project.title}
+              {projects.map((project: any) => (
+                <SelectItem key={project.id} value={project.id.toString()}>
+                  {project.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+      </div>
 
-        {/* Volunteer Dashboard */}
-        <TabsContent value="volunteer" className="space-y-6 mt-6">
-          {/* Volunteer Quick Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {dashboardType === "volunteer" ? (
+          <>
             <StatsCard
-              title="My Hours This Month"
+              title="Hours Contributed"
               value={kpis.hours}
-              icon={<Clock className="h-5 w-5" />}
-              iconBgClass="bg-blue-100 dark:bg-blue-900/30"
-              iconColor="text-blue-600 dark:text-blue-400"
-              change={{ value: "8 hrs", isPositive: true, label: "vs last month" }}
+              icon={<Clock className="h-6 w-6" />}
+              trend="+12%"
+              onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
+              data-testid="kpi-hours"
             />
-            
             <StatsCard
               title="Tasks Completed"
               value={kpis.tasks}
-              icon={<CheckSquare className="h-5 w-5" />}
-              iconBgClass="bg-green-100 dark:bg-green-900/30"
-              iconColor="text-green-600 dark:text-green-400"
-              change={{ value: "5 tasks", isPositive: true, label: "this week" }}
+              icon={<CheckSquare className="h-6 w-6" />}
+              trend="+8%"
+              onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}
+              data-testid="kpi-tasks"
             />
-            
             <StatsCard
               title="Active Projects"
               value={kpis.projects}
-              icon={<Target className="h-5 w-5" />}
-              iconBgClass="bg-purple-100 dark:bg-purple-900/30"
-              iconColor="text-purple-600 dark:text-purple-400"
-              change={{ value: selectedProject === "all" ? "1 new" : "selected", isPositive: true, label: selectedProject === "all" ? "this month" : "filter active" }}
+              icon={<Target className="h-6 w-6" />}
+              onClick={() => handleKPIClick("Active Projects", kpis.projects)}
+              data-testid="kpi-projects"
             />
-            
             <StatsCard
               title="Impact Score"
               value={kpis.impact}
-              icon={<Award className="h-5 w-5" />}
-              iconBgClass="bg-amber-100 dark:bg-amber-900/30"
-              iconColor="text-amber-600 dark:text-amber-400"
-              change={{ value: "+6 pts", isPositive: true, label: "this month" }}
+              icon={<Award className="h-6 w-6" />}
+              trend="+25%"
+              data-testid="kpi-impact"
             />
-          </div>
-
-          {/* Volunteer Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ImpactChart userType="volunteer" selectedProject={selectedProject} />
-            <SDGChart userType="volunteer" selectedProject={selectedProject} />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">My Active Projects</h2>
-                  <Link href="/projects">
-                    <span className="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer" data-testid="link-view-all-projects">View All</span>
-                  </Link>
-                </div>
-                <div className="p-4">
-                  <div className="space-y-4">
-                    {filteredProjects.slice(0, 2).map(project => (
-                      <ProjectCard
-                        key={project.id}
-                        projectId={project.id}
-                        title={project.title}
-                        description={project.description}
-                        status={project.status}
-                        progress={project.progress}
-                        timeRemaining={project.timeRemaining}
-                        volunteers={project.volunteers}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              
-              <TaskTable tasks={filteredTasks.filter(t => t.assignee?.name === "Sarah Johnson")} />
-            </div>
-            
-            <div className="space-y-6">
-              <ActivityFeed activities={filteredActivities.filter(a => a.user?.name === "Sarah Johnson")} />
-              <UpcomingEvents events={events} />
-              <QuickActions />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Organization Dashboard */}
-        <TabsContent value="organization" className="space-y-6 mt-6">
-          {/* Organization Quick Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          </>
+        ) : (
+          <>
             <StatsCard
-              title="Total Volunteers"
-              value={kpis.volunteers ?? "0"}
-              icon={<Users className="h-5 w-5" />}
-              iconBgClass="bg-indigo-100 dark:bg-indigo-900/30"
-              iconColor="text-indigo-600 dark:text-indigo-400"
-              change={{ value: "12%", isPositive: true, label: "vs last month" }}
+              title="Active Volunteers"
+              value={kpis.volunteers}
+              icon={<Users className="h-6 w-6" />}
+              trend="+15%"
+              data-testid="kpi-volunteers"
             />
-            
-            <StatsCard
-              title="Total Hours"
-              value={kpis.hours ?? "0"}
-              icon={<Clock className="h-5 w-5" />}
-              iconBgClass="bg-cyan-100 dark:bg-cyan-900/30"
-              iconColor="text-cyan-600 dark:text-cyan-400"
-              change={{ value: "18%", isPositive: true, label: "vs last month" }}
-            />
-            
             <StatsCard
               title="Active Projects"
-              value={kpis.projects ?? "0"}
-              icon={<CheckSquare className="h-5 w-5" />}
-              iconBgClass="bg-teal-100 dark:bg-teal-900/30"
-              iconColor="text-teal-600 dark:text-teal-400"
-              change={{ value: selectedProject === "all" ? "3 new" : "selected", isPositive: true, label: selectedProject === "all" ? "this quarter" : "filter active" }}
+              value={kpis.projects}
+              icon={<Building2 className="h-6 w-6" />}
+              onClick={() => handleKPIClick("Active Projects", kpis.projects)}
+              data-testid="kpi-projects"
             />
-            
             <StatsCard
-              title="People Impacted"
-              value={kpis.impacted ?? "0"}
-              icon={<TrendingUp className="h-5 w-5" />}
-              iconBgClass="bg-emerald-100 dark:bg-emerald-900/30"
-              iconColor="text-emerald-600 dark:text-emerald-400"
-              change={{ value: "24%", isPositive: true, label: "vs last quarter" }}
+              title="Total Hours"
+              value={kpis.hours}
+              icon={<Clock className="h-6 w-6" />}
+              trend="+20%"
+              onClick={() => handleKPIClick("Total Hours", kpis.hours)}
+              data-testid="kpi-hours"
             />
-          </div>
+            <StatsCard
+              title="SDGs Addressed"
+              value={kpis.sdgs}
+              icon={<Globe className="h-6 w-6" />}
+              data-testid="kpi-sdgs"
+            />
+          </>
+        )}
+      </div>
 
-          {/* Organization Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <ImpactChart userType="organization" selectedProject={selectedProject} />
-            <SDGChart userType="organization" selectedProject={selectedProject} />
-          </div>
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ImpactChart 
+          activities={filteredData.activities}
+          projectImpacts={filteredData.impacts}
+        />
+        <SDGChart 
+          projects={filteredData.projects}
+        />
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                  <h2 className="text-lg font-semibold">All Active Projects</h2>
-                  <Link href="/projects">
-                    <span className="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer" data-testid="link-view-all-projects-org">View All</span>
-                  </Link>
-                </div>
-                <div className="p-4">
-                  <div className="space-y-4">
-                    {filteredProjects.map(project => (
-                      <ProjectCard
-                        key={project.id}
-                        projectId={project.id}
-                        title={project.title}
-                        description={project.description}
-                        status={project.status}
-                        progress={project.progress}
-                        timeRemaining={project.timeRemaining}
-                        volunteers={project.volunteers}
-                      />
-                    ))}
+      {/* Projects Overview */}
+      <div>
+        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Active Projects</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredData.projects.slice(0, 6).map((project: any) => (
+            <ProjectCard
+              key={project.id}
+              id={project.id.toString()}
+              title={project.name}
+              description={project.description || "No description available"}
+              status={project.status as any}
+              progress={calculateProgress(project.id, tasks)}
+              timeRemaining={getTimeRemaining(project.endDate)}
+              volunteers={[]}
+            />
+          ))}
+          {filteredData.projects.length === 0 && (
+            <Card className="col-span-full">
+              <CardContent className="flex items-center justify-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">No projects found</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="tasks" className="w-full">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+            </TabsList>
+            <TabsContent value="tasks" className="mt-4">
+              <TaskTable tasks={formatTasksForTable(filteredData.tasks, projects)} />
+            </TabsContent>
+            <TabsContent value="activity" className="mt-4">
+              <ActivityFeed activities={formattedActivities} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="space-y-6">
+          <UpcomingEvents events={formattedEvents} />
+          <QuickActions userType={dashboardType} />
+        </div>
+      </div>
+
+      {/* KPI Detail Dialog */}
+      <Dialog open={!!selectedKPI} onOpenChange={(open) => !open && setSelectedKPI(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedKPI?.title}</DialogTitle>
+            <DialogDescription>
+              Detailed breakdown of {selectedKPI?.title.toLowerCase()}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedKPI?.items.map((item: any, index: number) => (
+              <div key={index} className="p-4 border rounded-lg">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium">{item.label}</h4>
+                    {item.project && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Project: {item.project}
+                      </p>
+                    )}
+                    {item.location && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Location: {item.location}
+                      </p>
+                    )}
                   </div>
+                  {item.value && (
+                    <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+                      {item.value}
+                    </span>
+                  )}
                 </div>
               </div>
-              
-              <TaskTable tasks={filteredTasks} />
-            </div>
-            
-            <div className="space-y-6">
-              <ActivityFeed activities={filteredActivities} />
-              <UpcomingEvents events={events} />
-              <QuickActions />
-            </div>
+            ))}
+            {selectedKPI?.items.length === 0 && (
+              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                No data available
+              </p>
+            )}
           </div>
-        </TabsContent>
-      </Tabs>
-    </>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
+}
+
+// Helper functions
+function formatTasksForTable(tasks: any[], projects: any[]): Task[] {
+  return tasks.map((task: any) => {
+    const project = projects.find((p: any) => p.id === task.projectId);
+    return {
+      id: task.id.toString(),
+      name: task.title,
+      project: project?.name || "Unknown Project",
+      dueDate: task.dueDate ? formatDate(new Date(task.dueDate)) : "No due date",
+      status: task.status,
+      assignee: task.assigneeId ? {
+        id: task.assigneeId.toString(),
+        name: "Volunteer",
+      } : undefined,
+    };
+  });
+}
+
+function calculateProgress(projectId: number, tasks: any[]): number {
+  const projectTasks = tasks.filter((t: any) => t.projectId === projectId);
+  if (projectTasks.length === 0) return 0;
+  
+  const completedTasks = projectTasks.filter((t: any) => t.status === "Completed").length;
+  return Math.round((completedTasks / projectTasks.length) * 100);
+}
+
+function getTimeRemaining(endDate: string | null): string {
+  if (!endDate) return "No end date";
+  
+  const end = new Date(endDate);
+  const now = new Date();
+  const diff = end.getTime() - now.getTime();
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days < 0) return "Overdue";
+  if (days === 0) return "Ends today";
+  if (days === 1) return "Ends tomorrow";
+  return `Ends in ${days} days`;
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatDateTime(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+}
+
+function getEventType(eventType: string): "primary" | "success" | "info" | "warning" | "destructive" {
+  const typeMap: Record<string, "primary" | "success" | "info" | "warning" | "destructive"> = {
+    volunteer_shift: "primary",
+    meeting: "info",
+    deadline: "warning",
+    training: "success",
+  };
+  return typeMap[eventType] || "info";
 }

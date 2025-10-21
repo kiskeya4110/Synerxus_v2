@@ -30,9 +30,14 @@ export default function Layout({ children }: LayoutProps) {
   const isProtectedRoute = protectedRoutes.some(route => location.startsWith(route));
   
   // Redirect to login if user is not authenticated and trying to access protected route
+  // Redirect to dashboard after successful login
   useEffect(() => {
     if (!loading && !user && isProtectedRoute) {
       setLocation("/login");
+    }
+    // Redirect authenticated users from landing to dashboard
+    if (!loading && user && location === "/") {
+      setLocation("/dashboard");
     }
   }, [user, loading, location, setLocation, isProtectedRoute]);
 

@@ -1,900 +1,554 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Camera, Upload, Check, MapPin, Wifi, WifiOff, Clock } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Check, Clock, Send } from "lucide-react";
 
 // Form schemas
 const activityFormSchema = z.object({
-  projectId: z.string().min(1, { message: "Please select a project" }),
-  activityType: z.string().min(1, { message: "Please select an activity type" }),
-  date: z.string().min(1, { message: "Please enter a date" }),
-  hoursSpent: z.string().min(1, { message: "Please enter hours spent" }),
-  location: z.string().min(1, { message: "Please enter a location" }),
-  description: z.string().min(5, { message: "Please enter a description" }),
-  skillsApplied: z.string().min(1, { message: "Please select skills applied" }),
-  impact: z.string().optional(),
+  projectId: z.string().min(1, "Please select a project"),
+  taskId: z.string().optional(),
+  hours: z.string().min(1, "Please enter hours spent").transform(Number),
+  date: z.string().min(1, "Please enter a date"),
+  description: z.string().min(5, "Please enter a description"),
+  skillsApplied: z.string().min(1, "Please enter skills applied"),
+  outcomes: z.string().optional(),
 });
 
 const impactFormSchema = z.object({
-  metricId: z.string().min(1, { message: "Please select a metric" }),
-  value: z.string().min(1, { message: "Please enter a value" }),
-  date: z.string().min(1, { message: "Please enter a date" }),
-  location: z.string().min(1, { message: "Please enter a location" }),
-  description: z.string().min(5, { message: "Please enter a description" }),
-  evidenceType: z.string().min(1, { message: "Please select evidence type" }),
+  projectId: z.string().min(1, "Please select a project"),
+  metricId: z.string().min(1, "Please select a metric"),
+  value: z.string().min(1, "Please enter a value").transform(Number),
+  date: z.string().min(1, "Please enter a date"),
+  notes: z.string().min(5, "Please enter notes"),
 });
 
-// Sample data
-const projects = [
-  { id: "1", name: "Clean Water Initiative" },
-  { id: "2", name: "Education Access Program" },
-  { id: "3", name: "Medical Outreach" },
-];
-
-const activityTypes = [
-  { id: "training", name: "Training" },
-  { id: "fieldwork", name: "Fieldwork" },
-  { id: "assessment", name: "Assessment" },
-  { id: "distribution", name: "Distribution" },
-  { id: "coordination", name: "Coordination" },
-  { id: "mentoring", name: "Mentoring" },
-];
-
-const skillsList = [
-  { id: "teaching", name: "Teaching" },
-  { id: "healthcare", name: "Healthcare" },
-  { id: "engineering", name: "Engineering" },
-  { id: "logistics", name: "Logistics" },
-  { id: "project_management", name: "Project Management" },
-  { id: "it_support", name: "IT Support" },
-];
-
-const impactMetrics = [
-  { id: "1", name: "People with Clean Water Access", unit: "people" },
-  { id: "2", name: "Students Educated", unit: "students" },
-  { id: "3", name: "Healthcare Services Delivered", unit: "services" },
-  { id: "4", name: "Meals Provided", unit: "meals" },
-  { id: "5", name: "Trees Planted", unit: "trees" },
-];
-
-const evidenceTypes = [
-  { id: "photo", name: "Photo" },
-  { id: "video", name: "Video" },
-  { id: "testimony", name: "Testimony" },
-  { id: "survey", name: "Survey Results" },
-  { id: "document", name: "Document" },
-];
-
-// Sample pending submissions
-const pendingSubmissions = [
-  {
-    id: "1",
-    type: "activity",
-    project: "Clean Water Initiative",
-    date: "2023-07-15",
-    summary: "Water filter installation training",
-    status: "pending",
-  },
-  {
-    id: "2",
-    type: "impact",
-    project: "Education Access Program",
-    date: "2023-07-12",
-    summary: "Computer literacy assessment",
-    status: "pending",
-  },
-];
+type ActivityFormData = z.infer<typeof activityFormSchema>;
+type ImpactFormData = z.infer<typeof impactFormSchema>;
 
 export default function MobileDataCollection() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("activity");
-  const [isOnline, setIsOnline] = useState(true);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [isLocationLoading, setIsLocationLoading] = useState(false);
-  const [location, setLocation] = useState<string | null>(null);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
 
-  // Form hooks
-  const activityForm = useForm<z.infer<typeof activityFormSchema>>({
+  // Fetch current user from database
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me"],
+  });
+
+  // Fetch projects from API
+  const { data: projects = [] } = useQuery({
+    queryKey: ["/api/projects"],
+  });
+
+  // Fetch tasks from API
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["/api/tasks"],
+  });
+
+  // Fetch impact metrics from API
+  const { data: impactMetrics = [] } = useQuery({
+    queryKey: ["/api/impact-metrics"],
+  });
+
+  // Fetch recent volunteer activities
+  const { data: recentActivities = [] } = useQuery({
+    queryKey: ["/api/volunteer-activities"],
+  });
+
+  // Activity form
+  const activityForm = useForm<ActivityFormData>({
     resolver: zodResolver(activityFormSchema),
     defaultValues: {
       projectId: "",
-      activityType: "",
-      date: new Date().toISOString().split("T")[0],
-      hoursSpent: "",
-      location: "",
+      taskId: "",
+      hours: "",
+      date: new Date().toISOString().split('T')[0],
       description: "",
       skillsApplied: "",
-      impact: "",
+      outcomes: "",
     },
   });
 
-  const impactForm = useForm<z.infer<typeof impactFormSchema>>({
+  // Impact form
+  const impactForm = useForm<ImpactFormData>({
     resolver: zodResolver(impactFormSchema),
     defaultValues: {
+      projectId: "",
       metricId: "",
       value: "",
-      date: new Date().toISOString().split("T")[0],
-      location: "",
-      description: "",
-      evidenceType: "",
+      date: new Date().toISOString().split('T')[0],
+      notes: "",
     },
   });
 
-  // Form submission handlers
-  const onActivitySubmit = (values: z.infer<typeof activityFormSchema>) => {
-    console.log(values);
-    
-    if (!isOnline) {
+  // Activity submission mutation
+  const activityMutation = useMutation({
+    mutationFn: async (data: ActivityFormData) => {
+      const payload = {
+        userId: currentUser?.id,
+        projectId: parseInt(data.projectId),
+        taskId: data.taskId ? parseInt(data.taskId) : null,
+        hours: data.hours,
+        date: new Date(data.date).toISOString(),
+        description: data.description,
+        skillsApplied: data.skillsApplied.split(',').map(s => s.trim()),
+        outcomes: data.outcomes || null,
+      };
+      return apiRequest("POST", "/api/volunteer-activities", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+      activityForm.reset();
       toast({
-        title: "Saved to device",
-        description: "Your data has been saved locally and will sync when online",
-        duration: 3000,
+        title: "Activity logged!",
+        description: "Your volunteer activity has been recorded.",
       });
-    } else {
-      // Simulate upload
-      simulateUpload(() => {
-        toast({
-          title: "Activity Logged Successfully",
-          description: "Your volunteer activity has been recorded",
-          duration: 3000,
-        });
-        activityForm.reset({
-          projectId: "",
-          activityType: "",
-          date: new Date().toISOString().split("T")[0],
-          hoursSpent: "",
-          location: "",
-          description: "",
-          skillsApplied: "",
-          impact: "",
-        });
-        setImageSrc(null);
-      });
-    }
-  };
-
-  const onImpactSubmit = (values: z.infer<typeof impactFormSchema>) => {
-    console.log(values);
-    
-    if (!isOnline) {
+    },
+    onError: (error: Error) => {
       toast({
-        title: "Saved to device",
-        description: "Your data has been saved locally and will sync when online",
-        duration: 3000,
+        title: "Error",
+        description: error.message || "Failed to log activity",
+        variant: "destructive",
       });
-    } else {
-      // Simulate upload
-      simulateUpload(() => {
-        toast({
-          title: "Impact Data Submitted",
-          description: "Your impact measurement has been recorded",
-          duration: 3000,
-        });
-        impactForm.reset({
-          metricId: "",
-          value: "",
-          date: new Date().toISOString().split("T")[0],
-          location: "",
-          description: "",
-          evidenceType: "",
-        });
-        setImageSrc(null);
-      });
-    }
-  };
+    },
+  });
 
-  // Simulate network operations
-  const simulateUpload = (onComplete: () => void) => {
-    setIsUploading(true);
-    setUploadProgress(0);
-    
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          onComplete();
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 300);
-  };
-
-  const getLocation = () => {
-    setIsLocationLoading(true);
-    
-    // Simulate geolocation API
-    setTimeout(() => {
-      setLocation("Latitude: 34.0522, Longitude: -118.2437");
-      
-      if (activeTab === "activity") {
-        activityForm.setValue("location", "Los Angeles, CA, USA");
-      } else {
-        impactForm.setValue("location", "Los Angeles, CA, USA");
-      }
-      
-      setIsLocationLoading(false);
-      
+  // Impact submission mutation
+  const impactMutation = useMutation({
+    mutationFn: async (data: ImpactFormData) => {
+      const payload = {
+        projectId: parseInt(data.projectId),
+        metricId: parseInt(data.metricId),
+        value: data.value,
+        date: new Date(data.date).toISOString(),
+        notes: data.notes,
+      };
+      return apiRequest("POST", "/api/project-impacts", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
+      impactForm.reset();
       toast({
-        title: "Location detected",
-        description: "Your location has been automatically filled in",
-        duration: 3000,
+        title: "Impact recorded!",
+        description: "Your impact data has been saved.",
       });
-    }, 1500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to record impact",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onActivitySubmit = (data: ActivityFormData) => {
+    activityMutation.mutate(data);
   };
 
-  const toggleCamera = () => {
-    setIsCameraActive(!isCameraActive);
-    
-    if (!isCameraActive) {
-      // Simulate camera capture after a delay
-      setTimeout(() => {
-        setImageSrc("https://images.unsplash.com/photo-1541332246502-2e99eaa96cc1?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3");
-        setIsCameraActive(false);
-        
-        toast({
-          title: "Image captured",
-          description: "Your evidence has been attached to the form",
-          duration: 3000,
-        });
-      }, 2000);
-    }
+  const onImpactSubmit = (data: ImpactFormData) => {
+    impactMutation.mutate(data);
   };
 
-  const toggleOnlineStatus = () => {
-    setIsOnline(!isOnline);
-    
-    toast({
-      title: isOnline ? "Offline Mode Activated" : "Back Online",
-      description: isOnline 
-        ? "Your submissions will be saved locally until you're back online" 
-        : "Your device is connected to the internet",
-      duration: 3000,
-    });
-  };
+  // Filter tasks by selected project
+  const selectedProjectId = activityForm.watch("projectId");
+  const filteredTasks = selectedProjectId 
+    ? tasks.filter((task: any) => task.projectId === parseInt(selectedProjectId))
+    : [];
 
   return (
-    <>
-      {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold">Mobile Data Collection</h1>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-              Record volunteer activities and impact metrics from the field
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleOnlineStatus}
-            className={`flex items-center gap-2 w-fit ${
-              isOnline ? "text-green-500" : "text-amber-500"
-            }`}
-            data-testid="button-toggle-online-status"
-          >
-            {isOnline ? <Wifi className="h-4 w-4" /> : <WifiOff className="h-4 w-4" />}
-            {isOnline ? "Online" : "Offline"}
-          </Button>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+          Mobile Data Collection
+        </h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          Log volunteer activities and track impact metrics in the field
+        </p>
       </div>
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <CardHeader className="p-4 sm:p-6">
-                <TabsList className="grid w-full grid-cols-2 min-h-[44px]">
-                  <TabsTrigger value="activity" className="text-sm sm:text-base min-h-[44px]" data-testid="tab-log-activity">Log Activity</TabsTrigger>
-                  <TabsTrigger value="impact" className="text-sm sm:text-base min-h-[44px]" data-testid="tab-record-impact">Record Impact</TabsTrigger>
-                </TabsList>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6 pt-0">
-              {isUploading && (
-                <div className="mb-4 sm:mb-6">
-                  <div className="flex justify-between text-xs sm:text-sm mb-1">
-                    <span>Uploading submission...</span>
-                    <span>{uploadProgress}%</span>
-                  </div>
-                  <Progress value={uploadProgress} className="h-2" />
-                </div>
-              )}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="activity">Log Activity</TabsTrigger>
+          <TabsTrigger value="impact">Record Impact</TabsTrigger>
+          <TabsTrigger value="history">Recent Entries</TabsTrigger>
+        </TabsList>
 
-              {/* Activity Log Form */}
-              <TabsContent value="activity" className="mt-0">
-                <Form {...activityForm}>
-                  <form 
-                    onSubmit={activityForm.handleSubmit(onActivitySubmit)} 
-                    className="space-y-4 sm:space-y-6"
-                  >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <FormField
-                        control={activityForm.control}
-                        name="projectId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Project</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select project" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {projects.map((project) => (
-                                  <SelectItem key={project.id} value={project.id}>
-                                    {project.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={activityForm.control}
-                        name="activityType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Activity Type</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select activity type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {activityTypes.map((type) => (
-                                  <SelectItem key={type.id} value={type.id}>
-                                    {type.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={activityForm.control}
-                        name="date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={activityForm.control}
-                        name="hoursSpent"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Hours Spent</FormLabel>
-                            <FormControl>
-                              <Input type="number" placeholder="3.5" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="flex items-end gap-2">
-                        <div className="flex-grow">
-                          <FormField
-                            control={activityForm.control}
-                            name="location"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Location</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="City, Country" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          onClick={getLocation}
-                          disabled={isLocationLoading}
-                        >
-                          {isLocationLoading ? (
-                            <Clock className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <MapPin className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <FormField
-                      control={activityForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Describe the activities performed..." 
-                              className="resize-none" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={activityForm.control}
-                      name="skillsApplied"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Skills Applied</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select skills" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {skillsList.map((skill) => (
-                                <SelectItem key={skill.id} value={skill.id}>
-                                  {skill.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={activityForm.control}
-                      name="impact"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Impact Notes (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Describe any observable impact..." 
-                              className="resize-none" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormDescription>
-                            Note any immediate outcomes or feedback
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="space-y-2">
-                      <FormLabel>Evidence (Optional)</FormLabel>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={toggleCamera}
-                          className="flex items-center gap-2"
-                        >
-                          <Camera className="h-4 w-4" />
-                          {isCameraActive ? "Cancel" : "Take Photo"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex items-center gap-2"
-                        >
-                          <Upload className="h-4 w-4" />
-                          Upload File
-                        </Button>
-                      </div>
-                      
-                      {isCameraActive && (
-                        <div className="mt-2 aspect-video bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center">
-                          <div className="text-center">
-                            <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm text-gray-500">Camera active, capturing...</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {imageSrc && !isCameraActive && (
-                        <div className="mt-2 relative">
-                          <img 
-                            src={imageSrc} 
-                            alt="Captured evidence" 
-                            className="rounded-md max-h-[200px] w-auto"
-                          />
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="absolute top-2 right-2"
-                            onClick={() => setImageSrc(null)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <Button type="submit" className="w-full" disabled={isUploading}>
-                      {isUploading ? "Submitting..." : "Submit Activity Log"}
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
-
-              {/* Impact Record Form */}
-              <TabsContent value="impact" className="mt-0">
-                <Form {...impactForm}>
-                  <form 
-                    onSubmit={impactForm.handleSubmit(onImpactSubmit)} 
-                    className="space-y-6"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={impactForm.control}
-                        name="metricId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Impact Metric</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select metric" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {impactMetrics.map((metric) => (
-                                  <SelectItem key={metric.id} value={metric.id}>
-                                    {metric.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={impactForm.control}
-                        name="value"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Value</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                placeholder="Enter quantity" 
-                                {...field} 
-                              />
-                            </FormControl>
-                            <FormDescription>
-                              {impactMetrics.find(m => m.id === impactForm.watch("metricId"))?.unit || "units"}
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={impactForm.control}
-                        name="date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="flex items-end gap-2">
-                        <div className="flex-grow">
-                          <FormField
-                            control={impactForm.control}
-                            name="location"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Location</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="City, Country" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="icon"
-                          onClick={getLocation}
-                          disabled={isLocationLoading}
-                        >
-                          {isLocationLoading ? (
-                            <Clock className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <MapPin className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <FormField
-                      control={impactForm.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Describe the impact observed..." 
-                              className="resize-none" 
-                              {...field} 
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={impactForm.control}
-                      name="evidenceType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Evidence Type</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select evidence type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {evidenceTypes.map((type) => (
-                                <SelectItem key={type.id} value={type.id}>
-                                  {type.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <div className="space-y-2">
-                      <FormLabel>Attach Evidence</FormLabel>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={toggleCamera}
-                          className="flex items-center gap-2"
-                        >
-                          <Camera className="h-4 w-4" />
-                          {isCameraActive ? "Cancel" : "Take Photo"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex items-center gap-2"
-                        >
-                          <Upload className="h-4 w-4" />
-                          Upload File
-                        </Button>
-                      </div>
-                      
-                      {isCameraActive && (
-                        <div className="mt-2 aspect-video bg-gray-100 dark:bg-gray-800 rounded-md flex items-center justify-center">
-                          <div className="text-center">
-                            <Camera className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm text-gray-500">Camera active, capturing...</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {imageSrc && !isCameraActive && (
-                        <div className="mt-2 relative">
-                          <img 
-                            src={imageSrc} 
-                            alt="Captured evidence" 
-                            className="rounded-md max-h-[200px] w-auto"
-                          />
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="absolute top-2 right-2"
-                            onClick={() => setImageSrc(null)}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <Button type="submit" className="w-full" disabled={isUploading}>
-                      {isUploading ? "Submitting..." : "Submit Impact Record"}
-                    </Button>
-                  </form>
-                </Form>
-              </TabsContent>
-              </CardContent>
-            </Tabs>
-          </Card>
-        </div>
-        
-        <div className="space-y-6">
-          {/* Offline Queue */}
+        {/* Activity Log Tab */}
+        <TabsContent value="activity" className="mt-6">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Pending Submissions
-              </CardTitle>
+            <CardHeader>
+              <CardTitle>Log Volunteer Activity</CardTitle>
               <CardDescription>
-                Entries waiting to be synced
+                Record your volunteer hours and activities in the field
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {pendingSubmissions.length > 0 ? (
-                <div className="space-y-3">
-                  {pendingSubmissions.map((submission) => (
-                    <div
-                      key={submission.id}
-                      className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3 last:border-0 last:pb-0"
-                    >
-                      <div>
-                        <div className="font-medium text-sm">{submission.summary}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {submission.project} • {submission.date}
-                        </div>
-                      </div>
-                      <Button size="sm" variant="ghost" className="text-primary">
-                        <Upload className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  
-                  <Button className="w-full mt-4" disabled={isOnline}>
-                    {isOnline ? (
-                      <span className="flex items-center gap-2">
-                        <Check className="h-4 w-4" />
-                        All synced
-                      </span>
+              <Form {...activityForm}>
+                <form onSubmit={activityForm.handleSubmit(onActivitySubmit)} className="space-y-6">
+                  <FormField
+                    control={activityForm.control}
+                    name="projectId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-project">
+                              <SelectValue placeholder="Select a project" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {projects.map((project: any) => (
+                              <SelectItem key={project.id} value={project.id.toString()}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={activityForm.control}
+                    name="taskId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Task (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a task (optional)" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {filteredTasks.map((task: any) => (
+                              <SelectItem key={task.id} value={task.id.toString()}>
+                                {task.title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={activityForm.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" data-testid="input-activity-date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={activityForm.control}
+                      name="hours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Hours Spent</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" step="0.5" placeholder="4" data-testid="input-activity-hours" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={activityForm.control}
+                    name="skillsApplied"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Skills Applied</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="e.g., Teaching, Engineering, Project Management" 
+                            data-testid="input-skills-applied"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={activityForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="Describe what you did during this activity" 
+                            rows={4}
+                            data-testid="textarea-activity-description"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={activityForm.control}
+                    name="outcomes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Outcomes (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="What was achieved or learned?" 
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={activityMutation.isPending}
+                    data-testid="button-submit-activity"
+                  >
+                    {activityMutation.isPending ? (
+                      <>
+                        <Clock className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
                     ) : (
-                      "Sync All (When Online)"
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Log Activity
+                      </>
                     )}
                   </Button>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <Check className="h-10 w-10 text-green-500 mx-auto mb-2" />
-                  <p className="text-gray-500 dark:text-gray-400">All entries synchronized</p>
-                </div>
-              )}
+                </form>
+              </Form>
             </CardContent>
           </Card>
-          
-          {/* Quick Tips */}
+        </TabsContent>
+
+        {/* Impact Recording Tab */}
+        <TabsContent value="impact" className="mt-6">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Mobile Collection Tips</CardTitle>
+            <CardHeader>
+              <CardTitle>Record Impact Data</CardTitle>
+              <CardDescription>
+                Track measurable outcomes and impact metrics from your projects
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li className="flex gap-2">
-                  <div className="rounded-full bg-primary/10 p-1 text-primary">
-                    <WifiOff className="h-4 w-4" />
+              <Form {...impactForm}>
+                <form onSubmit={impactForm.handleSubmit(onImpactSubmit)} className="space-y-6">
+                  <FormField
+                    control={impactForm.control}
+                    name="projectId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-impact-project">
+                              <SelectValue placeholder="Select a project" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {projects.map((project: any) => (
+                              <SelectItem key={project.id} value={project.id.toString()}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={impactForm.control}
+                    name="metricId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Impact Metric</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-metric">
+                              <SelectValue placeholder="Select a metric" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {impactMetrics.map((metric: any) => (
+                              <SelectItem key={metric.id} value={metric.id.toString()}>
+                                {metric.name} {metric.unit && `(${metric.unit})`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={impactForm.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="date" data-testid="input-impact-date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={impactForm.control}
+                      name="value"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Value</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="number" placeholder="100" data-testid="input-impact-value" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  <span>Toggle offline mode when in areas with poor connectivity</span>
-                </li>
-                <li className="flex gap-2">
-                  <div className="rounded-full bg-primary/10 p-1 text-primary">
-                    <MapPin className="h-4 w-4" />
-                  </div>
-                  <span>Use location detection to automatically fill in your position</span>
-                </li>
-                <li className="flex gap-2">
-                  <div className="rounded-full bg-primary/10 p-1 text-primary">
-                    <Camera className="h-4 w-4" />
-                  </div>
-                  <span>Take photos as evidence for more accurate impact tracking</span>
-                </li>
-                <li className="flex gap-2">
-                  <div className="rounded-full bg-primary/10 p-1 text-primary">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <span>Log activities daily for better accuracy and recall</span>
-                </li>
-              </ul>
+
+                  <FormField
+                    control={impactForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="Describe the impact measured and any relevant context" 
+                            rows={4}
+                            data-testid="textarea-impact-notes"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={impactMutation.isPending}
+                    data-testid="button-submit-impact"
+                  >
+                    {impactMutation.isPending ? (
+                      <>
+                        <Clock className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Record Impact
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
-            <CardFooter>
-              <Button variant="link" className="px-0">
-                View Data Collection Guide
-              </Button>
-            </CardFooter>
           </Card>
-        </div>
-      </div>
-    </>
+        </TabsContent>
+
+        {/* Recent Entries Tab */}
+        <TabsContent value="history" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity Logs</CardTitle>
+              <CardDescription>
+                Your most recent volunteer activities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentActivities.length === 0 ? (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No activities logged yet
+                  </p>
+                ) : (
+                  recentActivities.slice(0, 10).map((activity: any) => {
+                    const project = projects.find((p: any) => p.id === activity.projectId);
+                    return (
+                      <div key={activity.id} className="p-4 border rounded-lg">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold">{project?.name || "Unknown Project"}</h4>
+                              <Badge variant="secondary">{activity.hours}h</Badge>
+                            </div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                              {activity.description}
+                            </p>
+                            <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                              <span>
+                                {new Date(activity.date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                              {activity.skillsApplied && activity.skillsApplied.length > 0 && (
+                                <span className="flex items-center gap-1">
+                                  Skills: {activity.skillsApplied.join(', ')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

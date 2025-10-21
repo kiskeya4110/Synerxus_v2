@@ -7,6 +7,9 @@ import {
   impactMetrics, 
   projectImpacts,
   projectAssignments,
+  volunteers,
+  matchableOrganizations,
+  matches,
   type User, 
   type InsertUser,
   type Organization,
@@ -22,7 +25,13 @@ import {
   type ProjectImpact,
   type InsertProjectImpact,
   type ProjectAssignment,
-  type InsertProjectAssignment
+  type InsertProjectAssignment,
+  type Volunteer,
+  type InsertVolunteer,
+  type MatchableOrganization,
+  type InsertMatchableOrganization,
+  type Match,
+  type InsertMatch
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 
@@ -107,6 +116,29 @@ export interface IStorage {
   listProjectAssignmentsByProject(projectId: number): Promise<ProjectAssignment[]>;
   listProjectAssignmentsByVolunteer(volunteerId: number): Promise<ProjectAssignment[]>;
   deleteProjectAssignment(id: number): Promise<boolean>;
+
+  // Volunteer operations (matching system)
+  getVolunteer(id: string): Promise<Volunteer | undefined>;
+  createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer>;
+  updateVolunteer(id: string, volunteer: Partial<InsertVolunteer>): Promise<Volunteer | undefined>;
+  deleteVolunteer(id: string): Promise<boolean>;
+  listVolunteers(): Promise<Volunteer[]>;
+
+  // Matchable Organization operations
+  getMatchableOrganization(id: string): Promise<MatchableOrganization | undefined>;
+  createMatchableOrganization(organization: InsertMatchableOrganization): Promise<MatchableOrganization>;
+  updateMatchableOrganization(id: string, organization: Partial<InsertMatchableOrganization>): Promise<MatchableOrganization | undefined>;
+  deleteMatchableOrganization(id: string): Promise<boolean>;
+  listMatchableOrganizations(): Promise<MatchableOrganization[]>;
+
+  // Match operations
+  getMatch(id: number): Promise<Match | undefined>;
+  createMatch(match: InsertMatch): Promise<Match>;
+  updateMatch(id: number, match: Partial<InsertMatch>): Promise<Match | undefined>;
+  deleteMatch(id: number): Promise<boolean>;
+  listMatches(): Promise<Match[]>;
+  listMatchesByVolunteer(volunteerId: string): Promise<Match[]>;
+  listMatchesByOrganization(organizationId: string): Promise<Match[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -120,6 +152,9 @@ export class MemStorage implements IStorage {
   private opportunities: Map<number, any>;
   private applications: Map<number, any>;
   private projectAssignments: Map<number, ProjectAssignment>;
+  private volunteersMap: Map<string, Volunteer>;
+  private matchableOrganizationsMap: Map<string, MatchableOrganization>;
+  private matchesMap: Map<number, Match>;
 
   private userIdCounter: number;
   private organizationIdCounter: number;
@@ -131,6 +166,7 @@ export class MemStorage implements IStorage {
   private opportunityIdCounter: number;
   private applicationIdCounter: number;
   private projectAssignmentIdCounter: number;
+  private matchIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -143,6 +179,9 @@ export class MemStorage implements IStorage {
     this.opportunities = new Map();
     this.applications = new Map();
     this.projectAssignments = new Map();
+    this.volunteersMap = new Map();
+    this.matchableOrganizationsMap = new Map();
+    this.matchesMap = new Map();
 
     this.userIdCounter = 1;
     this.organizationIdCounter = 1;
@@ -154,6 +193,7 @@ export class MemStorage implements IStorage {
     this.opportunityIdCounter = 1;
     this.applicationIdCounter = 1;
     this.projectAssignmentIdCounter = 1;
+    this.matchIdCounter = 1;
 
     // Initialize with some common SDG-related impact metrics
     this.initializeImpactMetrics();
@@ -767,6 +807,138 @@ export class MemStorage implements IStorage {
 
   async deleteProjectAssignment(id: number): Promise<boolean> {
     return this.projectAssignments.delete(id);
+  }
+
+  // Volunteer operations (matching system)
+  async getVolunteer(id: string): Promise<Volunteer | undefined> {
+    return this.volunteersMap.get(id);
+  }
+
+  async createVolunteer(insertVolunteer: InsertVolunteer): Promise<Volunteer> {
+    const now = new Date();
+    const volunteer: Volunteer = {
+      ...insertVolunteer,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.volunteersMap.set(volunteer.id, volunteer);
+    return volunteer;
+  }
+
+  async updateVolunteer(id: string, volunteerData: Partial<InsertVolunteer>): Promise<Volunteer | undefined> {
+    const existing = await this.getVolunteer(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: Volunteer = {
+      ...existing,
+      ...volunteerData,
+      updatedAt: new Date()
+    };
+
+    this.volunteersMap.set(id, updated);
+    return updated;
+  }
+
+  async deleteVolunteer(id: string): Promise<boolean> {
+    return this.volunteersMap.delete(id);
+  }
+
+  async listVolunteers(): Promise<Volunteer[]> {
+    return Array.from(this.volunteersMap.values());
+  }
+
+  // Matchable Organization operations
+  async getMatchableOrganization(id: string): Promise<MatchableOrganization | undefined> {
+    return this.matchableOrganizationsMap.get(id);
+  }
+
+  async createMatchableOrganization(insertOrg: InsertMatchableOrganization): Promise<MatchableOrganization> {
+    const now = new Date();
+    const organization: MatchableOrganization = {
+      ...insertOrg,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.matchableOrganizationsMap.set(organization.id, organization);
+    return organization;
+  }
+
+  async updateMatchableOrganization(id: string, orgData: Partial<InsertMatchableOrganization>): Promise<MatchableOrganization | undefined> {
+    const existing = await this.getMatchableOrganization(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: MatchableOrganization = {
+      ...existing,
+      ...orgData,
+      updatedAt: new Date()
+    };
+
+    this.matchableOrganizationsMap.set(id, updated);
+    return updated;
+  }
+
+  async deleteMatchableOrganization(id: string): Promise<boolean> {
+    return this.matchableOrganizationsMap.delete(id);
+  }
+
+  async listMatchableOrganizations(): Promise<MatchableOrganization[]> {
+    return Array.from(this.matchableOrganizationsMap.values());
+  }
+
+  // Match operations
+  async getMatch(id: number): Promise<Match | undefined> {
+    return this.matchesMap.get(id);
+  }
+
+  async createMatch(insertMatch: InsertMatch): Promise<Match> {
+    const id = this.matchIdCounter++;
+    const now = new Date();
+    const match: Match = {
+      ...insertMatch,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.matchesMap.set(id, match);
+    return match;
+  }
+
+  async updateMatch(id: number, matchData: Partial<InsertMatch>): Promise<Match | undefined> {
+    const existing = await this.getMatch(id);
+    if (!existing) {
+      return undefined;
+    }
+
+    const updated: Match = {
+      ...existing,
+      ...matchData,
+      updatedAt: new Date()
+    };
+
+    this.matchesMap.set(id, updated);
+    return updated;
+  }
+
+  async deleteMatch(id: number): Promise<boolean> {
+    return this.matchesMap.delete(id);
+  }
+
+  async listMatches(): Promise<Match[]> {
+    return Array.from(this.matchesMap.values());
+  }
+
+  async listMatchesByVolunteer(volunteerId: string): Promise<Match[]> {
+    return Array.from(this.matchesMap.values())
+      .filter(match => match.volunteerId === volunteerId);
+  }
+
+  async listMatchesByOrganization(organizationId: string): Promise<Match[]> {
+    return Array.from(this.matchesMap.values())
+      .filter(match => match.organizationId === organizationId);
   }
 }
 

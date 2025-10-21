@@ -10,6 +10,7 @@ import {
   volunteers,
   matchableOrganizations,
   matches,
+  calendarEvents,
   type User, 
   type InsertUser,
   type Organization,
@@ -31,7 +32,9 @@ import {
   type MatchableOrganization,
   type InsertMatchableOrganization,
   type Match,
-  type InsertMatch
+  type InsertMatch,
+  type CalendarEvent,
+  type InsertCalendarEvent
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 
@@ -140,6 +143,13 @@ export interface IStorage {
   listMatches(): Promise<Match[]>;
   listMatchesByVolunteer(volunteerId: string): Promise<Match[]>;
   listMatchesByOrganization(organizationId: string): Promise<Match[]>;
+
+  // Calendar Event operations
+  getCalendarEvent(id: number): Promise<CalendarEvent | undefined>;
+  createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
+  updateCalendarEvent(id: number, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent | undefined>;
+  deleteCalendarEvent(id: number): Promise<boolean>;
+  listCalendarEvents(): Promise<CalendarEvent[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -156,10 +166,12 @@ export class MemStorage implements IStorage {
   private volunteersMap: Map<string, Volunteer>;
   private matchableOrganizationsMap: Map<string, MatchableOrganization>;
   private matchesMap: Map<number, Match>;
+  private calendarEvents: Map<number, CalendarEvent>;
 
   private userIdCounter: number;
   private organizationIdCounter: number;
   private projectIdCounter: number;
+  private calendarEventIdCounter: number;
   private taskIdCounter: number;
   private volunteerActivityIdCounter: number;
   private impactMetricIdCounter: number;
@@ -183,6 +195,7 @@ export class MemStorage implements IStorage {
     this.volunteersMap = new Map();
     this.matchableOrganizationsMap = new Map();
     this.matchesMap = new Map();
+    this.calendarEvents = new Map();
 
     this.userIdCounter = 1;
     this.organizationIdCounter = 1;
@@ -195,6 +208,7 @@ export class MemStorage implements IStorage {
     this.applicationIdCounter = 1;
     this.projectAssignmentIdCounter = 1;
     this.matchIdCounter = 1;
+    this.calendarEventIdCounter = 1;
 
     // Initialize with some common SDG-related impact metrics
     this.initializeImpactMetrics();
@@ -1014,6 +1028,45 @@ export class MemStorage implements IStorage {
   async listMatchesByOrganization(organizationId: string): Promise<Match[]> {
     return Array.from(this.matchesMap.values())
       .filter(match => match.organizationId === organizationId);
+  }
+
+  // Calendar Event operations
+  async getCalendarEvent(id: number): Promise<CalendarEvent | undefined> {
+    return this.calendarEvents.get(id);
+  }
+
+  async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
+    const id = this.calendarEventIdCounter++;
+    const now = new Date();
+    const calendarEvent: CalendarEvent = {
+      ...event,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.calendarEvents.set(id, calendarEvent);
+    return calendarEvent;
+  }
+
+  async updateCalendarEvent(id: number, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent | undefined> {
+    const existing = this.calendarEvents.get(id);
+    if (!existing) return undefined;
+
+    const updated: CalendarEvent = {
+      ...existing,
+      ...event,
+      updatedAt: new Date()
+    };
+    this.calendarEvents.set(id, updated);
+    return updated;
+  }
+
+  async deleteCalendarEvent(id: number): Promise<boolean> {
+    return this.calendarEvents.delete(id);
+  }
+
+  async listCalendarEvents(): Promise<CalendarEvent[]> {
+    return Array.from(this.calendarEvents.values());
   }
 }
 

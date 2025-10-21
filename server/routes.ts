@@ -12,7 +12,8 @@ import {
   insertProjectImpactSchema,
   insertVolunteerSchema,
   insertMatchableOrganizationSchema,
-  insertMatchSchema
+  insertMatchSchema,
+  insertCalendarEventSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -539,6 +540,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // === Calendar Events Routes ===
+  app.get("/api/calendar-events", async (req, res) => {
+    try {
+      const events = await storage.listCalendarEvents();
+      res.json(events);
+    } catch (err) {
+      console.error("Error fetching calendar events:", err);
+      res.status(500).json({ message: "Failed to fetch calendar events" });
+    }
+  });
+
+  app.get("/api/calendar-events/:id", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const event = await storage.getCalendarEvent(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ message: "Calendar event not found" });
+      }
+      
+      res.json(event);
+    } catch (err) {
+      console.error("Error fetching calendar event:", err);
+      res.status(500).json({ message: "Failed to fetch calendar event" });
+    }
+  });
+
+  app.post("/api/calendar-events", async (req, res) => {
+    try {
+      const eventData = insertCalendarEventSchema.parse(req.body);
+      const event = await storage.createCalendarEvent(eventData);
+      
+      broadcastUpdate("calendar_event_created", event);
+      res.status(201).json(event);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/calendar-events/:id", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const eventData = insertCalendarEventSchema.partial().parse(req.body);
+      
+      const updatedEvent = await storage.updateCalendarEvent(eventId, eventData);
+      if (!updatedEvent) {
+        return res.status(404).json({ message: "Calendar event not found" });
+      }
+      
+      broadcastUpdate("calendar_event_updated", updatedEvent);
+      res.json(updatedEvent);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/calendar-events/:id", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const deleted = await storage.deleteCalendarEvent(eventId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Calendar event not found" });
+      }
+      
+      broadcastUpdate("calendar_event_deleted", { id: eventId });
+      res.status(204).send();
+    } catch (err) {
+      console.error("Error deleting calendar event:", err);
+      res.status(500).json({ message: "Failed to delete calendar event" });
     }
   });
 

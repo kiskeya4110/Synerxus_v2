@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb, doublePrecision, sql } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, doublePrecision, sql, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -245,7 +245,10 @@ export const matches = pgTable("matches", {
   matchedOn: timestamp("matched_on").defaultNow().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  // Unique constraint: one match per volunteer-organization pair
+  uniqueVolunteerOrg: uniqueIndex("unique_volunteer_org_match").on(table.volunteerId, table.organizationId),
+}));
 
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({

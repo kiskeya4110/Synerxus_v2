@@ -135,6 +135,7 @@ export interface IStorage {
   getMatch(id: number): Promise<Match | undefined>;
   createMatch(match: InsertMatch): Promise<Match>;
   updateMatch(id: number, match: Partial<InsertMatch>): Promise<Match | undefined>;
+  upsertMatch(match: InsertMatch): Promise<Match>;
   deleteMatch(id: number): Promise<boolean>;
   listMatches(): Promise<Match[]>;
   listMatchesByVolunteer(volunteerId: string): Promise<Match[]>;
@@ -952,6 +953,49 @@ export class MemStorage implements IStorage {
 
     this.matchesMap.set(id, updated);
     return updated;
+  }
+
+  async upsertMatch(insertMatch: InsertMatch): Promise<Match> {
+    // Validate that volunteer and organization exist
+    const volunteer = await this.getVolunteer(insertMatch.volunteerId);
+    if (!volunteer) {
+      throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
+    }
+
+    const organization = await this.getMatchableOrganization(insertMatch.organizationId);
+    if (!organization) {
+      throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
+    }
+
+    // Check if match already exists for this volunteer-organization pair
+    const existingMatch = Array.from(this.matchesMap.values()).find(
+      match => match.volunteerId === insertMatch.volunteerId && 
+               match.organizationId === insertMatch.organizationId
+    );
+
+    if (existingMatch) {
+      // Update existing match with new score
+      const updated: Match = {
+        ...existingMatch,
+        score: insertMatch.score,
+        matchedOn: new Date(),
+        updatedAt: new Date()
+      };
+      this.matchesMap.set(existingMatch.id, updated);
+      return updated;
+    } else {
+      // Create new match
+      const id = this.matchIdCounter++;
+      const now = new Date();
+      const match: Match = {
+        ...insertMatch,
+        id,
+        createdAt: now,
+        updatedAt: now
+      };
+      this.matchesMap.set(id, match);
+      return match;
+    }
   }
 
   async deleteMatch(id: number): Promise<boolean> {

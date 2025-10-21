@@ -1027,7 +1027,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/matches", async (req, res) => {
     try {
       const matchData = insertMatchSchema.parse(req.body);
-      const match = await storage.createMatch(matchData);
+      // Use upsert to prevent duplicate matches for the same volunteer-organization pair
+      const match = await storage.upsertMatch(matchData);
       
       broadcastUpdate("match_created", match);
       res.status(201).json(match);

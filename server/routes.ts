@@ -9,7 +9,10 @@ import {
   insertTaskSchema, 
   insertVolunteerActivitySchema, 
   insertImpactMetricSchema, 
-  insertProjectImpactSchema
+  insertProjectImpactSchema,
+  insertVolunteerSchema,
+  insertMatchableOrganizationSchema,
+  insertMatchSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -830,6 +833,241 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error deleting project assignment:", err);
       res.status(500).json({ message: "Failed to delete project assignment" });
+    }
+  });
+
+  // === Volunteer Routes (Matching System) ===
+  app.get("/api/volunteers", async (req, res) => {
+    try {
+      const volunteers = await storage.listVolunteers();
+      res.json(volunteers);
+    } catch (err) {
+      console.error("Error fetching volunteers:", err);
+      res.status(500).json({ message: "Failed to fetch volunteers" });
+    }
+  });
+
+  app.get("/api/volunteers/:id", async (req, res) => {
+    try {
+      const volunteerId = req.params.id;
+      const volunteer = await storage.getVolunteer(volunteerId);
+      
+      if (!volunteer) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      
+      res.json(volunteer);
+    } catch (err) {
+      console.error("Error fetching volunteer:", err);
+      res.status(500).json({ message: "Failed to fetch volunteer" });
+    }
+  });
+
+  app.post("/api/volunteers", async (req, res) => {
+    try {
+      const volunteerData = insertVolunteerSchema.parse(req.body);
+      const volunteer = await storage.createVolunteer(volunteerData);
+      
+      broadcastUpdate("volunteer_created", volunteer);
+      res.status(201).json(volunteer);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/volunteers/:id", async (req, res) => {
+    try {
+      const volunteerId = req.params.id;
+      const volunteerData = insertVolunteerSchema.partial().parse(req.body);
+      
+      const updatedVolunteer = await storage.updateVolunteer(volunteerId, volunteerData);
+      if (!updatedVolunteer) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      
+      broadcastUpdate("volunteer_updated", updatedVolunteer);
+      res.json(updatedVolunteer);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/volunteers/:id", async (req, res) => {
+    try {
+      const volunteerId = req.params.id;
+      const deleted = await storage.deleteVolunteer(volunteerId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      
+      broadcastUpdate("volunteer_deleted", { id: volunteerId });
+      res.status(204).send();
+    } catch (err) {
+      console.error("Error deleting volunteer:", err);
+      res.status(500).json({ message: "Failed to delete volunteer" });
+    }
+  });
+
+  // === Matchable Organization Routes ===
+  app.get("/api/matchable-organizations", async (req, res) => {
+    try {
+      const organizations = await storage.listMatchableOrganizations();
+      res.json(organizations);
+    } catch (err) {
+      console.error("Error fetching matchable organizations:", err);
+      res.status(500).json({ message: "Failed to fetch matchable organizations" });
+    }
+  });
+
+  app.get("/api/matchable-organizations/:id", async (req, res) => {
+    try {
+      const organizationId = req.params.id;
+      const organization = await storage.getMatchableOrganization(organizationId);
+      
+      if (!organization) {
+        return res.status(404).json({ message: "Matchable organization not found" });
+      }
+      
+      res.json(organization);
+    } catch (err) {
+      console.error("Error fetching matchable organization:", err);
+      res.status(500).json({ message: "Failed to fetch matchable organization" });
+    }
+  });
+
+  app.post("/api/matchable-organizations", async (req, res) => {
+    try {
+      const organizationData = insertMatchableOrganizationSchema.parse(req.body);
+      const organization = await storage.createMatchableOrganization(organizationData);
+      
+      broadcastUpdate("matchable_organization_created", organization);
+      res.status(201).json(organization);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/matchable-organizations/:id", async (req, res) => {
+    try {
+      const organizationId = req.params.id;
+      const organizationData = insertMatchableOrganizationSchema.partial().parse(req.body);
+      
+      const updatedOrganization = await storage.updateMatchableOrganization(organizationId, organizationData);
+      if (!updatedOrganization) {
+        return res.status(404).json({ message: "Matchable organization not found" });
+      }
+      
+      broadcastUpdate("matchable_organization_updated", updatedOrganization);
+      res.json(updatedOrganization);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/matchable-organizations/:id", async (req, res) => {
+    try {
+      const organizationId = req.params.id;
+      const deleted = await storage.deleteMatchableOrganization(organizationId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Matchable organization not found" });
+      }
+      
+      broadcastUpdate("matchable_organization_deleted", { id: organizationId });
+      res.status(204).send();
+    } catch (err) {
+      console.error("Error deleting matchable organization:", err);
+      res.status(500).json({ message: "Failed to delete matchable organization" });
+    }
+  });
+
+  // === Match Routes ===
+  app.get("/api/matches", async (req, res) => {
+    try {
+      const { volunteerId, organizationId } = req.query;
+      
+      let matches;
+      if (volunteerId) {
+        matches = await storage.listMatchesByVolunteer(volunteerId as string);
+      } else if (organizationId) {
+        matches = await storage.listMatchesByOrganization(organizationId as string);
+      } else {
+        matches = await storage.listMatches();
+      }
+      
+      res.json(matches);
+    } catch (err) {
+      console.error("Error fetching matches:", err);
+      res.status(500).json({ message: "Failed to fetch matches" });
+    }
+  });
+
+  app.get("/api/matches/:id", async (req, res) => {
+    try {
+      const matchId = parseInt(req.params.id);
+      const match = await storage.getMatch(matchId);
+      
+      if (!match) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+      
+      res.json(match);
+    } catch (err) {
+      console.error("Error fetching match:", err);
+      res.status(500).json({ message: "Failed to fetch match" });
+    }
+  });
+
+  app.post("/api/matches", async (req, res) => {
+    try {
+      const matchData = insertMatchSchema.parse(req.body);
+      const match = await storage.createMatch(matchData);
+      
+      broadcastUpdate("match_created", match);
+      res.status(201).json(match);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/matches/:id", async (req, res) => {
+    try {
+      const matchId = parseInt(req.params.id);
+      const matchData = insertMatchSchema.partial().parse(req.body);
+      
+      const updatedMatch = await storage.updateMatch(matchId, matchData);
+      if (!updatedMatch) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+      
+      broadcastUpdate("match_updated", updatedMatch);
+      res.json(updatedMatch);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/matches/:id", async (req, res) => {
+    try {
+      const matchId = parseInt(req.params.id);
+      const deleted = await storage.deleteMatch(matchId);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Match not found" });
+      }
+      
+      broadcastUpdate("match_deleted", { id: matchId });
+      res.status(204).send();
+    } catch (err) {
+      console.error("Error deleting match:", err);
+      res.status(500).json({ message: "Failed to delete match" });
     }
   });
 

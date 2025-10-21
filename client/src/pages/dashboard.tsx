@@ -169,8 +169,9 @@ export default function Dashboard() {
     
     switch (title) {
       case "Hours Contributed":
+      case "Total Hours":
         detailData = {
-          title: "Volunteer Hours Breakdown",
+          title: dashboardType === "volunteer" ? "Volunteer Hours Breakdown" : "Total Volunteer Hours",
           items: filteredData.activities.map((a: any) => ({
             label: formatDate(new Date(a.date)),
             value: `${a.hours} hours`,
@@ -196,6 +197,42 @@ export default function Dashboard() {
             label: p.name,
             value: p.status,
             location: p.location,
+          })),
+        };
+        break;
+      case "Active Volunteers":
+        const volunteerIds = new Set(filteredData.activities.map((a: any) => a.userId));
+        detailData = {
+          title: "Active Volunteers",
+          items: Array.from(volunteerIds).map((userId: any) => {
+            const userActivities = filteredData.activities.filter((a: any) => a.userId === userId);
+            const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+            return {
+              label: `Volunteer #${userId}`,
+              value: `${totalHours} hours`,
+              project: `${userActivities.length} activities`,
+            };
+          }),
+        };
+        break;
+      case "SDGs Addressed":
+        const sdgDetails = new Map();
+        filteredData.projects.forEach((project: any) => {
+          if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+            project.sdgGoals.forEach((goal: number) => {
+              if (!sdgDetails.has(goal)) {
+                sdgDetails.set(goal, []);
+              }
+              sdgDetails.get(goal).push(project.name);
+            });
+          }
+        });
+        detailData = {
+          title: "SDG Goals Addressed",
+          items: Array.from(sdgDetails.entries()).map(([goal, projectNames]) => ({
+            label: `SDG ${goal}`,
+            value: `${projectNames.length} projects`,
+            project: projectNames.slice(0, 3).join(", ") + (projectNames.length > 3 ? "..." : ""),
           })),
         };
         break;
@@ -294,6 +331,7 @@ export default function Dashboard() {
               value={kpis.volunteers}
               icon={<Users className="h-6 w-6" />}
               trend="+15%"
+              onClick={() => handleKPIClick("Active Volunteers", kpis.volunteers)}
               data-testid="kpi-volunteers"
             />
             <StatsCard
@@ -315,6 +353,7 @@ export default function Dashboard() {
               title="SDGs Addressed"
               value={kpis.sdgs}
               icon={<Globe className="h-6 w-6" />}
+              onClick={() => handleKPIClick("SDGs Addressed", kpis.sdgs)}
               data-testid="kpi-sdgs"
             />
           </>

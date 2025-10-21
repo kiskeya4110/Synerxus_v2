@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,6 +37,7 @@ const SDG_OPTIONS = [
 
 // Form schema
 const formSchema = insertVolunteerSchema.extend({
+  email: z.string().email("Valid email is required"),
   name: z.string().min(1, "Name is required"),
   skills: z.array(z.string()).min(1, "At least one skill is required"),
   interests: z.array(z.string()).min(1, "At least one interest is required"),
@@ -61,19 +62,21 @@ export default function VolunteerProfileSettings() {
     queryKey: ["/api/volunteers"],
   });
 
-  // Find the volunteer profile for current user (match by email or other identifier)
-  const existingProfile = volunteers?.find(v => v.name === currentUser?.displayName);
+  // Find the volunteer profile for current user (match by email)
+  const existingProfile = volunteers?.find(v => v.email === currentUser?.email);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: existingProfile?.name || currentUser?.displayName || "",
-      skills: existingProfile?.skills || [],
-      interests: existingProfile?.interests || [],
-      location: existingProfile?.location || "",
-      sdgGoals: existingProfile?.sdgGoals || [],
+      email: "",
+      name: "",
+      skills: [],
+      interests: [],
+      location: "",
+      sdgGoals: [],
     },
     values: existingProfile ? {
+      email: existingProfile.email,
       name: existingProfile.name,
       skills: existingProfile.skills,
       interests: existingProfile.interests,
@@ -81,6 +84,16 @@ export default function VolunteerProfileSettings() {
       sdgGoals: existingProfile.sdgGoals,
     } : undefined,
   });
+
+  // Update form when currentUser loads (for new profile creation)
+  useEffect(() => {
+    if (currentUser?.email && !existingProfile) {
+      form.setValue("email", currentUser.email);
+      if (currentUser.displayName) {
+        form.setValue("name", currentUser.displayName);
+      }
+    }
+  }, [currentUser, existingProfile, form]);
 
   // Create mutation
   const createMutation = useMutation({
@@ -202,6 +215,30 @@ export default function VolunteerProfileSettings() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Email - Read-only, linked to user account */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        disabled
+                        className="bg-muted"
+                        data-testid="input-volunteer-email"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This email is linked to your account
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Name */}
               <FormField
                 control={form.control}

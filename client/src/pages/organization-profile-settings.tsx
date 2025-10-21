@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,6 +38,7 @@ const SDG_OPTIONS = [
 
 // Form schema
 const formSchema = insertMatchableOrganizationSchema.extend({
+  email: z.string().email("Valid email is required"),
   name: z.string().min(1, "Organization name is required"),
   mission: z.string().min(10, "Mission statement must be at least 10 characters"),
   location: z.string().min(1, "Location is required"),
@@ -61,19 +62,21 @@ export default function OrganizationProfileSettings() {
     queryKey: ["/api/matchable-organizations"],
   });
 
-  // Find the organization profile for current user
-  const existingProfile = organizations?.find(o => o.name === currentUser?.displayName);
+  // Find the organization profile for current user (match by email)
+  const existingProfile = organizations?.find(o => o.email === currentUser?.email);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: existingProfile?.name || currentUser?.displayName || "",
-      mission: existingProfile?.mission || "",
-      location: existingProfile?.location || "",
-      needs: existingProfile?.needs || [],
-      sdgFocus: existingProfile?.sdgFocus || [],
+      email: "",
+      name: "",
+      mission: "",
+      location: "",
+      needs: [],
+      sdgFocus: [],
     },
     values: existingProfile ? {
+      email: existingProfile.email,
       name: existingProfile.name,
       mission: existingProfile.mission,
       location: existingProfile.location,
@@ -81,6 +84,16 @@ export default function OrganizationProfileSettings() {
       sdgFocus: existingProfile.sdgFocus,
     } : undefined,
   });
+
+  // Update form when currentUser loads (for new profile creation)
+  useEffect(() => {
+    if (currentUser?.email && !existingProfile) {
+      form.setValue("email", currentUser.email);
+      if (currentUser.displayName) {
+        form.setValue("name", currentUser.displayName);
+      }
+    }
+  }, [currentUser, existingProfile, form]);
 
   // Create mutation
   const createMutation = useMutation({
@@ -187,6 +200,30 @@ export default function OrganizationProfileSettings() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Email - Read-only, linked to user account */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        disabled
+                        className="bg-muted"
+                        data-testid="input-org-email"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This email is linked to your account
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Organization Name */}
               <FormField
                 control={form.control}

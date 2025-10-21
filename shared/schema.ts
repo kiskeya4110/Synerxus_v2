@@ -213,6 +213,7 @@ export const projectAssignments = pgTable("project_assignments", {
 // Volunteers - Simplified volunteer schema for matching system
 export const volunteers = pgTable("volunteers", {
   id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
   name: text("name").notNull(),
   skills: text("skills").array().notNull(),
   interests: text("interests").array().notNull(),
@@ -225,6 +226,7 @@ export const volunteers = pgTable("volunteers", {
 // Matchable Organizations - Organizations for matching with volunteers
 export const matchableOrganizations = pgTable("matchable_organizations", {
   id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
   name: text("name").notNull(),
   mission: text("mission").notNull(),
   needs: text("needs").array().notNull(),

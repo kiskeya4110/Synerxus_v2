@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, doublePrecision } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -210,6 +210,41 @@ export const projectAssignments = pgTable("project_assignments", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Volunteers - Simplified volunteer schema for matching system
+export const volunteers = pgTable("volunteers", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  skills: text("skills").array().notNull().default([]),
+  interests: text("interests").array().notNull().default([]),
+  location: text("location").notNull(),
+  sdgGoals: text("sdg_goals").array().notNull().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Matchable Organizations - Organizations for matching with volunteers
+export const matchableOrganizations = pgTable("matchable_organizations", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  mission: text("mission").notNull(),
+  needs: text("needs").array().notNull().default([]),
+  sdgFocus: text("sdg_focus").array().notNull().default([]),
+  location: text("location").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Matches - Volunteer-Organization matches
+export const matches = pgTable("matches", {
+  id: serial("id").primaryKey(),
+  volunteerId: text("volunteer_id").references(() => volunteers.id).notNull(),
+  organizationId: text("organization_id").references(() => matchableOrganizations.id).notNull(),
+  score: doublePrecision("score").notNull(),
+  matchedOn: timestamp("matched_on").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -293,6 +328,22 @@ export const insertProjectAssignmentSchema = createInsertSchema(projectAssignmen
   updatedAt: true
 });
 
+export const insertVolunteerSchema = createInsertSchema(volunteers).omit({
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertMatchableOrganizationSchema = createInsertSchema(matchableOrganizations).omit({
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertMatchSchema = createInsertSchema(matches).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -332,3 +383,12 @@ export type InsertOrganizationProfile = z.infer<typeof insertOrganizationProfile
 
 export type ProjectAssignment = typeof projectAssignments.$inferSelect;
 export type InsertProjectAssignment = z.infer<typeof insertProjectAssignmentSchema>;
+
+export type Volunteer = typeof volunteers.$inferSelect;
+export type InsertVolunteer = z.infer<typeof insertVolunteerSchema>;
+
+export type MatchableOrganization = typeof matchableOrganizations.$inferSelect;
+export type InsertMatchableOrganization = z.infer<typeof insertMatchableOrganizationSchema>;
+
+export type Match = typeof matches.$inferSelect;
+export type InsertMatch = z.infer<typeof insertMatchSchema>;

@@ -16,6 +16,7 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
 
 // Helper function to handle validation errors
 function handleValidationError(err: unknown) {
@@ -1076,6 +1077,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error deleting match:", err);
       res.status(500).json({ message: "Failed to delete match" });
+    }
+  });
+
+  // === Matchmaker Routes ===
+  
+  /**
+   * Run matchmaker algorithm for all volunteers and organizations
+   * Query params:
+   * - threshold: Minimum match score (default: 40.0)
+   */
+  app.post("/api/matchmaker/run", async (req, res) => {
+    try {
+      const threshold = req.query.threshold ? parseFloat(req.query.threshold as string) : 40.0;
+      
+      // Get all volunteers and organizations
+      const volunteers = await storage.listVolunteers();
+      const organizations = await storage.listMatchableOrganizations();
+      
+      if (volunteers.length === 0) {
+        return res.status(400).json({ message: "No volunteers found in database" });
+      }
+      
+      if (organizations.length === 0) {
+        return res.status(400).json({ message: "No organizations found in database" });
+      }
+      
+      // Run the matchmaker
+      const result = await runMatchmaker(volunteers, organizations, threshold);
+      
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Matchmaker failed", 
+          error: result.error 
+        });
+      }
+      
+      res.json(result);
+    } catch (err) {
+      console.error("Error running matchmaker:", err);
+      res.status(500).json({ 
+        message: "Failed to run matchmaker", 
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  });
+  
+  /**
+   * Get top matches for a specific volunteer
+   * Query params:
+   * - limit: Maximum number of matches (default: 10)
+   * - threshold: Minimum match score (default: 40.0)
+   */
+  app.get("/api/matchmaker/volunteer/:id", async (req, res) => {
+    try {
+      const volunteerId = req.params.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const threshold = req.query.threshold ? parseFloat(req.query.threshold as string) : 40.0;
+      
+      // Get all volunteers and organizations
+      const volunteers = await storage.listVolunteers();
+      const organizations = await storage.listMatchableOrganizations();
+      
+      // Check if volunteer exists
+      const volunteer = volunteers.find(v => v.id === volunteerId);
+      if (!volunteer) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      
+      if (organizations.length === 0) {
+        return res.json({ 
+          volunteer_id: volunteerId,
+          matches: [],
+          message: "No organizations available for matching"
+        });
+      }
+      
+      // Get matches for this volunteer
+      const matches = await getVolunteerMatches(
+        volunteerId, 
+        volunteers, 
+        organizations, 
+        limit, 
+        threshold
+      );
+      
+      res.json({
+        volunteer_id: volunteerId,
+        volunteer_name: volunteer.name,
+        matches,
+        total_matches: matches.length
+      });
+    } catch (err) {
+      console.error("Error getting volunteer matches:", err);
+      res.status(500).json({ 
+        message: "Failed to get volunteer matches",
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  });
+  
+  /**
+   * Get top volunteers for a specific organization
+   * Query params:
+   * - limit: Maximum number of matches (default: 10)
+   * - threshold: Minimum match score (default: 40.0)
+   */
+  app.get("/api/matchmaker/organization/:id", async (req, res) => {
+    try {
+      const organizationId = req.params.id;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const threshold = req.query.threshold ? parseFloat(req.query.threshold as string) : 40.0;
+      
+      // Get all volunteers and organizations
+      const volunteers = await storage.listVolunteers();
+      const organizations = await storage.listMatchableOrganizations();
+      
+      // Check if organization exists
+      const organization = organizations.find(o => o.id === organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+      
+      if (volunteers.length === 0) {
+        return res.json({
+          organization_id: organizationId,
+          matches: [],
+          message: "No volunteers available for matching"
+        });
+      }
+      
+      // Get matches for this organization
+      const matches = await getOrganizationMatches(
+        organizationId,
+        volunteers,
+        organizations,
+        limit,
+        threshold
+      );
+      
+      res.json({
+        organization_id: organizationId,
+        organization_name: organization.name,
+        matches,
+        total_matches: matches.length
+      });
+    } catch (err) {
+      console.error("Error getting organization matches:", err);
+      res.status(500).json({
+        message: "Failed to get organization matches",
+        error: err instanceof Error ? err.message : String(err)
+      });
     }
   });
 

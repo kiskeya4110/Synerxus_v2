@@ -85,7 +85,7 @@ export default function QuickActions({ userType = "volunteer" }: QuickActionsPro
         <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {actions.map((action) => (
             <Link 
               key={action.id}
@@ -98,7 +98,7 @@ export default function QuickActions({ userType = "volunteer" }: QuickActionsPro
                 <div className={action.color}>
                   {action.icon}
                 </div>
-                <span className="text-sm">{action.label}</span>
+                <span className="text-sm text-center">{action.label}</span>
               </div>
             </Link>
           ))}

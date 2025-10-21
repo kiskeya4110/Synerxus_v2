@@ -19,8 +19,9 @@ Preferred communication style: Simple, everyday language.
 ### Technical Implementations
 - **Frontend**: React 18 with TypeScript, Vite, Wouter for routing, TanStack Query for server state, Tailwind CSS, Chart.js, React Hook Form with Zod.
 - **Backend**: Node.js with TypeScript, Express.js for REST API, WebSocket for real-time updates, Drizzle ORM with Neon serverless PostgreSQL, esbuild for production bundling.
-- **Database Schema**: Relational design covering Users, Organizations, Projects, Tasks, Volunteer Activities, Impact Metrics, Project Impacts, Opportunities, Applications, and Matchmaking data.
-- **AI Matching Algorithm**: Python-based system with Node.js integration for weighted scoring of volunteer-organization matches based on skills, location, interests, and SDG alignment.
+- **Database Schema**: Relational design covering Users, Organizations, Projects, Tasks, Volunteer Activities, Impact Metrics, Project Impacts, Opportunities, Applications, and Matchmaking data. Volunteer and MatchableOrganization tables include unique email fields for user account linking.
+- **AI Matching Algorithm**: Python-based system with Node.js integration for weighted scoring of volunteer-organization matches based on skills (35%), location (25%), interests (20%), and SDG alignment (20%). Configurable match threshold (default 40.0) with automatic match record creation.
+- **Profile Management**: Email-based profile linking with useEffect pattern for proper form initialization, handling race conditions between user authentication and form rendering.
 
 ### Feature Specifications
 - **Landing Page**: Publicly accessible, showcasing features and calls to action.
@@ -34,6 +35,7 @@ Preferred communication style: Simple, everyday language.
 - **Volunteer Opportunities System**: Full-featured opportunity posting and discovery with AI-powered recommendations, search/filter, and application tracking.
 - **System Partitioning**: Dual user types (Volunteer and Organization) with distinct signup/login flows, database fields, and role-based navigation menus.
 - **Project-Task Hierarchy**: Restructured application with a project-based workflow, including `projectAssignments` and task assignments to volunteers.
+- **Profile Settings**: Comprehensive matching profile management for both volunteers and organizations with email-based user linking, form validation, and seamless create/update workflows.
 
 ### System Design Choices
 - **Authentication**: Firebase Auth with Google OAuth.

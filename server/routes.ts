@@ -1031,6 +1031,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("match_created", match);
       res.status(201).json(match);
     } catch (err) {
+      // Handle referential integrity errors with 400 status
+      if (err instanceof Error && err.message.includes("does not exist")) {
+        return res.status(400).json({ message: err.message });
+      }
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
     }
@@ -1049,6 +1053,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("match_updated", updatedMatch);
       res.json(updatedMatch);
     } catch (err) {
+      // Handle referential integrity errors with 400 status
+      if (err instanceof Error && err.message.includes("does not exist")) {
+        return res.status(400).json({ message: err.message });
+      }
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
     }

@@ -101,13 +101,13 @@ export default function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
         <div className="max-w-4xl mx-auto text-center">
           <Badge className="mb-4 text-xs sm:text-sm" variant="secondary" data-testid="badge-platform-type">
-            aBridge AI Matching
+            Synerxus AI Matching
           </Badge>
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent leading-tight" data-testid="text-hero-title">
             Bridging Global Volunteers with Meaningful Impact Worldwide
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto px-2" data-testid="text-hero-description">
-            aBridge Global intelligently connects passionate volunteers with impactful opportunities worldwide, leveraging AI to match skills with needs for sustainable development.
+            Synerxus intelligently connects passionate volunteers with impactful opportunities worldwide, leveraging AI to match skills with needs for sustainable development.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
             <Link href="/login" className="w-full sm:w-auto">

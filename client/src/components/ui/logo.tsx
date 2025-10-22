@@ -1,4 +1,4 @@
-import { Link2 } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
@@ -29,12 +29,14 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
     <div className={cn("flex items-center gap-2", className)}>
       {showIcon && (
         <div className="relative">
-          <Link2 className={cn(sizeClasses.icon, "text-primary rotate-45")} />
-          <div className="absolute -inset-1 bg-primary/10 rounded-full -z-10" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 rounded-lg blur-sm" />
+          <div className="relative bg-gradient-to-br from-primary to-purple-600 rounded-lg p-1">
+            <Sparkles className={cn(sizeClasses.icon, "text-white")} />
+          </div>
         </div>
       )}
-      <span className={cn(sizeClasses.text, "font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent")}>
-        aBridge
+      <span className={cn(sizeClasses.text, "font-bold bg-gradient-to-r from-primary via-purple-600 to-pink-600 bg-clip-text text-transparent")}>
+        Synerxus
       </span>
     </div>
   );

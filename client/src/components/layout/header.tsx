@@ -55,7 +55,7 @@ export default function Header() {
         
         {/* Logo for mobile view */}
         <div className="flex items-center lg:hidden">
-          <span className="text-primary-600 dark:text-primary-400 font-semibold text-lg">aBridge</span>
+          <span className="text-primary-600 dark:text-primary-400 font-semibold text-lg">Synerxus</span>
         </div>
         
         {/* Search Bar */}

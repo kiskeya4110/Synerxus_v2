@@ -313,6 +313,95 @@ export async function seedMemStorage() {
       location: "Community Center, India"
     });
 
+    // Create opportunities
+    await storage.createOpportunity({
+      title: "Water Filtration System Installation",
+      description: "Help install and maintain water filtration systems in rural Kenyan villages. Training provided.",
+      projectId: project1.id,
+      organizationId: org1.id,
+      category: "healthcare",
+      location: "Kenya",
+      isRemote: false,
+      timeCommitment: "2-3 weeks",
+      requiredSkills: ["plumbing", "engineering", "community outreach"],
+      startDate: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+      endDate: new Date(now.getTime() + 35 * 24 * 60 * 60 * 1000),
+      status: "active"
+    });
+
+    await storage.createOpportunity({
+      title: "Mobile Library Assistant",
+      description: "Support our mobile library program by organizing books, reading to children, and helping with literacy programs.",
+      projectId: project2.id,
+      organizationId: org2.id,
+      category: "education",
+      location: "India",
+      isRemote: false,
+      timeCommitment: "1-2 months",
+      requiredSkills: ["teaching", "organization", "literacy"],
+      startDate: new Date(now.getTime() + 21 * 24 * 60 * 60 * 1000),
+      endDate: new Date(now.getTime() + 80 * 24 * 60 * 60 * 1000),
+      status: "active"
+    });
+
+    await storage.createOpportunity({
+      title: "Mobile Health Clinic Coordinator",
+      description: "Coordinate mobile health clinics in remote areas. Assist with patient registration, basic health screenings, and logistics.",
+      projectId: project3.id,
+      organizationId: org3.id,
+      category: "healthcare",
+      location: "Tanzania",
+      isRemote: false,
+      timeCommitment: "4-6 weeks",
+      requiredSkills: ["healthcare", "logistics", "communication"],
+      startDate: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+      endDate: new Date(now.getTime() + 49 * 24 * 60 * 60 * 1000),
+      status: "active"
+    });
+
+    await storage.createOpportunity({
+      title: "Remote Data Analysis for Impact Reporting",
+      description: "Help analyze volunteer activity data and create impact reports. Perfect for data enthusiasts who want to contribute remotely.",
+      projectId: project1.id,
+      organizationId: org1.id,
+      category: "community",
+      location: "Remote",
+      isRemote: true,
+      timeCommitment: "10-15 hours/week",
+      requiredSkills: ["data analysis", "reporting", "Excel"],
+      startDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
+      status: "active"
+    });
+
+    await storage.createOpportunity({
+      title: "Youth Mentorship Program Leader",
+      description: "Lead mentorship sessions for young adults in career development. Share your professional experience and guide the next generation.",
+      projectId: project4.id,
+      organizationId: org2.id,
+      category: "education",
+      location: "Remote",
+      isRemote: true,
+      timeCommitment: "5-10 hours/week",
+      requiredSkills: ["mentoring", "leadership", "communication"],
+      startDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+      status: "active"
+    });
+
+    await storage.createOpportunity({
+      title: "Community Health Educator",
+      description: "Teach community members about nutrition, hygiene, and preventive health practices. Make a lasting impact on public health.",
+      projectId: project3.id,
+      organizationId: org3.id,
+      category: "healthcare",
+      location: "Tanzania",
+      isRemote: false,
+      timeCommitment: "3-4 weeks",
+      requiredSkills: ["teaching", "healthcare", "public speaking"],
+      startDate: new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000),
+      endDate: new Date(now.getTime() + 56 * 24 * 60 * 60 * 1000),
+      status: "active"
+    });
+
     console.log("✅ MemStorage seeded successfully!");
     console.log("📊 Test data includes:");
     console.log("  - 6 users (3 volunteers, 3 org admins)");
@@ -323,6 +412,7 @@ export async function seedMemStorage() {
     console.log("  - 21 volunteer activities");
     console.log("  - 21 project impacts");
     console.log("  - 5 calendar events");
+    console.log("  - 6 opportunities");
 
   } catch (error) {
     console.error("❌ Error seeding MemStorage:", error);

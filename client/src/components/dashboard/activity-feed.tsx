@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BellIcon } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { BellIcon, Clock, User, Target } from "lucide-react";
 import { Link } from "wouter";
 
 export interface Activity {
@@ -21,6 +24,7 @@ interface ActivityFeedProps {
 }
 
 export default function ActivityFeed({ activities }: ActivityFeedProps) {
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const getActivityLink = (activity: Activity) => {
     // Determine link based on activity type
     if (activity.target.includes("Project") || activity.target.includes("Initiative") || activity.target.includes("Program") || activity.target.includes("Outreach")) {
@@ -43,32 +47,35 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
       <CardContent className="p-4">
         <div className="space-y-4">
           {activities.map((activity) => (
-            <Link key={activity.id} href={getActivityLink(activity)}>
-              <a className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1 rounded transition-colors cursor-pointer no-underline" data-testid={`link-activity-${activity.id}`}>
-                <div className="flex-shrink-0 mr-3">
-                  {activity.isSystem ? (
-                    <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                      <BellIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
-                    </div>
-                  ) : (
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={activity.user?.avatar} alt={`${activity.user?.name} avatar`} />
-                      <AvatarFallback>{activity.user?.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-                <div>
-                  <p className="text-sm">
-                    <span className="font-medium">
-                      {activity.isSystem ? "System" : activity.user?.name}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400"> {activity.action} </span>
-                    <span className="font-medium">{activity.target}</span>
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
-                </div>
-              </a>
-            </Link>
+            <div 
+              key={activity.id}
+              onClick={() => setSelectedActivity(activity)}
+              className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1 rounded transition-colors cursor-pointer"
+              data-testid={`activity-item-${activity.id}`}
+            >
+              <div className="flex-shrink-0 mr-3">
+                {activity.isSystem ? (
+                  <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                    <BellIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                  </div>
+                ) : (
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={activity.user?.avatar} alt={`${activity.user?.name} avatar`} />
+                    <AvatarFallback>{activity.user?.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+              <div>
+                <p className="text-sm">
+                  <span className="font-medium">
+                    {activity.isSystem ? "System" : activity.user?.name}
+                  </span>
+                  <span className="text-gray-600 dark:text-gray-400"> {activity.action} </span>
+                  <span className="font-medium">{activity.target}</span>
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
+              </div>
+            </div>
           ))}
         </div>
         <div className="mt-4 text-center">

@@ -121,6 +121,28 @@ export default function ImpactChart({ activities = [], projectImpacts = [] }: Im
                 labels: {
                   color: theme === "dark" ? "#f3f4f6" : "#1f2937"
                 }
+              },
+              tooltip: {
+                enabled: true,
+                backgroundColor: theme === "dark" ? "#1f2937" : "#ffffff",
+                titleColor: theme === "dark" ? "#f3f4f6" : "#1f2937",
+                bodyColor: theme === "dark" ? "#d1d5db" : "#4b5563",
+                borderColor: theme === "dark" ? "#374151" : "#e5e7eb",
+                borderWidth: 1,
+                padding: 12,
+                displayColors: true,
+                callbacks: {
+                  label: function(context: any) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                      label += ': ';
+                    }
+                    if (context.parsed.y !== null) {
+                      label += Math.round(context.parsed.y);
+                    }
+                    return label;
+                  }
+                }
               }
             }
           }

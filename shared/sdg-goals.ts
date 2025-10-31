@@ -150,6 +150,11 @@ export function getSDGName(sdgId: number): string {
   return SDG_GOALS[sdgId]?.shortName || `SDG ${sdgId}`;
 }
 
+export function getSDGNameWithNumber(sdgId: number): string {
+  const shortName = SDG_GOALS[sdgId]?.shortName;
+  return shortName ? `${shortName} (SDG ${sdgId})` : `SDG ${sdgId}`;
+}
+
 export function getSDGFullName(sdgId: number): string {
   return SDG_GOALS[sdgId]?.name || `SDG ${sdgId}`;
 }

@@ -4,7 +4,7 @@ import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
+import { getSDGName, getSDGFullName, getSDGColor, getSDGNameWithNumber } from "@shared/sdg-goals";
 
 export interface SDGChartProps {
   projects?: any[];
@@ -43,7 +43,7 @@ export default function SDGChart({ projects = [] }: SDGChartProps) {
     }
 
     return {
-      labels: topSDGs.map(([sdg]) => getSDGName(parseInt(sdg))),
+      labels: topSDGs.map(([sdg]) => getSDGNameWithNumber(parseInt(sdg))),
       values: topSDGs.map(([, count]) => count),
       colors: topSDGs.map(([sdg]) => getSDGColor(parseInt(sdg))),
       sdgIds: topSDGs.map(([sdg]) => parseInt(sdg)),

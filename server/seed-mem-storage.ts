@@ -39,62 +39,62 @@ export async function seedMemStorage() {
     // Create organizations
     const org1 = await storage.createOrganization({
       name: "WaterAid International",
-      description: "Global organization dedicated to providing clean water and sanitation",
-      website: "https://wateraid.org",
-      location: "Global",
-      mission: "Everyone, everywhere has clean water, decent toilets and good hygiene"
+      description: "Global organization dedicated to providing clean water and sanitation. Everyone, everywhere has clean water, decent toilets and good hygiene",
+      website: "https://wateraid.org"
     });
 
     const org2 = await storage.createOrganization({
       name: "Education for All",
-      description: "Building libraries and educational resources in underserved communities",
-      website: "https://educationforall.org",
-      location: "Africa, Asia",
-      mission: "Quality education accessible to all children worldwide"
+      description: "Building libraries and educational resources in underserved communities. Quality education accessible to all children worldwide",
+      website: "https://educationforall.org"
     });
 
     const org3 = await storage.createOrganization({
       name: "HealthAccess Initiative",
-      description: "Mobile health clinics bringing healthcare to remote areas",
-      website: "https://healthaccess.org",
-      location: "Rural Africa",
-      mission: "Healthcare access for every community, no matter how remote"
+      description: "Mobile health clinics bringing healthcare to remote areas. Healthcare access for every community, no matter how remote",
+      website: "https://healthaccess.org"
     });
 
     // Create users (volunteers and org admins)
     const volunteer1 = await storage.createUser({
       username: "volunteer_sarah",
       email: "sarah@volunteers.com",
+      password: "password123",
       userType: "volunteer"
     });
 
     const volunteer2 = await storage.createUser({
       username: "volunteer_michael",
       email: "michael@volunteers.com",
+      password: "password123",
       userType: "volunteer"
     });
 
     const volunteer3 = await storage.createUser({
       username: "volunteer_emma",
       email: "emma@volunteers.com",
+      password: "password123",
       userType: "volunteer"
     });
 
     await storage.createUser({
       username: "wateraid_admin",
       email: "admin@wateraid.org",
+      password: "password123",
       userType: "organization"
     });
 
     await storage.createUser({
       username: "educate_admin",
       email: "admin@educate.org",
+      password: "password123",
       userType: "organization"
     });
 
     await storage.createUser({
       username: "health_admin",
       email: "admin@healthaccess.org",
+      password: "password123",
       userType: "organization"
     });
 
@@ -195,7 +195,7 @@ export async function seedMemStorage() {
         date: activityDate,
         hours: 8 + Math.floor(Math.random() * 8),
         description: "Water system installation and community training",
-        skills: ["plumbing", "training"]
+        skillsApplied: ["plumbing", "training"]
       });
 
       // Volunteer 2 activities
@@ -205,7 +205,7 @@ export async function seedMemStorage() {
         date: activityDate,
         hours: 6 + Math.floor(Math.random() * 6),
         description: "Library setup and book cataloging",
-        skills: ["organization", "education"]
+        skillsApplied: ["organization", "education"]
       });
 
       // Volunteer 3 activities
@@ -215,7 +215,7 @@ export async function seedMemStorage() {
         date: activityDate,
         hours: 10 + Math.floor(Math.random() * 6),
         description: "Mobile health clinic support",
-        skills: ["healthcare", "community outreach"]
+        skillsApplied: ["healthcare", "community outreach"]
       });
     }
 

@@ -4,30 +4,11 @@ import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
 
 export interface SDGChartProps {
   projects?: any[];
 }
-
-const SDG_COLORS: Record<number, string> = {
-  1: "#E5243B",  // No Poverty
-  2: "#DDA63A",  // Zero Hunger
-  3: "#4C9F38",  // Good Health
-  4: "#C5192D",  // Quality Education
-  5: "#FF3A21",  // Gender Equality
-  6: "#26BDE2",  // Clean Water
-  7: "#FCC30B",  // Affordable Energy
-  8: "#A21942",  // Decent Work
-  9: "#FD6925",  // Industry Innovation
-  10: "#DD1367", // Reduced Inequalities
-  11: "#FD9D24", // Sustainable Cities
-  12: "#BF8B2E", // Responsible Consumption
-  13: "#3F7E44", // Climate Action
-  14: "#0A97D9", // Life Below Water
-  15: "#56C02B", // Life on Land
-  16: "#00689D", // Peace and Justice
-  17: "#19486A", // Partnerships
-};
 
 export default function SDGChart({ projects = [] }: SDGChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
@@ -57,13 +38,15 @@ export default function SDGChart({ projects = [] }: SDGChartProps) {
         labels: ["No data"],
         values: [1],
         colors: ["#CBD5E1"],
+        sdgIds: [],
       };
     }
 
     return {
-      labels: topSDGs.map(([sdg]) => `SDG ${sdg}`),
+      labels: topSDGs.map(([sdg]) => getSDGName(parseInt(sdg))),
       values: topSDGs.map(([, count]) => count),
-      colors: topSDGs.map(([sdg]) => SDG_COLORS[parseInt(sdg)] || "#CBD5E1"),
+      colors: topSDGs.map(([sdg]) => getSDGColor(parseInt(sdg))),
+      sdgIds: topSDGs.map(([sdg]) => parseInt(sdg)),
     };
   }, [projects]);
 
@@ -93,10 +76,9 @@ export default function SDGChart({ projects = [] }: SDGChartProps) {
             maintainAspectRatio: false,
             cutout: "70%",
             onClick: (event: any, elements: any) => {
-              if (elements.length > 0) {
+              if (elements.length > 0 && sdgData.sdgIds.length > 0) {
                 const index = elements[0].index;
-                const sdgLabel = sdgData.labels[index];
-                const sdgNumber = parseInt(sdgLabel.replace('SDG ', ''));
+                const sdgNumber = sdgData.sdgIds[index];
                 
                 const projectsForSDG = projects.filter((project: any) => 
                   project.sdgGoals && project.sdgGoals.includes(sdgNumber)
@@ -166,7 +148,9 @@ export default function SDGChart({ projects = [] }: SDGChartProps) {
       <Dialog open={!!selectedSDG} onOpenChange={(open) => !open && setSelectedSDG(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl">SDG {selectedSDG?.sdg} - Projects</DialogTitle>
+            <DialogTitle className="text-xl">
+              {selectedSDG && `SDG ${selectedSDG.sdg}: ${getSDGFullName(selectedSDG.sdg)}`}
+            </DialogTitle>
             <DialogDescription>
               Projects contributing to this Sustainable Development Goal
             </DialogDescription>
@@ -194,11 +178,11 @@ export default function SDGChart({ projects = [] }: SDGChartProps) {
                             <Badge 
                               key={goal} 
                               style={{ 
-                                backgroundColor: SDG_COLORS[goal],
+                                backgroundColor: getSDGColor(goal),
                                 color: '#ffffff'
                               }}
                             >
-                              SDG {goal}
+                              {getSDGName(goal)}
                             </Badge>
                           ))}
                         </div>

@@ -111,11 +111,17 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img 
-            src="/attached_assets/Gemini_Generated_Image_kjlrr8kjlrr8kjlr_1761873741221.png" 
-            alt="Synerxus Logo" 
-            className="mx-auto mb-4 h-32 w-auto"
-          />
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <img 
+              src="/attached_assets/Synerxus - Logo Wavy - Only_1761874690806.png" 
+              alt="Synerxus Logo" 
+              className="h-24 w-24 object-contain"
+            />
+            <h1 className="text-4xl font-bold">
+              <span style={{ color: '#1e3a8a' }}>SYNER</span>
+              <span style={{ color: '#f59e0b' }}>XUS</span>
+            </h1>
+          </div>
           <p className="text-gray-600 dark:text-gray-400 mt-2 font-medium">
             Connect. Collaborate. Impact Globally.
           </p>

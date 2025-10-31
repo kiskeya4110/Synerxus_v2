@@ -113,7 +113,7 @@ export default function Sidebar() {
       >
         <div className="px-4 py-6">
           <Link href="/">
-            <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity" data-testid="logo-abridge">
+            <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity" data-testid="logo-synerxus">
               <Logo size="md" />
             </div>
           </Link>

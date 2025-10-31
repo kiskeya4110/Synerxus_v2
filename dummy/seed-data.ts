@@ -1,4 +1,4 @@
-// Comprehensive seed data for testing aBridge platform
+// Comprehensive seed data for testing Synerxus platform
 // Run with: tsx dummy/seed-data.ts
 
 import { db } from "../server/db";

@@ -263,10 +263,12 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            {dashboardType === "volunteer" ? "Volunteer" : "Organization"} Dashboard
+            {dashboardType === "volunteer" ? "Volunteer Dashboard" : "Organization Dashboard"}
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Track your impact and manage your {dashboardType === "volunteer" ? "volunteer activities" : "organization projects"}
+            {dashboardType === "volunteer" 
+              ? "Track your impact and manage your volunteer activities" 
+              : "Track your organization's projects, manage volunteers, and measure their collective impact"}
           </p>
         </div>
         

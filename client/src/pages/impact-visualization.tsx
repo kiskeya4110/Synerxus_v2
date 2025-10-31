@@ -19,6 +19,7 @@ import {
   Legend,
   Filler,
 } from "chart.js";
+import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
 
 // Register Chart.js components
 ChartJS.register(
@@ -244,7 +245,7 @@ export default function ImpactVisualization() {
     });
 
     const sortedSDGs = Array.from(sdgImpacts.entries()).sort((a, b) => a[0] - b[0]);
-    const labels = sortedSDGs.map(([sdg]) => `SDG ${sdg}`);
+    const labels = sortedSDGs.map(([sdg]) => getSDGName(sdg));
     const values = sortedSDGs.map(([, impact]) => impact);
 
     return {
@@ -316,7 +317,7 @@ export default function ImpactVisualization() {
           }
         });
         details.items = Array.from(sdgProjects.entries()).map(([sdg, projectNames]) => ({
-          label: `SDG ${sdg}`,
+          label: `${getSDGName(sdg)} (SDG ${sdg})`,
           value: `${projectNames.length} projects`,
           project: projectNames.slice(0, 3).join(", ") + (projectNames.length > 3 ? "..." : ""),
         }));
@@ -376,21 +377,16 @@ export default function ImpactVisualization() {
               <Card key={project.id} className="min-h-[200px] w-full">
                 <CardHeader className="pb-3 p-4 sm:p-6">
                   <CardTitle className="text-base sm:text-lg">{project.title}</CardTitle>
-                  <div className="flex gap-1 mt-2">
+                  <div className="flex gap-2 mt-2 flex-wrap">
                     {project.sdgs.map((sdg: number) => (
                       <div 
                         key={sdg}
-                        className="w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                        className="px-2 py-1 rounded text-white text-xs font-semibold"
                         style={{ 
-                          backgroundColor: 
-                            sdg === 3 ? "#4C9F38" : 
-                            sdg === 4 ? "#C5192D" : 
-                            sdg === 5 ? "#FF3A21" : 
-                            sdg === 6 ? "#26BDE2" : 
-                            sdg === 10 ? "#DD1367" : "#FCC30B"
+                          backgroundColor: getSDGColor(sdg)
                         }}
                       >
-                        {sdg}
+                        {getSDGName(sdg)}
                       </div>
                     ))}
                   </div>

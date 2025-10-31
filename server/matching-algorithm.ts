@@ -5,9 +5,8 @@ interface MatchResult {
   breakdown: {
     skillMatch: number;
     locationMatch: number;
-    availabilityMatch: number;
+    sdgMatch: number;
     interestMatch: number;
-    experienceMatch: number;
   };
   reasons: string[];
 }
@@ -23,9 +22,8 @@ export function calculateMatchScore(
   const breakdown = {
     skillMatch: 0,
     locationMatch: 0,
-    availabilityMatch: 0,
+    sdgMatch: 0,
     interestMatch: 0,
-    experienceMatch: 0,
   };
   const reasons: string[] = [];
 
@@ -79,31 +77,29 @@ export function calculateMatchScore(
     }
   }
 
-  // 3. Availability Matching (20% weight)
-  if (volunteer.profile?.weeklyAvailability && opportunity.timeCommitment) {
-    const commitment = opportunity.timeCommitment.toLowerCase();
-    const weeklyHours = volunteer.profile.weeklyAvailability;
+  // 3. SDG Overlap Matching (20% weight)
+  // Check SDG alignment from volunteer profile and opportunity
+  const volSDGs = volunteer.profile?.interests?.filter(i => /^sdg[- ]?\d+$/i.test(i)).map(sdg => parseInt(sdg.replace(/[^\d]/g, ''))) || [];
+  const oppSDGs = opportunity.sdgGoals || [];
+  
+  if (volSDGs.length > 0 && oppSDGs.length > 0) {
+    const commonSDGs = volSDGs.filter(sdg => oppSDGs.includes(sdg));
     
-    // Extract hours from time commitment string
-    const hoursMatch = commitment.match(/(\d+)\s*hours?/i);
-    if (hoursMatch) {
-      const requiredHours = parseInt(hoursMatch[1]);
-      
-      if (weeklyHours >= requiredHours) {
-        breakdown.availabilityMatch = 100;
-        reasons.push("Sufficient availability");
-      } else {
-        breakdown.availabilityMatch = Math.min((weeklyHours / requiredHours) * 100, 100);
-      }
+    if (commonSDGs.length > 0) {
+      breakdown.sdgMatch = Math.min((commonSDGs.length / Math.max(volSDGs.length, oppSDGs.length)) * 100, 100);
+      reasons.push(`${commonSDGs.length} common SDG goal${commonSDGs.length > 1 ? 's' : ''}: #${commonSDGs.slice(0, 3).join(', #')}`);
     } else {
-      breakdown.availabilityMatch = 70; // Default if can't parse
+      breakdown.sdgMatch = 20;
     }
+  } else if (oppSDGs.length === 0) {
+    // No SDGs specified for opportunity - give baseline score
+    breakdown.sdgMatch = 50;
   } else {
-    // Default score when availability data is missing
-    breakdown.availabilityMatch = 50;
+    // Volunteer hasn't specified SDG interests
+    breakdown.sdgMatch = 30;
   }
 
-  // 4. Interest/Cause Matching (15% weight)
+  // 4. Interest/Cause Matching (20% weight)
   if (volunteer.profile?.preferredCauses && volunteer.profile.preferredCauses.length > 0 && opportunity.category) {
     const causes = volunteer.profile.preferredCauses.map(c => c.toLowerCase());
     const category = opportunity.category.toLowerCase();
@@ -119,37 +115,20 @@ export function calculateMatchScore(
     breakdown.interestMatch = 50;
   }
 
-  // 5. Experience Level Matching (5% weight)
-  if (volunteer.profile?.experience && opportunity.requirements) {
-    const experience = volunteer.profile.experience as any[];
-    const hasRelevantExperience = experience && experience.length > 0;
-    
-    if (hasRelevantExperience) {
-      breakdown.experienceMatch = 100;
-      reasons.push("Relevant experience");
-    } else {
-      breakdown.experienceMatch = 50;
-    }
-  } else {
-    // Default when experience data is missing
-    breakdown.experienceMatch = 50;
-  }
-
   // Calculate weighted final score
+  // Weights: Skills 35%, Location 25%, SDG 20%, Interests 20%
   const weights = {
     skillMatch: 0.35,
     locationMatch: 0.25,
-    availabilityMatch: 0.20,
-    interestMatch: 0.15,
-    experienceMatch: 0.05,
+    sdgMatch: 0.20,
+    interestMatch: 0.20,
   };
 
   const finalScore = Math.round(
     breakdown.skillMatch * weights.skillMatch +
     breakdown.locationMatch * weights.locationMatch +
-    breakdown.availabilityMatch * weights.availabilityMatch +
-    breakdown.interestMatch * weights.interestMatch +
-    breakdown.experienceMatch * weights.experienceMatch
+    breakdown.sdgMatch * weights.sdgMatch +
+    breakdown.interestMatch * weights.interestMatch
   );
 
   // Add overall assessment reason

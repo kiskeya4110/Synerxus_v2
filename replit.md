@@ -97,4 +97,10 @@ Preferred communication style: Simple, everyday language.
 - **Database & Infrastructure**: Neon Database, Drizzle Kit
 - **UI & Visualization**: Radix UI, Chart.js, Tailwind CSS
 - **Development & Build Tools**: TypeScript, Vite, ESBuild
-- **Matching Algorithm**: Python 3 runtime
+- **Matching Algorithm**: Dual implementation (Python and TypeScript) with weighted scoring:
+  - Skills Match: 35% (highest priority)
+  - Location Proximity: 25%
+  - SDG Overlap: 20%
+  - Interests/Cause Alignment: 20%
+  - Match threshold configurable (default: 40.0)
+  - Automatic match record creation and quality indicators (Excellent/Good/Fair/Limited)

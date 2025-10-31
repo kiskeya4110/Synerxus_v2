@@ -18,6 +18,8 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
+import OpenAI from "openai";
+import { suggestSDGsFromText } from "@shared/sdg-goals";
 
 // Helper function to handle validation errors
 function handleValidationError(err: unknown) {
@@ -1350,6 +1352,215 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error fetching dashboard summary:", err);
       res.status(500).json({ message: "Failed to fetch dashboard summary" });
+    }
+  });
+
+  // === AI SDG Auto-Linking Route ===
+  app.post("/api/projects/:id/auto-link-sdgs", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const project = await storage.getProject(projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Check if project already has SDGs
+      if (project.sdgGoals && project.sdgGoals.length > 0) {
+        return res.json({ 
+          message: "Project already has SDGs assigned",
+          sdgGoals: project.sdgGoals,
+          skipped: true
+        });
+      }
+
+      // First try keyword-based matching
+      const textToAnalyze = `${project.name} ${project.description || ''}`;
+      const keywordSuggestions = suggestSDGsFromText(textToAnalyze);
+
+      let suggestedSDGs = keywordSuggestions;
+
+      // If no keyword matches or only one match, use AI for better suggestions
+      if (keywordSuggestions.length < 2) {
+        try {
+          const openai = new OpenAI({
+            apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+            baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+          });
+
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              {
+                role: "system",
+                content: `You are an expert in mapping projects to UN Sustainable Development Goals (SDGs).
+Analyze the project and suggest 1-3 most relevant SDG numbers (1-17).
+Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
+              },
+              {
+                role: "user",
+                content: `Project: ${project.name}\nDescription: ${project.description || 'No description'}\n\nWhich SDGs (1-17) does this project address?`
+              }
+            ],
+            temperature: 0.3,
+            max_tokens: 50,
+          });
+
+          const aiResponse = completion.choices[0]?.message?.content?.trim();
+          if (aiResponse) {
+            try {
+              const aiSDGs = JSON.parse(aiResponse);
+              if (Array.isArray(aiSDGs) && aiSDGs.every(n => typeof n === 'number' && n >= 1 && n <= 17)) {
+                suggestedSDGs = aiSDGs.slice(0, 3);
+              }
+            } catch (parseErr) {
+              console.error("Failed to parse AI response:", parseErr);
+            }
+          }
+        } catch (aiErr) {
+          console.error("AI SDG suggestion failed, using keyword-based:", aiErr);
+        }
+      }
+
+      // Ensure we have at least one SDG
+      if (suggestedSDGs.length === 0) {
+        suggestedSDGs = [17]; // Default to "Partnerships for the Goals"
+      }
+
+      // Update project with suggested SDGs
+      const updatedProject = await storage.updateProject(projectId, {
+        sdgGoals: suggestedSDGs
+      });
+
+      res.json({
+        message: "SDGs automatically linked to project",
+        sdgGoals: suggestedSDGs,
+        project: updatedProject
+      });
+    } catch (err) {
+      console.error("Error auto-linking SDGs:", err);
+      res.status(500).json({ 
+        message: "Failed to auto-link SDGs",
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  });
+
+  // === Batch Auto-Link All Projects ===
+  app.post("/api/projects/batch/auto-link-sdgs", async (req, res) => {
+    try {
+      const projects = await storage.listProjects();
+      const results = {
+        processed: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 0,
+        details: [] as any[]
+      };
+
+      for (const project of projects) {
+        results.processed++;
+        
+        try {
+          // Skip if already has SDGs
+          if (project.sdgGoals && project.sdgGoals.length > 0) {
+            results.skipped++;
+            results.details.push({
+              projectId: project.id,
+              projectName: project.name,
+              status: 'skipped',
+              sdgGoals: project.sdgGoals
+            });
+            continue;
+          }
+
+          // First try keyword-based matching
+          const textToAnalyze = `${project.name} ${project.description || ''}`;
+          const keywordSuggestions = suggestSDGsFromText(textToAnalyze);
+
+          let suggestedSDGs = keywordSuggestions;
+
+          // If no keyword matches or only one match, use AI
+          if (keywordSuggestions.length < 2) {
+            try {
+              const openai = new OpenAI({
+                apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+                baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+              });
+
+              const completion = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                  {
+                    role: "system",
+                    content: `You are an expert in mapping projects to UN Sustainable Development Goals (SDGs).
+Analyze the project and suggest 1-3 most relevant SDG numbers (1-17).
+Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
+                  },
+                  {
+                    role: "user",
+                    content: `Project: ${project.name}\nDescription: ${project.description || 'No description'}\n\nWhich SDGs (1-17) does this project address?`
+                  }
+                ],
+                temperature: 0.3,
+                max_tokens: 50,
+              });
+
+              const aiResponse = completion.choices[0]?.message?.content?.trim();
+              if (aiResponse) {
+                try {
+                  const aiSDGs = JSON.parse(aiResponse);
+                  if (Array.isArray(aiSDGs) && aiSDGs.every(n => typeof n === 'number' && n >= 1 && n <= 17)) {
+                    suggestedSDGs = aiSDGs.slice(0, 3);
+                  }
+                } catch (parseErr) {
+                  console.error("Failed to parse AI response:", parseErr);
+                }
+              }
+            } catch (aiErr) {
+              console.error("AI SDG suggestion failed for project", project.id, aiErr);
+            }
+          }
+
+          // Ensure we have at least one SDG
+          if (suggestedSDGs.length === 0) {
+            suggestedSDGs = [17]; // Default to "Partnerships for the Goals"
+          }
+
+          // Update project
+          await storage.updateProject(project.id, {
+            sdgGoals: suggestedSDGs
+          });
+
+          results.updated++;
+          results.details.push({
+            projectId: project.id,
+            projectName: project.name,
+            status: 'updated',
+            sdgGoals: suggestedSDGs
+          });
+
+        } catch (projectErr) {
+          results.failed++;
+          results.details.push({
+            projectId: project.id,
+            projectName: project.name,
+            status: 'failed',
+            error: projectErr instanceof Error ? projectErr.message : String(projectErr)
+          });
+        }
+      }
+
+      res.json({
+        message: "Batch SDG auto-linking completed",
+        results
+      });
+    } catch (err) {
+      console.error("Error in batch auto-link:", err);
+      res.status(500).json({ 
+        message: "Failed to batch auto-link SDGs",
+        error: err instanceof Error ? err.message : String(err)
+      });
     }
   });
 

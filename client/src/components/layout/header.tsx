@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { useTheme } from "./theme-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -23,12 +24,28 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Fetch current user to determine user type
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me"],
+  });
+
+  // Mock notifications - in a real app, these would come from an API
+  const notifications = [
+    { id: 1, title: "New volunteer joined", message: "Jane Smith joined Clean Water Initiative", time: "5m ago", read: false },
+    { id: 2, title: "Task completed", message: "Water survey task has been completed", time: "1h ago", read: false },
+    { id: 3, title: "Project milestone", message: "50% progress on Education Access program", time: "3h ago", read: true },
+  ];
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const handleSignOut = async () => {
     try {
@@ -40,6 +57,23 @@ export default function Header() {
     } catch (error) {
       console.error("Error signing out:", error);
     }
+  };
+
+  const handleProfileClick = () => {
+    const userType = currentUser?.userType || 'volunteer';
+    if (userType === 'organization') {
+      setLocation('/organization-profile');
+    } else {
+      setLocation('/volunteer-profile');
+    }
+  };
+
+  const handleNotificationClick = (notificationId: number) => {
+    // In a real app, this would mark as read and navigate to details
+    toast({
+      title: "Notification",
+      description: `Opening notification ${notificationId}`,
+    });
   };
 
   return (
@@ -89,12 +123,45 @@ export default function Header() {
           </Button>
           
           {/* Notifications */}
-          <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative">
-            <Bell className="h-5 w-5" />
-            <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0">
-              3
-            </Badge>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative" data-testid="button-notifications">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80">
+              <div className="px-4 py-2 border-b">
+                <h3 className="font-semibold">Notifications</h3>
+                <p className="text-xs text-gray-500">{unreadCount} unread</p>
+              </div>
+              {notifications.map((notification) => (
+                <DropdownMenuItem 
+                  key={notification.id} 
+                  className="cursor-pointer p-4 flex flex-col items-start gap-1"
+                  onClick={() => handleNotificationClick(notification.id)}
+                  data-testid={`notification-${notification.id}`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="font-medium text-sm">{notification.title}</span>
+                    {!notification.read && (
+                      <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{notification.message}</p>
+                  <span className="text-xs text-gray-500">{notification.time}</span>
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer justify-center text-sm text-primary">
+                View all notifications
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           {/* User Menu */}
           {user && (
@@ -111,16 +178,16 @@ export default function Header() {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={handleProfileClick} data-testid="menu-profile">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={handleProfileClick} data-testid="menu-settings">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut}>
+                <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut} data-testid="menu-logout">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
                 </DropdownMenuItem>

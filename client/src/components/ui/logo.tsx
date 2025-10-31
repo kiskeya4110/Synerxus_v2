@@ -31,6 +31,8 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
           src="/attached_assets/Synerxus - Logo Wavy - Only_1761874690806.png" 
           alt="Synerxus Logo" 
           className={cn(sizeClasses.logo, "object-contain")}
+          style={{ imageRendering: 'high-quality' }}
+          loading="eager"
         />
       )}
       <span className={cn(sizeClasses.text, "font-bold")}>

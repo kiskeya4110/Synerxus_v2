@@ -84,6 +84,83 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
           </Link>
         </div>
       </CardContent>
+
+      {/* Activity Detail Dialog */}
+      <Dialog open={!!selectedActivity} onOpenChange={(open) => !open && setSelectedActivity(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Activity Details</DialogTitle>
+            <DialogDescription>
+              View complete information about this activity
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedActivity && (
+            <div className="space-y-4 mt-4">
+              <div className="flex items-center gap-3">
+                {selectedActivity.isSystem ? (
+                  <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                    <BellIcon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+                  </div>
+                ) : (
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={selectedActivity.user?.avatar} alt={`${selectedActivity.user?.name} avatar`} />
+                    <AvatarFallback className="text-lg">{selectedActivity.user?.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                )}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <span className="font-semibold">
+                      {selectedActivity.isSystem ? "System" : selectedActivity.user?.name}
+                    </span>
+                  </div>
+                  {selectedActivity.user?.id && (
+                    <Badge variant="outline" className="mt-1">ID: {selectedActivity.user.id}</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <Target className="h-4 w-4 text-gray-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Action</p>
+                    <p className="text-base">{selectedActivity.action}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Target className="h-4 w-4 text-gray-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Target</p>
+                    <p className="text-base font-semibold">{selectedActivity.target}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2">
+                  <Clock className="h-4 w-4 text-gray-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Time</p>
+                    <p className="text-base">{selectedActivity.time}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <Link href={getActivityLink(selectedActivity)}>
+                  <a 
+                    className="w-full inline-block text-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+                    data-testid="button-view-related"
+                  >
+                    View Related Page
+                  </a>
+                </Link>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

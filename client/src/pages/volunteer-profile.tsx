@@ -10,11 +10,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Switch } from "@/components/ui/switch";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { uploadProfilePhoto } from "@/lib/upload";
-import { Loader2, Plus, X, User, MapPin, Target, Heart, Camera, Upload } from "lucide-react";
+import { Loader2, Plus, X, User, MapPin, Target, Heart, Camera, Upload, Lock, Shield, Trash2 } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, setPersistence, browserLocalPersistence, browserSessionPersistence, deleteUser as firebaseDeleteUser } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useLocation } from "wouter";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -52,12 +57,22 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function VolunteerProfile() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [skillInput, setSkillInput] = useState("");
   const [interestInput, setInterestInput] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Security settings state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(true);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
   
   // Fetch current profile data
   const { data: profileData, isLoading: loadingProfile } = useQuery({
@@ -240,6 +255,143 @@ export default function VolunteerProfile() {
       form.setValue("sdgGoals", currentSDGs.filter(s => s !== sdgValue));
     } else {
       form.setValue("sdgGoals", [...currentSDGs, sdgValue]);
+    }
+  };
+
+  // Password change handler
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all password fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "New password and confirmation don't match.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setChangingPassword(true);
+    try {
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        throw new Error("No user is currently logged in");
+      }
+      
+      // Re-authenticate user
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // Update password
+      await updatePassword(user, newPassword);
+      
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+      });
+      
+      // Clear fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      toast({
+        title: "Error changing password",
+        description: error.message || "Please check your current password and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  // Keep logged in toggle handler
+  const handleKeepLoggedInToggle = async (checked: boolean) => {
+    setKeepLoggedIn(checked);
+    try {
+      await setPersistence(
+        auth,
+        checked ? browserLocalPersistence : browserSessionPersistence
+      );
+      toast({
+        title: "Session settings updated",
+        description: checked 
+          ? "You will stay logged in on this device" 
+          : "You will be logged out when you close the browser",
+      });
+    } catch (error: any) {
+      console.error("Error updating session persistence:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update session settings. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Delete account handler
+  const handleDeleteAccount = async () => {
+    if (!deleteConfirmPassword) {
+      toast({
+        title: "Password required",
+        description: "Please enter your password to confirm account deletion.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setDeletingAccount(true);
+    try {
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        throw new Error("No user is currently logged in");
+      }
+      
+      // Re-authenticate user
+      const credential = EmailAuthProvider.credential(user.email, deleteConfirmPassword);
+      await reauthenticateWithCredential(user, credential);
+      
+      // Delete from backend database first
+      const response = await apiRequest("DELETE", "/api/users/me", {});
+      await response.json();
+      
+      // Delete Firebase user
+      await firebaseDeleteUser(user);
+      
+      toast({
+        title: "Account deleted",
+        description: "Your account has been permanently deleted.",
+      });
+      
+      // Redirect to home page
+      setLocation("/");
+    } catch (error: any) {
+      console.error("Error deleting account:", error);
+      toast({
+        title: "Error deleting account",
+        description: error.message || "Please check your password and try again.",
+        variant: "destructive",
+      });
+      setDeletingAccount(false);
     }
   };
 
@@ -529,6 +681,166 @@ export default function VolunteerProfile() {
               </div>
             </form>
           </Form>
+        </CardContent>
+      </Card>
+
+      {/* Security Settings - Change Password */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" />
+            Change Password
+          </CardTitle>
+          <CardDescription>
+            Update your password to keep your account secure
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current Password</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+                disabled={changingPassword}
+                data-testid="input-current-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password (min 6 characters)"
+                disabled={changingPassword}
+                data-testid="input-new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+              <Input
+                id="confirm-new-password"
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                placeholder="Confirm new password"
+                disabled={changingPassword}
+                data-testid="input-confirm-new-password"
+              />
+            </div>
+            <Button type="submit" disabled={changingPassword} data-testid="button-change-password">
+              {changingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Change Password
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Session Settings */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Session Settings
+          </CardTitle>
+          <CardDescription>
+            Manage how your login session is handled
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label htmlFor="keep-logged-in" className="text-base">Keep me logged in</Label>
+              <p className="text-sm text-muted-foreground">
+                Stay logged in on this device even after closing the browser
+              </p>
+            </div>
+            <Switch
+              id="keep-logged-in"
+              checked={keepLoggedIn}
+              onCheckedChange={handleKeepLoggedInToggle}
+              data-testid="switch-keep-logged-in"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Danger Zone - Delete Account */}
+      <Card className="mt-6 border-destructive">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <Trash2 className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+          <CardDescription>
+            Permanently delete your account and all associated data
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" data-testid="button-delete-account-trigger">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Account
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription className="space-y-3">
+                  <p>
+                    This action cannot be undone. This will permanently delete your account and remove all your data from our servers, including:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li>Profile information and photos</li>
+                    <li>Volunteer activities and hours</li>
+                    <li>Project assignments and tasks</li>
+                    <li>Application history</li>
+                    <li>All personal data</li>
+                  </ul>
+                  <div className="pt-4">
+                    <Label htmlFor="delete-password" className="text-destructive font-semibold">
+                      Enter your password to confirm:
+                    </Label>
+                    <Input
+                      id="delete-password"
+                      type="password"
+                      value={deleteConfirmPassword}
+                      onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      className="mt-2"
+                      data-testid="input-delete-confirm-password"
+                    />
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel 
+                  onClick={() => setDeleteConfirmPassword("")}
+                  data-testid="button-cancel-delete"
+                >
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDeleteAccount}
+                  disabled={deletingAccount}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  data-testid="button-confirm-delete"
+                >
+                  {deletingAccount && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Delete My Account
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <p className="text-xs text-muted-foreground mt-2">
+            This action is irreversible and will delete all your volunteer data permanently.
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -77,8 +77,16 @@ export default function OrganizationProfile() {
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
   
   // Fetch current profile data
+  const userId = localStorage.getItem('currentUserId');
   const { data: profileData, isLoading: loadingProfile } = useQuery({
-    queryKey: ["/api/profile/organization"],
+    queryKey: ["/api/profile/organization", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/profile/organization?userId=${id}` : '/api/profile/organization';
+      const response = await fetch(url);
+      return response.json();
+    },
+    enabled: !!userId
   });
 
   const user = profileData?.user;
@@ -198,7 +206,9 @@ export default function OrganizationProfile() {
         setUploadingPhoto(false);
       }
 
-      const response = await apiRequest("PATCH", "/api/profile/organization", {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/profile/organization?userId=${id}` : '/api/profile/organization';
+      const response = await apiRequest("PATCH", url, {
         ...data,
         profilePhotoUrl: photoUrl,
       });

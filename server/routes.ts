@@ -1611,8 +1611,17 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
   // Update volunteer profile (updates both users table and volunteers matching table)
   app.patch("/api/profile/volunteer", async (req, res) => {
     try {
-      // TODO: Get userId from session instead of hardcoding
-      const userId = 1;
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -1685,8 +1694,17 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
   // Update organization profile (updates both users/organizations tables and matchable_organizations table)
   app.patch("/api/profile/organization", async (req, res) => {
     try {
-      // TODO: Get userId from session instead of hardcoding
-      const userId = 1;
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -1697,11 +1715,22 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(403).json({ message: "User is not an organization" });
       }
       
-      if (!user.organizationId) {
-        return res.status(400).json({ message: "User has no associated organization" });
-      }
-      
       const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail } = req.body;
+      
+      // Create organization if it doesn't exist
+      if (!user.organizationId && name) {
+        const newOrg = await storage.createOrganization({
+          name,
+          description: bio || "",
+          logo: profilePhotoUrl || null,
+          website: website || null,
+          contactEmail: contactEmail || user.email || "",
+        });
+        
+        // Link user to the new organization
+        await storage.updateUser(userId, { organizationId: newOrg.id });
+        user.organizationId = newOrg.id;
+      }
       
       // Update user table
       const userUpdates: any = {};
@@ -1713,15 +1742,17 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         await storage.updateUser(userId, userUpdates);
       }
       
-      // Update organization table
-      const orgUpdates: any = {};
-      if (profilePhotoUrl !== undefined) orgUpdates.logo = profilePhotoUrl;
-      if (name !== undefined) orgUpdates.name = name;
-      if (website !== undefined) orgUpdates.website = website;
-      if (contactEmail !== undefined) orgUpdates.contactEmail = contactEmail;
-      
-      if (Object.keys(orgUpdates).length > 0) {
-        await storage.updateOrganization(user.organizationId, orgUpdates);
+      // Update organization table (only if user has an organization)
+      if (user.organizationId) {
+        const orgUpdates: any = {};
+        if (profilePhotoUrl !== undefined) orgUpdates.logo = profilePhotoUrl;
+        if (name !== undefined) orgUpdates.name = name;
+        if (website !== undefined) orgUpdates.website = website;
+        if (contactEmail !== undefined) orgUpdates.contactEmail = contactEmail;
+        
+        if (Object.keys(orgUpdates).length > 0) {
+          await storage.updateOrganization(user.organizationId, orgUpdates);
+        }
       }
       
       // Update or create matchable organization profile
@@ -1773,8 +1804,17 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
   // Get volunteer profile data (combines user and volunteer matching data)
   app.get("/api/profile/volunteer", async (req, res) => {
     try {
-      // TODO: Get userId from session instead of hardcoding
-      const userId = 1;
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -1807,8 +1847,17 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
   // Get organization profile data (combines user, organization, and matchable organization data)
   app.get("/api/profile/organization", async (req, res) => {
     try {
-      // TODO: Get userId from session instead of hardcoding
-      const userId = 1;
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
       const user = await storage.getUser(userId);
       
       if (!user) {

@@ -75,8 +75,16 @@ export default function VolunteerProfile() {
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState("");
   
   // Fetch current profile data
+  const userId = localStorage.getItem('currentUserId');
   const { data: profileData, isLoading: loadingProfile } = useQuery({
-    queryKey: ["/api/profile/volunteer"],
+    queryKey: ["/api/profile/volunteer", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/profile/volunteer?userId=${id}` : '/api/profile/volunteer';
+      const response = await fetch(url);
+      return response.json();
+    },
+    enabled: !!userId
   });
 
   const user = profileData?.user;
@@ -191,7 +199,9 @@ export default function VolunteerProfile() {
         setUploadingPhoto(false);
       }
 
-      const response = await apiRequest("PATCH", "/api/profile/volunteer", {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/profile/volunteer?userId=${id}` : '/api/profile/volunteer';
+      const response = await apiRequest("PATCH", url, {
         ...data,
         profilePhotoUrl: photoUrl,
       });

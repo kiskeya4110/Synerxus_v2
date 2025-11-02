@@ -74,10 +74,11 @@ export default function ProjectEdit() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProjectEditForm) => {
-      return apiRequest(`/api/projects/${projectId}`, "PATCH", {
+      const response = await apiRequest("PATCH", `/api/projects/${projectId}`, {
         ...data,
         updatedAt: new Date(),
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });

@@ -176,15 +176,18 @@ export default function OrganizationProfile() {
         try {
           const result = await uploadPhotoMutation.mutateAsync(photoFile);
           photoUrl = result.url;
-        } finally {
+        } catch (error) {
           setUploadingPhoto(false);
+          throw new Error(`Photo upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
+        setUploadingPhoto(false);
       }
 
-      return apiRequest("PATCH", "/api/profile/organization", {
+      const response = await apiRequest("PATCH", "/api/profile/organization", {
         ...data,
         profilePhotoUrl: photoUrl,
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile/organization"] });

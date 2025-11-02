@@ -169,15 +169,18 @@ export default function VolunteerProfile() {
         try {
           const result = await uploadPhotoMutation.mutateAsync(photoFile);
           photoUrl = result.url;
-        } finally {
+        } catch (error) {
           setUploadingPhoto(false);
+          throw new Error(`Photo upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
+        setUploadingPhoto(false);
       }
 
-      return apiRequest("PATCH", "/api/profile/volunteer", {
+      const response = await apiRequest("PATCH", "/api/profile/volunteer", {
         ...data,
         profilePhotoUrl: photoUrl,
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });

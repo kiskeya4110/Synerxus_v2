@@ -8,6 +8,13 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform desi
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+- **Authentication Flow Fix** (November 2, 2025): Fixed critical issue where dashboard required two sign-ins instead of one. Added `firebaseUid` column to users table, created POST /api/users/firebase-sync endpoint for automatic user creation on first login, and updated all endpoints to use userId from localStorage instead of hardcoded ID 1.
+- **Profile vs Settings Separation** (November 2, 2025): Created distinction between read-only Profile page (/profile) showing personal information and editable Settings pages (/volunteer-profile, /organization-profile). Updated sidebar navigation for both user types to include separate "Profile" and "Settings" links.
+- **Security Enhancements** (November 2, 2025): Fixed data leakage bug where localStorage.currentUserId persisted after sign-out, allowing next user to inherit previous user's context. All API endpoints now require and validate userId parameter. Sign-out now properly clears localStorage.
+- **Organization Profile Creation** (November 2, 2025): Fixed bug preventing new organization users from saving profiles. Backend now automatically creates organization record when user first saves profile with organization name.
+
 ## System Architecture
 
 ### UI/UX Decisions

@@ -30,10 +30,16 @@ export default function Sidebar() {
   const isMobile = useIsMobile();
 
   // Fetch current user to determine role
-  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/me"],
-    enabled: true
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.json();
+    },
+    enabled: !!userId
   });
 
   // Set initial state based on screen size

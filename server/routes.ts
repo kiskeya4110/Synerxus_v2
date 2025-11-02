@@ -86,7 +86,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users/me", async (req, res) => {
     try {
       const userIdParam = req.query.userId as string;
-      const userId = userIdParam ? parseInt(userIdParam) : 1; // Default to 1 for backward compatibility
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
       
       const user = await storage.getUser(userId);
       

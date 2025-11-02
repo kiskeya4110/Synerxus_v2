@@ -34,8 +34,16 @@ export default function Header() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Fetch current user to determine user type
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.json();
+    },
+    enabled: !!userId
   });
 
   // Mock notifications - in a real app, these would come from an API

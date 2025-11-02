@@ -85,6 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       await firebaseSignOut(auth);
+      localStorage.removeItem('currentUserId');
     } catch (error) {
       console.error("Error signing out:", error);
       toast({

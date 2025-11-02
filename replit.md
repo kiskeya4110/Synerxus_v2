@@ -104,8 +104,18 @@ Preferred communication style: Simple, everyday language.
   - Photo URLs stored in both user.avatar and matching table profilePhotoUrl fields
   - Seamless create/update workflows with proper race condition handling
 
+- **Authentication & Login Flow**: Firebase-based authentication with automatic dashboard redirect:
+  - **Login Page** (/login): Dual-tab interface for Login and Registration
+  - **Authentication Methods**: Email/password and Google OAuth sign-in
+  - **User Type Selection**: Registration flow includes Volunteer vs Organization choice
+  - **Automatic Redirect**: Upon successful authentication (login, Google sign-in, or registration), users are automatically redirected to /dashboard
+  - **Session Persistence**: "Keep me logged in" toggle controls Firebase persistence mode (browserLocalPersistence vs browserSessionPersistence)
+  - **Password Management**: Change password feature with current password re-authentication
+  - **Account Deletion**: Delete account with password confirmation, backend data cleanup, and Firebase account removal
+  - Success toasts display before redirect: "Welcome back!" (login), "Welcome!" (Google), "Account created" (registration)
+
 ### System Design Choices
-- **Authentication**: Firebase Auth with Google OAuth.
+- **Authentication**: Firebase Auth with Google OAuth, automatic dashboard redirect on successful login.
 - **Client-Server Communication**: RESTful APIs with JSON, WebSocket for real-time updates, and React Query for state management.
 - **Data Processing**: Client-side data collection, Zod for validation, Drizzle ORM for PostgreSQL storage, server-side aggregation, and client-side visualization.
 - **Deployment**: Vite for frontend, Node.js with compiled TypeScript for backend, Neon for production database.

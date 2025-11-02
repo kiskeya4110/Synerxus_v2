@@ -60,12 +60,7 @@ export default function Header() {
   };
 
   const handleProfileClick = () => {
-    const userType = currentUser?.userType || 'volunteer';
-    if (userType === 'organization') {
-      setLocation('/organization-profile');
-    } else {
-      setLocation('/volunteer-profile');
-    }
+    setLocation('/profile');
   };
 
   const handleNotificationClick = (notificationId: number) => {

@@ -20,6 +20,7 @@ import FieldSpecificMetrics from "@/pages/field-specific-metrics";
 import Opportunities from "@/pages/opportunities";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
 import MyTasks from "@/pages/my-tasks";
+import Profile from "@/pages/profile";
 import VolunteerProfile from "@/pages/volunteer-profile";
 import OrganizationProfile from "@/pages/organization-profile";
 import ProjectDetail from "@/pages/project-detail";
@@ -49,6 +50,7 @@ function Router() {
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route path="/my-tasks" component={MyTasks} />
+      <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile" component={VolunteerProfile} />
       <Route path="/organization-profile" component={OrganizationProfile} />
       <Route component={NotFound} />

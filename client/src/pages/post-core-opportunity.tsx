@@ -454,9 +454,9 @@ export default function PostCoreOpportunity() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent className="max-h-[300px]">
-                          {sdgGoals.map((sdg) => (
-                            <SelectItem key={sdg.number} value={String(sdg.number)}>
-                              SDG {sdg.number}: {sdg.title}
+                          {Object.values(sdgGoals).map((sdg) => (
+                            <SelectItem key={sdg.id} value={String(sdg.id)}>
+                              SDG {sdg.id}: {sdg.name}
                             </SelectItem>
                           ))}
                         </SelectContent>

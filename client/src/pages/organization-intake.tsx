@@ -409,25 +409,25 @@ export default function OrganizationIntake() {
                         <FormLabel>Primary SDG Focus</FormLabel>
                         <FormDescription>Select the goals your organization primarily contributes to</FormDescription>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
-                          {sdgGoals.map((sdg) => (
+                          {Object.values(sdgGoals).map((sdg) => (
                             <div
-                              key={sdg.number}
-                              data-testid={`card-sdg-${sdg.number}`}
+                              key={sdg.id}
+                              data-testid={`card-sdg-${sdg.id}`}
                               className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                form.watch("primarySdgs")?.includes(sdg.number)
+                                form.watch("primarySdgs")?.includes(sdg.id)
                                   ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
                                   : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                               }`}
-                              onClick={() => toggleSDG(sdg.number)}
+                              onClick={() => toggleSDG(sdg.id)}
                             >
                               <div className="flex items-start gap-2">
                                 <Checkbox
-                                  checked={form.watch("primarySdgs")?.includes(sdg.number)}
+                                  checked={form.watch("primarySdgs")?.includes(sdg.id)}
                                   className="mt-1"
                                 />
                                 <div>
-                                  <p className="font-semibold text-sm">SDG {sdg.number}</p>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.title}</p>
+                                  <p className="font-semibold text-sm">SDG {sdg.id}</p>
+                                  <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
                                 </div>
                               </div>
                             </div>

@@ -146,6 +146,8 @@ export const SDG_GOALS: Record<number, SDGGoal> = {
   },
 };
 
+export const sdgGoals = SDG_GOALS;
+
 export function getSDGName(sdgId: number): string {
   return SDG_GOALS[sdgId]?.shortName || `SDG ${sdgId}`;
 }

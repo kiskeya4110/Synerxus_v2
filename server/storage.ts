@@ -122,6 +122,7 @@ export interface IStorage {
 
   // Volunteer operations (matching system)
   getVolunteer(id: string): Promise<Volunteer | undefined>;
+  getVolunteerByEmail(email: string): Promise<Volunteer | undefined>;
   createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer>;
   updateVolunteer(id: string, volunteer: Partial<InsertVolunteer>): Promise<Volunteer | undefined>;
   deleteVolunteer(id: string): Promise<boolean>;
@@ -129,6 +130,7 @@ export interface IStorage {
 
   // Matchable Organization operations
   getMatchableOrganization(id: string): Promise<MatchableOrganization | undefined>;
+  getMatchableOrganizationByEmail(email: string): Promise<MatchableOrganization | undefined>;
   createMatchableOrganization(organization: InsertMatchableOrganization): Promise<MatchableOrganization>;
   updateMatchableOrganization(id: string, organization: Partial<InsertMatchableOrganization>): Promise<MatchableOrganization | undefined>;
   deleteMatchableOrganization(id: string): Promise<boolean>;
@@ -866,9 +868,19 @@ export class MemStorage implements IStorage {
     return Array.from(this.volunteersMap.values());
   }
 
+  async getVolunteerByEmail(email: string): Promise<Volunteer | undefined> {
+    return Array.from(this.volunteersMap.values())
+      .find(volunteer => volunteer.email === email);
+  }
+
   // Matchable Organization operations
   async getMatchableOrganization(id: string): Promise<MatchableOrganization | undefined> {
     return this.matchableOrganizationsMap.get(id);
+  }
+
+  async getMatchableOrganizationByEmail(email: string): Promise<MatchableOrganization | undefined> {
+    return Array.from(this.matchableOrganizationsMap.values())
+      .find(org => org.email === email);
   }
 
   async createMatchableOrganization(insertOrg: InsertMatchableOrganization): Promise<MatchableOrganization> {

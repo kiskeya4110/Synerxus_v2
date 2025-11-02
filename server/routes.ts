@@ -1564,5 +1564,242 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
     }
   });
 
+  // === Profile Update Routes ===
+  // Update volunteer profile (updates both users table and volunteers matching table)
+  app.patch("/api/profile/volunteer", async (req, res) => {
+    try {
+      // TODO: Get userId from session instead of hardcoding
+      const userId = 1;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.userType !== 'volunteer') {
+        return res.status(403).json({ message: "User is not a volunteer" });
+      }
+      
+      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName } = req.body;
+      
+      // Update user table
+      const userUpdates: any = {};
+      if (profilePhotoUrl !== undefined) userUpdates.avatar = profilePhotoUrl;
+      if (bio !== undefined) userUpdates.bio = bio;
+      if (displayName !== undefined) userUpdates.displayName = displayName;
+      if (skills !== undefined) userUpdates.skills = skills;
+      
+      if (Object.keys(userUpdates).length > 0) {
+        await storage.updateUser(userId, userUpdates);
+      }
+      
+      // Update or create volunteer matching profile
+      if (user.email) {
+        try {
+          const existingVolunteer = await storage.getVolunteerByEmail(user.email);
+          
+          if (existingVolunteer) {
+            // Update existing volunteer profile
+            const volunteerUpdates: any = {};
+            if (profilePhotoUrl !== undefined) volunteerUpdates.profilePhotoUrl = profilePhotoUrl;
+            if (skills !== undefined) volunteerUpdates.skills = skills;
+            if (interests !== undefined) volunteerUpdates.interests = interests;
+            if (location !== undefined) volunteerUpdates.location = location;
+            if (sdgGoals !== undefined) volunteerUpdates.sdgGoals = sdgGoals;
+            if (displayName !== undefined) volunteerUpdates.name = displayName;
+            
+            await storage.updateVolunteer(existingVolunteer.id, volunteerUpdates);
+          } else {
+            // Create new volunteer profile if it doesn't exist
+            if (skills && interests && location && sdgGoals && displayName) {
+              await storage.createVolunteer({
+                id: `vol_${user.email}`,
+                email: user.email,
+                name: displayName,
+                profilePhotoUrl: profilePhotoUrl || null,
+                skills,
+                interests,
+                location,
+                sdgGoals
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Error updating volunteer matching profile:", err);
+          // Continue even if matching profile update fails
+        }
+      }
+      
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (err) {
+      console.error("Error updating volunteer profile:", err);
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // Update organization profile (updates both users/organizations tables and matchable_organizations table)
+  app.patch("/api/profile/organization", async (req, res) => {
+    try {
+      // TODO: Get userId from session instead of hardcoding
+      const userId = 1;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.userType !== 'organization') {
+        return res.status(403).json({ message: "User is not an organization" });
+      }
+      
+      if (!user.organizationId) {
+        return res.status(400).json({ message: "User has no associated organization" });
+      }
+      
+      const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail } = req.body;
+      
+      // Update user table
+      const userUpdates: any = {};
+      if (profilePhotoUrl !== undefined) userUpdates.avatar = profilePhotoUrl;
+      if (bio !== undefined) userUpdates.bio = bio;
+      if (displayName !== undefined) userUpdates.displayName = displayName;
+      
+      if (Object.keys(userUpdates).length > 0) {
+        await storage.updateUser(userId, userUpdates);
+      }
+      
+      // Update organization table
+      const orgUpdates: any = {};
+      if (profilePhotoUrl !== undefined) orgUpdates.logo = profilePhotoUrl;
+      if (name !== undefined) orgUpdates.name = name;
+      if (website !== undefined) orgUpdates.website = website;
+      if (contactEmail !== undefined) orgUpdates.contactEmail = contactEmail;
+      
+      if (Object.keys(orgUpdates).length > 0) {
+        await storage.updateOrganization(user.organizationId, orgUpdates);
+      }
+      
+      // Update or create matchable organization profile
+      if (user.email) {
+        try {
+          const existingOrg = await storage.getMatchableOrganizationByEmail(user.email);
+          
+          if (existingOrg) {
+            // Update existing matchable organization
+            const matchableOrgUpdates: any = {};
+            if (profilePhotoUrl !== undefined) matchableOrgUpdates.profilePhotoUrl = profilePhotoUrl;
+            if (name !== undefined) matchableOrgUpdates.name = name;
+            if (mission !== undefined) matchableOrgUpdates.mission = mission;
+            if (needs !== undefined) matchableOrgUpdates.needs = needs;
+            if (sdgFocus !== undefined) matchableOrgUpdates.sdgFocus = sdgFocus;
+            if (location !== undefined) matchableOrgUpdates.location = location;
+            
+            await storage.updateMatchableOrganization(existingOrg.id, matchableOrgUpdates);
+          } else {
+            // Create new matchable organization if it doesn't exist
+            if (name && mission && needs && sdgFocus && location) {
+              await storage.createMatchableOrganization({
+                id: `org_${user.email}`,
+                email: user.email,
+                name,
+                profilePhotoUrl: profilePhotoUrl || null,
+                mission,
+                needs,
+                sdgFocus,
+                location
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Error updating matchable organization profile:", err);
+          // Continue even if matching profile update fails
+        }
+      }
+      
+      const updatedUser = await storage.getUser(userId);
+      res.json(updatedUser);
+    } catch (err) {
+      console.error("Error updating organization profile:", err);
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // Get volunteer profile data (combines user and volunteer matching data)
+  app.get("/api/profile/volunteer", async (req, res) => {
+    try {
+      // TODO: Get userId from session instead of hardcoding
+      const userId = 1;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.userType !== 'volunteer') {
+        return res.status(403).json({ message: "User is not a volunteer" });
+      }
+      
+      let volunteerProfile = null;
+      if (user.email) {
+        try {
+          volunteerProfile = await storage.getVolunteerByEmail(user.email);
+        } catch (err) {
+          console.error("Error fetching volunteer profile:", err);
+        }
+      }
+      
+      res.json({
+        user,
+        volunteerProfile
+      });
+    } catch (err) {
+      console.error("Error fetching volunteer profile:", err);
+      res.status(500).json({ message: "Failed to fetch volunteer profile" });
+    }
+  });
+
+  // Get organization profile data (combines user, organization, and matchable organization data)
+  app.get("/api/profile/organization", async (req, res) => {
+    try {
+      // TODO: Get userId from session instead of hardcoding
+      const userId = 1;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.userType !== 'organization') {
+        return res.status(403).json({ message: "User is not an organization" });
+      }
+      
+      let organization = null;
+      if (user.organizationId) {
+        organization = await storage.getOrganization(user.organizationId);
+      }
+      
+      let matchableOrganization = null;
+      if (user.email) {
+        try {
+          matchableOrganization = await storage.getMatchableOrganizationByEmail(user.email);
+        } catch (err) {
+          console.error("Error fetching matchable organization:", err);
+        }
+      }
+      
+      res.json({
+        user,
+        organization,
+        matchableOrganization
+      });
+    } catch (err) {
+      console.error("Error fetching organization profile:", err);
+      res.status(500).json({ message: "Failed to fetch organization profile" });
+    }
+  });
+
   return httpServer;
 }

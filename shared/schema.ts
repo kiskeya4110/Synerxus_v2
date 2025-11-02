@@ -135,17 +135,29 @@ export const opportunities = pgTable("opportunities", {
   organizationId: integer("organization_id").references(() => organizations.id).notNull(),
   projectId: integer("project_id").references(() => projects.id),
   requiredSkills: text("required_skills").array(),
+  optionalSkills: text("optional_skills").array(), // Nice to have skills
   location: text("location"),
   isRemote: boolean("is_remote").default(false),
+  engagementType: text("engagement_type"), // remote, in-person, hybrid
   timeCommitment: text("time_commitment"), // e.g., "10 hours/week", "Weekend only"
+  commitmentType: text("commitment_type"), // ongoing, project-based, event
+  ongoingHoursPerWeek: integer("ongoing_hours_per_week"),
+  projectTotalHours: integer("project_total_hours"),
+  eventDate: timestamp("event_date"),
+  eventStartTime: text("event_start_time"),
+  eventEndTime: text("event_end_time"),
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   volunteersNeeded: integer("volunteers_needed").default(1),
   status: text("status").notNull().default("open"), // open, closed, filled
   category: text("category"), // healthcare, education, environment, etc.
   sdgGoals: integer("sdg_goals").array(),
+  primarySdg: integer("primary_sdg"), // Main SDG alignment for matching
+  impactMetricName: text("impact_metric_name"), // e.g., "Students Tutored"
+  impactMetricUnit: text("impact_metric_unit"), // e.g., "students"
   benefits: text("benefits"), // What volunteers will gain
   requirements: text("requirements"), // Specific requirements or qualifications
+  isUrgent: boolean("is_urgent").default(false), // For urgent needs/events
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -171,6 +183,8 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull().unique(),
   location: text("location"),
+  city: text("city"),
+  country: text("country"),
   languages: text("languages").array(),
   interests: text("interests").array(),
   experience: jsonb("experience"), // Array of experience objects
@@ -178,7 +192,12 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   preferredCauses: text("preferred_causes").array(),
   weeklyAvailability: integer("weekly_availability"), // hours per week
   preferredWorkStyle: text("preferred_work_style"), // remote, in-person, hybrid
+  preferredSdgs: integer("preferred_sdgs").array(), // SDG goals the volunteer cares about
+  motivations: text("motivations"), // Why they want to volunteer
   achievements: text("achievements").array(),
+  phoneNumber: text("phone_number"),
+  emergencyContact: jsonb("emergency_contact"), // {name, phone, relationship}
+  onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -189,11 +208,19 @@ export const organizationProfiles = pgTable("organization_profiles", {
   organizationId: integer("organization_id").references(() => organizations.id).notNull().unique(),
   missionStatement: text("mission_statement"),
   focusAreas: text("focus_areas").array(),
+  organizationType: text("organization_type"), // nonprofit, NGO, social enterprise, etc.
   size: text("size"), // small, medium, large
   yearFounded: integer("year_founded"),
+  taxId: text("tax_id"), // For verification
+  registrationNumber: text("registration_number"),
+  primarySdgs: integer("primary_sdgs").array(), // Main SDG focus areas
+  geographicScope: text("geographic_scope"), // local, regional, national, international
+  targetBeneficiaries: text("target_beneficiaries"), // Who they serve
+  volunteerNeeds: text("volunteer_needs").array(), // Types of volunteers they need
   impactStats: jsonb("impact_stats"),
   socialMedia: jsonb("social_media"),
   verificationStatus: text("verification_status").default("pending"), // pending, verified, rejected
+  onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -11,6 +11,8 @@ import {
   matchableOrganizations,
   matches,
   calendarEvents,
+  volunteerProfiles,
+  organizationProfiles,
   type User, 
   type InsertUser,
   type Organization,
@@ -34,7 +36,11 @@ import {
   type Match,
   type InsertMatch,
   type CalendarEvent,
-  type InsertCalendarEvent
+  type InsertCalendarEvent,
+  type VolunteerProfile,
+  type InsertVolunteerProfile,
+  type OrganizationProfile,
+  type InsertOrganizationProfile
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 
@@ -147,6 +153,20 @@ export interface IStorage {
   listMatchesByVolunteer(volunteerId: string): Promise<Match[]>;
   listMatchesByOrganization(organizationId: string): Promise<Match[]>;
 
+  // Volunteer Profile operations
+  getVolunteerProfile(id: number): Promise<VolunteerProfile | undefined>;
+  getVolunteerProfileByUserId(userId: number): Promise<VolunteerProfile | undefined>;
+  createVolunteerProfile(profile: InsertVolunteerProfile): Promise<VolunteerProfile>;
+  updateVolunteerProfile(id: number, profile: Partial<InsertVolunteerProfile>): Promise<VolunteerProfile | undefined>;
+  listVolunteerProfiles(): Promise<VolunteerProfile[]>;
+
+  // Organization Profile operations
+  getOrganizationProfile(id: number): Promise<OrganizationProfile | undefined>;
+  getOrganizationProfileByOrgId(organizationId: number): Promise<OrganizationProfile | undefined>;
+  createOrganizationProfile(profile: InsertOrganizationProfile): Promise<OrganizationProfile>;
+  updateOrganizationProfile(id: number, profile: Partial<InsertOrganizationProfile>): Promise<OrganizationProfile | undefined>;
+  listOrganizationProfiles(): Promise<OrganizationProfile[]>;
+
   // Calendar Event operations
   getCalendarEvent(id: number): Promise<CalendarEvent | undefined>;
   createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent>;
@@ -170,6 +190,8 @@ export class MemStorage implements IStorage {
   private matchableOrganizationsMap: Map<string, MatchableOrganization>;
   private matchesMap: Map<number, Match>;
   private calendarEvents: Map<number, CalendarEvent>;
+  private volunteerProfilesMap: Map<number, VolunteerProfile>;
+  private organizationProfilesMap: Map<number, OrganizationProfile>;
 
   private userIdCounter: number;
   private organizationIdCounter: number;
@@ -183,6 +205,8 @@ export class MemStorage implements IStorage {
   private applicationIdCounter: number;
   private projectAssignmentIdCounter: number;
   private matchIdCounter: number;
+  private volunteerProfileIdCounter: number;
+  private organizationProfileIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -199,6 +223,8 @@ export class MemStorage implements IStorage {
     this.matchableOrganizationsMap = new Map();
     this.matchesMap = new Map();
     this.calendarEvents = new Map();
+    this.volunteerProfilesMap = new Map();
+    this.organizationProfilesMap = new Map();
 
     this.userIdCounter = 1;
     this.organizationIdCounter = 1;
@@ -212,6 +238,8 @@ export class MemStorage implements IStorage {
     this.projectAssignmentIdCounter = 1;
     this.matchIdCounter = 1;
     this.calendarEventIdCounter = 1;
+    this.volunteerProfileIdCounter = 1;
+    this.organizationProfileIdCounter = 1;
 
     // Initialize with some common SDG-related impact metrics
     this.initializeImpactMetrics();
@@ -1086,6 +1114,86 @@ export class MemStorage implements IStorage {
 
   async listCalendarEvents(): Promise<CalendarEvent[]> {
     return Array.from(this.calendarEvents.values());
+  }
+
+  // Volunteer Profile operations
+  async getVolunteerProfile(id: number): Promise<VolunteerProfile | undefined> {
+    return this.volunteerProfilesMap.get(id);
+  }
+
+  async getVolunteerProfileByUserId(userId: number): Promise<VolunteerProfile | undefined> {
+    return Array.from(this.volunteerProfilesMap.values())
+      .find(profile => profile.userId === userId);
+  }
+
+  async createVolunteerProfile(profile: InsertVolunteerProfile): Promise<VolunteerProfile> {
+    const id = this.volunteerProfileIdCounter++;
+    const now = new Date();
+    const volunteerProfile: VolunteerProfile = {
+      ...profile,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.volunteerProfilesMap.set(id, volunteerProfile);
+    return volunteerProfile;
+  }
+
+  async updateVolunteerProfile(id: number, profile: Partial<InsertVolunteerProfile>): Promise<VolunteerProfile | undefined> {
+    const existing = this.volunteerProfilesMap.get(id);
+    if (!existing) return undefined;
+
+    const updated: VolunteerProfile = {
+      ...existing,
+      ...profile,
+      updatedAt: new Date()
+    };
+    this.volunteerProfilesMap.set(id, updated);
+    return updated;
+  }
+
+  async listVolunteerProfiles(): Promise<VolunteerProfile[]> {
+    return Array.from(this.volunteerProfilesMap.values());
+  }
+
+  // Organization Profile operations
+  async getOrganizationProfile(id: number): Promise<OrganizationProfile | undefined> {
+    return this.organizationProfilesMap.get(id);
+  }
+
+  async getOrganizationProfileByOrgId(organizationId: number): Promise<OrganizationProfile | undefined> {
+    return Array.from(this.organizationProfilesMap.values())
+      .find(profile => profile.organizationId === organizationId);
+  }
+
+  async createOrganizationProfile(profile: InsertOrganizationProfile): Promise<OrganizationProfile> {
+    const id = this.organizationProfileIdCounter++;
+    const now = new Date();
+    const organizationProfile: OrganizationProfile = {
+      ...profile,
+      id,
+      createdAt: now,
+      updatedAt: now
+    };
+    this.organizationProfilesMap.set(id, organizationProfile);
+    return organizationProfile;
+  }
+
+  async updateOrganizationProfile(id: number, profile: Partial<InsertOrganizationProfile>): Promise<OrganizationProfile | undefined> {
+    const existing = this.organizationProfilesMap.get(id);
+    if (!existing) return undefined;
+
+    const updated: OrganizationProfile = {
+      ...existing,
+      ...profile,
+      updatedAt: new Date()
+    };
+    this.organizationProfilesMap.set(id, updated);
+    return updated;
+  }
+
+  async listOrganizationProfiles(): Promise<OrganizationProfile[]> {
+    return Array.from(this.organizationProfilesMap.values());
   }
 }
 

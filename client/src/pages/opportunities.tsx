@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Users, Calendar, Briefcase } from "lucide-react";
-import { CreateOpportunityDialog, EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
+import { Button } from "@/components/ui/button";
+import { MapPin, Clock, Users, Calendar, Briefcase, Plus, AlertCircle } from "lucide-react";
+import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
 import type { Opportunity, User } from "@shared/schema";
 
 export default function Opportunities() {
+  const [, navigate] = useLocation();
+
   // Fetch current user to get organization ID
   // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
   const { data: currentUser } = useQuery<User>({
@@ -56,7 +60,25 @@ export default function Opportunities() {
           </p>
         </div>
         {currentUser?.organizationId && (
-          <CreateOpportunityDialog organizationId={currentUser.organizationId} />
+          <div className="flex gap-2">
+            <Button
+              data-testid="button-post-core"
+              onClick={() => navigate("/post-core-opportunity")}
+              variant="default"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Post Core Opportunity
+            </Button>
+            <Button
+              data-testid="button-post-urgent"
+              onClick={() => navigate("/post-urgent-opportunity")}
+              variant="outline"
+              className="border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            >
+              <AlertCircle className="w-4 h-4 mr-2" />
+              Post Urgent Need
+            </Button>
+          </div>
         )}
       </div>
 
@@ -69,7 +91,25 @@ export default function Opportunities() {
               Start posting volunteer opportunities to connect with passionate volunteers worldwide
             </p>
             {currentUser?.organizationId && (
-              <CreateOpportunityDialog organizationId={currentUser.organizationId} />
+              <div className="flex gap-2 justify-center">
+                <Button
+                  data-testid="button-post-core-empty"
+                  onClick={() => navigate("/post-core-opportunity")}
+                  variant="default"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Post Core Opportunity
+                </Button>
+                <Button
+                  data-testid="button-post-urgent-empty"
+                  onClick={() => navigate("/post-urgent-opportunity")}
+                  variant="outline"
+                  className="border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                >
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  Post Urgent Need
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

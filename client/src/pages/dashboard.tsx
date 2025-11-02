@@ -24,8 +24,15 @@ export default function Dashboard() {
   const [selectedKPI, setSelectedKPI] = useState<{ title: string; data: any } | null>(null);
 
   // Fetch current user from database
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.json();
+    }
   });
 
   // Determine dashboard type from user data

@@ -82,13 +82,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // TODO: Implement proper session management and authentication
-  // This endpoint should return the currently authenticated user from the session
-  // For now, it returns user ID 1 as a placeholder
+  // Get current user - uses userId from query parameter or defaults to user ID 1 for backward compatibility
   app.get("/api/users/me", async (req, res) => {
     try {
-      // TODO: Get userId from session/JWT token instead of hardcoding
-      const userId = 1; // Temporary hardcoded value
+      const userIdParam = req.query.userId as string;
+      const userId = userIdParam ? parseInt(userIdParam) : 1; // Default to 1 for backward compatibility
+      
       const user = await storage.getUser(userId);
       
       if (!user) {
@@ -115,6 +114,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error fetching user:", err);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.post("/api/users/firebase-sync", async (req, res) => {
+    try {
+      const { firebaseUid, email, displayName, userType } = req.body;
+      
+      if (!firebaseUid || !email || !userType) {
+        return res.status(400).json({ message: "Missing required fields: firebaseUid, email, userType" });
+      }
+      
+      // Check if user already exists
+      let user = await storage.getUserByFirebaseUid(firebaseUid);
+      
+      if (user) {
+        // User exists, return it
+        return res.json(user);
+      }
+      
+      // User doesn't exist, create new one
+      const username = email.split('@')[0] + '_' + Date.now();
+      const userData = {
+        firebaseUid,
+        username,
+        email,
+        displayName: displayName || email.split('@')[0],
+        userType,
+      };
+      
+      user = await storage.createUser(userData);
+      broadcastUpdate("user_created", user);
+      res.status(201).json(user);
+    } catch (err) {
+      console.error("Error syncing Firebase user:", err);
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
     }
   });
 

@@ -5,9 +5,10 @@ import { z } from "zod";
 // User schema - unified for both volunteers and organizations
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  firebaseUid: text("firebase_uid").unique(),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"), // Optional since Firebase handles auth
   userType: text("user_type").notNull(), // 'volunteer' or 'organization'
   displayName: text("display_name"),
   avatar: text("avatar"),

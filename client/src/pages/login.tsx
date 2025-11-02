@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
+import { UserCredential } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,25 @@ export default function Login() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      await signInWithGoogle();
+      const result = await signInWithGoogle() as UserCredential | undefined;
+      
+      // Sync with backend database
+      const firebaseUser = result?.user;
+      if (firebaseUser) {
+        const response = await fetch('/api/users/firebase-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firebaseUid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            userType: userType || 'volunteer' // Default to volunteer
+          })
+        });
+        const dbUser = await response.json();
+        localStorage.setItem('currentUserId', dbUser.id);
+      }
+      
       setLocation("/dashboard");
       toast({
         title: "Welcome!",
@@ -58,7 +77,24 @@ export default function Login() {
     
     try {
       setIsLoading(true);
-      await signInWithEmail(loginEmail, loginPassword);
+      const result = await signInWithEmail(loginEmail, loginPassword) as UserCredential | undefined;
+      
+      // Sync with backend database
+      if (result?.user) {
+        const response = await fetch('/api/users/firebase-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firebaseUid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            userType: 'volunteer' // Default for email login
+          })
+        });
+        const dbUser = await response.json();
+        localStorage.setItem('currentUserId', dbUser.id);
+      }
+      
       setLocation("/dashboard");
       toast({
         title: "Welcome back!",
@@ -94,7 +130,24 @@ export default function Login() {
     
     try {
       setIsLoading(true);
-      await signUp(registerEmail, registerPassword);
+      const result = await signUp(registerEmail, registerPassword, userType || undefined, registerName) as UserCredential | undefined;
+      
+      // Sync with backend database
+      if (result?.user && userType) {
+        const response = await fetch('/api/users/firebase-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firebaseUid: result.user.uid,
+            email: result.user.email,
+            displayName: registerName,
+            userType
+          })
+        });
+        const dbUser = await response.json();
+        localStorage.setItem('currentUserId', dbUser.id);
+      }
+      
       setLocation("/dashboard");
       toast({
         title: "Account created",

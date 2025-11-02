@@ -1893,6 +1893,140 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
     }
   });
 
+  // === Intake Form Routes ===
+  
+  // Volunteer Profile Intake - Get volunteer profile
+  app.get("/api/intake/volunteer-profile", async (req, res) => {
+    try {
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
+      const profile = await storage.getVolunteerProfileByUserId(userId);
+      res.json(profile);
+    } catch (err) {
+      console.error("Error fetching volunteer profile:", err);
+      res.status(500).json({ message: "Failed to fetch volunteer profile" });
+    }
+  });
+
+  // Volunteer Profile Intake - Create or update
+  app.post("/api/intake/volunteer-profile", async (req, res) => {
+    try {
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.userType !== 'volunteer') {
+        return res.status(403).json({ message: "User is not a volunteer" });
+      }
+      
+      const existingProfile = await storage.getVolunteerProfileByUserId(userId);
+      
+      let profile;
+      if (existingProfile) {
+        profile = await storage.updateVolunteerProfile(existingProfile.id, {
+          ...req.body,
+          userId
+        });
+      } else {
+        profile = await storage.createVolunteerProfile({
+          ...req.body,
+          userId
+        });
+      }
+      
+      broadcastUpdate("volunteer_profile_updated", profile);
+      res.json(profile);
+    } catch (err) {
+      console.error("Error saving volunteer profile:", err);
+      res.status(500).json({ message: "Failed to save volunteer profile" });
+    }
+  });
+
+  // Organization Profile Intake - Get organization profile
+  app.get("/api/intake/organization-profile", async (req, res) => {
+    try {
+      const orgIdParam = req.query.organizationId as string;
+      
+      if (!orgIdParam) {
+        return res.status(400).json({ message: "organizationId parameter is required" });
+      }
+      
+      const organizationId = parseInt(orgIdParam);
+      if (isNaN(organizationId)) {
+        return res.status(400).json({ message: "organizationId must be a valid number" });
+      }
+      
+      const profile = await storage.getOrganizationProfileByOrgId(organizationId);
+      res.json(profile);
+    } catch (err) {
+      console.error("Error fetching organization profile:", err);
+      res.status(500).json({ message: "Failed to fetch organization profile" });
+    }
+  });
+
+  // Organization Profile Intake - Create or update
+  app.post("/api/intake/organization-profile", async (req, res) => {
+    try {
+      const orgIdParam = req.query.organizationId as string;
+      
+      if (!orgIdParam) {
+        return res.status(400).json({ message: "organizationId parameter is required" });
+      }
+      
+      const organizationId = parseInt(orgIdParam);
+      if (isNaN(organizationId)) {
+        return res.status(400).json({ message: "organizationId must be a valid number" });
+      }
+      
+      const organization = await storage.getOrganization(organizationId);
+      if (!organization) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+      
+      const existingProfile = await storage.getOrganizationProfileByOrgId(organizationId);
+      
+      let profile;
+      if (existingProfile) {
+        profile = await storage.updateOrganizationProfile(existingProfile.id, {
+          ...req.body,
+          organizationId
+        });
+      } else {
+        profile = await storage.createOrganizationProfile({
+          ...req.body,
+          organizationId
+        });
+      }
+      
+      broadcastUpdate("organization_profile_updated", profile);
+      res.json(profile);
+    } catch (err) {
+      console.error("Error saving organization profile:", err);
+      res.status(500).json({ message: "Failed to save organization profile" });
+    }
+  });
+
   // Delete user account and all associated data
   app.delete("/api/users/me", async (req, res) => {
     try {

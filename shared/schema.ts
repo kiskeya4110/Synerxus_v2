@@ -47,6 +47,9 @@ export const projects = pgTable("projects", {
   goals: jsonb("goals"),
   sdgGoals: integer("sdg_goals").array(),
   coverImage: text("cover_image"),
+  completionPercentage: integer("completion_percentage").default(0),
+  aiTrackingEnabled: boolean("ai_tracking_enabled").default(false),
+  completionPreferences: jsonb("completion_preferences"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

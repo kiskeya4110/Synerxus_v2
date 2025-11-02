@@ -22,6 +22,8 @@ import DiscoverOpportunities from "@/pages/discover-opportunities";
 import MyTasks from "@/pages/my-tasks";
 import VolunteerProfile from "@/pages/volunteer-profile";
 import OrganizationProfile from "@/pages/organization-profile";
+import ProjectDetail from "@/pages/project-detail";
+import ProjectEdit from "@/pages/project-edit";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -32,6 +34,8 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/login" component={Login} />
+      <Route path="/projects/:id/edit" component={ProjectEdit} />
+      <Route path="/projects/:id" component={ProjectDetail} />
       <Route path="/projects" component={Projects} />
       <Route path="/tasks" component={Tasks} />
       <Route path="/volunteers" component={Volunteers} />

@@ -159,13 +159,13 @@ export default function ProjectCard({
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4 border-t">
-              <Link href="/projects" className="flex-1">
+              <Link href={`/projects/${projectId}`} className="flex-1">
                 <Button variant="outline" className="w-full gap-2" data-testid="button-view-project">
                   <Eye className="h-4 w-4" />
                   View Full Project
                 </Button>
               </Link>
-              <Link href="/projects" className="flex-1">
+              <Link href={`/projects/${projectId}/edit`} className="flex-1">
                 <Button className="w-full gap-2" data-testid="button-edit-project">
                   <Edit className="h-4 w-4" />
                   Edit Project

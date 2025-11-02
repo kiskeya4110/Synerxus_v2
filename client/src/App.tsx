@@ -20,8 +20,8 @@ import FieldSpecificMetrics from "@/pages/field-specific-metrics";
 import Opportunities from "@/pages/opportunities";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
 import MyTasks from "@/pages/my-tasks";
-import VolunteerProfileSettings from "@/pages/volunteer-profile-settings";
-import OrganizationProfileSettings from "@/pages/organization-profile-settings";
+import VolunteerProfile from "@/pages/volunteer-profile";
+import OrganizationProfile from "@/pages/organization-profile";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -45,8 +45,8 @@ function Router() {
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route path="/my-tasks" component={MyTasks} />
-      <Route path="/volunteer-profile" component={VolunteerProfileSettings} />
-      <Route path="/organization-profile" component={OrganizationProfileSettings} />
+      <Route path="/volunteer-profile" component={VolunteerProfile} />
+      <Route path="/organization-profile" component={OrganizationProfile} />
       <Route component={NotFound} />
     </Switch>
   );

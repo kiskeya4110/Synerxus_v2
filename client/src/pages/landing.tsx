@@ -128,7 +128,7 @@ export default function Landing() {
       {/* Benefits Section */}
       <section className="container mx-auto px-4 sm:px-6 py-10 sm:py-12 border-y bg-muted/30">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8" data-testid="text-benefits-title">Why Organizations Choose ImpactTrack</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8" data-testid="text-benefits-title">Why Organizations Choose Synerxus</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {benefits.map((benefit, index) => (
               <div key={index} className="flex items-start gap-3 p-2" data-testid={`benefit-item-${index}`}>
@@ -188,7 +188,7 @@ export default function Landing() {
               Ready to Amplify Your Impact?
             </CardTitle>
             <CardDescription className="text-base sm:text-lg mb-6" data-testid="text-cta-description">
-              Join organizations worldwide using ImpactTrack to demonstrate the power of volunteer action.
+              Join organizations worldwide using Synerxus to demonstrate the power of volunteer action.
             </CardDescription>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <Link href="/login" className="w-full sm:w-auto">
@@ -209,7 +209,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t py-8 bg-muted/30">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 ImpactTrack. Empowering volunteers to change the world.</p>
+          <p>© 2025 Synerxus. Intelligent connections for sustainable development worldwide.</p>
         </div>
       </footer>
     </div>

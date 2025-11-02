@@ -83,7 +83,15 @@ Preferred communication style: Simple, everyday language.
 - **Volunteer Opportunities System**: Full-featured opportunity posting and discovery with AI-powered recommendations, search/filter, and application tracking.
 - **System Partitioning**: Dual user types (Volunteer and Organization) with distinct signup/login flows, database fields, and role-based navigation menus.
 - **Project-Task Hierarchy**: Restructured application with a project-based workflow, including `projectAssignments` and task assignments to volunteers.
-- **Profile Settings**: Comprehensive matching profile management for both volunteers and organizations with email-based user linking, form validation, and seamless create/update workflows.
+- **Profile Settings**: Comprehensive matching profile management for both volunteers and organizations with:
+  - Profile photo upload via Firebase Storage (max 5MB, JPG/PNG/GIF)
+  - Email-based user linking between main user table and matching system tables
+  - Dual-table updates (users/organizations + volunteers/matchableOrganizations)
+  - Full profile editing: display name, bio, location, skills/needs, interests/mission, SDG goals
+  - Real-time form validation with Zod schemas
+  - Data persistence to database for algorithm optimization
+  - Photo URLs stored in both user.avatar and matching table profilePhotoUrl fields
+  - Seamless create/update workflows with proper race condition handling
 
 ### System Design Choices
 - **Authentication**: Firebase Auth with Google OAuth.

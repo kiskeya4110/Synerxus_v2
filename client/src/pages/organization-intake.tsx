@@ -58,9 +58,23 @@ export default function OrganizationIntake() {
   const [customFocusArea, setCustomFocusArea] = useState("");
   const [customVolunteerNeed, setCustomVolunteerNeed] = useState("");
 
+  // Fetch current user from database to get organizationId
+  const userId = localStorage.getItem('currentUserId');
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) throw new Error("User not found");
+      return response.json();
+    },
+    enabled: !!userId
+  });
+
   const { data: existingProfile } = useQuery({
-    queryKey: ["/api/intake/organization-profile", user?.organizationId],
-    enabled: !!user?.organizationId
+    queryKey: ["/api/intake/organization-profile", currentUser?.organizationId],
+    enabled: !!currentUser?.organizationId
   });
 
   const form = useForm<OrganizationProfileForm>({
@@ -85,7 +99,7 @@ export default function OrganizationIntake() {
     mutationFn: async (data: OrganizationProfileForm) => {
       // Backend will automatically update userType when creating profile
       return await apiRequest({
-        url: `/api/intake/organization-profile?organizationId=${user?.organizationId}`,
+        url: `/api/intake/organization-profile?organizationId=${currentUser?.organizationId}`,
         method: "POST",
         data
       });

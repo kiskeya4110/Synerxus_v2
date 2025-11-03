@@ -1956,6 +1956,31 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         await storage.updateUser(userId, { userType: 'volunteer' });
       }
       
+      // Create or update matchable volunteer for algorithm
+      if (profile) {
+        const matchableVolId = `vol_${user.email}`;
+        const existingMatchableVol = await storage.getVolunteer(matchableVolId);
+        
+        const matchableVolData = {
+          email: user.email || '',
+          name: user.displayName || user.email || 'Volunteer',
+          profilePhotoUrl: user.avatar || null,
+          skills: profile.interests || [],
+          interests: profile.interests || [],
+          location: profile.location || profile.city || '',
+          sdgGoals: profile.preferredSdgs || []
+        };
+        
+        if (existingMatchableVol) {
+          await storage.updateVolunteer(matchableVolId, matchableVolData);
+        } else {
+          await storage.createVolunteer({
+            id: matchableVolId,
+            ...matchableVolData
+          } as any);
+        }
+      }
+      
       broadcastUpdate("volunteer_profile_updated", profile);
       res.json(profile);
     } catch (err) {
@@ -2025,6 +2050,31 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       const orgUser = users.find(u => u.organizationId === organizationId);
       if (orgUser && !orgUser.userType) {
         await storage.updateUser(orgUser.id, { userType: 'organization' });
+      }
+      
+      // Create or update matchable organization for algorithm
+      if (profile) {
+        const matchableOrgId = `org_${organization.contactEmail || organizationId}`;
+        const existingMatchableOrg = await storage.getMatchableOrganization(matchableOrgId);
+        
+        const matchableOrgData = {
+          email: organization.contactEmail || '',
+          name: organization.name || 'Organization',
+          profilePhotoUrl: organization.logo || null,
+          mission: profile.missionStatement || '',
+          needs: profile.volunteerNeeds || [],
+          sdgFocus: profile.primarySdgs || [],
+          location: organization.address || ''
+        };
+        
+        if (existingMatchableOrg) {
+          await storage.updateMatchableOrganization(matchableOrgId, matchableOrgData);
+        } else {
+          await storage.createMatchableOrganization({
+            id: matchableOrgId,
+            ...matchableOrgData
+          } as any);
+        }
       }
       
       broadcastUpdate("organization_profile_updated", profile);

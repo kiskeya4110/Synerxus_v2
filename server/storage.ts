@@ -799,9 +799,10 @@ export class MemStorage implements IStorage {
     return this.volunteersMap.get(id);
   }
 
-  async createVolunteer(insertVolunteer: InsertVolunteer): Promise<Volunteer> {
+  async createVolunteer(insertVolunteer: InsertVolunteer | any): Promise<Volunteer> {
     const now = new Date();
-    const id = crypto.randomUUID();
+    // Use provided id if available, otherwise generate UUID
+    const id = insertVolunteer.id || crypto.randomUUID();
     const volunteer: Volunteer = {
       ...insertVolunteer,
       id,
@@ -851,9 +852,10 @@ export class MemStorage implements IStorage {
       .find(org => org.email === email);
   }
 
-  async createMatchableOrganization(insertOrg: InsertMatchableOrganization): Promise<MatchableOrganization> {
+  async createMatchableOrganization(insertOrg: InsertMatchableOrganization | any): Promise<MatchableOrganization> {
     const now = new Date();
-    const id = crypto.randomUUID();
+    // Use provided id if available, otherwise generate UUID
+    const id = insertOrg.id || crypto.randomUUID();
     const organization: MatchableOrganization = {
       ...insertOrg,
       id,

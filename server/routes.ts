@@ -1936,10 +1936,6 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(404).json({ message: "User not found" });
       }
       
-      if (user.userType !== 'volunteer') {
-        return res.status(403).json({ message: "User is not a volunteer" });
-      }
-      
       const existingProfile = await storage.getVolunteerProfileByUserId(userId);
       
       let profile;
@@ -1953,6 +1949,11 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           ...req.body,
           userId
         });
+      }
+      
+      // Only set userType if it's not already set (don't flip existing types)
+      if (!user.userType) {
+        await storage.updateUser(userId, { userType: 'volunteer' });
       }
       
       broadcastUpdate("volunteer_profile_updated", profile);
@@ -2017,6 +2018,13 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           ...req.body,
           organizationId
         });
+      }
+      
+      // Only set userType if it's not already set (don't flip existing types)
+      const users = await storage.listUsers();
+      const orgUser = users.find(u => u.organizationId === organizationId);
+      if (orgUser && !orgUser.userType) {
+        await storage.updateUser(orgUser.id, { userType: 'organization' });
       }
       
       broadcastUpdate("organization_profile_updated", profile);

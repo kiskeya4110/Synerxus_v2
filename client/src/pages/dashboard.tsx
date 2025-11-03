@@ -86,12 +86,24 @@ export default function Dashboard() {
       <div className="flex items-center justify-center h-screen">
         <Card className="p-8 max-w-md">
           <CardHeader>
-            <CardTitle>Profile Incomplete</CardTitle>
+            <CardTitle>Account Setup Required</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-gray-600 dark:text-gray-400">
-              Your account type is not set. Please complete your profile.
+              Your account type hasn't been set. Please choose whether you're registering as a volunteer or organization.
             </p>
+            <div className="flex flex-col gap-3">
+              <Link href="/volunteer-intake">
+                <button className="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90">
+                  I'm a Volunteer
+                </button>
+              </Link>
+              <Link href="/organization-intake">
+                <button className="w-full px-4 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90">
+                  I'm an Organization
+                </button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>

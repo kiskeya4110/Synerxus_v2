@@ -6,12 +6,18 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 ## Recent Changes
 
-### November 3, 2025 - Navigation & Data Cleanup
+### November 3, 2025 - UserType Handling & Navigation Fixes
+- **UserType Management**: Moved userType updates to server-side within intake endpoints. Updates occur AFTER successful profile creation to ensure data consistency.
+- **Intake Flow Security**: Added strict validation - userType only set when currently null (prevents role flipping). Changes applied atomically with profile creation.
+- **Sidebar UX**: Shows minimal navigation shell with intake form links for users without userType set, instead of disappearing.
+- **Dashboard Messaging**: Provides clear "Account Setup Required" message with action buttons for users without userType.
 - **Hamburger Menu**: Created shared SidebarContext for synchronized state between Header and Sidebar components. Menu now properly toggles sidebar on mobile devices.
 - **Logo Navigation**: All logos (header, sidebar, login page) now link to landing page using anchor tags with hover effects.
 - **Sign-Out Flow**: Updated to automatically redirect to landing page after successful sign-out.
 - **Seed Data Removal**: Completely removed initializeSeedData() method and all test data including "Clean Water Initiative" project, test users, and sample tasks. System now starts with clean state.
 - **Mock Data Cleanup**: Removed "Clean Water Initiative" references from header notifications.
+
+**Known Architectural Limitation**: Backend endpoints accept user/organization IDs from request parameters without session-based validation. This is a pre-existing pattern affecting many endpoints across the codebase. Full remediation would require implementing authentication middleware to bind requests to Firebase auth tokens system-wide.
 
 ## User Preferences
 

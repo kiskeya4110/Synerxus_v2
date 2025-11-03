@@ -93,6 +93,7 @@ export default function VolunteerIntake() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: VolunteerProfileForm) => {
+      // Backend will automatically update userType when creating profile
       return await apiRequest({
         url: `/api/intake/volunteer-profile?userId=${user?.id}`,
         method: "POST",

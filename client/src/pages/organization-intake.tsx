@@ -83,6 +83,7 @@ export default function OrganizationIntake() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: OrganizationProfileForm) => {
+      // Backend will automatically update userType when creating profile
       return await apiRequest({
         url: `/api/intake/organization-profile?organizationId=${user?.organizationId}`,
         method: "POST",

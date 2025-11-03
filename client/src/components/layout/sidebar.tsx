@@ -72,7 +72,41 @@ export default function Sidebar() {
     }
   }, [isMobile]);
 
-  const userType = currentUser?.userType || 'volunteer';
+  // Show minimal shell if userType is not set
+  if (!currentUser?.userType) {
+    return (
+      <aside 
+        id="sidebar"
+        className={cn(
+          "fixed lg:static inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform lg:translate-x-0 z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="px-4 py-6">
+          <a href="/">
+            <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity">
+              <Logo size="md" />
+            </div>
+          </a>
+          <div className="text-center py-8">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Complete your profile to access all features
+            </p>
+            <div className="space-y-2">
+              <a href="/volunteer-intake" className="block w-full px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90">
+                Volunteer Profile
+              </a>
+              <a href="/organization-intake" className="block w-full px-4 py-2 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/90">
+                Organization Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
+  const userType = currentUser.userType;
 
   // Volunteer-specific navigation
   const volunteerNavItems = [

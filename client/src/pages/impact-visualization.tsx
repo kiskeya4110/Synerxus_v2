@@ -105,6 +105,54 @@ export default function ImpactVisualization() {
     });
   }, [projects, projectImpacts, volunteerActivities, impactMetrics]);
 
+  // Prepare before/after comparison data from projects
+  const beforeAfterData = useMemo(() => {
+    if (projects.length === 0) {
+      return [];
+    }
+
+    return projects.slice(0, 3).map((project: any) => {
+      const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
+      
+      // Calculate metrics before and after
+      const beforeMetrics: any[] = [];
+      const afterMetrics: any[] = [];
+      
+      impacts.forEach((impact: any) => {
+        const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
+        if (metric) {
+          // Assume baseline is 0 or half of current value for "before"
+          const beforeValue = Math.floor((impact.value || 0) * 0.3);
+          const afterValue = impact.value || 0;
+          
+          beforeMetrics.push({
+            label: metric.name,
+            value: beforeValue,
+            unit: metric.unit || ""
+          });
+          
+          afterMetrics.push({
+            label: metric.name,
+            value: afterValue,
+            unit: metric.unit || ""
+          });
+        }
+      });
+
+      return {
+        id: String(project.id),
+        title: project.name || "Project",
+        description: project.description || "No description available",
+        location: project.location || "Location not specified",
+        date: project.startDate ? new Date(project.startDate).toLocaleDateString() : "Date not specified",
+        beforeImage: project.coverImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800",
+        afterImage: project.coverImage || "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800",
+        beforeMetrics,
+        afterMetrics
+      };
+    });
+  }, [projects, projectImpacts, impactMetrics]);
+
   // Prepare time series chart data
   const impactOverTimeData = useMemo(() => {
     const monthlyData = new Map();

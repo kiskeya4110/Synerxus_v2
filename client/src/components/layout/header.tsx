@@ -184,7 +184,16 @@ export default function Header() {
                   </span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex flex-col space-y-1 p-2">
+                  <p className="text-sm font-medium leading-none" data-testid="text-user-display-name">
+                    {user.displayName || user.email?.split('@')[0]}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground" data-testid="text-user-email">
+                    {user.email}
+                  </p>
+                </div>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer" onClick={handleProfileClick} data-testid="menu-profile">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>

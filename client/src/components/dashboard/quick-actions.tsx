@@ -85,20 +85,20 @@ export default function QuickActions({ userType = "volunteer" }: QuickActionsPro
         <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-4">
           {actions.map((action) => (
             <Link 
               key={action.id}
               href={action.href}
             >
               <div 
-                className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 cursor-pointer min-h-[44px]"
+                className="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 cursor-pointer min-h-[80px]"
                 data-testid={`button-${action.id}`}
               >
                 <div className={action.color}>
                   {action.icon}
                 </div>
-                <span className="text-sm text-center">{action.label}</span>
+                <span className="text-sm text-center font-medium mt-1">{action.label}</span>
               </div>
             </Link>
           ))}

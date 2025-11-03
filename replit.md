@@ -7,7 +7,14 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 ## Recent Changes
 
 ### November 3, 2025 - SDG Selection & Matching Algorithm Integration
-- **SDG Selection Fix**: Fixed infinite re-render loop in organization intake form by using FormField's `field` parameter instead of `form.watch()` in render loops.
+- **SDG Selection Fix - Complete Rewrite**: Fixed infinite re-render loop in organization intake form:
+  - Removed Radix Checkbox component entirely, replaced with custom div-based checkbox indicator
+  - Implemented React state management (`useState<number[]>`) for selected SDGs
+  - Eliminated all `form.watch()` calls that were causing subscription loops
+  - Added useEffect to sync state with form when profile loads
+  - Custom checkbox shows purple background with check icon when selected, gray border when not
+- **Form Submission Fix**: Fixed `apiRequest` call signature from object format to positional parameters `(method, url, data)`
+- **OrganizationId Handling**: Added fallback logic to use userId when organizationId is not available for new users
 - **Matching Algorithm Integration**: Intake endpoints now create/update matchable entities for the matching algorithm:
   - Volunteer intake creates/updates `volunteers` table with `sdgGoals` from `volunteer_profiles.preferredSdgs`
   - Organization intake creates/updates `matchable_organizations` table with `sdgFocus` from `organization_profiles.primarySdgs`

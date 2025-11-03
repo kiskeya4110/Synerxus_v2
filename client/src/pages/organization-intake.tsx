@@ -150,12 +150,21 @@ export default function OrganizationIntake() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: OrganizationProfileForm) => {
+      // Get userId from localStorage
+      const userId = localStorage.getItem('currentUserId');
+      if (!userId) {
+        throw new Error("No user ID found. Please log in again.");
+      }
+      
+      // Use userId as organizationId if currentUser doesn't have one
+      const orgId = currentUser?.organizationId || userId;
+      
       // Backend will automatically update userType when creating profile
-      return await apiRequest({
-        url: `/api/intake/organization-profile?organizationId=${currentUser?.organizationId}`,
-        method: "POST",
+      return await apiRequest(
+        "POST",
+        `/api/intake/organization-profile?organizationId=${orgId}`,
         data
-      });
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/intake/organization-profile"] });

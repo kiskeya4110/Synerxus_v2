@@ -44,7 +44,16 @@ export default function PostUrgentOpportunity() {
   const { user } = useAuth();
   const [customSkill, setCustomSkill] = useState("");
 
-  const { data: currentUser } = useQuery({ queryKey: ["/api/user"] });
+  const { data: currentUser } = useQuery({ 
+    queryKey: ["/api/users/me"],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) throw new Error("User not found");
+      return response.json();
+    }
+  });
 
   const form = useForm<UrgentOpportunityForm>({
     resolver: zodResolver(urgentOpportunitySchema),

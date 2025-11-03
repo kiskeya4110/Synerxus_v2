@@ -24,6 +24,19 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
   - Shows email address in muted text below name
   - Increased dropdown width from w-48 to w-56 for better readability
   - Added proper test IDs for automated testing
+- **Profile Picture Upload System**: Implemented complete profile picture upload functionality:
+  - Created ProfilePictureUpload component with Firebase Storage integration
+  - Validates image files and size limits (max 5MB)
+  - Integrated into both volunteer and organization intake forms (Step 1)
+  - Backend saves profile photo URLs to users.avatar field
+  - Component properly loads and displays existing profile pictures
+  - Users can upload, change, and remove profile pictures
+  - All profile pictures persist to PostgreSQL database
+- **Session Error Handling**: Enhanced error handling for expired sessions:
+  - Detects 404 errors (user not found) and prompts users to log in again
+  - Clears localStorage and shows "Session Expired" toast message
+  - Auto-redirects to login page after 2 seconds
+  - Works correctly in both organization and volunteer intake forms
 
 ### November 3, 2025 - SDG Selection & Matching Algorithm Integration
 - **SDG Selection Fix - Complete Rewrite**: Fixed infinite re-render loop in organization intake form:

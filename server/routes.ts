@@ -1951,13 +1951,16 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         });
       }
       
-      // Update user's displayName and userType if needed
+      // Update user's displayName, userType, and profile photo if needed
       const updates: any = {};
       if (!user.userType) {
         updates.userType = 'volunteer';
       }
       if (req.body.volunteerName && req.body.volunteerName !== user.displayName) {
         updates.displayName = req.body.volunteerName;
+      }
+      if (req.body.profilePhotoUrl) {
+        updates.avatar = req.body.profilePhotoUrl;
       }
       if (Object.keys(updates).length > 0) {
         await storage.updateUser(userId, updates);
@@ -2086,9 +2089,16 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         });
       }
       
-      // Only set userType if it's not already set (don't flip existing types)
+      // Update user with userType and profile photo if provided
+      const userUpdates: any = {};
       if (!user.userType) {
-        await storage.updateUser(user.id, { userType: 'organization' });
+        userUpdates.userType = 'organization';
+      }
+      if (req.body.profilePhotoUrl) {
+        userUpdates.avatar = req.body.profilePhotoUrl;
+      }
+      if (Object.keys(userUpdates).length > 0) {
+        await storage.updateUser(user.id, userUpdates);
       }
       
       // Create or update matchable organization for algorithm

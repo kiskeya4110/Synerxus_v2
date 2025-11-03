@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ArrowRight, ArrowLeft, Check, Building, Globe, Users, Target, FileCheck } from "lucide-react";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 
 const organizationProfileSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
@@ -105,6 +106,7 @@ export default function OrganizationIntake() {
   const [customFocusArea, setCustomFocusArea] = useState("");
   const [customVolunteerNeed, setCustomVolunteerNeed] = useState("");
   const [selectedSdgs, setSelectedSdgs] = useState<number[]>([]);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
 
   // Fetch current user from database to get organizationId
   const userId = localStorage.getItem('currentUserId');
@@ -124,6 +126,13 @@ export default function OrganizationIntake() {
     queryKey: ["/api/intake/organization-profile", currentUser?.organizationId],
     enabled: !!currentUser?.organizationId
   });
+
+  // Load existing avatar when user data loads
+  useEffect(() => {
+    if (currentUser?.avatar) {
+      setProfilePhotoUrl(currentUser.avatar);
+    }
+  }, [currentUser]);
 
   // Sync selectedSdgs with form value when existingProfile loads
   useEffect(() => {
@@ -164,7 +173,10 @@ export default function OrganizationIntake() {
       return await apiRequest(
         "POST",
         `/api/intake/organization-profile?organizationId=${userId}`,
-        data
+        {
+          ...data,
+          profilePhotoUrl
+        }
       );
     },
     onSuccess: () => {
@@ -177,6 +189,22 @@ export default function OrganizationIntake() {
       navigate("/dashboard");
     },
     onError: (error: any) => {
+      // If user not found (404 status), clear localStorage and redirect to login
+      const isUserNotFound = error.status === 404 || 
+                            error.message?.includes("User not found") || 
+                            error.message?.includes("404");
+      
+      if (isUserNotFound) {
+        localStorage.removeItem('currentUserId');
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to continue.",
+          variant: "destructive"
+        });
+        setTimeout(() => navigate("/login"), 2000);
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || "Failed to save profile",
@@ -276,6 +304,12 @@ export default function OrganizationIntake() {
                   <CardDescription>Tell us about your organization</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <ProfilePictureUpload
+                    currentPhotoUrl={profilePhotoUrl}
+                    onPhotoChange={setProfilePhotoUrl}
+                    userId={user?.id || ""}
+                    userType="organization"
+                  />
                   <FormField
                     control={form.control}
                     name="organizationName"

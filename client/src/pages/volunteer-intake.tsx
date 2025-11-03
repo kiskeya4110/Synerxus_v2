@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ArrowRight, ArrowLeft, Check, UserCircle, Globe, Heart, Clock, MessageSquare, Phone } from "lucide-react";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 
 const skillOptions = [
   "Project Management", "Marketing", "Graphic Design", "Web Development", "Data Analysis",
@@ -63,11 +64,19 @@ export default function VolunteerIntake() {
   const [customSkill, setCustomSkill] = useState("");
   const [customLanguage, setCustomLanguage] = useState("");
   const [customInterest, setCustomInterest] = useState("");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(user?.avatar || "");
 
   const { data: existingProfile } = useQuery({
     queryKey: ["/api/intake/volunteer-profile", user?.id],
     enabled: !!user?.id
   });
+
+  // Load existing avatar when user data loads
+  useEffect(() => {
+    if (user?.avatar) {
+      setProfilePhotoUrl(user.avatar);
+    }
+  }, [user]);
 
   const form = useForm<VolunteerProfileForm>({
     resolver: zodResolver(volunteerProfileSchema),
@@ -101,7 +110,8 @@ export default function VolunteerIntake() {
         `/api/intake/volunteer-profile?userId=${user?.id}`,
         {
           ...data,
-          location: `${data.city}, ${data.country}`
+          location: `${data.city}, ${data.country}`,
+          profilePhotoUrl
         }
       );
     },
@@ -115,6 +125,22 @@ export default function VolunteerIntake() {
       navigate("/dashboard");
     },
     onError: (error: any) => {
+      // If user not found (404 status), clear localStorage and redirect to login
+      const isUserNotFound = error.status === 404 || 
+                            error.message?.includes("User not found") || 
+                            error.message?.includes("404");
+      
+      if (isUserNotFound) {
+        localStorage.removeItem('currentUserId');
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to continue.",
+          variant: "destructive"
+        });
+        setTimeout(() => navigate("/login"), 2000);
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || "Failed to save profile",
@@ -213,6 +239,13 @@ export default function VolunteerIntake() {
                   <CardDescription>Tell us where you're from and what languages you speak</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <ProfilePictureUpload
+                    currentPhotoUrl={profilePhotoUrl}
+                    onPhotoChange={setProfilePhotoUrl}
+                    userId={user?.id || ""}
+                    userType="volunteer"
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="volunteerName"

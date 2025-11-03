@@ -6,6 +6,25 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 ## Recent Changes
 
+### November 3, 2025 - Database Migration & Bug Fixes
+
+- **PostgreSQL Database Migration**: Migrated from in-memory storage to persistent PostgreSQL database:
+  - Created database connection in server/db.ts using Neon serverless
+  - Converted all MemStorage methods to DatabaseStorage using Drizzle ORM
+  - Implemented CRUD operations for all entities (users, organizations, projects, tasks, etc.)
+  - Successfully synced schema to database with `npm run db:push`
+  - All data now persists across server restarts
+- **React Hooks Bug Fix**: Fixed "Rendered more hooks than during the previous render" error in dashboard:
+  - Moved all useQuery and useMemo hooks to top of component before early returns
+  - Removed duplicate hooks that were causing inconsistent rendering
+  - Added `enabled` option to conditionally run queries based on user state
+  - Dashboard now loads successfully for all user types
+- **Display Name Enhancement**: Added user identification to profile dropdown menu:
+  - Shows display name (or email prefix if no display name) at top of dropdown
+  - Shows email address in muted text below name
+  - Increased dropdown width from w-48 to w-56 for better readability
+  - Added proper test IDs for automated testing
+
 ### November 3, 2025 - SDG Selection & Matching Algorithm Integration
 - **SDG Selection Fix - Complete Rewrite**: Fixed infinite re-render loop in organization intake form:
   - Removed Radix Checkbox component entirely, replaced with custom div-based checkbox indicator

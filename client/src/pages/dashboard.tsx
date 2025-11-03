@@ -43,6 +43,92 @@ export default function Dashboard() {
     retry: false
   });
 
+  // Fetch real data from API - MUST be called before any early returns
+  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
+    queryKey: ["/api/dashboard/summary"],
+    enabled: !!currentUser && !!currentUser.userType
+  });
+
+  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+    queryKey: ["/api/projects"],
+    enabled: !!currentUser && !!currentUser.userType
+  });
+
+  const { data: tasks = [], isLoading: loadingTasks } = useQuery({
+    queryKey: ["/api/tasks"],
+    enabled: !!currentUser && !!currentUser.userType
+  });
+
+  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery({
+    queryKey: ["/api/volunteer-activities"],
+    enabled: !!currentUser && !!currentUser.userType
+  });
+
+  const { data: calendarEvents = [], isLoading: loadingEvents } = useQuery({
+    queryKey: ["/api/calendar-events"],
+    enabled: !!currentUser && !!currentUser.userType
+  });
+
+  const { data: impactMetrics = [] } = useQuery({
+    queryKey: ["/api/impact-metrics"],
+    enabled: !!currentUser && !!currentUser.userType
+  });
+
+  const { data: projectImpacts = [] } = useQuery({
+    queryKey: ["/api/project-impacts"],
+    enabled: !!currentUser && !!currentUser.userType
+  });
+
+  // Filter data based on selected project
+  const filteredData = useMemo(() => {
+    const projectId = selectedProject === "all" ? null : parseInt(selectedProject);
+
+    const filteredProjects = projectId 
+      ? projects.filter((p: any) => p.id === projectId)
+      : projects;
+
+    const filteredTasks = projectId
+      ? tasks.filter((t: any) => t.projectId === projectId)
+      : tasks;
+
+    const filteredActivities = projectId
+      ? volunteerActivities.filter((a: any) => a.projectId === projectId)
+      : volunteerActivities;
+
+    const filteredImpacts = projectId
+      ? projectImpacts.filter((i: any) => {
+          const project = projects.find((p: any) => p.id === i.projectId);
+          return project && project.id === projectId;
+        })
+      : projectImpacts;
+
+    return {
+      projects: filteredProjects,
+      tasks: filteredTasks,
+      activities: filteredActivities,
+      impacts: filteredImpacts,
+    };
+  }, [selectedProject, projects, tasks, volunteerActivities, projectImpacts]);
+
+  // Calculate KPIs from real data
+  const kpis = useMemo(() => {
+    const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
+    const filteredTotalTasks = filteredData.tasks.length;
+    const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status === "Completed").length;
+    const filteredActiveProjects = filteredData.projects.filter((p: any) => 
+      p.status === "In Progress" || p.status === "Active"
+    ).length;
+
+    return {
+      volunteers: dashboardData?.activeVolunteers || 0,
+      hours: Math.round(filteredHours),
+      tasks: filteredTotalTasks,
+      completedTasks: filteredCompletedTasks,
+      activeProjects: filteredActiveProjects,
+      impactScore: dashboardData?.impactScore || 0,
+    };
+  }, [dashboardData, filteredData]);
+
   // Show loading state while fetching user
   if (isLoadingUser) {
     return (
@@ -109,105 +195,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  // Fetch real data from API
-  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
-    queryKey: ["/api/dashboard/summary"],
-  });
-
-  const { data: projects = [], isLoading: loadingProjects } = useQuery({
-    queryKey: ["/api/projects"],
-  });
-
-  const { data: tasks = [], isLoading: loadingTasks } = useQuery({
-    queryKey: ["/api/tasks"],
-  });
-
-  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery({
-    queryKey: ["/api/volunteer-activities"],
-  });
-
-  const { data: calendarEvents = [], isLoading: loadingEvents } = useQuery({
-    queryKey: ["/api/calendar-events"],
-  });
-
-  const { data: impactMetrics = [] } = useQuery({
-    queryKey: ["/api/impact-metrics"],
-  });
-
-  const { data: projectImpacts = [] } = useQuery({
-    queryKey: ["/api/project-impacts"],
-  });
-
-  // Filter data based on selected project
-  const filteredData = useMemo(() => {
-    const projectId = selectedProject === "all" ? null : parseInt(selectedProject);
-
-    const filteredProjects = projectId 
-      ? projects.filter((p: any) => p.id === projectId)
-      : projects;
-
-    const filteredTasks = projectId
-      ? tasks.filter((t: any) => t.projectId === projectId)
-      : tasks;
-
-    const filteredActivities = projectId
-      ? volunteerActivities.filter((a: any) => a.projectId === projectId)
-      : volunteerActivities;
-
-    const filteredImpacts = projectId
-      ? projectImpacts.filter((i: any) => {
-          const project = projects.find((p: any) => p.id === i.projectId);
-          return project && project.id === projectId;
-        })
-      : projectImpacts;
-
-    return {
-      projects: filteredProjects,
-      tasks: filteredTasks,
-      activities: filteredActivities,
-      impacts: filteredImpacts,
-    };
-  }, [selectedProject, projects, tasks, volunteerActivities, projectImpacts]);
-
-  // Calculate KPIs from real data
-  const kpis = useMemo(() => {
-    const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
-    const filteredTotalTasks = filteredData.tasks.length;
-    const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status === "Completed").length;
-    const filteredActiveProjects = filteredData.projects.filter((p: any) => 
-      p.status === "In Progress" || p.status === "Active"
-    ).length;
-
-    // Calculate unique SDGs from filtered projects
-    const uniqueSDGs = new Set();
-    filteredData.projects.forEach((project: any) => {
-      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
-        project.sdgGoals.forEach((goal: number) => uniqueSDGs.add(goal));
-      }
-    });
-
-    // Calculate impact score (simplified version)
-    const impactScore = filteredData.impacts.reduce((sum: number, impact: any) => sum + (impact.value || 0), 0);
-
-    if (dashboardType === "volunteer") {
-      return {
-        hours: filteredHours.toString(),
-        tasks: filteredCompletedTasks.toString(),
-        projects: filteredActiveProjects.toString(),
-        impact: impactScore.toString(),
-      };
-    } else {
-      // Organization KPIs
-      const activeVolunteers = new Set(filteredData.activities.map((a: any) => a.userId)).size;
-      return {
-        volunteers: activeVolunteers.toString(),
-        projects: filteredActiveProjects.toString(),
-        hours: filteredHours.toString(),
-        sdgs: uniqueSDGs.size.toString(),
-      };
-    }
-  }, [filteredData, dashboardType]);
 
   // Transform activities for the activity feed
   const formattedActivities: Activity[] = useMemo(() => {

@@ -6,6 +6,33 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 ## Recent Changes
 
+### November 3, 2025 - Dashboard KPI Fixes & Post Opportunities Section
+
+- **Active Volunteers KPI Fix**: Fixed dashboard to show real count of volunteers who have logged hours:
+  - Changed `/api/dashboard/summary` endpoint to count unique volunteer IDs from `volunteer_activities` table
+  - Previously counted all users in system (incorrect)
+  - Now only counts volunteers who have actually contributed time
+- **Dashboard KPI Bug Fixes**: Fixed undefined KPI references in organization dashboard:
+  - Fixed `kpis.projects` → `kpis.activeProjects` (was showing undefined)
+  - Fixed `kpis.impact` → `kpis.impactScore` 
+  - Added `kpis.sdgs` calculation from filtered projects' SDG goals
+  - All KPI cards now display real data from database
+- **Post Opportunities Section**: Added new section under Active Projects in organization dashboard:
+  - Shows two cards: "Core Opportunity" and "Urgent Need/Event"
+  - Links to `/post-core-opportunity` and `/post-urgent-opportunity` forms
+  - Includes descriptive text about AI matching and impact tracking
+  - Only visible for organization user type
+- **Opportunity Forms Verification**: Confirmed both intake forms match attached specification:
+  - Core Opportunity form has 4 sections (Basics, Logistics, Ideal Volunteer, Purpose & Impact)
+  - Urgent Opportunity form captures event details with proper field validation
+  - All form fields properly linked to AI matching algorithm parameters
+  - Impact metrics automatically set for urgent opportunities (Total Volunteers, Total Hours)
+- **Impact Visualization TypeScript Fixes**: Added proper type annotations to all useQuery calls:
+  - Fixed 27 TypeScript errors in impact-visualization.tsx
+  - Fixed 20+ TypeScript errors in dashboard.tsx
+  - All queries now typed as `useQuery<any[]>` or `useQuery<any>` for type safety
+  - Application builds and runs successfully
+
 ### November 3, 2025 - Database Migration & Bug Fixes
 
 - **PostgreSQL Database Migration**: Migrated from in-memory storage to persistent PostgreSQL database:

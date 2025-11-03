@@ -26,7 +26,6 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Landing Page**: Rebranded, publicly accessible, showcasing features and calls to action.
-- **Seed Data**: Comprehensive dummy data script for testing all features.
 - **Dashboard**: Fully database-integrated, role-based views (Volunteer/Organization) with real-time KPIs, interactive KPI cards, Impact Over Time chart, SDG Contributions chart, Quick Actions, Recent Activity, and Upcoming Events.
 - **SDG Mapping**: Visual representation and tracking of project alignment with UN SDGs.
 - **Mobile Data Collection**: Tabbed interface for activity logging and impact data recording with form validation.

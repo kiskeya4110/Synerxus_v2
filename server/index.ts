@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { seedMemStorage } from "./seed-mem-storage";
 
 const app = express();
 app.use(express.json());
@@ -39,11 +38,6 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
-
-  // Seed MemStorage with test data in development
-  if (app.get("env") === "development") {
-    await seedMemStorage();
-  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

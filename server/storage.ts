@@ -13,6 +13,8 @@ import {
   calendarEvents,
   volunteerProfiles,
   organizationProfiles,
+  opportunities,
+  applications,
   type User, 
   type InsertUser,
   type Organization,
@@ -40,9 +42,15 @@ import {
   type VolunteerProfile,
   type InsertVolunteerProfile,
   type OrganizationProfile,
-  type InsertOrganizationProfile
+  type InsertOrganizationProfile,
+  type Opportunity,
+  type InsertOpportunity,
+  type Application,
+  type InsertApplication
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 // Define the storage interface with CRUD operations for all entities
 export interface IStorage {
@@ -175,77 +183,12 @@ export interface IStorage {
   listCalendarEvents(): Promise<CalendarEvent[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private organizations: Map<number, Organization>;
-  private projects: Map<number, Project>;
-  private tasks: Map<number, Task>;
-  private volunteerActivities: Map<number, VolunteerActivity>;
-  private impactMetrics: Map<number, ImpactMetric>;
-  private projectImpacts: Map<number, ProjectImpact>;
-  private opportunities: Map<number, any>;
-  private applications: Map<number, any>;
-  private projectAssignments: Map<number, ProjectAssignment>;
-  private volunteersMap: Map<string, Volunteer>;
-  private matchableOrganizationsMap: Map<string, MatchableOrganization>;
-  private matchesMap: Map<number, Match>;
-  private calendarEvents: Map<number, CalendarEvent>;
-  private volunteerProfilesMap: Map<number, VolunteerProfile>;
-  private organizationProfilesMap: Map<number, OrganizationProfile>;
-
-  private userIdCounter: number;
-  private organizationIdCounter: number;
-  private projectIdCounter: number;
-  private calendarEventIdCounter: number;
-  private taskIdCounter: number;
-  private volunteerActivityIdCounter: number;
-  private impactMetricIdCounter: number;
-  private projectImpactIdCounter: number;
-  private opportunityIdCounter: number;
-  private applicationIdCounter: number;
-  private projectAssignmentIdCounter: number;
-  private matchIdCounter: number;
-  private volunteerProfileIdCounter: number;
-  private organizationProfileIdCounter: number;
-
+export class DatabaseStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.organizations = new Map();
-    this.projects = new Map();
-    this.tasks = new Map();
-    this.volunteerActivities = new Map();
-    this.impactMetrics = new Map();
-    this.projectImpacts = new Map();
-    this.opportunities = new Map();
-    this.applications = new Map();
-    this.projectAssignments = new Map();
-    this.volunteersMap = new Map();
-    this.matchableOrganizationsMap = new Map();
-    this.matchesMap = new Map();
-    this.calendarEvents = new Map();
-    this.volunteerProfilesMap = new Map();
-    this.organizationProfilesMap = new Map();
-
-    this.userIdCounter = 1;
-    this.organizationIdCounter = 1;
-    this.projectIdCounter = 1;
-    this.taskIdCounter = 1;
-    this.volunteerActivityIdCounter = 1;
-    this.impactMetricIdCounter = 1;
-    this.projectImpactIdCounter = 1;
-    this.opportunityIdCounter = 1;
-    this.applicationIdCounter = 1;
-    this.projectAssignmentIdCounter = 1;
-    this.matchIdCounter = 1;
-    this.calendarEventIdCounter = 1;
-    this.volunteerProfileIdCounter = 1;
-    this.organizationProfileIdCounter = 1;
-
-    // Initialize with some common SDG-related impact metrics
     this.initializeImpactMetrics();
   }
 
-  private initializeImpactMetrics() {
+  private async initializeImpactMetrics() {
     const initialMetrics: InsertImpactMetric[] = [
       {
         name: "People with Clean Water Access",
@@ -284,432 +227,260 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    initialMetrics.forEach(metric => {
-      this.createImpactMetric(metric);
-    });
+    for (const metric of initialMetrics) {
+      const [existing] = await db
+        .select()
+        .from(impactMetrics)
+        .where(eq(impactMetrics.name, metric.name));
+      
+      if (!existing) {
+        await this.createImpactMetric(metric);
+      }
+    }
   }
 
 
   // User operations
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [result] = await db.select().from(users).where(eq(users.id, id));
+    return result || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      user => user.username.toLowerCase() === username.toLowerCase()
-    );
+    const [result] = await db.select().from(users).where(eq(users.username, username));
+    return result || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      user => user.email.toLowerCase() === email.toLowerCase()
-    );
+    const [result] = await db.select().from(users).where(eq(users.email, email));
+    return result || undefined;
   }
 
   async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      user => user.firebaseUid === firebaseUid
-    );
+    const [result] = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
+    return result || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.userIdCounter++;
-    const now = new Date();
-    const user: User = { 
-      ...insertUser, 
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async updateUser(id: number, userData: Partial<InsertUser>): Promise<User | undefined> {
-    const existingUser = await this.getUser(id);
-    if (!existingUser) {
-      return undefined;
-    }
-
-    const updatedUser: User = {
-      ...existingUser,
-      ...userData,
-      updatedAt: new Date()
-    };
-
-    this.users.set(id, updatedUser);
-    return updatedUser;
+    const [result] = await db.update(users).set(userData).where(eq(users.id, id)).returning();
+    return result || undefined;
   }
 
   async listUsers(): Promise<User[]> {
-    return Array.from(this.users.values());
+    return await db.select().from(users);
   }
 
   // Organization operations
   async getOrganization(id: number): Promise<Organization | undefined> {
-    return this.organizations.get(id);
+    const [result] = await db.select().from(organizations).where(eq(organizations.id, id));
+    return result || undefined;
   }
 
   async createOrganization(insertOrg: InsertOrganization): Promise<Organization> {
-    const id = this.organizationIdCounter++;
-    const now = new Date();
-    const organization: Organization = {
-      ...insertOrg,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.organizations.set(id, organization);
+    const [organization] = await db.insert(organizations).values(insertOrg).returning();
     return organization;
   }
 
   async updateOrganization(id: number, orgData: Partial<InsertOrganization>): Promise<Organization | undefined> {
-    const existingOrg = await this.getOrganization(id);
-    if (!existingOrg) {
-      return undefined;
-    }
-
-    const updatedOrg: Organization = {
-      ...existingOrg,
-      ...orgData,
-      updatedAt: new Date()
-    };
-
-    this.organizations.set(id, updatedOrg);
-    return updatedOrg;
+    const [result] = await db.update(organizations).set(orgData).where(eq(organizations.id, id)).returning();
+    return result || undefined;
   }
 
   async listOrganizations(): Promise<Organization[]> {
-    return Array.from(this.organizations.values());
+    return await db.select().from(organizations);
   }
 
   // Project operations
   async getProject(id: number): Promise<Project | undefined> {
-    return this.projects.get(id);
+    const [result] = await db.select().from(projects).where(eq(projects.id, id));
+    return result || undefined;
   }
 
   async createProject(insertProject: InsertProject): Promise<Project> {
-    const id = this.projectIdCounter++;
-    const now = new Date();
-    const project: Project = {
-      ...insertProject,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.projects.set(id, project);
+    const [project] = await db.insert(projects).values(insertProject).returning();
     return project;
   }
 
   async updateProject(id: number, projectData: Partial<InsertProject>): Promise<Project | undefined> {
-    const existingProject = await this.getProject(id);
-    if (!existingProject) {
-      return undefined;
-    }
-
-    const updatedProject: Project = {
-      ...existingProject,
-      ...projectData,
-      updatedAt: new Date()
-    };
-
-    this.projects.set(id, updatedProject);
-    return updatedProject;
+    const [result] = await db.update(projects).set(projectData).where(eq(projects.id, id)).returning();
+    return result || undefined;
   }
 
   async listProjects(): Promise<Project[]> {
-    return Array.from(this.projects.values());
+    return await db.select().from(projects);
   }
 
   async listProjectsByOrganization(organizationId: number): Promise<Project[]> {
-    return Array.from(this.projects.values())
-      .filter(project => project.organizationId === organizationId);
+    return await db.select().from(projects).where(eq(projects.organizationId, organizationId));
   }
 
   // Task operations
   async getTask(id: number): Promise<Task | undefined> {
-    return this.tasks.get(id);
+    const [result] = await db.select().from(tasks).where(eq(tasks.id, id));
+    return result || undefined;
   }
 
   async createTask(insertTask: InsertTask): Promise<Task> {
-    const id = this.taskIdCounter++;
-    const now = new Date();
-    const task: Task = {
-      ...insertTask,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.tasks.set(id, task);
+    const [task] = await db.insert(tasks).values(insertTask).returning();
     return task;
   }
 
   async updateTask(id: number, taskData: Partial<InsertTask>): Promise<Task | undefined> {
-    const existingTask = await this.getTask(id);
-    if (!existingTask) {
-      return undefined;
-    }
-
-    const updatedTask: Task = {
-      ...existingTask,
-      ...taskData,
-      updatedAt: new Date()
-    };
-
-    this.tasks.set(id, updatedTask);
-    return updatedTask;
+    const [result] = await db.update(tasks).set(taskData).where(eq(tasks.id, id)).returning();
+    return result || undefined;
   }
 
   async listTasks(): Promise<Task[]> {
-    return Array.from(this.tasks.values());
+    return await db.select().from(tasks);
   }
 
   async listTasksByProject(projectId: number): Promise<Task[]> {
-    return Array.from(this.tasks.values())
-      .filter(task => task.projectId === projectId);
+    return await db.select().from(tasks).where(eq(tasks.projectId, projectId));
   }
 
   async listTasksByAssignee(assigneeId: number): Promise<Task[]> {
-    return Array.from(this.tasks.values())
-      .filter(task => task.assigneeId === assigneeId);
+    return await db.select().from(tasks).where(eq(tasks.assigneeId, assigneeId));
   }
 
   // Volunteer Activity operations
   async getVolunteerActivity(id: number): Promise<VolunteerActivity | undefined> {
-    return this.volunteerActivities.get(id);
+    const [result] = await db.select().from(volunteerActivities).where(eq(volunteerActivities.id, id));
+    return result || undefined;
   }
 
   async createVolunteerActivity(insertActivity: InsertVolunteerActivity): Promise<VolunteerActivity> {
-    const id = this.volunteerActivityIdCounter++;
-    const now = new Date();
-    const activity: VolunteerActivity = {
-      ...insertActivity,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.volunteerActivities.set(id, activity);
+    const [activity] = await db.insert(volunteerActivities).values(insertActivity).returning();
     return activity;
   }
 
   async updateVolunteerActivity(id: number, activityData: Partial<InsertVolunteerActivity>): Promise<VolunteerActivity | undefined> {
-    const existingActivity = await this.getVolunteerActivity(id);
-    if (!existingActivity) {
-      return undefined;
-    }
-
-    const updatedActivity: VolunteerActivity = {
-      ...existingActivity,
-      ...activityData,
-      updatedAt: new Date()
-    };
-
-    this.volunteerActivities.set(id, updatedActivity);
-    return updatedActivity;
+    const [result] = await db.update(volunteerActivities).set(activityData).where(eq(volunteerActivities.id, id)).returning();
+    return result || undefined;
   }
 
   async listVolunteerActivities(): Promise<VolunteerActivity[]> {
-    return Array.from(this.volunteerActivities.values());
+    return await db.select().from(volunteerActivities);
   }
 
   async listVolunteerActivitiesByUser(userId: number): Promise<VolunteerActivity[]> {
-    return Array.from(this.volunteerActivities.values())
-      .filter(activity => activity.userId === userId);
+    return await db.select().from(volunteerActivities).where(eq(volunteerActivities.userId, userId));
   }
 
   async listVolunteerActivitiesByProject(projectId: number): Promise<VolunteerActivity[]> {
-    return Array.from(this.volunteerActivities.values())
-      .filter(activity => activity.projectId === projectId);
+    return await db.select().from(volunteerActivities).where(eq(volunteerActivities.projectId, projectId));
   }
 
   // Impact Metric operations
   async getImpactMetric(id: number): Promise<ImpactMetric | undefined> {
-    return this.impactMetrics.get(id);
+    const [result] = await db.select().from(impactMetrics).where(eq(impactMetrics.id, id));
+    return result || undefined;
   }
 
   async createImpactMetric(insertMetric: InsertImpactMetric): Promise<ImpactMetric> {
-    const id = this.impactMetricIdCounter++;
-    const now = new Date();
-    const metric: ImpactMetric = {
-      ...insertMetric,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.impactMetrics.set(id, metric);
+    const [metric] = await db.insert(impactMetrics).values(insertMetric).returning();
     return metric;
   }
 
   async updateImpactMetric(id: number, metricData: Partial<InsertImpactMetric>): Promise<ImpactMetric | undefined> {
-    const existingMetric = await this.getImpactMetric(id);
-    if (!existingMetric) {
-      return undefined;
-    }
-
-    const updatedMetric: ImpactMetric = {
-      ...existingMetric,
-      ...metricData,
-      updatedAt: new Date()
-    };
-
-    this.impactMetrics.set(id, updatedMetric);
-    return updatedMetric;
+    const [result] = await db.update(impactMetrics).set(metricData).where(eq(impactMetrics.id, id)).returning();
+    return result || undefined;
   }
 
   async listImpactMetrics(): Promise<ImpactMetric[]> {
-    return Array.from(this.impactMetrics.values());
+    return await db.select().from(impactMetrics);
   }
 
   async listImpactMetricsByCategory(category: string): Promise<ImpactMetric[]> {
-    return Array.from(this.impactMetrics.values())
-      .filter(metric => metric.category === category);
+    return await db.select().from(impactMetrics).where(eq(impactMetrics.category, category));
   }
 
   async listImpactMetricsBySDG(sdgGoal: number): Promise<ImpactMetric[]> {
-    return Array.from(this.impactMetrics.values())
-      .filter(metric => metric.sdgGoal === sdgGoal);
+    return await db.select().from(impactMetrics).where(eq(impactMetrics.sdgGoal, sdgGoal));
   }
 
   // Project Impact operations
   async getProjectImpact(id: number): Promise<ProjectImpact | undefined> {
-    return this.projectImpacts.get(id);
+    const [result] = await db.select().from(projectImpacts).where(eq(projectImpacts.id, id));
+    return result || undefined;
   }
 
   async createProjectImpact(insertImpact: InsertProjectImpact): Promise<ProjectImpact> {
-    const id = this.projectImpactIdCounter++;
-    const now = new Date();
-    const impact: ProjectImpact = {
-      ...insertImpact,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.projectImpacts.set(id, impact);
+    const [impact] = await db.insert(projectImpacts).values(insertImpact).returning();
     return impact;
   }
 
   async updateProjectImpact(id: number, impactData: Partial<InsertProjectImpact>): Promise<ProjectImpact | undefined> {
-    const existingImpact = await this.getProjectImpact(id);
-    if (!existingImpact) {
-      return undefined;
-    }
-
-    const updatedImpact: ProjectImpact = {
-      ...existingImpact,
-      ...impactData,
-      updatedAt: new Date()
-    };
-
-    this.projectImpacts.set(id, updatedImpact);
-    return updatedImpact;
+    const [result] = await db.update(projectImpacts).set(impactData).where(eq(projectImpacts.id, id)).returning();
+    return result || undefined;
   }
 
   async listProjectImpacts(): Promise<ProjectImpact[]> {
-    return Array.from(this.projectImpacts.values());
+    return await db.select().from(projectImpacts);
   }
 
   async listProjectImpactsByProject(projectId: number): Promise<ProjectImpact[]> {
-    return Array.from(this.projectImpacts.values())
-      .filter(impact => impact.projectId === projectId);
+    return await db.select().from(projectImpacts).where(eq(projectImpacts.projectId, projectId));
   }
 
   async listProjectImpactsByMetric(metricId: number): Promise<ProjectImpact[]> {
-    return Array.from(this.projectImpacts.values())
-      .filter(impact => impact.metricId === metricId);
+    return await db.select().from(projectImpacts).where(eq(projectImpacts.metricId, metricId));
   }
 
   // Opportunity operations
-  async getOpportunity(id: number): Promise<any | undefined> {
-    return this.opportunities.get(id);
+  async getOpportunity(id: number): Promise<Opportunity | undefined> {
+    const [result] = await db.select().from(opportunities).where(eq(opportunities.id, id));
+    return result || undefined;
   }
 
-  async createOpportunity(opportunity: any): Promise<any> {
-    const id = this.opportunityIdCounter++;
-    const now = new Date();
-    const newOpportunity = {
-      ...opportunity,
-      id,
-      createdAt: now,
-      updatedAt: now,
-      status: 'active'
-    };
-    this.opportunities.set(id, newOpportunity);
+  async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {
+    const [newOpportunity] = await db.insert(opportunities).values(opportunity).returning();
     return newOpportunity;
   }
 
-  async updateOpportunity(id: number, opportunity: Partial<any>): Promise<any | undefined> {
-    const existing = await this.getOpportunity(id);
-    if (!existing) {
-      return undefined;
-    }
-
-    const updated = {
-      ...existing,
-      ...opportunity,
-      updatedAt: new Date()
-    };
-
-    this.opportunities.set(id, updated);
-    return updated;
+  async updateOpportunity(id: number, opportunity: Partial<InsertOpportunity>): Promise<Opportunity | undefined> {
+    const [result] = await db.update(opportunities).set(opportunity).where(eq(opportunities.id, id)).returning();
+    return result || undefined;
   }
 
-  async listOpportunities(): Promise<any[]> {
-    return Array.from(this.opportunities.values());
+  async listOpportunities(): Promise<Opportunity[]> {
+    return await db.select().from(opportunities);
   }
 
-  async listOpportunitiesByOrganization(organizationId: number): Promise<any[]> {
-    return Array.from(this.opportunities.values())
-      .filter(opp => opp.organizationId === organizationId);
+  async listOpportunitiesByOrganization(organizationId: number): Promise<Opportunity[]> {
+    return await db.select().from(opportunities).where(eq(opportunities.organizationId, organizationId));
   }
 
   // Application operations
-  async getApplication(id: number): Promise<any | undefined> {
-    return this.applications.get(id);
+  async getApplication(id: number): Promise<Application | undefined> {
+    const [result] = await db.select().from(applications).where(eq(applications.id, id));
+    return result || undefined;
   }
 
-  async createApplication(application: any): Promise<any> {
-    const id = this.applicationIdCounter++;
-    const now = new Date();
-    const newApplication = {
-      ...application,
-      id,
-      status: 'pending',
-      createdAt: now,
-      updatedAt: now
-    };
-    this.applications.set(id, newApplication);
+  async createApplication(application: InsertApplication): Promise<Application> {
+    const [newApplication] = await db.insert(applications).values(application).returning();
     return newApplication;
   }
 
-  async updateApplication(id: number, application: Partial<any>): Promise<any | undefined> {
-    const existing = await this.getApplication(id);
-    if (!existing) {
-      return undefined;
-    }
-
-    const updated = {
-      ...existing,
-      ...application,
-      updatedAt: new Date()
-    };
-
-    this.applications.set(id, updated);
-    return updated;
+  async updateApplication(id: number, application: Partial<InsertApplication>): Promise<Application | undefined> {
+    const [result] = await db.update(applications).set(application).where(eq(applications.id, id)).returning();
+    return result || undefined;
   }
 
-  async listApplications(): Promise<any[]> {
-    return Array.from(this.applications.values());
+  async listApplications(): Promise<Application[]> {
+    return await db.select().from(applications);
   }
 
-  async listApplicationsByOpportunity(opportunityId: number): Promise<any[]> {
-    return Array.from(this.applications.values())
-      .filter(app => app.opportunityId === opportunityId);
+  async listApplicationsByOpportunity(opportunityId: number): Promise<Application[]> {
+    return await db.select().from(applications).where(eq(applications.opportunityId, opportunityId));
   }
 
-  async listApplicationsByVolunteer(volunteerId: number): Promise<any[]> {
-    return Array.from(this.applications.values())
-      .filter(app => app.volunteerId === volunteerId);
+  async listApplicationsByVolunteer(volunteerId: number): Promise<Application[]> {
+    return await db.select().from(applications).where(eq(applications.volunteerId, volunteerId));
   }
 
   // Match score operations
@@ -726,7 +497,6 @@ export class MemStorage implements IStorage {
       };
     }
 
-    // Use the imported matching algorithm
     const matchResult = calculateMatchScore(volunteer, opportunity);
     
     return {
@@ -740,163 +510,106 @@ export class MemStorage implements IStorage {
 
   // Project Assignment operations
   async getProjectAssignment(id: number): Promise<ProjectAssignment | undefined> {
-    return this.projectAssignments.get(id);
+    const [result] = await db.select().from(projectAssignments).where(eq(projectAssignments.id, id));
+    return result || undefined;
   }
 
   async createProjectAssignment(assignment: InsertProjectAssignment): Promise<ProjectAssignment> {
-    const id = this.projectAssignmentIdCounter++;
-    const now = new Date();
-    const newAssignment: ProjectAssignment = {
-      ...assignment,
-      id,
-      hoursCompleted: assignment.hoursCompleted ?? 0,
-      status: assignment.status || 'active',
-      assignedAt: assignment.assignedAt || now,
-      completedAt: assignment.completedAt || null,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.projectAssignments.set(id, newAssignment);
+    const [newAssignment] = await db.insert(projectAssignments).values(assignment).returning();
     return newAssignment;
   }
 
   async updateProjectAssignment(id: number, assignment: Partial<InsertProjectAssignment>): Promise<ProjectAssignment | undefined> {
-    const existing = await this.getProjectAssignment(id);
-    if (!existing) {
-      return undefined;
-    }
-
-    const updated: ProjectAssignment = {
-      ...existing,
-      ...assignment,
-      updatedAt: new Date()
-    };
-
-    this.projectAssignments.set(id, updated);
-    return updated;
+    const [result] = await db.update(projectAssignments).set(assignment).where(eq(projectAssignments.id, id)).returning();
+    return result || undefined;
   }
 
   async listProjectAssignments(): Promise<ProjectAssignment[]> {
-    return Array.from(this.projectAssignments.values());
+    return await db.select().from(projectAssignments);
   }
 
   async listProjectAssignmentsByProject(projectId: number): Promise<ProjectAssignment[]> {
-    return Array.from(this.projectAssignments.values())
-      .filter(assignment => assignment.projectId === projectId);
+    return await db.select().from(projectAssignments).where(eq(projectAssignments.projectId, projectId));
   }
 
   async listProjectAssignmentsByVolunteer(volunteerId: number): Promise<ProjectAssignment[]> {
-    return Array.from(this.projectAssignments.values())
-      .filter(assignment => assignment.volunteerId === volunteerId);
+    return await db.select().from(projectAssignments).where(eq(projectAssignments.volunteerId, volunteerId));
   }
 
   async deleteProjectAssignment(id: number): Promise<boolean> {
-    return this.projectAssignments.delete(id);
+    await db.delete(projectAssignments).where(eq(projectAssignments.id, id));
+    return true;
   }
 
   // Volunteer operations (matching system)
   async getVolunteer(id: string): Promise<Volunteer | undefined> {
-    return this.volunteersMap.get(id);
+    const [result] = await db.select().from(volunteers).where(eq(volunteers.id, id));
+    return result || undefined;
   }
 
   async createVolunteer(insertVolunteer: InsertVolunteer | any): Promise<Volunteer> {
-    const now = new Date();
-    // Use provided id if available, otherwise generate UUID
     const id = insertVolunteer.id || crypto.randomUUID();
-    const volunteer: Volunteer = {
-      ...insertVolunteer,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.volunteersMap.set(id, volunteer);
+    const [volunteer] = await db.insert(volunteers).values({ ...insertVolunteer, id }).returning();
     return volunteer;
   }
 
   async updateVolunteer(id: string, volunteerData: Partial<InsertVolunteer>): Promise<Volunteer | undefined> {
-    const existing = await this.getVolunteer(id);
-    if (!existing) {
-      return undefined;
-    }
-
-    const updated: Volunteer = {
-      ...existing,
-      ...volunteerData,
-      updatedAt: new Date()
-    };
-
-    this.volunteersMap.set(id, updated);
-    return updated;
+    const [result] = await db.update(volunteers).set(volunteerData).where(eq(volunteers.id, id)).returning();
+    return result || undefined;
   }
 
   async deleteVolunteer(id: string): Promise<boolean> {
-    return this.volunteersMap.delete(id);
+    await db.delete(volunteers).where(eq(volunteers.id, id));
+    return true;
   }
 
   async listVolunteers(): Promise<Volunteer[]> {
-    return Array.from(this.volunteersMap.values());
+    return await db.select().from(volunteers);
   }
 
   async getVolunteerByEmail(email: string): Promise<Volunteer | undefined> {
-    return Array.from(this.volunteersMap.values())
-      .find(volunteer => volunteer.email === email);
+    const [result] = await db.select().from(volunteers).where(eq(volunteers.email, email));
+    return result || undefined;
   }
 
   // Matchable Organization operations
   async getMatchableOrganization(id: string): Promise<MatchableOrganization | undefined> {
-    return this.matchableOrganizationsMap.get(id);
+    const [result] = await db.select().from(matchableOrganizations).where(eq(matchableOrganizations.id, id));
+    return result || undefined;
   }
 
   async getMatchableOrganizationByEmail(email: string): Promise<MatchableOrganization | undefined> {
-    return Array.from(this.matchableOrganizationsMap.values())
-      .find(org => org.email === email);
+    const [result] = await db.select().from(matchableOrganizations).where(eq(matchableOrganizations.email, email));
+    return result || undefined;
   }
 
   async createMatchableOrganization(insertOrg: InsertMatchableOrganization | any): Promise<MatchableOrganization> {
-    const now = new Date();
-    // Use provided id if available, otherwise generate UUID
     const id = insertOrg.id || crypto.randomUUID();
-    const organization: MatchableOrganization = {
-      ...insertOrg,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.matchableOrganizationsMap.set(id, organization);
+    const [organization] = await db.insert(matchableOrganizations).values({ ...insertOrg, id }).returning();
     return organization;
   }
 
   async updateMatchableOrganization(id: string, orgData: Partial<InsertMatchableOrganization>): Promise<MatchableOrganization | undefined> {
-    const existing = await this.getMatchableOrganization(id);
-    if (!existing) {
-      return undefined;
-    }
-
-    const updated: MatchableOrganization = {
-      ...existing,
-      ...orgData,
-      updatedAt: new Date()
-    };
-
-    this.matchableOrganizationsMap.set(id, updated);
-    return updated;
+    const [result] = await db.update(matchableOrganizations).set(orgData).where(eq(matchableOrganizations.id, id)).returning();
+    return result || undefined;
   }
 
   async deleteMatchableOrganization(id: string): Promise<boolean> {
-    return this.matchableOrganizationsMap.delete(id);
+    await db.delete(matchableOrganizations).where(eq(matchableOrganizations.id, id));
+    return true;
   }
 
   async listMatchableOrganizations(): Promise<MatchableOrganization[]> {
-    return Array.from(this.matchableOrganizationsMap.values());
+    return await db.select().from(matchableOrganizations);
   }
 
   // Match operations
   async getMatch(id: number): Promise<Match | undefined> {
-    return this.matchesMap.get(id);
+    const [result] = await db.select().from(matches).where(eq(matches.id, id));
+    return result || undefined;
   }
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
-    // Validate that volunteer and organization exist
     const volunteer = await this.getVolunteer(insertMatch.volunteerId);
     if (!volunteer) {
       throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
@@ -907,25 +620,11 @@ export class MemStorage implements IStorage {
       throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
     }
 
-    const id = this.matchIdCounter++;
-    const now = new Date();
-    const match: Match = {
-      ...insertMatch,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.matchesMap.set(id, match);
+    const [match] = await db.insert(matches).values(insertMatch).returning();
     return match;
   }
 
   async updateMatch(id: number, matchData: Partial<InsertMatch>): Promise<Match | undefined> {
-    const existing = await this.getMatch(id);
-    if (!existing) {
-      return undefined;
-    }
-
-    // Validate volunteer if being updated
     if (matchData.volunteerId) {
       const volunteer = await this.getVolunteer(matchData.volunteerId);
       if (!volunteer) {
@@ -933,7 +632,6 @@ export class MemStorage implements IStorage {
       }
     }
 
-    // Validate organization if being updated
     if (matchData.organizationId) {
       const organization = await this.getMatchableOrganization(matchData.organizationId);
       if (!organization) {
@@ -941,18 +639,11 @@ export class MemStorage implements IStorage {
       }
     }
 
-    const updated: Match = {
-      ...existing,
-      ...matchData,
-      updatedAt: new Date()
-    };
-
-    this.matchesMap.set(id, updated);
-    return updated;
+    const [result] = await db.update(matches).set(matchData).where(eq(matches.id, id)).returning();
+    return result || undefined;
   }
 
   async upsertMatch(insertMatch: InsertMatch): Promise<Match> {
-    // Validate that volunteer and organization exist
     const volunteer = await this.getVolunteer(insertMatch.volunteerId);
     if (!volunteer) {
       throw new Error(`Volunteer with id ${insertMatch.volunteerId} does not exist`);
@@ -963,173 +654,116 @@ export class MemStorage implements IStorage {
       throw new Error(`Organization with id ${insertMatch.organizationId} does not exist`);
     }
 
-    // Check if match already exists for this volunteer-organization pair
-    const existingMatch = Array.from(this.matchesMap.values()).find(
-      match => match.volunteerId === insertMatch.volunteerId && 
-               match.organizationId === insertMatch.organizationId
+    const existingMatches = await db.select().from(matches).where(
+      and(
+        eq(matches.volunteerId, insertMatch.volunteerId),
+        eq(matches.organizationId, insertMatch.organizationId)
+      )
     );
 
-    if (existingMatch) {
-      // Update existing match with new score
-      const updated: Match = {
-        ...existingMatch,
-        score: insertMatch.score,
-        matchedOn: new Date(),
-        updatedAt: new Date()
-      };
-      this.matchesMap.set(existingMatch.id, updated);
+    if (existingMatches.length > 0) {
+      const [updated] = await db.update(matches)
+        .set({ score: insertMatch.score, matchedOn: new Date() })
+        .where(eq(matches.id, existingMatches[0].id))
+        .returning();
       return updated;
     } else {
-      // Create new match
-      const id = this.matchIdCounter++;
-      const now = new Date();
-      const match: Match = {
-        ...insertMatch,
-        id,
-        createdAt: now,
-        updatedAt: now
-      };
-      this.matchesMap.set(id, match);
+      const [match] = await db.insert(matches).values(insertMatch).returning();
       return match;
     }
   }
 
   async deleteMatch(id: number): Promise<boolean> {
-    return this.matchesMap.delete(id);
+    await db.delete(matches).where(eq(matches.id, id));
+    return true;
   }
 
   async listMatches(): Promise<Match[]> {
-    return Array.from(this.matchesMap.values());
+    return await db.select().from(matches);
   }
 
   async listMatchesByVolunteer(volunteerId: string): Promise<Match[]> {
-    return Array.from(this.matchesMap.values())
-      .filter(match => match.volunteerId === volunteerId);
+    return await db.select().from(matches).where(eq(matches.volunteerId, volunteerId));
   }
 
   async listMatchesByOrganization(organizationId: string): Promise<Match[]> {
-    return Array.from(this.matchesMap.values())
-      .filter(match => match.organizationId === organizationId);
+    return await db.select().from(matches).where(eq(matches.organizationId, organizationId));
   }
 
   // Calendar Event operations
   async getCalendarEvent(id: number): Promise<CalendarEvent | undefined> {
-    return this.calendarEvents.get(id);
+    const [result] = await db.select().from(calendarEvents).where(eq(calendarEvents.id, id));
+    return result || undefined;
   }
 
   async createCalendarEvent(event: InsertCalendarEvent): Promise<CalendarEvent> {
-    const id = this.calendarEventIdCounter++;
-    const now = new Date();
-    const calendarEvent: CalendarEvent = {
-      ...event,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.calendarEvents.set(id, calendarEvent);
+    const [calendarEvent] = await db.insert(calendarEvents).values(event).returning();
     return calendarEvent;
   }
 
   async updateCalendarEvent(id: number, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent | undefined> {
-    const existing = this.calendarEvents.get(id);
-    if (!existing) return undefined;
-
-    const updated: CalendarEvent = {
-      ...existing,
-      ...event,
-      updatedAt: new Date()
-    };
-    this.calendarEvents.set(id, updated);
-    return updated;
+    const [result] = await db.update(calendarEvents).set(event).where(eq(calendarEvents.id, id)).returning();
+    return result || undefined;
   }
 
   async deleteCalendarEvent(id: number): Promise<boolean> {
-    return this.calendarEvents.delete(id);
+    await db.delete(calendarEvents).where(eq(calendarEvents.id, id));
+    return true;
   }
 
   async listCalendarEvents(): Promise<CalendarEvent[]> {
-    return Array.from(this.calendarEvents.values());
+    return await db.select().from(calendarEvents);
   }
 
   // Volunteer Profile operations
   async getVolunteerProfile(id: number): Promise<VolunteerProfile | undefined> {
-    return this.volunteerProfilesMap.get(id);
+    const [result] = await db.select().from(volunteerProfiles).where(eq(volunteerProfiles.id, id));
+    return result || undefined;
   }
 
   async getVolunteerProfileByUserId(userId: number): Promise<VolunteerProfile | undefined> {
-    return Array.from(this.volunteerProfilesMap.values())
-      .find(profile => profile.userId === userId);
+    const [result] = await db.select().from(volunteerProfiles).where(eq(volunteerProfiles.userId, userId));
+    return result || undefined;
   }
 
   async createVolunteerProfile(profile: InsertVolunteerProfile): Promise<VolunteerProfile> {
-    const id = this.volunteerProfileIdCounter++;
-    const now = new Date();
-    const volunteerProfile: VolunteerProfile = {
-      ...profile,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.volunteerProfilesMap.set(id, volunteerProfile);
+    const [volunteerProfile] = await db.insert(volunteerProfiles).values(profile).returning();
     return volunteerProfile;
   }
 
   async updateVolunteerProfile(id: number, profile: Partial<InsertVolunteerProfile>): Promise<VolunteerProfile | undefined> {
-    const existing = this.volunteerProfilesMap.get(id);
-    if (!existing) return undefined;
-
-    const updated: VolunteerProfile = {
-      ...existing,
-      ...profile,
-      updatedAt: new Date()
-    };
-    this.volunteerProfilesMap.set(id, updated);
-    return updated;
+    const [result] = await db.update(volunteerProfiles).set(profile).where(eq(volunteerProfiles.id, id)).returning();
+    return result || undefined;
   }
 
   async listVolunteerProfiles(): Promise<VolunteerProfile[]> {
-    return Array.from(this.volunteerProfilesMap.values());
+    return await db.select().from(volunteerProfiles);
   }
 
   // Organization Profile operations
   async getOrganizationProfile(id: number): Promise<OrganizationProfile | undefined> {
-    return this.organizationProfilesMap.get(id);
+    const [result] = await db.select().from(organizationProfiles).where(eq(organizationProfiles.id, id));
+    return result || undefined;
   }
 
   async getOrganizationProfileByOrgId(organizationId: number): Promise<OrganizationProfile | undefined> {
-    return Array.from(this.organizationProfilesMap.values())
-      .find(profile => profile.organizationId === organizationId);
+    const [result] = await db.select().from(organizationProfiles).where(eq(organizationProfiles.organizationId, organizationId));
+    return result || undefined;
   }
 
   async createOrganizationProfile(profile: InsertOrganizationProfile): Promise<OrganizationProfile> {
-    const id = this.organizationProfileIdCounter++;
-    const now = new Date();
-    const organizationProfile: OrganizationProfile = {
-      ...profile,
-      id,
-      createdAt: now,
-      updatedAt: now
-    };
-    this.organizationProfilesMap.set(id, organizationProfile);
+    const [organizationProfile] = await db.insert(organizationProfiles).values(profile).returning();
     return organizationProfile;
   }
 
   async updateOrganizationProfile(id: number, profile: Partial<InsertOrganizationProfile>): Promise<OrganizationProfile | undefined> {
-    const existing = this.organizationProfilesMap.get(id);
-    if (!existing) return undefined;
-
-    const updated: OrganizationProfile = {
-      ...existing,
-      ...profile,
-      updatedAt: new Date()
-    };
-    this.organizationProfilesMap.set(id, updated);
-    return updated;
+    const [result] = await db.update(organizationProfiles).set(profile).where(eq(organizationProfiles.id, id)).returning();
+    return result || undefined;
   }
 
   async listOrganizationProfiles(): Promise<OrganizationProfile[]> {
-    return Array.from(this.organizationProfilesMap.values());
+    return await db.select().from(organizationProfiles);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

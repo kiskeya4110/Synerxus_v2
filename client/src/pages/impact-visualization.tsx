@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import BeforeAfterComparison from "@/components/impact/before-after-comparison";
+import { Link } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -315,6 +316,9 @@ export default function ImpactVisualization() {
     setSelectedMetric(details);
   };
 
+  // Check if we have any data to display
+  const hasData = projects.length > 0 || projectImpacts.length > 0 || volunteerActivities.length > 0;
+
   return (
     <>
       {/* Page Header */}
@@ -325,7 +329,32 @@ export default function ImpactVisualization() {
         </p>
       </div>
 
+      {/* Empty State */}
+      {!hasData && (
+        <Card className="p-12">
+          <CardContent className="flex flex-col items-center justify-center text-center">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <BarChart className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">No Impact Data Yet</h2>
+            <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
+              Start tracking impact by creating projects, logging volunteer activities, and recording impact metrics. 
+              Your visualizations will appear here once you have data.
+            </p>
+            <div className="flex gap-3">
+              <Link href="/projects">
+                <Button>Create Project</Button>
+              </Link>
+              <Link href="/mobile-data-collection">
+                <Button variant="outline">Log Activity</Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Main Content */}
+      {hasData && (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 h-auto min-h-[44px]">
           <TabsTrigger value="before-after" className="text-xs sm:text-sm min-h-[44px]">Before & After</TabsTrigger>
@@ -526,6 +555,7 @@ export default function ImpactVisualization() {
           </div>
         </TabsContent>
       </Tabs>
+      )}
 
       {/* Metric Detail Dialog */}
       <Dialog open={!!selectedMetric} onOpenChange={(open) => !open && setSelectedMetric(null)}>

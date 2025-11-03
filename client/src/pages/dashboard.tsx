@@ -474,52 +474,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Post Opportunities Section - Organizations Only */}
-      {dashboardType === "organization" && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Post Volunteer Opportunities</h2>
-          <Card>
-            <CardContent className="p-6">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Attract the best volunteers by posting detailed opportunities. Your data powers AI Matching and Impact Tracking.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link href="/post-core-opportunity">
-                  <div className="p-4 border-2 border-primary/20 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer" data-testid="link-post-core-opportunity">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Briefcase className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Core Opportunity</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          For skilled, ongoing, or project-based roles. Detailed posts for best skill & purpose matching.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-                <Link href="/post-urgent-opportunity">
-                  <div className="p-4 border-2 border-amber-500/20 rounded-lg hover:border-amber-500/40 hover:bg-amber-500/5 transition-all cursor-pointer" data-testid="link-post-urgent-opportunity">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-amber-500/10 rounded-lg">
-                        <AlertCircle className="h-5 w-5 text-amber-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Urgent Need / Event</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          For time-sensitive events like fundraisers, community drives, or disaster response.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
       {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">

@@ -4,6 +4,45 @@
 
 Synerxus is a comprehensive volunteer impact tracking and matching platform. It helps organizations measure, visualize, and communicate the outcomes of their volunteer initiatives. The platform uses AI to intelligently match global volunteers with opportunities, connecting activities to humanitarian outcomes and Sustainable Development Goals (SDGs). Synerxus provides data-driven insights for impact assessment and storytelling, aiming to offer "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes
+
+### November 3, 2025 - Bug Fixes for Impact Visualization, Logo, and Dashboard
+
+- **Impact Visualization Fix**: Fixed the Impact Visualization page that was not working:
+  - Added missing BarChart icon import from lucide-react
+  - Page now correctly displays empty state when no data exists
+  - When data is present, displays full tabbed analytics (Before & After, Outcomes, Time Series)
+  - Works correctly for both volunteer and organization user types
+- **Logo Display Fix**: Fixed fractured logo appearance on dashboards:
+  - Added flex-shrink-0 class to prevent logo from shrinking
+  - Added whitespace-nowrap to keep text aligned
+  - Added error handling for logo loading failures
+  - Logo now displays consistently across all screen sizes
+- **Dashboard KPI Cleanup**: Removed misleading percentage trends from Volunteer Dashboard:
+  - Removed hardcoded trends (+12%, +8%, +25%, etc.) from KPI cards
+  - KPI cards now show only real data values without fake trend indicators
+  - Will add real trend calculations when historical data is available
+- **Location Persistence Verification**: Confirmed location saving works correctly:
+  - Location saved to volunteers/matchable_organizations tables (required for AI matching)
+  - Settings pages load location from matching tables
+  - Profile page displays location from matching tables
+  - All location data persists correctly across database and UI
+
+### November 3, 2025 - Navigation Streamlining & Empty State Improvements
+
+- **Navigation Cleanup**: Streamlined organization navigation to reduce redundancy:
+  - Removed "Post Opportunities" from sidebar menu (was redundant)
+  - Relocated Post Opportunities section from dashboard to Projects & Tasks page
+  - Section now appears under search bar, visible only to organization users
+  - Maintains same two-card design (Core Opportunity and Urgent Need/Event)
+  - Improves discoverability by placing opportunity posting next to projects list
+- **Impact Visualization Empty State**: Added comprehensive empty state to Impact Visualization page:
+  - Displays helpful card when no projects, activities, or impacts exist
+  - Provides clear explanation of why visualizations are empty
+  - Includes action buttons to "Create Project" and "Log Activity"
+  - Shows once user has data, hiding empty state and displaying tabbed analytics
+  - Improves UX by guiding users to take necessary actions
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

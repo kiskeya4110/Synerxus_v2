@@ -6,6 +6,26 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 ## Recent Changes
 
+### November 3, 2025 - Calendar-Project Linking & Comprehensive Project Intake Form
+
+- **Calendar Event Enhancements**: Enhanced calendar events with project and user assignment capabilities:
+  - Added `attendees` field to calendar event schema for assigning users/volunteers to events
+  - Calendar event form now includes project selection dropdown
+  - Attendees field accepts comma-separated user IDs for multi-user assignment
+  - Event details dialog displays linked project name and assigned users with their IDs
+  - Fixed form.reset() bug that retained stale attendee IDs when creating new events
+  - Form now properly clears all fields including attendees between event creations
+- **Comprehensive Project Intake Form**: Enhanced project creation with full AI matching data collection:
+  - Added `location` field (required, 25% weight in AI matching algorithm)
+  - Added `startDate` and `endDate` fields for project timeline tracking
+  - Added `skillsNeeded` field (35% weight in AI matching algorithm)
+  - Added `volunteersNeeded` field for capacity planning
+  - Added `impactGoals` field for expected outcomes description
+  - Enhanced `sdgs` field with matching weight explanation (20% in AI algorithm)
+  - Made dialog scrollable (max-h-90vh) for better UX with many fields
+  - All fields display their relevance to AI matching algorithm with percentage weights
+  - Project data properly stored in database for AI matching optimization
+
 ### November 3, 2025 - Bug Fixes for Impact Visualization, Logo, and Dashboard
 
 - **Impact Visualization Fix**: Fixed the Impact Visualization page that was not working:

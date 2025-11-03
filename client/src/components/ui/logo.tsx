@@ -30,12 +30,14 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
         <img 
           src="/attached_assets/Synerxus Modern Logo_1762068075617.png" 
           alt="Synerxus Logo" 
-          className={cn(sizeClasses.logo, "object-contain")}
-          style={{ imageRendering: 'high-quality' }}
-          loading="eager"
+          className={cn(sizeClasses.logo, "object-contain flex-shrink-0")}
+          onError={(e) => {
+            console.error('Logo failed to load');
+            e.currentTarget.style.display = 'none';
+          }}
         />
       )}
-      <span className={cn(sizeClasses.text, "font-bold")}>
+      <span className={cn(sizeClasses.text, "font-bold whitespace-nowrap")}>
         <span style={{ color: '#1e3a8a' }}>SYNER</span>
         <span style={{ color: '#f59e0b' }}>XUS</span>
       </span>

@@ -374,7 +374,6 @@ export default function Dashboard() {
               title="Hours Contributed"
               value={kpis.hours}
               icon={<Clock className="h-6 w-6" />}
-              trend="+12%"
               onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
               data-testid="kpi-hours"
             />
@@ -382,7 +381,6 @@ export default function Dashboard() {
               title="Tasks Completed"
               value={kpis.tasks}
               icon={<CheckSquare className="h-6 w-6" />}
-              trend="+8%"
               onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}
               data-testid="kpi-tasks"
             />
@@ -397,7 +395,6 @@ export default function Dashboard() {
               title="Impact Score"
               value={kpis.impactScore}
               icon={<Award className="h-6 w-6" />}
-              trend="+25%"
               data-testid="kpi-impact"
             />
           </>
@@ -407,7 +404,6 @@ export default function Dashboard() {
               title="Active Volunteers"
               value={kpis.volunteers}
               icon={<Users className="h-6 w-6" />}
-              trend="+15%"
               onClick={() => handleKPIClick("Active Volunteers", kpis.volunteers)}
               data-testid="kpi-volunteers"
             />
@@ -422,7 +418,6 @@ export default function Dashboard() {
               title="Total Hours"
               value={kpis.hours}
               icon={<Clock className="h-6 w-6" />}
-              trend="+20%"
               onClick={() => handleKPIClick("Total Hours", kpis.hours)}
               data-testid="kpi-hours"
             />

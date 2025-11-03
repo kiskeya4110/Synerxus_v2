@@ -129,6 +129,39 @@ export default function Dashboard() {
     };
   }, [dashboardData, filteredData]);
 
+  // Transform activities for the activity feed - MUST BE BEFORE EARLY RETURNS
+  const formattedActivities: Activity[] = useMemo(() => {
+    return (filteredData.activities || []).slice(0, 10).map((activity: any) => {
+      const relativeTime = getRelativeTime(new Date(activity.createdAt));
+      const project = projects.find((p: any) => p.id === activity.projectId);
+      
+      return {
+        id: activity.id.toString(),
+        user: {
+          id: activity.userId?.toString() || "1",
+          name: "Volunteer",
+          avatar: undefined,
+        },
+        action: "logged " + activity.hours + " hours on",
+        target: project?.name || "Unknown Project",
+        time: relativeTime,
+      };
+    });
+  }, [filteredData.activities, projects]);
+
+  // Transform events for upcoming events - MUST BE BEFORE EARLY RETURNS
+  const formattedEvents: Event[] = useMemo(() => {
+    return (calendarEvents || [])
+      .filter((event: any) => new Date(event.startTime) > new Date())
+      .slice(0, 3)
+      .map((event: any) => ({
+        id: event.id.toString(),
+        title: event.title,
+        dateTime: formatDateTime(new Date(event.startTime)),
+        type: getEventType(event.eventType),
+      }));
+  }, [calendarEvents]);
+
   // Show loading state while fetching user
   if (isLoadingUser) {
     return (
@@ -195,39 +228,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  // Transform activities for the activity feed
-  const formattedActivities: Activity[] = useMemo(() => {
-    return (filteredData.activities || []).slice(0, 10).map((activity: any) => {
-      const relativeTime = getRelativeTime(new Date(activity.createdAt));
-      const project = projects.find((p: any) => p.id === activity.projectId);
-      
-      return {
-        id: activity.id.toString(),
-        user: {
-          id: activity.userId?.toString() || "1",
-          name: "Volunteer",
-          avatar: undefined,
-        },
-        action: "logged " + activity.hours + " hours on",
-        target: project?.name || "Unknown Project",
-        time: relativeTime,
-      };
-    });
-  }, [filteredData.activities, projects]);
-
-  // Transform events for upcoming events
-  const formattedEvents: Event[] = useMemo(() => {
-    return (calendarEvents || [])
-      .filter((event: any) => new Date(event.startTime) > new Date())
-      .slice(0, 3)
-      .map((event: any) => ({
-        id: event.id.toString(),
-        title: event.title,
-        dateTime: formatDateTime(new Date(event.startTime)),
-        type: getEventType(event.eventType),
-      }));
-  }, [calendarEvents]);
 
   // Handle KPI card click to show details
   const handleKPIClick = (title: string, value: string) => {

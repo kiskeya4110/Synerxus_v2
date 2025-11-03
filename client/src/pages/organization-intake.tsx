@@ -214,6 +214,8 @@ export default function OrganizationIntake() {
   });
 
   const onSubmit = (data: OrganizationProfileForm) => {
+    console.log("Form submission triggered with data:", data);
+    console.log("Form errors:", form.formState.errors);
     submitMutation.mutate(data);
   };
 
@@ -647,7 +649,11 @@ export default function OrganizationIntake() {
                 <Button
                   data-testid="button-next"
                   type="button"
-                  onClick={() => setStep(Math.min(totalSteps, step + 1))}
+                  onClick={() => {
+                    console.log("Moving to next step. Current form values:", form.getValues());
+                    console.log("Current form errors:", form.formState.errors);
+                    setStep(Math.min(totalSteps, step + 1));
+                  }}
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -657,6 +663,11 @@ export default function OrganizationIntake() {
                   data-testid="button-submit"
                   type="submit"
                   disabled={submitMutation.isPending}
+                  onClick={() => {
+                    console.log("Submit button clicked");
+                    console.log("Form values:", form.getValues());
+                    console.log("Form errors:", form.formState.errors);
+                  }}
                 >
                   {submitMutation.isPending ? "Submitting..." : "Complete Profile"}
                   <Check className="w-4 h-4 ml-2" />

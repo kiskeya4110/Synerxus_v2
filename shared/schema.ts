@@ -9,7 +9,7 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password"), // Optional since Firebase handles auth
-  userType: text("user_type").notNull(), // 'volunteer' or 'organization'
+  userType: text("user_type"), // 'volunteer' or 'organization' - nullable until intake completed
   displayName: text("display_name"),
   avatar: text("avatar"),
   bio: text("bio"),

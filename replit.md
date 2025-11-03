@@ -4,6 +4,15 @@
 
 Synerxus is a comprehensive volunteer impact tracking and matching platform. It helps organizations measure, visualize, and communicate the outcomes of their volunteer initiatives. The platform uses AI to intelligently match global volunteers with opportunities, connecting activities to humanitarian outcomes and Sustainable Development Goals (SDGs). Synerxus provides data-driven insights for impact assessment and storytelling, aiming to offer "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes
+
+### November 3, 2025 - Navigation & Data Cleanup
+- **Hamburger Menu**: Created shared SidebarContext for synchronized state between Header and Sidebar components. Menu now properly toggles sidebar on mobile devices.
+- **Logo Navigation**: All logos (header, sidebar, login page) now link to landing page using anchor tags with hover effects.
+- **Sign-Out Flow**: Updated to automatically redirect to landing page after successful sign-out.
+- **Seed Data Removal**: Completely removed initializeSeedData() method and all test data including "Clean Water Initiative" project, test users, and sample tasks. System now starts with clean state.
+- **Mock Data Cleanup**: Removed "Clean Water Initiative" references from header notifications.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

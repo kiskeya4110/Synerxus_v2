@@ -13,12 +13,26 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
   - Eliminated all `form.watch()` calls that were causing subscription loops
   - Added useEffect to sync state with form when profile loads
   - Custom checkbox shows purple background with check icon when selected, gray border when not
-- **Form Submission Fix**: Fixed `apiRequest` call signature from object format to positional parameters `(method, url, data)`
-- **OrganizationId Handling**: Added fallback logic to use userId when organizationId is not available for new users
+- **Form Submission Fix**: Fixed `apiRequest` call signature from object format to positional parameters `(method, url, data)` in both organization and volunteer intake forms
+- **Organization & Volunteer Name Capture**: Added name fields to both intake forms:
+  - Organization intake Step 1 now has "Organization Name" field (required, min 2 chars)
+  - Volunteer intake Step 1 now has "Your Name" field (required, min 2 chars)
+  - Names are now captured and saved to database
+- **Organization Creation During Intake**: Updated organization intake backend to create organization record on-the-fly for new users:
+  - If user.organizationId exists, uses existing organization
+  - If user.organizationId is null, creates new organization with name from form
+  - Updates user.organizationId to link to the created organization
+  - Eliminates 404 "Organization not found" error for new users
+- **Volunteer Name Flow**: Updated volunteer intake backend to save volunteer name:
+  - Updates user.displayName from req.body.volunteerName
+  - Uses fresh volunteerName value directly for matchable volunteer entity (not stale user object)
+- **Name Propagation to Matching Algorithm**: Organization and volunteer names now flow correctly to matchable entities:
+  - Organization: form → backend → organizations.name → matchable_organizations.name
+  - Volunteer: form → backend → users.displayName → volunteers.name
 - **Matching Algorithm Integration**: Intake endpoints now create/update matchable entities for the matching algorithm:
   - Volunteer intake creates/updates `volunteers` table with `sdgGoals` from `volunteer_profiles.preferredSdgs`
   - Organization intake creates/updates `matchable_organizations` table with `sdgFocus` from `organization_profiles.primarySdgs`
-- **Storage Layer Enhancement**: Modified `createVolunteer` and `createMatchableOrganization` to respect caller-provided deterministic IDs (e.g., `vol_${email}`) instead of always generating UUIDs.
+- **Storage Layer Enhancement**: Modified `createVolunteer` and `createMatchableOrganization` to respect caller-provided deterministic IDs (e.g., `vol_${email}`, `org_${contactEmail}`) instead of always generating UUIDs.
 - **Data Synchronization**: SDG selections from intake forms now properly flow to matching algorithm, enabling the 20% SDG alignment component of match scores.
 - **UserType Management**: Moved userType updates to server-side within intake endpoints. Updates occur AFTER successful profile creation to ensure data consistency.
 - **Intake Flow Security**: Added strict validation - userType only set when currently null (prevents role flipping). Changes applied atomically with profile creation.

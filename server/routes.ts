@@ -1951,9 +1951,16 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         });
       }
       
-      // Only set userType if it's not already set (don't flip existing types)
+      // Update user's displayName and userType if needed
+      const updates: any = {};
       if (!user.userType) {
-        await storage.updateUser(userId, { userType: 'volunteer' });
+        updates.userType = 'volunteer';
+      }
+      if (req.body.volunteerName && req.body.volunteerName !== user.displayName) {
+        updates.displayName = req.body.volunteerName;
+      }
+      if (Object.keys(updates).length > 0) {
+        await storage.updateUser(userId, updates);
       }
       
       // Create or update matchable volunteer for algorithm
@@ -1961,9 +1968,12 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         const matchableVolId = `vol_${user.email}`;
         const existingMatchableVol = await storage.getVolunteer(matchableVolId);
         
+        // Use the updated name from request body, not the stale user object
+        const volunteerName = req.body.volunteerName || user.displayName || user.email || 'Volunteer';
+        
         const matchableVolData = {
           email: user.email || '',
-          name: user.displayName || user.email || 'Volunteer',
+          name: volunteerName,
           profilePhotoUrl: user.avatar || null,
           skills: profile.interests || [],
           interests: profile.interests || [],
@@ -2014,20 +2024,50 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
   // Organization Profile Intake - Create or update
   app.post("/api/intake/organization-profile", async (req, res) => {
     try {
-      const orgIdParam = req.query.organizationId as string;
+      const userIdParam = req.query.organizationId as string;
       
-      if (!orgIdParam) {
+      if (!userIdParam) {
         return res.status(400).json({ message: "organizationId parameter is required" });
       }
       
-      const organizationId = parseInt(orgIdParam);
-      if (isNaN(organizationId)) {
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
         return res.status(400).json({ message: "organizationId must be a valid number" });
       }
       
-      const organization = await storage.getOrganization(organizationId);
-      if (!organization) {
-        return res.status(404).json({ message: "Organization not found" });
+      // Get the user to access their email
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get or create organization
+      let organization;
+      let organizationId: number;
+      
+      if (user.organizationId) {
+        // User already has an organization
+        organization = await storage.getOrganization(user.organizationId);
+        if (!organization) {
+          return res.status(404).json({ message: "Organization not found" });
+        }
+        organizationId = user.organizationId;
+      } else {
+        // Create new organization for this user
+        const { organizationName } = req.body;
+        if (!organizationName) {
+          return res.status(400).json({ message: "organizationName is required for new organizations" });
+        }
+        
+        organization = await storage.createOrganization({
+          name: organizationName,
+          contactEmail: user.email || '',
+          description: req.body.missionStatement || ''
+        });
+        organizationId = organization.id;
+        
+        // Update user with organizationId
+        await storage.updateUser(userId, { organizationId: organization.id });
       }
       
       const existingProfile = await storage.getOrganizationProfileByOrgId(organizationId);
@@ -2046,10 +2086,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       }
       
       // Only set userType if it's not already set (don't flip existing types)
-      const users = await storage.listUsers();
-      const orgUser = users.find(u => u.organizationId === organizationId);
-      if (orgUser && !orgUser.userType) {
-        await storage.updateUser(orgUser.id, { userType: 'organization' });
+      if (!user.userType) {
+        await storage.updateUser(user.id, { userType: 'organization' });
       }
       
       // Create or update matchable organization for algorithm

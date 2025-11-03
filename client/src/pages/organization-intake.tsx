@@ -19,6 +19,7 @@ import { sdgGoals } from "@shared/sdg-goals";
 import { ArrowRight, ArrowLeft, Check, Building, Globe, Users, Target, FileCheck } from "lucide-react";
 
 const organizationProfileSchema = z.object({
+  organizationName: z.string().min(2, "Organization name is required"),
   missionStatement: z.string().min(20, "Please provide a detailed mission statement"),
   focusAreas: z.array(z.string()).min(1, "Select at least one focus area"),
   organizationType: z.string().min(1, "Select organization type"),
@@ -133,6 +134,7 @@ export default function OrganizationIntake() {
   const form = useForm<OrganizationProfileForm>({
     resolver: zodResolver(organizationProfileSchema),
     defaultValues: {
+      organizationName: "",
       missionStatement: existingProfile?.missionStatement || "",
       focusAreas: existingProfile?.focusAreas || [],
       organizationType: existingProfile?.organizationType || "",
@@ -156,13 +158,10 @@ export default function OrganizationIntake() {
         throw new Error("No user ID found. Please log in again.");
       }
       
-      // Use userId as organizationId if currentUser doesn't have one
-      const orgId = currentUser?.organizationId || userId;
-      
-      // Backend will automatically update userType when creating profile
+      // Backend will create organization if needed and update userType
       return await apiRequest(
         "POST",
-        `/api/intake/organization-profile?organizationId=${orgId}`,
+        `/api/intake/organization-profile?organizationId=${userId}`,
         data
       );
     },
@@ -275,6 +274,25 @@ export default function OrganizationIntake() {
                   <CardDescription>Tell us about your organization</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="organizationName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Organization Name</FormLabel>
+                        <FormDescription>What is your organization called?</FormDescription>
+                        <FormControl>
+                          <Input
+                            data-testid="input-organization-name"
+                            placeholder="e.g., Global Impact Foundation"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <FormField
                     control={form.control}
                     name="missionStatement"

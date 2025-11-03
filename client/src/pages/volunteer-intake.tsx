@@ -32,6 +32,7 @@ const interestOptions = [
 ];
 
 const volunteerProfileSchema = z.object({
+  volunteerName: z.string().min(2, "Your name is required"),
   location: z.string().optional(),
   city: z.string().min(1, "City is required"),
   country: z.string().min(1, "Country is required"),
@@ -71,6 +72,7 @@ export default function VolunteerIntake() {
   const form = useForm<VolunteerProfileForm>({
     resolver: zodResolver(volunteerProfileSchema),
     defaultValues: {
+      volunteerName: "",
       city: existingProfile?.city || "",
       country: existingProfile?.country || "",
       languages: existingProfile?.languages || [],
@@ -94,14 +96,14 @@ export default function VolunteerIntake() {
   const submitMutation = useMutation({
     mutationFn: async (data: VolunteerProfileForm) => {
       // Backend will automatically update userType when creating profile
-      return await apiRequest({
-        url: `/api/intake/volunteer-profile?userId=${user?.id}`,
-        method: "POST",
-        data: {
+      return await apiRequest(
+        "POST",
+        `/api/intake/volunteer-profile?userId=${user?.id}`,
+        {
           ...data,
           location: `${data.city}, ${data.country}`
         }
-      });
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile"] });
@@ -211,6 +213,25 @@ export default function VolunteerIntake() {
                   <CardDescription>Tell us where you're from and what languages you speak</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="volunteerName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Name</FormLabel>
+                        <FormDescription>What should we call you?</FormDescription>
+                        <FormControl>
+                          <Input
+                            data-testid="input-volunteer-name"
+                            placeholder="e.g., Sarah Johnson"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}

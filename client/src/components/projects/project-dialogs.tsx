@@ -18,8 +18,13 @@ const projectFormSchema = z.object({
   name: z.string().min(3, "Project name must be at least 3 characters"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   status: z.enum(["planning", "active", "completed", "on-hold"]).default("planning"),
+  location: z.string().min(1, "Location is required for volunteer matching"),
   sdgs: z.string().optional(),
-  location: z.string().optional()
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  skillsNeeded: z.string().optional(),
+  volunteersNeeded: z.string().optional(),
+  impactGoals: z.string().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -38,8 +43,13 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
       name: "",
       description: "",
       status: "planning",
+      location: "",
       sdgs: "",
-      location: ""
+      startDate: "",
+      endDate: "",
+      skillsNeeded: "",
+      volunteersNeeded: "",
+      impactGoals: "",
     }
   });
 
@@ -49,11 +59,32 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         ? data.sdgs.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 17)
         : [];
 
-      return apiRequest("POST", "/api/projects", {
-        ...data,
+      const skillsArray = data.skillsNeeded
+        ? data.skillsNeeded.split(",").map(s => s.trim()).filter(s => s.length > 0)
+        : [];
+
+      const payload: any = {
+        name: data.name,
+        description: data.description,
+        status: data.status,
+        location: data.location,
         organizationId,
-        sdgGoals: sdgArray
-      });
+        sdgGoals: sdgArray,
+      };
+
+      if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();
+      if (data.endDate) payload.endDate = new Date(data.endDate).toISOString();
+      
+      // Store additional data in goals field as JSON
+      if (data.skillsNeeded || data.volunteersNeeded || data.impactGoals) {
+        payload.goals = {
+          skillsNeeded: skillsArray,
+          volunteersNeeded: data.volunteersNeeded ? parseInt(data.volunteersNeeded) : null,
+          impactGoals: data.impactGoals || null,
+        };
+      }
+
+      return apiRequest("POST", "/api/projects", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
@@ -85,11 +116,11 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
           Create Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Project</DialogTitle>
           <DialogDescription>
-            Add a new project to track volunteer activities and impact
+            Add a new project to track volunteer activities and impact. Provide detailed information for better volunteer matching.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -153,20 +184,51 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
               name="location"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location (Optional)</FormLabel>
+                  <FormLabel>Location</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Nairobi, Kenya" {...field} data-testid="input-project-location" />
                   </FormControl>
+                  <p className="text-sm text-gray-500">Location is required for volunteer matching (weighted at 25%)</p>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="startDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Start Date (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} data-testid="input-project-start-date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="endDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>End Date (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} data-testid="input-project-end-date" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="sdgs"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>UN SDGs (Optional)</FormLabel>
+                  <FormLabel>UN SDGs</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., 1, 3, 6 (comma-separated, 1-17)"
@@ -174,10 +236,69 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
                       data-testid="input-project-sdgs"
                     />
                   </FormControl>
+                  <p className="text-sm text-gray-500">SDG alignment is weighted at 20% in volunteer matching</p>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="skillsNeeded"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Skills Needed (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g., Construction, Medical Training, Teaching (comma-separated)"
+                      {...field}
+                      data-testid="input-project-skills"
+                    />
+                  </FormControl>
+                  <p className="text-sm text-gray-500">Skills are weighted at 35% in volunteer matching</p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="volunteersNeeded"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Volunteers Needed (Optional)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="e.g., 10"
+                      {...field}
+                      data-testid="input-project-volunteers"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="impactGoals"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Impact Goals (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe the expected impact and outcomes..."
+                      className="min-h-[80px]"
+                      {...field}
+                      data-testid="input-project-impact-goals"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel

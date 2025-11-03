@@ -25,6 +25,7 @@ const eventFormSchema = z.object({
   startTime: z.string().min(1, "Start time is required"),
   endTime: z.string().min(1, "End time is required"),
   location: z.string().optional(),
+  attendees: z.string().optional(), // Comma-separated user IDs
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
@@ -46,6 +47,11 @@ export default function Calendar() {
     queryKey: ["/api/projects"],
   });
 
+  // Fetch users/volunteers for attendee selection
+  const { data: users = [] } = useQuery({
+    queryKey: ["/api/users"],
+  });
+
   // Form for adding events
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
@@ -57,17 +63,23 @@ export default function Calendar() {
       startTime: "",
       endTime: "",
       location: "",
+      attendees: "",
     },
   });
 
   // Add event mutation
   const addEventMutation = useMutation({
     mutationFn: async (data: EventFormData) => {
+      const attendeesArray = data.attendees
+        ? data.attendees.split(",").map(id => parseInt(id.trim())).filter(n => !isNaN(n))
+        : [];
+        
       const payload = {
         ...data,
         projectId: data.projectId ? parseInt(data.projectId) : null,
         startTime: new Date(data.startTime).toISOString(),
         endTime: new Date(data.endTime).toISOString(),
+        attendees: attendeesArray,
       };
       return apiRequest("POST", "/api/calendar-events", payload);
     },
@@ -199,6 +211,7 @@ export default function Calendar() {
                       startTime: format(defaultStart, "yyyy-MM-dd'T'HH:mm"),
                       endTime: format(defaultEnd, "yyyy-MM-dd'T'HH:mm"),
                       location: "",
+                      attendees: "",
                     });
                     setIsAddEventOpen(true);
                   }}
@@ -365,6 +378,23 @@ export default function Calendar() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="attendees"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assign to Users/Volunteers (Optional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="User IDs comma-separated (e.g., 1, 2, 3)" data-testid="input-attendees" />
+                    </FormControl>
+                    <p className="text-sm text-gray-500">
+                      {users.length > 0 ? `Available users: ${users.map((u: any) => `${u.id} (${u.displayName || u.email})`).slice(0, 5).join(", ")}${users.length > 5 ? "..." : ""}` : "Loading users..."}
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsAddEventOpen(false)}>
                   Cancel
@@ -401,6 +431,14 @@ export default function Calendar() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">{selectedEvent.description}</p>
               </div>
             )}
+            {selectedEvent?.projectId && (
+              <div>
+                <h4 className="font-semibold mb-2">Project</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {projects.find((p: any) => p.id === selectedEvent.projectId)?.name || `Project #${selectedEvent.projectId}`}
+                </p>
+              </div>
+            )}
             {selectedEvent?.location && (
               <div>
                 <h4 className="font-semibold mb-2">Location</h4>
@@ -411,6 +449,21 @@ export default function Calendar() {
               <h4 className="font-semibold mb-2">Type</h4>
               <Badge>{selectedEvent?.eventType?.replace('_', ' ')}</Badge>
             </div>
+            {selectedEvent?.attendees && selectedEvent.attendees.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-2">Assigned Users</h4>
+                <div className="space-y-1">
+                  {selectedEvent.attendees.map((userId: number) => {
+                    const user = users.find((u: any) => u.id === userId);
+                    return (
+                      <p key={userId} className="text-sm text-gray-600 dark:text-gray-400">
+                        {user ? `${user.displayName || user.email} (ID: ${userId})` : `User #${userId}`}
+                      </p>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

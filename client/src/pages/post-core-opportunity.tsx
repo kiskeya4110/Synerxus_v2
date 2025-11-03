@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,6 +66,8 @@ export default function PostCoreOpportunity() {
   const [customSkill, setCustomSkill] = useState("");
   const [customOptionalSkill, setCustomOptionalSkill] = useState("");
 
+  const { data: currentUser } = useQuery({ queryKey: ["/api/user"] });
+
   const form = useForm<OpportunityForm>({
     resolver: zodResolver(opportunitySchema),
     defaultValues: {
@@ -89,17 +91,13 @@ export default function PostCoreOpportunity() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: OpportunityForm) => {
-      return await apiRequest({
-        url: "/api/opportunities",
-        method: "POST",
-        data: {
-          ...data,
-          organizationId: user?.organizationId,
-          isRemote: data.engagementType === "remote",
-          sdgGoals: [data.primarySdg],
-          status: "open",
-          isUrgent: false
-        }
+      return await apiRequest("POST", "/api/opportunities", {
+        ...data,
+        organizationId: currentUser?.organizationId,
+        isRemote: data.engagementType === "remote",
+        sdgGoals: [data.primarySdg],
+        status: "open",
+        isUrgent: false
       });
     },
     onSuccess: () => {

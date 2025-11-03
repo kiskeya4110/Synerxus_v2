@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +44,8 @@ export default function PostUrgentOpportunity() {
   const { user } = useAuth();
   const [customSkill, setCustomSkill] = useState("");
 
+  const { data: currentUser } = useQuery({ queryKey: ["/api/user"] });
+
   const form = useForm<UrgentOpportunityForm>({
     resolver: zodResolver(urgentOpportunitySchema),
     defaultValues: {
@@ -62,29 +64,25 @@ export default function PostUrgentOpportunity() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: UrgentOpportunityForm) => {
-      return await apiRequest({
-        url: "/api/opportunities",
-        method: "POST",
-        data: {
-          title: data.title,
-          description: data.description,
-          location: data.location,
-          engagementType: "in-person",
-          commitmentType: "event",
-          eventDate: data.eventDate,
-          eventStartTime: data.eventStartTime,
-          eventEndTime: data.eventEndTime,
-          volunteersNeeded: data.volunteersNeeded,
-          primarySdg: data.primarySdg,
-          sdgGoals: [data.primarySdg],
-          requiredSkills: data.requiresSkills && data.requiredSkills ? data.requiredSkills : [],
-          organizationId: user?.organizationId,
-          isRemote: false,
-          status: "open",
-          isUrgent: true,
-          impactMetricName: "Total Volunteers",
-          impactMetricUnit: "volunteers"
-        }
+      return await apiRequest("POST", "/api/opportunities", {
+        title: data.title,
+        description: data.description,
+        location: data.location,
+        engagementType: "in-person",
+        commitmentType: "event",
+        eventDate: data.eventDate,
+        eventStartTime: data.eventStartTime,
+        eventEndTime: data.eventEndTime,
+        volunteersNeeded: data.volunteersNeeded,
+        primarySdg: data.primarySdg,
+        sdgGoals: [data.primarySdg],
+        requiredSkills: data.requiresSkills && data.requiredSkills ? data.requiredSkills : [],
+        organizationId: currentUser?.organizationId,
+        isRemote: false,
+        status: "open",
+        isUrgent: true,
+        impactMetricName: "Total Volunteers",
+        impactMetricUnit: "volunteers"
       });
     },
     onSuccess: () => {

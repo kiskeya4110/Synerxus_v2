@@ -16,8 +16,10 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 - **Form Submission Fix**: Fixed `apiRequest` call signature from object format to positional parameters `(method, url, data)` in both organization and volunteer intake forms
 - **Organization & Volunteer Name Capture**: Added name fields to both intake forms:
   - Organization intake Step 1 now has "Organization Name" field (required, min 2 chars)
+  - Organization intake Step 1 now has "Organization Location" field (required, min 3 chars)
   - Volunteer intake Step 1 now has "Your Name" field (required, min 2 chars)
-  - Names are now captured and saved to database
+  - Names and location are now captured and saved to database
+  - Communities served field exists as "Target Beneficiaries" in Step 4
 - **Organization Creation During Intake**: Updated organization intake backend to create organization record on-the-fly for new users:
   - If user.organizationId exists, uses existing organization
   - If user.organizationId is null, creates new organization with name from form

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
@@ -23,10 +23,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
 import type { User } from "@shared/schema";
+import { useSidebarContext } from "@/contexts/sidebar-context";
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarOpen, setSidebarOpen } = useSidebarContext();
   const isMobile = useIsMobile();
 
   // Fetch current user to determine role
@@ -120,11 +121,11 @@ export default function Sidebar() {
         )}
       >
         <div className="px-4 py-6">
-          <Link href="/">
+          <a href="/">
             <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity" data-testid="logo-synerxus">
               <Logo size="md" />
             </div>
-          </Link>
+          </a>
           
           <nav>
             <div className="space-y-1">

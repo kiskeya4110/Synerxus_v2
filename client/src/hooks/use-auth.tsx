@@ -86,6 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await firebaseSignOut(auth);
       localStorage.removeItem('currentUserId');
+      // Redirect to landing page after sign out
+      window.location.href = '/';
     } catch (error) {
       console.error("Error signing out:", error);
       toast({

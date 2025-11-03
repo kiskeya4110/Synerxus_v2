@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { useTheme } from "./theme-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,13 +24,15 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { useSidebarContext } from "@/contexts/sidebar-context";
+import Logo from "@/components/ui/logo";
 
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { toggleSidebar } = useSidebarContext();
 
   // Fetch current user to determine user type
   const userId = localStorage.getItem('currentUserId');
@@ -48,9 +49,9 @@ export default function Header() {
 
   // Mock notifications - in a real app, these would come from an API
   const notifications = [
-    { id: 1, title: "New volunteer joined", message: "Jane Smith joined Clean Water Initiative", time: "5m ago", read: false },
-    { id: 2, title: "Task completed", message: "Water survey task has been completed", time: "1h ago", read: false },
-    { id: 3, title: "Project milestone", message: "50% progress on Education Access program", time: "3h ago", read: true },
+    { id: 1, title: "New volunteer joined", message: "A new volunteer has joined your organization", time: "5m ago", read: false },
+    { id: 2, title: "Task completed", message: "A task has been completed", time: "1h ago", read: false },
+    { id: 3, title: "Project milestone", message: "Project progress update available", time: "3h ago", read: true },
   ];
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -84,15 +85,18 @@ export default function Header() {
       <div className="flex items-center justify-between h-16 px-4">
         {/* Mobile Menu Button */}
         <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)} 
+          onClick={toggleSidebar} 
           className="text-gray-500 dark:text-gray-400 focus:outline-none lg:hidden"
+          data-testid="button-hamburger-menu"
         >
           <Menu className="h-5 w-5" />
         </button>
         
-        {/* Logo for mobile view */}
+        {/* Logo for mobile view - always link to landing page */}
         <div className="flex items-center lg:hidden">
-          <span className="text-primary-600 dark:text-primary-400 font-semibold text-lg">Synerxus</span>
+          <a href="/" className="flex items-center hover:opacity-80 transition-opacity">
+            <Logo size="sm" />
+          </a>
         </div>
         
         {/* Search Bar */}

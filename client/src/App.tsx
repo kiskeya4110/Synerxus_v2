@@ -32,6 +32,7 @@ import PostUrgentOpportunity from "@/pages/post-urgent-opportunity";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
+import { SidebarProvider } from "@/contexts/sidebar-context";
 
 function Router() {
   return (
@@ -71,12 +72,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="light">
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Layout>
-              <Router />
-            </Layout>
-          </TooltipProvider>
+          <SidebarProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Layout>
+                <Router />
+              </Layout>
+            </TooltipProvider>
+          </SidebarProvider>
         </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>

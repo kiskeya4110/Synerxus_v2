@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Search, Filter, Mail, Phone, Award } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,83 +7,44 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Volunteers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [skillFilter, setSkillFilter] = useState("all");
 
-  // Mock data
-  const volunteers = [
-    {
-      id: 1,
-      name: "Sarah Johnson",
-      email: "sarah.j@email.com",
-      phone: "+1 (555) 123-4567",
-      skills: ["Water Management", "Community Outreach", "Project Management"],
-      availability: "Weekends",
-      projects: ["Clean Water Initiative"],
-      hours: 120,
-      tasksCompleted: 15,
-      bio: "Passionate about water conservation and community development"
-    },
-    {
-      id: 2,
-      name: "Michael Chen",
-      email: "m.chen@email.com",
-      phone: "+1 (555) 234-5678",
-      skills: ["Lab Testing", "Data Analysis", "Research"],
-      availability: "Evenings",
-      projects: ["Clean Water Initiative", "Medical Outreach"],
-      hours: 95,
-      tasksCompleted: 12,
-      bio: "Environmental scientist with expertise in water quality"
-    },
-    {
-      id: 3,
-      name: "Emily Rodriguez",
-      email: "emily.r@email.com",
-      phone: "+1 (555) 345-6789",
-      skills: ["Teaching", "Curriculum Development", "Mentoring"],
-      availability: "Flexible",
-      projects: ["Education Access Program"],
-      hours: 156,
-      tasksCompleted: 22,
-      bio: "Former teacher dedicated to educational equity"
-    },
-    {
-      id: 4,
-      name: "David Kim",
-      email: "david.k@email.com",
-      phone: "+1 (555) 456-7890",
-      skills: ["Healthcare", "First Aid", "Patient Care"],
-      availability: "Full-time",
-      projects: ["Medical Outreach"],
-      hours: 240,
-      tasksCompleted: 31,
-      bio: "Registered nurse with field experience in mobile clinics"
-    },
-    {
-      id: 5,
-      name: "Lisa Anderson",
-      email: "lisa.a@email.com",
-      phone: "+1 (555) 567-8901",
-      skills: ["Environmental Science", "Urban Planning", "GIS"],
-      availability: "Weekends",
-      projects: ["Urban Reforestation"],
-      hours: 64,
-      tasksCompleted: 8,
-      bio: "Urban planner focused on sustainable city development"
-    }
-  ];
+  const { data: users = [], isLoading } = useQuery({ 
+    queryKey: ["/api/users"] 
+  });
 
-  const filteredVolunteers = volunteers.filter(volunteer => {
-    const matchesSearch = volunteer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         volunteer.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesSkill = skillFilter === "all" || volunteer.skills.includes(skillFilter);
+  const { data: volunteerActivities = [] } = useQuery({ 
+    queryKey: ["/api/volunteer-activities"] 
+  });
+
+  const volunteers = users.filter((user: any) => user.userType === 'volunteer');
+
+  const volunteersWithStats = useMemo(() => {
+    return volunteers.map((volunteer: any) => {
+      const activities = volunteerActivities.filter((a: any) => a.userId === volunteer.id);
+      const totalHours = activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+      
+      return {
+        ...volunteer,
+        hours: totalHours,
+        tasksCompleted: activities.length,
+        skills: volunteer.skills || [],
+      };
+    });
+  }, [volunteers, volunteerActivities]);
+
+  const filteredVolunteers = volunteersWithStats.filter((volunteer: any) => {
+    const matchesSearch = volunteer.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         volunteer.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSkill = skillFilter === "all" || (volunteer.skills && volunteer.skills.includes(skillFilter));
     return matchesSearch && matchesSkill;
   });
 
-  const allSkills = Array.from(new Set(volunteers.flatMap(v => v.skills)));
+  const allSkills = Array.from(new Set(volunteersWithStats.flatMap((v: any) => v.skills || [])));
 
   return (
     <>
@@ -100,7 +61,7 @@ export default function Volunteers() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{volunteers.length}</p>
+              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.length}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Volunteers</p>
             </div>
           </CardContent>
@@ -108,7 +69,7 @@ export default function Volunteers() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{volunteers.reduce((sum, v) => sum + v.hours, 0)}</p>
+              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0)}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Hours</p>
             </div>
           </CardContent>
@@ -116,7 +77,7 @@ export default function Volunteers() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{volunteers.reduce((sum, v) => sum + v.tasksCompleted, 0)}</p>
+              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0)}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Tasks Completed</p>
             </div>
           </CardContent>
@@ -157,60 +118,43 @@ export default function Volunteers() {
 
       {/* Volunteers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {filteredVolunteers.map((volunteer) => (
+        {filteredVolunteers.map((volunteer: any) => (
           <Card key={volunteer.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3 mb-3">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-primary text-white">
-                    {volunteer.name.split(' ').map(n => n[0]).join('')}
+                    {volunteer.displayName?.split(' ').map((n: string) => n[0]).join('') || volunteer.email?.[0] || '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg truncate">{volunteer.name}</CardTitle>
-                  <CardDescription className="text-xs truncate">{volunteer.email}</CardDescription>
+                  <CardTitle className="text-lg truncate">{volunteer.displayName || 'Unnamed Volunteer'}</CardTitle>
+                  <CardDescription className="text-xs truncate">{volunteer.email || 'No email'}</CardDescription>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                {volunteer.bio}
-              </p>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Phone className="h-4 w-4" />
-                  <span className="truncate">{volunteer.phone}</span>
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Skills</p>
-                  <div className="flex flex-wrap gap-1">
-                    {volunteer.skills.map(skill => (
-                      <Badge key={skill} variant="outline" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
+                {volunteer.skills && volunteer.skills.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Skills</p>
+                    <div className="flex flex-wrap gap-1">
+                      {volunteer.skills.map((skill: string) => (
+                        <Badge key={skill} variant="outline" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Projects</p>
-                  {volunteer.projects.map(project => (
-                    <Link key={project} href="/projects">
-                      <Badge variant="secondary" className="text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700">
-                        {project}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div className="text-center">
-                    <p className="text-lg font-bold text-primary">{volunteer.hours}</p>
+                    <p className="text-lg font-bold text-primary">{volunteer.hours || 0}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Hours</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold text-primary">{volunteer.tasksCompleted}</p>
+                    <p className="text-lg font-bold text-primary">{volunteer.tasksCompleted || 0}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Tasks</p>
                   </div>
                 </div>

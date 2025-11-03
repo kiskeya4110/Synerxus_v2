@@ -25,18 +25,78 @@ export default function Dashboard() {
 
   // Fetch current user from database
   const userId = localStorage.getItem('currentUserId');
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isLoading: isLoadingUser, error: userError } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      if (!id) {
+        throw new Error("No user ID found");
+      }
+      const url = `/api/users/me?userId=${id}`;
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("User not found");
+      }
       return response.json();
-    }
+    },
+    enabled: !!userId,
+    retry: false
   });
 
-  // Determine dashboard type from user data
-  const dashboardType = currentUser?.userType || "volunteer";
+  // Show loading state while fetching user
+  if (isLoadingUser) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if user not found
+  if (userError || !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Card className="p-8 max-w-md">
+          <CardHeader>
+            <CardTitle>Authentication Required</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Please log in to access your dashboard.
+            </p>
+            <Link href="/login">
+              <button className="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                Go to Login
+              </button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Determine dashboard type from user data (no default fallback)
+  const dashboardType = currentUser.userType;
+
+  if (!dashboardType) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Card className="p-8 max-w-md">
+          <CardHeader>
+            <CardTitle>Profile Incomplete</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 dark:text-gray-400">
+              Your account type is not set. Please complete your profile.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Fetch real data from API
   const { data: dashboardData, isLoading: loadingDashboard } = useQuery({

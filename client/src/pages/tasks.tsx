@@ -8,83 +8,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Tasks() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
 
-  // Mock data
-  const tasks = [
-    {
-      id: 1,
-      title: "Install water filtration systems",
-      description: "Set up 10 water filtration units in community centers",
-      project: "Clean Water Initiative",
-      projectId: 1,
-      assignee: "Sarah Johnson",
-      status: "in-progress",
-      priority: "high",
-      dueDate: "2024-11-15",
-      estimatedHours: 40
-    },
-    {
-      id: 2,
-      title: "Conduct water quality tests",
-      description: "Test water samples from 15 different sources",
-      project: "Clean Water Initiative",
-      projectId: 1,
-      assignee: "Michael Chen",
-      status: "pending",
-      priority: "medium",
-      dueDate: "2024-11-20",
-      estimatedHours: 16
-    },
-    {
-      id: 3,
-      title: "Distribute educational materials",
-      description: "Hand out books and supplies to 200 students",
-      project: "Education Access Program",
-      projectId: 2,
-      assignee: "Emily Rodriguez",
-      status: "in-progress",
-      priority: "high",
-      dueDate: "2024-11-18",
-      estimatedHours: 24
-    },
-    {
-      id: 4,
-      title: "Organize health screening event",
-      description: "Set up and conduct health screenings for 150 people",
-      project: "Medical Outreach",
-      projectId: 3,
-      assignee: "David Kim",
-      status: "completed",
-      priority: "high",
-      dueDate: "2024-10-30",
-      estimatedHours: 32
-    },
-    {
-      id: 5,
-      title: "Site survey for tree planting",
-      description: "Survey and mark locations for 500 new trees",
-      project: "Urban Reforestation",
-      projectId: 4,
-      assignee: null,
-      status: "pending",
-      priority: "low",
-      dueDate: "2024-12-05",
-      estimatedHours: 12
-    }
-  ];
+  const { data: tasks = [], isLoading } = useQuery({ 
+    queryKey: ["/api/tasks"] 
+  });
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || task.status === statusFilter;
+  const { data: projects = [] } = useQuery({ 
+    queryKey: ["/api/projects"] 
+  });
+
+  const filteredTasks = tasks.filter((task: any) => {
+    const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         task.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || task.status?.toLowerCase() === statusFilter;
     const matchesTab = activeTab === "all" || 
-                      (activeTab === "my-tasks" && task.assignee) ||
-                      (activeTab === "unassigned" && !task.assignee);
+                      (activeTab === "my-tasks" && task.assignedTo) ||
+                      (activeTab === "unassigned" && !task.assignedTo);
     return matchesSearch && matchesStatus && matchesTab;
   });
 

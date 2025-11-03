@@ -5,69 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Organizations() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Mock data
-  const organizations = [
-    {
-      id: 1,
-      name: "Water for All",
-      description: "Global initiative providing clean water access to underserved communities",
-      logo: null,
-      website: "https://waterforall.org",
-      contactEmail: "contact@waterforall.org",
-      contactPhone: "+1 (555) 100-2000",
-      address: "123 Ocean Drive, San Francisco, CA 94102",
-      projects: 3,
-      volunteers: 67,
-      impactReach: "25,000 people"
-    },
-    {
-      id: 2,
-      name: "Global Education Fund",
-      description: "Building educational infrastructure and providing resources to developing regions",
-      logo: null,
-      website: "https://globaleducation.org",
-      contactEmail: "info@globaleducation.org",
-      contactPhone: "+1 (555) 200-3000",
-      address: "456 Learning Lane, Boston, MA 02101",
-      projects: 5,
-      volunteers: 89,
-      impactReach: "50,000 students"
-    },
-    {
-      id: 3,
-      name: "Healthcare for All",
-      description: "Mobile health clinics and medical outreach to remote and underserved populations",
-      logo: null,
-      website: "https://healthcareforall.org",
-      contactEmail: "support@healthcareforall.org",
-      contactPhone: "+1 (555) 300-4000",
-      address: "789 Medical Plaza, Seattle, WA 98101",
-      projects: 4,
-      volunteers: 124,
-      impactReach: "75,000 patients"
-    },
-    {
-      id: 4,
-      name: "Green Cities Alliance",
-      description: "Urban environmental projects focused on sustainability and green spaces",
-      logo: null,
-      website: "https://greencities.org",
-      contactEmail: "hello@greencities.org",
-      contactPhone: "+1 (555) 400-5000",
-      address: "321 Park Avenue, Portland, OR 97201",
-      projects: 2,
-      volunteers: 45,
-      impactReach: "10 cities"
-    }
-  ];
+  const { data: organizations = [], isLoading } = useQuery({ 
+    queryKey: ["/api/organizations"] 
+  });
 
-  const filteredOrganizations = organizations.filter(org => 
-    org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    org.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const { data: projects = [] } = useQuery({
+    queryKey: ["/api/projects"]
+  });
+
+  const filteredOrganizations = organizations.filter((org: any) => 
+    org.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    org.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -85,7 +38,7 @@ export default function Organizations() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{organizations.length}</p>
+              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : organizations.length}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Organizations</p>
             </div>
           </CardContent>
@@ -93,7 +46,7 @@ export default function Organizations() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{organizations.reduce((sum, org) => sum + org.projects, 0)}</p>
+              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : projects.length}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Active Projects</p>
             </div>
           </CardContent>
@@ -101,7 +54,7 @@ export default function Organizations() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-3xl font-bold text-primary">{organizations.reduce((sum, org) => sum + org.volunteers, 0)}</p>
+              <p className="text-3xl font-bold text-primary">-</p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Volunteers</p>
             </div>
           </CardContent>
@@ -167,22 +120,20 @@ export default function Organizations() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div className="text-center">
                     <Link href="/projects">
-                      <p className="text-lg font-bold text-primary cursor-pointer hover:underline">{org.projects}</p>
+                      <p className="text-lg font-bold text-primary cursor-pointer hover:underline">
+                        {projects.filter((p: any) => p.organizationId === org.id).length}
+                      </p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Projects</p>
                     </Link>
                   </div>
                   <div className="text-center">
                     <Link href="/volunteers">
-                      <p className="text-lg font-bold text-primary cursor-pointer hover:underline">{org.volunteers}</p>
+                      <p className="text-lg font-bold text-primary cursor-pointer hover:underline">-</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Volunteers</p>
                     </Link>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-green-600 dark:text-green-400">{org.impactReach}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Impact</p>
                   </div>
                 </div>
 

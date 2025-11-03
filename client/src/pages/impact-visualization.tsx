@@ -35,66 +35,6 @@ ChartJS.register(
   Filler
 );
 
-// Sample data for before/after comparisons
-const beforeAfterData = [
-  {
-    id: "1",
-    title: "Community Water Project",
-    description: "Installation of water filters and sanitation facilities in a rural community",
-    location: "Kibera, Kenya",
-    date: "January 2023 - March 2023",
-    beforeImage: "https://images.unsplash.com/photo-1551873753-77eceaa24ada?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    afterImage: "https://images.unsplash.com/photo-1563299796-17596ed6b017?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    beforeMetrics: [
-      { label: "Clean Water Access", value: 23, unit: "% of population" },
-      { label: "Water-borne Diseases", value: 68, unit: "cases/month" },
-      { label: "Average Water Collection Time", value: 2.5, unit: "hours/day" }
-    ],
-    afterMetrics: [
-      { label: "Clean Water Access", value: 87, unit: "% of population" },
-      { label: "Water-borne Diseases", value: 12, unit: "cases/month" },
-      { label: "Average Water Collection Time", value: 0.5, unit: "hours/day" }
-    ]
-  },
-  {
-    id: "2",
-    title: "Classroom Renovation Project",
-    description: "Renovation of a primary school with new facilities and learning materials",
-    location: "Bogotá, Colombia",
-    date: "March 2023 - June 2023",
-    beforeImage: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    afterImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    beforeMetrics: [
-      { label: "Student Attendance", value: 62, unit: "% rate" },
-      { label: "Reading Proficiency", value: 34, unit: "% of students" },
-      { label: "Student-Teacher Ratio", value: 45, unit: "students per teacher" }
-    ],
-    afterMetrics: [
-      { label: "Student Attendance", value: 89, unit: "% rate" },
-      { label: "Reading Proficiency", value: 71, unit: "% of students" },
-      { label: "Student-Teacher Ratio", value: 25, unit: "students per teacher" }
-    ]
-  },
-  {
-    id: "3",
-    title: "Community Garden Project",
-    description: "Transformation of an abandoned lot into a productive community garden",
-    location: "Detroit, USA",
-    date: "April 2023 - August 2023",
-    beforeImage: "https://images.unsplash.com/photo-1567364891000-916b695a85e2?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    afterImage: "https://images.unsplash.com/photo-1466692476655-ab0c26c69cbf?w=800&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
-    beforeMetrics: [
-      { label: "Green Space", value: 0, unit: "sq meters" },
-      { label: "Food Production", value: 0, unit: "kg/month" },
-      { label: "Community Engagement", value: 5, unit: "local participants" }
-    ],
-    afterMetrics: [
-      { label: "Green Space", value: 500, unit: "sq meters" },
-      { label: "Food Production", value: 120, unit: "kg/month" },
-      { label: "Community Engagement", value: 45, unit: "local participants" }
-    ]
-  }
-];
 
 export default function ImpactVisualization() {
   const [activeTab, setActiveTab] = useState("before-after");

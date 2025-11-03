@@ -41,10 +41,10 @@ export default function ImpactVisualization() {
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
 
   // Fetch real data from API
-  const { data: projects = [] } = useQuery({ queryKey: ["/api/projects"] });
-  const { data: projectImpacts = [] } = useQuery({ queryKey: ["/api/project-impacts"] });
-  const { data: volunteerActivities = [] } = useQuery({ queryKey: ["/api/volunteer-activities"] });
-  const { data: impactMetrics = [] } = useQuery({ queryKey: ["/api/impact-metrics"] });
+  const { data: projects = [] } = useQuery<any[]>({ queryKey: ["/api/projects"] });
+  const { data: projectImpacts = [] } = useQuery<any[]>({ queryKey: ["/api/project-impacts"] });
+  const { data: volunteerActivities = [] } = useQuery<any[]>({ queryKey: ["/api/volunteer-activities"] });
+  const { data: impactMetrics = [] } = useQuery<any[]>({ queryKey: ["/api/impact-metrics"] });
 
   // Calculate aggregated metrics from real data
   const aggregatedMetrics = useMemo(() => {

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
@@ -44,37 +44,37 @@ export default function Dashboard() {
   });
 
   // Fetch real data from API - MUST be called before any early returns
-  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
+  const { data: dashboardData, isLoading: loadingDashboard } = useQuery<any>({
     queryKey: ["/api/dashboard/summary"],
     enabled: !!currentUser && !!currentUser.userType
   });
 
-  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+  const { data: projects = [], isLoading: loadingProjects } = useQuery<any[]>({
     queryKey: ["/api/projects"],
     enabled: !!currentUser && !!currentUser.userType
   });
 
-  const { data: tasks = [], isLoading: loadingTasks } = useQuery({
+  const { data: tasks = [], isLoading: loadingTasks } = useQuery<any[]>({
     queryKey: ["/api/tasks"],
     enabled: !!currentUser && !!currentUser.userType
   });
 
-  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery({
+  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery<any[]>({
     queryKey: ["/api/volunteer-activities"],
     enabled: !!currentUser && !!currentUser.userType
   });
 
-  const { data: calendarEvents = [], isLoading: loadingEvents } = useQuery({
+  const { data: calendarEvents = [], isLoading: loadingEvents } = useQuery<any[]>({
     queryKey: ["/api/calendar-events"],
     enabled: !!currentUser && !!currentUser.userType
   });
 
-  const { data: impactMetrics = [] } = useQuery({
+  const { data: impactMetrics = [] } = useQuery<any[]>({
     queryKey: ["/api/impact-metrics"],
     enabled: !!currentUser && !!currentUser.userType
   });
 
-  const { data: projectImpacts = [] } = useQuery({
+  const { data: projectImpacts = [] } = useQuery<any[]>({
     queryKey: ["/api/project-impacts"],
     enabled: !!currentUser && !!currentUser.userType
   });
@@ -118,6 +118,14 @@ export default function Dashboard() {
     const filteredActiveProjects = filteredData.projects.filter((p: any) => 
       p.status === "In Progress" || p.status === "Active"
     ).length;
+    
+    // Calculate unique SDGs from filtered projects
+    const uniqueSDGs = new Set();
+    filteredData.projects.forEach((p: any) => {
+      if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
+        p.sdgGoals.forEach((sdg: number) => uniqueSDGs.add(sdg));
+      }
+    });
 
     return {
       volunteers: dashboardData?.activeVolunteers || 0,
@@ -125,6 +133,7 @@ export default function Dashboard() {
       tasks: filteredTotalTasks,
       completedTasks: filteredCompletedTasks,
       activeProjects: filteredActiveProjects,
+      sdgs: uniqueSDGs.size,
       impactScore: dashboardData?.impactScore || 0,
     };
   }, [dashboardData, filteredData]);
@@ -379,14 +388,14 @@ export default function Dashboard() {
             />
             <StatsCard
               title="Active Projects"
-              value={kpis.projects}
+              value={kpis.activeProjects}
               icon={<Target className="h-6 w-6" />}
-              onClick={() => handleKPIClick("Active Projects", kpis.projects)}
+              onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
               data-testid="kpi-projects"
             />
             <StatsCard
               title="Impact Score"
-              value={kpis.impact}
+              value={kpis.impactScore}
               icon={<Award className="h-6 w-6" />}
               trend="+25%"
               data-testid="kpi-impact"
@@ -404,9 +413,9 @@ export default function Dashboard() {
             />
             <StatsCard
               title="Active Projects"
-              value={kpis.projects}
+              value={kpis.activeProjects}
               icon={<Building2 className="h-6 w-6" />}
-              onClick={() => handleKPIClick("Active Projects", kpis.projects)}
+              onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
               data-testid="kpi-projects"
             />
             <StatsCard
@@ -464,6 +473,52 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Post Opportunities Section - Organizations Only */}
+      {dashboardType === "organization" && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Post Volunteer Opportunities</h2>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                Attract the best volunteers by posting detailed opportunities. Your data powers AI Matching and Impact Tracking.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/post-core-opportunity">
+                  <div className="p-4 border-2 border-primary/20 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer" data-testid="link-post-core-opportunity">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Briefcase className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Core Opportunity</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          For skilled, ongoing, or project-based roles. Detailed posts for best skill & purpose matching.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+                <Link href="/post-urgent-opportunity">
+                  <div className="p-4 border-2 border-amber-500/20 rounded-lg hover:border-amber-500/40 hover:bg-amber-500/5 transition-all cursor-pointer" data-testid="link-post-urgent-opportunity">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-amber-500/10 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Urgent Need / Event</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          For time-sensitive events like fundraisers, community drives, or disaster response.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

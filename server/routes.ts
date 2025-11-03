@@ -1362,8 +1362,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activities = await storage.listVolunteerActivities();
       const impacts = await storage.listProjectImpacts();
       
-      // Calculate summary metrics
-      const activeVolunteers = users.length;
+      // Calculate summary metrics - count unique volunteers who have actually logged hours
+      const uniqueVolunteerIds = new Set(activities.map(activity => activity.userId));
+      const activeVolunteers = uniqueVolunteerIds.size;
       
       // Calculate total volunteer hours
       const totalHours = activities.reduce((sum, activity) => sum + activity.hours, 0);

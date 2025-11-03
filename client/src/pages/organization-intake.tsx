@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -50,6 +50,51 @@ const volunteerNeedOptions = [
   "Administrative Support", "Translation Services", "Mentoring"
 ];
 
+function SDGSelection({ selectedSdgs, onToggle, error }: { 
+  selectedSdgs: number[], 
+  onToggle: (id: number) => void,
+  error?: string
+}) {
+  return (
+    <div className="space-y-2">
+      <FormLabel>Primary SDG Focus</FormLabel>
+      <FormDescription>Select the goals your organization primarily contributes to</FormDescription>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+        {Object.values(sdgGoals).map((sdg) => {
+          const isSelected = selectedSdgs.includes(sdg.id);
+          return (
+            <div
+              key={sdg.id}
+              data-testid={`card-sdg-${sdg.id}`}
+              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                isSelected
+                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+              }`}
+              onClick={() => onToggle(sdg.id)}
+            >
+              <div className="flex items-start gap-2">
+                <div className={`mt-1 w-4 h-4 rounded border-2 flex items-center justify-center ${
+                  isSelected ? "bg-purple-500 border-purple-500" : "border-gray-300"
+                }`}>
+                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">SDG {sdg.id}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {error && (
+        <p className="text-sm font-medium text-destructive">{error}</p>
+      )}
+    </div>
+  );
+}
+
 export default function OrganizationIntake() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -57,6 +102,7 @@ export default function OrganizationIntake() {
   const [step, setStep] = useState(1);
   const [customFocusArea, setCustomFocusArea] = useState("");
   const [customVolunteerNeed, setCustomVolunteerNeed] = useState("");
+  const [selectedSdgs, setSelectedSdgs] = useState<number[]>([]);
 
   // Fetch current user from database to get organizationId
   const userId = localStorage.getItem('currentUserId');
@@ -76,6 +122,13 @@ export default function OrganizationIntake() {
     queryKey: ["/api/intake/organization-profile", currentUser?.organizationId],
     enabled: !!currentUser?.organizationId
   });
+
+  // Sync selectedSdgs with form value when existingProfile loads
+  useEffect(() => {
+    if (existingProfile?.primarySdgs) {
+      setSelectedSdgs(existingProfile.primarySdgs);
+    }
+  }, [existingProfile]);
 
   const form = useForm<OrganizationProfileForm>({
     resolver: zodResolver(organizationProfileSchema),
@@ -165,12 +218,13 @@ export default function OrganizationIntake() {
   };
 
   const toggleSDG = (sdgNumber: number) => {
-    const current = form.getValues("primarySdgs") || [];
-    if (current.includes(sdgNumber)) {
-      form.setValue("primarySdgs", current.filter(s => s !== sdgNumber));
-    } else {
-      form.setValue("primarySdgs", [...current, sdgNumber]);
-    }
+    setSelectedSdgs(prev => {
+      const newSelection = prev.includes(sdgNumber)
+        ? prev.filter(s => s !== sdgNumber)
+        : [...prev, sdgNumber];
+      form.setValue("primarySdgs", newSelection);
+      return newSelection;
+    });
   };
 
   const totalSteps = 4;
@@ -416,47 +470,10 @@ export default function OrganizationIntake() {
                   <CardDescription>Which UN Sustainable Development Goals align with your work?</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="primarySdgs"
-                    render={({ field }) => {
-                      const selectedSdgs = field.value || [];
-                      return (
-                        <FormItem>
-                          <FormLabel>Primary SDG Focus</FormLabel>
-                          <FormDescription>Select the goals your organization primarily contributes to</FormDescription>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
-                            {Object.values(sdgGoals).map((sdg) => {
-                              const isSelected = selectedSdgs.includes(sdg.id);
-                              return (
-                                <div
-                                  key={sdg.id}
-                                  data-testid={`card-sdg-${sdg.id}`}
-                                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                    isSelected
-                                      ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                                  }`}
-                                  onClick={() => toggleSDG(sdg.id)}
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <Checkbox
-                                      checked={isSelected}
-                                      className="mt-1"
-                                    />
-                                    <div>
-                                      <p className="font-semibold text-sm">SDG {sdg.id}</p>
-                                      <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      );
-                    }}
+                  <SDGSelection 
+                    selectedSdgs={selectedSdgs} 
+                    onToggle={toggleSDG}
+                    error={form.formState.errors.primarySdgs?.message}
                   />
                 </CardContent>
               </Card>

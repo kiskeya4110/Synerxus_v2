@@ -419,38 +419,44 @@ export default function OrganizationIntake() {
                   <FormField
                     control={form.control}
                     name="primarySdgs"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Primary SDG Focus</FormLabel>
-                        <FormDescription>Select the goals your organization primarily contributes to</FormDescription>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
-                          {Object.values(sdgGoals).map((sdg) => (
-                            <div
-                              key={sdg.id}
-                              data-testid={`card-sdg-${sdg.id}`}
-                              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                form.watch("primarySdgs")?.includes(sdg.id)
-                                  ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
-                                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                              }`}
-                              onClick={() => toggleSDG(sdg.id)}
-                            >
-                              <div className="flex items-start gap-2">
-                                <Checkbox
-                                  checked={form.watch("primarySdgs")?.includes(sdg.id)}
-                                  className="mt-1"
-                                />
-                                <div>
-                                  <p className="font-semibold text-sm">SDG {sdg.id}</p>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
+                    render={({ field }) => {
+                      const selectedSdgs = field.value || [];
+                      return (
+                        <FormItem>
+                          <FormLabel>Primary SDG Focus</FormLabel>
+                          <FormDescription>Select the goals your organization primarily contributes to</FormDescription>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                            {Object.values(sdgGoals).map((sdg) => {
+                              const isSelected = selectedSdgs.includes(sdg.id);
+                              return (
+                                <div
+                                  key={sdg.id}
+                                  data-testid={`card-sdg-${sdg.id}`}
+                                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                    isSelected
+                                      ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20"
+                                      : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                                  }`}
+                                  onClick={() => toggleSDG(sdg.id)}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <Checkbox
+                                      checked={isSelected}
+                                      className="mt-1"
+                                    />
+                                    <div>
+                                      <p className="font-semibold text-sm">SDG {sdg.id}</p>
+                                      <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                              );
+                            })}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </CardContent>
               </Card>

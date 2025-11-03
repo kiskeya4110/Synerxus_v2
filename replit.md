@@ -6,7 +6,13 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 ## Recent Changes
 
-### November 3, 2025 - UserType Handling & Navigation Fixes
+### November 3, 2025 - SDG Selection & Matching Algorithm Integration
+- **SDG Selection Fix**: Fixed infinite re-render loop in organization intake form by using FormField's `field` parameter instead of `form.watch()` in render loops.
+- **Matching Algorithm Integration**: Intake endpoints now create/update matchable entities for the matching algorithm:
+  - Volunteer intake creates/updates `volunteers` table with `sdgGoals` from `volunteer_profiles.preferredSdgs`
+  - Organization intake creates/updates `matchable_organizations` table with `sdgFocus` from `organization_profiles.primarySdgs`
+- **Storage Layer Enhancement**: Modified `createVolunteer` and `createMatchableOrganization` to respect caller-provided deterministic IDs (e.g., `vol_${email}`) instead of always generating UUIDs.
+- **Data Synchronization**: SDG selections from intake forms now properly flow to matching algorithm, enabling the 20% SDG alignment component of match scores.
 - **UserType Management**: Moved userType updates to server-side within intake endpoints. Updates occur AFTER successful profile creation to ensure data consistency.
 - **Intake Flow Security**: Added strict validation - userType only set when currently null (prevents role flipping). Changes applied atomically with profile creation.
 - **Sidebar UX**: Shows minimal navigation shell with intake form links for users without userType set, instead of disappearing.

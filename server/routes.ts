@@ -2054,7 +2054,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         organizationId = user.organizationId;
       } else {
         // Create new organization for this user
-        const { organizationName } = req.body;
+        const { organizationName, organizationLocation } = req.body;
         if (!organizationName) {
           return res.status(400).json({ message: "organizationName is required for new organizations" });
         }
@@ -2062,7 +2062,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         organization = await storage.createOrganization({
           name: organizationName,
           contactEmail: user.email || '',
-          description: req.body.missionStatement || ''
+          description: req.body.missionStatement || '',
+          address: organizationLocation || ''
         });
         organizationId = organization.id;
         

@@ -20,6 +20,7 @@ import { ArrowRight, ArrowLeft, Check, Building, Globe, Users, Target, FileCheck
 
 const organizationProfileSchema = z.object({
   organizationName: z.string().min(2, "Organization name is required"),
+  organizationLocation: z.string().min(3, "Organization location is required"),
   missionStatement: z.string().min(20, "Please provide a detailed mission statement"),
   focusAreas: z.array(z.string()).min(1, "Select at least one focus area"),
   organizationType: z.string().min(1, "Select organization type"),
@@ -135,6 +136,7 @@ export default function OrganizationIntake() {
     resolver: zodResolver(organizationProfileSchema),
     defaultValues: {
       organizationName: "",
+      organizationLocation: "",
       missionStatement: existingProfile?.missionStatement || "",
       focusAreas: existingProfile?.focusAreas || [],
       organizationType: existingProfile?.organizationType || "",
@@ -285,6 +287,25 @@ export default function OrganizationIntake() {
                           <Input
                             data-testid="input-organization-name"
                             placeholder="e.g., Global Impact Foundation"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="organizationLocation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Organization Location</FormLabel>
+                        <FormDescription>Where is your organization based?</FormDescription>
+                        <FormControl>
+                          <Input
+                            data-testid="input-organization-location"
+                            placeholder="e.g., San Francisco, California, USA"
                             {...field}
                           />
                         </FormControl>

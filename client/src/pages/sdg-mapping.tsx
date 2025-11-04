@@ -1,11 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/layout/theme-provider";
-import { Loader2 } from "lucide-react";
+import { Loader2, BarChart } from "lucide-react";
 import SDGIcons from "@/assets/sdg-icons";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 
@@ -35,33 +37,59 @@ export default function SDGMapping() {
   const [selectedSDG, setSelectedSDG] = useState(1);
   
   // Fetch current user to get organization ID
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser, isLoading: loadingUser } = useQuery({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) throw new Error("User not found");
+      return response.json();
+    },
+    enabled: !!userId
   });
   
-  // Fetch projects (filtered by organization on backend)
-  const { data: projects = [], isLoading: loadingProjects } = useQuery({
-    queryKey: ["/api/projects"],
+  // Fetch organization profile to get their selected SDGs
+  const { data: orgProfile } = useQuery({
+    queryKey: ["/api/profile/organization", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/profile/organization?userId=${id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser && currentUser.userType === 'organization'
   });
+  
+  // Fetch organization-scoped dashboard data
+  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
+    queryKey: ["/api/dashboard/summary", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      return response.json();
+    },
+    enabled: !!currentUser && !!userId
+  });
+  
+  // Use scoped data from dashboard
+  const organizationProjects = dashboardData?.projects || [];
+  const projectImpacts = dashboardData?.impacts || [];
   
   // Fetch impact metrics
   const { data: impactMetrics = [], isLoading: loadingMetrics } = useQuery({
     queryKey: ["/api/impact-metrics"],
   });
   
-  // Fetch project impacts
-  const { data: projectImpacts = [], isLoading: loadingImpacts } = useQuery({
-    queryKey: ["/api/project-impacts"],
-  });
-  
-  // Filter projects by current user's organization
-  const organizationProjects = useMemo(() => {
-    // Return empty array until user data is loaded to prevent data leakage
-    if (!currentUser) return [];
-    const userOrg = (currentUser as any)?.organizationId;
-    if (!userOrg) return [];
-    return (projects as any[]).filter((p: any) => p.organizationId === userOrg);
-  }, [projects, currentUser]);
+  // Get organization's selected SDGs from their Settings
+  const organizationSDGs = useMemo(() => {
+    if (!orgProfile?.matchableOrganization?.primarySdgs) return [];
+    return orgProfile.matchableOrganization.primarySdgs;
+  }, [orgProfile]);
   
   // Calculate SDG data from real projects
   const sdgData = useMemo(() => {
@@ -74,18 +102,25 @@ export default function SDGMapping() {
       impactMetrics: any[];
     }>();
     
-    // Initialize all 17 SDGs
-    for (let i = 1; i <= 17; i++) {
-      const metadata = SDG_METADATA[i] || { title: `SDG ${i}`, description: "" };
-      sdgMap.set(i, {
-        id: i,
+    // Initialize ONLY organization's selected SDGs from Settings
+    const sdgsToShow = organizationSDGs.length > 0 ? organizationSDGs : [];
+    
+    // If organization hasn't selected SDGs yet, show empty state
+    if (sdgsToShow.length === 0) {
+      return [];
+    }
+    
+    sdgsToShow.forEach((sdgId: number) => {
+      const metadata = SDG_METADATA[sdgId] || { title: `SDG ${sdgId}`, description: "" };
+      sdgMap.set(sdgId, {
+        id: sdgId,
         title: metadata.title,
         description: metadata.description,
-        color: getSDGColor(i),
+        color: getSDGColor(sdgId),
         projectCount: 0,
         impactMetrics: []
       });
-    }
+    });
     
     // Create a Set of organization project IDs for filtering
     const orgProjectIds = new Set(organizationProjects.map((p: any) => p.id));
@@ -130,20 +165,53 @@ export default function SDGMapping() {
     });
     
     return Array.from(sdgMap.values());
-  }, [organizationProjects, impactMetrics, projectImpacts]);
+  }, [organizationProjects, impactMetrics, projectImpacts, organizationSDGs]);
   
+  // Initialize selectedSDG to first available org SDG when data loads
+  useEffect(() => {
+    if (sdgData.length > 0 && !sdgData.find(sdg => sdg.id === selectedSDG)) {
+      setSelectedSDG(sdgData[0].id);
+    }
+  }, [sdgData, selectedSDG]);
+
   const selectedData = sdgData.find(sdg => sdg.id === selectedSDG) || sdgData[0];
   const relatedProjects = organizationProjects.filter((project: any) => 
     project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(selectedSDG)
   );
   
-  const isLoading = loadingUser || loadingProjects || loadingMetrics || loadingImpacts;
+  const isLoading = loadingUser || loadingDashboard || loadingMetrics;
   
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
+    );
+  }
+  
+  // Empty state when organization hasn't selected SDGs in Settings
+  if (sdgData.length === 0) {
+    return (
+      <>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            Connect volunteer activities to Sustainable Development Goals and track impact
+          </p>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <BarChart className="h-16 w-16 text-gray-400 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No SDGs Selected</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-4">
+              Please select your organization's primary SDG focus areas in Settings to view SDG mapping and impact tracking.
+            </p>
+            <Link href="/profile">
+              <Button>Go to Settings</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </>
     );
   }
   
@@ -159,7 +227,7 @@ export default function SDGMapping() {
       
       {/* SDG Selection Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {sdgData.map(sdg => (
+        {sdgData.map((sdg: any) => (
           <button
             key={sdg.id}
             onClick={() => setSelectedSDG(sdg.id)}

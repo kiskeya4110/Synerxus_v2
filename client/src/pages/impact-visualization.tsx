@@ -48,58 +48,32 @@ export default function ImpactVisualization() {
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
-      const response = await fetch(url);
+      if (!id) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) throw new Error("User not found");
       return response.json();
-    }
+    },
+    enabled: !!userId
   });
 
-  // Fetch real data from API
-  const { data: allProjects = [] } = useQuery<any[]>({ queryKey: ["/api/projects"] });
-  const { data: projectAssignments = [] } = useQuery<any[]>({ 
-    queryKey: ["/api/project-assignments", { volunteerId: currentUser?.id }],
+  // Fetch organization-scoped dashboard data
+  const { data: dashboardData } = useQuery<any>({
+    queryKey: ["/api/dashboard/summary", userId],
     queryFn: async () => {
-      if (!currentUser?.id) return [];
-      const response = await fetch(`/api/project-assignments?volunteerId=${currentUser.id}`);
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
       return response.json();
     },
-    enabled: !!currentUser?.id && currentUser?.userType === 'volunteer'
+    enabled: !!currentUser && !!userId
   });
-  
-  // Filter projects to show only user's assigned projects if volunteer, org's projects if organization
-  const projects = useMemo(() => {
-    if (!currentUser) return [];
+
+  // Use scoped data from dashboard
+  const projects = dashboardData?.projects || [];
+  const volunteerActivities = dashboardData?.activities || [];
+  const projectImpacts = dashboardData?.impacts || [];
     
-    if (currentUser.userType === 'volunteer') {
-      // Show only projects the volunteer is assigned to
-      if (projectAssignments.length === 0) return [];
-      return allProjects.filter(p => projectAssignments.some((a: any) => a.projectId === p.id));
-    } else if (currentUser.userType === 'organization') {
-      // Show projects belonging to the organization
-      // Organizations may have organizationId in their user record, or we filter by their created projects
-      return allProjects.filter((p: any) => 
-        p.organizationId === currentUser.organizationId || 
-        p.organizationId === currentUser.id
-      );
-    }
-    
-    return allProjects;
-  }, [currentUser, allProjects, projectAssignments]);
-    
-  const { data: projectImpacts = [] } = useQuery<any[]>({ queryKey: ["/api/project-impacts"] });
-  const { data: volunteerActivities = [] } = useQuery<any[]>({ 
-    queryKey: ["/api/volunteer-activities"],
-    queryFn: async () => {
-      const response = await fetch("/api/volunteer-activities");
-      const activities = await response.json();
-      // Filter by user if volunteer
-      if (currentUser?.userType === 'volunteer') {
-        return activities.filter((a: any) => a.volunteerId === currentUser.id);
-      }
-      return activities;
-    },
-    enabled: !!currentUser
-  });
   const { data: impactMetrics = [] } = useQuery<any[]>({ queryKey: ["/api/impact-metrics"] });
 
   // Calculate aggregated metrics from real data
@@ -439,7 +413,7 @@ export default function ImpactVisualization() {
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
                 <div className="space-y-3 sm:space-y-4">
-                  {beforeAfterData.map(item => (
+                  {beforeAfterData.map((item: any) => (
                     <div key={item.id} className="border-b border-gray-200 dark:border-gray-700 pb-3 sm:pb-4 last:border-0 last:pb-0">
                       <h3 className="font-medium mb-1 text-sm sm:text-base">{item.title}</h3>
                       <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">{item.description}</p>
@@ -457,7 +431,7 @@ export default function ImpactVisualization() {
 
         <TabsContent value="outcomes" className="space-y-4 sm:space-y-6">
           <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {projectOutcomes.map(project => (
+            {projectOutcomes.map((project: any) => (
               <Card key={project.id} className="min-h-[200px] w-full">
                 <CardHeader className="pb-3 p-4 sm:p-6">
                   <CardTitle className="text-base sm:text-lg">{project.title}</CardTitle>

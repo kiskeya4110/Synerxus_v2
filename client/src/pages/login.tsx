@@ -146,12 +146,22 @@ export default function Login() {
         });
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
+        
+        // Redirect to appropriate intake form based on user type
+        if (userType === 'volunteer') {
+          setLocation("/volunteer-intake");
+        } else if (userType === 'organization') {
+          setLocation("/organization-intake");
+        } else {
+          setLocation("/dashboard");
+        }
+      } else {
+        setLocation("/dashboard");
       }
       
-      setLocation("/dashboard");
       toast({
         title: "Account created",
-        description: "Your account has been created successfully.",
+        description: "Please complete your profile to get started.",
       });
     } catch (error) {
       console.error("Error signing up:", error);

@@ -2131,6 +2131,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       // Create or update matchable volunteer for algorithm
       if (profile) {
         const matchableVolId = `vol_${user.email}`;
+        console.log(`Creating/updating matchable volunteer: ${matchableVolId}`);
         const existingMatchableVol = await storage.getVolunteer(matchableVolId);
         
         // Use the updated name from request body, not the stale user object
@@ -2146,14 +2147,19 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           sdgGoals: profile.preferredSdgs || []
         };
         
+        console.log('Matchable volunteer data:', JSON.stringify(matchableVolData, null, 2));
+        
         if (existingMatchableVol) {
+          console.log('Updating existing matchable volunteer');
           await storage.updateVolunteer(matchableVolId, matchableVolData);
         } else {
+          console.log('Creating new matchable volunteer');
           await storage.createVolunteer({
             id: matchableVolId,
             ...matchableVolData
           } as any);
         }
+        console.log('Matchable volunteer created/updated successfully');
       }
       
       broadcastUpdate("volunteer_profile_updated", profile);

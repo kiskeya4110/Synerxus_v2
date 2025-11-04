@@ -104,8 +104,10 @@ export default function VolunteerIntake() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: VolunteerProfileForm) => {
+      console.log('[Volunteer Intake Mutation] Starting mutation');
+      console.log('[Volunteer Intake Mutation] userId:', user?.id);
       // Backend will automatically update userType when creating profile
-      return await apiRequest(
+      const result = await apiRequest(
         "POST",
         `/api/intake/volunteer-profile?userId=${user?.id}`,
         {
@@ -114,6 +116,8 @@ export default function VolunteerIntake() {
           profilePhotoUrl
         }
       );
+      console.log('[Volunteer Intake Mutation] Success:', result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile"] });
@@ -150,6 +154,10 @@ export default function VolunteerIntake() {
   });
 
   const onSubmit = (data: VolunteerProfileForm) => {
+    console.log('[Volunteer Intake] Form submission triggered');
+    console.log('[Volunteer Intake] Form data:', data);
+    console.log('[Volunteer Intake] User ID:', user?.id);
+    console.log('[Volunteer Intake] Form errors:', form.formState.errors);
     submitMutation.mutate(data);
   };
 
@@ -199,6 +207,9 @@ export default function VolunteerIntake() {
       form.setValue("preferredSdgs", [...current, sdgNumber]);
     }
   };
+
+  // Watch preferredSdgs once at component level to avoid infinite loops
+  const selectedSdgs = form.watch("preferredSdgs") || [];
 
   const totalSteps = 5;
 
@@ -549,7 +560,7 @@ export default function VolunteerIntake() {
                               key={sdg.id}
                               data-testid={`card-sdg-${sdg.id}`}
                               className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                form.watch("preferredSdgs")?.includes(sdg.id)
+                                selectedSdgs.includes(sdg.id)
                                   ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                                   : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                               }`}
@@ -557,7 +568,7 @@ export default function VolunteerIntake() {
                             >
                               <div className="flex items-start gap-2">
                                 <Checkbox
-                                  checked={form.watch("preferredSdgs")?.includes(sdg.id)}
+                                  checked={selectedSdgs.includes(sdg.id)}
                                   className="mt-1"
                                 />
                                 <div>

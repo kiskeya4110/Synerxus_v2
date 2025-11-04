@@ -19,7 +19,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
-import { calculateMatchScore, findTopMatches } from "./matching-algorithm";
+import { calculateMatchScore, findTopMatches, findTopVolunteers } from "./matching-algorithm";
 import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer } from "./dashboard-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
@@ -1167,6 +1167,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error fetching current user's volunteer profile:", err);
       res.status(500).json({ message: "Failed to fetch volunteer profile" });
+    }
+  });
+
+  // AI-matched volunteers endpoint - returns volunteers matched to organization's needs
+  app.get("/api/volunteers/matches", async (req, res) => {
+    try {
+      const organizationId = req.query.organizationId as string | undefined;
+      const thresholdParam = req.query.threshold as string | undefined;
+      
+      if (!organizationId) {
+        return res.status(400).json({ message: "organizationId query parameter is required" });
+      }
+      
+      const orgId = parseInt(organizationId);
+      const threshold = thresholdParam ? parseInt(thresholdParam) : 40; // Default 40% threshold
+      
+      // Get organization and their profile
+      const organization = await storage.getUser(orgId);
+      if (!organization || organization.userType !== 'organization') {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+      
+      // Get organization's open opportunities to match against
+      const orgOpportunities = await storage.listOpportunitiesByOrganization(orgId);
+      const openOpportunities = orgOpportunities.filter(opp => opp.status === 'open');
+      
+      if (openOpportunities.length === 0) {
+        // No opportunities to match against - return empty array
+        return res.json([]);
+      }
+      
+      // Get all volunteers with their profiles
+      const allUsers = await storage.listUsers();
+      const volunteers = allUsers.filter(u => u.userType === 'volunteer');
+      
+      // Get volunteer profiles - pass full profile object to matching algorithm
+      const volunteersWithProfiles = await Promise.all(
+        volunteers.map(async (vol) => {
+          const profile = vol.email ? await storage.getVolunteerByEmail(vol.email) : null;
+          return { ...vol, profile } as any; // Type cast for flexibility
+        })
+      );
+      
+      // Match volunteers against the organization's most representative opportunity
+      // (using first open opportunity as baseline)
+      const representativeOpportunity = openOpportunities[0];
+      const matchedVolunteers = findTopVolunteers(
+        representativeOpportunity, 
+        volunteersWithProfiles as any,
+        100 // Get all volunteers, will filter by threshold
+      );
+      
+      // Filter by threshold and add match data
+      const filteredVolunteers = matchedVolunteers
+        .filter(vol => vol.matchScore >= threshold)
+        .map(vol => ({
+          ...vol,
+          matchPercentage: vol.matchScore,
+          matchReasons: vol.matchReasons
+        }));
+      
+      res.json(filteredVolunteers);
+    } catch (err) {
+      console.error("Error fetching matched volunteers:", err);
+      res.status(500).json({ message: "Failed to fetch matched volunteers", error: err instanceof Error ? err.message : String(err) });
     }
   });
 

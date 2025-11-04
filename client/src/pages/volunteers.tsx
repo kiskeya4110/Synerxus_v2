@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Mail, Phone, Award } from "lucide-react";
+import { Plus, Search, Filter, Mail, Phone, Award, Target } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,15 +13,43 @@ export default function Volunteers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [skillFilter, setSkillFilter] = useState("all");
 
-  const { data: users = [], isLoading } = useQuery({ 
-    queryKey: ["/api/users"] 
+  // Get current user to check if organization
+  const userId = localStorage.getItem('currentUserId');
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId
   });
 
-  const { data: volunteerActivities = [] } = useQuery({ 
+  // Use AI matching for organizations, regular list for admin/other users
+  const isOrganization = currentUser?.userType === 'organization';
+  
+  const { data: volunteers = [], isLoading } = useQuery<any[]>({ 
+    queryKey: isOrganization ? ["/api/volunteers/matches", userId] : ["/api/users"],
+    queryFn: async () => {
+      if (isOrganization && userId) {
+        const response = await fetch(`/api/volunteers/matches?organizationId=${userId}`);
+        if (!response.ok) return [];
+        return response.json();
+      } else {
+        const response = await fetch('/api/users');
+        if (!response.ok) return [];
+        const allUsers = await response.json();
+        return allUsers.filter((user: any) => user.userType === 'volunteer');
+      }
+    },
+    enabled: !!currentUser
+  });
+
+  const { data: volunteerActivities = [] } = useQuery<any[]>({ 
     queryKey: ["/api/volunteer-activities"] 
   });
-
-  const volunteers = users.filter((user: any) => user.userType === 'volunteer');
 
   const volunteersWithStats = useMemo(() => {
     return volunteers.map((volunteer: any) => {
@@ -119,8 +147,16 @@ export default function Volunteers() {
       {/* Volunteers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filteredVolunteers.map((volunteer: any) => (
-          <Card key={volunteer.id} className="hover:shadow-lg transition-shadow">
+          <Card key={volunteer.id} className="hover:shadow-lg transition-shadow relative">
             <CardHeader className="pb-3">
+              {isOrganization && volunteer.matchPercentage && (
+                <div className="absolute top-3 right-3">
+                  <Badge variant="secondary" className="gap-1">
+                    <Target className="h-3 w-3" />
+                    {volunteer.matchPercentage}% Match
+                  </Badge>
+                </div>
+              )}
               <div className="flex items-center gap-3 mb-3">
                 <Avatar className="h-12 w-12">
                   <AvatarFallback className="bg-primary text-white">

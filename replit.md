@@ -33,14 +33,14 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Landing Page**: Rebranded, publicly accessible, showcasing features and calls to action, including an interactive SDG wheel.
-- **Dashboard**: Fully database-integrated, role-based views (Volunteer/Organization) with real-time KPIs, interactive KPI cards, Impact Over Time chart, SDG Contributions chart, Quick Actions, Recent Activity, and Upcoming Events. Volunteers have a "Find Opportunities" tab showing AI-matched opportunities with percentage scores (skills 35%, location 25%, SDG 20%, interests 20%). Impact Score (0-100) calculated from volunteer hours (40%), completed tasks (30%), SDG coverage (20%), and match acceptance (10%). KPIs now accurately reflect multi-tenant filtered data.
+- **Dashboard**: Fully database-integrated, role-based views (Volunteer/Organization) with real-time KPIs, interactive KPI cards, Impact Over Time chart, SDG Contributions chart, Quick Actions, Recent Activity, and Upcoming Events. Volunteers have a "Find Opportunities" tab showing AI-matched opportunities with percentage scores (skills 35%, location 25%, SDG 20%, interests 20%). Impact Score (0-100) calculated from volunteer hours (40%), completed tasks (30%), SDG coverage (20%), and match acceptance (10%). **Dashboard now uses scoped `/api/dashboard/summary` endpoint instead of global `/api/tasks` and `/api/volunteer-activities` endpoints, eliminating cross-tenant data leakage.** KPIs accurately reflect multi-tenant filtered data. SDG chart filters to show only organization's selected SDGs from Settings.
 - **SDG Mapping**: Visual representation and tracking of project alignment with UN SDGs, with multi-tenant security.
 - **Mobile Data Collection**: Tabbed interface for activity logging and impact data recording with form validation.
 - **Calendar**: Full-featured calendar with event management, clickable day slots for event creation, and project/user assignment capabilities.
 - **Impact Visualization**: Interactive impact dashboard with Before/After comparison, clickable aggregated impact metrics, and real-time Chart.js visualizations, including comprehensive empty states.
 - **Impact Storytelling**: AI-powered narrative generation and social media sharing.
 - **Field-Specific Metrics**: Customizable KPIs for various domains.
-- **Core Management Pages**: Dedicated interfaces for Projects, Tasks, Volunteers, Organizations, Calendar, Opportunities, and Applications.
+- **Core Management Pages**: Dedicated interfaces for Projects, Tasks, Volunteers, Organizations, Calendar, Opportunities, and Applications. **Projects page now organization-scoped** - fetches only the logged-in organization's projects using `userId` parameter. Full CRUD capabilities with CreateProjectDialog (comprehensive intake form), EditProjectDialog, and DeleteProjectDialog.
 - **Project Detail & Management**: Comprehensive viewing and editing with AI-powered or manual completion tracking, statistics display, and tabbed interface.
 - **Volunteer Opportunities System**: Full-featured posting and discovery with AI recommendations and application tracking. Includes an enhanced project intake form for comprehensive data collection for AI matching.
 - **System Partitioning**: Dual user types (Volunteer/Organization) with distinct flows and role-based navigation.

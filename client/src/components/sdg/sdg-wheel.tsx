@@ -2,7 +2,28 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Users, Wheat, HeartPulse, GraduationCap, Scale, Droplets, Zap, TrendingUp, Cog, BarChart, Building2, Recycle, Cloud, Fish, Trees, Landmark, Network } from "lucide-react";
+
+// SDG Icon mapping using Lucide icons
+const SDG_ICONS = {
+  1: Users,
+  2: Wheat,
+  3: HeartPulse,
+  4: GraduationCap,
+  5: Scale,
+  6: Droplets,
+  7: Zap,
+  8: TrendingUp,
+  9: Cog,
+  10: BarChart,
+  11: Building2,
+  12: Recycle,
+  13: Cloud,
+  14: Fish,
+  15: Trees,
+  16: Landmark,
+  17: Network
+};
 
 const SDG_DATA = [
   {
@@ -149,38 +170,41 @@ export function SDGWheel() {
   const renderSDGGrid = () => {
     return (
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 xl:grid-cols-12 gap-2 sm:gap-3 max-w-5xl mx-auto">
-        {SDG_DATA.map((sdg) => (
-          <button
-            key={sdg.id}
-            onClick={() => setSelectedSDG(sdg)}
-            className="group relative rounded-md overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            style={{ 
-              backgroundColor: sdg.color,
-              aspectRatio: '1/1'
-            }}
-            data-testid={`sdg-button-${sdg.id}`}
-          >
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-            <div className="relative h-full flex flex-col items-start justify-start p-1.5 sm:p-2 text-white">
-              <div className="text-xs sm:text-sm font-bold mb-0.5">{sdg.id}</div>
-              <div className="text-[0.5rem] sm:text-[0.6rem] font-semibold leading-tight line-clamp-3 text-left uppercase tracking-tight">
-                {sdg.title.replace('and', '&')}
+        {SDG_DATA.map((sdg) => {
+          const IconComponent = SDG_ICONS[sdg.id as keyof typeof SDG_ICONS];
+          return (
+            <button
+              key={sdg.id}
+              onClick={() => setSelectedSDG(sdg)}
+              className="group relative rounded-md overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              style={{ 
+                backgroundColor: sdg.color,
+                aspectRatio: '1/1'
+              }}
+              data-testid={`sdg-button-${sdg.id}`}
+            >
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+              <div className="relative h-full flex flex-col items-start justify-between p-1.5 sm:p-2 text-white">
+                <div className="text-xs sm:text-sm font-bold">{sdg.id}</div>
+                <div className="text-[0.45rem] sm:text-[0.55rem] font-bold leading-tight line-clamp-2 text-left uppercase tracking-tighter">
+                  {sdg.title.replace('and', '&')}
+                </div>
               </div>
-            </div>
-            
-            {/* Icon placeholder - would be replaced with actual SDG icons */}
-            <div className="absolute bottom-1 right-1 w-6 h-6 sm:w-8 sm:h-8 opacity-20 group-hover:opacity-30 transition-opacity">
-              <div className="w-full h-full rounded-full border-2 border-white/50" />
-            </div>
-            
-            {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-1">
-              <div className="text-white text-[0.6rem] sm:text-xs text-center leading-tight">
-                Learn more
+              
+              {/* SDG Icon */}
+              <div className="absolute bottom-1 right-1 w-5 h-5 sm:w-7 sm:h-7 opacity-30 group-hover:opacity-50 transition-opacity">
+                <IconComponent className="w-full h-full text-white" strokeWidth={2.5} />
               </div>
-            </div>
-          </button>
-        ))}
+              
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-1">
+                <div className="text-white text-[0.6rem] sm:text-xs text-center leading-tight">
+                  Learn more
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
     );
   };

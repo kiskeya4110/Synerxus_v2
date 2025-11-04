@@ -112,13 +112,13 @@ export default function Landing() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4 sm:px-0">
             <Link href="/login" className="w-full sm:w-auto">
-              <Button size="lg" className="gap-2 w-full sm:w-auto min-h-[48px]" data-testid="button-start-tracking">
+              <Button size="lg" className="gap-2 w-full sm:w-auto min-h-[48px] bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white" data-testid="button-start-tracking">
                 Start Tracking Impact
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
             <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px]" data-testid="button-explore-demo">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px] border-[#d97706] text-[#d97706] hover:bg-[#d97706] hover:text-white" data-testid="button-explore-demo">
                 Explore Demo
               </Button>
             </Link>
@@ -233,12 +233,12 @@ export default function Landing() {
             </CardDescription>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <Link href="/login" className="w-full sm:w-auto">
-                <Button size="lg" className="w-full sm:w-auto min-h-[48px]" data-testid="button-create-account">
+                <Button size="lg" className="w-full sm:w-auto min-h-[48px] bg-[#1e3a8a] hover:bg-[#1e3a8a]/90 text-white" data-testid="button-create-account">
                   Create Free Account
                 </Button>
               </Link>
               <Link href="/dashboard" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px]" data-testid="button-view-dashboard">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px] border-[#d97706] text-[#d97706] hover:bg-[#d97706] hover:text-white" data-testid="button-view-dashboard">
                   View Dashboard Demo
                 </Button>
               </Link>

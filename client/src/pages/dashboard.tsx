@@ -10,6 +10,7 @@ import TaskTable, { Task } from "@/components/dashboard/task-table";
 import ActivityFeed, { Activity } from "@/components/dashboard/activity-feed";
 import UpcomingEvents, { Event } from "@/components/dashboard/upcoming-events";
 import QuickActions from "@/components/dashboard/quick-actions";
+import OpportunitiesTab from "@/components/dashboard/opportunities-tab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -45,8 +46,15 @@ export default function Dashboard() {
 
   // Fetch real data from API - MUST be called before any early returns
   const { data: dashboardData, isLoading: loadingDashboard } = useQuery<any>({
-    queryKey: ["/api/dashboard/summary"],
-    enabled: !!currentUser && !!currentUser.userType
+    queryKey: ["/api/dashboard/summary", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch dashboard summary");
+      return response.json();
+    },
+    enabled: !!currentUser && !!currentUser.userType && !!userId
   });
 
   const { data: projects = [], isLoading: loadingProjects } = useQuery<any[]>({
@@ -110,8 +118,22 @@ export default function Dashboard() {
     };
   }, [selectedProject, projects, tasks, volunteerActivities, projectImpacts]);
 
-  // Calculate KPIs from real data
+  // Use KPIs from backend - no local filtering needed for KPIs
   const kpis = useMemo(() => {
+    // When "all" is selected or no filter, use backend KPIs directly
+    if (selectedProject === "all") {
+      return {
+        volunteers: dashboardData?.activeVolunteers || 0,
+        hours: Math.round(dashboardData?.totalHours || 0),
+        tasks: dashboardData?.totalTasks || 0,
+        completedTasks: dashboardData?.completedTasks || 0,
+        activeProjects: dashboardData?.activeProjects || 0,
+        sdgs: dashboardData?.sdgsAddressed || 0,
+        impactScore: dashboardData?.impactScore || 0,
+      };
+    }
+    
+    // When a specific project is filtered, calculate filtered KPIs
     const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
     const filteredTotalTasks = filteredData.tasks.length;
     const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status === "Completed").length;
@@ -136,7 +158,7 @@ export default function Dashboard() {
       sdgs: uniqueSDGs.size,
       impactScore: dashboardData?.impactScore || 0,
     };
-  }, [dashboardData, filteredData]);
+  }, [dashboardData, filteredData, selectedProject]);
 
   // Transform activities for the activity feed - MUST BE BEFORE EARLY RETURNS
   const formattedActivities: Activity[] = useMemo(() => {
@@ -473,9 +495,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className="w-full grid grid-cols-2">
+            <TabsList className={`w-full grid ${dashboardType === 'volunteer' ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <TabsTrigger value="tasks">Tasks</TabsTrigger>
               <TabsTrigger value="activity">Recent Activity</TabsTrigger>
+              {dashboardType === 'volunteer' && (
+                <TabsTrigger value="opportunities">Find Opportunities</TabsTrigger>
+              )}
             </TabsList>
             <TabsContent value="tasks" className="mt-4">
               <TaskTable tasks={formatTasksForTable(filteredData.tasks, projects)} />
@@ -483,6 +508,11 @@ export default function Dashboard() {
             <TabsContent value="activity" className="mt-4">
               <ActivityFeed activities={formattedActivities} />
             </TabsContent>
+            {dashboardType === 'volunteer' && (
+              <TabsContent value="opportunities" className="mt-4">
+                <OpportunitiesTab userId={userId} />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
 

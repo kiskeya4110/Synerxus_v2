@@ -18,6 +18,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
+import { calculateMatchScore, findTopMatches } from "./matching-algorithm";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
@@ -665,6 +666,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // === Opportunities Routes ===
   // Note: More specific routes must come before parameterized routes
+  
+  // Opportunities matches endpoint - returns matched opportunities for a volunteer with percentage scores
+  app.get("/api/opportunities/matches", async (req, res) => {
+    try {
+      const userId = req.query.userId as string | undefined;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "userId query parameter is required" });
+      }
+      
+      // Fetch the user and their volunteer profile
+      const users = await storage.listUsers();
+      const volunteers = await storage.listVolunteers();
+      const user = users.find(u => u.id.toString() === userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Get volunteer profile by email
+      const volunteer = volunteers.find(v => v.email === user.email);
+      
+      // Create a combined volunteer object with user data and profile
+      const volunteerWithProfile = {
+        ...user,
+        profile: volunteer ? {
+          userId: parseInt(userId),
+          location: volunteer.location,
+          interests: volunteer.interests,
+          preferredCauses: volunteer.interests,
+          preferredSdgs: volunteer.sdgGoals,
+        } : null
+      };
+      
+      // Fetch all open opportunities
+      const allOpportunities = await storage.listOpportunities();
+      const openOpportunities = allOpportunities.filter(opp => opp.status === 'open');
+      
+      // Use matching algorithm to find top matches
+      const matchedOpportunities = findTopMatches(volunteerWithProfile as any, openOpportunities, 50);
+      
+      // Format the response with percentage and detailed breakdown
+      const formattedMatches = matchedOpportunities.map(opp => ({
+        ...opp,
+        matchPercentage: opp.matchScore, // Already 0-100
+        matchReasons: opp.matchReasons
+      }));
+      
+      res.json(formattedMatches);
+    } catch (err) {
+      console.error("Error fetching matched opportunities:", err);
+      res.status(500).json({ message: "Failed to fetch matched opportunities", error: err instanceof Error ? err.message : String(err) });
+    }
+  });
   
   // Discover endpoint must come BEFORE /:id route
   app.get("/api/opportunities/discover", async (req, res) => {
@@ -1396,38 +1451,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Dashboard Summary Route ===
   app.get("/api/dashboard/summary", async (req, res) => {
     try {
+      const userId = req.query.userId as string | undefined;
+      
       // Fetch data needed for the dashboard
       const users = await storage.listUsers();
       const projects = await storage.listProjects();
+      const tasks = await storage.listTasks();
       const activities = await storage.listVolunteerActivities();
       const impacts = await storage.listProjectImpacts();
+      const projectAssignments = await storage.listProjectAssignments();
+      const applications = await storage.listApplications();
+      
+      // Determine the current user and their type
+      let currentUser = null;
+      if (userId) {
+        currentUser = users.find(u => u.id.toString() === userId);
+      }
+      
+      // Filter data based on user type
+      let relevantProjects = projects;
+      let relevantActivities = activities;
+      let relevantTasks = tasks;
+      
+      if (currentUser) {
+        if (currentUser.userType === 'volunteer') {
+          // For volunteers: show only projects they're assigned to
+          const volunteerProjectIds = projectAssignments
+            .filter(pa => pa.volunteerId === currentUser.id)
+            .map(pa => pa.projectId);
+          
+          relevantProjects = projects.filter(p => volunteerProjectIds.includes(p.id));
+          relevantActivities = activities.filter(a => a.userId === currentUser.id);
+          relevantTasks = tasks.filter(t => 
+            volunteerProjectIds.includes(t.projectId || 0) || t.assigneeId === currentUser.id
+          );
+        } else if (currentUser.userType === 'organization' && currentUser.organizationId) {
+          // For organizations: show only their projects
+          relevantProjects = projects.filter(p => p.organizationId === currentUser.organizationId);
+          const orgProjectIds = relevantProjects.map(p => p.id);
+          relevantActivities = activities.filter(a => orgProjectIds.includes(a.projectId || 0));
+          relevantTasks = tasks.filter(t => orgProjectIds.includes(t.projectId || 0));
+        }
+      }
       
       // Calculate summary metrics - count unique volunteers who have actually logged hours
-      const uniqueVolunteerIds = new Set(activities.map(activity => activity.userId));
+      const uniqueVolunteerIds = new Set(relevantActivities.map(activity => activity.userId));
       const activeVolunteers = uniqueVolunteerIds.size;
       
       // Calculate total volunteer hours
-      const totalHours = activities.reduce((sum, activity) => sum + activity.hours, 0);
+      const totalHours = relevantActivities.reduce((sum, activity) => sum + activity.hours, 0);
       
       // Count active projects
-      const activeProjects = projects.filter(project => 
+      const activeProjects = relevantProjects.filter(project => 
         project.status === 'In Progress' || project.status === 'Active'
       ).length;
       
-      // Count unique SDGs addressed across all projects
+      // Count completed tasks
+      const completedTasks = relevantTasks.filter(t => t.status === 'Completed').length;
+      const totalTasks = relevantTasks.length;
+      
+      // Count unique SDGs addressed across relevant projects
       const uniqueSDGs = new Set();
-      projects.forEach(project => {
+      relevantProjects.forEach(project => {
         if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
           project.sdgGoals.forEach(goal => uniqueSDGs.add(goal));
         }
       });
       
+      // Calculate Impact Score (0-100)
+      // Formula: volunteer hours (40%), completed tasks (30%), SDG coverage (20%), match acceptance (10%)
+      const hoursScore = Math.min((totalHours / 100) * 100, 100); // Scale: 100 hours = 100%
+      const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+      const sdgScore = (uniqueSDGs.size / 17) * 100; // 17 total SDGs
+      
+      // Match acceptance: accepted applications / total applications
+      const relevantApplications = currentUser && currentUser.userType === 'volunteer'
+        ? applications.filter(app => app.volunteerId === currentUser.id)
+        : applications;
+      const acceptedApplications = relevantApplications.filter(app => app.status === 'accepted').length;
+      const matchScore = relevantApplications.length > 0 
+        ? (acceptedApplications / relevantApplications.length) * 100 
+        : 50; // Default 50% if no applications
+      
+      const impactScore = Math.round(
+        hoursScore * 0.40 +
+        tasksScore * 0.30 +
+        sdgScore * 0.20 +
+        matchScore * 0.10
+      );
+      
       const summary = {
         activeVolunteers,
         totalHours,
         activeProjects,
+        completedTasks,
+        totalTasks,
         sdgsAddressed: uniqueSDGs.size,
-        recentActivities: activities.sort((a, b) => 
+        impactScore,
+        recentActivities: relevantActivities.sort((a, b) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         ).slice(0, 5)
       };

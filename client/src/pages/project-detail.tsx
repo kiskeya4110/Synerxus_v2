@@ -272,13 +272,110 @@ export default function ProjectDetail() {
         </Card>
       </div>
 
+      {/* Project Requirements & Details from Intake Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Project Requirements & Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Skills Required */}
+          {project.requiredSkills && project.requiredSkills.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-muted-foreground">Required Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {project.requiredSkills.map((skill: string, index: number) => (
+                  <Badge key={index} variant="default">{skill}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Optional Skills */}
+          {project.optionalSkills && project.optionalSkills.length > 0 && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-muted-foreground">Optional Skills</h3>
+              <div className="flex flex-wrap gap-2">
+                {project.optionalSkills.map((skill: string, index: number) => (
+                  <Badge key={index} variant="outline">{skill}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Experience Level, Engagement Type, Commitment Type */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {project.experienceLevel && (
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-muted-foreground">Experience Level</h3>
+                <p className="text-base capitalize">{project.experienceLevel}</p>
+              </div>
+            )}
+            {project.engagementType && (
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-muted-foreground">Engagement Type</h3>
+                <p className="text-base capitalize">{project.engagementType}</p>
+              </div>
+            )}
+            {project.commitmentType && (
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-muted-foreground">Commitment Type</h3>
+                <p className="text-base capitalize">{project.commitmentType}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Time Commitment */}
+          {(project.ongoingHoursPerWeek || project.projectTotalHours) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {project.ongoingHoursPerWeek && (
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Hours Per Week</h3>
+                  <p className="text-base">{project.ongoingHoursPerWeek} hours/week</p>
+                </div>
+              )}
+              {project.projectTotalHours && (
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-muted-foreground">Total Project Hours</h3>
+                  <p className="text-base">{project.projectTotalHours} hours</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Impact Metric */}
+          {(project.impactMetricName || project.impactMetricUnit) && (
+            <div className="space-y-1">
+              <h3 className="text-sm font-semibold text-muted-foreground">Impact Metric</h3>
+              <p className="text-base">
+                {project.impactMetricName} 
+                {project.impactMetricUnit && ` (measured in ${project.impactMetricUnit})`}
+              </p>
+            </div>
+          )}
+
+          {/* Primary SDG */}
+          {project.primarySdg && (
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold text-muted-foreground">Primary SDG Goal</h3>
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium"
+                style={{ backgroundColor: SDG_COLORS[project.primarySdg] }}
+              >
+                <span className="font-bold">#{project.primarySdg}</span>
+                <span className="text-sm">{SDG_NAMES[project.primarySdg]}</span>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* SDG Goals */}
       {project.sdgGoals && project.sdgGoals.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="h-5 w-5" />
-              Sustainable Development Goals
+              All Sustainable Development Goals
             </CardTitle>
           </CardHeader>
           <CardContent>

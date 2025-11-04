@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 
 interface ProjectCardProps {
+  id?: string;
   projectId?: string;
   title: string;
   description: string;
@@ -22,6 +23,7 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({
+  id,
   projectId,
   title,
   description,
@@ -31,6 +33,7 @@ export default function ProjectCard({
   volunteers
 }: ProjectCardProps) {
   const [showDialog, setShowDialog] = useState(false);
+  const actualProjectId = projectId || id;
   const getStatusBadgeClasses = () => {
     switch (status) {
       case "Planning":
@@ -94,7 +97,7 @@ export default function ProjectCard({
       <div 
         className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary-500 hover:shadow-md transition-all duration-200 cursor-pointer"
         onClick={() => setShowDialog(true)}
-        data-testid={`card-project-${projectId || 'default'}`}
+        data-testid={`card-project-${actualProjectId || 'default'}`}
       >
         <CardContent />
       </div>
@@ -159,18 +162,26 @@ export default function ProjectCard({
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4 border-t">
-              <Link href={`/projects/${projectId}`} className="flex-1">
-                <Button variant="outline" className="w-full gap-2" data-testid="button-view-project">
-                  <Eye className="h-4 w-4" />
-                  View Full Project
-                </Button>
-              </Link>
-              <Link href={`/projects/${projectId}/edit`} className="flex-1">
-                <Button className="w-full gap-2" data-testid="button-edit-project">
-                  <Edit className="h-4 w-4" />
-                  Edit Project
-                </Button>
-              </Link>
+              {actualProjectId && (
+                <>
+                  <Link href={`/projects/${actualProjectId}`} className="flex-1">
+                    <a className="w-full">
+                      <Button variant="outline" className="w-full gap-2" data-testid="button-view-project" onClick={() => setShowDialog(false)}>
+                        <Eye className="h-4 w-4" />
+                        View Full Project
+                      </Button>
+                    </a>
+                  </Link>
+                  <Link href={`/projects/${actualProjectId}/edit`} className="flex-1">
+                    <a className="w-full">
+                      <Button className="w-full gap-2" data-testid="button-edit-project" onClick={() => setShowDialog(false)}>
+                        <Edit className="h-4 w-4" />
+                        Edit Project
+                      </Button>
+                    </a>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </DialogContent>

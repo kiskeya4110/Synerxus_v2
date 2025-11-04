@@ -11,6 +11,7 @@ import ActivityFeed, { Activity } from "@/components/dashboard/activity-feed";
 import UpcomingEvents, { Event } from "@/components/dashboard/upcoming-events";
 import QuickActions from "@/components/dashboard/quick-actions";
 import OpportunitiesTab from "@/components/dashboard/opportunities-tab";
+import ProfileOverview from "@/components/dashboard/profile-overview";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -517,6 +518,7 @@ export default function Dashboard() {
         </div>
 
         <div className="space-y-6">
+          <ProfileOverview userId={userId} userType={dashboardType} />
           <UpcomingEvents events={formattedEvents} />
           <QuickActions userType={dashboardType} />
         </div>

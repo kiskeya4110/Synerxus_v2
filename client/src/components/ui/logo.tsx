@@ -39,7 +39,7 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
       )}
       <span className={cn(sizeClasses.text, "font-bold whitespace-nowrap")}>
         <span style={{ color: '#1e3a8a' }}>SYNER</span>
-        <span style={{ color: '#d97706' }}>XUS</span>
+        <span style={{ color: '#b45309' }}>XUS</span>
       </span>
     </div>
   );

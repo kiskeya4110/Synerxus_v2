@@ -118,7 +118,7 @@ export default function Landing() {
               </Button>
             </Link>
             <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px] border-[#d97706] text-[#d97706] hover:bg-[#d97706] hover:text-white" data-testid="button-explore-demo">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px] border-[#b45309] text-[#b45309] hover:bg-[#b45309] hover:text-white font-semibold" data-testid="button-explore-demo">
                 Explore Demo
               </Button>
             </Link>
@@ -238,7 +238,7 @@ export default function Landing() {
                 </Button>
               </Link>
               <Link href="/dashboard" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px] border-[#d97706] text-[#d97706] hover:bg-[#d97706] hover:text-white" data-testid="button-view-dashboard">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto min-h-[48px] border-[#b45309] text-[#b45309] hover:bg-[#b45309] hover:text-white font-semibold" data-testid="button-view-dashboard">
                   View Dashboard Demo
                 </Button>
               </Link>

@@ -72,16 +72,12 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType && !!userId
   });
 
-  const { data: tasks = [], isLoading: loadingTasks } = useQuery<any[]>({
-    queryKey: ["/api/tasks"],
-    enabled: !!currentUser && !!currentUser.userType
-  });
-
-  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery<any[]>({
-    queryKey: ["/api/volunteer-activities"],
-    enabled: !!currentUser && !!currentUser.userType
-  });
-
+  // Use scoped data from dashboard service instead of global endpoints
+  const tasks = dashboardData?.tasks || [];
+  const volunteerActivities = dashboardData?.activities || [];
+  const projectImpacts = dashboardData?.impacts || [];
+  
+  // These endpoints don't have scoped versions yet - fetch globally for now
   const { data: calendarEvents = [], isLoading: loadingEvents } = useQuery<any[]>({
     queryKey: ["/api/calendar-events"],
     enabled: !!currentUser && !!currentUser.userType
@@ -89,11 +85,6 @@ export default function Dashboard() {
 
   const { data: impactMetrics = [] } = useQuery<any[]>({
     queryKey: ["/api/impact-metrics"],
-    enabled: !!currentUser && !!currentUser.userType
-  });
-
-  const { data: projectImpacts = [] } = useQuery<any[]>({
-    queryKey: ["/api/project-impacts"],
     enabled: !!currentUser && !!currentUser.userType
   });
 
@@ -364,7 +355,7 @@ export default function Dashboard() {
     setSelectedKPI(detailData);
   };
 
-  if (loadingDashboard || loadingProjects || loadingTasks || loadingActivities) {
+  if (loadingDashboard || loadingProjects) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-64" />

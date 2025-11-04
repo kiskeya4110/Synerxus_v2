@@ -6,6 +6,47 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 ## Recent Changes
 
+### November 4, 2025 - Comprehensive Project Intake Form Enhancement
+
+- **Project Form Expansion**: Completely redesigned project intake form to match "Core Opportunity Form" specifications:
+  - **Section 1 - The Basics**: Project title, description, and status tracking
+  - **Section 2 - The Ideal Volunteer**: 
+    - Required Skills field (35% weight in AI matching - most important)
+    - Optional Skills field (nice-to-have skills for refined matching)
+    - Experience Level dropdown (entry-level, intermediate, expert/specialist)
+  - **Section 3 - The Logistics**:
+    - Engagement Type selector (remote, in-person, hybrid)
+    - Location field (25% weight in AI matching - critical for local volunteers)
+    - Start Date and End Date for project timeline
+    - Time Commitment Type (ongoing, project-based, event)
+    - Ongoing Hours per Week (for regular commitments)
+    - Project Total Hours (for project-based work)
+    - Number of Volunteers Needed
+  - **Section 4 - The Purpose & Impact**:
+    - Primary SDG Alignment (main UN SDG goal, 20% weight in matching)
+    - Additional SDG Alignments (optional secondary SDGs)
+    - Impact Metric Name (e.g., "Students Tutored", "Trees Planted")
+    - Impact Metric Unit (e.g., "students", "trees", "families")
+    - Impact Goals description (expected outcomes)
+  - **Section 5 - Completion Tracking**:
+    - Total Hours Logged (actual volunteer hours completed)
+    - Completion Percentage (0-100% project completion)
+- **Database Schema Updates**: Added 11 new fields to projects table:
+  - `requiredSkills` (text array) - Required skills for AI matching
+  - `optionalSkills` (text array) - Nice-to-have skills
+  - `experienceLevel` (text) - entry-level, intermediate, or expert
+  - `engagementType` (text) - remote, in-person, or hybrid
+  - `commitmentType` (text) - ongoing, project-based, or event
+  - `ongoingHoursPerWeek` (integer) - For ongoing commitments
+  - `projectTotalHours` (integer) - For project-based work
+  - `totalHoursLogged` (integer) - Actual hours completed
+  - `primarySdg` (integer) - Main SDG goal (1-17)
+  - `impactMetricName` (text) - Primary impact metric name
+  - `impactMetricUnit` (text) - Unit of measurement
+- **Form Organization**: Five organized sections with clear headings and helpful descriptions
+- **AI Matching Integration**: All fields clearly labeled with their weight in the matching algorithm (Skills 35%, Location 25%, SDG 20%)
+- **Visual Enhancements**: Blue highlighted indicators for critical matching fields, helpful placeholder text, and contextual guidance
+
 ### November 4, 2025 - SDG Mapping Multi-Tenant Security Fix
 
 - **Critical Data Leakage Fix**: Fixed cross-organization data exposure on SDG Mapping dashboard:

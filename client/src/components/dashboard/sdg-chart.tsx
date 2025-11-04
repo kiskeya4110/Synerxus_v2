@@ -8,9 +8,10 @@ import { getSDGName, getSDGFullName, getSDGColor, getSDGNameWithNumber } from "@
 
 export interface SDGChartProps {
   projects?: any[];
+  organizationSdgs?: number[]; // Organization's selected primary SDGs
 }
 
-export default function SDGChart({ projects = [] }: SDGChartProps) {
+export default function SDGChart({ projects = [], organizationSdgs }: SDGChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
@@ -28,12 +29,25 @@ export default function SDGChart({ projects = [] }: SDGChartProps) {
       }
     });
 
-    // Get top 5 SDGs
-    const topSDGs = Object.entries(sdgCounts)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 5);
+    // If organizationSdgs is provided, only show those SDGs
+    let sdgsToShow = Object.entries(sdgCounts);
+    
+    if (organizationSdgs && organizationSdgs.length > 0) {
+      // Filter to only show organization's selected SDGs
+      sdgsToShow = organizationSdgs.map(sdg => {
+        const count = sdgCounts[sdg] || 0;
+        return [sdg.toString(), count];
+      });
+      // Sort by count, descending
+      sdgsToShow.sort(([, a], [, b]) => (b as number) - (a as number));
+    } else {
+      // Get top 5 SDGs from projects
+      sdgsToShow = sdgsToShow
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5);
+    }
 
-    if (topSDGs.length === 0) {
+    if (sdgsToShow.length === 0) {
       return {
         labels: ["No data"],
         values: [1],
@@ -43,12 +57,12 @@ export default function SDGChart({ projects = [] }: SDGChartProps) {
     }
 
     return {
-      labels: topSDGs.map(([sdg]) => getSDGNameWithNumber(parseInt(sdg))),
-      values: topSDGs.map(([, count]) => count),
-      colors: topSDGs.map(([sdg]) => getSDGColor(parseInt(sdg))),
-      sdgIds: topSDGs.map(([sdg]) => parseInt(sdg)),
+      labels: sdgsToShow.map(([sdg]) => getSDGNameWithNumber(parseInt(sdg))),
+      values: sdgsToShow.map(([, count]) => count as number),
+      colors: sdgsToShow.map(([sdg]) => getSDGColor(parseInt(sdg))),
+      sdgIds: sdgsToShow.map(([sdg]) => parseInt(sdg)),
     };
-  }, [projects]);
+  }, [projects, organizationSdgs]);
 
   useEffect(() => {
     if (chartRef.current) {

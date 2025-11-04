@@ -2363,5 +2363,31 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
     }
   });
 
+  // Get notifications for a user
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
+      // For now, return empty array
+      // Future: Query notifications table and filter by userId
+      // Future: Generate SDG-based matching notifications
+      const notifications: any[] = [];
+      
+      res.json(notifications);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
   return httpServer;
 }

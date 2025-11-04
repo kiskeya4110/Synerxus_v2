@@ -298,6 +298,22 @@ export const matches = pgTable("matches", {
   uniqueVolunteerOrg: uniqueIndex("unique_volunteer_org_match").on(table.volunteerId, table.organizationId),
 }));
 
+// Notifications - User notifications for SDG matches and other events
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  type: text("type").notNull(), // 'sdg_match', 'volunteer_joined', 'project_update', etc.
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  relatedUserId: integer("related_user_id").references(() => users.id), // The user this notification is about
+  relatedEntityType: text("related_entity_type"), // 'project', 'opportunity', 'user', etc.
+  relatedEntityId: integer("related_entity_id"), // ID of the related entity
+  sdgGoals: integer("sdg_goals").array(), // SDGs related to this notification
+  read: boolean("read").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Create insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -412,6 +428,12 @@ export const insertMatchSchema = createInsertSchema(matches).omit({
   updatedAt: true
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -460,3 +482,6 @@ export type InsertMatchableOrganization = z.infer<typeof insertMatchableOrganiza
 
 export type Match = typeof matches.$inferSelect;
 export type InsertMatch = z.infer<typeof insertMatchSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;

@@ -27,6 +27,19 @@ import { useQuery } from "@tanstack/react-query";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import Logo from "@/components/ui/logo";
 
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+  if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+  if (days === 1) return "Yesterday";
+  return `${days} days ago`;
+}
+
 export default function Header() {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
@@ -47,14 +60,21 @@ export default function Header() {
     enabled: !!userId
   });
 
-  // Mock notifications - in a real app, these would come from an API
-  const notifications = [
-    { id: 1, title: "New volunteer joined", message: "A new volunteer has joined your organization", time: "5m ago", read: false },
-    { id: 2, title: "Task completed", message: "A task has been completed", time: "1h ago", read: false },
-    { id: 3, title: "Project milestone", message: "Project progress update available", time: "3h ago", read: true },
-  ];
+  // Fetch real notifications from API
+  const { data: notifications = [] } = useQuery<any[]>({
+    queryKey: ["/api/notifications", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/notifications?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId,
+    refetchInterval: 60000 // Refetch every minute
+  });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n: any) => !n.read).length;
 
   const handleSignOut = async () => {
     try {
@@ -146,27 +166,44 @@ export default function Header() {
                 <h3 className="font-semibold">Notifications</h3>
                 <p className="text-xs text-gray-500">{unreadCount} unread</p>
               </div>
-              {notifications.map((notification) => (
-                <DropdownMenuItem 
-                  key={notification.id} 
-                  className="cursor-pointer p-4 flex flex-col items-start gap-1"
-                  onClick={() => handleNotificationClick(notification.id)}
-                  data-testid={`notification-${notification.id}`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-medium text-sm">{notification.title}</span>
-                    {!notification.read && (
-                      <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">{notification.message}</p>
-                  <span className="text-xs text-gray-500">{notification.time}</span>
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer justify-center text-sm text-primary">
-                View all notifications
-              </DropdownMenuItem>
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Bell className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                  <p className="text-sm text-gray-500 dark:text-gray-400">No notifications yet</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    You'll receive notifications about SDG-matched partners and project updates
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {notifications.map((notification: any) => {
+                    const timeAgo = notification.createdAt ? 
+                      getRelativeTime(new Date(notification.createdAt)) : '';
+                    
+                    return (
+                      <DropdownMenuItem 
+                        key={notification.id} 
+                        className="cursor-pointer p-4 flex flex-col items-start gap-1"
+                        onClick={() => handleNotificationClick(notification.id)}
+                        data-testid={`notification-${notification.id}`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-medium text-sm">{notification.title}</span>
+                          {!notification.read && (
+                            <Badge variant="default" className="h-2 w-2 p-0 rounded-full" />
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{notification.message}</p>
+                        <span className="text-xs text-gray-500">{timeAgo}</span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="cursor-pointer justify-center text-sm text-primary">
+                    View all notifications
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
           

@@ -88,6 +88,20 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType
   });
 
+  // Fetch organization profile for organization users to get their selected SDGs
+  const { data: orgProfile } = useQuery({
+    queryKey: ["/api/profile/organization", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const url = `/api/profile/organization?userId=${id}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId && currentUser?.userType === 'organization'
+  });
+
   // Filter data based on selected project
   const filteredData = useMemo(() => {
     const projectId = selectedProject === "all" ? null : parseInt(selectedProject);
@@ -463,6 +477,7 @@ export default function Dashboard() {
         />
         <SDGChart 
           projects={filteredData.projects}
+          organizationSdgs={currentUser?.userType === 'organization' ? orgProfile?.matchableOrganization?.primarySdgs : undefined}
         />
       </div>
 

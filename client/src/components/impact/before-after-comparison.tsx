@@ -47,6 +47,24 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
     setSliderPosition(parseInt(e.target.value));
   };
 
+  // Show empty state if no data
+  if (!data || data.length === 0) {
+    return (
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle>Before & After Impact</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">
+              No before & after data available yet. Once your projects record impact metrics with baseline and current values, they'll appear here.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-3">

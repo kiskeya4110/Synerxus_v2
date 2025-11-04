@@ -83,7 +83,7 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Update your profile with skills and interests to see matched opportunities
             </p>
-            <Link href="/volunteer-profile-settings">
+            <Link href="/settings">
               <Button className="mt-4" variant="outline">
                 Update Profile
               </Button>

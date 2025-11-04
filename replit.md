@@ -27,7 +27,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Landing Page**: Rebranded, publicly accessible, showcasing features and calls to action, including an interactive SDG wheel.
-- **Dashboard**: Fully database-integrated, role-based views (Volunteer/Organization) with real-time KPIs, interactive KPI cards, Impact Over Time chart, SDG Contributions chart, Quick Actions, Recent Activity, and Upcoming Events.
+- **Dashboard**: Fully database-integrated, role-based views (Volunteer/Organization) with real-time KPIs, interactive KPI cards, Impact Over Time chart, SDG Contributions chart, Quick Actions, Recent Activity, and Upcoming Events. Volunteers have a "Find Opportunities" tab showing AI-matched opportunities with percentage scores (skills 35%, location 25%, SDG 20%, interests 20%). Impact Score (0-100) calculated from volunteer hours (40%), completed tasks (30%), SDG coverage (20%), and match acceptance (10%). KPIs now accurately reflect multi-tenant filtered data.
 - **SDG Mapping**: Visual representation and tracking of project alignment with UN SDGs, with multi-tenant security.
 - **Mobile Data Collection**: Tabbed interface for activity logging and impact data recording with form validation.
 - **Calendar**: Full-featured calendar with event management, clickable day slots for event creation, and project/user assignment capabilities.

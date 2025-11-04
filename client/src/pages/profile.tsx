@@ -27,7 +27,9 @@ const SDG_LABELS = {
 
 export default function Profile() {
   const userId = localStorage.getItem('currentUserId');
-  const { data: currentUser, isLoading } = useQuery({
+  
+  // First, fetch basic user info to determine userType
+  const { data: currentUser, isLoading: isLoadingUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
@@ -36,26 +38,38 @@ export default function Profile() {
       return response.json();
     }
   });
-
-  const { data: volunteerProfile } = useQuery({
-    queryKey: ["/api/volunteers", currentUser?.email],
-    enabled: !!currentUser?.email && currentUser?.userType === 'volunteer',
+  
+  // Fetch volunteer profile data (combines user and volunteer matching data)
+  const { data: volunteerData, isLoading: isLoadingVolunteer } = useQuery({
+    queryKey: ["/api/profile/volunteer", userId],
+    enabled: !!userId && currentUser?.userType === 'volunteer',
     queryFn: async () => {
-      const response = await fetch(`/api/volunteers?email=${currentUser?.email}`);
-      const volunteers = await response.json();
-      return volunteers[0];
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const url = `/api/profile/volunteer?userId=${id}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      return response.json();
     }
   });
 
-  const { data: orgProfile } = useQuery({
-    queryKey: ["/api/matchable-organizations", currentUser?.email],
-    enabled: !!currentUser?.email && currentUser?.userType === 'organization',
+  // Fetch organization profile data (combines user, organization, and matchable org data)
+  const { data: orgData, isLoading: isLoadingOrg } = useQuery({
+    queryKey: ["/api/profile/organization", userId],
+    enabled: !!userId && currentUser?.userType === 'organization',
     queryFn: async () => {
-      const response = await fetch(`/api/matchable-organizations?email=${currentUser?.email}`);
-      const orgs = await response.json();
-      return orgs[0];
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const url = `/api/profile/organization?userId=${id}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      return response.json();
     }
   });
+
+  const isLoading = isLoadingUser || isLoadingVolunteer || isLoadingOrg;
+  const volunteerProfile = volunteerData?.volunteerProfile;
+  const orgProfile = orgData?.matchableOrganization;
 
   if (isLoading) {
     return (

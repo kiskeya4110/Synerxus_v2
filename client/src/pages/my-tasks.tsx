@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Task, Project, ProjectAssignment, User } from "@shared/schema";
 
 interface TaskWithProject extends Task {
@@ -14,11 +16,18 @@ interface TaskWithProject extends Task {
 
 export default function MyTasks() {
   const [activeTab, setActiveTab] = useState("tasks");
+  const { toast } = useToast();
 
   // Fetch current user to get their ID
-  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/me"]
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.json();
+    }
   });
 
   const volunteerId = currentUser?.id;
@@ -51,6 +60,38 @@ export default function MyTasks() {
 
   const getProject = (projectId: number) => {
     return allProjects.find(p => p.id === projectId);
+  };
+
+  // Mutation to update task status
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ taskId, status }: { taskId: number; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/tasks/${taskId}`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
+      toast({
+        title: "Task updated",
+        description: "Task status has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleStartTask = (taskId: number) => {
+    updateTaskMutation.mutate({ taskId, status: "in progress" });
+  };
+
+  const handleCompleteTask = (taskId: number) => {
+    updateTaskMutation.mutate({ taskId, status: "completed" });
   };
 
   const getTaskStatusColor = (status: string) => {
@@ -192,8 +233,14 @@ export default function MyTasks() {
                             </p>
                           )}
                         </div>
-                        <Button size="sm" variant="outline" data-testid={`button-start-task-${task.id}`}>
-                          Start Task
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleStartTask(task.id)}
+                          disabled={updateTaskMutation.isPending}
+                          data-testid={`button-start-task-${task.id}`}
+                        >
+                          {updateTaskMutation.isPending ? "Updating..." : "Start Task"}
                         </Button>
                       </div>
                     </CardContent>
@@ -233,8 +280,13 @@ export default function MyTasks() {
                             </p>
                           )}
                         </div>
-                        <Button size="sm" data-testid={`button-complete-task-${task.id}`}>
-                          Mark Complete
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleCompleteTask(task.id)}
+                          disabled={updateTaskMutation.isPending}
+                          data-testid={`button-complete-task-${task.id}`}
+                        >
+                          {updateTaskMutation.isPending ? "Updating..." : "Mark Complete"}
                         </Button>
                       </div>
                     </CardContent>

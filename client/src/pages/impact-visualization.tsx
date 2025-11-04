@@ -42,10 +42,64 @@ export default function ImpactVisualization() {
   const [activeTab, setActiveTab] = useState("before-after");
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
 
+  // Get current user to filter their projects
+  const userId = localStorage.getItem('currentUserId');
+  const { data: currentUser } = useQuery<any>({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const response = await fetch(url);
+      return response.json();
+    }
+  });
+
   // Fetch real data from API
-  const { data: projects = [] } = useQuery<any[]>({ queryKey: ["/api/projects"] });
+  const { data: allProjects = [] } = useQuery<any[]>({ queryKey: ["/api/projects"] });
+  const { data: projectAssignments = [] } = useQuery<any[]>({ 
+    queryKey: ["/api/project-assignments", { volunteerId: currentUser?.id }],
+    queryFn: async () => {
+      if (!currentUser?.id) return [];
+      const response = await fetch(`/api/project-assignments?volunteerId=${currentUser.id}`);
+      return response.json();
+    },
+    enabled: !!currentUser?.id && currentUser?.userType === 'volunteer'
+  });
+  
+  // Filter projects to show only user's assigned projects if volunteer, org's projects if organization
+  const projects = useMemo(() => {
+    if (!currentUser) return [];
+    
+    if (currentUser.userType === 'volunteer') {
+      // Show only projects the volunteer is assigned to
+      if (projectAssignments.length === 0) return [];
+      return allProjects.filter(p => projectAssignments.some((a: any) => a.projectId === p.id));
+    } else if (currentUser.userType === 'organization') {
+      // Show projects belonging to the organization
+      // Organizations may have organizationId in their user record, or we filter by their created projects
+      return allProjects.filter((p: any) => 
+        p.organizationId === currentUser.organizationId || 
+        p.organizationId === currentUser.id
+      );
+    }
+    
+    return allProjects;
+  }, [currentUser, allProjects, projectAssignments]);
+    
   const { data: projectImpacts = [] } = useQuery<any[]>({ queryKey: ["/api/project-impacts"] });
-  const { data: volunteerActivities = [] } = useQuery<any[]>({ queryKey: ["/api/volunteer-activities"] });
+  const { data: volunteerActivities = [] } = useQuery<any[]>({ 
+    queryKey: ["/api/volunteer-activities"],
+    queryFn: async () => {
+      const response = await fetch("/api/volunteer-activities");
+      const activities = await response.json();
+      // Filter by user if volunteer
+      if (currentUser?.userType === 'volunteer') {
+        return activities.filter((a: any) => a.volunteerId === currentUser.id);
+      }
+      return activities;
+    },
+    enabled: !!currentUser
+  });
   const { data: impactMetrics = [] } = useQuery<any[]>({ queryKey: ["/api/impact-metrics"] });
 
   // Calculate aggregated metrics from real data
@@ -113,18 +167,26 @@ export default function ImpactVisualization() {
       return [];
     }
 
-    return projects.slice(0, 3).map((project: any) => {
+    return projects.slice(0, 5).map((project: any) => {
       const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
       
       // Calculate metrics before and after
       const beforeMetrics: any[] = [];
       const afterMetrics: any[] = [];
       
+      // Collect all evidence URLs for images
+      const allEvidenceUrls: string[] = [];
+      impacts.forEach((impact: any) => {
+        if (impact.evidenceUrls && Array.isArray(impact.evidenceUrls)) {
+          allEvidenceUrls.push(...impact.evidenceUrls);
+        }
+      });
+      
       impacts.forEach((impact: any) => {
         const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
         if (metric) {
-          // Assume baseline is 0 or half of current value for "before"
-          const beforeValue = Math.floor((impact.value || 0) * 0.3);
+          // Use baseline value if available, otherwise calculate as 30% for demonstration
+          const beforeValue = impact.baselineValue || Math.floor((impact.value || 0) * 0.3);
           const afterValue = impact.value || 0;
           
           beforeMetrics.push({
@@ -141,14 +203,18 @@ export default function ImpactVisualization() {
         }
       });
 
+      // Use evidence URLs if available, otherwise fall back to coverImage or placeholder
+      const beforeImage = allEvidenceUrls[0] || project.coverImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800";
+      const afterImage = allEvidenceUrls[1] || allEvidenceUrls[0] || project.coverImage || "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800";
+
       return {
         id: String(project.id),
         title: project.name || "Project",
         description: project.description || "No description available",
         location: project.location || "Location not specified",
         date: project.startDate ? new Date(project.startDate).toLocaleDateString() : "Date not specified",
-        beforeImage: project.coverImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800",
-        afterImage: project.coverImage || "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800",
+        beforeImage,
+        afterImage,
         beforeMetrics,
         afterMetrics
       };

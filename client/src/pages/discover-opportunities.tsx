@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,27 @@ export default function DiscoverOpportunities() {
   const { data: opportunities = [], isLoading } = useQuery<Array<Opportunity & { matchScore?: number; matchReasons?: string[] }>>({
     queryKey: ["/api/opportunities/discover"],
   });
+
+  // Extract unique categories and locations from actual opportunities data
+  const availableCategories = useMemo(() => {
+    const categories = new Set<string>();
+    opportunities.forEach(opp => {
+      if (opp.category) {
+        categories.add(opp.category);
+      }
+    });
+    return Array.from(categories).sort();
+  }, [opportunities]);
+
+  const availableLocations = useMemo(() => {
+    const locations = new Set<string>();
+    opportunities.forEach(opp => {
+      if (opp.location) {
+        locations.add(opp.location);
+      }
+    });
+    return Array.from(locations).sort();
+  }, [opportunities]);
 
   // Filter opportunities based on search and filters
   const filteredOpportunities = opportunities.filter((opp) => {
@@ -90,10 +111,15 @@ export default function DiscoverOpportunities() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="healthcare">Healthcare</SelectItem>
-            <SelectItem value="education">Education</SelectItem>
-            <SelectItem value="environment">Environment</SelectItem>
-            <SelectItem value="community">Community</SelectItem>
+            {availableCategories.length > 0 ? (
+              availableCategories.map(category => (
+                <SelectItem key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="none" disabled>No categories available</SelectItem>
+            )}
           </SelectContent>
         </Select>
         <Select value={locationFilter} onValueChange={setLocationFilter}>
@@ -102,10 +128,18 @@ export default function DiscoverOpportunities() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Locations</SelectItem>
-            <SelectItem value="remote">Remote Only</SelectItem>
-            <SelectItem value="Kenya">Kenya</SelectItem>
-            <SelectItem value="Uganda">Uganda</SelectItem>
-            <SelectItem value="Tanzania">Tanzania</SelectItem>
+            {opportunities.some(opp => opp.isRemote) && (
+              <SelectItem value="remote">Remote Only</SelectItem>
+            )}
+            {availableLocations.length > 0 ? (
+              availableLocations.map(location => (
+                <SelectItem key={location} value={location}>
+                  {location}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem value="none" disabled>No locations available</SelectItem>
+            )}
           </SelectContent>
         </Select>
       </div>

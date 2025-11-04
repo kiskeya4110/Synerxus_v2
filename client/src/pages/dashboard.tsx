@@ -61,8 +61,15 @@ export default function Dashboard() {
   });
 
   const { data: projects = [], isLoading: loadingProjects } = useQuery<any[]>({
-    queryKey: ["/api/projects"],
-    enabled: !!currentUser && !!currentUser.userType
+    queryKey: ["/api/projects", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/projects?userId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch projects");
+      return response.json();
+    },
+    enabled: !!currentUser && !!currentUser.userType && !!userId
   });
 
   const { data: tasks = [], isLoading: loadingTasks } = useQuery<any[]>({

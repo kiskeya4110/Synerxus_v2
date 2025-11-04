@@ -20,10 +20,15 @@ Preferred communication style: Simple, everyday language.
 ### Technical Implementations
 - **Frontend**: React 18 with TypeScript, Vite, Wouter for routing, TanStack Query for server state, Tailwind CSS, Chart.js, React Hook Form with Zod, date-fns.
 - **Backend**: Node.js with TypeScript, Express.js for REST API, WebSocket for real-time updates, Drizzle ORM with Neon serverless PostgreSQL, esbuild.
-- **Database Schema**: Relational design covering Users, Organizations, Projects, Tasks, Volunteer Activities, Impact Metrics, Project Impacts, Opportunities, Applications, and Matchmaking data. Includes AI tracking fields for projects.
-- **AI Matching Algorithm**: Python-based system with Node.js integration for weighted scoring of volunteer-organization matches (skills 35%, location 25%, interests 20%, SDG alignment 20%). Configurable match threshold.
+- **Database Schema**: Relational design covering Users, Organizations, Projects, Tasks, Volunteer Activities, Impact Metrics, Project Impacts, Opportunities, Applications, Messages, and Matchmaking data. Includes AI tracking fields for projects.
+- **AI Matching Algorithm**: TypeScript implementation (`server/matching-algorithm.ts`) with weighted scoring of volunteer-opportunity matches (skills 35%, location 25%, interests 20%, SDG alignment 20%). Default 40% match threshold filters opportunities shown to volunteers. Reuses same algorithm for volunteer-organization matching.
+- **Multi-Tenant Security Architecture**: 
+  - **Server-Side Service Layer** (`server/dashboard-service.ts`): `getProjectsForVolunteer()` filters opportunities by AI match threshold (40% default), `getDashboardDataForOrganization()` strictly scopes all data by organizationId, `getDashboardDataForVolunteer()` includes only assigned projects and AI-matched opportunities
+  - **API Endpoints**: All endpoints (`/api/projects`, `/api/opportunities`, `/api/dashboard/summary`) require userId or organizationId query parameters for authentication context, enforce server-side filtering at database level before returning data
+  - **Data Isolation**: Organizations only see their own projects, opportunities, volunteers, and metrics with zero cross-organization data leakage. Volunteers only see projects they're assigned to and AI-matched opportunities above threshold
+  - **Authorization**: Backend validates user type and applies role-based filtering - organizations filtered by organizationId, volunteers filtered by projectAssignments and AI matching
 - **Profile Management**: Email-based profile linking with `useEffect` for form initialization. Cache invalidation strategy ensures profile data synchronization across Settings, Profile, and Dashboard views using user-scoped query keys.
-- **Multi-Tenant Security**: Project edit permissions enforced at UI level - organizations can only edit their own projects. Volunteers have read-only access to organization projects.
+- **Organization-Volunteer Communication**: Full messaging system with Messages table, 4 REST endpoints (create, list, conversation, mark-as-read), ContactVolunteerModal using shadcn Form + zodResolver validation, project assignment capabilities. Organizations can only contact volunteers assigned to their projects.
 
 ### Feature Specifications
 - **Landing Page**: Rebranded, publicly accessible, showcasing features and calls to action, including an interactive SDG wheel.

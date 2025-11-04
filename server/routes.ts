@@ -20,7 +20,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
 import { calculateMatchScore, findTopMatches } from "./matching-algorithm";
-import { getDashboardDataForOrganization, getDashboardDataForVolunteer } from "./dashboard-service";
+import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer } from "./dashboard-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
@@ -797,7 +797,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const matchedOpportunities = await getProjectsForVolunteer(userIdNum, threshold);
       
       // Format the response with percentage and detailed breakdown
-      const formattedMatches = matchedOpportunities.map(opp => ({
+      const formattedMatches = matchedOpportunities.map((opp: any) => ({
         ...opp,
         matchPercentage: opp.matchScore, // Already 0-100
         matchReasons: opp.matchReasons

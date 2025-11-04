@@ -128,50 +128,59 @@ export default function Landing() {
 
       {/* Benefits Section */}
       <section className="container mx-auto px-4 sm:px-6 py-10 sm:py-12 border-y bg-muted/30">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8" data-testid="text-benefits-title">Why Organizations Choose Synerxus</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-start gap-3 p-2" data-testid={`benefit-item-${index}`}>
-                <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                <p className="text-sm sm:text-base text-muted-foreground">{benefit}</p>
-              </div>
+              <button
+                key={index}
+                className="group relative overflow-hidden rounded-xl p-5 text-left transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-100 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 hover:from-primary/20 hover:via-purple-500/20 hover:to-pink-500/20 border-2 border-transparent hover:border-primary/30"
+                data-testid={`benefit-item-${index}`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <CheckCircle2 className="h-5 w-5 text-white" />
+                  </div>
+                  <p className="text-sm sm:text-base font-medium text-foreground flex-1 pt-1.5">{benefit}</p>
+                </div>
+              </button>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+      {/* Features Section - Reduced by 1/3 */}
+      <section className="container mx-auto px-4 sm:px-6 py-8 sm:py-10 md:py-16">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8 sm:mb-12">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4" data-testid="text-features-title">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 sm:mb-3" data-testid="text-features-title">
               Complete Impact Tracking Platform
             </h2>
-            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4" data-testid="text-features-description">
+            <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto px-4" data-testid="text-features-description">
               Everything you need to measure, visualize, and share your volunteer program's impact
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {features.map((feature, index) => (
               <Link key={index} href={feature.path} className="block">
                 <Card 
                   className="h-full hover:shadow-lg active:scale-98 transition-all duration-300 cursor-pointer group border-2 hover:border-primary/50"
                   data-testid={`card-feature-${index}`}
                 >
-                  <CardHeader className="pb-3 sm:pb-6">
-                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-lg ${feature.bgColor} ${feature.color} flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform`}>
+                  <CardHeader className="pb-2 sm:pb-4">
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg ${feature.bgColor} ${feature.color} flex items-center justify-center mb-2 sm:mb-3 group-hover:scale-110 transition-transform`}>
                       {feature.icon}
                     </div>
-                    <CardTitle className="text-lg sm:text-xl" data-testid={`text-feature-title-${index}`}>{feature.title}</CardTitle>
-                    <CardDescription className="text-sm sm:text-base" data-testid={`text-feature-description-${index}`}>
+                    <CardTitle className="text-base sm:text-lg" data-testid={`text-feature-title-${index}`}>{feature.title}</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm" data-testid={`text-feature-description-${index}`}>
                       {feature.description}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="flex items-center gap-2 text-primary font-medium group-hover:gap-3 transition-all text-sm sm:text-base">
-                      Explore <ArrowRight className="h-4 w-4" />
+                    <div className="flex items-center gap-2 text-primary font-medium group-hover:gap-3 transition-all text-xs sm:text-sm">
+                      Explore <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4" />
                     </div>
                   </CardContent>
                 </Card>

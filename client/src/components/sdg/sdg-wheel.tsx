@@ -148,27 +148,35 @@ export function SDGWheel() {
 
   const renderSDGGrid = () => {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 xl:grid-cols-12 gap-2 sm:gap-3 max-w-5xl mx-auto">
         {SDG_DATA.map((sdg) => (
           <button
             key={sdg.id}
             onClick={() => setSelectedSDG(sdg)}
-            className="group relative aspect-square rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            style={{ backgroundColor: sdg.color }}
+            className="group relative rounded-md overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            style={{ 
+              backgroundColor: sdg.color,
+              aspectRatio: '1/1'
+            }}
             data-testid={`sdg-button-${sdg.id}`}
           >
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-            <div className="relative h-full flex flex-col items-center justify-center p-3 sm:p-4 text-white">
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">{sdg.id}</div>
-              <div className="text-xs sm:text-sm font-semibold text-center leading-tight line-clamp-3">
-                {sdg.title}
+            <div className="relative h-full flex flex-col items-start justify-start p-1.5 sm:p-2 text-white">
+              <div className="text-xs sm:text-sm font-bold mb-0.5">{sdg.id}</div>
+              <div className="text-[0.5rem] sm:text-[0.6rem] font-semibold leading-tight line-clamp-3 text-left uppercase tracking-tight">
+                {sdg.title.replace('and', '&')}
               </div>
             </div>
             
+            {/* Icon placeholder - would be replaced with actual SDG icons */}
+            <div className="absolute bottom-1 right-1 w-6 h-6 sm:w-8 sm:h-8 opacity-20 group-hover:opacity-30 transition-opacity">
+              <div className="w-full h-full rounded-full border-2 border-white/50" />
+            </div>
+            
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-2">
-              <div className="text-white text-xs sm:text-sm text-center">
-                Click to learn more
+            <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-1">
+              <div className="text-white text-[0.6rem] sm:text-xs text-center leading-tight">
+                Learn more
               </div>
             </div>
           </button>

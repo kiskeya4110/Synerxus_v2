@@ -1173,21 +1173,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI-matched volunteers endpoint - returns volunteers matched to organization's needs
   app.get("/api/volunteers/matches", async (req, res) => {
     try {
-      const organizationId = req.query.organizationId as string | undefined;
+      const userId = req.query.userId as string | undefined;
       const thresholdParam = req.query.threshold as string | undefined;
       
-      if (!organizationId) {
-        return res.status(400).json({ message: "organizationId query parameter is required" });
+      if (!userId) {
+        return res.status(400).json({ message: "userId query parameter is required" });
       }
       
-      const orgId = parseInt(organizationId);
+      const userIdNum = parseInt(userId);
       const threshold = thresholdParam ? parseInt(thresholdParam) : 40; // Default 40% threshold
       
-      // Get organization and their profile
-      const organization = await storage.getUser(orgId);
-      if (!organization || organization.userType !== 'organization') {
-        return res.status(404).json({ message: "Organization not found" });
+      // Get authenticated user and verify they are an organization
+      const user = await storage.getUser(userIdNum);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
+      
+      if (user.userType !== 'organization') {
+        return res.status(403).json({ message: "Only organizations can access matched volunteers" });
+      }
+      
+      // Use the authenticated user's ID as the organization ID
+      const orgId = userIdNum;
       
       // Get organization's open opportunities to match against
       const orgOpportunities = await storage.listOpportunitiesByOrganization(orgId);

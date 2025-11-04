@@ -34,7 +34,7 @@ export default function Volunteers() {
     queryKey: isOrganization ? ["/api/volunteers/matches", userId] : ["/api/users"],
     queryFn: async () => {
       if (isOrganization && userId) {
-        const response = await fetch(`/api/volunteers/matches?organizationId=${userId}`);
+        const response = await fetch(`/api/volunteers/matches?userId=${userId}`);
         if (!response.ok) return [];
         return response.json();
       } else {

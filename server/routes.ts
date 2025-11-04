@@ -2140,7 +2140,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           email: user.email || '',
           name: volunteerName,
           profilePhotoUrl: user.avatar || null,
-          skills: profile.interests || [],
+          skills: profile.skills || [],
           interests: profile.interests || [],
           location: profile.location || profile.city || '',
           sdgGoals: profile.preferredSdgs || []

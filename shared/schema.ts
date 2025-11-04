@@ -200,6 +200,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   city: text("city"),
   country: text("country"),
   languages: text("languages").array(),
+  skills: text("skills").array(),
   interests: text("interests").array(),
   experience: jsonb("experience"), // Array of experience objects
   education: jsonb("education"), // Array of education objects

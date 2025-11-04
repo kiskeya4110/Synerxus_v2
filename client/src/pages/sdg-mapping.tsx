@@ -1,137 +1,151 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useTheme } from "@/components/layout/theme-provider";
+import { Loader2 } from "lucide-react";
 import SDGIcons from "@/assets/sdg-icons";
+import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 
-// SDG data with titles, descriptions and colors
-const sdgData = [
-  {
-    id: 1,
-    title: "No Poverty",
-    description: "End poverty in all its forms everywhere",
-    color: "#E5243B",
-    metrics: [
-      { name: "People lifted from poverty", value: 120, unit: "people", target: 500 },
-      { name: "Micro-businesses supported", value: 45, unit: "businesses", target: 100 },
-      { name: "Financial literacy trainings", value: 24, unit: "sessions", target: 30 }
-    ]
-  },
-  {
-    id: 2,
-    title: "Zero Hunger",
-    description: "End hunger, achieve food security and improved nutrition and promote sustainable agriculture",
-    color: "#DDA63A",
-    metrics: [
-      { name: "Meals provided", value: 3450, unit: "meals", target: 5000 },
-      { name: "Community gardens established", value: 8, unit: "gardens", target: 15 },
-      { name: "Farmers trained", value: 32, unit: "farmers", target: 50 }
-    ]
-  },
-  {
-    id: 3,
-    title: "Good Health and Well-being",
-    description: "Ensure healthy lives and promote well-being for all at all ages",
-    color: "#4C9F38",
-    metrics: [
-      { name: "Medical consultations", value: 215, unit: "consultations", target: 300 },
-      { name: "Health workshops", value: 18, unit: "workshops", target: 25 },
-      { name: "Vaccinations administered", value: 180, unit: "vaccinations", target: 250 }
-    ]
-  },
-  {
-    id: 4,
-    title: "Quality Education",
-    description: "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all",
-    color: "#C5192D",
-    metrics: [
-      { name: "Students tutored", value: 86, unit: "students", target: 120 },
-      { name: "Educational resources distributed", value: 450, unit: "resources", target: 500 },
-      { name: "Teacher training sessions", value: 12, unit: "sessions", target: 20 }
-    ]
-  },
-  {
-    id: 5,
-    title: "Gender Equality",
-    description: "Achieve gender equality and empower all women and girls",
-    color: "#FF3A21",
-    metrics: [
-      { name: "Women in leadership programs", value: 64, unit: "participants", target: 100 },
-      { name: "Gender equality workshops", value: 15, unit: "workshops", target: 30 },
-      { name: "Girls in STEM initiatives", value: 45, unit: "participants", target: 75 }
-    ]
-  },
-  {
-    id: 6,
-    title: "Clean Water and Sanitation",
-    description: "Ensure availability and sustainable management of water and sanitation for all",
-    color: "#26BDE2",
-    metrics: [
-      { name: "Water filters installed", value: 120, unit: "filters", target: 150 },
-      { name: "People with clean water access", value: 3200, unit: "people", target: 5000 },
-      { name: "Sanitation facilities built", value: 18, unit: "facilities", target: 25 }
-    ]
-  },
-  {
-    id: 7,
-    title: "Affordable and Clean Energy",
-    description: "Ensure access to affordable, reliable, sustainable and modern energy for all",
-    color: "#FCC30B",
-    metrics: [
-      { name: "Solar panels installed", value: 35, unit: "panels", target: 50 },
-      { name: "Households with improved energy", value: 120, unit: "households", target: 200 },
-      { name: "Energy efficiency trainings", value: 8, unit: "trainings", target: 15 }
-    ]
-  }
-];
-
-// Connected projects data
-const connectedProjects = [
-  {
-    id: 1,
-    name: "Clean Water Initiative",
-    sdgs: [6, 3],
-    activities: [
-      { name: "Water testing program", impact: "High", sdg: 6 },
-      { name: "Community hygiene workshops", impact: "Medium", sdg: 3 }
-    ]
-  },
-  {
-    id: 2,
-    name: "Education Access Program",
-    sdgs: [4, 5, 1],
-    activities: [
-      { name: "Rural school support", impact: "High", sdg: 4 },
-      { name: "Girls' education initiative", impact: "High", sdg: 5 },
-      { name: "Scholarship program", impact: "Medium", sdg: 1 }
-    ]
-  },
-  {
-    id: 3,
-    name: "Medical Outreach",
-    sdgs: [3, 2],
-    activities: [
-      { name: "Mobile clinic program", impact: "High", sdg: 3 },
-      { name: "Nutrition education", impact: "Medium", sdg: 2 }
-    ]
-  }
-];
+// SDG metadata (titles, descriptions)
+const SDG_METADATA: Record<number, { title: string; description: string }> = {
+  1: { title: "No Poverty", description: "End poverty in all its forms everywhere" },
+  2: { title: "Zero Hunger", description: "End hunger, achieve food security and improved nutrition" },
+  3: { title: "Good Health and Well-being", description: "Ensure healthy lives and promote well-being for all" },
+  4: { title: "Quality Education", description: "Ensure inclusive and equitable quality education" },
+  5: { title: "Gender Equality", description: "Achieve gender equality and empower all women and girls" },
+  6: { title: "Clean Water and Sanitation", description: "Ensure availability and sustainable management of water" },
+  7: { title: "Affordable and Clean Energy", description: "Ensure access to affordable, reliable, sustainable energy" },
+  8: { title: "Decent Work and Economic Growth", description: "Promote sustained, inclusive economic growth and employment" },
+  9: { title: "Industry, Innovation and Infrastructure", description: "Build resilient infrastructure and promote innovation" },
+  10: { title: "Reduced Inequalities", description: "Reduce inequality within and among countries" },
+  11: { title: "Sustainable Cities and Communities", description: "Make cities and human settlements inclusive and sustainable" },
+  12: { title: "Responsible Consumption and Production", description: "Ensure sustainable consumption and production patterns" },
+  13: { title: "Climate Action", description: "Take urgent action to combat climate change" },
+  14: { title: "Life Below Water", description: "Conserve and sustainably use the oceans, seas and marine resources" },
+  15: { title: "Life on Land", description: "Protect, restore and promote sustainable use of terrestrial ecosystems" },
+  16: { title: "Peace, Justice and Strong Institutions", description: "Promote peaceful and inclusive societies for sustainable development" },
+  17: { title: "Partnerships for the Goals", description: "Strengthen the means of implementation and revitalize global partnerships" },
+};
 
 export default function SDGMapping() {
   const { theme } = useTheme();
-  const [selectedSDG, setSelectedSDG] = useState(6); // Default to Clean Water (SDG 6)
+  const [selectedSDG, setSelectedSDG] = useState(1);
+  
+  // Fetch current user to get organization ID
+  const { data: currentUser, isLoading: loadingUser } = useQuery({
+    queryKey: ["/api/users/me"],
+  });
+  
+  // Fetch projects (filtered by organization on backend)
+  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+    queryKey: ["/api/projects"],
+  });
+  
+  // Fetch impact metrics
+  const { data: impactMetrics = [], isLoading: loadingMetrics } = useQuery({
+    queryKey: ["/api/impact-metrics"],
+  });
+  
+  // Fetch project impacts
+  const { data: projectImpacts = [], isLoading: loadingImpacts } = useQuery({
+    queryKey: ["/api/project-impacts"],
+  });
+  
+  // Filter projects by current user's organization
+  const organizationProjects = useMemo(() => {
+    // Return empty array until user data is loaded to prevent data leakage
+    if (!currentUser) return [];
+    const userOrg = (currentUser as any)?.organizationId;
+    if (!userOrg) return [];
+    return (projects as any[]).filter((p: any) => p.organizationId === userOrg);
+  }, [projects, currentUser]);
+  
+  // Calculate SDG data from real projects
+  const sdgData = useMemo(() => {
+    const sdgMap = new Map<number, {
+      id: number;
+      title: string;
+      description: string;
+      color: string;
+      projectCount: number;
+      impactMetrics: any[];
+    }>();
+    
+    // Initialize all 17 SDGs
+    for (let i = 1; i <= 17; i++) {
+      const metadata = SDG_METADATA[i] || { title: `SDG ${i}`, description: "" };
+      sdgMap.set(i, {
+        id: i,
+        title: metadata.title,
+        description: metadata.description,
+        color: getSDGColor(i),
+        projectCount: 0,
+        impactMetrics: []
+      });
+    }
+    
+    // Create a Set of organization project IDs for filtering
+    const orgProjectIds = new Set(organizationProjects.map((p: any) => p.id));
+    
+    // Count projects per SDG
+    organizationProjects.forEach((project: any) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach((sdg: number) => {
+          const existing = sdgMap.get(sdg);
+          if (existing) {
+            existing.projectCount++;
+          }
+        });
+      }
+    });
+    
+    // Filter project impacts to only include impacts from organization's projects
+    const orgProjectImpacts = (projectImpacts as any[]).filter((pi: any) => 
+      orgProjectIds.has(pi.projectId)
+    );
+    
+    // Add impact metrics for each SDG (only from organization's projects)
+    (impactMetrics as any[]).forEach((metric: any) => {
+      if (metric.sdgGoal) {
+        const existing = sdgMap.get(metric.sdgGoal);
+        if (existing) {
+          // Find all impacts for this metric from organization's projects only
+          const metricsImpacts = orgProjectImpacts.filter((pi: any) => pi.metricId === metric.id);
+          const totalValue = metricsImpacts.reduce((sum: number, pi: any) => sum + (pi.value || 0), 0);
+          
+          // Only add metric if there's actual data
+          if (totalValue > 0) {
+            existing.impactMetrics.push({
+              name: metric.name,
+              value: totalValue,
+              unit: metric.unit || "units",
+              metricId: metric.id
+            });
+          }
+        }
+      }
+    });
+    
+    return Array.from(sdgMap.values());
+  }, [organizationProjects, impactMetrics, projectImpacts]);
   
   const selectedData = sdgData.find(sdg => sdg.id === selectedSDG) || sdgData[0];
-  const relatedProjects = connectedProjects.filter(project => project.sdgs.includes(selectedSDG));
+  const relatedProjects = organizationProjects.filter((project: any) => 
+    project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(selectedSDG)
+  );
   
-  const getMetricColor = (value: number, target: number) => {
-    const percentage = (value / target) * 100;
-    if (percentage < 33) return "text-red-500 dark:text-red-400";
-    if (percentage < 66) return "text-yellow-500 dark:text-yellow-400";
-    return "text-green-500 dark:text-green-400";
-  };
+  const isLoading = loadingUser || loadingProjects || loadingMetrics || loadingImpacts;
+  
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   
   return (
     <>
@@ -209,56 +223,58 @@ export default function SDGMapping() {
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Impact Metrics</h3>
-            <div className="space-y-4">
-              {selectedData.metrics.map((metric, index) => (
-                <div key={index}>
-                  <div className="flex justify-between mb-1 gap-2">
-                    <span className="text-xs sm:text-sm font-medium">{metric.name}</span>
-                    <span className={`text-xs sm:text-sm font-medium ${getMetricColor(metric.value, metric.target)} whitespace-nowrap`}>
-                      {metric.value} / {metric.target} {metric.unit}
+            {selectedData.impactMetrics.length > 0 ? (
+              <div className="space-y-3">
+                {selectedData.impactMetrics.map((metric, index) => (
+                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <span className="text-sm font-medium">{metric.name}</span>
+                    <span className="text-lg font-bold text-primary">
+                      {metric.value.toLocaleString()} <span className="text-sm text-gray-500">{metric.unit}</span>
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Progress 
-                      value={(metric.value / metric.target) * 100} 
-                      className="h-2 flex-grow"
-                    />
-                    <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[35px] text-right">
-                      {Math.round((metric.value / metric.target) * 100)}%
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400 text-sm">
+                No impact metrics recorded for this SDG yet.
+              </p>
+            )}
             
             <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">Connected Projects</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Connected Projects ({relatedProjects.length})
+              </h3>
               {relatedProjects.length > 0 ? (
-                <div className="space-y-4">
-                  {relatedProjects.map(project => (
-                    <div key={project.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                      <h4 className="font-medium">{project.name}</h4>
-                      <div className="mt-2 space-y-2">
-                        {project.activities
-                          .filter(activity => activity.sdg === selectedSDG)
-                          .map((activity, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-sm">
-                              <span>{activity.name}</span>
-                              <Badge variant={
-                                activity.impact === "High" ? "default" : 
-                                activity.impact === "Medium" ? "outline" : "secondary"
-                              }>
-                                {activity.impact} Impact
-                              </Badge>
-                            </div>
-                          ))
-                        }
+                <div className="space-y-3">
+                  {relatedProjects.map((project: any) => (
+                    <div 
+                      key={project.id} 
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary transition-colors"
+                      data-testid={`project-${project.id}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-medium text-base">{project.name}</h4>
+                          {project.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                              {project.description}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="ml-2 whitespace-nowrap">
+                          {project.status}
+                        </Badge>
                       </div>
+                      {project.location && (
+                        <p className="text-xs text-gray-500 mt-2">📍 {project.location}</p>
+                      )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 dark:text-gray-400">No projects are currently connected to this SDG.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  No projects are currently aligned with SDG {selectedSDG}.
+                </p>
               )}
             </div>
           </CardContent>
@@ -285,20 +301,19 @@ export default function SDGMapping() {
                     <label className="text-sm font-medium">Project</label>
                     <select className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
                       <option value="">Select a project</option>
-                      {connectedProjects.map(project => (
+                      {organizationProjects.map((project: any) => (
                         <option key={project.id} value={project.id}>{project.name}</option>
                       ))}
                     </select>
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Activity</label>
-                    <select className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
-                      <option value="">Select an activity</option>
-                      <option value="1">Water testing program</option>
-                      <option value="2">Community hygiene workshops</option>
-                      <option value="3">Mobile clinic program</option>
-                    </select>
+                    <label className="text-sm font-medium">Activity Type</label>
+                    <input 
+                      type="text"
+                      placeholder="e.g., Health Screening, Training Session"
+                      className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                    />
                   </div>
                   
                   <div className="space-y-2">

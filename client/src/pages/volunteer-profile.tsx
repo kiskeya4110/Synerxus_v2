@@ -207,14 +207,29 @@ export default function VolunteerProfile() {
       });
       return response.json();
     },
-    onSuccess: () => {
-      // Invalidate all relevant queries to sync data across Settings and Profile
+    onSuccess: async () => {
+      // Refetch all relevant queries to sync data across Settings, Profile, and Dashboard
       const id = localStorage.getItem('currentUserId');
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      
+      // Use refetchQueries to force immediate refetch instead of just invalidating
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/profile/volunteer", id] }),
+        queryClient.refetchQueries({ queryKey: ["/api/profile/volunteer"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/users/me"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/users/me", id] }),
+        queryClient.refetchQueries({ 
+          predicate: (query) => {
+            const key = query.queryKey[0];
+            if (typeof key === 'string') {
+              return key.startsWith("/api/volunteers") || key.startsWith("/api/matchable-organizations");
+            }
+            return false;
+          }
+        }),
+        queryClient.refetchQueries({ queryKey: ["/api/dashboard/summary"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/dashboard/summary", id] }),
+      ]);
+      
       setPhotoFile(null);
       toast({
         title: "Profile updated!",

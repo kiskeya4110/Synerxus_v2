@@ -214,9 +214,29 @@ export default function OrganizationProfile() {
       });
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/organization"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+    onSuccess: async () => {
+      // Refetch all relevant queries to sync data across Settings, Profile, and Dashboard
+      const id = localStorage.getItem('currentUserId');
+      
+      // Use refetchQueries to force immediate refetch instead of just invalidating
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/profile/organization", id] }),
+        queryClient.refetchQueries({ queryKey: ["/api/profile/organization"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/users/me"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/users/me", id] }),
+        queryClient.refetchQueries({ 
+          predicate: (query) => {
+            const key = query.queryKey[0];
+            if (typeof key === 'string') {
+              return key.startsWith("/api/volunteers") || key.startsWith("/api/matchable-organizations");
+            }
+            return false;
+          }
+        }),
+        queryClient.refetchQueries({ queryKey: ["/api/dashboard/summary"] }),
+        queryClient.refetchQueries({ queryKey: ["/api/dashboard/summary", id] }),
+      ]);
+      
       setPhotoFile(null);
       toast({
         title: "Profile updated!",

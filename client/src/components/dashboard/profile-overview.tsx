@@ -38,33 +38,18 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     enabled: !!userId
   });
 
-  const { data: volunteerProfile, isLoading: isLoadingProfile } = useQuery<any>({
-    queryKey: ["/api/volunteers", currentUser?.email],
-    queryFn: async () => {
-      if (!currentUser?.email) return null;
-      const response = await fetch(`/api/volunteers?email=${currentUser.email}`, {
-        credentials: "include"
-      });
-      if (!response.ok) return null;
-      const volunteers = await response.json();
-      return volunteers[0];
-    },
+  const { data: volunteers = [], isLoading: isLoadingProfile } = useQuery<any[]>({
+    queryKey: currentUser?.email ? [`/api/volunteers?email=${currentUser.email}`] : ["/api/volunteers"],
     enabled: !!currentUser?.email && userType === 'volunteer'
   });
 
-  const { data: orgProfile, isLoading: isLoadingOrgProfile } = useQuery<any>({
-    queryKey: ["/api/matchable-organizations", currentUser?.email],
-    queryFn: async () => {
-      if (!currentUser?.email) return null;
-      const response = await fetch(`/api/matchable-organizations?email=${currentUser.email}`, {
-        credentials: "include"
-      });
-      if (!response.ok) return null;
-      const orgs = await response.json();
-      return orgs[0];
-    },
+  const { data: orgs = [], isLoading: isLoadingOrgProfile } = useQuery<any[]>({
+    queryKey: currentUser?.email ? [`/api/matchable-organizations?email=${currentUser.email}`] : ["/api/matchable-organizations"],
     enabled: !!currentUser?.email && userType === 'organization'
   });
+
+  const volunteerProfile = volunteers[0];
+  const orgProfile = orgs[0];
 
   const isLoading = isLoadingUser || isLoadingProfile || isLoadingOrgProfile;
   const isVolunteer = userType === 'volunteer';

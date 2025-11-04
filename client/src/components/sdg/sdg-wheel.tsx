@@ -180,7 +180,7 @@ export function SDGWheel() {
               style={{ 
                 backgroundColor: sdg.color,
                 aspectRatio: '1/1',
-                minHeight: '120px'
+                minHeight: '140px'
               }}
               data-testid={`sdg-button-${sdg.id}`}
             >
@@ -189,18 +189,18 @@ export function SDGWheel() {
               {/* Content container */}
               <div className="relative h-full flex flex-col justify-between p-3 sm:p-4 text-white">
                 {/* Top section with number and title */}
-                <div className="flex flex-col items-start">
-                  <div className="text-xl sm:text-2xl font-extrabold mb-1">{sdg.id}</div>
-                  <div className="text-xs sm:text-sm md:text-base font-bold leading-tight text-left uppercase w-full">
-                    {sdg.title.split(' ').map((word, i) => (
-                      <div key={i} className="tracking-tight">{word}</div>
-                    ))}
+                <div className="flex flex-col items-start flex-1">
+                  <div className="text-2xl sm:text-3xl font-extrabold mb-1 sm:mb-2">{sdg.id}</div>
+                  <div className="text-xs sm:text-sm md:text-base font-extrabold leading-snug text-left uppercase w-full">
+                    {sdg.title}
                   </div>
                 </div>
                 
-                {/* Bottom section with large icon */}
-                <div className="flex justify-center items-end">
-                  <IconComponent className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white opacity-80 group-hover:opacity-100" strokeWidth={2} />
+                {/* Bottom section with large UN-style icon */}
+                <div className="flex justify-center items-end pb-2">
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center">
+                    <IconComponent className="w-full h-full text-white drop-shadow-lg" strokeWidth={2.5} fill="white" fillOpacity={0.2} />
+                  </div>
                 </div>
               </div>
               

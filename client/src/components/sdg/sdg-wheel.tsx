@@ -169,37 +169,45 @@ export function SDGWheel() {
 
   const renderSDGGrid = () => {
     return (
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 xl:grid-cols-12 gap-2 sm:gap-3 max-w-5xl mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto">
         {SDG_DATA.map((sdg) => {
           const IconComponent = SDG_ICONS[sdg.id as keyof typeof SDG_ICONS];
           return (
             <button
               key={sdg.id}
               onClick={() => setSelectedSDG(sdg)}
-              className="group relative rounded-md overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="group relative rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               style={{ 
                 backgroundColor: sdg.color,
-                aspectRatio: '1/1'
+                aspectRatio: '1/1',
+                minHeight: '120px'
               }}
               data-testid={`sdg-button-${sdg.id}`}
             >
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              <div className="relative h-full flex flex-col items-start justify-between p-1.5 sm:p-2 text-white">
-                <div className="text-xs sm:text-sm font-bold">{sdg.id}</div>
-                <div className="text-[0.45rem] sm:text-[0.55rem] font-bold leading-tight line-clamp-2 text-left uppercase tracking-tighter">
-                  {sdg.title.replace('and', '&')}
+              
+              {/* Content container */}
+              <div className="relative h-full flex flex-col justify-between p-3 sm:p-4 text-white">
+                {/* Top section with number and title */}
+                <div className="flex flex-col items-start">
+                  <div className="text-xl sm:text-2xl font-extrabold mb-1">{sdg.id}</div>
+                  <div className="text-xs sm:text-sm md:text-base font-bold leading-tight text-left uppercase w-full">
+                    {sdg.title.split(' ').map((word, i) => (
+                      <div key={i} className="tracking-tight">{word}</div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Bottom section with large icon */}
+                <div className="flex justify-center items-end">
+                  <IconComponent className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-white opacity-80 group-hover:opacity-100" strokeWidth={2} />
                 </div>
               </div>
               
-              {/* SDG Icon */}
-              <div className="absolute bottom-1 right-1 w-5 h-5 sm:w-7 sm:h-7 opacity-30 group-hover:opacity-50 transition-opacity">
-                <IconComponent className="w-full h-full text-white" strokeWidth={2.5} />
-              </div>
-              
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-1">
-                <div className="text-white text-[0.6rem] sm:text-xs text-center leading-tight">
-                  Learn more
+              <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-3">
+                <div className="text-white text-sm sm:text-base font-semibold text-center">
+                  Click to learn more
                 </div>
               </div>
             </button>

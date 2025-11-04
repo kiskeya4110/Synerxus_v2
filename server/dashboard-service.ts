@@ -37,6 +37,7 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
         return {
           ...opportunity,
           matchScore: matchResult.score,
+          matchPercentage: matchResult.score, // For frontend compatibility
           matchBreakdown: matchResult.breakdown,
           matchReasons: matchResult.reasons,
         };

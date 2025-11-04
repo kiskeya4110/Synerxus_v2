@@ -22,16 +22,31 @@ export default function Projects() {
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
   // Fetch current user to get organization ID
-  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/me"],
-    enabled: true
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) throw new Error("User not found");
+      return response.json();
+    },
+    enabled: !!userId
   });
 
-  // Fetch projects for organization
+  // Fetch projects scoped to the logged-in organization
   const { data: projects = [], isLoading } = useQuery<ProjectWithDetails[]>({
-    queryKey: ["/api/projects"],
-    select: (data: Project[]) => data as ProjectWithDetails[]
+    queryKey: ["/api/projects", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/projects?userId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch projects");
+      return response.json();
+    },
+    select: (data: Project[]) => data as ProjectWithDetails[],
+    enabled: !!currentUser && !!userId
   });
 
   // Fetch all tasks

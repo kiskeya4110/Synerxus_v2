@@ -22,7 +22,8 @@ Preferred communication style: Simple, everyday language.
 - **Backend**: Node.js with TypeScript, Express.js for REST API, WebSocket for real-time updates, Drizzle ORM with Neon serverless PostgreSQL, esbuild.
 - **Database Schema**: Relational design covering Users, Organizations, Projects, Tasks, Volunteer Activities, Impact Metrics, Project Impacts, Opportunities, Applications, and Matchmaking data. Includes AI tracking fields for projects.
 - **AI Matching Algorithm**: Python-based system with Node.js integration for weighted scoring of volunteer-organization matches (skills 35%, location 25%, interests 20%, SDG alignment 20%). Configurable match threshold.
-- **Profile Management**: Email-based profile linking with `useEffect` for form initialization.
+- **Profile Management**: Email-based profile linking with `useEffect` for form initialization. Cache invalidation strategy ensures profile data synchronization across Settings, Profile, and Dashboard views using user-scoped query keys.
+- **Multi-Tenant Security**: Project edit permissions enforced at UI level - organizations can only edit their own projects. Volunteers have read-only access to organization projects.
 
 ### Feature Specifications
 - **Landing Page**: Rebranded, publicly accessible, showcasing features and calls to action, including an interactive SDG wheel.

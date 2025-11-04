@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -29,6 +30,7 @@ const SDG_NAMES: { [key: number]: string } = {
 export default function ProjectDetail() {
   const [, params] = useRoute("/projects/:id");
   const projectId = params?.id ? parseInt(params.id) : null;
+  const { user } = useAuth();
 
   const { data: project, isLoading: loadingProject } = useQuery({
     queryKey: ["/api/projects", projectId],
@@ -50,6 +52,11 @@ export default function ProjectDetail() {
   const { data: users = [] } = useQuery({
     queryKey: ["/api/users"],
   });
+  
+  // Check if current user can edit this project
+  // Only organization users who own the project can edit it
+  const canEditProject = user?.userType === 'organization' && 
+                        project?.organizationId === user?.organizationId;
 
   if (!projectId) {
     return (
@@ -137,12 +144,14 @@ export default function ProjectDetail() {
             <p className="text-muted-foreground mt-1">Project Details & Progress</p>
           </div>
         </div>
-        <Link href={`/projects/${projectId}/edit`}>
-          <Button className="gap-2 w-full sm:w-auto" data-testid="button-edit-project-detail">
-            <Edit className="h-4 w-4" />
-            Edit Project
-          </Button>
-        </Link>
+        {canEditProject && (
+          <Link href={`/projects/${projectId}/edit`}>
+            <Button className="gap-2 w-full sm:w-auto" data-testid="button-edit-project-detail">
+              <Edit className="h-4 w-4" />
+              Edit Project
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Status and Key Info */}

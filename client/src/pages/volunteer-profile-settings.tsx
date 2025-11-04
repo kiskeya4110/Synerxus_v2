@@ -53,6 +53,7 @@ export default function VolunteerProfileSettings() {
   const [interestInput, setInterestInput] = useState("");
   
   // Fetch current user to get email
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery({
     queryKey: ["/api/users/me"],
   });
@@ -101,10 +102,16 @@ export default function VolunteerProfileSettings() {
       return apiRequest("POST", "/api/volunteers", data);
     },
     onSuccess: () => {
+      // Invalidate all relevant queries to sync data across Settings and Profile
+      const id = localStorage.getItem('currentUserId');
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       toast({
         title: "Profile created!",
-        description: "Your volunteer profile has been created successfully.",
+        description: "Your volunteer profile has been created successfully. This data helps with AI matching and feeds into SDG analytics.",
       });
     },
     onError: (error: Error) => {
@@ -123,10 +130,16 @@ export default function VolunteerProfileSettings() {
       return apiRequest("PATCH", `/api/volunteers/${existingProfile.id}`, data);
     },
     onSuccess: () => {
+      // Invalidate all relevant queries to sync data across Settings and Profile
+      const id = localStorage.getItem('currentUserId');
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       toast({
         title: "Profile updated!",
-        description: "Your volunteer profile has been updated successfully.",
+        description: "Your volunteer profile has been updated successfully. This data helps with AI matching and feeds into SDG analytics.",
       });
     },
     onError: (error: Error) => {

@@ -208,12 +208,17 @@ export default function VolunteerProfile() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate all relevant queries to sync data across Settings and Profile
+      const id = localStorage.getItem('currentUserId');
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       setPhotoFile(null);
       toast({
         title: "Profile updated!",
-        description: "Your volunteer profile has been saved successfully. This data helps improve your match recommendations.",
+        description: "Your volunteer profile has been saved successfully. This data helps improve your match recommendations and feeds into SDG analytics.",
       });
     },
     onError: (error: Error) => {

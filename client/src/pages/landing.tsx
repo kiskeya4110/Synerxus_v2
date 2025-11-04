@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Logo from "@/components/ui/logo";
+import { SDGWheel } from "@/components/sdg/sdg-wheel";
 import { 
   Globe, 
   BarChart3, 
@@ -176,6 +177,37 @@ export default function Landing() {
                 </Card>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SDG Wheel Section */}
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 bg-gradient-to-b from-muted/30 to-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8 sm:mb-12">
+            <Badge className="mb-4" variant="secondary" data-testid="badge-un-sdgs">
+              UN Sustainable Development Goals
+            </Badge>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4" data-testid="text-sdg-title">
+              Align Your Impact with Global Goals
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4" data-testid="text-sdg-description">
+              Connect your volunteer projects to the United Nations' 17 Sustainable Development Goals. Click any goal to learn more about its targets and how your organization can contribute.
+            </p>
+          </div>
+
+          <SDGWheel />
+
+          <div className="text-center mt-8 sm:mt-12">
+            <p className="text-sm sm:text-base text-muted-foreground mb-4">
+              Synerxus helps you track and report your organization's contribution to these global goals
+            </p>
+            <Link href="/sdg-mapping">
+              <Button variant="outline" size="lg" className="gap-2" data-testid="button-explore-sdg-mapping">
+                Explore SDG Mapping Feature
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

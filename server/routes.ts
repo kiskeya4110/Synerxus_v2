@@ -959,6 +959,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // === Volunteer Routes (Matching System) ===
+  app.get("/api/volunteers/me", async (req, res) => {
+    try {
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.userType !== 'volunteer') {
+        return res.status(403).json({ message: "User is not a volunteer" });
+      }
+      
+      if (!user.email) {
+        return res.status(400).json({ message: "User email is required" });
+      }
+      
+      const volunteer = await storage.getVolunteerByEmail(user.email);
+      
+      if (!volunteer) {
+        return res.status(404).json({ message: "Volunteer not found" });
+      }
+      
+      res.json(volunteer);
+    } catch (err) {
+      console.error("Error fetching current user's volunteer profile:", err);
+      res.status(500).json({ message: "Failed to fetch volunteer profile" });
+    }
+  });
+
   app.get("/api/volunteers", async (req, res) => {
     try {
       const volunteers = await storage.listVolunteers();

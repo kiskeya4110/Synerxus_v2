@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, boolean, jsonb, doublePrecision, sql, uniqueIndex } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, jsonb, doublePrecision, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -51,6 +51,20 @@ export const projects = pgTable("projects", {
   completionPercentage: integer("completion_percentage").default(0),
   aiTrackingEnabled: boolean("ai_tracking_enabled").default(false),
   completionPreferences: jsonb("completion_preferences"),
+  // Matching algorithm fields (from Core Opportunity Form)
+  requiredSkills: text("required_skills").array(), // Skills needed (35% weight in matching)
+  optionalSkills: text("optional_skills").array(), // Nice to have skills
+  experienceLevel: text("experience_level"), // entry-level, intermediate, expert
+  engagementType: text("engagement_type"), // remote, in-person, hybrid
+  // Time commitment fields
+  commitmentType: text("commitment_type"), // ongoing, project-based, event
+  ongoingHoursPerWeek: integer("ongoing_hours_per_week"), // For ongoing commitments
+  projectTotalHours: integer("project_total_hours"), // For project-based work
+  totalHoursLogged: integer("total_hours_logged").default(0), // Actual hours logged by volunteers
+  // Impact tracking fields
+  primarySdg: integer("primary_sdg"), // Main SDG alignment for the project
+  impactMetricName: text("impact_metric_name"), // e.g., "Students Tutored", "Trees Planted"
+  impactMetricUnit: text("impact_metric_unit"), // e.g., "students", "trees"
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

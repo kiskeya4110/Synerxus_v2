@@ -20,9 +20,26 @@ const projectFormSchema = z.object({
   status: z.enum(["planning", "active", "completed", "on-hold"]).default("planning"),
   location: z.string().min(1, "Location is required for volunteer matching"),
   sdgs: z.string().optional(),
+  primarySdg: z.string().optional(),
   startDate: z.string().optional(),
   endDate: z.string().optional(),
-  skillsNeeded: z.string().optional(),
+  // Skills and experience
+  requiredSkills: z.string().optional(),
+  optionalSkills: z.string().optional(),
+  experienceLevel: z.enum(["entry-level", "intermediate", "expert"]).optional(),
+  // Engagement type
+  engagementType: z.enum(["remote", "in-person", "hybrid"]).optional(),
+  // Time commitment
+  commitmentType: z.enum(["ongoing", "project-based", "event"]).optional(),
+  ongoingHoursPerWeek: z.string().optional(),
+  projectTotalHours: z.string().optional(),
+  // Impact metrics
+  impactMetricName: z.string().optional(),
+  impactMetricUnit: z.string().optional(),
+  // Completion tracking
+  completionPercentage: z.string().optional(),
+  totalHoursLogged: z.string().optional(),
+  // Legacy fields
   volunteersNeeded: z.string().optional(),
   impactGoals: z.string().optional(),
 });
@@ -45,9 +62,20 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
       status: "planning",
       location: "",
       sdgs: "",
+      primarySdg: "",
       startDate: "",
       endDate: "",
-      skillsNeeded: "",
+      requiredSkills: "",
+      optionalSkills: "",
+      experienceLevel: undefined,
+      engagementType: undefined,
+      commitmentType: undefined,
+      ongoingHoursPerWeek: "",
+      projectTotalHours: "",
+      impactMetricName: "",
+      impactMetricUnit: "",
+      completionPercentage: "",
+      totalHoursLogged: "",
       volunteersNeeded: "",
       impactGoals: "",
     }
@@ -59,8 +87,12 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         ? data.sdgs.split(",").map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 17)
         : [];
 
-      const skillsArray = data.skillsNeeded
-        ? data.skillsNeeded.split(",").map(s => s.trim()).filter(s => s.length > 0)
+      const requiredSkillsArray = data.requiredSkills
+        ? data.requiredSkills.split(",").map(s => s.trim()).filter(s => s.length > 0)
+        : [];
+
+      const optionalSkillsArray = data.optionalSkills
+        ? data.optionalSkills.split(",").map(s => s.trim()).filter(s => s.length > 0)
         : [];
 
       const payload: any = {
@@ -70,15 +102,27 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         location: data.location,
         organizationId,
         sdgGoals: sdgArray,
+        requiredSkills: requiredSkillsArray,
+        optionalSkills: optionalSkillsArray,
       };
 
       if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();
       if (data.endDate) payload.endDate = new Date(data.endDate).toISOString();
       
-      // Store additional data in goals field as JSON
-      if (data.skillsNeeded || data.volunteersNeeded || data.impactGoals) {
+      if (data.primarySdg) payload.primarySdg = parseInt(data.primarySdg);
+      if (data.experienceLevel) payload.experienceLevel = data.experienceLevel;
+      if (data.engagementType) payload.engagementType = data.engagementType;
+      if (data.commitmentType) payload.commitmentType = data.commitmentType;
+      if (data.ongoingHoursPerWeek) payload.ongoingHoursPerWeek = parseInt(data.ongoingHoursPerWeek);
+      if (data.projectTotalHours) payload.projectTotalHours = parseInt(data.projectTotalHours);
+      if (data.impactMetricName) payload.impactMetricName = data.impactMetricName;
+      if (data.impactMetricUnit) payload.impactMetricUnit = data.impactMetricUnit;
+      if (data.completionPercentage) payload.completionPercentage = parseInt(data.completionPercentage);
+      if (data.totalHoursLogged) payload.totalHoursLogged = parseInt(data.totalHoursLogged);
+      
+      // Store legacy data in goals field as JSON
+      if (data.volunteersNeeded || data.impactGoals) {
         payload.goals = {
-          skillsNeeded: skillsArray,
           volunteersNeeded: data.volunteersNeeded ? parseInt(data.volunteersNeeded) : null,
           impactGoals: data.impactGoals || null,
         };
@@ -124,85 +168,18 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Project Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Clean Water Initiative" {...field} data-testid="input-project-name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe the project goals and activities..."
-                      className="min-h-[100px]"
-                      {...field}
-                      data-testid="input-project-description"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-project-status">
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="planning">Planning</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="on-hold">On Hold</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="location"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g., Nairobi, Kenya" {...field} data-testid="input-project-location" />
-                  </FormControl>
-                  <p className="text-sm text-gray-500">Location is required for volunteer matching (weighted at 25%)</p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Section 1: The Basics */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Section 1: The Basics</h3>
               <FormField
                 control={form.control}
-                name="startDate"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Date (Optional)</FormLabel>
+                    <FormLabel>Project Title</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} data-testid="input-project-start-date" />
+                      <Input placeholder="e.g., Volunteer Grant Writer for Education Program" {...field} data-testid="input-project-name" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -210,12 +187,256 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
               />
               <FormField
                 control={form.control}
-                name="endDate"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>End Date (Optional)</FormLabel>
+                    <FormLabel>Description of the Project</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} data-testid="input-project-end-date" />
+                      <Textarea
+                        placeholder="Be specific. What will volunteers do? What are the key responsibilities? What makes this project impactful?"
+                        className="min-h-[100px]"
+                        {...field}
+                        data-testid="input-project-description"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-project-status">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="planning">Planning</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="on-hold">On Hold</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Section 2: The Ideal Volunteer */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Section 2: The Ideal Volunteer</h3>
+              <FormField
+                control={form.control}
+                name="requiredSkills"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Required Skills</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Marketing, React.js, First Aid, Spanish (comma-separated)"
+                        {...field}
+                        data-testid="input-project-required-skills"
+                      />
+                    </FormControl>
+                    <p className="text-sm text-blue-600 font-medium">✓ Most important for AI matching (35% weight)</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="optionalSkills"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Optional Skills (Nice to Have)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Photography, Event Planning (comma-separated)"
+                        {...field}
+                        data-testid="input-project-optional-skills"
+                      />
+                    </FormControl>
+                    <p className="text-sm text-gray-500">Skills that are a bonus but not required</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="experienceLevel"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Experience Level Required</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-experience-level">
+                          <SelectValue placeholder="Select experience level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="entry-level">Entry-Level (General tasks, no specific experience needed)</SelectItem>
+                        <SelectItem value="intermediate">Intermediate (Some experience preferred)</SelectItem>
+                        <SelectItem value="expert">Expert / Specialist (Requires a high-level professional)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            {/* Section 3: The Logistics */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Section 3: The Logistics</h3>
+              <FormField
+                control={form.control}
+                name="engagementType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Engagement Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-engagement-type">
+                          <SelectValue placeholder="Select engagement type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="remote">Remote / Virtual (Global or region-specific)</SelectItem>
+                        <SelectItem value="in-person">In-Person (At a specific location)</SelectItem>
+                        <SelectItem value="hybrid">Hybrid (A mix of both)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="City, Country (e.g., Nairobi, Kenya)" {...field} data-testid="input-project-location" />
+                    </FormControl>
+                    <p className="text-sm text-blue-600 font-medium">✓ Critical for matching local volunteers (25% weight)</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="startDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Start Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-project-start-date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="endDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>End Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} data-testid="input-project-end-date" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="commitmentType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Time Commitment Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-commitment-type">
+                          <SelectValue placeholder="Select commitment type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="ongoing">Ongoing (Regular weekly/monthly hours)</SelectItem>
+                        <SelectItem value="project-based">Project-Based (Total hours for completion)</SelectItem>
+                        <SelectItem value="event">Event (Specific date and time)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="ongoingHoursPerWeek"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Ongoing Hours per Week</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g., 5"
+                          {...field}
+                          data-testid="input-ongoing-hours"
+                        />
+                      </FormControl>
+                      <p className="text-sm text-gray-500">For ongoing commitments</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="projectTotalHours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Project Total Hours</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g., 40"
+                          {...field}
+                          data-testid="input-total-hours"
+                        />
+                      </FormControl>
+                      <p className="text-sm text-gray-500">For project-based work</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="volunteersNeeded"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Number of Volunteers Needed</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="e.g., 10"
+                        {...field}
+                        data-testid="input-project-volunteers"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,81 +444,162 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
               />
             </div>
 
-            <FormField
-              control={form.control}
-              name="sdgs"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>UN SDGs</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g., 1, 3, 6 (comma-separated, 1-17)"
-                      {...field}
-                      data-testid="input-project-sdgs"
-                    />
-                  </FormControl>
-                  <p className="text-sm text-gray-500">SDG alignment is weighted at 20% in volunteer matching</p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Section 4: The Purpose & Impact */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Section 4: The Purpose & Impact</h3>
+              <FormField
+                control={form.control}
+                name="primarySdg"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary SDG Alignment</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        max="17"
+                        placeholder="Select the one main UN SDG (1-17)"
+                        {...field}
+                        data-testid="input-primary-sdg"
+                      />
+                    </FormControl>
+                    <p className="text-sm text-blue-600 font-medium">✓ Matches volunteer passions (20% weight)</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sdgs"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Additional SDG Alignments</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., 1, 3, 6 (comma-separated, 1-17)"
+                        {...field}
+                        data-testid="input-project-sdgs"
+                      />
+                    </FormControl>
+                    <p className="text-sm text-gray-500">Optional: Other SDGs this project supports</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="border-l-4 border-blue-500 pl-4 py-2 bg-blue-50 dark:bg-blue-950 rounded">
+                <p className="text-sm font-semibold mb-2">Define Your Impact Metric (Critical for Dashboard)</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                  This allows Synerxus to track your success. When volunteers log hours, they will report against this metric.
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="impactMetricName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Metric Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., Students Tutored, Trees Planted"
+                            {...field}
+                            data-testid="input-metric-name"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="impactMetricUnit"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Unit of Measurement</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="e.g., students, trees, families"
+                            {...field}
+                            data-testid="input-metric-unit"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
 
-            <FormField
-              control={form.control}
-              name="skillsNeeded"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Skills Needed (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g., Construction, Medical Training, Teaching (comma-separated)"
-                      {...field}
-                      data-testid="input-project-skills"
-                    />
-                  </FormControl>
-                  <p className="text-sm text-gray-500">Skills are weighted at 35% in volunteer matching</p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="impactGoals"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Impact Goals (Optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Describe the expected impact and outcomes..."
+                        className="min-h-[80px]"
+                        {...field}
+                        data-testid="input-project-impact-goals"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-            <FormField
-              control={form.control}
-              name="volunteersNeeded"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Volunteers Needed (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="e.g., 10"
-                      {...field}
-                      data-testid="input-project-volunteers"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="impactGoals"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Impact Goals (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describe the expected impact and outcomes..."
-                      className="min-h-[80px]"
-                      {...field}
-                      data-testid="input-project-impact-goals"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Section 5: Completion Tracking */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2">Section 5: Completion Tracking</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Track progress when the project is completed or ongoing
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="totalHoursLogged"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Total Hours Logged</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="e.g., 120"
+                          {...field}
+                          data-testid="input-hours-logged"
+                        />
+                      </FormControl>
+                      <p className="text-sm text-gray-500">Actual volunteer hours completed</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="completionPercentage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Completion Percentage</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          placeholder="e.g., 75"
+                          {...field}
+                          data-testid="input-completion-percentage"
+                        />
+                      </FormControl>
+                      <p className="text-sm text-gray-500">Project completion (0-100%)</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>

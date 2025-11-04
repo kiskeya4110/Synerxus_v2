@@ -1,0 +1,80 @@
+Form 1: The "Core Opportunity" Form (For Skilled, Ongoing, or Project-Based Roles)
+Use this for 90% of your volunteer needs. The more detail you provide, the better the AI match.
+
+Post a New Opportunity
+A detailed post attracts the best volunteers. The data you provide here directly powers the Synerxus AI Matching and your Impact Dashboard.
+
+Section 1: The Basics (What is the role?)
+Opportunity Title: (e.g., "Volunteer Grant Writer for Education Program," "Part-Time Python Developer for Climate Data") [__________________________________________________]
+
+Description of the Role: (Be specific. What will the volunteer do? What are the key responsibilities? What makes this role impactful?) [Text Area for 2-3 paragraphs]
+
+Section 2: The Ideal Volunteer (Who are you looking for?)
+Required Skills: (This is the most important field for the AI match. Add the skills your ideal volunteer MUST have.) [Add skills like "Marketing", "React.js", "First Aid", "Spanish"] [+]
+
+"Nice to Have" Skills (Optional): (Skills that are a bonus but not required. This helps our AI refine the match score.) [Add skills...] [+]
+
+Experience Level Required:
+
+( ) Entry-Level (General tasks, no specific experience needed)
+
+( ) Intermediate (Some experience preferred)
+
+( ) Expert / Specialist (Requires a high-level professional)
+
+Section 3: The Logistics (Where and when?)
+Engagement Type:
+
+( ) Remote / Virtual (Global or region-specific)
+
+( ) In-Person (At a specific location)
+
+( ) Hybrid (A mix of both)
+
+Location: (Required if "In-Person" or "Hybrid." This is critical for matching local volunteers.) [City, Country________________________________]
+
+Time Commitment:
+
+( ) Ongoing: Approx. [__] hours per [week/month]
+
+( ) Project-Based: Approx. [__] total hours
+
+( ) Event: A specific date [Date Picker]
+
+Section 4: The Purpose & Impact (Why does this matter?)
+Primary SDG Alignment: (Select the one main UN Sustainable Development Goal this role supports. This matches the volunteer's passions.) [Dropdown: Select SDG 1-17 ⌄]
+
+Define Your Impact Metric: (This is the key metric this role will contribute to. It will appear on your Impact Dashboard.)
+
+Why this is critical: This allows Synerxus to track your success. When a volunteer logs hours for this role, they will report against this specific metric.
+
+Metric Name: (e.g., "Students Tutored," "Families Fed," "Trees Planted," "Code Modules Deployed") [__________________________________________________]
+
+Unit of Measurement: (e.g., "students," "families," "trees," "modules") [__________________________________________________]
+
+[ Post Opportunity ]
+Form 2: The "Urgent Need / Event" Form (For Time-Sensitive, General Roles)
+Use this for time-sensitive events (e.g., disaster relief, community clean-ups) where you need volunteers fast. This form prioritizes Availability and Location over deep skills.
+
+Post an Urgent Need or Event
+Event Title: (e.g., "Urgent: Community Clean-Up Day," "Volunteers Needed for Food Drive") [__________________________________________________]
+
+What's Happening? (A brief description of the event and what volunteers will be doing.) [Text Area]
+
+Date and Time: [Date Picker] from [Time] to [Time]
+
+Location (Must be In-Person): [Full Address, City, Country_____________________]
+
+Number of Volunteers Needed: [Dropdown: 5, 10, 25, 50, 100+]
+
+Primary SDG Alignment: (e.g., "SDG 2: Zero Hunger" for a food drive, "SDG 15: Life on Land" for a clean-up.) [Dropdown: Select SDG 1-17 ⌄]
+
+Skills Required:
+
+(•) No Specific Skills Required (Default)
+
+( ) Add Skills: [Add skills...] [+]
+
+Note: For this event, Synerxus will automatically track your impact as Total Volunteers and Total Hours contributed to your selected SDG.
+
+[ Post Urgent Need ]

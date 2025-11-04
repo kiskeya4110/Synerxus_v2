@@ -6,6 +6,20 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 ## Recent Changes
 
+### November 4, 2025 - SDG Mapping Multi-Tenant Security Fix
+
+- **Critical Data Leakage Fix**: Fixed cross-organization data exposure on SDG Mapping dashboard:
+  - Removed all hardcoded mock data (sdgData array, connectedProjects array)
+  - Implemented proper organization-scoped filtering for all data queries
+  - Added loading gate that waits for user identity before rendering any data
+  - Projects filtered by user's organizationId to ensure tenant isolation
+  - Impact metrics aggregated only from organization's own project impacts
+  - Created Set-based filtering to prevent cross-organization impact data leakage
+  - Returns empty arrays when user or organization ID not available (defensive programming)
+  - Fixed initial render vulnerability where unfiltered data briefly appeared
+  - All SDG statistics now calculated from real database data, scoped by organization
+  - Security verified: No cross-organization data visible at any point in render lifecycle
+
 ### November 3, 2025 - Calendar-Project Linking & Comprehensive Project Intake Form
 
 - **Calendar Event Enhancements**: Enhanced calendar events with project and user assignment capabilities:

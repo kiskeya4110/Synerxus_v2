@@ -13,7 +13,8 @@ import {
   insertVolunteerSchema,
   insertMatchableOrganizationSchema,
   insertMatchSchema,
-  insertCalendarEventSchema
+  insertCalendarEventSchema,
+  insertMessageSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -661,6 +662,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error deleting calendar event:", err);
       res.status(500).json({ message: "Failed to delete calendar event" });
+    }
+  });
+
+  // === Message Routes ===
+  app.get("/api/messages", async (req, res) => {
+    try {
+      const userIdParam = req.query.userId as string;
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId query parameter is required" });
+      }
+      
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+      
+      const sentMessages = await storage.listMessagesBySender(userId);
+      const receivedMessages = await storage.listMessagesByReceiver(userId);
+      
+      const allMessages = [...sentMessages, ...receivedMessages].sort((a, b) => {
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+      
+      res.json(allMessages);
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.get("/api/messages/conversation/:userId", async (req, res) => {
+    try {
+      const otherUserId = parseInt(req.params.userId);
+      const currentUserIdParam = req.query.currentUserId as string;
+      
+      if (!currentUserIdParam) {
+        return res.status(400).json({ message: "currentUserId query parameter is required" });
+      }
+      
+      const currentUserId = parseInt(currentUserIdParam);
+      if (isNaN(currentUserId) || isNaN(otherUserId)) {
+        return res.status(400).json({ message: "User IDs must be valid numbers" });
+      }
+      
+      const conversation = await storage.listConversation(currentUserId, otherUserId);
+      res.json(conversation);
+    } catch (err) {
+      console.error("Error fetching conversation:", err);
+      res.status(500).json({ message: "Failed to fetch conversation" });
+    }
+  });
+
+  app.post("/api/messages", async (req, res) => {
+    try {
+      const messageData = insertMessageSchema.parse(req.body);
+      const message = await storage.createMessage(messageData);
+      
+      broadcastUpdate("message_created", message);
+      res.status(201).json(message);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/messages/:id/read", async (req, res) => {
+    try {
+      const messageId = parseInt(req.params.id);
+      const updatedMessage = await storage.markMessageAsRead(messageId);
+      
+      if (!updatedMessage) {
+        return res.status(404).json({ message: "Message not found" });
+      }
+      
+      broadcastUpdate("message_read", updatedMessage);
+      res.json(updatedMessage);
+    } catch (err) {
+      console.error("Error marking message as read:", err);
+      res.status(500).json({ message: "Failed to mark message as read" });
     }
   });
 

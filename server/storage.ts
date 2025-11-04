@@ -15,6 +15,7 @@ import {
   organizationProfiles,
   opportunities,
   applications,
+  messages,
   type User, 
   type InsertUser,
   type Organization,
@@ -46,11 +47,13 @@ import {
   type Opportunity,
   type InsertOpportunity,
   type Application,
-  type InsertApplication
+  type InsertApplication,
+  type Message,
+  type InsertMessage
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, asc } from "drizzle-orm";
 
 // Define the storage interface with CRUD operations for all entities
 export interface IStorage {
@@ -181,6 +184,16 @@ export interface IStorage {
   updateCalendarEvent(id: number, event: Partial<InsertCalendarEvent>): Promise<CalendarEvent | undefined>;
   deleteCalendarEvent(id: number): Promise<boolean>;
   listCalendarEvents(): Promise<CalendarEvent[]>;
+
+  // Message operations
+  getMessage(id: number): Promise<Message | undefined>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  updateMessage(id: number, message: Partial<InsertMessage>): Promise<Message | undefined>;
+  listMessages(): Promise<Message[]>;
+  listMessagesBySender(senderId: number): Promise<Message[]>;
+  listMessagesByReceiver(receiverId: number): Promise<Message[]>;
+  listConversation(userId1: number, userId2: number): Promise<Message[]>;
+  markMessageAsRead(id: number): Promise<Message | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -713,6 +726,56 @@ export class DatabaseStorage implements IStorage {
 
   async listCalendarEvents(): Promise<CalendarEvent[]> {
     return await db.select().from(calendarEvents);
+  }
+
+  // Message operations
+  async getMessage(id: number): Promise<Message | undefined> {
+    const [result] = await db.select().from(messages).where(eq(messages.id, id));
+    return result || undefined;
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const [newMessage] = await db.insert(messages).values(message).returning();
+    return newMessage;
+  }
+
+  async updateMessage(id: number, messageData: Partial<InsertMessage>): Promise<Message | undefined> {
+    const [result] = await db.update(messages).set(messageData).where(eq(messages.id, id)).returning();
+    return result || undefined;
+  }
+
+  async listMessages(): Promise<Message[]> {
+    return await db.select().from(messages);
+  }
+
+  async listMessagesBySender(senderId: number): Promise<Message[]> {
+    return await db.select().from(messages).where(eq(messages.senderId, senderId));
+  }
+
+  async listMessagesByReceiver(receiverId: number): Promise<Message[]> {
+    return await db.select().from(messages).where(eq(messages.receiverId, receiverId));
+  }
+
+  async listConversation(userId1: number, userId2: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(
+        or(
+          and(eq(messages.senderId, userId1), eq(messages.receiverId, userId2)),
+          and(eq(messages.senderId, userId2), eq(messages.receiverId, userId1))
+        )
+      )
+      .orderBy(asc(messages.createdAt));
+  }
+
+  async markMessageAsRead(id: number): Promise<Message | undefined> {
+    const [result] = await db
+      .update(messages)
+      .set({ read: true })
+      .where(eq(messages.id, id))
+      .returning();
+    return result || undefined;
   }
 
   // Volunteer Profile operations

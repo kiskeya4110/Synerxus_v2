@@ -12,6 +12,7 @@ import UpcomingEvents, { Event } from "@/components/dashboard/upcoming-events";
 import QuickActions from "@/components/dashboard/quick-actions";
 import OpportunitiesTab from "@/components/dashboard/opportunities-tab";
 import ProfileOverview from "@/components/dashboard/profile-overview";
+import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [selectedKPI, setSelectedKPI] = useState<{ title: string; data: any } | null>(null);
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Fetch current user from database
   const userId = localStorage.getItem('currentUserId');
@@ -535,9 +537,21 @@ export default function Dashboard() {
         <div className="space-y-6">
           <ProfileOverview userId={userId} userType={dashboardType} />
           <UpcomingEvents events={formattedEvents} />
-          <QuickActions userType={dashboardType} />
+          <QuickActions 
+            userType={dashboardType} 
+            onContactVolunteers={() => setShowContactModal(true)}
+          />
         </div>
       </div>
+
+      {/* Contact Volunteer Modal */}
+      {currentUser && (
+        <ContactVolunteerModal
+          open={showContactModal}
+          onOpenChange={setShowContactModal}
+          organizationUserId={currentUser.id}
+        />
+      )}
 
       {/* KPI Detail Dialog */}
       <Dialog open={!!selectedKPI} onOpenChange={(open) => !open && setSelectedKPI(null)}>

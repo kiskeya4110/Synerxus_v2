@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckSquare, Clock, UserPlus, LineChart, Calendar, Briefcase } from "lucide-react";
+import { CheckSquare, Clock, UserPlus, LineChart, Calendar, Briefcase, MessageSquare } from "lucide-react";
 import { Link } from "wouter";
 
 interface QuickAction {
@@ -7,14 +7,16 @@ interface QuickAction {
   label: string;
   icon: JSX.Element;
   color: string;
-  href: string;
+  href?: string;
+  onClick?: () => void;
 }
 
 interface QuickActionsProps {
   userType?: "volunteer" | "organization";
+  onContactVolunteers?: () => void;
 }
 
-export default function QuickActions({ userType = "volunteer" }: QuickActionsProps) {
+export default function QuickActions({ userType = "volunteer", onContactVolunteers }: QuickActionsProps) {
   const volunteerActions: QuickAction[] = [
     {
       id: "log-hours",
@@ -48,18 +50,18 @@ export default function QuickActions({ userType = "volunteer" }: QuickActionsPro
 
   const organizationActions: QuickAction[] = [
     {
+      id: "contact-volunteers",
+      label: "Contact Volunteers",
+      icon: <MessageSquare className="h-5 w-5 mb-1" />,
+      color: "text-blue-500",
+      onClick: onContactVolunteers
+    },
+    {
       id: "add-project",
       label: "Add Project",
       icon: <Briefcase className="h-5 w-5 mb-1" />,
       color: "text-primary-500",
       href: "/projects"
-    },
-    {
-      id: "add-task",
-      label: "Add Task",
-      icon: <CheckSquare className="h-5 w-5 mb-1" />,
-      color: "text-success-500",
-      href: "/tasks"
     },
     {
       id: "recruit-volunteers",
@@ -86,22 +88,30 @@ export default function QuickActions({ userType = "volunteer" }: QuickActionsPro
       </CardHeader>
       <CardContent className="p-4">
         <div className="grid grid-cols-2 gap-4">
-          {actions.map((action) => (
-            <Link 
-              key={action.id}
-              href={action.href}
-            >
+          {actions.map((action) => {
+            const content = (
               <div 
                 className="flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-150 cursor-pointer min-h-[80px]"
                 data-testid={`button-${action.id}`}
+                onClick={action.onClick}
               >
                 <div className={action.color}>
                   {action.icon}
                 </div>
                 <span className="text-sm text-center font-medium mt-1">{action.label}</span>
               </div>
-            </Link>
-          ))}
+            );
+
+            if (action.href) {
+              return (
+                <Link key={action.id} href={action.href}>
+                  {content}
+                </Link>
+              );
+            }
+
+            return <div key={action.id}>{content}</div>;
+          })}
         </div>
       </CardContent>
     </Card>

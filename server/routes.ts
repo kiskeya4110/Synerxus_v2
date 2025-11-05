@@ -1991,6 +1991,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       }
       
       const { profilePhotoUrl, name, mission, needs, sdgFocus, location, bio, displayName, website, contactEmail } = req.body;
+      console.log('[OrganizationProfile PATCH] Received data:', { needs, sdgFocus, mission, name });
       
       // Create organization if it doesn't exist
       if (!user.organizationId && name) {
@@ -2024,6 +2025,11 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         if (name !== undefined) orgUpdates.name = name;
         if (website !== undefined) orgUpdates.website = website;
         if (contactEmail !== undefined) orgUpdates.contactEmail = contactEmail;
+        if (sdgFocus !== undefined) orgUpdates.primarySdgs = sdgFocus;
+        if (needs !== undefined) orgUpdates.needs = needs;
+        if (mission !== undefined) orgUpdates.goals = mission;
+        
+        console.log('[OrganizationProfile] Updating organization with:', orgUpdates);
         
         if (Object.keys(orgUpdates).length > 0) {
           await storage.updateOrganization(user.organizationId, orgUpdates);

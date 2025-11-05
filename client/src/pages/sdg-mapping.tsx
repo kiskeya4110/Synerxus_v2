@@ -327,10 +327,42 @@ export default function SDGMapping() {
           <CardHeader>
             <CardTitle>SDG Focus vs. Project Distribution</CardTitle>
             <CardDescription>
-              Compare your organization's selected SDG focus areas from Settings with your actual project distribution
+              Compare your organization's selected SDG focus areas from Settings with your actual project distribution across {organizationProjects.length} active {organizationProjects.length === 1 ? 'project' : 'projects'}
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">Total Projects</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{organizationProjects.length}</p>
+              </div>
+              <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-sm text-green-700 dark:text-green-300 font-medium">Completed Projects</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                  {organizationProjects.filter((p: any) => p.status?.toLowerCase() === 'completed').length}
+                </p>
+              </div>
+              <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                <p className="text-sm text-orange-700 dark:text-orange-300 font-medium">Active Projects</p>
+                <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
+                  {organizationProjects.filter((p: any) => 
+                    p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
+                  ).length}
+                </p>
+              </div>
+              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Avg. Completion</p>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                  {organizationProjects.length > 0 
+                    ? Math.round(
+                        organizationProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / 
+                        organizationProjects.length
+                      )
+                    : 0}%
+                </p>
+              </div>
+            </div>
+            
             <div className="w-full max-w-2xl mx-auto" style={{ height: '400px' }}>
               <Radar
                 data={radarChartData}
@@ -514,9 +546,39 @@ export default function SDGMapping() {
                           {project.status}
                         </Badge>
                       </div>
-                      {project.location && (
-                        <p className="text-xs text-gray-500 mt-2">📍 {project.location}</p>
-                      )}
+                      
+                      <div className="mt-3 space-y-2">
+                        {project.location && (
+                          <p className="text-xs text-gray-500">📍 {project.location}</p>
+                        )}
+                        
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                            <span>Completion</span>
+                            <span className="font-semibold">{project.completionPercentage || 0}%</span>
+                          </div>
+                          <Progress value={project.completionPercentage || 0} className="h-2" />
+                        </div>
+                        
+                        {project.sdgGoals && project.sdgGoals.length > 1 && (
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <span className="text-xs text-gray-500">Also aligned with:</span>
+                            {project.sdgGoals
+                              .filter((sdg: number) => sdg !== selectedSDG)
+                              .slice(0, 3)
+                              .map((sdg: number) => (
+                                <Badge 
+                                  key={sdg} 
+                                  variant="outline" 
+                                  className="text-xs px-1.5 py-0"
+                                  style={{ borderColor: getSDGColor(sdg) }}
+                                >
+                                  SDG {sdg}
+                                </Badge>
+                              ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -70,6 +70,7 @@ export default function Profile() {
   const isLoading = isLoadingUser || isLoadingVolunteer || isLoadingOrg;
   const volunteerProfile = volunteerData?.volunteerProfile;
   const orgProfile = orgData?.matchableOrganization;
+  const organizationData = orgData?.organization;
 
   if (isLoading) {
     return (
@@ -81,6 +82,11 @@ export default function Profile() {
 
   const isVolunteer = currentUser?.userType === 'volunteer';
   const profile = isVolunteer ? volunteerProfile : orgProfile;
+  
+  // For organizations, use primarySdgs from organization data instead of sdgGoals
+  const sdgsToDisplay = isVolunteer 
+    ? profile?.sdgGoals 
+    : (organizationData?.primarySdgs || profile?.sdgGoals);
   const initials = currentUser?.displayName
     ? currentUser.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : currentUser?.email?.[0].toUpperCase();
@@ -186,17 +192,17 @@ export default function Profile() {
         )}
 
         {/* SDG Goals Section */}
-        {profile?.sdgGoals && profile.sdgGoals.length > 0 && (
+        {sdgsToDisplay && sdgsToDisplay.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Sustainable Development Goals
+                {isVolunteer ? "Sustainable Development Goals" : "Primary SDG Focus Areas"}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {profile.sdgGoals.map((goal: number) => (
+                {sdgsToDisplay.map((goal: number) => (
                   <div key={goal} className="flex items-center gap-2 p-2 border rounded">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
                       {goal}

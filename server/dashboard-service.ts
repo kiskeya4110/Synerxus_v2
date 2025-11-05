@@ -119,7 +119,10 @@ export async function getDashboardDataForOrganization(userId: number) {
     const totalHours = organizationActivities.reduce((sum, activity) => sum + activity.hours, 0);
 
     const activeProjects = organizationProjects.filter(
-      project => project.status === 'In Progress' || project.status === 'Active'
+      project => {
+        const status = project.status?.toLowerCase();
+        return status === 'in progress' || status === 'active';
+      }
     ).length;
 
     const completedTasks = organizationTasks.filter(t => t.status === 'Completed').length;

@@ -393,6 +393,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const taskData = insertTaskSchema.parse(req.body);
       const task = await storage.createTask(taskData);
       
+      // Recalculate project completion percentage when task is created
+      if (task.projectId) {
+        const projectTasks = await storage.listTasksByProject(task.projectId);
+        const completedTasks = projectTasks.filter(t => t.status === "Completed").length;
+        const completionPercentage = projectTasks.length > 0 
+          ? Math.round((completedTasks / projectTasks.length) * 100) 
+          : 0;
+        
+        await storage.updateProject(task.projectId, { completionPercentage });
+        console.log(`[Task Create] Recalculated project ${task.projectId} completion: ${completionPercentage}%`);
+        
+        // Broadcast project update
+        const updatedProject = await storage.getProject(task.projectId);
+        if (updatedProject) {
+          broadcastUpdate("project_updated", updatedProject);
+        }
+      }
+      
       broadcastUpdate("task_created", task);
       res.status(201).json(task);
     } catch (err) {
@@ -409,6 +427,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedTask = await storage.updateTask(taskId, taskData);
       if (!updatedTask) {
         return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // If task status was updated and task belongs to a project, recalculate project completion
+      if (taskData.status && updatedTask.projectId) {
+        const projectTasks = await storage.listTasksByProject(updatedTask.projectId);
+        const completedTasks = projectTasks.filter(t => t.status === "Completed").length;
+        const completionPercentage = projectTasks.length > 0 
+          ? Math.round((completedTasks / projectTasks.length) * 100) 
+          : 0;
+        
+        await storage.updateProject(updatedTask.projectId, { completionPercentage });
+        console.log(`[Task Update] Recalculated project ${updatedTask.projectId} completion: ${completionPercentage}%`);
+        
+        // Broadcast project update as well
+        const updatedProject = await storage.getProject(updatedTask.projectId);
+        if (updatedProject) {
+          broadcastUpdate("project_updated", updatedProject);
+        }
       }
       
       broadcastUpdate("task_updated", updatedTask);

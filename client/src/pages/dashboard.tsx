@@ -493,7 +493,7 @@ export default function Dashboard() {
               title={project.name}
               description={project.description || "No description available"}
               status={project.status as any}
-              progress={calculateProgress(project.id, tasks)}
+              progress={project.completionPercentage || 0}
               timeRemaining={getTimeRemaining(project.endDate)}
               volunteers={[]}
             />

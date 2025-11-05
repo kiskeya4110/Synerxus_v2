@@ -34,7 +34,7 @@ const SDG_METADATA: Record<number, { title: string; description: string }> = {
 
 export default function SDGMapping() {
   const { theme } = useTheme();
-  const [selectedSDG, setSelectedSDG] = useState(1);
+  const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
@@ -175,15 +175,18 @@ export default function SDGMapping() {
   
   // Initialize selectedSDG to first available org SDG when data loads
   useEffect(() => {
-    if (sdgData.length > 0 && !sdgData.find(sdg => sdg.id === selectedSDG)) {
-      setSelectedSDG(sdgData[0].id);
+    if (sdgData.length > 0) {
+      // If no SDG is selected, or current selection is not in org's SDGs, select the first one
+      if (selectedSDG === null || !sdgData.find(sdg => sdg.id === selectedSDG)) {
+        setSelectedSDG(sdgData[0].id);
+      }
     }
   }, [sdgData, selectedSDG]);
 
-  const selectedData = sdgData.find(sdg => sdg.id === selectedSDG) || sdgData[0];
-  const relatedProjects = organizationProjects.filter((project: any) => 
+  const selectedData = selectedSDG ? sdgData.find(sdg => sdg.id === selectedSDG) : null;
+  const relatedProjects = selectedSDG ? organizationProjects.filter((project: any) => 
     project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(selectedSDG)
-  );
+  ) : [];
   
   const isLoading = loadingUser || loadingDashboard || loadingMetrics;
   
@@ -263,6 +266,7 @@ export default function SDGMapping() {
       </div>
       
       {/* Selected SDG Detail View */}
+      {selectedData && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* SDG Information */}
         <Card className="lg:col-span-2">
@@ -394,7 +398,7 @@ export default function SDGMapping() {
                     <label className="text-sm font-medium">SDG Goal</label>
                     <select 
                       className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                      value={selectedSDG}
+                      value={selectedSDG ?? ""}
                       onChange={(e) => setSelectedSDG(Number(e.target.value))}
                     >
                       {sdgData.map(sdg => (
@@ -498,6 +502,16 @@ export default function SDGMapping() {
           </Card>
         </div>
       </div>
+      )}
+      
+      {/* Guard: Show message when no SDG is selected */}
+      {!selectedData && sdgData.length > 0 && (
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">Select an SDG above to view details</p>
+          </CardContent>
+        </Card>
+      )}
     </>
   );
 }

@@ -35,6 +35,11 @@ export default function ProjectEdit() {
 
   const { data: project, isLoading } = useQuery({
     queryKey: ["/api/projects", projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}`);
+      if (!response.ok) throw new Error("Failed to fetch project");
+      return response.json();
+    },
     enabled: !!projectId,
   });
 

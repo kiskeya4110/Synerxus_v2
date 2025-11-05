@@ -44,27 +44,52 @@ export default function MobileDataCollection() {
   const [activeTab, setActiveTab] = useState("activity");
 
   // Fetch current user from database
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) throw new Error("User not found");
+      return response.json();
+    },
+    enabled: !!userId
   });
 
-  // Fetch projects from API
-  const { data: projects = [] } = useQuery({
-    queryKey: ["/api/projects"],
+  // Fetch organization-scoped projects from API
+  const { data: projects = [] } = useQuery<any[]>({
+    queryKey: ["/api/projects", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/projects?userId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch projects");
+      return response.json();
+    },
+    enabled: !!currentUser && !!userId
   });
 
-  // Fetch tasks from API
-  const { data: tasks = [] } = useQuery({
-    queryKey: ["/api/tasks"],
+  // Fetch organization-scoped tasks from API
+  const { data: tasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/tasks", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/tasks?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!currentUser && !!userId
   });
 
   // Fetch impact metrics from API
-  const { data: impactMetrics = [] } = useQuery({
+  const { data: impactMetrics = [] } = useQuery<any[]>({
     queryKey: ["/api/impact-metrics"],
   });
 
   // Fetch recent volunteer activities
-  const { data: recentActivities = [] } = useQuery({
+  const { data: recentActivities = [] } = useQuery<any[]>({
     queryKey: ["/api/volunteer-activities"],
   });
 

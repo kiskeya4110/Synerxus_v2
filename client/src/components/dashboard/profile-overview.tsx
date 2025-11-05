@@ -38,18 +38,34 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     enabled: !!userId
   });
 
-  const { data: volunteers = [], isLoading: isLoadingProfile } = useQuery<any[]>({
-    queryKey: currentUser?.email ? [`/api/volunteers?email=${currentUser.email}`] : ["/api/volunteers"],
-    enabled: !!currentUser?.email && userType === 'volunteer'
+  // Fetch volunteer profile data from Settings
+  const { data: volunteerData, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ["/api/profile/volunteer", userId],
+    enabled: !!userId && userType === 'volunteer',
+    queryFn: async () => {
+      if (!userId) return null;
+      const url = `/api/profile/volunteer?userId=${userId}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      return response.json();
+    }
   });
 
-  const { data: orgs = [], isLoading: isLoadingOrgProfile } = useQuery<any[]>({
-    queryKey: currentUser?.email ? [`/api/matchable-organizations?email=${currentUser.email}`] : ["/api/matchable-organizations"],
-    enabled: !!currentUser?.email && userType === 'organization'
+  // Fetch organization profile data from Settings
+  const { data: orgData, isLoading: isLoadingOrgProfile } = useQuery({
+    queryKey: ["/api/profile/organization", userId],
+    enabled: !!userId && userType === 'organization',
+    queryFn: async () => {
+      if (!userId) return null;
+      const url = `/api/profile/organization?userId=${userId}`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      return response.json();
+    }
   });
 
-  const volunteerProfile = volunteers[0];
-  const orgProfile = orgs[0];
+  const volunteerProfile = volunteerData?.volunteerProfile;
+  const orgProfile = orgData?.organization;
 
   const isLoading = isLoadingUser || isLoadingProfile || isLoadingOrgProfile;
   const isVolunteer = userType === 'volunteer';
@@ -131,15 +147,47 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
           </div>
         )}
 
-        {/* SDG Goals */}
-        {profile?.sdgGoals && profile.sdgGoals.length > 0 && (
+        {/* Organization Needs */}
+        {!isVolunteer && profile?.needs && profile.needs.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Heart className="h-4 w-4" />
+              <span>Volunteer Needs</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {profile.needs.slice(0, 5).map((need: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-xs" data-testid={`badge-need-${need}`}>{need}</Badge>
+              ))}
+              {profile.needs.length > 5 && (
+                <Badge variant="outline" className="text-xs" data-testid="badge-need-more">+{profile.needs.length - 5} more</Badge>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Organization Goals */}
+        {!isVolunteer && profile?.goals && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Target className="h-4 w-4" />
-              <span>SDG Goals</span>
+              <span>Goals</span>
+            </div>
+            <p className="text-xs text-muted-foreground" data-testid="text-goals">
+              {profile.goals.length > 100 ? `${profile.goals.substring(0, 100)}...` : profile.goals}
+            </p>
+          </div>
+        )}
+
+        {/* SDG Goals - Use primarySdgs for organizations, sdgGoals for volunteers */}
+        {((isVolunteer && profile?.sdgGoals && profile.sdgGoals.length > 0) || 
+          (!isVolunteer && profile?.primarySdgs && profile.primarySdgs.length > 0)) && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Target className="h-4 w-4" />
+              <span>{isVolunteer ? "SDG Goals" : "Primary SDGs"}</span>
             </div>
             <div className="space-y-1">
-              {profile.sdgGoals.slice(0, 3).map((goal: number) => (
+              {(isVolunteer ? profile.sdgGoals : profile.primarySdgs).slice(0, 3).map((goal: number) => (
                 <div key={goal} className="flex items-center gap-2 text-xs" data-testid={`sdg-goal-${goal}`}>
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
                     {goal}
@@ -147,8 +195,10 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                   <span className="text-sm">{SDG_LABELS[goal]}</span>
                 </div>
               ))}
-              {profile.sdgGoals.length > 3 && (
-                <p className="text-xs text-muted-foreground ml-8" data-testid="text-sdg-more">+{profile.sdgGoals.length - 3} more goals</p>
+              {(isVolunteer ? profile.sdgGoals : profile.primarySdgs).length > 3 && (
+                <p className="text-xs text-muted-foreground ml-8" data-testid="text-sdg-more">
+                  +{(isVolunteer ? profile.sdgGoals : profile.primarySdgs).length - 3} more goals
+                </p>
               )}
             </div>
           </div>

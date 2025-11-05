@@ -222,7 +222,7 @@ export default function SDGMapping() {
       projectDistribution.set(sdgId, 0);
     });
     
-    // Count projects per SDG
+    // Count projects per SDG (1 per each)
     organizationProjects.forEach((project: any) => {
       if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
         project.sdgGoals.forEach((sdg: number) => {
@@ -233,7 +233,7 @@ export default function SDGMapping() {
       }
     });
     
-    // Find max for normalization
+    // Find max for baseline reference (keeping selectedData at this max)
     const maxProjects = Math.max(...Array.from(projectDistribution.values()), 1);
     
     const labels = organizationSDGs.map((sdgId: number) => {
@@ -241,13 +241,14 @@ export default function SDGMapping() {
       return metadata ? metadata.title : `SDG ${sdgId}`;
     });
     
-    // Selected SDGs (all equal - showing organization's commitment)
-    const selectedData = organizationSDGs.map(() => 100);
+    // Apply log transformation for better visibility when values differ greatly
+    // Using log10(x + 1) to handle zero values
+    const selectedData = organizationSDGs.map(() => Math.log10(maxProjects + 1));
     
-    // Actual project distribution (normalized to 100)
+    // Actual project distribution with log transformation (counts as 1 per each)
     const actualData = organizationSDGs.map((sdgId: number) => {
       const count = projectDistribution.get(sdgId) || 0;
-      return maxProjects > 0 ? (count / maxProjects) * 100 : 0;
+      return Math.log10(count + 1);
     });
     
     return {
@@ -376,10 +377,13 @@ export default function SDGMapping() {
                   scales: {
                     r: {
                       beginAtZero: true,
-                      max: 100,
                       ticks: {
-                        stepSize: 20,
                         color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
+                        callback: function(value: any) {
+                          // Convert log scale back to actual project count for display
+                          const actualValue = Math.round(Math.pow(10, value) - 1);
+                          return actualValue;
+                        }
                       },
                       grid: {
                         color: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',

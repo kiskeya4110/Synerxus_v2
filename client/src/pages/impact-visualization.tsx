@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BeforeAfterComparison from "@/components/impact/before-after-comparison";
 import { Link } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
@@ -41,6 +42,7 @@ ChartJS.register(
 export default function ImpactVisualization() {
   const [activeTab, setActiveTab] = useState("before-after");
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
+  const [selectedProjectIdForStories, setSelectedProjectIdForStories] = useState<string>("all");
 
   // Get current user to filter their projects
   const userId = localStorage.getItem('currentUserId');
@@ -141,58 +143,61 @@ export default function ImpactVisualization() {
       return [];
     }
 
-    return projects.slice(0, 5).map((project: any) => {
-      const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
-      
-      // Calculate metrics before and after
-      const beforeMetrics: any[] = [];
-      const afterMetrics: any[] = [];
-      
-      // Collect all evidence URLs for images
-      const allEvidenceUrls: string[] = [];
-      impacts.forEach((impact: any) => {
-        if (impact.evidenceUrls && Array.isArray(impact.evidenceUrls)) {
-          allEvidenceUrls.push(...impact.evidenceUrls);
-        }
-      });
-      
-      impacts.forEach((impact: any) => {
-        const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
-        if (metric) {
-          // Use baseline value if available, otherwise calculate as 30% for demonstration
-          const beforeValue = impact.baselineValue || Math.floor((impact.value || 0) * 0.3);
-          const afterValue = impact.value || 0;
-          
-          beforeMetrics.push({
-            label: metric.name,
-            value: beforeValue,
-            unit: metric.unit || ""
-          });
-          
-          afterMetrics.push({
-            label: metric.name,
-            value: afterValue,
-            unit: metric.unit || ""
-          });
-        }
-      });
+    return projects
+      .map((project: any) => {
+        const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
+        
+        // Calculate metrics before and after
+        const beforeMetrics: any[] = [];
+        const afterMetrics: any[] = [];
+        
+        // Collect all evidence URLs for images
+        const allEvidenceUrls: string[] = [];
+        impacts.forEach((impact: any) => {
+          if (impact.evidenceUrls && Array.isArray(impact.evidenceUrls)) {
+            allEvidenceUrls.push(...impact.evidenceUrls);
+          }
+        });
+        
+        impacts.forEach((impact: any) => {
+          const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
+          if (metric) {
+            // Use baseline value if available, otherwise calculate as 30% for demonstration
+            const beforeValue = impact.baselineValue || Math.floor((impact.value || 0) * 0.3);
+            const afterValue = impact.value || 0;
+            
+            beforeMetrics.push({
+              label: metric.name,
+              value: beforeValue,
+              unit: metric.unit || ""
+            });
+            
+            afterMetrics.push({
+              label: metric.name,
+              value: afterValue,
+              unit: metric.unit || ""
+            });
+          }
+        });
 
-      // Use evidence URLs if available, otherwise fall back to coverImage or placeholder
-      const beforeImage = allEvidenceUrls[0] || project.coverImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800";
-      const afterImage = allEvidenceUrls[1] || allEvidenceUrls[0] || project.coverImage || "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800";
+        // Use evidence URLs if available, otherwise fall back to coverImage or placeholder
+        const beforeImage = allEvidenceUrls[0] || project.coverImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800";
+        const afterImage = allEvidenceUrls[1] || allEvidenceUrls[0] || project.coverImage || "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800";
 
-      return {
-        id: String(project.id),
-        title: project.name || "Project",
-        description: project.description || "No description available",
-        location: project.location || "Location not specified",
-        date: project.startDate ? new Date(project.startDate).toLocaleDateString() : "Date not specified",
-        beforeImage,
-        afterImage,
-        beforeMetrics,
-        afterMetrics
-      };
-    });
+        return {
+          id: String(project.id),
+          title: project.name || "Project",
+          description: project.description || "No description available",
+          location: project.location || "Location not specified",
+          date: project.startDate ? new Date(project.startDate).toLocaleDateString() : "Date not specified",
+          beforeImage,
+          afterImage,
+          beforeMetrics,
+          afterMetrics,
+          hasImpactData: beforeMetrics.length > 0 || afterMetrics.length > 0
+        };
+      })
+      .filter((project: any) => project.hasImpactData); // Only include projects with impact data
   }, [projects, projectImpacts, impactMetrics]);
 
   // Prepare time series chart data
@@ -409,21 +414,56 @@ export default function ImpactVisualization() {
             
             <Card>
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-lg sm:text-xl">Impact Stories</CardTitle>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <CardTitle className="text-lg sm:text-xl">Impact Stories</CardTitle>
+                  <Select 
+                    value={selectedProjectIdForStories} 
+                    onValueChange={setSelectedProjectIdForStories}
+                  >
+                    <SelectTrigger className="w-full sm:w-[250px]" data-testid="select-project-impact-stories">
+                      <SelectValue placeholder="Choose a project" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Projects</SelectItem>
+                      {projects.map((project: any) => (
+                        <SelectItem key={project.id} value={project.id.toString()}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
-                <div className="space-y-3 sm:space-y-4">
-                  {beforeAfterData.map((item: any) => (
-                    <div key={item.id} className="border-b border-gray-200 dark:border-gray-700 pb-3 sm:pb-4 last:border-0 last:pb-0">
-                      <h3 className="font-medium mb-1 text-sm sm:text-base">{item.title}</h3>
-                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">{item.description}</p>
-                      <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs sm:text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">{item.location}</span>
-                        <span className="text-gray-500 dark:text-gray-400">{item.date}</span>
-                      </div>
+                {(() => {
+                  const filteredStories = beforeAfterData.filter((item: any) => 
+                    selectedProjectIdForStories === "all" || 
+                    item.id === selectedProjectIdForStories
+                  );
+                  
+                  if (filteredStories.length === 0) {
+                    return (
+                      <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                        No impact stories available for this project
+                      </p>
+                    );
+                  }
+                  
+                  return (
+                    <div className="space-y-3 sm:space-y-4">
+                      {filteredStories.map((item: any) => (
+                        <div key={item.id} className="border-b border-gray-200 dark:border-gray-700 pb-3 sm:pb-4 last:border-0 last:pb-0">
+                          <h3 className="font-medium mb-1 text-sm sm:text-base">{item.title}</h3>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-2">{item.description}</p>
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 text-xs sm:text-sm">
+                            <span className="text-gray-500 dark:text-gray-400">{item.location}</span>
+                            <span className="text-gray-500 dark:text-gray-400">{item.date}</span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  );
+                })()}
               </CardContent>
             </Card>
           </div>

@@ -37,18 +37,37 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { toast } = useToast();
 
-  // Fetch events from API
+  // Get current user ID for scoping
+  const userId = localStorage.getItem('currentUserId');
+
+  // Fetch events from API - scoped to user
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["/api/calendar-events"],
+    queryKey: ["/api/calendar-events", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/calendar-events?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId
   });
 
-  // Fetch projects for dropdown
+  // Fetch projects for dropdown - scoped to user
   const { data: projects = [] } = useQuery({
-    queryKey: ["/api/projects"],
+    queryKey: ["/api/projects", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/projects?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId
   });
 
   // Fetch users/volunteers for attendee selection
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
   });
 
@@ -85,6 +104,7 @@ export default function Calendar() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/calendar-events"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/calendar-events", userId] });
       setIsAddEventOpen(false);
       form.reset();
       toast({

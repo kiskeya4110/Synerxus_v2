@@ -69,8 +69,8 @@ export default function Profile() {
 
   const isLoading = isLoadingUser || isLoadingVolunteer || isLoadingOrg;
   const volunteerProfile = volunteerData?.volunteerProfile;
-  const orgProfile = orgData?.matchableOrganization;
   const organizationData = orgData?.organization;
+  const matchableOrgData = orgData?.matchableOrganization;
 
   if (isLoading) {
     return (
@@ -81,12 +81,12 @@ export default function Profile() {
   }
 
   const isVolunteer = currentUser?.userType === 'volunteer';
-  const profile = isVolunteer ? volunteerProfile : orgProfile;
+  const profile = isVolunteer ? volunteerProfile : organizationData;
   
   // For organizations, use primarySdgs from organization data instead of sdgGoals
   const sdgsToDisplay = isVolunteer 
-    ? profile?.sdgGoals 
-    : (organizationData?.primarySdgs || profile?.sdgGoals);
+    ? volunteerProfile?.sdgGoals 
+    : organizationData?.primarySdgs;
   const initials = currentUser?.displayName
     ? currentUser.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : currentUser?.email?.[0].toUpperCase();
@@ -99,7 +99,7 @@ export default function Profile() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
               <Avatar className="h-32 w-32">
-                <AvatarImage src={currentUser?.avatar || profile?.profilePhotoUrl} />
+                <AvatarImage src={currentUser?.avatar || profile?.profilePhotoUrl || matchableOrgData?.profilePhotoUrl} />
                 <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
               </Avatar>
               
@@ -116,19 +116,19 @@ export default function Profile() {
                   <span>{currentUser?.email}</span>
                 </div>
                 
-                {profile?.location && (
+                {(profile?.location || matchableOrgData?.location) && (
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span>{profile.location}</span>
+                    <span>{profile?.location || matchableOrgData?.location}</span>
                   </div>
                 )}
               </div>
             </div>
             
-            {(currentUser?.bio || profile?.mission) && (
+            {(currentUser?.bio || profile?.mission || matchableOrgData?.mission) && (
               <div className="mt-6">
                 <p className="text-muted-foreground">
-                  {currentUser?.bio || profile?.mission || "No bio available"}
+                  {currentUser?.bio || profile?.mission || matchableOrgData?.mission || "No bio available"}
                 </p>
               </div>
             )}
@@ -154,7 +154,7 @@ export default function Profile() {
           </Card>
         )}
 
-        {!isVolunteer && profile?.needs && profile.needs.length > 0 && (
+        {!isVolunteer && ((profile?.needs && profile.needs.length > 0) || (matchableOrgData?.needs && matchableOrgData.needs.length > 0)) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {profile.needs.map((need: string, index: number) => (
+                {(profile?.needs || matchableOrgData?.needs || []).map((need: string, index: number) => (
                   <Badge key={index} variant="outline">{need}</Badge>
                 ))}
               </div>
@@ -187,6 +187,21 @@ export default function Profile() {
                   <Badge key={index} variant="secondary">{interest}</Badge>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Goals Section for Organizations */}
+        {!isVolunteer && profile?.goals && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Goals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">{profile.goals}</p>
             </CardContent>
           </Card>
         )}

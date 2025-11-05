@@ -215,7 +215,7 @@ export default function SDGMapping() {
             <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-4">
               Please select your organization's primary SDG focus areas in Settings to view SDG mapping and impact tracking.
             </p>
-            <Link href="/profile">
+            <Link href="/settings">
               <Button>Go to Settings</Button>
             </Link>
           </CardContent>

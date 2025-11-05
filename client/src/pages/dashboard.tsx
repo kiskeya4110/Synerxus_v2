@@ -304,11 +304,12 @@ export default function Dashboard() {
         detailData = {
           title: "Active Projects Details",
           items: filteredData.projects.filter((p: any) => 
-            p.status === "In Progress" || p.status === "Active"
+            p.status?.toLowerCase() === "in progress" || p.status?.toLowerCase() === "active"
           ).map((p: any) => ({
             label: p.name,
             value: p.status,
             location: p.location,
+            completion: `${calculateProgress(p.id, tasks)}% complete`,
           })),
         };
         break;
@@ -564,7 +565,7 @@ export default function Dashboard() {
             {selectedKPI?.items.map((item: any, index: number) => (
               <div key={index} className="p-4 border rounded-lg">
                 <div className="flex justify-between items-start">
-                  <div>
+                  <div className="flex-1">
                     <h4 className="font-medium">{item.label}</h4>
                     {item.project && (
                       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -574,6 +575,11 @@ export default function Dashboard() {
                     {item.location && (
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Location: {item.location}
+                      </p>
+                    )}
+                    {item.completion && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Progress: {item.completion}
                       </p>
                     )}
                   </div>

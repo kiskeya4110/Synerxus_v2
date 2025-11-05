@@ -396,13 +396,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Recalculate project completion percentage when task is created
       if (task.projectId) {
         const projectTasks = await storage.listTasksByProject(task.projectId);
-        const completedTasks = projectTasks.filter(t => t.status === "Completed").length;
+        const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
         const completionPercentage = projectTasks.length > 0 
           ? Math.round((completedTasks / projectTasks.length) * 100) 
           : 0;
         
         await storage.updateProject(task.projectId, { completionPercentage });
-        console.log(`[Task Create] Recalculated project ${task.projectId} completion: ${completionPercentage}%`);
+        console.log(`[Task Create] Recalculated project ${task.projectId} completion: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks)`);
         
         // Broadcast project update
         const updatedProject = await storage.getProject(task.projectId);
@@ -432,13 +432,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If task status was updated and task belongs to a project, recalculate project completion
       if (taskData.status && updatedTask.projectId) {
         const projectTasks = await storage.listTasksByProject(updatedTask.projectId);
-        const completedTasks = projectTasks.filter(t => t.status === "Completed").length;
+        const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
         const completionPercentage = projectTasks.length > 0 
           ? Math.round((completedTasks / projectTasks.length) * 100) 
           : 0;
         
         await storage.updateProject(updatedTask.projectId, { completionPercentage });
-        console.log(`[Task Update] Recalculated project ${updatedTask.projectId} completion: ${completionPercentage}%`);
+        console.log(`[Task Update] Recalculated project ${updatedTask.projectId} completion: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks)`);
         
         // Broadcast project update as well
         const updatedProject = await storage.getProject(updatedTask.projectId);

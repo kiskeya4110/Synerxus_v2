@@ -83,22 +83,26 @@ export default function SDGMapping() {
     enabled: !!currentUser && currentUser.userType === 'organization'
   });
   
-  // Fetch organization-scoped dashboard data
-  const { data: dashboardData, isLoading: loadingDashboard } = useQuery({
-    queryKey: ["/api/dashboard/summary", userId],
+  // Fetch organization-scoped projects
+  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+    queryKey: ["/api/projects", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
-      if (!id) return null;
-      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
-      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      if (!id) return [];
+      const response = await fetch(`/api/projects?userId=${id}`);
+      if (!response.ok) return [];
       return response.json();
     },
     enabled: !!currentUser && !!userId
   });
   
-  // Use scoped data from dashboard
-  const organizationProjects = dashboardData?.projects || [];
-  const projectImpacts = dashboardData?.impacts || [];
+  // Fetch project impacts
+  const { data: projectImpacts = [], isLoading: loadingImpacts } = useQuery({
+    queryKey: ["/api/project-impacts"],
+  });
+  
+  // Use scoped data from queries
+  const organizationProjects = projects;
   
   // Fetch impact metrics
   const { data: impactMetrics = [], isLoading: loadingMetrics } = useQuery({
@@ -275,7 +279,7 @@ export default function SDGMapping() {
     };
   }, [organizationSDGs, organizationProjects]);
   
-  const isLoading = loadingUser || loadingDashboard || loadingMetrics;
+  const isLoading = loadingUser || loadingProjects || loadingImpacts || loadingMetrics;
   
   if (isLoading) {
     return (

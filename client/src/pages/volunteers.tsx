@@ -8,10 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 
 export default function Volunteers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [skillFilter, setSkillFilter] = useState("all");
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
 
   // Get current user to check if organization
   const userId = localStorage.getItem('currentUserId');
@@ -195,7 +198,16 @@ export default function Volunteers() {
                   </div>
                 </div>
 
-                <Button variant="outline" size="sm" className="w-full min-h-[44px]">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full min-h-[44px]"
+                  onClick={() => {
+                    setSelectedVolunteer(volunteer);
+                    setShowContactModal(true);
+                  }}
+                  data-testid={`button-contact-${volunteer.id}`}
+                >
                   <Mail className="h-4 w-4 mr-2" />
                   Contact
                 </Button>
@@ -209,6 +221,15 @@ export default function Volunteers() {
         <Card className="p-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">No volunteers found</p>
         </Card>
+      )}
+
+      {/* Contact Volunteer Modal */}
+      {currentUser && isOrganization && (
+        <ContactVolunteerModal
+          open={showContactModal}
+          onOpenChange={setShowContactModal}
+          organizationUserId={currentUser.id}
+        />
       )}
     </>
   );

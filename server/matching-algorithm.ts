@@ -29,12 +29,12 @@ export function calculateMatchScore(
 
   // 1. Skills Matching (35% weight) - Most important factor
   if (volunteer.skills && volunteer.skills.length > 0 && opportunity.requiredSkills && opportunity.requiredSkills.length > 0) {
-    const volunteerSkills = volunteer.skills.map(s => s.toLowerCase());
-    const requiredSkills = opportunity.requiredSkills.map(s => s.toLowerCase());
+    const volunteerSkills = volunteer.skills.map(s => s.toLowerCase().trim());
+    const requiredSkills = opportunity.requiredSkills.map(s => s.toLowerCase().trim());
     
     const matchingSkills = volunteerSkills.filter(skill =>
       requiredSkills.some(req => 
-        req.includes(skill) || skill.includes(req)
+        req.includes(skill) || skill.includes(req) || skill === req
       )
     );
     
@@ -47,9 +47,12 @@ export function calculateMatchScore(
       reasons.push(`${matchingSkills.length} matching skill${matchingSkills.length > 1 ? 's' : ''}: ${matchingSkills.slice(0, 3).join(', ')}`);
     }
   } else if (!opportunity.requiredSkills || opportunity.requiredSkills.length === 0) {
-    // No skills required - give baseline score
-    breakdown.skillMatch = 70;
+    // No skills required - give moderate baseline score
+    breakdown.skillMatch = 50;
     reasons.push("No specific skills required");
+  } else if (!volunteer.skills || volunteer.skills.length === 0) {
+    // Volunteer has no skills listed but opportunity requires them
+    breakdown.skillMatch = 0;
   }
 
   // 2. Location Matching (25% weight)
@@ -57,8 +60,8 @@ export function calculateMatchScore(
     breakdown.locationMatch = 100;
     reasons.push("Remote opportunity - location flexible");
   } else if (volunteer.profile?.location && opportunity.location) {
-    const volLocation = volunteer.profile.location.toLowerCase();
-    const oppLocation = opportunity.location.toLowerCase();
+    const volLocation = volunteer.profile.location.toLowerCase().trim();
+    const oppLocation = opportunity.location.toLowerCase().trim();
     
     if (volLocation.includes(oppLocation) || oppLocation.includes(volLocation)) {
       breakdown.locationMatch = 100;
@@ -69,12 +72,15 @@ export function calculateMatchScore(
       const oppParts = oppLocation.split(',').map(p => p.trim());
       
       if (volParts.some(vp => oppParts.some(op => vp.includes(op) || op.includes(vp)))) {
-        breakdown.locationMatch = 60;
+        breakdown.locationMatch = 50;
         reasons.push("Same region/country");
       } else {
-        breakdown.locationMatch = 20;
+        breakdown.locationMatch = 0;
       }
     }
+  } else {
+    // Missing location data - no match
+    breakdown.locationMatch = 0;
   }
 
   // 3. SDG Overlap Matching (20% weight)
@@ -89,30 +95,33 @@ export function calculateMatchScore(
       breakdown.sdgMatch = Math.min((commonSDGs.length / Math.max(volSDGs.length, oppSDGs.length)) * 100, 100);
       reasons.push(`${commonSDGs.length} common SDG goal${commonSDGs.length > 1 ? 's' : ''}: #${commonSDGs.slice(0, 3).join(', #')}`);
     } else {
-      breakdown.sdgMatch = 20;
+      breakdown.sdgMatch = 0;
     }
-  } else if (oppSDGs.length === 0) {
-    // No SDGs specified for opportunity - give baseline score
-    breakdown.sdgMatch = 50;
+  } else if (oppSDGs.length === 0 && volSDGs.length === 0) {
+    // Neither specified SDGs - neutral baseline
+    breakdown.sdgMatch = 40;
   } else {
-    // Volunteer hasn't specified SDG interests
-    breakdown.sdgMatch = 30;
+    // One party specified SDGs but not the other - low match
+    breakdown.sdgMatch = 0;
   }
 
   // 4. Interest/Cause Matching (20% weight)
   if (volunteer.profile?.preferredCauses && volunteer.profile.preferredCauses.length > 0 && opportunity.category) {
-    const causes = volunteer.profile.preferredCauses.map(c => c.toLowerCase());
-    const category = opportunity.category.toLowerCase();
+    const causes = volunteer.profile.preferredCauses.map(c => c.toLowerCase().trim());
+    const category = opportunity.category.toLowerCase().trim();
     
     if (causes.some(cause => cause.includes(category) || category.includes(cause))) {
       breakdown.interestMatch = 100;
       reasons.push(`Interest in ${opportunity.category}`);
     } else {
-      breakdown.interestMatch = 40;
+      breakdown.interestMatch = 0;
     }
+  } else if (!opportunity.category && (!volunteer.profile?.preferredCauses || volunteer.profile.preferredCauses.length === 0)) {
+    // Both missing - neutral baseline
+    breakdown.interestMatch = 40;
   } else {
-    // Default when category/interest data is missing
-    breakdown.interestMatch = 50;
+    // One party has data, other doesn't - no match
+    breakdown.interestMatch = 0;
   }
 
   // Calculate weighted final score

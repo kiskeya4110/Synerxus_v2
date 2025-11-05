@@ -135,16 +135,16 @@ export default function Dashboard() {
 
   // Use KPIs from backend - no local filtering needed for KPIs
   const kpis = useMemo(() => {
-    // When "all" is selected or no filter, use backend KPIs directly
+    // When "all" is selected or no filter, use backend KPIs directly from summary object
     if (selectedProject === "all") {
       return {
-        volunteers: dashboardData?.activeVolunteers || 0,
-        hours: Math.round(dashboardData?.totalHours || 0),
-        tasks: dashboardData?.totalTasks || 0,
-        completedTasks: dashboardData?.completedTasks || 0,
-        activeProjects: dashboardData?.activeProjects || 0,
-        sdgs: dashboardData?.sdgsAddressed || 0,
-        impactScore: dashboardData?.impactScore || 0,
+        volunteers: dashboardData?.summary?.activeVolunteers || 0,
+        hours: Math.round(dashboardData?.summary?.totalHours || 0),
+        tasks: dashboardData?.summary?.totalTasks || 0,
+        completedTasks: dashboardData?.summary?.completedTasks || 0,
+        activeProjects: dashboardData?.summary?.activeProjects || 0,
+        sdgs: dashboardData?.summary?.sdgsAddressed || 0,
+        impactScore: dashboardData?.summary?.impactScore || 0,
       };
     }
     
@@ -165,13 +165,13 @@ export default function Dashboard() {
     });
 
     return {
-      volunteers: dashboardData?.activeVolunteers || 0,
+      volunteers: dashboardData?.summary?.activeVolunteers || 0,
       hours: Math.round(filteredHours),
       tasks: filteredTotalTasks,
       completedTasks: filteredCompletedTasks,
       activeProjects: filteredActiveProjects,
       sdgs: uniqueSDGs.size,
-      impactScore: dashboardData?.impactScore || 0,
+      impactScore: dashboardData?.summary?.impactScore || 0,
     };
   }, [dashboardData, filteredData, selectedProject]);
 
@@ -477,7 +477,7 @@ export default function Dashboard() {
         />
         <SDGChart 
           projects={filteredData.projects}
-          organizationSdgs={currentUser?.userType === 'organization' ? orgProfile?.matchableOrganization?.primarySdgs : undefined}
+          organizationSdgs={currentUser?.userType === 'organization' ? dashboardData?.summary?.organizationPrimarySdgs : undefined}
         />
       </div>
 

@@ -107,6 +107,11 @@ export async function getDashboardDataForOrganization(userId: number) {
     const volunteerIds = new Set(organizationAssignments.map(pa => pa.volunteerId));
     const organizationVolunteers = allUsers.filter(u => u.userType === 'volunteer' && volunteerIds.has(u.id));
 
+    // Get organization profile for selected SDGs
+    const allOrgProfiles = await storage.listOrganizationProfiles();
+    const organizationProfile = allOrgProfiles.find(p => p.organizationId === organizationId) || null;
+    const organizationPrimarySdgs = organizationProfile?.primarySdgs || [];
+
     // Calculate summary metrics
     const uniqueVolunteerIds = new Set(organizationActivities.map(activity => activity.userId));
     const activeVolunteers = uniqueVolunteerIds.size;
@@ -156,6 +161,7 @@ export async function getDashboardDataForOrganization(userId: number) {
         recentActivities: organizationActivities
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5),
+        organizationPrimarySdgs, // Organization's selected SDGs from profile settings
       },
       projects: organizationProjects,
       tasks: organizationTasks,

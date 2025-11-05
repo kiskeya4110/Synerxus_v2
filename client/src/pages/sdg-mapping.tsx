@@ -1,15 +1,34 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/layout/theme-provider";
-import { Loader2, BarChart } from "lucide-react";
+import { Loader2, BarChart, ExternalLink } from "lucide-react";
 import SDGIcons from "@/assets/sdg-icons";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
+import { Radar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+);
 
 // SDG metadata (titles, descriptions)
 const SDG_METADATA: Record<number, { title: string; description: string }> = {
@@ -35,6 +54,7 @@ const SDG_METADATA: Record<number, { title: string; description: string }> = {
 export default function SDGMapping() {
   const { theme } = useTheme();
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
+  const [, navigate] = useLocation();
   
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
@@ -188,6 +208,73 @@ export default function SDGMapping() {
     project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(selectedSDG)
   ) : [];
   
+  // Radar chart data: Compare organization's selected SDGs vs actual project distribution
+  const radarChartData = useMemo(() => {
+    if (organizationSDGs.length === 0) return null;
+    
+    // Calculate project distribution across SDGs
+    const projectDistribution = new Map<number, number>();
+    organizationSDGs.forEach((sdgId: number) => {
+      projectDistribution.set(sdgId, 0);
+    });
+    
+    // Count projects per SDG
+    organizationProjects.forEach((project: any) => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach((sdg: number) => {
+          if (projectDistribution.has(sdg)) {
+            projectDistribution.set(sdg, (projectDistribution.get(sdg) || 0) + 1);
+          }
+        });
+      }
+    });
+    
+    // Find max for normalization
+    const maxProjects = Math.max(...Array.from(projectDistribution.values()), 1);
+    
+    const labels = organizationSDGs.map((sdgId: number) => {
+      const metadata = SDG_METADATA[sdgId];
+      return metadata ? metadata.title : `SDG ${sdgId}`;
+    });
+    
+    // Selected SDGs (all equal - showing organization's commitment)
+    const selectedData = organizationSDGs.map(() => 100);
+    
+    // Actual project distribution (normalized to 100)
+    const actualData = organizationSDGs.map((sdgId: number) => {
+      const count = projectDistribution.get(sdgId) || 0;
+      return maxProjects > 0 ? (count / maxProjects) * 100 : 0;
+    });
+    
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Selected SDG Focus Areas (Settings)',
+          data: selectedData,
+          backgroundColor: 'rgba(30, 58, 138, 0.2)', // SYNER blue with transparency
+          borderColor: '#1e3a8a', // SYNER blue
+          borderWidth: 2,
+          pointBackgroundColor: '#1e3a8a',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#1e3a8a',
+        },
+        {
+          label: 'Actual Project Distribution',
+          data: actualData,
+          backgroundColor: 'rgba(180, 83, 9, 0.2)', // XUS orange-gold with transparency
+          borderColor: '#b45309', // XUS orange-gold
+          borderWidth: 2,
+          pointBackgroundColor: '#b45309',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#b45309',
+        },
+      ],
+    };
+  }, [organizationSDGs, organizationProjects]);
+  
   const isLoading = loadingUser || loadingDashboard || loadingMetrics;
   
   if (isLoading) {
@@ -233,6 +320,84 @@ export default function SDGMapping() {
           Connect volunteer activities to Sustainable Development Goals and track impact
         </p>
       </div>
+      
+      {/* Spider Web Chart - SDG Comparison */}
+      {radarChartData && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>SDG Focus vs. Project Distribution</CardTitle>
+            <CardDescription>
+              Compare your organization's selected SDG focus areas from Settings with your actual project distribution
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full max-w-2xl mx-auto" style={{ height: '400px' }}>
+              <Radar
+                data={radarChartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    r: {
+                      beginAtZero: true,
+                      max: 100,
+                      ticks: {
+                        stepSize: 20,
+                        color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
+                      },
+                      grid: {
+                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                      },
+                      pointLabels: {
+                        color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
+                        font: {
+                          size: 12,
+                        },
+                      },
+                    },
+                  },
+                  plugins: {
+                    legend: {
+                      position: 'top' as const,
+                      labels: {
+                        color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
+                        padding: 20,
+                        font: {
+                          size: 14,
+                        },
+                      },
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          let label = context.dataset.label || '';
+                          if (label) {
+                            label += ': ';
+                          }
+                          if (context.parsed.r !== null) {
+                            label += Math.round(context.parsed.r) + '%';
+                          }
+                          return label;
+                        }
+                      }
+                    }
+                  },
+                }}
+              />
+            </div>
+            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+              <p className="flex items-center justify-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#1e3a8a' }}></span>
+                Selected SDGs represent your organization's commitment from Settings
+              </p>
+              <p className="flex items-center justify-center gap-2 mt-2">
+                <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#b45309' }}></span>
+                Project Distribution shows where you're actually making impact
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* SDG Selection Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -327,12 +492,18 @@ export default function SDGMapping() {
                   {relatedProjects.map((project: any) => (
                     <div 
                       key={project.id} 
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary transition-colors"
+                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary hover:shadow-md transition-all cursor-pointer group"
+                      onClick={() => navigate(`/projects/${project.id}`)}
                       data-testid={`project-${project.id}`}
                     >
                       <div className="flex items-start justify-between">
-                        <div>
-                          <h4 className="font-medium text-base">{project.name}</h4>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-base group-hover:text-primary transition-colors">
+                              {project.name}
+                            </h4>
+                            <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
                           {project.description && (
                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                               {project.description}

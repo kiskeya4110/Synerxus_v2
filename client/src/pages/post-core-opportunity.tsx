@@ -110,6 +110,8 @@ export default function PostCoreOpportunity() {
       });
     },
     onSuccess: () => {
+      const userId = localStorage.getItem('currentUserId');
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
       toast({
         title: "Opportunity posted!",

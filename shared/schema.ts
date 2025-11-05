@@ -341,11 +341,16 @@ export const insertOrganizationSchema = createInsertSchema(organizations).omit({
   updatedAt: true
 });
 
-export const insertProjectSchema = createInsertSchema(projects).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+export const insertProjectSchema = createInsertSchema(projects)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true
+  })
+  .extend({
+    startDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    endDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+  });
 
 export const insertTaskSchema = createInsertSchema(tasks)
   .omit({
@@ -394,11 +399,17 @@ export const insertCalendarEventSchema = createInsertSchema(calendarEvents)
     endTime: z.coerce.date(),
   });
 
-export const insertOpportunitySchema = createInsertSchema(opportunities).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+export const insertOpportunitySchema = createInsertSchema(opportunities)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true
+  })
+  .extend({
+    eventDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    startDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    endDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+  });
 
 export const insertApplicationSchema = createInsertSchema(applications).omit({
   id: true,

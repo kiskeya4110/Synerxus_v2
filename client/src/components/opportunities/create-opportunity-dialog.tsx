@@ -61,6 +61,8 @@ export default function CreateOpportunityDialog({ open, onOpenChange }: CreateOp
         title: "Opportunity Posted!",
         description: "Your volunteer opportunity has been posted successfully.",
       });
+      const userId = localStorage.getItem('currentUserId');
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
       reset();
       onOpenChange(false);

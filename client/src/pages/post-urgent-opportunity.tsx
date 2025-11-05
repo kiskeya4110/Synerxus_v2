@@ -79,7 +79,7 @@ export default function PostUrgentOpportunity() {
         location: data.location,
         engagementType: "in-person",
         commitmentType: "event",
-        eventDate: data.eventDate,
+        eventDate: data.eventDate instanceof Date ? data.eventDate.toISOString() : data.eventDate,
         eventStartTime: data.eventStartTime,
         eventEndTime: data.eventEndTime,
         volunteersNeeded: data.volunteersNeeded,
@@ -95,6 +95,8 @@ export default function PostUrgentOpportunity() {
       });
     },
     onSuccess: () => {
+      const userId = localStorage.getItem('currentUserId');
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
       toast({
         title: "Urgent need posted!",

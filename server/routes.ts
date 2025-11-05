@@ -14,7 +14,8 @@ import {
   insertMatchableOrganizationSchema,
   insertMatchSchema,
   insertCalendarEventSchema,
-  insertMessageSchema
+  insertMessageSchema,
+  insertOpportunitySchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -904,7 +905,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/opportunities", async (req, res) => {
     try {
-      const opportunityData = req.body;
+      const opportunityData = insertOpportunitySchema.parse(req.body);
       const opportunity = await storage.createOpportunity(opportunityData);
       
       broadcastUpdate("opportunity_created", opportunity);

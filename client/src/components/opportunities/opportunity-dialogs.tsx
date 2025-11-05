@@ -72,6 +72,8 @@ export function CreateOpportunityDialog({ organizationId }: CreateOpportunityDia
       });
     },
     onSuccess: () => {
+      const userId = localStorage.getItem('currentUserId');
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
       toast({
         title: "Success",
@@ -339,6 +341,8 @@ export function EditOpportunityDialog({ opportunity }: EditOpportunityDialogProp
       });
     },
     onSuccess: () => {
+      const userId = localStorage.getItem('currentUserId');
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
       toast({
         title: "Success",
@@ -583,6 +587,8 @@ export function DeleteOpportunityDialog({ opportunity }: DeleteOpportunityDialog
       return apiRequest("DELETE", `/api/opportunities/${opportunity.id}`);
     },
     onSuccess: () => {
+      const userId = localStorage.getItem('currentUserId');
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
       toast({

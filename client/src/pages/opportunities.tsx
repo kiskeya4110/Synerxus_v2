@@ -9,17 +9,30 @@ import type { Opportunity, User } from "@shared/schema";
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
+  const userId = localStorage.getItem('currentUserId');
 
   // Fetch current user to get organization ID
-  // TODO: /api/users/me currently returns hardcoded user. Implement proper session management.
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/me"],
-    enabled: true
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      if (!userId) throw new Error("No user ID");
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!userId
   });
 
-  // Fetch opportunities
+  // Fetch opportunities with userId parameter
   const { data: opportunities = [], isLoading } = useQuery<Opportunity[]>({
-    queryKey: ["/api/opportunities"],
+    queryKey: ["/api/opportunities", userId],
+    queryFn: async () => {
+      if (!userId) throw new Error("No user ID");
+      const response = await fetch(`/api/opportunities?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch opportunities");
+      return response.json();
+    },
+    enabled: !!userId
   });
 
   const getStatusColor = (status: string) => {

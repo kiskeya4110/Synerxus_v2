@@ -10,6 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (November 2025)
 
+### Latest Updates
+- **Date Handling Fix**: Resolved critical opportunity save/update error ("toISOString is not a function"). Schema now handles both string and Date inputs with proper transformation. PATCH route uses `insertOpportunitySchema.partial()` for partial updates while maintaining validation.
+- **SDG Numerical Sorting**: All SDG displays (SDG Mapping page, project detail cards, profile settings) now show goals in numerical order 1-17 using `.sort((a, b) => a.id - b.id)`.
+- **SDG Mapping Project Filter**: Added project filter dropdown to SDG Mapping page. When selected, all analytics (radar chart, statistics cards, connected projects) dynamically update to show only that project's data.
+- **Navigation Streamlining**: Combined "Impact Stories" and "Impact Reports" into single "Impact Reports & Stories" menu item, reducing organization navigation from 10 to 9 items.
+
 ### UI/UX Improvements
 - **Dashboard Compaction**: All dashboard tabs now use compact spacing with reduced padding, smaller text (text-xs), and grid-based square patterns for badges and buttons. TaskTable, ActivityFeed, and OpportunitiesTab optimized for better space utilization.
 - **UN SDG Graphics**: Replaced custom Lucide-based SDG icons with official UN SDG graphics. All SDGs now display in increasing numerical order (1-17) using authentic UN imagery.

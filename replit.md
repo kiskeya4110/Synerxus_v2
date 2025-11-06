@@ -8,6 +8,14 @@ Synerxus is a comprehensive volunteer impact tracking and matching platform. It 
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (November 2025)
+
+### UI/UX Improvements
+- **Dashboard Compaction**: All dashboard tabs now use compact spacing with reduced padding, smaller text (text-xs), and grid-based square patterns for badges and buttons. TaskTable, ActivityFeed, and OpportunitiesTab optimized for better space utilization.
+- **UN SDG Graphics**: Replaced custom Lucide-based SDG icons with official UN SDG graphics. All SDGs now display in increasing numerical order (1-17) using authentic UN imagery.
+- **Impact Score Transparency**: Added prominent "Impact Score Algorithm" card to Impact Visualization page showing weighted breakdown: Volunteer Hours (40%), Task Completion (30%), SDG Coverage (20%), Match Acceptance (10%) with actual data and formula.
+- **Opportunity Management**: Projects & Tasks page now displays posted Core Opportunities and Urgent Needs with visual distinction (blue/Briefcase vs amber/AlertCircle), showing status, location, volunteers needed, and event dates.
+
 ## System Architecture
 
 ### UI/UX Decisions

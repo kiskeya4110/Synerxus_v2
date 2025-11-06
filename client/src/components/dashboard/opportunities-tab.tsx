@@ -103,74 +103,74 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+    <div className="space-y-3">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
           {opportunities.length} Matching Opportunities
         </h3>
         <Link href="/opportunities">
-          <Button variant="outline" size="sm">
-            View All <ExternalLink className="ml-2 h-4 w-4" />
+          <Button variant="outline" size="sm" className="text-xs h-7">
+            View All <ExternalLink className="ml-1 h-3 w-3" />
           </Button>
         </Link>
       </div>
 
       {opportunities.map((opp) => (
         <Card key={opp.id} className="hover:shadow-md transition-shadow" data-testid={`opportunity-card-${opp.id}`}>
-          <CardHeader>
+          <CardHeader className="p-3 pb-2">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-lg mb-2">{opp.title}</CardTitle>
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <Badge className={getMatchColor(opp.matchPercentage)} data-testid={`match-badge-${opp.id}`}>
+                <CardTitle className="text-sm mb-2 leading-tight">{opp.title}</CardTitle>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Badge className={`${getMatchColor(opp.matchPercentage)} text-xs px-2 py-0 justify-center`} data-testid={`match-badge-${opp.id}`}>
                     {opp.matchPercentage}% Match
                   </Badge>
                   {opp.category && (
-                    <Badge variant="outline">{opp.category}</Badge>
+                    <Badge variant="outline" className="text-xs px-2 py-0 justify-center">{opp.category}</Badge>
                   )}
                   {opp.isRemote && (
-                    <Badge variant="secondary">Remote</Badge>
+                    <Badge variant="secondary" className="text-xs px-2 py-0 justify-center">Remote</Badge>
                   )}
                 </div>
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+          <CardContent className="p-3 pt-0">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
               {opp.description}
             </p>
 
-            <div className="space-y-2 mb-4">
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <MapPin className="h-4 w-4 mr-2" />
-                <span>{opp.location || "Location not specified"}</span>
+            <div className="space-y-1.5 mb-3">
+              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                <span className="truncate">{opp.location || "Location not specified"}</span>
               </div>
               {opp.volunteersNeeded && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                  <Users className="h-4 w-4 mr-2" />
+                <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                  <Users className="h-3 w-3 mr-1.5 flex-shrink-0" />
                   <span>{opp.volunteersNeeded} volunteers needed</span>
                 </div>
               )}
               {opp.commitmentType && (
-                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                  <Calendar className="h-4 w-4 mr-2" />
+                <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                  <Calendar className="h-3 w-3 mr-1.5 flex-shrink-0" />
                   <span className="capitalize">{opp.commitmentType}</span>
                 </div>
               )}
             </div>
 
             {opp.requiredSkills && opp.requiredSkills.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Required Skills:</p>
-                <div className="flex flex-wrap gap-1">
-                  {opp.requiredSkills.slice(0, 5).map((skill, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
+              <div className="mb-3">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {opp.requiredSkills.slice(0, 4).map((skill, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs px-2 py-0 justify-center truncate">
                       {skill}
                     </Badge>
                   ))}
-                  {opp.requiredSkills.length > 5 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{opp.requiredSkills.length - 5} more
+                  {opp.requiredSkills.length > 4 && (
+                    <Badge variant="outline" className="text-xs px-2 py-0 justify-center">
+                      +{opp.requiredSkills.length - 4}
                     </Badge>
                   )}
                 </div>
@@ -178,28 +178,28 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
             )}
 
             {opp.matchReasons && opp.matchReasons.length > 0 && (
-              <div className="mb-4">
-                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Why this matches:</p>
-                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                  {opp.matchReasons.slice(0, 3).map((reason, idx) => (
+              <div className="mb-3">
+                <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Why this matches:</p>
+                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
+                  {opp.matchReasons.slice(0, 2).map((reason, idx) => (
                     <li key={idx} className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>{reason}</span>
+                      <span className="mr-1.5">•</span>
+                      <span className="line-clamp-1">{reason}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Link href={`/opportunities/${opp.id}`}>
-                <Button size="sm" className="flex-1" data-testid={`view-opportunity-${opp.id}`}>
-                  View Details
+                <Button size="sm" className="w-full text-xs h-7" data-testid={`view-opportunity-${opp.id}`}>
+                  View
                 </Button>
               </Link>
               <Link href={`/opportunities/${opp.id}`}>
-                <Button size="sm" variant="outline" data-testid={`apply-opportunity-${opp.id}`}>
-                  Apply Now
+                <Button size="sm" variant="outline" className="w-full text-xs h-7" data-testid={`apply-opportunity-${opp.id}`}>
+                  Apply
                 </Button>
               </Link>
             </div>

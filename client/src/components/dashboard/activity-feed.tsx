@@ -41,46 +41,46 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
 
   return (
     <Card>
-      <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700">
-        <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
+      <CardHeader className="pb-2 border-b border-gray-200 dark:border-gray-700 p-3">
+        <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="space-y-4">
+      <CardContent className="p-2">
+        <div className="space-y-2">
           {activities.map((activity) => (
             <div 
               key={activity.id}
               onClick={() => setSelectedActivity(activity)}
-              className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-2 px-2 py-1 rounded transition-colors cursor-pointer"
+              className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-1 px-1 py-1 rounded transition-colors cursor-pointer"
               data-testid={`activity-item-${activity.id}`}
             >
-              <div className="flex-shrink-0 mr-3">
+              <div className="flex-shrink-0 mr-2">
                 {activity.isSystem ? (
-                  <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <BellIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                  <div className="h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                    <BellIcon className="h-3 w-3 text-primary-600 dark:text-primary-400" />
                   </div>
                 ) : (
-                  <Avatar className="h-8 w-8">
+                  <Avatar className="h-6 w-6">
                     <AvatarImage src={activity.user?.avatar} alt={`${activity.user?.name} avatar`} />
-                    <AvatarFallback>{activity.user?.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="text-xs">{activity.user?.name.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}
               </div>
               <div>
-                <p className="text-sm">
+                <p className="text-xs leading-tight">
                   <span className="font-medium">
                     {activity.isSystem ? "System" : activity.user?.name}
                   </span>
                   <span className="text-gray-600 dark:text-gray-400"> {activity.action} </span>
                   <span className="font-medium">{activity.target}</span>
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.time}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-4 text-center">
+        <div className="mt-3 text-center">
           <Link href="/dashboard">
-            <a className="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">View all activity</a>
+            <a className="text-xs text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">View all activity</a>
           </Link>
         </div>
       </CardContent>

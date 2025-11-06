@@ -2,28 +2,8 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Users, Wheat, HeartPulse, GraduationCap, Scale, Droplets, Zap, TrendingUp, Cog, BarChart, Building2, Recycle, Cloud, Fish, Trees, Landmark, Network } from "lucide-react";
-
-// SDG Icon mapping using Lucide icons
-const SDG_ICONS = {
-  1: Users,
-  2: Wheat,
-  3: HeartPulse,
-  4: GraduationCap,
-  5: Scale,
-  6: Droplets,
-  7: Zap,
-  8: TrendingUp,
-  9: Cog,
-  10: BarChart,
-  11: Building2,
-  12: Recycle,
-  13: Cloud,
-  14: Fish,
-  15: Trees,
-  16: Landmark,
-  17: Network
-};
+import { ExternalLink } from "lucide-react";
+import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 
 const SDG_DATA = [
   {
@@ -168,41 +148,30 @@ export function SDGWheel() {
   const [selectedSDG, setSelectedSDG] = useState<typeof SDG_DATA[0] | null>(null);
 
   const renderSDGGrid = () => {
+    // Sort SDG_DATA by ID to ensure numerical order
+    const sortedSDGData = [...SDG_DATA].sort((a, b) => a.id - b.id);
+    
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto">
-        {SDG_DATA.map((sdg) => {
-          const IconComponent = SDG_ICONS[sdg.id as keyof typeof SDG_ICONS];
+        {sortedSDGData.map((sdg) => {
+          const sdgIcon = UN_SDG_ICONS[sdg.id];
           return (
             <button
               key={sdg.id}
               onClick={() => setSelectedSDG(sdg)}
               className="group relative rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               style={{ 
-                backgroundColor: sdg.color,
                 aspectRatio: '1/1',
                 minHeight: '140px'
               }}
               data-testid={`sdg-button-${sdg.id}`}
             >
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-              
-              {/* Content container */}
-              <div className="relative h-full flex flex-col justify-between p-3 sm:p-4 text-white">
-                {/* Top section with number and title */}
-                <div className="flex flex-col items-start flex-1">
-                  <div className="text-2xl sm:text-3xl font-extrabold mb-1 sm:mb-2">{sdg.id}</div>
-                  <div className="text-xs sm:text-sm md:text-base font-extrabold leading-snug text-left uppercase w-full">
-                    {sdg.title}
-                  </div>
-                </div>
-                
-                {/* Bottom section with large UN-style icon */}
-                <div className="flex justify-center items-end pb-2">
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 flex items-center justify-center">
-                    <IconComponent className="w-full h-full text-white drop-shadow-lg" strokeWidth={2.5} fill="white" fillOpacity={0.2} />
-                  </div>
-                </div>
-              </div>
+              {/* UN SDG Official Graphic */}
+              <img 
+                src={sdgIcon} 
+                alt={`SDG ${sdg.id}: ${sdg.title}`}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-3">

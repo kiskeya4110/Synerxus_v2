@@ -39,42 +39,42 @@ export default function TaskTable({ tasks }: TaskTableProps) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-gray-200 dark:border-gray-700">
-        <CardTitle className="text-lg font-semibold">Recent Tasks</CardTitle>
-        <a href="#" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">View All</a>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 border-b border-gray-200 dark:border-gray-700 p-3">
+        <CardTitle className="text-base font-semibold">Recent Tasks</CardTitle>
+        <a href="#" className="text-xs text-primary-600 dark:text-primary-400 hover:underline">View All</a>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-2">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[200px]">Task</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Due Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Assignee</TableHead>
+                <TableHead className="w-[180px] text-xs py-2">Task</TableHead>
+                <TableHead className="text-xs py-2">Project</TableHead>
+                <TableHead className="text-xs py-2">Due Date</TableHead>
+                <TableHead className="text-xs py-2">Status</TableHead>
+                <TableHead className="text-xs py-2">Assignee</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tasks.map((task) => (
                 <TableRow key={task.id}>
-                  <TableCell className="font-medium">{task.name}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{task.project}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400">{task.dueDate}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusBadgeClasses(task.status)}>
+                  <TableCell className="font-medium text-xs py-2">{task.name}</TableCell>
+                  <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.project}</TableCell>
+                  <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.dueDate}</TableCell>
+                  <TableCell className="py-2">
+                    <Badge variant="outline" className={`${getStatusBadgeClasses(task.status)} text-xs px-2 py-0`}>
                       {task.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-2">
                     {task.assignee ? (
-                      <Avatar className="h-6 w-6">
+                      <Avatar className="h-5 w-5">
                         <AvatarImage src={task.assignee.avatar} alt={`${task.assignee.name} avatar`} />
-                        <AvatarFallback>{task.assignee.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback className="text-xs">{task.assignee.name.charAt(0)}</AvatarFallback>
                       </Avatar>
                     ) : (
-                      <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs">
-                        <PlusIcon className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                      <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                        <PlusIcon className="h-2.5 w-2.5 text-gray-500 dark:text-gray-400" />
                       </div>
                     )}
                   </TableCell>

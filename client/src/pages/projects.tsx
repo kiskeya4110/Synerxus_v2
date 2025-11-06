@@ -59,6 +59,19 @@ export default function Projects() {
     queryKey: ["/api/project-assignments"]
   });
 
+  // Fetch opportunities for the organization
+  const { data: opportunities = [] } = useQuery<any[]>({
+    queryKey: ["/api/opportunities", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/opportunities?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!currentUser && !!userId
+  });
+
   const toggleProject = (projectId: number) => {
     const newExpanded = new Set(expandedProjects);
     if (newExpanded.has(projectId)) {
@@ -202,6 +215,62 @@ export default function Projects() {
                     </div>
                   </div>
                 </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Posted Opportunities Section */}
+      {currentUser?.userType === "organization" && opportunities.length > 0 && (
+        <div className="mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Posted Opportunities ({opportunities.length})</CardTitle>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Your active volunteer opportunities. Core opportunities and urgent needs posted for matching.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {opportunities.map((opp: any) => (
+                  <div key={opp.id} className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-2 rounded-lg ${opp.isUrgent ? 'bg-amber-500/10' : 'bg-primary/10'}`}>
+                          {opp.isUrgent ? (
+                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                          ) : (
+                            <Briefcase className="h-4 w-4 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900 dark:text-white">{opp.title}</h3>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline" className={opp.isUrgent ? 'bg-amber-50 text-amber-700 border-amber-200' : ''}>
+                              {opp.isUrgent ? 'Urgent Need' : 'Core Opportunity'}
+                            </Badge>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                              {opp.status}
+                            </Badge>
+                            {opp.isRemote && <Badge variant="secondary">Remote</Badge>}
+                          </div>
+                        </div>
+                      </div>
+                      <Link href={`/opportunities/${opp.id}`}>
+                        <Button size="sm" variant="outline">View</Button>
+                      </Link>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 ml-10">
+                      {opp.description}
+                    </p>
+                    <div className="flex flex-wrap gap-4 mt-2 ml-10 text-xs text-gray-500">
+                      {opp.location && <span>📍 {opp.location}</span>}
+                      {opp.volunteersNeeded && <span>👥 {opp.volunteersNeeded} needed</span>}
+                      {opp.eventDate && <span>📅 {new Date(opp.eventDate).toLocaleDateString()}</span>}
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

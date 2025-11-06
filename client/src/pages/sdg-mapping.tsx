@@ -431,6 +431,17 @@ export default function SDGMapping() {
                         font: {
                           size: 12,
                         },
+                        callback: function(label: string) {
+                          // Wrap labels to max 2 words per line for better visibility
+                          const words = label.split(' ');
+                          if (words.length <= 2) return label;
+                          
+                          const lines: string[] = [];
+                          for (let i = 0; i < words.length; i += 2) {
+                            lines.push(words.slice(i, i + 2).join(' '));
+                          }
+                          return lines;
+                        },
                       },
                     },
                   },

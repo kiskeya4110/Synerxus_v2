@@ -217,7 +217,7 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {sdgsToDisplay.map((goal: number) => (
+                {[...sdgsToDisplay].sort((a: number, b: number) => a - b).map((goal: number) => (
                   <div key={goal} className="flex items-center gap-2 p-2 border rounded">
                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
                       {goal}

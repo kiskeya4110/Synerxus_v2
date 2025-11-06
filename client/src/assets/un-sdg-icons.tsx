@@ -1,5 +1,5 @@
 import sdg1 from '@assets/stock_images/E_SDG_PRINT-01.jpg';
-import sdg2 from'@assets/stock_images/E_SDG_PRINT-02.jpg';
+import sdg2 from '@assets/stock_images/E_SDG_PRINT-02.jpg';
 import sdg3 from '@assets/stock_images/E_SDG_PRINT-03.jpg';
 import sdg4 from '@assets/stock_images/E_SDG_PRINT-04.jpg';
 import sdg5 from '@assets/stock_images/E_SDG_PRINT-05.jpg';

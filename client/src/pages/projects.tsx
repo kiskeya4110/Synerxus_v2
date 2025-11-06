@@ -10,7 +10,8 @@ import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { CreateProjectDialog, EditProjectDialog, DeleteProjectDialog } from "@/components/projects/project-dialogs";
 import { CreateTaskDialog, EditTaskDialog, DeleteTaskDialog } from "@/components/projects/task-dialogs";
-import type { Project, Task, ProjectAssignment, User } from "@shared/schema";
+import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
+import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
 interface ProjectWithDetails extends Project {
   tasks?: Task[];
@@ -60,7 +61,7 @@ export default function Projects() {
   });
 
   // Fetch opportunities for the organization
-  const { data: opportunities = [] } = useQuery<any[]>({
+  const { data: opportunities = [] } = useQuery<Opportunity[]>({
     queryKey: ["/api/opportunities", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
@@ -136,6 +137,12 @@ export default function Projects() {
       default:
         return "bg-gray-100 text-gray-800";
     }
+  };
+
+  const getProjectName = (projectId: number | null | undefined) => {
+    if (!projectId) return null;
+    const project = projects.find(p => p.id === projectId);
+    return project?.name || null;
   };
 
   const filteredProjects = projects.filter(project =>
@@ -233,10 +240,10 @@ export default function Projects() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {opportunities.map((opp: any) => (
+                {opportunities.map((opp) => (
                   <div key={opp.id} className="p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                     <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-1">
                         <div className={`p-2 rounded-lg ${opp.isUrgent ? 'bg-amber-500/10' : 'bg-primary/10'}`}>
                           {opp.isUrgent ? (
                             <AlertCircle className="h-4 w-4 text-amber-600" />
@@ -257,9 +264,13 @@ export default function Projects() {
                           </div>
                         </div>
                       </div>
-                      <Link href={`/opportunities/${opp.id}`}>
-                        <Button size="sm" variant="outline">View</Button>
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/opportunities/${opp.id}`}>
+                          <Button size="sm" variant="outline" data-testid={`button-view-opportunity-${opp.id}`}>View</Button>
+                        </Link>
+                        <EditOpportunityDialog opportunity={opp} />
+                        <DeleteOpportunityDialog opportunity={opp} />
+                      </div>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 ml-10">
                       {opp.description}
@@ -268,6 +279,9 @@ export default function Projects() {
                       {opp.location && <span>📍 {opp.location}</span>}
                       {opp.volunteersNeeded && <span>👥 {opp.volunteersNeeded} needed</span>}
                       {opp.eventDate && <span>📅 {new Date(opp.eventDate).toLocaleDateString()}</span>}
+                      {opp.projectId && getProjectName(opp.projectId) && (
+                        <span className="font-medium text-primary">🔗 {getProjectName(opp.projectId)}</span>
+                      )}
                     </div>
                   </div>
                 ))}

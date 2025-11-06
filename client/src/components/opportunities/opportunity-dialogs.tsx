@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Plus, Pencil, Trash2 } from "lucide-react";
-import type { Opportunity, User } from "@shared/schema";
+import type { Opportunity, User, Project } from "@shared/schema";
 
 const opportunityFormSchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -30,6 +30,7 @@ const opportunityFormSchema = z.object({
   benefits: z.string().optional(),
   requirements: z.string().optional(),
   status: z.enum(["open", "closed", "filled"]).default("open"),
+  projectId: z.number().optional(),
 });
 
 type OpportunityFormValues = z.infer<typeof opportunityFormSchema>;
@@ -41,6 +42,20 @@ interface CreateOpportunityDialogProps {
 export function CreateOpportunityDialog({ organizationId }: CreateOpportunityDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  // Fetch organization's projects for linking
+  const userId = localStorage.getItem('currentUserId');
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/projects?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId && open
+  });
 
   const form = useForm<OpportunityFormValues>({
     resolver: zodResolver(opportunityFormSchema),
@@ -58,6 +73,7 @@ export function CreateOpportunityDialog({ organizationId }: CreateOpportunityDia
       benefits: "",
       requirements: "",
       status: "open",
+      projectId: undefined,
     },
   });
 
@@ -156,6 +172,24 @@ export function CreateOpportunityDialog({ organizationId }: CreateOpportunityDia
                   <SelectItem value="technology">Technology</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="projectId">Link to Project (Optional)</Label>
+              <Select onValueChange={(value) => form.setValue("projectId", value === "none" ? undefined : parseInt(value))}>
+                <SelectTrigger data-testid="select-project-link">
+                  <SelectValue placeholder="Select a project to link" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No project link</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">Link this opportunity to a specific project for better task management</p>
             </div>
 
             <div>
@@ -312,6 +346,20 @@ export function EditOpportunityDialog({ opportunity }: EditOpportunityDialogProp
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
+  // Fetch organization's projects for linking
+  const userId = localStorage.getItem('currentUserId');
+  const { data: projects = [] } = useQuery<Project[]>({
+    queryKey: ["/api/projects", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/projects?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId && open
+  });
+
   const form = useForm<OpportunityFormValues>({
     resolver: zodResolver(opportunityFormSchema),
     defaultValues: {
@@ -328,6 +376,7 @@ export function EditOpportunityDialog({ opportunity }: EditOpportunityDialogProp
       benefits: opportunity.benefits || "",
       requirements: opportunity.requirements || "",
       status: (opportunity.status as "open" | "closed" | "filled") || "open",
+      projectId: opportunity.projectId || undefined,
     },
   });
 
@@ -426,6 +475,27 @@ export function EditOpportunityDialog({ opportunity }: EditOpportunityDialogProp
                   <SelectItem value="technology">Technology</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="edit-projectId">Link to Project (Optional)</Label>
+              <Select 
+                value={form.watch("projectId")?.toString() || "none"}
+                onValueChange={(value) => form.setValue("projectId", value === "none" ? undefined : parseInt(value))}
+              >
+                <SelectTrigger data-testid="select-edit-project-link">
+                  <SelectValue placeholder="Select a project to link" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No project link</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500 mt-1">Link this opportunity to a specific project for better task management</p>
             </div>
 
             <div>

@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Award, Target, MapPin, Heart } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import SDGIcons from "@/assets/sdg-icons";
 
 const SDG_LABELS: Record<number, string> = {
   1: "No Poverty",
@@ -186,21 +188,36 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
               <Target className="h-4 w-4" />
               <span>{isVolunteer ? "SDG Goals" : "Primary SDGs"}</span>
             </div>
-            <div className="space-y-1">
-              {(isVolunteer ? profile.sdgGoals : profile.primarySdgs).slice(0, 3).map((goal: number) => (
-                <div key={goal} className="flex items-center gap-2 text-xs" data-testid={`sdg-goal-${goal}`}>
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
-                    {goal}
-                  </div>
-                  <span className="text-sm">{SDG_LABELS[goal]}</span>
-                </div>
-              ))}
-              {(isVolunteer ? profile.sdgGoals : profile.primarySdgs).length > 3 && (
-                <p className="text-xs text-muted-foreground ml-8" data-testid="text-sdg-more">
-                  +{(isVolunteer ? profile.sdgGoals : profile.primarySdgs).length - 3} more goals
-                </p>
-              )}
-            </div>
+            <TooltipProvider>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {[...(isVolunteer ? profile.sdgGoals : profile.primarySdgs)]
+                  .sort((a: number, b: number) => a - b)
+                  .map((goal: number) => (
+                    <Tooltip key={goal}>
+                      <TooltipTrigger>
+                        <div 
+                          className="flex flex-col items-center gap-1 p-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          data-testid={`sdg-goal-${goal}`}
+                        >
+                          {SDGIcons[goal] ? (
+                            SDGIcons[goal]({ width: 40, height: 40 })
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                              {goal}
+                            </div>
+                          )}
+                          <span className="text-xs text-center line-clamp-1 font-medium">
+                            {SDG_LABELS[goal]}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>SDG {goal}: {SDG_LABELS[goal]}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+              </div>
+            </TooltipProvider>
           </div>
         )}
 

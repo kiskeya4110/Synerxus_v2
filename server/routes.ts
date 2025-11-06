@@ -1038,6 +1038,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Accept/Reject application with automatic project assignment
+  app.post("/api/applications/:id/review", async (req, res) => {
+    try {
+      const applicationId = parseInt(req.params.id);
+      const { status, notes, reviewerId } = req.body;
+      
+      if (!status || !["accepted", "rejected"].includes(status)) {
+        return res.status(400).json({ message: "Status must be 'accepted' or 'rejected'" });
+      }
+      
+      // Get application details
+      const application = await storage.getApplication(applicationId);
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      
+      // Get opportunity details to find the project
+      const opportunity = await storage.getOpportunity(application.opportunityId);
+      if (!opportunity) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+      
+      // Update application status
+      const updatedApplication = await storage.updateApplication(applicationId, {
+        status,
+        reviewedAt: new Date(),
+        reviewedBy: reviewerId || null,
+        notes: notes || null
+      });
+      
+      if (!updatedApplication) {
+        return res.status(500).json({ message: "Failed to update application" });
+      }
+      
+      // If accepted, assign volunteer to project (if opportunity is linked to a project)
+      if (status === "accepted" && opportunity.projectId) {
+        // Check if assignment already exists
+        const existingAssignments = await storage.listProjectAssignmentsByProject(opportunity.projectId);
+        const alreadyAssigned = existingAssignments.some(
+          (assignment: any) => assignment.volunteerId === application.volunteerId
+        );
+        
+        if (!alreadyAssigned) {
+          // Create project assignment
+          await storage.createProjectAssignment({
+            projectId: opportunity.projectId,
+            volunteerId: application.volunteerId,
+            role: "Volunteer",
+            assignedAt: new Date()
+          });
+          
+          // Create activity entry for the assignment
+          await storage.createVolunteerActivity({
+            userId: application.volunteerId,
+            projectId: opportunity.projectId,
+            description: `Accepted application for ${opportunity.title}`,
+            date: new Date(),
+            hours: 0
+          });
+        }
+      }
+      
+      broadcastUpdate("application_reviewed", updatedApplication);
+      res.json(updatedApplication);
+    } catch (err) {
+      console.error("Error reviewing application:", err);
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
   // === Match Score Route ===
   app.get("/api/opportunities/:id/match-score", async (req, res) => {
     try {

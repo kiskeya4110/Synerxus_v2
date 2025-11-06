@@ -29,6 +29,8 @@ import VolunteerIntake from "@/pages/volunteer-intake";
 import OrganizationIntake from "@/pages/organization-intake";
 import PostCoreOpportunity from "@/pages/post-core-opportunity";
 import PostUrgentOpportunity from "@/pages/post-urgent-opportunity";
+import Applications from "@/pages/applications";
+import MyApplications from "@/pages/my-applications";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -56,6 +58,8 @@ function Router() {
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
       <Route path="/post-urgent-opportunity" component={PostUrgentOpportunity} />
+      <Route path="/applications" component={Applications} />
+      <Route path="/my-applications" component={MyApplications} />
       <Route path="/my-tasks" component={MyTasks} />
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile" component={VolunteerProfile} />

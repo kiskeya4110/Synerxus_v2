@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Mail, MapPin, Award, Briefcase, Target, Users } from "lucide-react";
+import SDGIcons from "@/assets/sdg-icons";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -216,16 +218,31 @@ export default function Profile() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {[...sdgsToDisplay].sort((a: number, b: number) => a - b).map((goal: number) => (
-                  <div key={goal} className="flex items-center gap-2 p-2 border rounded">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
-                      {goal}
-                    </div>
-                    <span className="text-sm">{SDG_LABELS[goal as keyof typeof SDG_LABELS]}</span>
-                  </div>
-                ))}
-              </div>
+              <TooltipProvider>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {[...sdgsToDisplay].sort((a: number, b: number) => a - b).map((goal: number) => (
+                    <Tooltip key={goal}>
+                      <TooltipTrigger>
+                        <div className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          {SDGIcons[goal] ? (
+                            SDGIcons[goal]({ width: 60, height: 60 })
+                          ) : (
+                            <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                              {goal}
+                            </div>
+                          )}
+                          <span className="text-xs text-center line-clamp-2 font-medium">
+                            {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>SDG {goal}: {SDG_LABELS[goal as keyof typeof SDG_LABELS]}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              </TooltipProvider>
             </CardContent>
           </Card>
         )}

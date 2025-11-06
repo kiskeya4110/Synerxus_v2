@@ -11,6 +11,7 @@ Preferred communication style: Simple, everyday language.
 ## Recent Changes (November 2025)
 
 ### Latest Updates
+- **Mobile UX Optimization** (Nov 2025): Comprehensive mobile improvements including responsive button sizing (all buttons 10-15% smaller on mobile), SDG radar chart label wrapping (max 2 words per line), and UN graphics integration in dashboard SDG project cards. Profile tab Primary SDG Focus Areas now sorted numerically 1-17.
 - **Date Handling Fix**: Resolved critical opportunity save/update error ("toISOString is not a function"). Schema now handles both string and Date inputs with proper transformation. PATCH route uses `insertOpportunitySchema.partial()` for partial updates while maintaining validation.
 - **SDG Numerical Sorting**: All SDG displays (SDG Mapping page, project detail cards, profile settings) now show goals in numerical order 1-17 using `.sort((a, b) => a.id - b.id)`.
 - **SDG Mapping Project Filter**: Added project filter dropdown to SDG Mapping page. When selected, all analytics (radar chart, statistics cards, connected projects) dynamically update to show only that project's data.

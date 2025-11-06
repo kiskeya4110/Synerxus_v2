@@ -955,7 +955,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/opportunities/:id", async (req, res) => {
     try {
       const opportunityId = parseInt(req.params.id);
-      const opportunityData = req.body;
+      const opportunityData = insertOpportunitySchema.partial().parse(req.body);
       
       const updatedOpportunity = await storage.updateOpportunity(opportunityId, opportunityData);
       if (!updatedOpportunity) {

@@ -385,7 +385,7 @@ export default function ProjectDetail() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
-              {project.sdgGoals.map((sdg: number) => (
+              {[...project.sdgGoals].sort((a, b) => a - b).map((sdg: number) => (
                 <div
                   key={sdg}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium"

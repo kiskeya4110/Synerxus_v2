@@ -6,8 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "@/components/layout/theme-provider";
-import { Loader2, BarChart, ExternalLink } from "lucide-react";
+import { Loader2, BarChart, ExternalLink, Filter } from "lucide-react";
 import SDGIcons from "@/assets/sdg-icons";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { Radar } from "react-chartjs-2";
@@ -54,6 +55,7 @@ const SDG_METADATA: Record<number, { title: string; description: string }> = {
 export default function SDGMapping() {
   const { theme } = useTheme();
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [, navigate] = useLocation();
   
   // Fetch current user to get organization ID
@@ -104,6 +106,15 @@ export default function SDGMapping() {
   // Use scoped data from queries
   const organizationProjects = projects;
   
+  // Filter projects based on selectedProjectFilter
+  const filteredProjects = useMemo(() => {
+    if (!organizationProjects || organizationProjects.length === 0) return [];
+    if (selectedProjectFilter === "all") {
+      return organizationProjects;
+    }
+    return organizationProjects.filter((p: any) => p.id.toString() === selectedProjectFilter);
+  }, [organizationProjects, selectedProjectFilter]);
+  
   // Fetch impact metrics
   const { data: impactMetrics = [], isLoading: loadingMetrics } = useQuery({
     queryKey: ["/api/impact-metrics"],
@@ -152,11 +163,11 @@ export default function SDGMapping() {
       });
     });
     
-    // Create a Set of organization project IDs for filtering
-    const orgProjectIds = new Set(organizationProjects.map((p: any) => p.id));
+    // Create a Set of filtered project IDs for filtering
+    const orgProjectIds = new Set(filteredProjects.map((p: any) => p.id));
     
-    // Count projects per SDG
-    organizationProjects.forEach((project: any) => {
+    // Count projects per SDG (using filtered projects)
+    filteredProjects.forEach((project: any) => {
       if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
         project.sdgGoals.forEach((sdg: number) => {
           const existing = sdgMap.get(sdg);
@@ -194,8 +205,8 @@ export default function SDGMapping() {
       }
     });
     
-    return Array.from(sdgMap.values());
-  }, [organizationProjects, impactMetrics, projectImpacts, organizationSDGs]);
+    return Array.from(sdgMap.values()).sort((a, b) => a.id - b.id);
+  }, [filteredProjects, impactMetrics, projectImpacts, organizationSDGs]);
   
   // Initialize selectedSDG to first available org SDG when data loads
   useEffect(() => {
@@ -208,7 +219,7 @@ export default function SDGMapping() {
   }, [sdgData, selectedSDG]);
 
   const selectedData = selectedSDG ? sdgData.find(sdg => sdg.id === selectedSDG) : null;
-  const relatedProjects = selectedSDG ? organizationProjects.filter((project: any) => 
+  const relatedProjects = selectedSDG ? filteredProjects.filter((project: any) => 
     project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(selectedSDG)
   ) : [];
   
@@ -222,8 +233,8 @@ export default function SDGMapping() {
       projectDistribution.set(sdgId, 0);
     });
     
-    // Count projects per SDG (1 per each)
-    organizationProjects.forEach((project: any) => {
+    // Count projects per SDG (1 per each, using filtered projects)
+    filteredProjects.forEach((project: any) => {
       if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
         project.sdgGoals.forEach((sdg: number) => {
           if (projectDistribution.has(sdg)) {
@@ -278,7 +289,7 @@ export default function SDGMapping() {
         },
       ],
     };
-  }, [organizationSDGs, organizationProjects]);
+  }, [organizationSDGs, filteredProjects]);
   
   const isLoading = loadingUser || loadingProjects || loadingImpacts || loadingMetrics;
   
@@ -325,6 +336,33 @@ export default function SDGMapping() {
           Connect volunteer activities to Sustainable Development Goals and track impact
         </p>
       </div>
+
+      {/* Project Filter */}
+      {organizationProjects.length > 1 && (
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <Filter className="h-5 w-5 text-gray-500" />
+              <div className="flex-1">
+                <label className="text-sm font-medium mb-2 block">Filter by Project</label>
+                <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
+                  <SelectTrigger className="w-full sm:w-80" data-testid="select-project-filter">
+                    <SelectValue placeholder="Select project to filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
+                    {organizationProjects.map((project: any) => (
+                      <SelectItem key={project.id} value={project.id.toString()}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       {/* Spider Web Chart - SDG Comparison */}
       {radarChartData && (
@@ -332,25 +370,25 @@ export default function SDGMapping() {
           <CardHeader>
             <CardTitle>SDG Focus vs. Project Distribution</CardTitle>
             <CardDescription>
-              Compare your organization's selected SDG focus areas from Settings with your actual project distribution across {organizationProjects.length} active {organizationProjects.length === 1 ? 'project' : 'projects'}
+              Compare your organization's selected SDG focus areas from Settings with your actual project distribution across {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'} {selectedProjectFilter !== 'all' ? '(filtered)' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
               <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                 <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">Total Projects</p>
-                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{organizationProjects.length}</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{filteredProjects.length}</p>
               </div>
               <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                 <p className="text-sm text-green-700 dark:text-green-300 font-medium">Completed Projects</p>
                 <p className="text-2xl font-bold text-green-900 dark:text-green-100">
-                  {organizationProjects.filter((p: any) => p.status?.toLowerCase() === 'completed').length}
+                  {filteredProjects.filter((p: any) => p.status?.toLowerCase() === 'completed').length}
                 </p>
               </div>
               <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
                 <p className="text-sm text-orange-700 dark:text-orange-300 font-medium">Active Projects</p>
                 <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">
-                  {organizationProjects.filter((p: any) => 
+                  {filteredProjects.filter((p: any) => 
                     p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
                   ).length}
                 </p>
@@ -358,10 +396,10 @@ export default function SDGMapping() {
               <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
                 <p className="text-sm text-purple-700 dark:text-purple-300 font-medium">Avg. Completion</p>
                 <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
-                  {organizationProjects.length > 0 
+                  {filteredProjects.length > 0 
                     ? Math.round(
-                        organizationProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / 
-                        organizationProjects.length
+                        filteredProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / 
+                        filteredProjects.length
                       )
                     : 0}%
                 </p>

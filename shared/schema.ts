@@ -409,9 +409,24 @@ export const insertOpportunitySchema = createInsertSchema(opportunities)
     updatedAt: true
   })
   .extend({
-    eventDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
-    startDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
-    endDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    eventDate: z.union([z.string(), z.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => {
+      if (val === "" || val === null || val === undefined) return null;
+      if (typeof val === 'string') return val; // Return string as-is for PostgreSQL
+      if (val instanceof Date) return val.toISOString(); // Convert Date to string
+      return val;
+    }),
+    startDate: z.union([z.string(), z.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => {
+      if (val === "" || val === null || val === undefined) return null;
+      if (typeof val === 'string') return val; // Return string as-is for PostgreSQL
+      if (val instanceof Date) return val.toISOString(); // Convert Date to string
+      return val;
+    }),
+    endDate: z.union([z.string(), z.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => {
+      if (val === "" || val === null || val === undefined) return null;
+      if (typeof val === 'string') return val; // Return string as-is for PostgreSQL
+      if (val instanceof Date) return val.toISOString(); // Convert Date to string
+      return val;
+    }),
   });
 
 export const insertApplicationSchema = createInsertSchema(applications).omit({

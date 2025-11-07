@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { getSDGName, getSDGFullName, getSDGColor, getSDGNameWithNumber } from "@shared/sdg-goals";
-import SDGIcons from "@/assets/sdg-icons";
+import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 
 export interface SDGChartProps {
   projects?: any[];
@@ -191,8 +191,12 @@ export default function SDGChart({ projects = [], organizationSdgs }: SDGChartPr
                         <div className="flex gap-1 flex-wrap">
                           {project.sdgGoals.map((goal: number) => (
                             <div key={goal} className="inline-block" title={`SDG ${goal}: ${getSDGFullName(goal)}`}>
-                              {SDGIcons[goal] ? 
-                                SDGIcons[goal]({ width: 40, height: 40 }) 
+                              {UN_SDG_ICONS[goal] ? 
+                                <img 
+                                  src={UN_SDG_ICONS[goal]} 
+                                  alt={`SDG ${goal}`}
+                                  className="w-10 h-10 rounded"
+                                />
                                 : 
                                 <Badge 
                                   style={{ 

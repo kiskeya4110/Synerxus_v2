@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp } from "lucide-react";
-import SDGIcons from "@/assets/sdg-icons";
+import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { Radar } from "react-chartjs-2";
@@ -562,9 +562,13 @@ export default function SDGMapping() {
             style={{ backgroundColor: selectedSDG === sdg.id ? `${sdg.color}15` : '' }}
             data-testid={`button-sdg-${sdg.id}`}
           >
-            {SDGIcons[sdg.id] ? 
+            {UN_SDG_ICONS[sdg.id] ? 
               <div className="flex justify-center">
-                {SDGIcons[sdg.id]({ width: 50, height: 50 })}
+                <img 
+                  src={UN_SDG_ICONS[sdg.id]} 
+                  alt={`SDG ${sdg.id}`}
+                  className="w-12 h-12 sm:w-16 sm:h-16 rounded"
+                />
               </div>
               :
               <div 
@@ -587,8 +591,12 @@ export default function SDGMapping() {
           <CardHeader style={{ backgroundColor: `${selectedData.color}15` }} className="p-4 sm:p-6">
             <div className="flex items-start sm:items-center flex-col sm:flex-row gap-3 sm:gap-0">
               <div className="sm:mr-4">
-                {SDGIcons[selectedData.id] ? 
-                  SDGIcons[selectedData.id]({ width: 50, height: 50 }) 
+                {UN_SDG_ICONS[selectedData.id] ? 
+                  <img 
+                    src={UN_SDG_ICONS[selectedData.id]} 
+                    alt={`SDG ${selectedData.id}`}
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded"
+                  />
                   : 
                   <div 
                     className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold"

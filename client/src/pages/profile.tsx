@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Mail, MapPin, Award, Briefcase, Target, Users } from "lucide-react";
-import SDGIcons from "@/assets/sdg-icons";
+import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -224,8 +224,12 @@ export default function Profile() {
                     <Tooltip key={goal}>
                       <TooltipTrigger>
                         <div className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          {SDGIcons[goal] ? (
-                            SDGIcons[goal]({ width: 60, height: 60 })
+                          {UN_SDG_ICONS[goal] ? (
+                            <img 
+                              src={UN_SDG_ICONS[goal]} 
+                              alt={`SDG ${goal}`}
+                              className="w-15 h-15 rounded"
+                            />
                           ) : (
                             <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
                               {goal}

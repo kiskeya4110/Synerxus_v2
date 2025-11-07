@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Award, Target, MapPin, Heart } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import SDGIcons from "@/assets/sdg-icons";
+import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 
 const SDG_LABELS: Record<number, string> = {
   1: "No Poverty",
@@ -199,8 +199,12 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                           className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                           data-testid={`sdg-goal-${goal}`}
                         >
-                          {SDGIcons[goal] ? (
-                            SDGIcons[goal]({ width: 48, height: 48 })
+                          {UN_SDG_ICONS[goal] ? (
+                            <img 
+                              src={UN_SDG_ICONS[goal]} 
+                              alt={`SDG ${goal}`}
+                              className="w-12 h-12 rounded"
+                            />
                           ) : (
                             <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-base">
                               {goal}

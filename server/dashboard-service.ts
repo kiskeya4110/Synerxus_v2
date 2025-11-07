@@ -64,10 +64,8 @@ export async function getDashboardDataForOrganization(userId: number) {
       throw new Error("User is not an organization");
     }
 
-    const organizationId = user.organizationId;
-    if (!organizationId) {
-      throw new Error("User does not have an associated organization");
-    }
+    // Use organizationId if available, otherwise use userId (user IS the organization)
+    const organizationId = user.organizationId || userId;
 
     // Fetch ALL data (we'll filter below)
     const allProjects = await storage.listProjects();

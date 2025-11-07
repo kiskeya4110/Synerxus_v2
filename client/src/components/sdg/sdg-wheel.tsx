@@ -166,12 +166,24 @@ export function SDGWheel() {
               }}
               data-testid={`sdg-button-${sdg.id}`}
             >
-              {/* UN SDG Official Graphic */}
-              <img 
-                src={sdgIcon} 
-                alt={`SDG ${sdg.id}: ${sdg.title}`}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
+              {/* UN SDG Official Graphic or Fallback */}
+              {sdgIcon ? (
+                <img 
+                  src={sdgIcon} 
+                  alt={`SDG ${sdg.id}: ${sdg.title}`}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+              ) : (
+                <div 
+                  className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white"
+                  style={{ backgroundColor: sdg.color }}
+                >
+                  <div className="text-4xl font-bold mb-2">{sdg.id}</div>
+                  <div className="text-xs sm:text-sm font-semibold text-center leading-tight">
+                    {sdg.title}
+                  </div>
+                </div>
+              )}
               
               {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-3">

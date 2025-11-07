@@ -1109,6 +1109,143 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === Saved Opportunities Routes ===
+  app.post("/api/saved-opportunities", async (req, res) => {
+    try {
+      const { volunteerId, opportunityId, notes } = req.body;
+      
+      if (!volunteerId || !opportunityId) {
+        return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+      }
+      
+      // Check if already saved
+      const alreadySaved = await storage.isSavedOpportunity(volunteerId, opportunityId);
+      if (alreadySaved) {
+        return res.status(400).json({ message: "Opportunity already saved" });
+      }
+      
+      const savedOpp = await storage.saveOpportunity({ volunteerId, opportunityId, notes });
+      res.status(201).json(savedOpp);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/saved-opportunities", async (req, res) => {
+    try {
+      const { volunteerId, opportunityId } = req.query;
+      
+      if (!volunteerId || !opportunityId) {
+        return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+      }
+      
+      await storage.unsaveOpportunity(Number(volunteerId), Number(opportunityId));
+      res.status(204).send();
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/saved-opportunities", async (req, res) => {
+    try {
+      const volunteerId = req.query.volunteerId as string;
+      
+      if (!volunteerId) {
+        return res.status(400).json({ message: "volunteerId is required" });
+      }
+      
+      const saved = await storage.listSavedOpportunitiesByVolunteer(Number(volunteerId));
+      res.json(saved);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // === Rejected Opportunities Routes ===
+  app.post("/api/rejected-opportunities", async (req, res) => {
+    try {
+      const { volunteerId, opportunityId, reason } = req.body;
+      
+      if (!volunteerId || !opportunityId) {
+        return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+      }
+      
+      // Check if already rejected
+      const alreadyRejected = await storage.isRejectedOpportunity(volunteerId, opportunityId);
+      if (alreadyRejected) {
+        return res.status(400).json({ message: "Opportunity already rejected" });
+      }
+      
+      const rejectedOpp = await storage.rejectOpportunity({ volunteerId, opportunityId, reason });
+      res.status(201).json(rejectedOpp);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/rejected-opportunities", async (req, res) => {
+    try {
+      const { volunteerId, opportunityId } = req.query;
+      
+      if (!volunteerId || !opportunityId) {
+        return res.status(400).json({ message: "volunteerId and opportunityId are required" });
+      }
+      
+      await storage.unrejectOpportunity(Number(volunteerId), Number(opportunityId));
+      res.status(204).send();
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/rejected-opportunities", async (req, res) => {
+    try {
+      const volunteerId = req.query.volunteerId as string;
+      
+      if (!volunteerId) {
+        return res.status(400).json({ message: "volunteerId is required" });
+      }
+      
+      const rejected = await storage.listRejectedOpportunitiesByVolunteer(Number(volunteerId));
+      res.json(rejected);
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // Get opportunity status for a volunteer (saved/applied/rejected)
+  app.get("/api/opportunities/status", async (req, res) => {
+    try {
+      const volunteerId = req.query.volunteerId as string;
+      
+      if (!volunteerId) {
+        return res.status(400).json({ message: "volunteerId is required" });
+      }
+      
+      const vid = Number(volunteerId);
+      const [saved, rejected, applications] = await Promise.all([
+        storage.listSavedOpportunitiesByVolunteer(vid),
+        storage.listRejectedOpportunitiesByVolunteer(vid),
+        storage.listApplicationsByVolunteer(vid)
+      ]);
+      
+      const savedIds = saved.map(s => s.opportunityId);
+      const rejectedIds = rejected.map(r => r.opportunityId);
+      const appliedIds = applications.map(a => a.opportunityId);
+      
+      res.json({ savedIds, rejectedIds, appliedIds });
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
   // === Match Score Route ===
   app.get("/api/opportunities/:id/match-score", async (req, res) => {
     try {

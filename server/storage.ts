@@ -15,6 +15,8 @@ import {
   organizationProfiles,
   opportunities,
   applications,
+  savedOpportunities,
+  rejectedOpportunities,
   messages,
   type User, 
   type InsertUser,
@@ -48,6 +50,10 @@ import {
   type InsertOpportunity,
   type Application,
   type InsertApplication,
+  type SavedOpportunity,
+  type InsertSavedOpportunity,
+  type RejectedOpportunity,
+  type InsertRejectedOpportunity,
   type Message,
   type InsertMessage
 } from "@shared/schema";
@@ -125,6 +131,18 @@ export interface IStorage {
   listApplications(): Promise<any[]>;
   listApplicationsByOpportunity(opportunityId: number): Promise<any[]>;
   listApplicationsByVolunteer(volunteerId: number): Promise<any[]>;
+  
+  // Saved Opportunity operations
+  saveOpportunity(savedOpp: any): Promise<any>;
+  unsaveOpportunity(volunteerId: number, opportunityId: number): Promise<void>;
+  listSavedOpportunitiesByVolunteer(volunteerId: number): Promise<any[]>;
+  isSavedOpportunity(volunteerId: number, opportunityId: number): Promise<boolean>;
+  
+  // Rejected Opportunity operations
+  rejectOpportunity(rejectedOpp: any): Promise<any>;
+  unrejectOpportunity(volunteerId: number, opportunityId: number): Promise<void>;
+  listRejectedOpportunitiesByVolunteer(volunteerId: number): Promise<any[]>;
+  isRejectedOpportunity(volunteerId: number, opportunityId: number): Promise<boolean>;
 
   // Match score operations
   getMatchScore(opportunityId: number, volunteerId: number): Promise<any>;
@@ -494,6 +512,64 @@ export class DatabaseStorage implements IStorage {
 
   async listApplicationsByVolunteer(volunteerId: number): Promise<Application[]> {
     return await db.select().from(applications).where(eq(applications.volunteerId, volunteerId));
+  }
+
+  // Saved Opportunity operations
+  async saveOpportunity(savedOpp: InsertSavedOpportunity): Promise<SavedOpportunity> {
+    const [newSaved] = await db.insert(savedOpportunities).values(savedOpp).returning();
+    return newSaved;
+  }
+
+  async unsaveOpportunity(volunteerId: number, opportunityId: number): Promise<void> {
+    await db.delete(savedOpportunities).where(
+      and(
+        eq(savedOpportunities.volunteerId, volunteerId),
+        eq(savedOpportunities.opportunityId, opportunityId)
+      )
+    );
+  }
+
+  async listSavedOpportunitiesByVolunteer(volunteerId: number): Promise<SavedOpportunity[]> {
+    return await db.select().from(savedOpportunities).where(eq(savedOpportunities.volunteerId, volunteerId));
+  }
+
+  async isSavedOpportunity(volunteerId: number, opportunityId: number): Promise<boolean> {
+    const [result] = await db.select().from(savedOpportunities).where(
+      and(
+        eq(savedOpportunities.volunteerId, volunteerId),
+        eq(savedOpportunities.opportunityId, opportunityId)
+      )
+    );
+    return !!result;
+  }
+
+  // Rejected Opportunity operations
+  async rejectOpportunity(rejectedOpp: InsertRejectedOpportunity): Promise<RejectedOpportunity> {
+    const [newRejected] = await db.insert(rejectedOpportunities).values(rejectedOpp).returning();
+    return newRejected;
+  }
+
+  async unrejectOpportunity(volunteerId: number, opportunityId: number): Promise<void> {
+    await db.delete(rejectedOpportunities).where(
+      and(
+        eq(rejectedOpportunities.volunteerId, volunteerId),
+        eq(rejectedOpportunities.opportunityId, opportunityId)
+      )
+    );
+  }
+
+  async listRejectedOpportunitiesByVolunteer(volunteerId: number): Promise<RejectedOpportunity[]> {
+    return await db.select().from(rejectedOpportunities).where(eq(rejectedOpportunities.volunteerId, volunteerId));
+  }
+
+  async isRejectedOpportunity(volunteerId: number, opportunityId: number): Promise<boolean> {
+    const [result] = await db.select().from(rejectedOpportunities).where(
+      and(
+        eq(rejectedOpportunities.volunteerId, volunteerId),
+        eq(rejectedOpportunities.opportunityId, opportunityId)
+      )
+    );
+    return !!result;
   }
 
   // Match score operations

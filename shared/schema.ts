@@ -186,6 +186,7 @@ export const applications = pgTable("applications", {
   volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
   status: text("status").notNull().default("pending"), // pending, accepted, rejected, withdrawn
   coverLetter: text("cover_letter"),
+  resumeUrl: text("resume_url"), // URL or path to uploaded resume
   matchScore: integer("match_score"), // AI-calculated match score (0-100)
   appliedAt: timestamp("applied_at").defaultNow().notNull(),
   reviewedAt: timestamp("reviewed_at"),
@@ -193,6 +194,26 @@ export const applications = pgTable("applications", {
   notes: text("notes"), // Organization's notes about the application
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Saved Opportunities - track opportunities that volunteers have saved for later
+export const savedOpportunities = pgTable("saved_opportunities", {
+  id: serial("id").primaryKey(),
+  opportunityId: integer("opportunity_id").references(() => opportunities.id).notNull(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  savedAt: timestamp("saved_at").defaultNow().notNull(),
+  notes: text("notes"), // Personal notes about why they saved it
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Rejected Opportunities - track opportunities that volunteers have explicitly rejected
+export const rejectedOpportunities = pgTable("rejected_opportunities", {
+  id: serial("id").primaryKey(),
+  opportunityId: integer("opportunity_id").references(() => opportunities.id).notNull(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  rejectedAt: timestamp("rejected_at").defaultNow().notNull(),
+  reason: text("reason"), // Optional reason for rejection
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Volunteer Profiles - Extended volunteer information
@@ -215,6 +236,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   achievements: text("achievements").array(),
   phoneNumber: text("phone_number"),
   emergencyContact: jsonb("emergency_contact"), // {name, phone, relationship}
+  resumeUrl: text("resume_url"), // URL or path to default resume
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -435,6 +457,16 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
   updatedAt: true
 });
 
+export const insertSavedOpportunitySchema = createInsertSchema(savedOpportunities).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertRejectedOpportunitySchema = createInsertSchema(rejectedOpportunities).omit({
+  id: true,
+  createdAt: true
+});
+
 export const insertVolunteerProfileSchema = createInsertSchema(volunteerProfiles).omit({
   id: true,
   createdAt: true,
@@ -513,6 +545,12 @@ export type InsertOpportunity = z.infer<typeof insertOpportunitySchema>;
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
+
+export type SavedOpportunity = typeof savedOpportunities.$inferSelect;
+export type InsertSavedOpportunity = z.infer<typeof insertSavedOpportunitySchema>;
+
+export type RejectedOpportunity = typeof rejectedOpportunities.$inferSelect;
+export type InsertRejectedOpportunity = z.infer<typeof insertRejectedOpportunitySchema>;
 
 export type VolunteerProfile = typeof volunteerProfiles.$inferSelect;
 export type InsertVolunteerProfile = z.infer<typeof insertVolunteerProfileSchema>;

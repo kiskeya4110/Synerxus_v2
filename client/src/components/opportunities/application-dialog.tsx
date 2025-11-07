@@ -3,12 +3,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Opportunity } from "@shared/schema";
-import { MapPin, Clock, Sparkles } from "lucide-react";
+import { MapPin, Clock, Sparkles, FileText } from "lucide-react";
 
 interface ApplicationDialogProps {
   opportunity: Opportunity & { matchScore?: number; matchReasons?: string[] };
@@ -18,15 +19,13 @@ interface ApplicationDialogProps {
 
 export default function ApplicationDialog({ opportunity, open, onOpenChange }: ApplicationDialogProps) {
   const [coverLetter, setCoverLetter] = useState("");
+  const [resumeUrl, setResumeUrl] = useState("");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   const applyMutation = useMutation({
-    mutationFn: async (data: { opportunityId: number; coverLetter: string }) => {
-      // TODO: Get volunteerId from authenticated session instead of hardcoded value
-      return await apiRequest("POST", "/api/applications", {
-        ...data,
-        volunteerId: 1 // Temporary hardcoded value - replace with auth
-      });
+    mutationFn: async (data: { opportunityId: number; coverLetter: string; resumeUrl?: string; volunteerId: number }) => {
+      return await apiRequest("POST", "/api/applications", data);
     },
     onSuccess: () => {
       toast({
@@ -34,8 +33,10 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
         description: "Your application has been submitted successfully. The organization will review it soon.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/status"] });
       onOpenChange(false);
       setCoverLetter("");
+      setResumeUrl("");
     },
     onError: (error: Error) => {
       toast({
@@ -46,7 +47,33 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a PDF or Word document (.pdf, .doc, .docx)",
+          variant: "destructive",
+        });
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload a file smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setResumeFile(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!coverLetter.trim()) {
       toast({
@@ -56,9 +83,30 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
       });
       return;
     }
+
+    const userId = localStorage.getItem('currentUserId');
+    if (!userId) {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to apply for opportunities.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let finalResumeUrl = resumeUrl.trim() || undefined;
+
+    // If user uploaded a file, create a note about it
+    // For MVP, we'll just note the filename - proper file upload would require backend support
+    if (resumeFile) {
+      finalResumeUrl = `File: ${resumeFile.name} (${(resumeFile.size / 1024).toFixed(1)}KB)`;
+    }
+
     applyMutation.mutate({
       opportunityId: opportunity.id,
       coverLetter,
+      resumeUrl: finalResumeUrl,
+      volunteerId: Number(userId),
     });
   };
 
@@ -168,6 +216,59 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
               <p className="text-xs text-gray-500 mt-1">
                 Minimum 50 characters recommended
               </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="resume-file" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Upload Resume/CV (Optional)
+                </Label>
+                <Input
+                  id="resume-file"
+                  type="file"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleFileChange}
+                  className="mt-2"
+                  data-testid="input-resume-file"
+                />
+                {resumeFile && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    ✓ Selected: {resumeFile.name} ({(resumeFile.size / 1024).toFixed(1)}KB)
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Upload a PDF or Word document (max 5MB)
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="resume-url">
+                  Resume/CV Link
+                </Label>
+                <Input
+                  id="resume-url"
+                  type="url"
+                  placeholder="https://drive.google.com/... or https://your-website.com/resume.pdf"
+                  value={resumeUrl}
+                  onChange={(e) => setResumeUrl(e.target.value)}
+                  disabled={!!resumeFile}
+                  className="mt-2"
+                  data-testid="input-resume-url"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Or share a link to your resume from Google Drive, Dropbox, or your personal website
+                </p>
+              </div>
             </div>
 
             <DialogFooter>

@@ -28,13 +28,9 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
     <div className={cn("flex items-center gap-3", className)}>
       {showIcon && (
         <img 
-          src="/attached_assets/Untitled design_1762278844836.png" 
+          src="/attached_assets/Synerxus Modern Logo_1762068075617.png" 
           alt="Synerxus Logo" 
           className={cn(sizeClasses.logo, "object-contain flex-shrink-0")}
-          onError={(e) => {
-            console.error('Logo failed to load');
-            e.currentTarget.style.display = 'none';
-          }}
         />
       )}
       <span className={cn(sizeClasses.text, "font-bold whitespace-nowrap")}>

@@ -183,30 +183,30 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
         {/* SDG Goals - Use primarySdgs for organizations, sdgGoals for volunteers */}
         {((isVolunteer && profile?.sdgGoals && profile.sdgGoals.length > 0) || 
           (!isVolunteer && profile?.primarySdgs && profile.primarySdgs.length > 0)) && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <Target className="h-4 w-4" />
               <span>{isVolunteer ? "SDG Goals" : "Primary SDGs"}</span>
             </div>
             <TooltipProvider>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {[...(isVolunteer ? profile.sdgGoals : profile.primarySdgs)]
                   .sort((a: number, b: number) => a - b)
                   .map((goal: number) => (
                     <Tooltip key={goal}>
                       <TooltipTrigger>
                         <div 
-                          className="flex flex-col items-center gap-1 p-2 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                           data-testid={`sdg-goal-${goal}`}
                         >
                           {SDGIcons[goal] ? (
-                            SDGIcons[goal]({ width: 40, height: 40 })
+                            SDGIcons[goal]({ width: 48, height: 48 })
                           ) : (
-                            <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+                            <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-base">
                               {goal}
                             </div>
                           )}
-                          <span className="text-xs text-center line-clamp-1 font-medium">
+                          <span className="text-xs text-center line-clamp-2 font-medium leading-tight">
                             {SDG_LABELS[goal]}
                           </span>
                         </div>

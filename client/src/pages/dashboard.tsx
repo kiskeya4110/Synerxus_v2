@@ -508,39 +508,38 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Tabs defaultValue="tasks" className="w-full">
-            <TabsList className={`w-full grid ${dashboardType === 'volunteer' ? 'grid-cols-3' : 'grid-cols-2'}`}>
-              <TabsTrigger value="tasks">Tasks</TabsTrigger>
-              <TabsTrigger value="activity">Recent Activity</TabsTrigger>
-              {dashboardType === 'volunteer' && (
-                <TabsTrigger value="opportunities">Find Opportunities</TabsTrigger>
-              )}
-            </TabsList>
-            <TabsContent value="tasks" className="mt-4">
-              <TaskTable tasks={formatTasksForTable(filteredData.tasks, projects)} />
-            </TabsContent>
-            <TabsContent value="activity" className="mt-4">
-              <ActivityFeed activities={formattedActivities} />
-            </TabsContent>
+      {/* Tasks and Activity Section */}
+      <div className="w-full">
+        <Tabs defaultValue="tasks" className="w-full">
+          <TabsList className={`w-full grid ${dashboardType === 'volunteer' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="activity">Recent Activity</TabsTrigger>
             {dashboardType === 'volunteer' && (
-              <TabsContent value="opportunities" className="mt-4">
-                <OpportunitiesTab userId={userId} />
-              </TabsContent>
+              <TabsTrigger value="opportunities">Find Opportunities</TabsTrigger>
             )}
-          </Tabs>
-        </div>
+          </TabsList>
+          <TabsContent value="tasks" className="mt-4">
+            <TaskTable tasks={formatTasksForTable(filteredData.tasks, projects)} />
+          </TabsContent>
+          <TabsContent value="activity" className="mt-4">
+            <ActivityFeed activities={formattedActivities} />
+          </TabsContent>
+          {dashboardType === 'volunteer' && (
+            <TabsContent value="opportunities" className="mt-4">
+              <OpportunitiesTab userId={userId} />
+            </TabsContent>
+          )}
+        </Tabs>
+      </div>
 
-        <div className="space-y-6">
-          <ProfileOverview userId={userId} userType={dashboardType} />
-          <UpcomingEvents events={formattedEvents} />
-          <QuickActions 
-            userType={dashboardType} 
-            onContactVolunteers={() => setShowContactModal(true)}
-          />
-        </div>
+      {/* Bottom Section - Profile, Events, and Actions */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <ProfileOverview userId={userId} userType={dashboardType} />
+        <UpcomingEvents events={formattedEvents} />
+        <QuickActions 
+          userType={dashboardType} 
+          onContactVolunteers={() => setShowContactModal(true)}
+        />
       </div>
 
       {/* Contact Volunteer Modal */}

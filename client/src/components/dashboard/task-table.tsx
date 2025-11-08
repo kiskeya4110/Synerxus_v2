@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PlusIcon } from "lucide-react";
+import { Link } from "wouter";
 
 export interface Task {
   id: string;
@@ -57,7 +58,12 @@ export default function TaskTable({ tasks }: TaskTableProps) {
             </TableHeader>
             <TableBody>
               {tasks.map((task) => (
-                <TableRow key={task.id}>
+                <TableRow 
+                  key={task.id} 
+                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => window.location.href = '/tasks'}
+                  data-testid={`task-row-${task.id}`}
+                >
                   <TableCell className="font-medium text-xs py-2">{task.name}</TableCell>
                   <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.project}</TableCell>
                   <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.dueDate}</TableCell>

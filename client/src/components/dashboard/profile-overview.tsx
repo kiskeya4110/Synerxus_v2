@@ -167,24 +167,24 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
             <p className="text-sm text-muted-foreground">
               Sustainable Development Goals {isVolunteer ? 'you care about' : 'the organization focuses on'}
             </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4">
               {sdgList?.sort((a: number, b: number) => a - b).map((goal: number) => (
                 <div 
                   key={goal} 
-                  className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex flex-col items-center gap-1.5 sm:gap-2 p-2 sm:p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   {UN_SDG_ICONS[goal] ? (
                     <img 
                       src={UN_SDG_ICONS[goal]} 
                       alt={`SDG ${goal}`}
-                      className="w-20 h-20 rounded"
+                      className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm sm:text-base md:text-xl">
                       {goal}
                     </div>
                   )}
-                  <span className="text-sm text-center font-medium">
+                  <span className="text-xs sm:text-sm text-center font-medium leading-tight line-clamp-2">
                     SDG {goal}: {SDG_LABELS[goal]}
                   </span>
                 </div>
@@ -353,28 +353,28 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
               <span className="text-xs text-primary">View all</span>
             </div>
             <TooltipProvider>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
                 {[...(isVolunteer ? profile.sdgGoals : profile.primarySdgs)]
                   .sort((a: number, b: number) => a - b)
                   .map((goal: number) => (
                     <Tooltip key={goal}>
                       <TooltipTrigger>
                         <div 
-                          className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           data-testid={`sdg-goal-${goal}`}
                         >
                           {UN_SDG_ICONS[goal] ? (
                             <img 
                               src={UN_SDG_ICONS[goal]} 
                               alt={`SDG ${goal}`}
-                              className="w-12 h-12 rounded"
+                              className="w-10 h-10 sm:w-12 sm:h-12 rounded"
                             />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-base">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm sm:text-base">
                               {goal}
                             </div>
                           )}
-                          <span className="text-xs text-center line-clamp-2 font-medium leading-tight">
+                          <span className="text-[10px] sm:text-xs text-center line-clamp-2 font-medium leading-tight">
                             {SDG_LABELS[goal]}
                           </span>
                         </div>

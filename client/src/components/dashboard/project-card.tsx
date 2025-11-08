@@ -207,20 +207,16 @@ export default function ProjectCard({
               {actualProjectId && (
                 <>
                   <Link href={`/projects/${actualProjectId}`} className="flex-1">
-                    <a className="w-full">
-                      <Button variant="outline" className="w-full gap-2" data-testid="button-view-project" onClick={() => setShowDialog(false)}>
-                        <Eye className="h-4 w-4" />
-                        View Full Project
-                      </Button>
-                    </a>
+                    <Button variant="outline" className="w-full gap-2" data-testid="button-view-project" onClick={() => setShowDialog(false)}>
+                      <Eye className="h-4 w-4" />
+                      View Full Project
+                    </Button>
                   </Link>
                   <Link href={`/projects/${actualProjectId}/edit`} className="flex-1">
-                    <a className="w-full">
-                      <Button className="w-full gap-2" data-testid="button-edit-project" onClick={() => setShowDialog(false)}>
-                        <Edit className="h-4 w-4" />
-                        Edit Project
-                      </Button>
-                    </a>
+                    <Button className="w-full gap-2" data-testid="button-edit-project" onClick={() => setShowDialog(false)}>
+                      <Edit className="h-4 w-4" />
+                      Edit Project
+                    </Button>
                   </Link>
                 </>
               )}

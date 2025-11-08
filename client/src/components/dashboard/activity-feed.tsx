@@ -79,8 +79,8 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
           ))}
         </div>
         <div className="mt-3 text-center">
-          <Link href="/dashboard">
-            <a className="text-xs text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">View all activity</a>
+          <Link href="/dashboard" className="text-xs text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">
+            View all activity
           </Link>
         </div>
       </CardContent>

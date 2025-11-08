@@ -273,3 +273,87 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     throw error;
   }
 }
+
+/**
+ * Get SDG contributions overview for an organization
+ * Returns aggregated data for each SDG including hours, volunteers, and projects
+ */
+export async function getSDGContributionsForOrganization(userId: number) {
+  try {
+    // Get the organization user
+    const user = await storage.getUser(userId);
+    if (!user || user.userType !== 'organization') {
+      throw new Error("User is not an organization");
+    }
+
+    // Use organizationId if available, otherwise use userId
+    const organizationId = user.organizationId || userId;
+
+    // Fetch organization's data
+    const allProjects = await storage.listProjects();
+    const allActivities = await storage.listVolunteerActivities();
+    const allUsers = await storage.listUsers();
+
+    // Filter to only this organization's projects
+    const organizationProjects = allProjects.filter(p => p.organizationId === organizationId);
+    const organizationProjectIds = new Set(organizationProjects.map(p => p.id));
+
+    // Filter activities to only those on organization's projects
+    const organizationActivities = allActivities.filter(a => a.projectId && organizationProjectIds.has(a.projectId));
+
+    // Initialize SDG data for all 17 SDGs
+    const sdgContributions = Array.from({ length: 17 }, (_, i) => {
+      const sdgNumber = i + 1;
+      return {
+        sdgNumber,
+        hours: 0,
+        volunteers: new Set<number>(),
+        projects: new Set<number>(),
+      };
+    });
+
+    // Aggregate data for each SDG
+    organizationProjects.forEach(project => {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+        project.sdgGoals.forEach(sdgGoal => {
+          if (sdgGoal >= 1 && sdgGoal <= 17) {
+            const sdgIndex = sdgGoal - 1;
+            
+            // Add project to this SDG
+            sdgContributions[sdgIndex].projects.add(project.id);
+
+            // Find activities for this project and aggregate hours and volunteers
+            const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
+            projectActivities.forEach(activity => {
+              sdgContributions[sdgIndex].hours += activity.hours;
+              if (activity.userId) {
+                sdgContributions[sdgIndex].volunteers.add(activity.userId);
+              }
+            });
+          }
+        });
+      }
+    });
+
+    // Calculate total engagement hours
+    const totalHours = organizationActivities.reduce((sum, activity) => sum + activity.hours, 0);
+
+    // Format the result
+    const result = sdgContributions
+      .map(sdg => ({
+        sdgNumber: sdg.sdgNumber,
+        hours: sdg.hours,
+        volunteers: sdg.volunteers.size,
+        projects: sdg.projects.size,
+      }))
+      .filter(sdg => sdg.projects > 0); // Only include SDGs with projects
+
+    return {
+      sdgContributions: result,
+      totalEngagementHours: totalHours,
+    };
+  } catch (error) {
+    console.error("Error getting SDG contributions for organization:", error);
+    throw error;
+  }
+}

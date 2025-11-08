@@ -21,7 +21,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
 import { calculateMatchScore, findTopMatches, findTopVolunteers } from "./matching-algorithm";
-import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer } from "./dashboard-service";
+import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization } from "./dashboard-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
@@ -1914,6 +1914,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error fetching dashboard summary:", err);
       res.status(500).json({ message: "Failed to fetch dashboard summary" });
+    }
+  });
+
+  // === SDG Contributions Overview Route ===
+  app.get("/api/dashboard/sdg-contributions", async (req, res) => {
+    try {
+      const userId = req.query.userId as string | undefined;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
+
+      const userIdNum = parseInt(userId);
+      if (isNaN(userIdNum)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
+
+      // Get user to determine type
+      const user = await storage.getUser(userIdNum);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Only organizations can access SDG contributions overview
+      if (user.userType !== 'organization') {
+        return res.status(403).json({ message: "Only organizations can access SDG contributions" });
+      }
+
+      const sdgData = await getSDGContributionsForOrganization(userIdNum);
+      res.json(sdgData);
+    } catch (err) {
+      console.error("Error fetching SDG contributions:", err);
+      res.status(500).json({ message: "Failed to fetch SDG contributions" });
     }
   });
 

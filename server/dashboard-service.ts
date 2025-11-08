@@ -150,6 +150,62 @@ export async function getDashboardDataForOrganization(userId: number) {
       matchScore * 0.10
     );
 
+    // Enrich projects with assigned volunteers and compute progress fallback
+    const projectsWithVolunteers = organizationProjects.map(project => {
+      // Get volunteers assigned to this project
+      const projectVolunteerIds = organizationAssignments
+        .filter(pa => pa.projectId === project.id)
+        .map(pa => pa.volunteerId);
+      
+      const assignedVolunteers = organizationVolunteers
+        .filter(v => projectVolunteerIds.includes(v.id))
+        .map(v => ({
+          id: v.id.toString(),
+          name: v.displayName || v.username || 'Unknown',
+          avatar: v.avatar || undefined,
+        }));
+
+      // Compute progress fallback if not set
+      let progress = project.completionPercentage || 0;
+      if (progress === 0) {
+        const projectTasks = organizationTasks.filter(t => t.projectId === project.id);
+        if (projectTasks.length > 0) {
+          const completedCount = projectTasks.filter(t => t.status === 'Completed').length;
+          progress = Math.round((completedCount / projectTasks.length) * 100);
+        }
+      }
+
+      return {
+        ...project,
+        volunteers: assignedVolunteers,
+        completionPercentage: progress,
+      };
+    });
+
+    // Create volunteer summaries with profile info
+    const volunteerSummaries = organizationVolunteers.map(volunteer => {
+      const volunteerActivities = organizationActivities.filter(a => a.userId === volunteer.id);
+      const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+      const activityCount = volunteerActivities.length;
+      
+      // Get projects this volunteer is assigned to
+      const assignedProjectIds = organizationAssignments
+        .filter(pa => pa.volunteerId === volunteer.id)
+        .map(pa => pa.projectId);
+      const volunteerProjects = organizationProjects.filter(p => assignedProjectIds.includes(p.id));
+
+      return {
+        id: volunteer.id,
+        name: volunteer.displayName || volunteer.username || 'Unknown Volunteer',
+        email: volunteer.email,
+        avatar: volunteer.avatar || undefined,
+        totalHours,
+        activityCount,
+        projectCount: volunteerProjects.length,
+        projects: volunteerProjects.map(p => p.name),
+      };
+    });
+
     return {
       summary: {
         activeVolunteers,
@@ -165,10 +221,12 @@ export async function getDashboardDataForOrganization(userId: number) {
         organizationPrimarySdgs, // Organization's selected SDGs from profile settings
       },
       projects: organizationProjects,
+      projectsWithVolunteers, // Enriched projects with volunteers and progress
       tasks: organizationTasks,
       activities: organizationActivities,
       impacts: organizationImpacts,
       volunteers: organizationVolunteers,
+      volunteerSummaries, // Enriched volunteer data with summaries
       applications: organizationApplications,
       projectAssignments: organizationAssignments,
     };

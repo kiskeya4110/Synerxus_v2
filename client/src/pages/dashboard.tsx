@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -76,6 +77,8 @@ export default function Dashboard() {
   const tasks = dashboardData?.tasks || [];
   const volunteerActivities = dashboardData?.activities || [];
   const projectImpacts = dashboardData?.impacts || [];
+  const projectsWithVolunteers = dashboardData?.projectsWithVolunteers || [];
+  const volunteerSummaries = dashboardData?.volunteerSummaries || [];
   
   // These endpoints don't have scoped versions yet - fetch globally for now
   const { data: calendarEvents = [], isLoading: loadingEvents } = useQuery<any[]>({
@@ -314,18 +317,19 @@ export default function Dashboard() {
         };
         break;
       case "Active Volunteers":
-        const volunteerIds = new Set(filteredData.activities.map((a: any) => a.userId));
+        // Use volunteer summaries with real user data
         detailData = {
           title: "Active Volunteers",
-          items: Array.from(volunteerIds).map((userId: any) => {
-            const userActivities = filteredData.activities.filter((a: any) => a.userId === userId);
-            const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-            return {
-              label: `Volunteer #${userId}`,
-              value: `${totalHours} hours`,
-              project: `${userActivities.length} activities`,
-            };
-          }),
+          items: volunteerSummaries.map((volunteer: any) => ({
+            id: volunteer.id,
+            name: volunteer.name,
+            avatar: volunteer.avatar,
+            label: volunteer.name,
+            value: `${volunteer.totalHours} hours`,
+            project: `${volunteer.activityCount} activities`,
+            projectCount: volunteer.projectCount,
+            projects: volunteer.projects,
+          })),
         };
         break;
       case "SDGs Addressed":
@@ -486,7 +490,7 @@ export default function Dashboard() {
       <div>
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Active Projects</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredData.projects.slice(0, 6).map((project: any) => (
+          {(projectsWithVolunteers.length > 0 ? projectsWithVolunteers : filteredData.projects).slice(0, 6).map((project: any) => (
             <ProjectCard
               key={project.id}
               id={project.id.toString()}
@@ -495,7 +499,7 @@ export default function Dashboard() {
               status={project.status as any}
               progress={project.completionPercentage || 0}
               timeRemaining={getTimeRemaining(project.endDate)}
-              volunteers={[]}
+              volunteers={project.volunteers || []}
             />
           ))}
           {filteredData.projects.length === 0 && (
@@ -563,35 +567,63 @@ export default function Dashboard() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {selectedKPI?.items.map((item: any, index: number) => (
-              <div key={index} className="p-4 border rounded-lg">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{item.label}</h4>
-                    {item.project && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Project: {item.project}
-                      </p>
-                    )}
-                    {item.location && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Location: {item.location}
-                      </p>
-                    )}
-                    {item.completion && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Progress: {item.completion}
-                      </p>
+            {selectedKPI?.items.map((item: any, index: number) => {
+              // Check if this is a volunteer item (has avatar and id)
+              const isVolunteerItem = item.avatar !== undefined && item.id;
+              
+              const content = (
+                <div className={`p-4 border rounded-lg ${isVolunteerItem ? 'hover:border-primary-500 hover:shadow-md transition-all cursor-pointer' : ''}`} data-testid={`kpi-item-${index}`}>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex items-center gap-3 flex-1">
+                      {isVolunteerItem && (
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={item.avatar} alt={`${item.name} avatar`} />
+                          <AvatarFallback>{item.name?.charAt(0) || '?'}</AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.label}</h4>
+                        {item.project && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {item.project}
+                          </p>
+                        )}
+                        {item.projects && item.projects.length > 0 && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Projects: {item.projects.slice(0, 2).join(", ")}
+                            {item.projects.length > 2 && ` +${item.projects.length - 2} more`}
+                          </p>
+                        )}
+                        {item.location && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Location: {item.location}
+                          </p>
+                        )}
+                        {item.completion && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Progress: {item.completion}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    {item.value && (
+                      <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+                        {item.value}
+                      </span>
                     )}
                   </div>
-                  {item.value && (
-                    <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
-                      {item.value}
-                    </span>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+
+              // Wrap in Link if it's a volunteer item
+              return isVolunteerItem ? (
+                <Link key={index} href={`/volunteers/${item.id}`}>
+                  {content}
+                </Link>
+              ) : (
+                <div key={index}>{content}</div>
+              );
+            })}
             {selectedKPI?.items.length === 0 && (
               <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                 No data available

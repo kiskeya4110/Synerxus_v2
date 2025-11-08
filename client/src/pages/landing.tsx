@@ -130,19 +130,19 @@ export default function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-10 sm:py-12 border-y bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8" data-testid="text-benefits-title">Why Organizations Choose Synerxus</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4">
+          <div className="grid grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
             {benefits.map((benefit, index) => (
               <button
                 key={index}
-                className="group relative overflow-hidden rounded-xl p-3 sm:p-5 text-left transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-100 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 hover:from-primary/20 hover:via-purple-500/20 hover:to-pink-500/20 border-2 border-transparent hover:border-primary/30 aspect-[2/1.5]"
+                className="group relative overflow-hidden rounded-lg sm:rounded-xl p-2.5 sm:p-3 md:p-5 text-left transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-100 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 hover:from-primary/20 hover:via-purple-500/20 hover:to-pink-500/20 border-2 border-transparent hover:border-primary/30 min-h-[120px] sm:min-h-0 sm:aspect-[2/1.5]"
                 data-testid={`benefit-item-${index}`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative flex items-start gap-2 sm:gap-3 h-full">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                <div className="relative flex flex-col sm:flex-row items-start gap-2 sm:gap-2 md:gap-3 h-full">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-md sm:rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
                   </div>
-                  <p className="text-xs sm:text-sm md:text-base font-medium text-foreground flex-1 pt-0.5 sm:pt-1.5 leading-snug">{benefit}</p>
+                  <p className="text-xs sm:text-sm md:text-base font-medium text-foreground flex-1 leading-snug sm:pt-0.5 md:pt-1.5">{benefit}</p>
                 </div>
               </button>
             ))}

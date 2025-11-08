@@ -152,17 +152,17 @@ export function SDGWheel() {
     const sortedSDGData = [...SDG_DATA].sort((a, b) => a.id - b.id);
     
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl mx-auto">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4 max-w-6xl mx-auto">
         {sortedSDGData.map((sdg) => {
           const sdgIcon = UN_SDG_ICONS[sdg.id];
           return (
             <button
               key={sdg.id}
               onClick={() => setSelectedSDG(sdg)}
-              className="group relative rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+              className="group relative rounded-md sm:rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
               style={{ 
                 aspectRatio: '1/1',
-                minHeight: '140px'
+                minHeight: '80px'
               }}
               data-testid={`sdg-button-${sdg.id}`}
             >
@@ -175,19 +175,19 @@ export function SDGWheel() {
                 />
               ) : (
                 <div 
-                  className="absolute inset-0 flex flex-col items-center justify-center p-4 text-white"
+                  className="absolute inset-0 flex flex-col items-center justify-center p-2 sm:p-3 md:p-4 text-white"
                   style={{ backgroundColor: sdg.color }}
                 >
-                  <div className="text-4xl font-bold mb-2">{sdg.id}</div>
-                  <div className="text-xs sm:text-sm font-semibold text-center leading-tight">
+                  <div className="text-3xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2">{sdg.id}</div>
+                  <div className="text-[11px] sm:text-xs md:text-sm font-semibold text-center leading-tight line-clamp-2">
                     {sdg.title}
                   </div>
                 </div>
               )}
               
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-3">
-                <div className="text-white text-sm sm:text-base font-semibold text-center">
+              <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-2 sm:p-3">
+                <div className="text-white text-xs sm:text-sm md:text-base font-semibold text-center">
                   Click to learn more
                 </div>
               </div>

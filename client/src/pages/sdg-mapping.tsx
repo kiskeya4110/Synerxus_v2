@@ -70,6 +70,7 @@ export default function SDGMapping() {
   const [selectedGoalForConnection, setSelectedGoalForConnection] = useState<number[]>([]);
   const [recommendedSDGs, setRecommendedSDGs] = useState<number[]>([]);
   
+  
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
   const { data: currentUser, isLoading: loadingUser } = useQuery({
@@ -220,15 +221,8 @@ export default function SDGMapping() {
     return Array.from(sdgMap.values()).sort((a, b) => a.id - b.id);
   }, [filteredProjects, impactMetrics, projectImpacts, organizationSDGs]);
   
-  // Initialize selectedSDG to first available org SDG when data loads
-  useEffect(() => {
-    if (sdgData.length > 0) {
-      // If no SDG is selected, or current selection is not in org's SDGs, select the first one
-      if (selectedSDG === null || !sdgData.find(sdg => sdg.id === selectedSDG)) {
-        setSelectedSDG(sdgData[0].id);
-      }
-    }
-  }, [sdgData, selectedSDG]);
+  // Auto-select first SDG if none selected and data is available
+  const effectiveSelectedSDG = selectedSDG ?? (sdgData.length > 0 ? sdgData[0].id : null);
   
   // Compute AI recommendations when project is selected
   useEffect(() => {
@@ -344,9 +338,9 @@ export default function SDGMapping() {
     setStatsDialogOpen(true);
   };
 
-  const selectedData = selectedSDG ? sdgData.find(sdg => sdg.id === selectedSDG) : null;
-  const relatedProjects = selectedSDG ? filteredProjects.filter((project: any) => 
-    project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(selectedSDG)
+  const selectedData = effectiveSelectedSDG ? sdgData.find(sdg => sdg.id === effectiveSelectedSDG) : null;
+  const relatedProjects = effectiveSelectedSDG ? filteredProjects.filter((project: any) => 
+    project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(effectiveSelectedSDG)
   ) : [];
   
   // Radar chart data: Compare organization's selected SDGs vs actual project distribution
@@ -635,11 +629,11 @@ export default function SDGMapping() {
             key={sdg.id}
             onClick={() => setSelectedSDG(sdg.id)}
             className={`p-3 sm:p-4 rounded-lg border min-h-[120px] sm:min-h-auto active:scale-95 transition-all ${
-              selectedSDG === sdg.id 
+              effectiveSelectedSDG === sdg.id 
                 ? 'ring-2 ring-primary border-primary' 
                 : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
-            style={{ backgroundColor: selectedSDG === sdg.id ? `${sdg.color}15` : '' }}
+            style={{ backgroundColor: effectiveSelectedSDG === sdg.id ? `${sdg.color}15` : '' }}
             data-testid={`button-sdg-${sdg.id}`}
           >
             {UN_SDG_ICONS[sdg.id] ? 
@@ -769,7 +763,7 @@ export default function SDGMapping() {
                           <div className="flex items-center gap-1 flex-wrap">
                             <span className="text-xs text-gray-500">Also aligned with:</span>
                             {project.sdgGoals
-                              .filter((sdg: number) => sdg !== selectedSDG)
+                              .filter((sdg: number) => sdg !== effectiveSelectedSDG)
                               .slice(0, 3)
                               .map((sdg: number) => (
                                 <Badge 
@@ -789,7 +783,7 @@ export default function SDGMapping() {
                 </div>
               ) : (
                 <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  No projects are currently aligned with SDG {selectedSDG}.
+                  No projects are currently aligned with SDG {effectiveSelectedSDG}.
                 </p>
               )}
             </div>
@@ -960,7 +954,7 @@ export default function SDGMapping() {
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Generate Report For</label>
                     <select className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
-                      <option value="sdg">This SDG (Goal {selectedSDG})</option>
+                      <option value="sdg">This SDG (Goal {effectiveSelectedSDG})</option>
                       <option value="all">All SDGs</option>
                       <option value="project">Specific Project</option>
                     </select>
@@ -1002,7 +996,7 @@ export default function SDGMapping() {
               <ul className="space-y-3 text-sm">
                 <li>
                   <a 
-                    href={`https://sdgs.un.org/goals/goal${selectedSDG}`} 
+                    href={`https://sdgs.un.org/goals/goal${effectiveSelectedSDG}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:underline flex items-center group"
@@ -1011,13 +1005,13 @@ export default function SDGMapping() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span className="flex-1">SDG {selectedSDG} Official Indicators</span>
+                    <span className="flex-1">SDG {effectiveSelectedSDG} Official Indicators</span>
                     <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </a>
                 </li>
                 <li>
                   <a 
-                    href={`https://www.youtube.com/results?search_query=measuring+impact+SDG+${selectedSDG}`} 
+                    href={`https://www.youtube.com/results?search_query=measuring+impact+SDG+${effectiveSelectedSDG}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:underline flex items-center group"
@@ -1026,13 +1020,13 @@ export default function SDGMapping() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    <span className="flex-1">Video: Measuring Impact for SDG {selectedSDG}</span>
+                    <span className="flex-1">Video: Measuring Impact for SDG {effectiveSelectedSDG}</span>
                     <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </a>
                 </li>
                 <li>
                   <a 
-                    href={`https://sdgs.un.org/goals/goal${selectedSDG}#targets_and_indicators`} 
+                    href={`https://sdgs.un.org/goals/goal${effectiveSelectedSDG}#targets_and_indicators`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:underline flex items-center group"
@@ -1047,7 +1041,7 @@ export default function SDGMapping() {
                 </li>
                 <li>
                   <a 
-                    href={`https://sustainabledevelopment.un.org/partnerships/goal${selectedSDG}`} 
+                    href={`https://sustainabledevelopment.un.org/partnerships/goal${effectiveSelectedSDG}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-primary hover:underline flex items-center group"
@@ -1056,7 +1050,7 @@ export default function SDGMapping() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    <span className="flex-1">Connect with SDG {selectedSDG} Partners</span>
+                    <span className="flex-1">Connect with SDG {effectiveSelectedSDG} Partners</span>
                     <ExternalLink className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </a>
                 </li>

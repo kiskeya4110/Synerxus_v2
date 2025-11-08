@@ -43,13 +43,6 @@ function Router() {
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    const savedRoute = localStorage.getItem(LAST_ROUTE_KEY);
-    if (savedRoute && savedRoute !== "/" && location === "/") {
-      setLocation(savedRoute);
-    }
-  }, []);
-
-  useEffect(() => {
     localStorage.setItem(LAST_ROUTE_KEY, location);
   }, [location]);
 

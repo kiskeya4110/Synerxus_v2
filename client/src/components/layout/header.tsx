@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useTheme } from "./theme-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
@@ -114,9 +114,9 @@ export default function Header() {
         
         {/* Logo for mobile view - always link to landing page */}
         <div className="flex items-center lg:hidden">
-          <a href="/" className="flex items-center hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
             <Logo size="sm" />
-          </a>
+          </Link>
         </div>
         
         {/* Search Bar */}

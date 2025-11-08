@@ -39,8 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async (userType?: string) => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      return result;
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error signing in with Google:", error);
       toast({
@@ -54,8 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      return result;
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
       console.error("Error signing in with email:", error);
       toast({
@@ -69,8 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, userType?: string, displayName?: string) => {
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      return result;
+      await createUserWithEmailAndPassword(auth, email, password);
     } catch (error) {
       console.error("Error signing up:", error);
       toast({

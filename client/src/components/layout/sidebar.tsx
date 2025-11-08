@@ -84,22 +84,22 @@ export default function Sidebar() {
         )}
       >
         <div className="px-4 py-6">
-          <a href="/">
+          <Link href="/">
             <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity">
               <Logo size="md" />
             </div>
-          </a>
+          </Link>
           <div className="text-center py-8">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               Complete your profile to access all features
             </p>
             <div className="space-y-2">
-              <a href="/volunteer-intake" className="block w-full px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90">
+              <Link href="/volunteer-intake" className="block w-full px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90">
                 Volunteer Profile
-              </a>
-              <a href="/organization-intake" className="block w-full px-4 py-2 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/90">
+              </Link>
+              <Link href="/organization-intake" className="block w-full px-4 py-2 text-sm bg-secondary text-white rounded-lg hover:bg-secondary/90">
                 Organization Profile
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -156,11 +156,11 @@ export default function Sidebar() {
         )}
       >
         <div className="px-4 py-6">
-          <a href="/">
+          <Link href="/">
             <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity" data-testid="logo-synerxus">
               <Logo size="md" />
             </div>
-          </a>
+          </Link>
           
           <nav>
             <div className="space-y-1">

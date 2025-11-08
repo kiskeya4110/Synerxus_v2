@@ -18,6 +18,7 @@ Preferred communication style: Simple, everyday language.
 - **Branding**: Synerxus rebrand with an infinity loop logo, navy blue and orange-gold color scheme, and consistent typography.
 - **UN SDG Graphics**: Integration of official UN SDG graphics, replacing custom icons, displayed in numerical order.
 - **Interactive Elements**: Clickable profile sections that open detailed modals, hover states throughout the dashboard, and visual cues ("View all", "Read more") to indicate interactivity.
+- **Navigation**: Logo in sidebar and header always navigates to landing page using SPA navigation (wouter Link component). Logout automatically redirects to landing page.
 
 ### Technical Implementations
 - **Frontend**: React 18 with TypeScript, Vite, Wouter for routing, TanStack Query for server state, Tailwind CSS, Chart.js, React Hook Form with Zod, date-fns.
@@ -43,7 +44,7 @@ Preferred communication style: Simple, everyday language.
 - **Project-Task Hierarchy**: Project-based workflow with `projectAssignments` and task assignments.
 - **Profile Settings**: Comprehensive matching profile management for volunteers and organizations, including photo upload and full editing.
 - **Intake Forms System**: Multi-step onboarding forms for volunteers and organizations, and detailed forms for Core and Urgent Opportunity Posting.
-- **Authentication & Login Flow**: Firebase-based authentication (email/password, Google OAuth) with automatic dashboard redirect, user type selection, session persistence, and password management.
+- **Authentication & Login Flow**: Firebase-based authentication (email/password, Google OAuth) with automatic dashboard redirect, user type selection, session persistence, and password management. Logout automatically redirects to landing page and clears user session.
 
 ### System Design Choices
 - **Authentication**: Firebase Auth with Google OAuth.

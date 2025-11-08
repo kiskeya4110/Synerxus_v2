@@ -75,21 +75,21 @@ export default function SDGChart({ projects = [], organizationSdgs }: SDGChartPr
         }
         
         chartInstance.current = new Chart(ctx, {
-          type: "doughnut",
+          type: "pie",
           data: {
             labels: sdgData.labels,
             datasets: [{
               data: sdgData.values,
               backgroundColor: sdgData.colors,
-              borderWidth: 3,
+              borderWidth: 2,
               borderColor: theme === "dark" ? "#1f2937" : "#ffffff",
-              hoverBorderWidth: 4
+              hoverBorderWidth: 3,
+              hoverOffset: 10
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            cutout: "70%",
             onClick: (event: any, elements: any) => {
               if (elements.length > 0 && sdgData.sdgIds.length > 0) {
                 const index = elements[0].index;
@@ -150,10 +150,10 @@ export default function SDGChart({ projects = [], organizationSdgs }: SDGChartPr
     <>
       <Card>
         <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-          <CardTitle className="text-lg font-semibold">SDG Contributions (Click to view projects)</CardTitle>
+          <CardTitle className="text-lg font-semibold">SDG Distribution (Click segments to view projects)</CardTitle>
         </CardHeader>
-        <CardContent className="p-4">
-          <div className="h-[300px]">
+        <CardContent className="p-6">
+          <div className="h-[350px] flex items-center justify-center">
             <canvas ref={chartRef}></canvas>
           </div>
         </CardContent>

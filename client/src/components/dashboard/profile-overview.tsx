@@ -1,10 +1,12 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Award, Target, MapPin, Heart } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Award, Target, MapPin, Heart, Building2, Users, Globe, Mail, Phone } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
@@ -35,6 +37,9 @@ interface ProfileOverviewProps {
 }
 
 export default function ProfileOverview({ userId, userType }: ProfileOverviewProps) {
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [selectedSection, setSelectedSection] = useState<'skills' | 'interests' | 'needs' | 'goals' | 'sdgs' | null>(null);
+  
   const { data: currentUser, isLoading: isLoadingUser } = useQuery<any>({
     queryKey: ["/api/users/me", userId],
     enabled: !!userId
@@ -90,14 +95,132 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     ? currentUser.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : currentUser?.email?.[0].toUpperCase();
 
+  const handleSectionClick = (section: 'skills' | 'interests' | 'needs' | 'goals' | 'sdgs') => {
+    setSelectedSection(section);
+    setShowDetailsDialog(true);
+  };
+
+  const renderDialogContent = () => {
+    if (!selectedSection || !profile) return null;
+
+    switch (selectedSection) {
+      case 'skills':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              All skills listed in your profile
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {profile.skills?.map((skill: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-sm py-1">{skill}</Badge>
+              ))}
+            </div>
+          </div>
+        );
+      case 'interests':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Areas of interest and passion
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {profile.interests?.map((interest: string, index: number) => (
+                <Badge key={index} variant="secondary" className="text-sm py-1">{interest}</Badge>
+              ))}
+            </div>
+          </div>
+        );
+      case 'needs':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Volunteer skills and support needed
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {profile.needs?.map((need: string, index: number) => (
+                <Badge key={index} variant="outline" className="text-sm py-1">{need}</Badge>
+              ))}
+            </div>
+          </div>
+        );
+      case 'goals':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground mb-4">
+              Organization mission and objectives
+            </p>
+            <div className="prose dark:prose-invert max-w-none">
+              <p className="text-base">{profile.goals}</p>
+            </div>
+            {profile.description && (
+              <div className="mt-6 pt-6 border-t">
+                <h4 className="font-semibold mb-2">About the Organization</h4>
+                <p className="text-sm text-muted-foreground">{profile.description}</p>
+              </div>
+            )}
+          </div>
+        );
+      case 'sdgs':
+        const sdgList = isVolunteer ? profile.sdgGoals : profile.primarySdgs;
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Sustainable Development Goals {isVolunteer ? 'you care about' : 'the organization focuses on'}
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              {sdgList?.sort((a: number, b: number) => a - b).map((goal: number) => (
+                <div 
+                  key={goal} 
+                  className="flex flex-col items-center gap-2 p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {UN_SDG_ICONS[goal] ? (
+                    <img 
+                      src={UN_SDG_ICONS[goal]} 
+                      alt={`SDG ${goal}`}
+                      className="w-20 h-20 rounded"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xl">
+                      {goal}
+                    </div>
+                  )}
+                  <span className="text-sm text-center font-medium">
+                    SDG {goal}: {SDG_LABELS[goal]}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getDialogTitle = () => {
+    switch (selectedSection) {
+      case 'skills': return 'All Skills';
+      case 'interests': return 'Interests & Passions';
+      case 'needs': return 'Volunteer Needs';
+      case 'goals': return 'Organization Goals & Mission';
+      case 'sdgs': return 'Sustainable Development Goals';
+      default: return 'Details';
+    }
+  };
+
   return (
+    <>
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg font-semibold">Profile Overview</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* User Info */}
-        <div className="flex items-center gap-3">
+        {/* User Info - Clickable */}
+        <div 
+          className="flex items-center gap-3 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+          onClick={() => handleSectionClick('goals')}
+          data-testid="clickable-user-info"
+        >
           <Avatar className="h-16 w-16" data-testid="avatar-profile-overview">
             <AvatarImage src={currentUser?.avatar || profile?.profilePhotoUrl} />
             <AvatarFallback className="text-lg">{initials}</AvatarFallback>
@@ -110,15 +233,28 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                 <span data-testid="text-location">{profile.location}</span>
               </div>
             )}
+            {!isVolunteer && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                <Building2 className="h-3 w-3" />
+                <span>Click for details</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Skills */}
+        {/* Skills - Clickable */}
         {isVolunteer && profile?.skills && profile.skills.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Award className="h-4 w-4" />
-              <span>Skills</span>
+          <div 
+            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            onClick={() => handleSectionClick('skills')}
+            data-testid="clickable-skills"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Award className="h-4 w-4" />
+                <span>Skills</span>
+              </div>
+              <span className="text-xs text-primary">View all</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {profile.skills.slice(0, 5).map((skill: string, index: number) => (
@@ -131,12 +267,19 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
           </div>
         )}
 
-        {/* Interests */}
+        {/* Interests - Clickable */}
         {isVolunteer && profile?.interests && profile.interests.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Heart className="h-4 w-4" />
-              <span>Interests</span>
+          <div 
+            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            onClick={() => handleSectionClick('interests')}
+            data-testid="clickable-interests"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Heart className="h-4 w-4" />
+                <span>Interests</span>
+              </div>
+              <span className="text-xs text-primary">View all</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {profile.interests.slice(0, 5).map((interest: string, index: number) => (
@@ -149,12 +292,19 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
           </div>
         )}
 
-        {/* Organization Needs */}
+        {/* Organization Needs - Clickable */}
         {!isVolunteer && profile?.needs && profile.needs.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Heart className="h-4 w-4" />
-              <span>Volunteer Needs</span>
+          <div 
+            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            onClick={() => handleSectionClick('needs')}
+            data-testid="clickable-needs"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Users className="h-4 w-4" />
+                <span>Volunteer Needs</span>
+              </div>
+              <span className="text-xs text-primary">View all</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {profile.needs.slice(0, 5).map((need: string, index: number) => (
@@ -167,12 +317,19 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
           </div>
         )}
 
-        {/* Organization Goals */}
+        {/* Organization Goals - Clickable */}
         {!isVolunteer && profile?.goals && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Target className="h-4 w-4" />
-              <span>Goals</span>
+          <div 
+            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            onClick={() => handleSectionClick('goals')}
+            data-testid="clickable-goals"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Target className="h-4 w-4" />
+                <span>Mission & Goals</span>
+              </div>
+              <span className="text-xs text-primary">Read more</span>
             </div>
             <p className="text-xs text-muted-foreground" data-testid="text-goals">
               {profile.goals.length > 100 ? `${profile.goals.substring(0, 100)}...` : profile.goals}
@@ -180,13 +337,20 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
           </div>
         )}
 
-        {/* SDG Goals - Use primarySdgs for organizations, sdgGoals for volunteers */}
+        {/* SDG Goals - Clickable */}
         {((isVolunteer && profile?.sdgGoals && profile.sdgGoals.length > 0) || 
           (!isVolunteer && profile?.primarySdgs && profile.primarySdgs.length > 0)) && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Target className="h-4 w-4" />
-              <span>{isVolunteer ? "SDG Goals" : "Primary SDGs"}</span>
+          <div 
+            className="space-y-3 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            onClick={() => handleSectionClick('sdgs')}
+            data-testid="clickable-sdgs"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Globe className="h-4 w-4" />
+                <span>{isVolunteer ? "SDG Goals" : "Primary SDGs"}</span>
+              </div>
+              <span className="text-xs text-primary">View all</span>
             </div>
             <TooltipProvider>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -196,7 +360,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                     <Tooltip key={goal}>
                       <TooltipTrigger>
                         <div 
-                          className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                          className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                           data-testid={`sdg-goal-${goal}`}
                         >
                           {UN_SDG_ICONS[goal] ? (
@@ -242,5 +406,21 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
         )}
       </CardContent>
     </Card>
+
+    {/* Details Dialog */}
+    <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{getDialogTitle()}</DialogTitle>
+          <DialogDescription>
+            {isVolunteer ? 'Your profile information' : 'Organization information'}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-4">
+          {renderDialogContent()}
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

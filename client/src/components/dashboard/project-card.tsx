@@ -64,9 +64,24 @@ export default function ProjectCard({
       <div className="mt-4">
         <div className="flex justify-between text-sm mb-1">
           <span>Progress</span>
-          <span>{progress}%</span>
+          <span className="font-semibold">{progress}%</span>
         </div>
-        <Progress value={progress} className="h-2.5" />
+        <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+          {/* Completed portion - Green */}
+          <div 
+            className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+          {/* Remaining portion overlay - Lighter color to show remaining work */}
+          <div 
+            className="absolute top-0 right-0 h-full bg-amber-100 dark:bg-amber-900/30 transition-all duration-500"
+            style={{ width: `${100 - progress}%` }}
+          />
+        </div>
+        <div className="flex justify-between text-xs mt-1 text-gray-500 dark:text-gray-400">
+          <span>Completed: {progress}%</span>
+          <span>Remaining: {100 - progress}%</span>
+        </div>
       </div>
       
       <div className="flex justify-between items-center mt-4 text-sm">
@@ -132,13 +147,40 @@ export default function ProjectCard({
 
             {/* Progress */}
             <div>
-              <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-2">Progress</h3>
-              <div className="space-y-2">
+              <h3 className="font-semibold text-sm text-gray-500 dark:text-gray-400 mb-2">Progress Tracking</h3>
+              <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span>Completion</span>
-                  <span className="font-semibold">{progress}%</span>
+                  <span className="font-semibold text-lg">{progress}%</span>
                 </div>
-                <Progress value={progress} className="h-3" />
+                <div className="relative h-4 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                  {/* Completed portion - Green */}
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-500 to-green-600 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                  {/* Remaining portion - Amber */}
+                  <div 
+                    className="absolute top-0 right-0 h-full bg-gradient-to-r from-amber-300 to-amber-400 dark:from-amber-600 dark:to-amber-700 transition-all duration-500"
+                    style={{ width: `${100 - progress}%` }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-green-500 to-green-600"></div>
+                    <div className="text-xs">
+                      <div className="text-gray-500 dark:text-gray-400">Completed</div>
+                      <div className="font-semibold">{progress}%</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-gradient-to-r from-amber-300 to-amber-400 dark:from-amber-600 dark:to-amber-700"></div>
+                    <div className="text-xs">
+                      <div className="text-gray-500 dark:text-gray-400">Remaining</div>
+                      <div className="font-semibold">{100 - progress}%</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

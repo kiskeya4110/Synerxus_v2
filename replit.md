@@ -11,12 +11,13 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-- **Dashboard Design**: Role-based partitioning for volunteers and organizations, optimized color schemes for KPIs, and UN SDG colors for charts.
+- **Dashboard Design**: Role-based partitioning for volunteers and organizations, optimized color schemes for KPIs, and UN SDG colors for charts. Enhanced with dual-color progress bars (green for completed, amber for remaining) and interactive profile overview sections.
 - **Mobile Optimization**: Comprehensive mobile app optimization with responsive layouts for all components, including dynamic sizing and grid adjustments.
 - **Component Library**: Utilizes `shadcn/ui` components built on `Radix UI` primitives for accessibility.
 - **Theme**: Lighter theme with a very light blue-gray background, bright blue primary color, white cards, and vibrant accent colors.
 - **Branding**: Synerxus rebrand with an infinity loop logo, navy blue and orange-gold color scheme, and consistent typography.
 - **UN SDG Graphics**: Integration of official UN SDG graphics, replacing custom icons, displayed in numerical order.
+- **Interactive Elements**: Clickable profile sections that open detailed modals, hover states throughout the dashboard, and visual cues ("View all", "Read more") to indicate interactivity.
 
 ### Technical Implementations
 - **Frontend**: React 18 with TypeScript, Vite, Wouter for routing, TanStack Query for server state, Tailwind CSS, Chart.js, React Hook Form with Zod, date-fns.
@@ -30,7 +31,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Feature Specifications
 - **Landing Page**: Rebranded, public-facing page showcasing features and calls to action, including an interactive SDG wheel.
-- **Dashboard**: Role-based views (Volunteer/Organization) with real-time KPIs, interactive cards, Impact Over Time and SDG Contributions charts, Quick Actions, Recent Activity, and Upcoming Events. Volunteers see AI-matched opportunities. Impact Score calculated from volunteer hours, completed tasks, SDG coverage, and match acceptance. All KPIs are server-side calculated and organization-scoped.
+- **Dashboard**: Role-based views (Volunteer/Organization) with real-time KPIs, interactive cards, Impact Over Time and full pie-chart SDG Distribution visualization, Quick Actions, Recent Activity, and Upcoming Events. Project cards display dual-color progress bars (green gradient for completed work, amber gradient for remaining work) with percentage breakdowns. Profile Overview features fully interactive, clickable sections that open detailed modals for skills, interests, organization needs, goals, and SDG commitments. Volunteers see AI-matched opportunities. Impact Score calculated from volunteer hours, completed tasks, SDG coverage, and match acceptance. All KPIs are server-side calculated and organization-scoped.
 - **SDG Mapping**: Visual tracking of project alignment with UN SDGs using an interactive radar chart with logarithmic scale, comparing organization's SDG focus areas against actual project distribution. Includes project statistics dashboard and interactive project cards with completion progress and SDG badges.
 - **Mobile Data Collection**: Tabbed interface for activity logging and impact data recording with form validation.
 - **Calendar**: Full-featured calendar with event management, creation, and assignment capabilities.

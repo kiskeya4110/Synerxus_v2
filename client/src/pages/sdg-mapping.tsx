@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,10 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
-import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp } from "lucide-react";
+import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
-import { getSDGName, getSDGColor } from "@shared/sdg-goals";
+import { getSDGName, getSDGColor, suggestSDGsFromText, SDG_GOALS } from "@shared/sdg-goals";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Radar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -56,11 +58,17 @@ const SDG_METADATA: Record<number, { title: string; description: string }> = {
 
 export default function SDGMapping() {
   const { theme } = useTheme();
+  const { toast } = useToast();
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [statsDialogOpen, setStatsDialogOpen] = useState(false);
   const [statsDialogData, setStatsDialogData] = useState<{ title: string; items: any[] } | null>(null);
   const [, navigate] = useLocation();
+  
+  // New state for SDG alignment tool
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedGoalForConnection, setSelectedGoalForConnection] = useState<number[]>([]);
+  const [recommendedSDGs, setRecommendedSDGs] = useState<number[]>([]);
   
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
@@ -221,6 +229,78 @@ export default function SDGMapping() {
       }
     }
   }, [sdgData, selectedSDG]);
+  
+  // Compute AI recommendations when project is selected
+  useEffect(() => {
+    if (selectedProjectId) {
+      const project = organizationProjects.find((p: any) => p.id.toString() === selectedProjectId);
+      if (project) {
+        const projectText = `${project.name} ${project.description || ""}`;
+        const suggestions = suggestSDGsFromText(projectText);
+        setRecommendedSDGs(suggestions);
+        
+        // Pre-select recommended SDGs
+        setSelectedGoalForConnection(suggestions.length > 0 ? [suggestions[0]] : []);
+      }
+    } else {
+      setRecommendedSDGs([]);
+      setSelectedGoalForConnection([]);
+    }
+  }, [selectedProjectId, organizationProjects]);
+  
+  // Mutation to update project SDGs
+  const updateProjectSDGs = useMutation({
+    mutationFn: async ({ projectId, sdgGoals }: { projectId: number; sdgGoals: number[] }) => {
+      return await apiRequest('PATCH', `/api/projects/${projectId}`, { sdgGoals });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Project SDG alignment updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
+      setSelectedProjectId("");
+      setSelectedGoalForConnection([]);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update project SDG alignment",
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Handle connect button click
+  const handleConnectSDG = () => {
+    if (!selectedProjectId) {
+      toast({
+        title: "No Project Selected",
+        description: "Please select a project first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (selectedGoalForConnection.length === 0) {
+      toast({
+        title: "No SDG Selected",
+        description: "Please select at least one SDG goal",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    const project = organizationProjects.find((p: any) => p.id.toString() === selectedProjectId);
+    if (project) {
+      // Merge with existing SDGs
+      const existingSDGs = project.sdgGoals || [];
+      const uniqueSDGSet = new Set([...existingSDGs, ...selectedGoalForConnection]);
+      const newSDGs = Array.from(uniqueSDGSet);
+      updateProjectSDGs.mutate({ projectId: project.id, sdgGoals: newSDGs });
+    }
+  };
 
   // Handle statistics card click
   const handleStatsClick = (title: string) => {
@@ -735,7 +815,12 @@ export default function SDGMapping() {
                 <TabsContent value="connect" className="space-y-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Project</label>
-                    <select className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                    <select 
+                      className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+                      value={selectedProjectId}
+                      onChange={(e) => setSelectedProjectId(e.target.value)}
+                      data-testid="select-project"
+                    >
                       <option value="">Select a project</option>
                       {organizationProjects.map((project: any) => (
                         <option key={project.id} value={project.id}>{project.name}</option>
@@ -743,40 +828,132 @@ export default function SDGMapping() {
                     </select>
                   </div>
                   
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Activity Type</label>
-                    <input 
-                      type="text"
-                      placeholder="e.g., Health Screening, Training Session"
-                      className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                    />
-                  </div>
+                  {/* AI Recommendations */}
+                  {selectedProjectId && recommendedSDGs.length > 0 && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                      <div className="flex items-start gap-2">
+                        <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                            AI-Recommended SDGs
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {recommendedSDGs.map(sdgId => (
+                              <Badge 
+                                key={sdgId}
+                                className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700"
+                                style={{ borderColor: getSDGColor(sdgId) }}
+                              >
+                                <span className="mr-1">✨</span>
+                                Goal {sdgId}: {SDG_GOALS[sdgId]?.shortName}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">SDG Goal</label>
-                    <select 
-                      className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
-                      value={selectedSDG ?? ""}
-                      onChange={(e) => setSelectedSDG(Number(e.target.value))}
-                    >
-                      {sdgData.map(sdg => (
-                        <option key={sdg.id} value={sdg.id}>Goal {sdg.id}: {sdg.title}</option>
-                      ))}
-                    </select>
+                    <label className="text-sm font-medium">Select SDG Goals</label>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Choose one or more SDGs to connect with this project
+                    </p>
+                    
+                    <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                      {/* Show all 17 SDGs */}
+                      {Object.values(SDG_GOALS).map((sdg) => {
+                        const isRecommended = recommendedSDGs.includes(sdg.id);
+                        const isOrgFocus = organizationSDGs.includes(sdg.id);
+                        const isSelected = selectedGoalForConnection.includes(sdg.id);
+                        const project = organizationProjects.find((p: any) => p.id.toString() === selectedProjectId);
+                        const isAlreadyLinked = project?.sdgGoals?.includes(sdg.id);
+                        
+                        return (
+                          <div
+                            key={sdg.id}
+                            onClick={() => {
+                              if (isAlreadyLinked) return;
+                              setSelectedGoalForConnection(prev =>
+                                prev.includes(sdg.id)
+                                  ? prev.filter(id => id !== sdg.id)
+                                  : [...prev, sdg.id]
+                              );
+                            }}
+                            className={`
+                              flex items-center gap-3 p-2 rounded-md cursor-pointer transition-colors
+                              ${isSelected ? 'bg-primary/10 border-2 border-primary' : 'border border-gray-200 dark:border-gray-700'}
+                              ${isAlreadyLinked ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 dark:hover:bg-gray-800'}
+                            `}
+                            data-testid={`sdg-option-${sdg.id}`}
+                          >
+                            <div 
+                              className="w-1 h-8 rounded-full flex-shrink-0" 
+                              style={{ backgroundColor: sdg.color }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium text-sm">Goal {sdg.id}</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-300">{sdg.name}</span>
+                              </div>
+                              <div className="flex items-center gap-1 mt-1">
+                                {isRecommended && (
+                                  <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700">
+                                    <Sparkles className="h-3 w-3 mr-1" />
+                                    AI Recommended
+                                  </Badge>
+                                )}
+                                {isOrgFocus && (
+                                  <Badge variant="outline" className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-700">
+                                    Org Focus
+                                  </Badge>
+                                )}
+                                {isAlreadyLinked && (
+                                  <Badge variant="outline" className="text-xs bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-400">
+                                    <CheckCircle2 className="h-3 w-3 mr-1" />
+                                    Already Linked
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              disabled={isAlreadyLinked}
+                              readOnly
+                              className="h-4 w-4 flex-shrink-0"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Impact Level</label>
-                    <select className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
-                      <option value="high">High</option>
-                      <option value="medium">Medium</option>
-                      <option value="low">Low</option>
-                    </select>
-                  </div>
+                  {/* Warning for non-recommended selections */}
+                  {selectedGoalForConnection.some(id => !recommendedSDGs.includes(id) && !organizationSDGs.includes(id)) && (
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm text-amber-800 dark:text-amber-200">
+                        You've selected SDGs that are not recommended by AI or in your organization's focus areas. You can still proceed with these selections.
+                      </p>
+                    </div>
+                  )}
                   
-                  <button className="w-full mt-4 bg-primary text-white py-2 rounded-md hover:bg-primary-700">
-                    Connect Activity to SDG
-                  </button>
+                  <Button 
+                    onClick={handleConnectSDG}
+                    disabled={!selectedProjectId || selectedGoalForConnection.length === 0 || updateProjectSDGs.isPending}
+                    className="w-full"
+                    data-testid="button-connect-sdg"
+                  >
+                    {updateProjectSDGs.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>Connect to SDG{selectedGoalForConnection.length > 1 ? 's' : ''}</>
+                    )}
+                  </Button>
                 </TabsContent>
                 
                 <TabsContent value="report" className="space-y-4">

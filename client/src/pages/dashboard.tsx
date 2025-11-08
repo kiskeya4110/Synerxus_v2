@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -312,7 +314,7 @@ export default function Dashboard() {
             label: p.name,
             value: p.status,
             location: p.location,
-            completion: `${calculateProgress(p.id, tasks)}% complete`,
+            completion: `${p.completionPercentage || 0}% complete`,
           })),
         };
         break;
@@ -340,16 +342,22 @@ export default function Dashboard() {
               if (!sdgDetails.has(goal)) {
                 sdgDetails.set(goal, []);
               }
-              sdgDetails.get(goal).push(project.name);
+              sdgDetails.get(goal).push({
+                name: project.name,
+                id: project.id,
+                completion: project.completionPercentage || 0,
+              });
             });
           }
         });
         detailData = {
           title: "SDG Goals Addressed",
-          items: Array.from(sdgDetails.entries()).map(([goal, projectNames]) => ({
+          items: Array.from(sdgDetails.entries()).map(([goal, projects]) => ({
+            sdgNumber: goal,
             label: `SDG ${goal}`,
-            value: `${projectNames.length} projects`,
-            project: projectNames.slice(0, 3).join(", ") + (projectNames.length > 3 ? "..." : ""),
+            value: `${projects.length} projects`,
+            projectsList: projects,
+            isSDG: true, // Flag to identify SDG items
           })),
         };
         break;
@@ -570,7 +578,57 @@ export default function Dashboard() {
             {selectedKPI?.items.map((item: any, index: number) => {
               // Check if this is a volunteer item (has avatar and id)
               const isVolunteerItem = item.avatar !== undefined && item.id;
+              // Check if this is an SDG item (has isSDG flag)
+              const isSDGItem = item.isSDG === true;
               
+              // SDG Item with Collapsible Projects List
+              if (isSDGItem) {
+                return (
+                  <Collapsible key={index}>
+                    <div className="border rounded-lg">
+                      <CollapsibleTrigger className="w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" data-testid={`kpi-item-${index}`}>
+                        <div className="flex justify-between items-center gap-4">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                              <Target className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <h4 className="font-medium">{item.label}</h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Click to view projects
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+                              {item.value}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-gray-500 transition-transform ui-open:rotate-180" />
+                          </div>
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="border-t p-4 space-y-2 bg-gray-50 dark:bg-gray-900/50">
+                          {item.projectsList && item.projectsList.map((project: any, pIndex: number) => (
+                            <Link key={pIndex} href={`/projects/${project.id}`}>
+                              <div className="p-3 bg-white dark:bg-gray-800 rounded-md hover:border-primary-500 hover:shadow-md transition-all border cursor-pointer" data-testid={`sdg-project-${project.id}`}>
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium">{project.name}</span>
+                                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    {project.completion}% complete
+                                  </span>
+                                </div>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                );
+              }
+              
+              // Regular or Volunteer Item
               const content = (
                 <div className={`p-4 border rounded-lg ${isVolunteerItem ? 'hover:border-primary-500 hover:shadow-md transition-all cursor-pointer' : ''}`} data-testid={`kpi-item-${index}`}>
                   <div className="flex justify-between items-start gap-4">

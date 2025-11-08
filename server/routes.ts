@@ -1904,7 +1904,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Use secure service layer based on user type
       if (user.userType === 'organization') {
         const dashboardData = await getDashboardDataForOrganization(userIdNum);
-        res.json(dashboardData.summary);
+        // Return full dashboard data with enriched projects and volunteers
+        res.json({
+          ...dashboardData.summary,
+          projectsWithVolunteers: dashboardData.projectsWithVolunteers,
+          volunteerSummaries: dashboardData.volunteerSummaries,
+        });
       } else if (user.userType === 'volunteer') {
         const dashboardData = await getDashboardDataForVolunteer(userIdNum);
         res.json(dashboardData.summary);

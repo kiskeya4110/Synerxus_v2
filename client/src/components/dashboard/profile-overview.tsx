@@ -220,130 +220,9 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     <>
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg font-semibold">Profile Overview</CardTitle>
+        <CardTitle className="text-lg font-semibold">Primary SDGs</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* User Info - Clickable */}
-        <div 
-          className="flex items-center gap-3 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-          onClick={() => handleSectionClick('goals')}
-          data-testid="clickable-user-info"
-        >
-          <Avatar className="h-16 w-16" data-testid="avatar-profile-overview">
-            <AvatarImage src={currentUser?.avatar || profile?.profilePhotoUrl} />
-            <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg" data-testid="text-user-name">{currentUser?.displayName || currentUser?.username}</h3>
-            {profile?.location && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                <MapPin className="h-3 w-3" />
-                <span data-testid="text-location">{profile.location}</span>
-              </div>
-            )}
-            {!isVolunteer && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                <Building2 className="h-3 w-3" />
-                <span>Click for details</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Skills - Clickable */}
-        {isVolunteer && profile?.skills && profile.skills.length > 0 && (
-          <div 
-            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-            onClick={() => handleSectionClick('skills')}
-            data-testid="clickable-skills"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Award className="h-4 w-4" />
-                <span>Skills</span>
-              </div>
-              <span className="text-xs text-primary">View all</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {profile.skills.slice(0, 5).map((skill: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-xs" data-testid={`badge-skill-${skill}`}>{skill}</Badge>
-              ))}
-              {profile.skills.length > 5 && (
-                <Badge variant="outline" className="text-xs" data-testid="badge-skill-more">+{profile.skills.length - 5} more</Badge>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Interests - Clickable */}
-        {isVolunteer && profile?.interests && profile.interests.length > 0 && (
-          <div 
-            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-            onClick={() => handleSectionClick('interests')}
-            data-testid="clickable-interests"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Heart className="h-4 w-4" />
-                <span>Interests</span>
-              </div>
-              <span className="text-xs text-primary">View all</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.slice(0, 5).map((interest: string, index: number) => (
-                <Badge key={index} variant="secondary" className="text-xs" data-testid={`badge-interest-${interest}`}>{interest}</Badge>
-              ))}
-              {profile.interests.length > 5 && (
-                <Badge variant="secondary" className="text-xs" data-testid="badge-interest-more">+{profile.interests.length - 5} more</Badge>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Organization Needs - Clickable */}
-        {!isVolunteer && profile?.needs && profile.needs.length > 0 && (
-          <div 
-            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-            onClick={() => handleSectionClick('needs')}
-            data-testid="clickable-needs"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span>Volunteer Needs</span>
-              </div>
-              <span className="text-xs text-primary">View all</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {profile.needs.slice(0, 5).map((need: string, index: number) => (
-                <Badge key={index} variant="outline" className="text-xs" data-testid={`badge-need-${need}`}>{need}</Badge>
-              ))}
-              {profile.needs.length > 5 && (
-                <Badge variant="outline" className="text-xs" data-testid="badge-need-more">+{profile.needs.length - 5} more</Badge>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Organization Goals - Clickable */}
-        {!isVolunteer && profile?.goals && (
-          <div 
-            className="space-y-2 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-            onClick={() => handleSectionClick('goals')}
-            data-testid="clickable-goals"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Target className="h-4 w-4" />
-                <span>Mission & Goals</span>
-              </div>
-              <span className="text-xs text-primary">Read more</span>
-            </div>
-            <p className="text-xs text-muted-foreground" data-testid="text-goals">
-              {profile.goals.length > 100 ? `${profile.goals.substring(0, 100)}...` : profile.goals}
-            </p>
-          </div>
-        )}
 
         {/* SDG Goals - Each individually clickable */}
         {((isVolunteer && profile?.sdgGoals && profile.sdgGoals.length > 0) || 
@@ -401,7 +280,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
         {!profile && (
           <div className="text-center py-4">
             <p className="text-sm text-muted-foreground mb-3" data-testid="text-empty-profile">
-              Complete your profile to see your information here
+              Add your SDG focus areas to see them here
             </p>
             <Link href="/settings">
               <a>

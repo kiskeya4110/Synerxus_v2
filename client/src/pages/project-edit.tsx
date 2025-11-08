@@ -4,6 +4,7 @@ import { ArrowLeft, Save, TrendingUp } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -60,22 +61,24 @@ export default function ProjectEdit() {
   });
 
   // Update form when project data loads
-  if (project && !form.formState.isDirty) {
-    const projectTasks = tasks.filter((t: any) => t.projectId === projectId);
-    const completedTasks = projectTasks.filter((t: any) => t.status === "Completed").length;
-    const calculatedPercentage = projectTasks.length > 0 
-      ? Math.round((completedTasks / projectTasks.length) * 100) 
-      : 0;
+  useEffect(() => {
+    if (project && Array.isArray(tasks)) {
+      const projectTasks = tasks.filter((t: any) => t.projectId === projectId);
+      const completedTasks = projectTasks.filter((t: any) => t.status === "Completed").length;
+      const calculatedPercentage = projectTasks.length > 0 
+        ? Math.round((completedTasks / projectTasks.length) * 100) 
+        : 0;
 
-    form.reset({
-      name: project.name || "",
-      description: project.description || "",
-      status: project.status || "Planning",
-      location: project.location || "",
-      completionPercentage: project.completionPercentage ?? calculatedPercentage,
-      aiTrackingEnabled: project.aiTrackingEnabled || false,
-    });
-  }
+      form.reset({
+        name: project.name || "",
+        description: project.description || "",
+        status: project.status || "Planning",
+        location: project.location || "",
+        completionPercentage: project.completionPercentage ?? calculatedPercentage,
+        aiTrackingEnabled: project.aiTrackingEnabled || false,
+      });
+    }
+  }, [project, tasks, projectId, form]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProjectEditForm) => {

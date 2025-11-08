@@ -283,11 +283,9 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
               Add your SDG focus areas to see them here
             </p>
             <Link href="/settings">
-              <a>
-                <Button variant="outline" size="sm" data-testid="button-update-profile">
-                  Update Profile
-                </Button>
-              </a>
+              <Button variant="outline" size="sm" data-testid="button-update-profile">
+                Update Profile
+              </Button>
             </Link>
           </div>
         )}

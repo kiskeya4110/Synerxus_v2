@@ -39,6 +39,8 @@ interface ProfileOverviewProps {
 export default function ProfileOverview({ userId, userType }: ProfileOverviewProps) {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [selectedSection, setSelectedSection] = useState<'skills' | 'interests' | 'needs' | 'goals' | 'sdgs' | null>(null);
+  const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
+  const [showSDGDialog, setShowSDGDialog] = useState(false);
   
   const { data: currentUser, isLoading: isLoadingUser } = useQuery<any>({
     queryKey: ["/api/users/me", userId],
@@ -98,6 +100,12 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
   const handleSectionClick = (section: 'skills' | 'interests' | 'needs' | 'goals' | 'sdgs') => {
     setSelectedSection(section);
     setShowDetailsDialog(true);
+  };
+
+  const handleSDGClick = (sdgNumber: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedSDG(sdgNumber);
+    setShowSDGDialog(true);
   };
 
   const renderDialogContent = () => {
@@ -337,20 +345,19 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
           </div>
         )}
 
-        {/* SDG Goals - Clickable */}
+        {/* SDG Goals - Each individually clickable */}
         {((isVolunteer && profile?.sdgGoals && profile.sdgGoals.length > 0) || 
           (!isVolunteer && profile?.primarySdgs && profile.primarySdgs.length > 0)) && (
           <div 
-            className="space-y-3 p-3 -m-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-            onClick={() => handleSectionClick('sdgs')}
+            className="space-y-3"
             data-testid="clickable-sdgs"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-3 -mx-3">
               <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Globe className="h-4 w-4" />
                 <span>{isVolunteer ? "SDG Goals" : "Primary SDGs"}</span>
               </div>
-              <span className="text-xs text-primary">View all</span>
+              <span className="text-xs text-muted-foreground">Click to view details</span>
             </div>
             <TooltipProvider>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
@@ -360,7 +367,8 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                     <Tooltip key={goal}>
                       <TooltipTrigger>
                         <div 
-                          className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          onClick={(e) => handleSDGClick(goal, e)}
+                          className="flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-3 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-all cursor-pointer hover:scale-105 hover:shadow-md"
                           data-testid={`sdg-goal-${goal}`}
                         >
                           {UN_SDG_ICONS[goal] ? (
@@ -380,7 +388,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>SDG {goal}: {SDG_LABELS[goal]}</p>
+                        <p>Click to view SDG {goal} details</p>
                       </TooltipContent>
                     </Tooltip>
                   ))}
@@ -418,6 +426,52 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
         </DialogHeader>
         <div className="mt-4">
           {renderDialogContent()}
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Individual SDG Dialog */}
+    <Dialog open={showSDGDialog} onOpenChange={setShowSDGDialog}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>SDG {selectedSDG}: {selectedSDG ? SDG_LABELS[selectedSDG] : ''}</DialogTitle>
+          <DialogDescription>
+            Sustainable Development Goal details
+          </DialogDescription>
+        </DialogHeader>
+        <div className="mt-4 space-y-4">
+          {selectedSDG && (
+            <>
+              <div className="flex justify-center">
+                {UN_SDG_ICONS[selectedSDG] ? (
+                  <img 
+                    src={UN_SDG_ICONS[selectedSDG]} 
+                    alt={`SDG ${selectedSDG}`}
+                    className="w-32 h-32 rounded-lg shadow-md"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-4xl shadow-md">
+                    {selectedSDG}
+                  </div>
+                )}
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-xl font-bold">
+                  Goal {selectedSDG}: {SDG_LABELS[selectedSDG]}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {isVolunteer 
+                    ? 'You have selected this as one of your focus areas for volunteer work.' 
+                    : 'Your organization has committed to contributing to this global goal.'}
+                </p>
+              </div>
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm">
+                  <strong>About this goal:</strong> This is one of the 17 United Nations Sustainable Development Goals designed to address global challenges and create a better future for all by 2030.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

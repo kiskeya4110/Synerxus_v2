@@ -29,6 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **Profile Management**: Email-based profile linking with cache invalidation strategies for data synchronization.
 - **Organization-Volunteer Communication**: Full messaging system with REST endpoints, contact modals, and project assignment capabilities, restricted to assigned project volunteers.
 - **Automatic Project Completion Tracking**: Backend recalculates and persists project completion percentages based on task status, broadcasting updates via WebSocket.
+- **Performance Optimizations**: Component-level optimization with React.memo for ProjectListCard, useMemo for expensive calculations (typed Map for project metrics), and useCallback for event handlers to minimize re-renders on large datasets.
 
 ### Feature Specifications
 - **Landing Page**: Rebranded, public-facing page showcasing features and calls to action, including an interactive SDG wheel.

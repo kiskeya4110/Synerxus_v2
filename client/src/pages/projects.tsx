@@ -299,14 +299,14 @@ export default function Projects() {
           const isExpanded = expandedProjects.has(project.id);
 
           return (
-            <Card key={project.id}>
+            <Card key={project.id} className="hover:shadow-md transition-shadow">
               <Collapsible open={isExpanded} onOpenChange={() => toggleProject(project.id)}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" data-testid={`button-toggle-project-${project.id}`}>
                             {isExpanded ? (
                               <ChevronDown className="h-4 w-4" />
                             ) : (
@@ -314,16 +314,25 @@ export default function Projects() {
                             )}
                           </Button>
                         </CollapsibleTrigger>
-                        <CardTitle className="text-xl">{project.name}</CardTitle>
+                        <Link href={`/projects/${project.id}`}>
+                          <CardTitle className="text-xl hover:text-primary cursor-pointer transition-colors" data-testid={`title-project-${project.id}`}>
+                            {project.name}
+                          </CardTitle>
+                        </Link>
                         <Badge className={getStatusColor(project.status)}>
                           {project.status}
                         </Badge>
                       </div>
                       {project.description && (
-                        <p className="text-sm text-gray-600 ml-11">{project.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 ml-11">{project.description}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
+                      <Link href={`/projects/${project.id}`}>
+                        <Button variant="outline" size="sm" data-testid={`button-view-project-${project.id}`}>
+                          View Details
+                        </Button>
+                      </Link>
                       <EditProjectDialog project={project} />
                       <DeleteProjectDialog project={project} />
                     </div>

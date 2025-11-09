@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FiMail, FiLock, FiUser } from "react-icons/fi";
+import { FiMail, FiLock, FiUser, FiEye, FiEyeOff } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ export default function Login() {
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   
   // Register form state
   const [registerName, setRegisterName] = useState("");
@@ -28,14 +29,45 @@ export default function Login() {
   const [registerPassword, setRegisterPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Helper function to determine where to redirect after login
+  const getRedirectPath = async (userId: number, userType: string) => {
+    try {
+      // Fetch user's profile completion status
+      const profileResponse = await fetch(`/api/profile/${userType}?userId=${userId}`);
+      
+      if (!profileResponse.ok) {
+        console.error('Failed to fetch profile status');
+        return '/dashboard'; // Default to dashboard if request fails
+      }
+      
+      const profileData = await profileResponse.json();
+      
+      // Check if profile is complete
+      const isProfileComplete = profileData?.user?.profileComplete || false;
+      
+      if (!isProfileComplete) {
+        // Redirect to intake form if profile not complete
+        return userType === 'volunteer' ? '/volunteer-intake' : '/organization-intake';
+      }
+      
+      // Profile is complete, go to dashboard
+      return '/dashboard';
+    } catch (error) {
+      console.error('Error checking profile status:', error);
+      // Default to dashboard if there's an error
+      return '/dashboard';
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      const result = await signInWithGoogle() as UserCredential | undefined;
+      const firebaseUser = await signInWithGoogle();
       
       // Sync with backend database
-      const firebaseUser = result?.user;
       if (firebaseUser) {
         const response = await fetch('/api/users/firebase-sync', {
           method: 'POST',
@@ -47,17 +79,30 @@ export default function Login() {
             userType: userType || 'volunteer' // Default to volunteer
           })
         });
+        
+        if (!response.ok) {
+          throw new Error('Failed to sync with backend');
+        }
+        
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
+        
+        // Determine redirect based on profile completion
+        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
+        setLocation(redirectPath);
+        
+        toast({
+          title: "Welcome!",
+          description: "You have successfully signed in with Google.",
+        });
       }
-      
-      setLocation("/dashboard");
-      toast({
-        title: "Welcome!",
-        description: "You have successfully signed in with Google.",
-      });
     } catch (error) {
       console.error("Error signing in with Google:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign in. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -77,31 +122,43 @@ export default function Login() {
     
     try {
       setIsLoading(true);
-      const result = await signInWithEmail(loginEmail, loginPassword) as UserCredential | undefined;
+      const firebaseUser = await signInWithEmail(loginEmail, loginPassword);
       
       // Sync with backend database
-      if (result?.user) {
+      if (firebaseUser) {
         const response = await fetch('/api/users/firebase-sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            firebaseUid: result.user.uid,
-            email: result.user.email,
-            displayName: result.user.displayName,
-            userType: 'volunteer' // Default for email login
+            firebaseUid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName
           })
         });
+        
+        if (!response.ok) {
+          throw new Error('Failed to sync with backend');
+        }
+        
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
+        
+        // Determine redirect based on profile completion
+        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
+        setLocation(redirectPath);
+        
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
+        });
       }
-      
-      setLocation("/dashboard");
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully signed in.",
-      });
     } catch (error) {
       console.error("Error signing in:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign in. Please check your credentials and try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -130,20 +187,25 @@ export default function Login() {
     
     try {
       setIsLoading(true);
-      const result = await signUp(registerEmail, registerPassword, userType || undefined, registerName) as UserCredential | undefined;
+      const firebaseUser = await signUp(registerEmail, registerPassword, userType || undefined, registerName);
       
       // Sync with backend database
-      if (result?.user && userType) {
+      if (firebaseUser && userType) {
         const response = await fetch('/api/users/firebase-sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            firebaseUid: result.user.uid,
-            email: result.user.email,
+            firebaseUid: firebaseUser.uid,
+            email: firebaseUser.email,
             displayName: registerName,
             userType
           })
         });
+        
+        if (!response.ok) {
+          throw new Error('Failed to sync with backend');
+        }
+        
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
         
@@ -155,16 +217,25 @@ export default function Login() {
         } else {
           setLocation("/dashboard");
         }
+        
+        toast({
+          title: "Account created",
+          description: "Please complete your profile to get started.",
+        });
       } else {
         setLocation("/dashboard");
+        toast({
+          title: "Account created",
+          description: "Welcome to Synerxus!",
+        });
       }
-      
-      toast({
-        title: "Account created",
-        description: "Please complete your profile to get started.",
-      });
     } catch (error) {
       console.error("Error signing up:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create account. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -236,13 +307,23 @@ export default function Login() {
                         <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                         <Input 
                           id="password" 
-                          type="password" 
+                          type={showLoginPassword ? "text" : "password"}
                           placeholder="••••••••" 
-                          className="pl-10"
+                          className="pl-10 pr-10"
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
                           disabled={isLoading}
+                          data-testid="input-login-password"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowLoginPassword(!showLoginPassword)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                          aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                          data-testid="button-toggle-login-password"
+                        >
+                          {showLoginPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                        </button>
                       </div>
                     </div>
                     <Button type="submit" className="w-full" disabled={isLoading}>
@@ -353,14 +434,23 @@ export default function Login() {
                           <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                           <Input 
                             id="register-password" 
-                            type="password" 
+                            type={showRegisterPassword ? "text" : "password"}
                             placeholder="••••••••" 
-                            className="pl-10"
+                            className="pl-10 pr-10"
                             value={registerPassword}
                             onChange={(e) => setRegisterPassword(e.target.value)}
                             disabled={isLoading}
                             data-testid="input-register-password"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                            aria-label={showRegisterPassword ? "Hide password" : "Show password"}
+                            data-testid="button-toggle-register-password"
+                          >
+                            {showRegisterPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                          </button>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -369,14 +459,23 @@ export default function Login() {
                           <FiLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                           <Input 
                             id="confirm-password" 
-                            type="password" 
+                            type={showConfirmPassword ? "text" : "password"}
                             placeholder="••••••••" 
-                            className="pl-10"
+                            className="pl-10 pr-10"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             disabled={isLoading}
                             data-testid="input-confirm-password"
                           />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                            aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                            data-testid="button-toggle-confirm-password"
+                          >
+                            {showConfirmPassword ? <FiEyeOff className="h-4 w-4" /> : <FiEye className="h-4 w-4" />}
+                          </button>
                         </div>
                       </div>
                       <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-submit-register">

@@ -84,9 +84,15 @@ export default function VolunteerIntake() {
     enabled: !!userId
   });
 
-  // Fetch user data to get avatar
+  // Fetch user data to get avatar and displayName
   const { data: userData } = useQuery<User>({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      if (!userId) throw new Error("User ID is required");
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch user data");
+      return response.json();
+    },
     enabled: !!userId
   });
 

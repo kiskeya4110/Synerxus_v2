@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
+import { VolunteerProfile, User } from "@shared/schema";
 import { ArrowRight, ArrowLeft, Check, UserCircle, Globe, Heart, Clock, MessageSquare, Phone } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 
@@ -59,41 +60,52 @@ type VolunteerProfileForm = z.infer<typeof volunteerProfileSchema>;
 export default function VolunteerIntake() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user: firebaseUser } = useAuth();
   const [step, setStep] = useState(1);
   const [customSkill, setCustomSkill] = useState("");
   const [customLanguage, setCustomLanguage] = useState("");
   const [customInterest, setCustomInterest] = useState("");
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState(user?.avatar || "");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
+  
+  // Get database user ID from localStorage
+  const userId = localStorage.getItem('currentUserId');
 
-  const { data: existingProfile } = useQuery({
-    queryKey: ["/api/intake/volunteer-profile", user?.id],
-    enabled: !!user?.id
+  const { data: existingProfile, isLoading } = useQuery<VolunteerProfile | null>({
+    queryKey: ["/api/intake/volunteer-profile", userId],
+    queryFn: async () => {
+      if (!userId) throw new Error("User ID is required");
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${userId}`);
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error("Failed to fetch volunteer profile");
+      }
+      return response.json();
+    },
+    enabled: !!userId
   });
 
-  // Load existing avatar when user data loads
-  useEffect(() => {
-    if (user?.avatar) {
-      setProfilePhotoUrl(user.avatar);
-    }
-  }, [user]);
+  // Fetch user data to get avatar
+  const { data: userData } = useQuery<User>({
+    queryKey: ["/api/users/me"],
+    enabled: !!userId
+  });
 
   const form = useForm<VolunteerProfileForm>({
     resolver: zodResolver(volunteerProfileSchema),
     defaultValues: {
       volunteerName: "",
-      city: existingProfile?.city || "",
-      country: existingProfile?.country || "",
-      languages: existingProfile?.languages || [],
+      city: "",
+      country: "",
+      languages: [],
       skills: [],
-      interests: existingProfile?.interests || [],
-      preferredCauses: existingProfile?.preferredCauses || [],
-      weeklyAvailability: existingProfile?.weeklyAvailability || 5,
-      preferredWorkStyle: existingProfile?.preferredWorkStyle || "remote",
-      preferredSdgs: existingProfile?.preferredSdgs || [],
-      motivations: existingProfile?.motivations || "",
-      phoneNumber: existingProfile?.phoneNumber || "",
-      emergencyContact: existingProfile?.emergencyContact || {
+      interests: [],
+      preferredCauses: [],
+      weeklyAvailability: 5,
+      preferredWorkStyle: "remote",
+      preferredSdgs: [],
+      motivations: "",
+      phoneNumber: "",
+      emergencyContact: {
         name: "",
         phone: "",
         relationship: ""
@@ -102,14 +114,53 @@ export default function VolunteerIntake() {
     }
   });
 
+  // Reset form when existing profile data loads
+  useEffect(() => {
+    if (existingProfile && !isLoading && userData) {
+      const profileData = {
+        volunteerName: userData.displayName || firebaseUser?.displayName || "",
+        city: existingProfile.city || "",
+        country: existingProfile.country || "",
+        languages: existingProfile.languages || [],
+        skills: existingProfile.skills || [],
+        interests: existingProfile.interests || [],
+        preferredCauses: existingProfile.preferredCauses || [],
+        weeklyAvailability: existingProfile.weeklyAvailability || 5,
+        preferredWorkStyle: (existingProfile.preferredWorkStyle as "remote" | "in-person" | "hybrid") || "remote",
+        preferredSdgs: existingProfile.preferredSdgs || [],
+        motivations: existingProfile.motivations || "",
+        phoneNumber: existingProfile.phoneNumber || "",
+        emergencyContact: (existingProfile.emergencyContact as { name?: string; phone?: string; relationship?: string }) || {
+          name: "",
+          phone: "",
+          relationship: ""
+        },
+        onboardingCompleted: true
+      };
+      form.reset(profileData);
+    }
+  }, [existingProfile, isLoading, userData, firebaseUser, form]);
+
+  // Load profile photo from user data when it becomes available
+  useEffect(() => {
+    if (userData?.avatar && !profilePhotoUrl) {
+      setProfilePhotoUrl(userData.avatar);
+    }
+  }, [userData, profilePhotoUrl]);
+
   const submitMutation = useMutation({
     mutationFn: async (data: VolunteerProfileForm) => {
       console.log('[Volunteer Intake Mutation] Starting mutation');
-      console.log('[Volunteer Intake Mutation] userId:', user?.id);
+      console.log('[Volunteer Intake Mutation] userId:', userId);
+      
+      if (!userId) {
+        throw new Error("User ID not found. Please log in again.");
+      }
+      
       // Backend will automatically update userType when creating profile
       const result = await apiRequest(
         "POST",
-        `/api/intake/volunteer-profile?userId=${user?.id}`,
+        `/api/intake/volunteer-profile?userId=${userId}`,
         {
           ...data,
           location: `${data.city}, ${data.country}`,
@@ -120,7 +171,7 @@ export default function VolunteerIntake() {
       return result;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({
         title: "Profile completed!",
@@ -156,7 +207,7 @@ export default function VolunteerIntake() {
   const onSubmit = (data: VolunteerProfileForm) => {
     console.log('[Volunteer Intake] Form submission triggered');
     console.log('[Volunteer Intake] Form data:', data);
-    console.log('[Volunteer Intake] User ID:', user?.id);
+    console.log('[Volunteer Intake] User ID:', userId);
     console.log('[Volunteer Intake] Form errors:', form.formState.errors);
     submitMutation.mutate(data);
   };
@@ -253,7 +304,7 @@ export default function VolunteerIntake() {
                   <ProfilePictureUpload
                     currentPhotoUrl={profilePhotoUrl}
                     onPhotoChange={setProfilePhotoUrl}
-                    userId={user?.id || ""}
+                    userId={userId || ""}
                     userType="volunteer"
                   />
                   

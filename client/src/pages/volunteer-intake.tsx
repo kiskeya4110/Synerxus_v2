@@ -139,7 +139,8 @@ export default function VolunteerIntake() {
       };
       form.reset(profileData);
     }
-  }, [existingProfile, isLoading, userData, firebaseUser, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingProfile, isLoading, userData, firebaseUser]);
 
   // Load profile photo from user data when it becomes available
   useEffect(() => {

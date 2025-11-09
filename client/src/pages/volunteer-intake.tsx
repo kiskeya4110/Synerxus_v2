@@ -147,7 +147,8 @@ export default function VolunteerIntake() {
     if (userData?.avatar && !profilePhotoUrl) {
       setProfilePhotoUrl(userData.avatar);
     }
-  }, [userData, profilePhotoUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData]);
 
   const submitMutation = useMutation({
     mutationFn: async (data: VolunteerProfileForm) => {
@@ -259,9 +260,6 @@ export default function VolunteerIntake() {
       form.setValue("preferredSdgs", [...current, sdgNumber]);
     }
   };
-
-  // Watch preferredSdgs once at component level to avoid infinite loops
-  const selectedSdgs = form.watch("preferredSdgs") || [];
 
   const totalSteps = 5;
 
@@ -602,38 +600,41 @@ export default function VolunteerIntake() {
                   <FormField
                     control={form.control}
                     name="preferredSdgs"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Select Your Preferred SDGs</FormLabel>
-                        <FormDescription>Choose the goals you want to contribute to</FormDescription>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
-                          {Object.values(sdgGoals).map((sdg) => (
-                            <div
-                              key={sdg.id}
-                              data-testid={`card-sdg-${sdg.id}`}
-                              className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                selectedSdgs.includes(sdg.id)
-                                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                  : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                              }`}
-                              onClick={() => toggleSDG(sdg.id)}
-                            >
-                              <div className="flex items-start gap-2">
-                                <Checkbox
-                                  checked={selectedSdgs.includes(sdg.id)}
-                                  className="mt-1"
-                                />
-                                <div>
-                                  <p className="font-semibold text-sm">SDG {sdg.id}</p>
-                                  <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
+                    render={({ field }) => {
+                      const currentSdgs = field.value || [];
+                      return (
+                        <FormItem>
+                          <FormLabel>Select Your Preferred SDGs</FormLabel>
+                          <FormDescription>Choose the goals you want to contribute to</FormDescription>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+                            {Object.values(sdgGoals).map((sdg) => (
+                              <div
+                                key={sdg.id}
+                                data-testid={`card-sdg-${sdg.id}`}
+                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                                  currentSdgs.includes(sdg.id)
+                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                                }`}
+                                onClick={() => toggleSDG(sdg.id)}
+                              >
+                                <div className="flex items-start gap-2">
+                                  <Checkbox
+                                    checked={currentSdgs.includes(sdg.id)}
+                                    className="mt-1"
+                                  />
+                                  <div>
+                                    <p className="font-semibold text-sm">SDG {sdg.id}</p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </CardContent>
               </Card>

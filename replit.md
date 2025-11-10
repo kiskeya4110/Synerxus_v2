@@ -45,7 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Project-Task Hierarchy**: Project-based workflow with `projectAssignments` and task assignments.
 - **Profile Settings**: Comprehensive matching profile management for volunteers and organizations, including photo upload and full editing.
 - **Intake Forms System**: Multi-step onboarding forms for volunteers and organizations, and detailed forms for Core and Urgent Opportunity Posting.
-- **Authentication & Login Flow**: Firebase-based authentication (email/password, Google OAuth) with intelligent redirect based on profile completion status (directs new users to intake forms, existing users to dashboard), user type selection, session persistence, password visibility toggles with keyboard accessibility, and comprehensive error handling. Logout automatically redirects to landing page and clears user session.
+- **Authentication & Login Flow**: Firebase-based authentication (email/password, Google OAuth) with intelligent redirect based on profile completion status (directs new users to intake forms, existing users to dashboard), user type selection, session persistence, password visibility toggles with keyboard accessibility, and comprehensive error handling. Logout automatically redirects to landing page and clears user session. Backend `/api/users/firebase-sync` endpoint handles both registration (requires userType) and login (returns existing user) seamlessly.
 
 ### System Design Choices
 - **Authentication**: Firebase Auth with Google OAuth.

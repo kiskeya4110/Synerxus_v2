@@ -133,19 +133,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { firebaseUid, email, displayName, userType } = req.body;
       
-      if (!firebaseUid || !email || !userType) {
-        return res.status(400).json({ message: "Missing required fields: firebaseUid, email, userType" });
+      if (!firebaseUid || !email) {
+        return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
       }
       
       // Check if user already exists
       let user = await storage.getUserByFirebaseUid(firebaseUid);
       
       if (user) {
-        // User exists, return it
+        // User exists, return it (login case)
         return res.json(user);
       }
       
-      // User doesn't exist, create new one
+      // User doesn't exist, create new one (registration case)
+      if (!userType) {
+        return res.status(400).json({ message: "userType is required for new user registration" });
+      }
+      
       const username = email.split('@')[0] + '_' + Date.now();
       const userData = {
         firebaseUid,

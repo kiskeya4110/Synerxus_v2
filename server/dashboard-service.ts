@@ -141,7 +141,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     const acceptedApplications = organizationApplications.filter(app => app.status === 'accepted').length;
     const matchScore = organizationApplications.length > 0
       ? (acceptedApplications / organizationApplications.length) * 100
-      : 50;
+      : 0;
 
     const impactScore = Math.round(
       hoursScore * 0.40 +
@@ -297,7 +297,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const acceptedApplications = volunteerApplications.filter(app => app.status === 'accepted').length;
     const matchScore = volunteerApplications.length > 0
       ? (acceptedApplications / volunteerApplications.length) * 100
-      : 50;
+      : 0;
 
     const impactScore = Math.round(
       hoursScore * 0.40 +

@@ -137,15 +137,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
       }
       
-      // Check if user already exists
+      // Check if user already exists by Firebase UID
       let user = await storage.getUserByFirebaseUid(firebaseUid);
       
       if (user) {
-        // User exists, return it (login case)
+        // User exists with this Firebase UID, return it (login case)
         return res.json(user);
       }
       
-      // User doesn't exist, create new one (registration case)
+      // Check if user exists by email (re-linking case for migrated users)
+      user = await storage.getUserByEmail(email);
+      
+      if (user) {
+        // User exists in database but needs Firebase UID updated (migration case)
+        const updatedUser = await storage.updateUser(user.id, { 
+          firebaseUid,
+          displayName: displayName || user.displayName
+        });
+        console.log(`Re-linked existing user ${email} to new Firebase account`);
+        return res.json(updatedUser);
+      }
+      
+      // User doesn't exist at all, create new one (registration case)
       if (!userType) {
         return res.status(400).json({ message: "userType is required for new user registration" });
       }

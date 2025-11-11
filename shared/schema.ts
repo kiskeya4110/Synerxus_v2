@@ -83,6 +83,11 @@ export const tasks = pgTable("tasks", {
   priority: text("priority"),
   dueDate: timestamp("due_date"),
   estimatedHours: integer("estimated_hours"),
+  // AI Matching override fields (inherit from project if not set)
+  requiredSkillsOverride: text("required_skills_override").array(),
+  sdgGoalsOverride: integer("sdg_goals_override").array(),
+  isRemoteOverride: boolean("is_remote_override"),
+  locationOverride: text("location_override"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

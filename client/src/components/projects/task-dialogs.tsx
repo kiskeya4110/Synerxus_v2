@@ -28,13 +28,18 @@ interface CreateTaskDialogProps {
   projectId: number;
 }
 
+interface VolunteerWithScore extends User {
+  matchScore?: number;
+  matchReasons?: string[];
+}
+
 export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch volunteers for assignment
-  const { data: volunteers = [] } = useQuery<User[]>({
-    queryKey: ["/api/users"],
+  // Fetch AI-recommended volunteers for this project
+  const { data: volunteers = [], isLoading: loadingRecommendations } = useQuery<VolunteerWithScore[]>({
+    queryKey: ["/api/projects", projectId, "recommended-volunteers"],
     enabled: open
   });
 
@@ -168,7 +173,7 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
               name="assigneeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Assign to Volunteer (Optional)</FormLabel>
+                  <FormLabel>Assign to Volunteer (AI-Recommended)</FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(value === "unassigned" ? undefined : parseInt(value))}
                     value={field.value?.toString() || "unassigned"}
@@ -180,13 +185,33 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {volunteers.filter(v => v.userType === 'volunteer').map((volunteer) => (
-                        <SelectItem key={volunteer.id} value={volunteer.id!.toString()}>
-                          {volunteer.username}
-                        </SelectItem>
-                      ))}
+                      {loadingRecommendations ? (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading recommendations...</div>
+                      ) : (
+                        volunteers.filter(v => v.userType === 'volunteer').map((volunteer) => (
+                          <SelectItem 
+                            key={volunteer.id} 
+                            value={volunteer.id!.toString()}
+                            data-testid={`select-volunteer-${volunteer.id}`}
+                          >
+                            <div className="flex items-center justify-between w-full gap-2">
+                              <span>{volunteer.username}</span>
+                              {volunteer.matchScore !== undefined && (
+                                <span className="text-xs text-muted-foreground font-semibold">
+                                  {volunteer.matchScore}% match
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  {volunteers.length > 0 && volunteers[0]?.matchReasons && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Top match: {volunteers[0].matchReasons[0]}
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -210,14 +235,29 @@ interface EditTaskDialogProps {
   task: Task;
 }
 
+interface VolunteerWithScore extends User {
+  matchScore?: number;
+  matchReasons?: string[];
+}
+
 export function EditTaskDialog({ task }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const { data: volunteers = [] } = useQuery<User[]>({
-    queryKey: ["/api/users"],
-    enabled: open
+  // Fetch AI-recommended volunteers sorted by match score
+  const { data: recommendedVolunteers = [], isLoading: loadingRecommendations } = useQuery<VolunteerWithScore[]>({
+    queryKey: ["/api/tasks", task.id, "recommended-volunteers"],
+    enabled: open && !!task.projectId,
   });
+
+  // Fallback to all volunteers if task has no project (shouldn't happen but for safety)
+  const { data: allVolunteers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    enabled: open && !task.projectId
+  });
+
+  // Use recommended volunteers if available, otherwise fall back to all volunteers
+  const volunteers: VolunteerWithScore[] = task.projectId ? recommendedVolunteers : allVolunteers;
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -339,7 +379,7 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
               name="assigneeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Assign to Volunteer (Optional)</FormLabel>
+                  <FormLabel>Assign to Volunteer (AI-Recommended)</FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(value === "unassigned" ? undefined : parseInt(value))}
                     value={field.value?.toString() || "unassigned"}
@@ -351,13 +391,33 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="unassigned">Unassigned</SelectItem>
-                      {volunteers.filter(v => v.userType === 'volunteer').map((volunteer) => (
-                        <SelectItem key={volunteer.id} value={volunteer.id!.toString()}>
-                          {volunteer.username}
-                        </SelectItem>
-                      ))}
+                      {loadingRecommendations ? (
+                        <div className="px-2 py-1 text-sm text-muted-foreground">Loading recommendations...</div>
+                      ) : (
+                        volunteers.filter(v => v.userType === 'volunteer').map((volunteer) => (
+                          <SelectItem 
+                            key={volunteer.id} 
+                            value={volunteer.id!.toString()}
+                            data-testid={`select-volunteer-${volunteer.id}`}
+                          >
+                            <div className="flex items-center justify-between w-full gap-2">
+                              <span>{volunteer.username}</span>
+                              {volunteer.matchScore !== undefined && (
+                                <span className="text-xs text-muted-foreground font-semibold">
+                                  {volunteer.matchScore}% match
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  {volunteers.length > 0 && volunteers[0]?.matchReasons && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Top match: {volunteers[0].matchReasons[0]}
+                    </p>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

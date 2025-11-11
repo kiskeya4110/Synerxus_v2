@@ -22,6 +22,7 @@ import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
 import { calculateMatchScore, findTopMatches, findTopVolunteers } from "./matching-algorithm";
 import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization } from "./dashboard-service";
+import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
@@ -503,6 +504,187 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
+    }
+  });
+
+  // === AI-Powered Volunteer Recommendation Routes ===
+  
+  /**
+   * Get recommended volunteers for a specific task based on AI matching algorithm
+   * Returns volunteers sorted by match score with SDG alignment, skills, location, and interests
+   */
+  app.get("/api/tasks/:taskId/recommended-volunteers", async (req, res) => {
+    try {
+      const taskId = parseInt(req.params.taskId);
+      const limit = parseInt(req.query.limit as string || "10");
+      const threshold = parseInt(req.query.threshold as string || "0");
+      
+      // Get the task
+      const task = await storage.getTask(taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Get the project to determine organization (required for scoping)
+      if (!task.projectId) {
+        return res.status(400).json({ message: "Task must belong to a project for volunteer recommendations" });
+      }
+      
+      const project = await storage.getProject(task.projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Get ALL volunteers connected to this organization through any of:
+      // 1. Direct organization membership (organizationId field)
+      // 2. Project assignments (currently/previously assigned)
+      // 3. Opportunity applications (have applied to org's opportunities)
+      const allUsers = await storage.listUsers();
+      
+      // Get all projects for this organization
+      const organizationProjects = await storage.listProjects();
+      const orgProjectIds = organizationProjects
+        .filter(p => p.organizationId === project.organizationId)
+        .map(p => p.id);
+      
+      // Get volunteers assigned to any project in this organization
+      const allAssignments = await storage.listProjectAssignments();
+      const assignedVolunteerIds = new Set(
+        allAssignments
+          .filter(a => orgProjectIds.includes(a.projectId))
+          .map(a => a.volunteerId)
+      );
+      
+      // Get volunteers who have applied to opportunities from this organization
+      const allOpportunities = await storage.listOpportunities();
+      const orgOpportunityIds = allOpportunities
+        .filter(opp => opp.organizationId === project.organizationId)
+        .map(opp => opp.id);
+      
+      const allApplications = await storage.listApplications();
+      const applicantVolunteerIds = new Set(
+        allApplications
+          .filter(app => orgOpportunityIds.includes(app.opportunityId))
+          .map(app => app.volunteerId)
+      );
+      
+      // Filter users to volunteers connected to this organization via ANY method
+      const organizationVolunteers = allUsers.filter(u => {
+        if (u.userType !== 'volunteer') return false;
+        
+        // Include if: directly linked to org, assigned to project, or applied to opportunity
+        return u.organizationId === project.organizationId ||
+               assignedVolunteerIds.has(u.id!) ||
+               applicantVolunteerIds.has(u.id!);
+      });
+      
+      // Bulk fetch all volunteer profiles to avoid N+1 queries
+      const allProfiles = await storage.listVolunteerProfiles();
+      const profileMap = new Map(allProfiles.map(p => [p.userId, p]));
+      
+      // Combine volunteers with their profiles
+      const volunteersWithProfiles = organizationVolunteers.map(volunteer => ({
+        ...volunteer,
+        profile: profileMap.get(volunteer.id!) || null
+      }));
+      
+      // Get recommended volunteers using AI matching
+      const recommendedVolunteers = getRecommendedVolunteersForTask(
+        task,
+        project,
+        volunteersWithProfiles,
+        limit,
+        threshold
+      );
+      
+      res.json(recommendedVolunteers);
+    } catch (err) {
+      console.error("Error getting recommended volunteers for task:", err);
+      res.status(500).json({ message: "Failed to get recommended volunteers" });
+    }
+  });
+  
+  /**
+   * Get recommended volunteers for a specific project based on AI matching algorithm
+   * Returns volunteers sorted by match score with SDG alignment, skills, location, and interests
+   */
+  app.get("/api/projects/:projectId/recommended-volunteers", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.projectId);
+      const limit = parseInt(req.query.limit as string || "10");
+      const threshold = parseInt(req.query.threshold as string || "0");
+      
+      // Get the project
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Get ALL volunteers connected to this organization through any of:
+      // 1. Direct organization membership (organizationId field)
+      // 2. Project assignments (currently/previously assigned)
+      // 3. Opportunity applications (have applied to org's opportunities)
+      const allUsers = await storage.listUsers();
+      
+      // Get all projects for this organization
+      const organizationProjects = await storage.listProjects();
+      const orgProjectIds = organizationProjects
+        .filter(p => p.organizationId === project.organizationId)
+        .map(p => p.id);
+      
+      // Get volunteers assigned to any project in this organization
+      const allAssignments = await storage.listProjectAssignments();
+      const assignedVolunteerIds = new Set(
+        allAssignments
+          .filter(a => orgProjectIds.includes(a.projectId))
+          .map(a => a.volunteerId)
+      );
+      
+      // Get volunteers who have applied to opportunities from this organization
+      const allOpportunities = await storage.listOpportunities();
+      const orgOpportunityIds = allOpportunities
+        .filter(opp => opp.organizationId === project.organizationId)
+        .map(opp => opp.id);
+      
+      const allApplications = await storage.listApplications();
+      const applicantVolunteerIds = new Set(
+        allApplications
+          .filter(app => orgOpportunityIds.includes(app.opportunityId))
+          .map(app => app.volunteerId)
+      );
+      
+      // Filter users to volunteers connected to this organization via ANY method
+      const organizationVolunteers = allUsers.filter(u => {
+        if (u.userType !== 'volunteer') return false;
+        
+        // Include if: directly linked to org, assigned to project, or applied to opportunity
+        return u.organizationId === project.organizationId ||
+               assignedVolunteerIds.has(u.id!) ||
+               applicantVolunteerIds.has(u.id!);
+      });
+      
+      // Bulk fetch all volunteer profiles to avoid N+1 queries
+      const allProfiles = await storage.listVolunteerProfiles();
+      const profileMap = new Map(allProfiles.map(p => [p.userId, p]));
+      
+      // Combine volunteers with their profiles
+      const volunteersWithProfiles = organizationVolunteers.map(volunteer => ({
+        ...volunteer,
+        profile: profileMap.get(volunteer.id!) || null
+      }));
+      
+      // Get recommended volunteers using AI matching
+      const recommendedVolunteers = getRecommendedVolunteersForProject(
+        project,
+        volunteersWithProfiles,
+        limit,
+        threshold
+      );
+      
+      res.json(recommendedVolunteers);
+    } catch (err) {
+      console.error("Error getting recommended volunteers for project:", err);
+      res.status(500).json({ message: "Failed to get recommended volunteers" });
     }
   });
 

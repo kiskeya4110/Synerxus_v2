@@ -412,14 +412,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Recalculate project completion percentage when task is created
       if (task.projectId) {
+        const project = await storage.getProject(task.projectId);
         const projectTasks = await storage.listTasksByProject(task.projectId);
         const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
         const completionPercentage = projectTasks.length > 0 
           ? Math.round((completedTasks / projectTasks.length) * 100) 
           : 0;
         
-        await storage.updateProject(task.projectId, { completionPercentage });
-        console.log(`[Task Create] Recalculated project ${task.projectId} completion: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks)`);
+        // Auto-update status based on completion percentage
+        // Only auto-update if current status is auto-manageable (not manually set to "On Hold")
+        let newStatus = project?.status;
+        if (project && ["Planning", "In Progress", "Completed"].includes(project.status)) {
+          if (completionPercentage === 0) {
+            newStatus = "Planning";
+          } else if (completionPercentage === 100) {
+            newStatus = "Completed";
+          } else {
+            newStatus = "In Progress";
+          }
+        }
+        
+        await storage.updateProject(task.projectId, { 
+          completionPercentage,
+          ...(newStatus !== project?.status && { status: newStatus })
+        });
+        console.log(`[Task Create] Updated project ${task.projectId}: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks), status: ${newStatus}`);
         
         // Broadcast project update
         const updatedProject = await storage.getProject(task.projectId);
@@ -448,14 +465,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // If task status was updated and task belongs to a project, recalculate project completion
       if (taskData.status && updatedTask.projectId) {
+        const project = await storage.getProject(updatedTask.projectId);
         const projectTasks = await storage.listTasksByProject(updatedTask.projectId);
         const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
         const completionPercentage = projectTasks.length > 0 
           ? Math.round((completedTasks / projectTasks.length) * 100) 
           : 0;
         
-        await storage.updateProject(updatedTask.projectId, { completionPercentage });
-        console.log(`[Task Update] Recalculated project ${updatedTask.projectId} completion: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks)`);
+        // Auto-update status based on completion percentage
+        // Only auto-update if current status is auto-manageable (not manually set to "On Hold")
+        let newStatus = project?.status;
+        if (project && ["Planning", "In Progress", "Completed"].includes(project.status)) {
+          if (completionPercentage === 0) {
+            newStatus = "Planning";
+          } else if (completionPercentage === 100) {
+            newStatus = "Completed";
+          } else {
+            newStatus = "In Progress";
+          }
+        }
+        
+        await storage.updateProject(updatedTask.projectId, { 
+          completionPercentage,
+          ...(newStatus !== project?.status && { status: newStatus })
+        });
+        console.log(`[Task Update] Updated project ${updatedTask.projectId}: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks), status: ${newStatus}`);
         
         // Broadcast project update as well
         const updatedProject = await storage.getProject(updatedTask.projectId);

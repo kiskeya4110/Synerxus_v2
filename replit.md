@@ -30,6 +30,9 @@ Preferred communication style: Simple, everyday language.
 - **Profile Management**: Email-based profile linking with cache invalidation strategies for data synchronization.
 - **Organization-Volunteer Communication**: Full messaging system with REST endpoints, contact modals, and project assignment capabilities, restricted to assigned project volunteers.
 - **Automatic Project Completion Tracking**: Backend recalculates and persists project completion percentages based on task status (0% = Planning, 1-99% = In Progress, 100% = Completed), preserving manual "On Hold" status, broadcasting updates via WebSocket.
+- **Real-Time Volunteer List Updates**: Automatic cache invalidation system ensures volunteer lists, project rosters, and dashboard data refresh immediately when applications are accepted. Uses predicate-based query invalidation to handle both global and user-scoped TanStack Query keys, ensuring volunteers appear in all relevant sections without manual page refresh.
+- **Task-Project Integration**: Dashboard tasks are enriched server-side with project metadata (projectId, projectName, projectStatus) using efficient Map-based lookups. Recent Tasks section displays full project names alongside task details for better tracking and context. Includes backwards-compatible fallbacks for legacy data.
+- **Unified Profile Management**: Intake forms and Settings tab share the same data source (volunteer_profiles table), ensuring profile data entered once during onboarding appears immediately in Settings without re-entry. Fixed data flow ensures consistency between volunteer registration and profile management.
 - **Performance Optimizations**: Component-level optimization with React.memo for ProjectListCard, useMemo for expensive calculations (typed Map for project metrics), and useCallback for event handlers to minimize re-renders on large datasets.
 
 ### Feature Specifications

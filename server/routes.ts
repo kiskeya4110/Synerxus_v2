@@ -2621,13 +2621,12 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(403).json({ message: "User is not a volunteer" });
       }
       
+      // Get volunteer profile from volunteer_profiles table (where intake form saves)
       let volunteerProfile = null;
-      if (user.email) {
-        try {
-          volunteerProfile = await storage.getVolunteerByEmail(user.email);
-        } catch (err) {
-          console.error("Error fetching volunteer profile:", err);
-        }
+      try {
+        volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+      } catch (err) {
+        console.error("Error fetching volunteer profile:", err);
       }
       
       res.json({

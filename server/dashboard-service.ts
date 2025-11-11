@@ -206,6 +206,19 @@ export async function getDashboardDataForOrganization(userId: number) {
       };
     });
 
+    // Create a map of project data for quick lookup
+    const projectMap = new Map(
+      organizationProjects.map(p => [p.id, { name: p.name, status: p.status }])
+    );
+
+    // Enrich tasks with project metadata
+    const tasksWithProjects = organizationTasks.map(task => ({
+      ...task,
+      projectId: task.projectId,
+      projectName: task.projectId ? projectMap.get(task.projectId)?.name || 'Unknown Project' : undefined,
+      projectStatus: task.projectId ? projectMap.get(task.projectId)?.status : undefined,
+    }));
+
     return {
       summary: {
         activeVolunteers,
@@ -222,7 +235,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       },
       projects: organizationProjects,
       projectsWithVolunteers, // Enriched projects with volunteers and progress
-      tasks: organizationTasks,
+      tasks: tasksWithProjects, // Enriched tasks with project metadata
       activities: organizationActivities,
       impacts: organizationImpacts,
       volunteers: organizationVolunteers,
@@ -306,6 +319,19 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       matchScore * 0.10
     );
 
+    // Create project map from assigned projects
+    const projectMap = new Map(
+      assignedProjects.map(p => [p.id, { name: p.name, status: p.status }])
+    );
+
+    // Enrich volunteer tasks with project metadata
+    const tasksWithProjects = volunteerTasks.map(task => ({
+      ...task,
+      projectId: task.projectId,
+      projectName: task.projectId ? projectMap.get(task.projectId)?.name || 'Unknown Project' : undefined,
+      projectStatus: task.projectId ? projectMap.get(task.projectId)?.status : undefined,
+    }));
+
     return {
       summary: {
         activeVolunteers: 1, // Only themselves
@@ -320,7 +346,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
           .slice(0, 5),
       },
       projects: assignedProjects,
-      tasks: volunteerTasks,
+      tasks: tasksWithProjects, // Enriched tasks with project metadata
       activities: volunteerActivities,
       applications: volunteerApplications,
       matchedOpportunities, // AI-filtered opportunities above threshold

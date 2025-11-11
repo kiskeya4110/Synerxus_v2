@@ -8,7 +8,10 @@ import { Link, useLocation } from "wouter";
 export interface Task {
   id: string;
   name: string;
-  project: string;
+  project: string; // Kept for backwards compatibility
+  projectId?: number; // New: Project ID for linking
+  projectName?: string; // New: Project name from backend
+  projectStatus?: string; // New: Project status
   dueDate: string;
   status: "To Do" | "In Progress" | "Completed" | "Overdue";
   assignee?: {
@@ -74,7 +77,9 @@ export default function TaskTable({ tasks }: TaskTableProps) {
                   data-testid={`task-row-${task.id}`}
                 >
                   <TableCell className="font-medium text-xs py-2">{task.name}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.project}</TableCell>
+                  <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">
+                    {task.projectName || task.project || 'No Project'}
+                  </TableCell>
                   <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.dueDate}</TableCell>
                   <TableCell className="py-2">
                     <Badge variant="outline" className={`${getStatusBadgeClasses(task.status)} text-xs px-2 py-0`}>

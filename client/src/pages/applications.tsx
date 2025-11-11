@@ -85,7 +85,19 @@ export default function ApplicationsPage() {
         title: "Application Reviewed",
         description: `Application ${reviewAction === "accepted" ? "accepted" : "rejected"} successfully`,
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      // Invalidate all relevant queries to update volunteer lists and dashboard
+      // Use predicate to match all queries starting with these paths (handles user-scoped keys)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && (
+            key.startsWith('/api/applications') ||
+            key.startsWith('/api/volunteers') ||
+            key.startsWith('/api/projects') ||
+            key.startsWith('/api/dashboard/summary')
+          );
+        }
+      });
       setReviewDialogOpen(false);
       setSelectedApplication(null);
       setReviewNotes("");

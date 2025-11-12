@@ -2656,8 +2656,14 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         console.error("Error fetching volunteer profile:", err);
       }
       
+      // Add profileComplete field to user based on onboardingCompleted status
+      const profileComplete = volunteerProfile?.onboardingCompleted || false;
+      
       res.json({
-        user,
+        user: {
+          ...user,
+          profileComplete
+        },
         volunteerProfile
       });
     } catch (err) {
@@ -2704,8 +2710,14 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         }
       }
       
+      // Add profileComplete field to user based on onboardingCompleted status
+      const profileComplete = matchableOrganization?.onboardingCompleted || false;
+      
       res.json({
-        user,
+        user: {
+          ...user,
+          profileComplete
+        },
         organization,
         matchableOrganization
       });

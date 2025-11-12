@@ -31,7 +31,7 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
     <div className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gradient-to-r from-blue-50/50 to-orange-50/50 dark:from-blue-950/30 dark:to-orange-950/30", className)}>
       {showIcon && (
         <img 
-          src="/attached_assets/Untitled design_1762970177273.png" 
+          src="/attached_assets/Untitled design_1762278844836.png" 
           alt="Synerxus Logo" 
           className={cn(sizeClasses.logo, "object-contain flex-shrink-0 drop-shadow-sm")}
         />

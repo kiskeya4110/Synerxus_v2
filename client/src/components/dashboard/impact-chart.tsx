@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export interface ImpactChartProps {
   activities?: any[];
   projectImpacts?: any[];
+  monthlyImpactTrend?: Array<{ month: string; score: number }>;
 }
 
-export default function ImpactChart({ activities = [], projectImpacts = [] }: ImpactChartProps) {
+export default function ImpactChart({ activities = [], projectImpacts = [], monthlyImpactTrend = [] }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
@@ -39,6 +40,9 @@ export default function ImpactChart({ activities = [], projectImpacts = [] }: Im
       months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
     }
 
+    // Create a map of algorithm scores by month key for easy lookup
+    const algorithmScoreMap = new Map(monthlyImpactTrend.map(item => [item.month, item.score]));
+
     return {
       labels: months.map(m => {
         const [year, month] = m.split('-');
@@ -46,8 +50,9 @@ export default function ImpactChart({ activities = [], projectImpacts = [] }: Im
       }),
       hours: months.map(m => monthlyHours[m] || 0),
       impact: months.map(m => monthlyImpact[m] || 0),
+      algorithmScores: months.map(m => algorithmScoreMap.get(m) || 0),
     };
-  }, [activities, projectImpacts]);
+  }, [activities, projectImpacts, monthlyImpactTrend]);
 
   useEffect(() => {
     if (chartRef.current) {
@@ -64,7 +69,7 @@ export default function ImpactChart({ activities = [], projectImpacts = [] }: Im
             labels: chartData.labels,
             datasets: [
               {
-                label: "Volunteer Hours",
+                label: "Volunteer Hours (Entered Data)",
                 data: chartData.hours,
                 borderColor: "#3B82F6",
                 backgroundColor: "rgba(59, 130, 246, 0.1)",
@@ -78,7 +83,7 @@ export default function ImpactChart({ activities = [], projectImpacts = [] }: Im
                 pointHoverRadius: 6
               },
               {
-                label: "People Impacted",
+                label: "People Impacted (Entered Data)",
                 data: chartData.impact,
                 borderColor: "#10B981",
                 backgroundColor: "rgba(16, 185, 129, 0.1)",
@@ -90,6 +95,22 @@ export default function ImpactChart({ activities = [], projectImpacts = [] }: Im
                 pointBorderWidth: 2,
                 pointRadius: 4,
                 pointHoverRadius: 6
+              },
+              {
+                label: "Impact Score (Algorithm Evaluation)",
+                data: chartData.algorithmScores,
+                borderColor: "#F59E0B",
+                backgroundColor: "rgba(245, 158, 11, 0.05)",
+                borderWidth: 3,
+                borderDash: [10, 5], // Dashed line to differentiate
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: "#F59E0B",
+                pointBorderColor: "#fff",
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                pointStyle: 'rect' // Different point style
               }
             ]
           },

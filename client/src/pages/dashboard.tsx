@@ -505,6 +505,7 @@ export default function Dashboard() {
         <ImpactChart 
           activities={filteredData.activities}
           projectImpacts={filteredData.impacts}
+          monthlyImpactTrend={dashboardData?.monthlyImpactTrend}
         />
         <SDGChart 
           projects={filteredData.projects}

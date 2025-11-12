@@ -118,7 +118,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     const organizationPrimarySdgs = organizationProfile?.primarySdgs || [];
 
     // Calculate summary metrics
-    const uniqueVolunteerIds = new Set(organizationActivities.map(activity => activity.userId));
+    const uniqueVolunteerIds = new Set(organizationActivities.map(activity => activity.userId).filter((id): id is number => id !== null));
     const activeVolunteers = uniqueVolunteerIds.size;
 
     const totalHours = organizationActivities.reduce((sum, activity) => sum + activity.hours, 0);
@@ -468,6 +468,63 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const completedFields = Object.values(profileFields).filter(v => v > 0).length;
     const profileCompleteness = Math.round((completedFields / Object.keys(profileFields).length) * 100);
 
+    // Calculate monthly impact scores (algorithm-evaluated data)
+    const now = new Date();
+    const months: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+
+    const monthlyImpactTrend = months.map(monthKey => {
+      // Filter activities for this month
+      const monthActivities = volunteerActivities.filter(a => {
+        const activityDate = new Date(a.date);
+        const activityMonthKey = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;
+        return activityMonthKey === monthKey;
+      });
+
+      // Filter tasks created or completed in this month
+      const monthTasks = volunteerTasks.filter(t => {
+        const taskDate = new Date(t.createdAt);
+        const taskMonthKey = `${taskDate.getFullYear()}-${String(taskDate.getMonth() + 1).padStart(2, '0')}`;
+        return taskMonthKey === monthKey;
+      });
+
+      // Filter applications from this month
+      const monthApplications = volunteerApplications.filter(app => {
+        const appDate = new Date(app.appliedAt || app.createdAt);
+        const appMonthKey = `${appDate.getFullYear()}-${String(appDate.getMonth() + 1).padStart(2, '0')}`;
+        return appMonthKey === monthKey;
+      });
+
+      // Calculate monthly metrics
+      const monthHours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
+      const monthCompletedTasks = monthTasks.filter(t => t.status === 'Completed').length;
+      const monthTotalTasks = monthTasks.length;
+      const monthAcceptedApps = monthApplications.filter(app => app.status === 'accepted').length;
+
+      // Calculate scores (same formula as overall impact score)
+      const monthHoursScore = Math.min((monthHours / 20) * 100, 100); // Normalized to 20 hours/month
+      const monthTasksScore = monthTotalTasks > 0 ? (monthCompletedTasks / monthTotalTasks) * 100 : 0;
+      const monthMatchScore = monthApplications.length > 0
+        ? (monthAcceptedApps / monthApplications.length) * 100
+        : 0;
+
+      // Monthly impact score (weighted average)
+      const monthImpactScore = Math.round(
+        monthHoursScore * 0.50 +     // Higher weight for hours in monthly view
+        monthTasksScore * 0.30 +      // Task completion
+        sdgScore * 0.10 +              // Overall SDG coverage (constant per user)
+        monthMatchScore * 0.10         // Application success rate
+      );
+
+      return {
+        month: monthKey,
+        score: monthImpactScore,
+      };
+    });
+
     return {
       summary: {
         activeVolunteers: 1, // Only themselves
@@ -492,6 +549,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         rejected: rejectedApplications,
       },
       hoursByProject,
+      monthlyImpactTrend, // Algorithm-evaluated monthly impact trend with month keys
       projects: assignedProjects,
       tasks: tasksWithProjects, // Enriched tasks with project metadata
       activities: volunteerActivities,

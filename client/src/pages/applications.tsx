@@ -96,13 +96,7 @@ export default function ApplicationsPage() {
 
   // Fetch organization's projects for assignment
   const { data: orgProjects = [] } = useQuery({
-    queryKey: ["/api/projects", organizationId],
-    queryFn: async () => {
-      if (!organizationId) return [];
-      const response = await fetch(`/api/projects?userId=${userId}`);
-      if (!response.ok) return [];
-      return response.json();
-    },
+    queryKey: ["/api/projects", userId],
     enabled: !!organizationId && !!userId
   });
 
@@ -128,12 +122,23 @@ export default function ApplicationsPage() {
         role: "Volunteer"
       });
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast({
         title: "Project Assigned",
-        description: "Volunteer has been assigned to the project successfully",
+        description: "Volunteer will receive a notification to accept or decline this assignment",
       });
+      // Invalidate project assignments, volunteer profile, and volunteers/applications lists
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", variables.volunteerId] });
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && (
+            key.startsWith('/api/volunteers') ||
+            key.startsWith('/api/applications')
+          );
+        }
+      });
       setSelectedProjectId("");
     },
     onError: (error: Error) => {

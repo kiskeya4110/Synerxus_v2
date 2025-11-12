@@ -2710,8 +2710,18 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         }
       }
       
+      // Get organization profile to check onboarding status
+      let organizationProfile = null;
+      if (user.organizationId) {
+        try {
+          organizationProfile = await storage.getOrganizationProfile(user.organizationId);
+        } catch (err) {
+          console.error("Error fetching organization profile:", err);
+        }
+      }
+      
       // Add profileComplete field to user based on onboardingCompleted status
-      const profileComplete = matchableOrganization?.onboardingCompleted || false;
+      const profileComplete = organizationProfile?.onboardingCompleted || false;
       
       res.json({
         user: {
@@ -2719,6 +2729,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           profileComplete
         },
         organization,
+        organizationProfile,
         matchableOrganization
       });
     } catch (err) {

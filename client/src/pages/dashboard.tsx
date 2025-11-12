@@ -13,6 +13,7 @@ import QuickActions from "@/components/dashboard/quick-actions";
 import OpportunitiesTab from "@/components/dashboard/opportunities-tab";
 import ProfileOverview from "@/components/dashboard/profile-overview";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
+import { VolunteerInsightsSection } from "@/components/dashboard/volunteer-insights";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -498,6 +499,15 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Volunteer Insights Section - Only for volunteers */}
+      {dashboardType === 'volunteer' && dashboardData && (
+        <VolunteerInsightsSection
+          volunteerProfile={dashboardData.volunteerProfile || null}
+          applicationStats={dashboardData.applicationStats || { total: 0, pending: 0, accepted: 0, rejected: 0 }}
+          hoursByProject={dashboardData.hoursByProject || []}
+        />
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

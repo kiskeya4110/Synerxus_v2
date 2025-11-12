@@ -132,7 +132,7 @@ export function VolunteerInsightsSection({
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Complete your profile to get better opportunity matches
                 </p>
-                <Link href="/settings">
+                <Link href="/volunteer-profile">
                   <Button size="sm" data-testid="button-complete-profile">
                     Complete Profile
                   </Button>
@@ -303,7 +303,7 @@ export function VolunteerInsightsSection({
 
                 {/* Edit Profile CTA */}
                 {completeness < 100 && (
-                  <Link href="/settings">
+                  <Link href="/volunteer-profile">
                     <Button variant="outline" size="sm" className="w-full" data-testid="button-edit-profile">
                       Complete Profile ({100 - completeness}% remaining)
                     </Button>
@@ -332,7 +332,7 @@ export function VolunteerInsightsSection({
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   You haven't applied to any opportunities yet
                 </p>
-                <Link href="/discover">
+                <Link href="/discover-opportunities">
                   <Button size="sm" data-testid="button-discover-opportunities">
                     Discover Opportunities
                   </Button>

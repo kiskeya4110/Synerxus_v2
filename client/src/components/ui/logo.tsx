@@ -28,16 +28,17 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
   const sizeClasses = sizes[size];
 
   return (
-    <div className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gradient-to-r from-blue-50/50 to-orange-50/50 dark:from-blue-950/30 dark:to-orange-950/30", className)}>
+    <div className={cn("inline-flex items-center gap-2", className)}>
       {showIcon && (
         <img 
           src="/attached_assets/Untitled design_1762278844836.png" 
           alt="Synerxus Logo" 
-          className={cn(sizeClasses.logo, "object-contain flex-shrink-0 drop-shadow-sm")}
+          className={cn(sizeClasses.logo, "object-contain flex-shrink-0")}
+          style={{ maxWidth: '100%', height: 'auto' }}
         />
       )}
       <span 
-        className={cn(sizeClasses.text, "font-bold whitespace-nowrap leading-none")}
+        className={cn(sizeClasses.text, "font-bold whitespace-nowrap")}
         style={{ letterSpacing: sizeClasses.letterSpacing }}
       >
         <span style={{ color: '#1e3a8a' }}>SYNER</span>

@@ -182,12 +182,12 @@ export default function Dashboard() {
 
   // Transform activities for the activity feed - MUST BE BEFORE EARLY RETURNS
   const formattedActivities: Activity[] = useMemo(() => {
-    return (filteredData.activities || []).slice(0, 10).map((activity: any) => {
-      const relativeTime = getRelativeTime(new Date(activity.createdAt));
+    return (filteredData.activities || []).map((activity: any) => {
+      const relativeTime = getRelativeTime(new Date(activity.createdAt || activity.timestamp));
       
       // Check if this is a unified activity or legacy format
       if (activity.type) {
-        // New unified activity format
+        // New unified activity format from backend
         return {
           id: activity.id.toString(),
           user: {
@@ -714,16 +714,23 @@ export default function Dashboard() {
 // Helper functions
 function formatTasksForTable(tasks: any[], projects: any[]): Task[] {
   return tasks.map((task: any) => {
-    const project = projects.find((p: any) => p.id === task.projectId);
+    // Use projectName from backend if available (already enriched), otherwise look it up
+    const projectName = task.projectName || 
+                       projects.find((p: any) => p.id === task.projectId)?.name || 
+                       "Unknown Project";
+    
     return {
       id: task.id.toString(),
       name: task.title,
-      project: project?.name || "Unknown Project",
+      project: projectName,
+      projectName: projectName, // Add projectName field for TaskTable compatibility
       dueDate: task.dueDate ? formatDate(new Date(task.dueDate)) : "No due date",
       status: task.status,
-      assignee: task.assigneeId ? {
-        id: task.assigneeId.toString(),
-        name: "Volunteer",
+      // Use enriched assignee data from backend if available
+      assignee: task.assignee ? {
+        id: task.assignee.id.toString(),
+        name: task.assignee.name,
+        avatar: task.assignee.avatar,
       } : undefined,
     };
   });

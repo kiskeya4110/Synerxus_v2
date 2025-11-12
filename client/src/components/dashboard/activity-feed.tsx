@@ -45,44 +45,52 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
         <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
       </CardHeader>
       <CardContent className="p-2">
-        <div className="space-y-2">
-          {activities.map((activity) => (
-            <div 
-              key={activity.id}
-              onClick={() => setSelectedActivity(activity)}
-              className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-1 px-1 py-1 rounded transition-colors cursor-pointer"
-              data-testid={`activity-item-${activity.id}`}
-            >
-              <div className="flex-shrink-0 mr-2">
-                {activity.isSystem ? (
-                  <div className="h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                    <BellIcon className="h-3 w-3 text-primary-600 dark:text-primary-400" />
+        {activities.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No recent activity
+          </div>
+        ) : (
+          <>
+            <div className="space-y-2">
+              {activities.map((activity) => (
+                <div 
+                  key={activity.id}
+                  onClick={() => setSelectedActivity(activity)}
+                  className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-1 px-1 py-1 rounded transition-colors cursor-pointer"
+                  data-testid={`activity-item-${activity.id}`}
+                >
+                  <div className="flex-shrink-0 mr-2">
+                    {activity.isSystem ? (
+                      <div className="h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                        <BellIcon className="h-3 w-3 text-primary-600 dark:text-primary-400" />
+                      </div>
+                    ) : (
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={activity.user?.avatar} alt={`${activity.user?.name} avatar`} />
+                        <AvatarFallback className="text-xs">{activity.user?.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    )}
                   </div>
-                ) : (
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={activity.user?.avatar} alt={`${activity.user?.name} avatar`} />
-                    <AvatarFallback className="text-xs">{activity.user?.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                )}
-              </div>
-              <div>
-                <p className="text-xs leading-tight">
-                  <span className="font-medium">
-                    {activity.isSystem ? "System" : activity.user?.name}
-                  </span>
-                  <span className="text-gray-600 dark:text-gray-400"> {activity.action} </span>
-                  <span className="font-medium">{activity.target}</span>
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
-              </div>
+                  <div>
+                    <p className="text-xs leading-tight">
+                      <span className="font-medium">
+                        {activity.isSystem ? "System" : activity.user?.name}
+                      </span>
+                      <span className="text-gray-600 dark:text-gray-400"> {activity.action} </span>
+                      <span className="font-medium">{activity.target}</span>
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="mt-3 text-center">
-          <Link href="/dashboard" className="text-xs text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">
-            View all activity
-          </Link>
-        </div>
+            <div className="mt-3 text-center">
+              <Link href="/dashboard" className="text-xs text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">
+                View all activity
+              </Link>
+            </div>
+          </>
+        )}
       </CardContent>
 
       {/* Activity Detail Dialog */}

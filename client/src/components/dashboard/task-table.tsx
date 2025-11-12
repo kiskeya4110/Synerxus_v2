@@ -61,45 +61,53 @@ export default function TaskTable({ tasks }: TaskTableProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.map((task) => (
-                <TableRow 
-                  key={task.id} 
-                  className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  onClick={() => setLocation('/tasks')}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setLocation('/tasks');
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  data-testid={`task-row-${task.id}`}
-                >
-                  <TableCell className="font-medium text-xs py-2">{task.name}</TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">
-                    {task.projectName || task.project || 'No Project'}
-                  </TableCell>
-                  <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.dueDate}</TableCell>
-                  <TableCell className="py-2">
-                    <Badge variant="outline" className={`${getStatusBadgeClasses(task.status)} text-xs px-2 py-0`}>
-                      {task.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="py-2">
-                    {task.assignee ? (
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={task.assignee.avatar} alt={`${task.assignee.name} avatar`} />
-                        <AvatarFallback className="text-xs">{task.assignee.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                        <PlusIcon className="h-2.5 w-2.5 text-gray-500 dark:text-gray-400" />
-                      </div>
-                    )}
+              {tasks.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    No tasks found
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                tasks.map((task) => (
+                  <TableRow 
+                    key={task.id} 
+                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    onClick={() => setLocation('/tasks')}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setLocation('/tasks');
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    data-testid={`task-row-${task.id}`}
+                  >
+                    <TableCell className="font-medium text-xs py-2">{task.name}</TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">
+                      {task.projectName || task.project || 'No Project'}
+                    </TableCell>
+                    <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.dueDate}</TableCell>
+                    <TableCell className="py-2">
+                      <Badge variant="outline" className={`${getStatusBadgeClasses(task.status)} text-xs px-2 py-0`}>
+                        {task.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      {task.assignee ? (
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={task.assignee.avatar} alt={`${task.assignee.name} avatar`} />
+                          <AvatarFallback className="text-xs">{task.assignee.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                          <PlusIcon className="h-2.5 w-2.5 text-gray-500 dark:text-gray-400" />
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>

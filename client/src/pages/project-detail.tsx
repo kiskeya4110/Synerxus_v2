@@ -27,12 +27,64 @@ const SDG_NAMES: { [key: number]: string } = {
   15: "Life on Land", 16: "Peace and Justice", 17: "Partnerships"
 };
 
+interface Project {
+  id: number;
+  name: string;
+  description?: string;
+  organizationId?: number;
+  status: string;
+  completionPercentage?: number;
+  [key: string]: any;
+}
+
+interface Task {
+  id: number;
+  projectId: number;
+  status: string;
+  [key: string]: any;
+}
+
+interface VolunteerActivity {
+  id: number;
+  projectId: number;
+  userId: number;
+  hours: number;
+  [key: string]: any;
+}
+
+interface ProjectImpact {
+  id: number;
+  projectId: number;
+  value: number;
+  [key: string]: any;
+}
+
+interface DBUser {
+  id: number;
+  userType?: string;
+  organizationId?: number;
+  [key: string]: any;
+}
+
 export default function ProjectDetail() {
   const [, params] = useRoute("/projects/:id");
   const projectId = params?.id ? parseInt(params.id) : null;
-  const { user } = useAuth();
+  const userId = localStorage.getItem('currentUserId');
 
-  const { data: project, isLoading: loadingProject } = useQuery({
+  // Fetch current user from database
+  const { data: currentUser } = useQuery<DBUser>({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!userId
+  });
+
+  const { data: project, isLoading: loadingProject } = useQuery<Project>({
     queryKey: ["/api/projects", projectId],
     queryFn: async () => {
       const response = await fetch(`/api/projects/${projectId}`);
@@ -42,26 +94,26 @@ export default function ProjectDetail() {
     enabled: !!projectId,
   });
 
-  const { data: tasks = [], isLoading: loadingTasks } = useQuery({
+  const { data: tasks = [], isLoading: loadingTasks } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
-  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery({
+  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery<VolunteerActivity[]>({
     queryKey: ["/api/volunteer-activities"],
   });
 
-  const { data: projectImpacts = [], isLoading: loadingImpacts } = useQuery({
+  const { data: projectImpacts = [], isLoading: loadingImpacts } = useQuery<ProjectImpact[]>({
     queryKey: ["/api/project-impacts"],
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<DBUser[]>({
     queryKey: ["/api/users"],
   });
   
   // Check if current user can edit this project
   // Only organization users who own the project can edit it
-  const canEditProject = user?.userType === 'organization' && 
-                        project?.organizationId === user?.organizationId;
+  const canEditProject = currentUser?.userType === 'organization' && 
+                        project?.organizationId === currentUser?.organizationId;
 
   if (!projectId) {
     return (

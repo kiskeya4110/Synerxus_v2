@@ -34,6 +34,7 @@ export default function ApplicationsPage() {
   const [reviewNotes, setReviewNotes] = useState("");
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
+  const [profileApplication, setProfileApplication] = useState<Application | null>(null);
   const { toast } = useToast();
 
   // Get current user ID
@@ -157,14 +158,16 @@ export default function ApplicationsPage() {
     setReviewDialogOpen(true);
   };
 
-  const openProfileDialog = (volunteerId: number) => {
+  const openProfileDialog = (volunteerId: number, application?: Application) => {
     setSelectedVolunteerId(volunteerId);
+    setProfileApplication(application || null);
     setProfileDialogOpen(true);
   };
 
   const closeProfileDialog = () => {
     setProfileDialogOpen(false);
     setSelectedVolunteerId(null);
+    setProfileApplication(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -292,7 +295,7 @@ export default function ApplicationsPage() {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => openProfileDialog(app.volunteerId)}
+                      onClick={() => openProfileDialog(app.volunteerId, app)}
                       data-testid={`button-view-profile-${app.id}`}
                     >
                       <User className="w-4 h-4 mr-2" />
@@ -536,10 +539,37 @@ export default function ApplicationsPage() {
             </div>
           )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={closeProfileDialog}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={closeProfileDialog} data-testid="button-close-profile">
               Close
             </Button>
+            {profileApplication && profileApplication.status === "pending" && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    closeProfileDialog();
+                    openReviewDialog(profileApplication, "rejected");
+                  }}
+                  className="bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400"
+                  data-testid="button-reject-from-profile"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Reject
+                </Button>
+                <Button
+                  onClick={() => {
+                    closeProfileDialog();
+                    openReviewDialog(profileApplication, "accepted");
+                  }}
+                  className="bg-green-600 hover:bg-green-700"
+                  data-testid="button-approve-from-profile"
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Approve
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

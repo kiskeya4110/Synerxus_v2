@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Mail, Phone, Award, Target } from "lucide-react";
+import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
@@ -15,6 +16,8 @@ export default function Volunteers() {
   const [skillFilter, setSkillFilter] = useState("all");
   const [showContactModal, setShowContactModal] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
 
   // Get current user to check if organization
   const userId = localStorage.getItem('currentUserId');
@@ -53,6 +56,28 @@ export default function Volunteers() {
   const { data: volunteerActivities = [] } = useQuery<any[]>({ 
     queryKey: ["/api/volunteer-activities"] 
   });
+
+  // Fetch volunteer profile when selected
+  const { data: volunteerProfile } = useQuery({
+    queryKey: ["/api/profile/volunteer", selectedVolunteerId],
+    queryFn: async () => {
+      if (!selectedVolunteerId) return null;
+      const response = await fetch(`/api/profile/volunteer?userId=${selectedVolunteerId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!selectedVolunteerId && profileDialogOpen
+  });
+
+  const openProfileDialog = (volunteerId: number) => {
+    setSelectedVolunteerId(volunteerId);
+    setProfileDialogOpen(true);
+  };
+
+  const closeProfileDialog = () => {
+    setProfileDialogOpen(false);
+    setSelectedVolunteerId(null);
+  };
 
   const volunteersWithStats = useMemo(() => {
     return volunteers.map((volunteer: any) => {
@@ -198,19 +223,31 @@ export default function Volunteers() {
                   </div>
                 </div>
 
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full min-h-[44px]"
-                  onClick={() => {
-                    setSelectedVolunteer(volunteer);
-                    setShowContactModal(true);
-                  }}
-                  data-testid={`button-contact-${volunteer.id}`}
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Contact
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 min-h-[44px]"
+                    onClick={() => openProfileDialog(volunteer.id)}
+                    data-testid={`button-view-profile-${volunteer.id}`}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    View Profile
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 min-h-[44px]"
+                    onClick={() => {
+                      setSelectedVolunteer(volunteer);
+                      setShowContactModal(true);
+                    }}
+                    data-testid={`button-contact-${volunteer.id}`}
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Contact
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -231,6 +268,158 @@ export default function Volunteers() {
           organizationUserId={currentUser.id}
         />
       )}
+
+      {/* Profile Dialog */}
+      <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Volunteer Profile</DialogTitle>
+            <DialogDescription>
+              Detailed information and qualifications
+            </DialogDescription>
+          </DialogHeader>
+
+          {volunteerProfile ? (
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={volunteerProfile.user?.avatar} />
+                  <AvatarFallback className="bg-primary text-white text-xl">
+                    {volunteerProfile.user?.displayName?.[0] || "V"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold text-lg">{volunteerProfile.user?.displayName || "Unknown"}</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Mail className="w-4 h-4" />
+                    {volunteerProfile.user?.email}
+                  </div>
+                  {volunteerProfile.volunteerProfile?.location && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <MapPin className="w-4 h-4" />
+                      {volunteerProfile.volunteerProfile.location}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Skills */}
+              {volunteerProfile.volunteerProfile?.skills && volunteerProfile.volunteerProfile.skills.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Skills</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.skills.map((skill: string, index: number) => (
+                      <Badge key={index} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Interests */}
+              {volunteerProfile.volunteerProfile?.interests && volunteerProfile.volunteerProfile.interests.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Interests</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.interests.map((interest: string, index: number) => (
+                      <Badge key={index} variant="outline">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SDG Commitments */}
+              {volunteerProfile.volunteerProfile?.preferredSdgs && volunteerProfile.volunteerProfile.preferredSdgs.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">UN SDG Commitments</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.preferredSdgs.map((sdg: number, index: number) => (
+                      <Badge key={index} className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        SDG {sdg}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Availability */}
+              {volunteerProfile.volunteerProfile?.weeklyAvailability !== undefined && (
+                <div>
+                  <h4 className="font-medium mb-2">Weekly Availability</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {volunteerProfile.volunteerProfile.weeklyAvailability} hours per week
+                  </p>
+                </div>
+              )}
+
+              {/* Languages */}
+              {volunteerProfile.volunteerProfile?.languages && volunteerProfile.volunteerProfile.languages.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Languages</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.languages.map((lang: string, index: number) => (
+                      <Badge key={index} variant="outline">
+                        {lang}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Motivations */}
+              {volunteerProfile.volunteerProfile?.motivations && (
+                <div>
+                  <h4 className="font-medium mb-2">Motivations</h4>
+                  <p className="text-sm text-muted-foreground italic">
+                    "{volunteerProfile.volunteerProfile.motivations}"
+                  </p>
+                </div>
+              )}
+
+              {/* Work Style */}
+              {volunteerProfile.volunteerProfile?.workStyle && (
+                <div>
+                  <h4 className="font-medium mb-2">Work Style Preference</h4>
+                  <Badge variant="outline">
+                    {volunteerProfile.volunteerProfile.workStyle}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-muted-foreground">Loading profile...</p>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={closeProfileDialog} data-testid="button-close-volunteer-profile">
+              Close
+            </Button>
+            {isOrganization && volunteerProfile && (
+              <Button
+                onClick={() => {
+                  closeProfileDialog();
+                  const volunteer = volunteersWithStats.find((v: any) => v.id === selectedVolunteerId);
+                  if (volunteer) {
+                    setSelectedVolunteer(volunteer);
+                    setShowContactModal(true);
+                  }
+                }}
+                className="bg-primary hover:bg-primary/90"
+                data-testid="button-contact-from-profile"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                Contact Volunteer
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

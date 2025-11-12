@@ -94,11 +94,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userIdParam = req.query.userId as string;
       
-      if (!userIdParam) {
-        return res.status(400).json({ message: "userId parameter is required" });
-      }
+      // Default to user ID 1 for backward compatibility if userId not provided
+      const userId = userIdParam ? parseInt(userIdParam) : 1;
       
-      const userId = parseInt(userIdParam);
       if (isNaN(userId)) {
         return res.status(400).json({ message: "userId must be a valid number" });
       }

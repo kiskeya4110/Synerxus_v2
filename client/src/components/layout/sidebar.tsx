@@ -116,6 +116,7 @@ export default function Sidebar() {
     { href: "/volunteer-profile", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/my-applications", label: "My Applications", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/assignments", label: "My Assignments", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/my-tasks", label: "My Tasks", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },

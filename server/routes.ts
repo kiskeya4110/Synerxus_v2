@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage, DuplicateAssignmentError } from "./storage";
 import { WebSocketServer } from "ws";
 import { 
   insertUserSchema, 
@@ -16,7 +16,8 @@ import {
   insertCalendarEventSchema,
   insertMessageSchema,
   insertOpportunitySchema,
-  insertApplicationSchema
+  insertApplicationSchema,
+  insertProjectAssignmentSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -1581,12 +1582,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/project-assignments", async (req, res) => {
     try {
-      const assignmentData = req.body;
+      // Validate request payload with schema
+      const assignmentData = insertProjectAssignmentSchema.parse(req.body);
       const newAssignment = await storage.createProjectAssignment(assignmentData);
       
       broadcastUpdate("project_assignment_created", newAssignment);
       res.status(201).json(newAssignment);
     } catch (err) {
+      // Handle duplicate assignment error
+      if (err instanceof DuplicateAssignmentError) {
+        return res.status(409).json({ message: err.message });
+      }
+      
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });
     }

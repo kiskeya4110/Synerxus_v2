@@ -95,8 +95,15 @@ export default function ApplicationsPage() {
   });
 
   // Fetch organization's projects for assignment
-  const { data: orgProjects = [] } = useQuery({
+  const { data: orgProjects = [] } = useQuery<any[]>({
     queryKey: ["/api/projects", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects?userId=${userId}`, {
+        credentials: "include"
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
     enabled: !!organizationId && !!userId
   });
 

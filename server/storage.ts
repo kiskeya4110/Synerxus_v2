@@ -61,6 +61,14 @@ import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
 import { eq, and, or, asc, inArray } from "drizzle-orm";
 
+// Custom error for duplicate project assignments
+export class DuplicateAssignmentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DuplicateAssignmentError";
+  }
+}
+
 // Define the storage interface with CRUD operations for all entities
 export interface IStorage {
   // User operations
@@ -151,6 +159,7 @@ export interface IStorage {
 
   // Project Assignment operations
   getProjectAssignment(id: number): Promise<ProjectAssignment | undefined>;
+  findProjectAssignmentByVolunteerProject(volunteerId: number, projectId: number, statuses?: string[]): Promise<ProjectAssignment | undefined>;
   createProjectAssignment(assignment: InsertProjectAssignment): Promise<ProjectAssignment>;
   updateProjectAssignment(id: number, assignment: Partial<InsertProjectAssignment>): Promise<ProjectAssignment | undefined>;
   listProjectAssignments(): Promise<ProjectAssignment[]>;
@@ -642,7 +651,43 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
+  async findProjectAssignmentByVolunteerProject(
+    volunteerId: number,
+    projectId: number,
+    statuses: string[] = ['pending', 'active']
+  ): Promise<ProjectAssignment | undefined> {
+    // Guard against empty statuses array
+    if (!statuses || statuses.length === 0) {
+      return undefined;
+    }
+
+    const [result] = await db
+      .select()
+      .from(projectAssignments)
+      .where(
+        and(
+          eq(projectAssignments.volunteerId, volunteerId),
+          eq(projectAssignments.projectId, projectId),
+          inArray(projectAssignments.status, statuses)
+        )
+      );
+    return result;
+  }
+
   async createProjectAssignment(assignment: InsertProjectAssignment): Promise<ProjectAssignment> {
+    // Check for duplicate pending or active assignments
+    const existing = await this.findProjectAssignmentByVolunteerProject(
+      assignment.volunteerId,
+      assignment.projectId,
+      ['pending', 'active']
+    );
+    
+    if (existing) {
+      throw new DuplicateAssignmentError(
+        `Volunteer is already assigned to this project with status: ${existing.status}`
+      );
+    }
+
     const [newAssignment] = await db.insert(projectAssignments).values(assignment).returning();
     return newAssignment;
   }

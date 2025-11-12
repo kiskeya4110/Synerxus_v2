@@ -8,7 +8,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Target, Calendar } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,6 +37,7 @@ export default function ApplicationsPage() {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
   const [profileApplication, setProfileApplication] = useState<Application | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const { toast } = useToast();
 
   // Get current user ID
@@ -91,6 +94,18 @@ export default function ApplicationsPage() {
     enabled: !!userId && !!organizationId
   });
 
+  // Fetch organization's projects for assignment
+  const { data: orgProjects = [] } = useQuery({
+    queryKey: ["/api/projects", organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const response = await fetch(`/api/projects?userId=${userId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!organizationId && !!userId
+  });
+
   // Fetch volunteer profile when selected
   const { data: volunteerProfile } = useQuery({
     queryKey: ["/api/profile/volunteer", selectedVolunteerId],
@@ -101,6 +116,33 @@ export default function ApplicationsPage() {
       return response.json();
     },
     enabled: !!selectedVolunteerId && profileDialogOpen
+  });
+
+  // Assign volunteer to project mutation
+  const assignProjectMutation = useMutation({
+    mutationFn: async ({ volunteerId, projectId }: { volunteerId: number; projectId: number }) => {
+      return await apiRequest("POST", `/api/project-assignments`, {
+        volunteerId,
+        projectId,
+        status: "pending", // Volunteer must accept/decline
+        role: "Volunteer"
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Project Assigned",
+        description: "Volunteer has been assigned to the project successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
+      setSelectedProjectId("");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Assignment Failed",
+        description: error.message || "Failed to assign volunteer to project",
+        variant: "destructive",
+      });
+    }
   });
 
   // Review mutation (accept/reject)
@@ -440,25 +482,35 @@ export default function ApplicationsPage() {
 
           {volunteerProfile ? (
             <div className="space-y-6">
-              {/* Basic Info */}
-              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <Avatar className="h-16 w-16">
-                  <AvatarImage src={volunteerProfile.user?.avatar} />
-                  <AvatarFallback>{volunteerProfile.user?.displayName?.[0] || "V"}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold text-lg">{volunteerProfile.user?.displayName || "Unknown"}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="w-4 h-4" />
-                    {volunteerProfile.user?.email}
-                  </div>
-                  {volunteerProfile.volunteerProfile?.location && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                      <MapPin className="w-4 h-4" />
-                      {volunteerProfile.volunteerProfile.location}
+              {/* Basic Info with Match Score */}
+              <div className="flex items-start justify-between gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={volunteerProfile.user?.avatar} />
+                    <AvatarFallback className="bg-primary text-white text-xl">
+                      {volunteerProfile.user?.displayName?.[0] || "V"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold text-lg">{volunteerProfile.user?.displayName || "Unknown"}</h3>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Mail className="w-4 h-4" />
+                      {volunteerProfile.user?.email}
                     </div>
-                  )}
+                    {volunteerProfile.volunteerProfile?.location && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                        <MapPin className="w-4 h-4" />
+                        {volunteerProfile.volunteerProfile.location}
+                      </div>
+                    )}
+                  </div>
                 </div>
+                {profileApplication?.matchScore && (
+                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-lg px-3 py-1">
+                    <Target className="w-4 h-4 mr-1" />
+                    {profileApplication.matchScore}% Match
+                  </Badge>
+                )}
               </div>
 
               {/* Skills */}
@@ -514,22 +566,88 @@ export default function ApplicationsPage() {
               )}
 
               {/* Availability */}
-              {volunteerProfile.volunteerProfile?.availability && (
+              <div className="grid grid-cols-2 gap-4">
+                {volunteerProfile.volunteerProfile?.weeklyAvailability !== undefined && (
+                  <div>
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Weekly Availability
+                    </h4>
+                    <p className="text-2xl font-bold text-primary">
+                      {volunteerProfile.volunteerProfile.weeklyAvailability} hrs/week
+                    </p>
+                  </div>
+                )}
+                {volunteerProfile.volunteerProfile?.workStyle && (
+                  <div>
+                    <h4 className="font-medium mb-2">Work Style</h4>
+                    <Badge variant="outline" className="text-sm px-3 py-1">
+                      {volunteerProfile.volunteerProfile.workStyle}
+                    </Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Languages */}
+              {volunteerProfile.volunteerProfile?.languages && volunteerProfile.volunteerProfile.languages.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2">Availability</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {volunteerProfile.volunteerProfile.availability}
+                  <h4 className="font-medium mb-2">Languages</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.languages.map((lang: string, index: number) => (
+                      <Badge key={index} variant="secondary">
+                        {lang}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Motivations */}
+              {volunteerProfile.volunteerProfile?.motivations && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border-l-4 border-blue-500">
+                  <h4 className="font-medium mb-2">Why They Volunteer</h4>
+                  <p className="text-sm italic text-muted-foreground">
+                    "{volunteerProfile.volunteerProfile.motivations}"
                   </p>
                 </div>
               )}
 
-              {/* Experience Level */}
-              {volunteerProfile.volunteerProfile?.experienceLevel && (
-                <div>
-                  <h4 className="font-medium mb-2">Experience Level</h4>
-                  <Badge variant="outline">
-                    {volunteerProfile.volunteerProfile.experienceLevel}
-                  </Badge>
+              {/* Project Assignment Section */}
+              {orgProjects.length > 0 && (
+                <div className="border-t pt-4">
+                  <Label className="text-base font-semibold mb-3 block">Assign to Project</Label>
+                  <div className="flex gap-2">
+                    <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                      <SelectTrigger className="flex-1" data-testid="select-assign-project">
+                        <SelectValue placeholder="Select a project..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {orgProjects.map((project: any) => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={() => {
+                        if (selectedProjectId && selectedVolunteerId) {
+                          assignProjectMutation.mutate({
+                            volunteerId: selectedVolunteerId,
+                            projectId: parseInt(selectedProjectId)
+                          });
+                        }
+                      }}
+                      disabled={!selectedProjectId || assignProjectMutation.isPending}
+                      data-testid="button-assign-project"
+                    >
+                      <Briefcase className="w-4 h-4 mr-2" />
+                      {assignProjectMutation.isPending ? "Assigning..." : "Assign"}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    The volunteer will receive a notification to accept or reject this assignment
+                  </p>
                 </div>
               )}
             </div>

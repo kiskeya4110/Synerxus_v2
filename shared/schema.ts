@@ -276,8 +276,9 @@ export const projectAssignments = pgTable("project_assignments", {
   projectId: integer("project_id").references(() => projects.id).notNull(),
   volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
   role: text("role"), // Team Lead, Contributor, Coordinator, etc.
-  status: text("status").notNull().default("active"), // active, completed, on-hold
+  status: text("status").notNull().default("pending"), // pending, active, completed, on-hold, declined
   assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  respondedAt: timestamp("responded_at"), // When volunteer accepted/declined
   completedAt: timestamp("completed_at"),
   hoursCommitted: integer("hours_committed"),
   hoursCompleted: integer("hours_completed").default(0),

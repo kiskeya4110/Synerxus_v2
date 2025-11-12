@@ -1206,13 +1206,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Applications Routes ===
   app.get("/api/applications", async (req, res) => {
     try {
-      const { opportunityId, volunteerId } = req.query;
+      const { opportunityId, volunteerId, organizationId } = req.query;
       
       let applications;
       if (opportunityId) {
         applications = await storage.listApplicationsByOpportunity(parseInt(opportunityId as string));
       } else if (volunteerId) {
         applications = await storage.listApplicationsByVolunteer(parseInt(volunteerId as string));
+      } else if (organizationId) {
+        // Filter by organization - only show applications for this org's opportunities
+        applications = await storage.listApplicationsByOrganization(parseInt(organizationId as string));
       } else {
         applications = await storage.listApplications();
       }

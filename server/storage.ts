@@ -514,6 +514,19 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(applications).where(eq(applications.volunteerId, volunteerId));
   }
 
+  async listApplicationsByOrganization(organizationId: number): Promise<Application[]> {
+    // Fetch all applications for opportunities belonging to this organization
+    const results = await db
+      .select({
+        application: applications,
+      })
+      .from(applications)
+      .innerJoin(opportunities, eq(applications.opportunityId, opportunities.id))
+      .where(eq(opportunities.organizationId, organizationId));
+    
+    return results.map(r => r.application);
+  }
+
   // Saved Opportunity operations
   async saveOpportunity(savedOpp: InsertSavedOpportunity): Promise<SavedOpportunity> {
     const [newSaved] = await db.insert(savedOpportunities).values(savedOpp).returning();

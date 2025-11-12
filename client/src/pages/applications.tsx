@@ -32,17 +32,36 @@ export default function ApplicationsPage() {
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewAction, setReviewAction] = useState<"accepted" | "rejected" | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
   const { toast } = useToast();
 
   // Get current user ID
   const userId = localStorage.getItem('currentUserId');
 
-  // Fetch all applications for the organization
-  const { data: applications = [], isLoading } = useQuery<Application[]>({
-    queryKey: ["/api/applications", userId],
+  // Fetch current user data to get organizationId
+  const { data: currentUser } = useQuery<{ organizationId?: number }>({
+    queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      // For now, fetch all applications - in production, this should be scoped to the organization's opportunities
-      const response = await fetch("/api/applications");
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!userId
+  });
+
+  const organizationId = currentUser?.organizationId;
+
+  // Fetch applications for this organization only
+  const { data: applications = [], isLoading } = useQuery<Application[]>({
+    queryKey: ["/api/applications", organizationId],
+    queryFn: async () => {
+      // Fetch applications scoped to this organization's opportunities
+      const url = organizationId 
+        ? `/api/applications?organizationId=${organizationId}`
+        : "/api/applications";
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch applications");
       const apps = await response.json();
       
@@ -68,7 +87,19 @@ export default function ApplicationsPage() {
       
       return enrichedApps;
     },
-    enabled: !!userId
+    enabled: !!userId && !!organizationId
+  });
+
+  // Fetch volunteer profile when selected
+  const { data: volunteerProfile } = useQuery({
+    queryKey: ["/api/profile/volunteer", selectedVolunteerId],
+    queryFn: async () => {
+      if (!selectedVolunteerId) return null;
+      const response = await fetch(`/api/profile/volunteer?userId=${selectedVolunteerId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!selectedVolunteerId && profileDialogOpen
   });
 
   // Review mutation (accept/reject)
@@ -124,6 +155,16 @@ export default function ApplicationsPage() {
     setSelectedApplication(app);
     setReviewAction(action);
     setReviewDialogOpen(true);
+  };
+
+  const openProfileDialog = (volunteerId: number) => {
+    setSelectedVolunteerId(volunteerId);
+    setProfileDialogOpen(true);
+  };
+
+  const closeProfileDialog = () => {
+    setProfileDialogOpen(false);
+    setSelectedVolunteerId(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -250,6 +291,14 @@ export default function ApplicationsPage() {
 
                   <div className="flex gap-2">
                     <Button
+                      variant="outline"
+                      onClick={() => openProfileDialog(app.volunteerId)}
+                      data-testid={`button-view-profile-${app.id}`}
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      View Profile
+                    </Button>
+                    <Button
                       className="flex-1"
                       onClick={() => openReviewDialog(app, "accepted")}
                       data-testid={`button-accept-${app.id}`}
@@ -371,6 +420,125 @@ export default function ApplicationsPage() {
               data-testid="button-confirm-review"
             >
               {reviewMutation.isPending ? "Processing..." : reviewAction === "accepted" ? "Accept & Assign" : "Reject"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Dialog */}
+      <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Volunteer Profile</DialogTitle>
+            <DialogDescription>
+              Detailed information about the volunteer applicant
+            </DialogDescription>
+          </DialogHeader>
+
+          {volunteerProfile ? (
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={volunteerProfile.user?.avatar} />
+                  <AvatarFallback>{volunteerProfile.user?.displayName?.[0] || "V"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="font-semibold text-lg">{volunteerProfile.user?.displayName || "Unknown"}</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Mail className="w-4 h-4" />
+                    {volunteerProfile.user?.email}
+                  </div>
+                  {volunteerProfile.volunteerProfile?.location && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                      <MapPin className="w-4 h-4" />
+                      {volunteerProfile.volunteerProfile.location}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Skills */}
+              {volunteerProfile.volunteerProfile?.skills && volunteerProfile.volunteerProfile.skills.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Skills</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.skills.map((skill: string, index: number) => (
+                      <Badge key={index} variant="secondary">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Interests */}
+              {volunteerProfile.volunteerProfile?.interests && volunteerProfile.volunteerProfile.interests.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">Interests</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.interests.map((interest: string, index: number) => (
+                      <Badge key={index} variant="outline">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SDG Goals */}
+              {volunteerProfile.volunteerProfile?.sdgGoals && volunteerProfile.volunteerProfile.sdgGoals.length > 0 && (
+                <div>
+                  <h4 className="font-medium mb-2">UN SDG Commitments</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteerProfile.volunteerProfile.sdgGoals.map((sdg: number, index: number) => (
+                      <Badge key={index} className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                        SDG {sdg}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* About/Bio */}
+              {volunteerProfile.volunteerProfile?.about && (
+                <div>
+                  <h4 className="font-medium mb-2">About</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {volunteerProfile.volunteerProfile.about}
+                  </p>
+                </div>
+              )}
+
+              {/* Availability */}
+              {volunteerProfile.volunteerProfile?.availability && (
+                <div>
+                  <h4 className="font-medium mb-2">Availability</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {volunteerProfile.volunteerProfile.availability}
+                  </p>
+                </div>
+              )}
+
+              {/* Experience Level */}
+              {volunteerProfile.volunteerProfile?.experienceLevel && (
+                <div>
+                  <h4 className="font-medium mb-2">Experience Level</h4>
+                  <Badge variant="outline">
+                    {volunteerProfile.volunteerProfile.experienceLevel}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-muted-foreground">Loading profile...</p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeProfileDialog}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

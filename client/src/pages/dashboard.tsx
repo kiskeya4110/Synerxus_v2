@@ -184,19 +184,36 @@ export default function Dashboard() {
   const formattedActivities: Activity[] = useMemo(() => {
     return (filteredData.activities || []).slice(0, 10).map((activity: any) => {
       const relativeTime = getRelativeTime(new Date(activity.createdAt));
-      const project = projects.find((p: any) => p.id === activity.projectId);
       
-      return {
-        id: activity.id.toString(),
-        user: {
-          id: activity.userId?.toString() || "1",
-          name: "Volunteer",
-          avatar: undefined,
-        },
-        action: "logged " + activity.hours + " hours on",
-        target: project?.name || "Unknown Project",
-        time: relativeTime,
-      };
+      // Check if this is a unified activity or legacy format
+      if (activity.type) {
+        // New unified activity format
+        return {
+          id: activity.id.toString(),
+          user: {
+            id: activity.userId?.toString() || "1",
+            name: activity.userName || "Unknown",
+            avatar: activity.userAvatar,
+          },
+          action: activity.action,
+          target: activity.target,
+          time: relativeTime,
+        };
+      } else {
+        // Legacy format (volunteer hours)
+        const project = projects.find((p: any) => p.id === activity.projectId);
+        return {
+          id: activity.id.toString(),
+          user: {
+            id: activity.userId?.toString() || "1",
+            name: "Volunteer",
+            avatar: undefined,
+          },
+          action: "logged " + activity.hours + " hours on",
+          target: project?.name || "Unknown Project",
+          time: relativeTime,
+        };
+      }
     });
   }, [filteredData.activities, projects]);
 

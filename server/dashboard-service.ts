@@ -211,13 +211,100 @@ export async function getDashboardDataForOrganization(userId: number) {
       organizationProjects.map(p => [p.id, { name: p.name, status: p.status }])
     );
 
-    // Enrich tasks with project metadata
+    // Create a map of user data for assignee lookup
+    const userMap = new Map(
+      allUsers.map(u => [u.id, { name: u.displayName || u.username || 'Unknown', avatar: u.avatar }])
+    );
+
+    // Enrich tasks with project metadata and assignee details
     const tasksWithProjects = organizationTasks.map(task => ({
       ...task,
       projectId: task.projectId,
       projectName: task.projectId ? projectMap.get(task.projectId)?.name || 'Unknown Project' : undefined,
       projectStatus: task.projectId ? projectMap.get(task.projectId)?.status : undefined,
+      assignee: task.assigneeId ? {
+        id: task.assigneeId.toString(),
+        name: userMap.get(task.assigneeId)?.name || 'Unknown',
+        avatar: userMap.get(task.assigneeId)?.avatar,
+      } : undefined,
     }));
+
+    // Create unified activity feed
+    const unifiedActivities: any[] = [];
+
+    // Add volunteer hour logs
+    organizationActivities.forEach(activity => {
+      const volunteer = userMap.get(activity.userId);
+      const project = activity.projectId ? projectMap.get(activity.projectId) : undefined;
+      unifiedActivities.push({
+        id: `activity-${activity.id}`,
+        type: 'hours_logged',
+        userId: activity.userId,
+        userName: volunteer?.name || 'Unknown Volunteer',
+        userAvatar: volunteer?.avatar,
+        action: `logged ${activity.hours} hours on`,
+        target: project?.name || 'Unknown Project',
+        timestamp: new Date(activity.createdAt),
+        createdAt: activity.createdAt,
+      });
+    });
+
+    // Add application submissions
+    organizationApplications.forEach(app => {
+      const volunteer = userMap.get(app.volunteerId);
+      const opportunity = organizationOpportunities.find((o: any) => o.id === app.opportunityId);
+      unifiedActivities.push({
+        id: `application-${app.id}`,
+        type: 'application_submitted',
+        userId: app.volunteerId,
+        userName: volunteer?.name || 'Unknown Volunteer',
+        userAvatar: volunteer?.avatar,
+        action: 'applied to',
+        target: opportunity?.title || 'Unknown Opportunity',
+        timestamp: new Date(app.appliedAt),
+        createdAt: app.appliedAt,
+      });
+    });
+
+    // Add volunteer assignments
+    organizationAssignments.forEach(assignment => {
+      const volunteer = userMap.get(assignment.volunteerId);
+      const project = projectMap.get(assignment.projectId);
+      unifiedActivities.push({
+        id: `assignment-${assignment.id}`,
+        type: 'volunteer_assigned',
+        userId: assignment.volunteerId,
+        userName: volunteer?.name || 'Unknown Volunteer',
+        userAvatar: volunteer?.avatar,
+        action: 'was assigned to',
+        target: project?.name || 'Unknown Project',
+        timestamp: new Date(assignment.assignedAt),
+        createdAt: assignment.assignedAt,
+      });
+    });
+
+    // Add task completions
+    const completedTaskActivities = organizationTasks.filter(t => t.status === 'Completed');
+    completedTaskActivities.forEach(task => {
+      const assignee = task.assigneeId ? userMap.get(task.assigneeId) : null;
+      const project = task.projectId ? projectMap.get(task.projectId) : undefined;
+      unifiedActivities.push({
+        id: `task-${task.id}`,
+        type: 'task_completed',
+        userId: task.assigneeId || null,
+        userName: assignee?.name || 'Unknown',
+        userAvatar: assignee?.avatar,
+        action: 'completed task',
+        target: `"${task.title}" in ${project?.name || 'Unknown Project'}`,
+        timestamp: new Date(task.updatedAt),
+        createdAt: task.updatedAt,
+      });
+    });
+
+    // Sort by timestamp and get most recent 20
+    const recentUnifiedActivities = unifiedActivities
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, 20);
 
     return {
       summary: {
@@ -228,15 +315,13 @@ export async function getDashboardDataForOrganization(userId: number) {
         totalTasks,
         sdgsAddressed: uniqueSDGs.size,
         impactScore,
-        recentActivities: organizationActivities
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 5),
+        recentActivities: recentUnifiedActivities, // Unified activity feed with all activity types
         organizationPrimarySdgs, // Organization's selected SDGs from profile settings
       },
       projects: organizationProjects,
       projectsWithVolunteers, // Enriched projects with volunteers and progress
       tasks: tasksWithProjects, // Enriched tasks with project metadata
-      activities: organizationActivities,
+      activities: recentUnifiedActivities, // Unified activity feed for activity tab
       impacts: organizationImpacts,
       volunteers: organizationVolunteers,
       volunteerSummaries, // Enriched volunteer data with summaries
@@ -267,6 +352,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const allActivities = await storage.listVolunteerActivities();
     const allProjectAssignments = await storage.listProjectAssignments();
     const allApplications = await storage.listApplications();
+    const allUsers = await storage.listUsers();
 
     // Get projects the volunteer is assigned to
     const volunteerAssignments = allProjectAssignments.filter(pa => pa.volunteerId === userId);
@@ -324,12 +410,22 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       assignedProjects.map(p => [p.id, { name: p.name, status: p.status }])
     );
 
-    // Enrich volunteer tasks with project metadata
+    // Create a map of user data for assignee lookup
+    const userMap = new Map(
+      allUsers.map(u => [u.id, { name: u.displayName || u.username || 'Unknown', avatar: u.avatar }])
+    );
+
+    // Enrich volunteer tasks with project metadata and assignee details
     const tasksWithProjects = volunteerTasks.map(task => ({
       ...task,
       projectId: task.projectId,
       projectName: task.projectId ? projectMap.get(task.projectId)?.name || 'Unknown Project' : undefined,
       projectStatus: task.projectId ? projectMap.get(task.projectId)?.status : undefined,
+      assignee: task.assigneeId ? {
+        id: task.assigneeId.toString(),
+        name: userMap.get(task.assigneeId)?.name || 'Unknown',
+        avatar: userMap.get(task.assigneeId)?.avatar,
+      } : undefined,
     }));
 
     return {

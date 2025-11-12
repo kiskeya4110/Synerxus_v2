@@ -500,15 +500,6 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Volunteer Insights Section - Only for volunteers */}
-      {dashboardType === 'volunteer' && dashboardData && (
-        <VolunteerInsightsSection
-          volunteerProfile={dashboardData.volunteerProfile || null}
-          applicationStats={dashboardData.applicationStats || { total: 0, pending: 0, accepted: 0, rejected: 0 }}
-          hoursByProject={dashboardData.hoursByProject || []}
-        />
-      )}
-
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ImpactChart 
@@ -524,6 +515,15 @@ export default function Dashboard() {
           }
         />
       </div>
+
+      {/* Volunteer Insights Section - Only for volunteers */}
+      {dashboardType === 'volunteer' && dashboardData && (
+        <VolunteerInsightsSection
+          volunteerProfile={dashboardData.volunteerProfile || null}
+          applicationStats={dashboardData.applicationStats || { total: 0, pending: 0, accepted: 0, rejected: 0 }}
+          hoursByProject={dashboardData.hoursByProject || []}
+        />
+      )}
 
       {/* Projects Overview */}
       <div>

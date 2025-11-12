@@ -2171,7 +2171,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } else if (user.userType === 'volunteer') {
         const dashboardData = await getDashboardDataForVolunteer(userIdNum);
-        res.json(dashboardData.summary);
+        // Return full dashboard data with all arrays needed for charts
+        res.json({
+          ...dashboardData.summary,
+          volunteerProfile: dashboardData.volunteerProfile,
+          applicationStats: dashboardData.applicationStats,
+          hoursByProject: dashboardData.hoursByProject,
+          monthlyImpactTrend: dashboardData.monthlyImpactTrend,
+          projects: dashboardData.projects,
+          tasks: dashboardData.tasks,
+          activities: dashboardData.activities,
+          impacts: dashboardData.impacts,
+          applications: dashboardData.applications,
+          matchedOpportunities: dashboardData.matchedOpportunities,
+          projectAssignments: dashboardData.projectAssignments,
+        });
       } else {
         return res.status(400).json({ message: "Invalid user type" });
       }

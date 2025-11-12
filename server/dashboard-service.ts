@@ -241,6 +241,7 @@ export async function getDashboardDataForOrganization(userId: number) {
 
     // Add volunteer hour logs
     organizationActivities.forEach(activity => {
+      if (!activity.userId) return; // Skip if no userId
       const volunteer = userMap.get(activity.userId);
       const project = activity.projectId ? projectMap.get(activity.projectId) : undefined;
       unifiedActivities.push({
@@ -360,6 +361,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const allProjects = await storage.listProjects();
     const allTasks = await storage.listTasks();
     const allActivities = await storage.listVolunteerActivities();
+    const allImpacts = await storage.listProjectImpacts();
     const allProjectAssignments = await storage.listProjectAssignments();
     const allApplications = await storage.listApplications();
     const allUsers = await storage.listUsers();
@@ -371,6 +373,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Filter activities to only this volunteer's
     const volunteerActivities = allActivities.filter(a => a.userId === userId);
+    
+    // Filter impacts to only assigned projects
+    const volunteerImpacts = allImpacts.filter(i => i.projectId && assignedProjectIds.has(i.projectId));
 
     // Filter tasks to assigned projects or tasks assigned to this volunteer
     const volunteerTasks = allTasks.filter(t =>
@@ -553,6 +558,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       projects: assignedProjects,
       tasks: tasksWithProjects, // Enriched tasks with project metadata
       activities: volunteerActivities,
+      impacts: volunteerImpacts, // Project impacts for assigned projects
       applications: volunteerApplications,
       matchedOpportunities, // AI-filtered opportunities above threshold
       projectAssignments: volunteerAssignments,

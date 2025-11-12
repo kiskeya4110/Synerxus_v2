@@ -28,7 +28,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 export default function Dashboard() {
   const { user } = useAuth();
   const [selectedProject, setSelectedProject] = useState<string>("all");
-  const [selectedKPI, setSelectedKPI] = useState<{ title: string; items: any[] } | null>(null);
+  const [selectedKPI, setSelectedKPI] = useState<{ title: string; items: any[]; totalScore?: number } | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
 
   // Fetch current user from database
@@ -108,36 +108,47 @@ export default function Dashboard() {
     enabled: !!userId && currentUser?.userType === 'organization'
   });
 
+  // Determine dashboard type early (needed for data filtering)
+  const dashboardType = currentUser?.userType;
+
   // Filter data based on selected project
+  // For volunteers, use dashboard data; for organizations, use separate queries
   const filteredData = useMemo(() => {
     const projectId = selectedProject === "all" ? null : parseInt(selectedProject);
 
+    // Use dashboardData for volunteers (it contains everything), separate queries for organizations
+    const sourceProjects = dashboardType === 'volunteer' ? (dashboardData?.projects || []) : projects;
+    const sourceTasks = dashboardType === 'volunteer' ? (dashboardData?.tasks || []) : tasks;
+    const sourceActivities = dashboardType === 'volunteer' ? (dashboardData?.activities || []) : volunteerActivities;
+    const sourceImpacts = dashboardType === 'volunteer' ? (dashboardData?.impacts || []) : projectImpacts;
+
     const filteredProjects = projectId 
-      ? projects.filter((p: any) => p.id === projectId)
-      : projects;
+      ? sourceProjects.filter((p: any) => p.id === projectId)
+      : sourceProjects;
 
     const filteredTasks = projectId
-      ? tasks.filter((t: any) => t.projectId === projectId)
-      : tasks;
+      ? sourceTasks.filter((t: any) => t.projectId === projectId)
+      : sourceTasks;
 
     const filteredActivities = projectId
-      ? volunteerActivities.filter((a: any) => a.projectId === projectId)
-      : volunteerActivities;
+      ? sourceActivities.filter((a: any) => a.projectId === projectId)
+      : sourceActivities;
 
     const filteredImpacts = projectId
-      ? projectImpacts.filter((i: any) => {
-          const project = projects.find((p: any) => p.id === i.projectId);
+      ? sourceImpacts.filter((i: any) => {
+          const project = sourceProjects.find((p: any) => p.id === i.projectId);
           return project && project.id === projectId;
         })
-      : projectImpacts;
+      : sourceImpacts;
 
     return {
       projects: filteredProjects,
       tasks: filteredTasks,
       activities: filteredActivities,
       impacts: filteredImpacts,
+      applications: dashboardData?.applications || [], // Add applications to filteredData
     };
-  }, [selectedProject, projects, tasks, volunteerActivities, projectImpacts]);
+  }, [selectedProject, dashboardType, dashboardData, projects, tasks, volunteerActivities, projectImpacts]);
 
   // Use KPIs from backend - API returns summary data at top level
   const kpis = useMemo(() => {
@@ -266,9 +277,7 @@ export default function Dashboard() {
     );
   }
 
-  // Determine dashboard type from user data (no default fallback)
-  const dashboardType = currentUser.userType;
-
+  // Dashboard type already determined above
   if (!dashboardType) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -379,6 +388,60 @@ export default function Dashboard() {
           })),
         };
         break;
+      case "Impact Score":
+        // Calculate component scores for the breakdown
+        const totalHours = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        const totalTasks = filteredData.tasks.length;
+        const completedTasks = filteredData.tasks.filter((t: any) => t.status === "Completed").length;
+        const uniqueSDGs = new Set<number>();
+        filteredData.projects.forEach((p: any) => {
+          if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
+            p.sdgGoals.forEach((goal: number) => uniqueSDGs.add(goal));
+          }
+        });
+        const applications = filteredData.applications || [];
+        const acceptedApplications = applications.filter((app: any) => app.status === 'accepted').length;
+        
+        const hoursScore = Math.min((totalHours / 100) * 100, 100);
+        const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+        const sdgScore = (uniqueSDGs.size / 17) * 100;
+        const matchScore = applications.length > 0 ? (acceptedApplications / applications.length) * 100 : 0;
+        
+        detailData = {
+          title: "Impact Score Breakdown",
+          items: [
+            {
+              label: "Hours Contribution",
+              value: `${Math.round(hoursScore)} / 100`,
+              weight: "40%",
+              contribution: Math.round(hoursScore * 0.40),
+              description: `${totalHours} hours logged`,
+            },
+            {
+              label: "Task Completion",
+              value: `${Math.round(tasksScore)} / 100`,
+              weight: "30%",
+              contribution: Math.round(tasksScore * 0.30),
+              description: `${completedTasks} of ${totalTasks} tasks completed`,
+            },
+            {
+              label: "SDG Coverage",
+              value: `${Math.round(sdgScore)} / 100`,
+              weight: "20%",
+              contribution: Math.round(sdgScore * 0.20),
+              description: `${uniqueSDGs.size} of 17 SDGs addressed`,
+            },
+            {
+              label: "Application Success",
+              value: `${Math.round(matchScore)} / 100`,
+              weight: "10%",
+              contribution: Math.round(matchScore * 0.10),
+              description: `${acceptedApplications} of ${applications.length} applications accepted`,
+            },
+          ],
+          totalScore: value,
+        };
+        break;
       default:
         detailData = { title, items: [] };
     }
@@ -463,6 +526,7 @@ export default function Dashboard() {
               title="Impact Score"
               value={kpis.impactScore}
               icon={<Award className="h-6 w-6" />}
+              onClick={() => handleKPIClick("Impact Score", kpis.impactScore)}
               data-testid="kpi-impact"
             />
           </>
@@ -516,15 +580,6 @@ export default function Dashboard() {
           }
         />
       </div>
-
-      {/* Volunteer Insights Section - Only for volunteers */}
-      {dashboardType === 'volunteer' && dashboardData && (
-        <VolunteerInsightsSection
-          volunteerProfile={dashboardData.volunteerProfile || null}
-          applicationStats={dashboardData.applicationStats || { total: 0, pending: 0, accepted: 0, rejected: 0 }}
-          hoursByProject={dashboardData.hoursByProject || []}
-        />
-      )}
 
       {/* Projects Overview */}
       <div>
@@ -588,6 +643,15 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Volunteer Insights Section - Only for volunteers */}
+      {dashboardType === 'volunteer' && dashboardData && (
+        <VolunteerInsightsSection
+          volunteerProfile={dashboardData.volunteerProfile || null}
+          applicationStats={dashboardData.applicationStats || { total: 0, pending: 0, accepted: 0, rejected: 0 }}
+          hoursByProject={dashboardData.hoursByProject || []}
+        />
+      )}
+
       {/* Contact Volunteer Modal */}
       {currentUser && (
         <ContactVolunteerModal
@@ -607,11 +671,64 @@ export default function Dashboard() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Impact Score Breakdown - Special case */}
+            {selectedKPI?.totalScore !== undefined && (
+              <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold">Total Impact Score</span>
+                  <span className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                    {selectedKPI.totalScore}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {selectedKPI?.items.map((item: any, index: number) => {
+              // Check if this is an Impact Score component item
+              const isImpactScoreItem = item.weight !== undefined;
               // Check if this is a volunteer item (has avatar and id)
               const isVolunteerItem = item.avatar !== undefined && item.id;
               // Check if this is an SDG item (has isSDG flag)
               const isSDGItem = item.isSDG === true;
+              
+              // Impact Score Component Breakdown
+              if (isImpactScoreItem) {
+                return (
+                  <div key={index} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900/50" data-testid={`kpi-item-${index}`}>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900 dark:text-white">{item.label}</h4>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
+                        </div>
+                        <div className="text-right ml-4">
+                          <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Weight: {item.weight}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 mt-3">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between text-sm mb-1">
+                            <span className="text-gray-600 dark:text-gray-400">Score</span>
+                            <span className="font-medium">{item.value}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-primary-600 dark:bg-primary-500 h-2 rounded-full transition-all"
+                              style={{ width: `${parseInt(item.value)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">Contribution</div>
+                          <div className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                            +{item.contribution}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
               
               // SDG Item with Collapsible Projects List
               if (isSDGItem) {

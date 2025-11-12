@@ -353,6 +353,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       throw new Error("User is not a volunteer");
     }
 
+    // Get volunteer profile data
+    const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+
     // Fetch data
     const allProjects = await storage.listProjects();
     const allTasks = await storage.listTasks();
@@ -435,6 +438,36 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       } : undefined,
     }));
 
+    // Calculate application statistics
+    const pendingApplications = volunteerApplications.filter(app => app.status === 'pending').length;
+    const rejectedApplications = volunteerApplications.filter(app => app.status === 'rejected').length;
+
+    // Calculate hours breakdown by project
+    const hoursByProject = assignedProjects.map(project => {
+      const projectActivities = volunteerActivities.filter(a => a.projectId === project.id);
+      const projectHours = projectActivities.reduce((sum, a) => sum + a.hours, 0);
+      return {
+        projectId: project.id,
+        projectName: project.name,
+        hours: projectHours,
+        activityCount: projectActivities.length,
+      };
+    }).filter(p => p.hours > 0).sort((a, b) => b.hours - a.hours);
+
+    // Calculate profile completeness
+    const profileFields = {
+      skills: volunteerProfile?.skills?.length || 0,
+      interests: volunteerProfile?.interests?.length || 0,
+      location: volunteerProfile?.location ? 1 : 0,
+      preferredSdgs: volunteerProfile?.preferredSdgs?.length || 0,
+      languages: volunteerProfile?.languages?.length || 0,
+      motivations: volunteerProfile?.motivations ? 1 : 0,
+      weeklyAvailability: volunteerProfile?.weeklyAvailability ? 1 : 0,
+      preferredWorkStyle: volunteerProfile?.preferredWorkStyle ? 1 : 0,
+    };
+    const completedFields = Object.values(profileFields).filter(v => v > 0).length;
+    const profileCompleteness = Math.round((completedFields / Object.keys(profileFields).length) * 100);
+
     return {
       summary: {
         activeVolunteers: 1, // Only themselves
@@ -448,6 +481,17 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5),
       },
+      volunteerProfile: volunteerProfile ? {
+        ...volunteerProfile,
+        profileCompleteness,
+      } : null,
+      applicationStats: {
+        total: volunteerApplications.length,
+        pending: pendingApplications,
+        accepted: acceptedApplications,
+        rejected: rejectedApplications,
+      },
+      hoursByProject,
       projects: assignedProjects,
       tasks: tasksWithProjects, // Enriched tasks with project metadata
       activities: volunteerActivities,

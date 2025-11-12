@@ -517,7 +517,11 @@ export default function Dashboard() {
         />
         <SDGChart 
           projects={filteredData.projects}
-          organizationSdgs={currentUser?.userType === 'organization' ? dashboardData?.organizationPrimarySdgs : undefined}
+          organizationSdgs={
+            currentUser?.userType === 'organization' 
+              ? dashboardData?.organizationPrimarySdgs 
+              : dashboardData?.volunteerProfile?.preferredSdgs
+          }
         />
       </div>
 

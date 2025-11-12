@@ -84,8 +84,8 @@ export function calculateMatchScore(
   }
 
   // 3. SDG Overlap Matching (20% weight)
-  // Check SDG alignment from volunteer profile and opportunity
-  const volSDGs = volunteer.profile?.interests?.filter(i => /^sdg[- ]?\d+$/i.test(i)).map(sdg => parseInt(sdg.replace(/[^\d]/g, ''))) || [];
+  // Check SDG alignment from volunteer's preferredSdgs field
+  const volSDGs = volunteer.profile?.preferredSdgs || [];
   const oppSDGs = opportunity.sdgGoals || [];
   
   if (volSDGs.length > 0 && oppSDGs.length > 0) {

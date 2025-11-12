@@ -35,7 +35,7 @@ export default function DiscoverOpportunities() {
 
   // Fetch opportunities with AI matches and organization data
   const { data: opportunities = [], isLoading } = useQuery<EnrichedOpportunity[]>({
-    queryKey: ["/api/opportunities/discover", userId],
+    queryKey: userId ? [`/api/opportunities/discover?userId=${userId}`] : [],
     enabled: !!userId, // Only fetch if we have a userId
   });
 

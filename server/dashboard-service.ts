@@ -462,7 +462,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       preferredSdgs: volunteerProfile?.preferredSdgs?.length || 0,
       languages: volunteerProfile?.languages?.length || 0,
       motivations: volunteerProfile?.motivations ? 1 : 0,
-      weeklyAvailability: volunteerProfile?.weeklyAvailability ? 1 : 0,
+      weeklyAvailability: volunteerProfile?.weeklyAvailability !== null && volunteerProfile?.weeklyAvailability !== undefined ? 1 : 0,
       preferredWorkStyle: volunteerProfile?.preferredWorkStyle ? 1 : 0,
     };
     const completedFields = Object.values(profileFields).filter(v => v > 0).length;

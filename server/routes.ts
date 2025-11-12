@@ -2493,8 +2493,14 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         }
       }
       
+      // Return both user and volunteer profile (matching GET endpoint structure)
       const updatedUser = await storage.getUser(userId);
-      res.json(updatedUser);
+      const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+      
+      res.json({
+        user: updatedUser,
+        volunteerProfile
+      });
     } catch (err) {
       console.error("Error updating volunteer profile:", err);
       const error = handleValidationError(err);
@@ -2767,7 +2773,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         });
       }
       
-      // Update user's displayName, userType, and profile photo if needed
+      // Update user's displayName, userType, skills, and profile photo if needed
       const updates: any = {};
       if (!user.userType) {
         updates.userType = 'volunteer';
@@ -2777,6 +2783,10 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       }
       if (req.body.profilePhotoUrl) {
         updates.avatar = req.body.profilePhotoUrl;
+      }
+      // Update skills in users table to match volunteer_profiles (for matching algorithm)
+      if (req.body.skills) {
+        updates.skills = req.body.skills;
       }
       if (Object.keys(updates).length > 0) {
         await storage.updateUser(userId, updates);

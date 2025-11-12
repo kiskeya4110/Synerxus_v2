@@ -56,8 +56,11 @@ export async function updateVolunteerProfileWithUser(
       .where(eq(volunteerProfiles.userId, userId));
     
     const profileUpdates: Partial<InsertVolunteerProfile> = {};
-    // volunteer_profiles only stores interests, location, and preferredSdgs
-    // skills are managed on users table only
+    // volunteer_profiles stores skills, interests, location, and preferredSdgs
+    // Keep skills in both tables for consistency with intake form
+    if (profileData.skills !== undefined) {
+      profileUpdates.skills = profileData.skills || [];
+    }
     if (profileData.interests !== undefined) {
       profileUpdates.interests = profileData.interests || [];
     }
@@ -87,9 +90,10 @@ export async function updateVolunteerProfileWithUser(
         updatedProfile = existingProfile;
       }
     } else {
-      // Create new profile (skills are NOT stored in volunteer_profiles)
+      // Create new profile with all volunteer data (matching intake form structure)
       const newProfileData: InsertVolunteerProfile = {
         userId,
+        skills: profileData.skills || [],
         interests: profileData.interests || [],
         location: profileData.location || null,
         preferredSdgs: profileData.preferredSdgs || [],

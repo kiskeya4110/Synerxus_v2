@@ -1083,28 +1083,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Discover endpoint must come BEFORE /:id route
   app.get("/api/opportunities/discover", async (req, res) => {
     try {
-      // TODO: Get volunteerId from authenticated session instead of hardcoded value
-      const volunteerId = 1; // Temporary hardcoded value - replace with auth
+      const userIdParam = req.query.userId as string;
       
-      const allOpportunities = await storage.listOpportunities();
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId parameter is required" });
+      }
       
-      // Calculate match scores for all opportunities
-      const opportunitiesWithScores = await Promise.all(
-        allOpportunities.map(async (opp) => {
-          const matchData = await storage.getMatchScore(opp.id, volunteerId);
-          return {
-            ...opp,
-            matchScore: matchData.score,
-            matchReasons: matchData.matchReasons,
-            matchBreakdown: matchData.breakdown
-          };
-        })
-      );
+      const userId = parseInt(userIdParam);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
+      }
       
-      // Sort by match score (highest first)
-      opportunitiesWithScores.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+      const { getEnrichedOpportunities } = await import("./opportunity-enrichment-service");
       
-      res.json(opportunitiesWithScores);
+      // Get enriched opportunities with match scores and organization data
+      const enrichedOpportunities = await getEnrichedOpportunities(storage, {
+        includeMatch: true,
+        volunteerId: userId,
+        matchThreshold: 0, // Show all opportunities, even low matches
+      });
+      
+      res.json(enrichedOpportunities);
     } catch (err) {
       console.error("Error fetching opportunities with match scores:", err);
       res.status(500).json({ message: "Failed to fetch opportunities" });

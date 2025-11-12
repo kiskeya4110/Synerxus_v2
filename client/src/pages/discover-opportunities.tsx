@@ -5,20 +5,38 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Clock, Users, Calendar, Search, TrendingUp, Sparkles } from "lucide-react";
+import { MapPin, Clock, Users, Calendar, Search, TrendingUp, Sparkles, Building2, CalendarDays, AlertCircle } from "lucide-react";
 import { Opportunity } from "@shared/schema";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
+import { sdgGoals } from "@shared/sdg-goals";
+
+interface EnrichedOpportunity extends Opportunity {
+  organizationName?: string;
+  matchScore?: number;
+  matchPercentage?: number;
+  matchReasons?: string[];
+  matchBreakdown?: {
+    skillMatch: number;
+    locationMatch: number;
+    sdgMatch: number;
+    interestMatch: number;
+  };
+}
 
 export default function DiscoverOpportunities() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [selectedOpportunity, setSelectedOpportunity] = useState<(Opportunity & { matchScore?: number; matchReasons?: string[] }) | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<EnrichedOpportunity | null>(null);
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
 
-  // Fetch opportunities with AI matches
-  const { data: opportunities = [], isLoading } = useQuery<Array<Opportunity & { matchScore?: number; matchReasons?: string[] }>>({
-    queryKey: ["/api/opportunities/discover"],
+  // Get current user ID from localStorage
+  const userId = localStorage.getItem('currentUserId');
+
+  // Fetch opportunities with AI matches and organization data
+  const { data: opportunities = [], isLoading } = useQuery<EnrichedOpportunity[]>({
+    queryKey: ["/api/opportunities/discover", userId],
+    enabled: !!userId, // Only fetch if we have a userId
   });
 
   // Extract unique categories and locations from actual opportunities data
@@ -241,46 +259,166 @@ export default function DiscoverOpportunities() {
                 data-testid={`card-opportunity-${opportunity.id}`}
               >
                 <CardHeader>
-                  <div className="flex items-start justify-between mb-2">
-                    <CardTitle className="text-lg">{opportunity.title}</CardTitle>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <CardTitle className="text-lg">{opportunity.title}</CardTitle>
+                        {opportunity.isUrgent && (
+                          <Badge className="bg-red-500 text-white text-xs">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Urgent
+                          </Badge>
+                        )}
+                      </div>
+                      {opportunity.organizationName && (
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          <Building2 className="w-3.5 h-3.5 mr-1.5" />
+                          <span className="font-medium">{opportunity.organizationName}</span>
+                        </div>
+                      )}
+                    </div>
                     {getMatchBadge(opportunity.matchScore)}
                   </div>
                   <CardDescription className="line-clamp-2">
                     {opportunity.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm mb-4">
+                <CardContent className="space-y-3">
+                  {/* Basic Info */}
+                  <div className="space-y-1.5 text-sm">
                     {opportunity.location && (
                       <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        {opportunity.location}
+                        <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span>{opportunity.location}</span>
                         {opportunity.isRemote && (
-                          <Badge variant="outline" className="ml-2">Remote</Badge>
+                          <Badge variant="outline" className="ml-2 text-xs">Remote</Badge>
                         )}
                       </div>
                     )}
                     {opportunity.timeCommitment && (
                       <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <Clock className="w-4 h-4 mr-2" />
-                        {opportunity.timeCommitment}
+                        <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span>{opportunity.timeCommitment}</span>
+                        {opportunity.commitmentType && <span className="ml-1">({opportunity.commitmentType})</span>}
                       </div>
                     )}
-                    {opportunity.category && (
-                      <Badge variant="secondary">{opportunity.category}</Badge>
+                    {opportunity.volunteersNeeded && (
+                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                        <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span>{opportunity.volunteersNeeded} volunteer{opportunity.volunteersNeeded > 1 ? 's' : ''} needed</span>
+                      </div>
+                    )}
+                    {(opportunity.startDate || opportunity.endDate) && (
+                      <div className="flex items-center text-gray-600 dark:text-gray-400">
+                        <CalendarDays className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span className="text-xs">
+                          {opportunity.startDate && new Date(opportunity.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {opportunity.startDate && opportunity.endDate && ' - '}
+                          {opportunity.endDate && new Date(opportunity.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
                     )}
                   </div>
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    data-testid={`button-view-${opportunity.id}`}
-                    onClick={() => {
-                      setSelectedOpportunity(opportunity);
-                      setApplicationDialogOpen(true);
-                    }}
-                  >
-                    View Details
-                  </Button>
+
+                  {/* Category and Engagement Type */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {opportunity.category && (
+                      <Badge variant="secondary" className="text-xs">{opportunity.category}</Badge>
+                    )}
+                    {opportunity.engagementType && (
+                      <Badge variant="outline" className="text-xs capitalize">{opportunity.engagementType}</Badge>
+                    )}
+                  </div>
+
+                  {/* SDG Goals */}
+                  {opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {opportunity.sdgGoals.slice(0, 4).map((sdgId) => {
+                          const sdg = sdgGoals[sdgId];
+                          return sdg ? (
+                            <Badge 
+                              key={sdgId} 
+                              style={{ backgroundColor: sdg.color, color: '#fff' }}
+                              className="text-xs px-2 py-0"
+                            >
+                              SDG {sdgId}
+                            </Badge>
+                          ) : null;
+                        })}
+                        {opportunity.sdgGoals.length > 4 && (
+                          <Badge variant="outline" className="text-xs px-2 py-0">
+                            +{opportunity.sdgGoals.length - 4}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Required Skills */}
+                  {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {opportunity.requiredSkills.slice(0, 3).map((skill, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs px-2 py-0">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {opportunity.requiredSkills.length > 3 && (
+                          <Badge variant="outline" className="text-xs px-2 py-0">
+                            +{opportunity.requiredSkills.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Requirements */}
+                  {opportunity.requirements && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.requirements}</p>
+                    </div>
+                  )}
+
+                  {/* Benefits */}
+                  {opportunity.benefits && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.benefits}</p>
+                    </div>
+                  )}
+
+                  {/* Match Reasons */}
+                  {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Why this matches you:</p>
+                      <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
+                        {opportunity.matchReasons.slice(0, 2).map((reason, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="mr-1.5">•</span>
+                            <span className="line-clamp-1">{reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="pt-2">
+                    <Button 
+                      className="w-full" 
+                      data-testid={`button-view-${opportunity.id}`}
+                      onClick={() => {
+                        setSelectedOpportunity(opportunity);
+                        setApplicationDialogOpen(true);
+                      }}
+                    >
+                      Apply Now
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}

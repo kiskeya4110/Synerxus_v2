@@ -27,15 +27,22 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
     // Get all opportunities
     const opportunities = await storage.listOpportunities();
     
+    // Get all organizations to enrich opportunities with organization names
+    const allOrganizations = await storage.listOrganizations();
+    const organizationMap = new Map(allOrganizations.map(org => [org.id, org]));
+    
     // Combine user and profile for matching algorithm
     const volunteerWithProfile = { ...volunteer, profile: volunteerProfile };
 
-    // Calculate match scores for each opportunity
+    // Calculate match scores for each opportunity and enrich with organization data
     const matchedOpportunities = opportunities
       .map((opportunity: Opportunity) => {
         const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
+        const organization = organizationMap.get(opportunity.organizationId);
+        
         return {
           ...opportunity,
+          organizationName: organization?.name || "Unknown Organization",
           matchScore: matchResult.score,
           matchPercentage: matchResult.score, // For frontend compatibility
           matchBreakdown: matchResult.breakdown,

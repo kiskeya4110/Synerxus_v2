@@ -4,27 +4,41 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Calendar, Users, Target, ExternalLink, Bookmark, BookmarkCheck, X, FileText } from "lucide-react";
+import { MapPin, Calendar, Users, Target, ExternalLink, Bookmark, BookmarkCheck, X, FileText, Building2, Clock, AlertCircle, Sparkles, CalendarDays } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
+import { sdgGoals } from "@shared/sdg-goals";
 
 interface OpportunityMatch {
   id: number;
   title: string;
   description: string;
+  organizationName?: string;
   location: string;
   isRemote: boolean;
   requiredSkills: string[];
+  optionalSkills?: string[];
   sdgGoals: number[];
   category: string;
   volunteersNeeded: number;
   commitmentType: string;
+  timeCommitment?: string;
+  engagementType?: string;
   startDate: string;
   endDate: string;
+  benefits?: string;
+  requirements?: string;
+  isUrgent?: boolean;
   matchPercentage: number;
   matchReasons: string[];
+  matchBreakdown?: {
+    skillMatch: number;
+    locationMatch: number;
+    sdgMatch: number;
+    interestMatch: number;
+  };
   status: string;
 }
 
@@ -234,19 +248,32 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
               <CardHeader className="p-3 pb-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <CardTitle className="text-sm leading-tight">{opp.title}</CardTitle>
+                      {opp.isUrgent && (
+                        <Badge className="bg-red-500 text-white text-xs px-2 py-0">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Urgent
+                        </Badge>
+                      )}
                       {getOpportunityStatusBadge(opp.id)}
                     </div>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <Badge className={`${getMatchColor(opp.matchPercentage)} text-xs px-2 py-0 justify-center`} data-testid={`match-badge-${opp.id}`}>
+                    {opp.organizationName && (
+                      <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-2">
+                        <Building2 className="h-3 w-3 mr-1" />
+                        <span className="font-medium">{opp.organizationName}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge className={`${getMatchColor(opp.matchPercentage)} text-xs px-2 py-0`} data-testid={`match-badge-${opp.id}`}>
+                        <Sparkles className="h-3 w-3 mr-1" />
                         {opp.matchPercentage}% Match
                       </Badge>
                       {opp.category && (
-                        <Badge variant="outline" className="text-xs px-2 py-0 justify-center">{opp.category}</Badge>
+                        <Badge variant="outline" className="text-xs px-2 py-0">{opp.category}</Badge>
                       )}
-                      {opp.isRemote && (
-                        <Badge variant="secondary" className="text-xs px-2 py-0 justify-center">Remote</Badge>
+                      {opp.engagementType && (
+                        <Badge variant="secondary" className="text-xs px-2 py-0 capitalize">{opp.engagementType}</Badge>
                       )}
                     </div>
                   </div>
@@ -274,41 +301,81 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+              <CardContent className="p-3 pt-0 space-y-3">
+                {/* Description */}
+                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                   {opp.description}
                 </p>
 
-                <div className="space-y-1.5 mb-3">
+                {/* Basic Info */}
+                <div className="space-y-1.5">
                   <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
                     <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" />
                     <span className="truncate">{opp.location || "Location not specified"}</span>
                   </div>
+                  {opp.timeCommitment && (
+                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                      <Clock className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                      <span>{opp.timeCommitment}</span>
+                      {opp.commitmentType && <span className="ml-1">({opp.commitmentType})</span>}
+                    </div>
+                  )}
                   {opp.volunteersNeeded && (
                     <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
                       <Users className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                      <span>{opp.volunteersNeeded} volunteers needed</span>
+                      <span>{opp.volunteersNeeded} volunteer{opp.volunteersNeeded > 1 ? 's' : ''} needed</span>
                     </div>
                   )}
-                  {opp.commitmentType && (
+                  {(opp.startDate || opp.endDate) && (
                     <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                      <Calendar className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                      <span className="capitalize">{opp.commitmentType}</span>
+                      <CalendarDays className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                      <span>
+                        {opp.startDate && new Date(opp.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {opp.startDate && opp.endDate && ' - '}
+                        {opp.endDate && new Date(opp.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
                     </div>
                   )}
                 </div>
 
+                {/* SDG Goals */}
+                {opp.sdgGoals && opp.sdgGoals.length > 0 && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {opp.sdgGoals.slice(0, 5).map((sdgId) => {
+                        const sdg = sdgGoals[sdgId];
+                        return sdg ? (
+                          <Badge 
+                            key={sdgId} 
+                            style={{ backgroundColor: sdg.color, color: '#fff' }}
+                            className="text-xs px-2 py-0"
+                          >
+                            SDG {sdgId}
+                          </Badge>
+                        ) : null;
+                      })}
+                      {opp.sdgGoals.length > 5 && (
+                        <Badge variant="outline" className="text-xs px-2 py-0">
+                          +{opp.sdgGoals.length - 5}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Required Skills */}
                 {opp.requiredSkills && opp.requiredSkills.length > 0 && (
-                  <div className="mb-3">
+                  <div>
                     <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
-                    <div className="grid grid-cols-2 gap-1">
+                    <div className="flex flex-wrap gap-1">
                       {opp.requiredSkills.slice(0, 4).map((skill, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs px-2 py-0 justify-center truncate">
+                        <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
                           {skill}
                         </Badge>
                       ))}
                       {opp.requiredSkills.length > 4 && (
-                        <Badge variant="outline" className="text-xs px-2 py-0 justify-center">
+                        <Badge variant="outline" className="text-xs px-2 py-0">
                           +{opp.requiredSkills.length - 4}
                         </Badge>
                       )}
@@ -316,11 +383,28 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                   </div>
                 )}
 
+                {/* Requirements/Responsibilities */}
+                {opp.requirements && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.requirements}</p>
+                  </div>
+                )}
+
+                {/* Benefits */}
+                {opp.benefits && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.benefits}</p>
+                  </div>
+                )}
+
+                {/* Match Reasons */}
                 {opp.matchReasons && opp.matchReasons.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Why this matches:</p>
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Why this matches you:</p>
                     <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
-                      {opp.matchReasons.slice(0, 2).map((reason, idx) => (
+                      {opp.matchReasons.slice(0, 3).map((reason, idx) => (
                         <li key={idx} className="flex items-start">
                           <span className="mr-1.5">•</span>
                           <span className="line-clamp-1">{reason}</span>
@@ -330,7 +414,8 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-2 pt-2">
                   <Link href={`/opportunities/${opp.id}`}>
                     <Button size="sm" variant="outline" className="w-full text-xs h-7" data-testid={`view-opportunity-${opp.id}`}>
                       <FileText className="mr-1 h-3 w-3" />

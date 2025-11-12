@@ -59,7 +59,7 @@ import {
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
-import { eq, and, or, asc } from "drizzle-orm";
+import { eq, and, or, asc, inArray } from "drizzle-orm";
 
 // Define the storage interface with CRUD operations for all entities
 export interface IStorage {
@@ -74,6 +74,7 @@ export interface IStorage {
 
   // Organization operations
   getOrganization(id: number): Promise<Organization | undefined>;
+  getOrganizationsByIds(ids: number[]): Promise<Organization[]>;
   createOrganization(organization: InsertOrganization): Promise<Organization>;
   updateOrganization(id: number, organization: Partial<InsertOrganization>): Promise<Organization | undefined>;
   listOrganizations(): Promise<Organization[]>;
@@ -310,6 +311,20 @@ export class DatabaseStorage implements IStorage {
   async getOrganization(id: number): Promise<Organization | undefined> {
     const [result] = await db.select().from(organizations).where(eq(organizations.id, id));
     return result || undefined;
+  }
+
+  async getOrganizationsByIds(ids: number[]): Promise<Organization[]> {
+    if (ids.length === 0) return [];
+    
+    // Deduplicate IDs to minimize query parameters
+    const uniqueIds = Array.from(new Set(ids));
+    
+    const results = await db
+      .select()
+      .from(organizations)
+      .where(inArray(organizations.id, uniqueIds));
+    
+    return results;
   }
 
   async createOrganization(insertOrg: InsertOrganization): Promise<Organization> {

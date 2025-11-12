@@ -132,6 +132,7 @@ export interface IStorage {
   listApplications(): Promise<any[]>;
   listApplicationsByOpportunity(opportunityId: number): Promise<any[]>;
   listApplicationsByVolunteer(volunteerId: number): Promise<any[]>;
+  findApplicationByVolunteerAndOpportunity(volunteerId: number, opportunityId: number): Promise<any | undefined>;
   
   // Saved Opportunity operations
   saveOpportunity(savedOpp: any): Promise<any>;
@@ -527,6 +528,16 @@ export class DatabaseStorage implements IStorage {
 
   async listApplicationsByVolunteer(volunteerId: number): Promise<Application[]> {
     return await db.select().from(applications).where(eq(applications.volunteerId, volunteerId));
+  }
+
+  async findApplicationByVolunteerAndOpportunity(volunteerId: number, opportunityId: number): Promise<Application | undefined> {
+    const [result] = await db.select().from(applications).where(
+      and(
+        eq(applications.volunteerId, volunteerId),
+        eq(applications.opportunityId, opportunityId)
+      )
+    );
+    return result || undefined;
   }
 
   async listApplicationsByOrganization(organizationId: number): Promise<Application[]> {

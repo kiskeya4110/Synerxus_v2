@@ -15,7 +15,8 @@ import {
   insertMatchSchema,
   insertCalendarEventSchema,
   insertMessageSchema,
-  insertOpportunitySchema
+  insertOpportunitySchema,
+  insertApplicationSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -23,6 +24,7 @@ import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./ma
 import { calculateMatchScore, findTopMatches, findTopVolunteers } from "./matching-algorithm";
 import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization } from "./dashboard-service";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
+import { updateVolunteerProfileWithUser } from "./profile-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
@@ -1244,8 +1246,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/applications", async (req, res) => {
     try {
-      const applicationData = req.body;
-      const application = await storage.createApplication(applicationData);
+      // Validate request payload first (schema-first validation)
+      const validatedData = insertApplicationSchema.parse(req.body);
+      const { opportunityId, volunteerId } = validatedData;
+      
+      // Check if volunteer has already applied to this opportunity (across ALL statuses)
+      const existingApplication = await storage.findApplicationByVolunteerAndOpportunity(
+        volunteerId,
+        opportunityId
+      );
+      
+      if (existingApplication) {
+        return res.status(409).json({ 
+          message: "You have already applied to this opportunity",
+          existingStatus: existingApplication.status
+        });
+      }
+      
+      // Create application with pending status (default from schema)
+      const application = await storage.createApplication(validatedData);
       
       broadcastUpdate("application_created", application);
       res.status(201).json(application);
@@ -2426,18 +2445,18 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       
       const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName } = req.body;
       
-      // Update user table
-      const userUpdates: any = {};
-      if (profilePhotoUrl !== undefined) userUpdates.avatar = profilePhotoUrl;
-      if (bio !== undefined) userUpdates.bio = bio;
-      if (displayName !== undefined) userUpdates.displayName = displayName;
-      if (skills !== undefined) userUpdates.skills = skills;
+      // Use profile service to atomically update both users and volunteer_profiles tables
+      await updateVolunteerProfileWithUser(userId, {
+        avatar: profilePhotoUrl,
+        bio,
+        displayName,
+        skills,
+        interests,
+        location,
+        preferredSdgs: sdgGoals
+      });
       
-      if (Object.keys(userUpdates).length > 0) {
-        await storage.updateUser(userId, userUpdates);
-      }
-      
-      // Update or create volunteer matching profile
+      // Update legacy volunteer matching profile (best effort, outside transaction)
       if (user.email) {
         try {
           const existingVolunteer = await storage.getVolunteerByEmail(user.email);
@@ -2469,8 +2488,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
             }
           }
         } catch (err) {
-          console.error("Error updating volunteer matching profile:", err);
-          // Continue even if matching profile update fails
+          console.error("Error updating legacy volunteer table (non-critical):", err);
+          // This is legacy data, don't fail the request if it errors
         }
       }
       

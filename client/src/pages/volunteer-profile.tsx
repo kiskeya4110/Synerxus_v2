@@ -48,9 +48,9 @@ const formSchema = z.object({
   bio: z.string().optional(),
   profilePhotoUrl: z.string().optional(),
   skills: z.array(z.string()).min(1, "At least one skill is required"),
-  interests: z.array(z.string()).min(1, "At least one interest is required"),
-  location: z.string().min(1, "Location is required"),
-  sdgGoals: z.array(z.number()).min(1, "At least one SDG goal is required"),
+  interests: z.array(z.string()).default([]), // Optional - can be empty
+  location: z.string().optional(), // Optional - can be empty
+  sdgGoals: z.array(z.number()).default([]), // Optional - can be empty
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -115,7 +115,7 @@ export default function VolunteerProfile() {
         form.setValue("skills", volunteerProfile.skills || []);
         form.setValue("interests", volunteerProfile.interests || []);
         form.setValue("location", volunteerProfile.location || "");
-        form.setValue("sdgGoals", volunteerProfile.sdgGoals || []);
+        form.setValue("sdgGoals", volunteerProfile.preferredSdgs || []); // Fix: use preferredSdgs from backend
       } else {
         // Initialize with user's skills if no volunteer profile exists
         if (user.skills && user.skills.length > 0) {

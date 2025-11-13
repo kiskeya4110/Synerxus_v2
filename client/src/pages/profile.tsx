@@ -87,7 +87,7 @@ export default function Profile() {
   
   // For organizations, use primarySdgs from organization data instead of sdgGoals
   const sdgsToDisplay = isVolunteer 
-    ? volunteerProfile?.sdgGoals 
+    ? volunteerProfile?.preferredSdgs 
     : organizationData?.primarySdgs;
   const initials = currentUser?.displayName
     ? currentUser.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()

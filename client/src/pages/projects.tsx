@@ -140,6 +140,9 @@ export default function Projects() {
     );
   }
 
+  // Volunteers can only view projects, not edit them
+  const canManageProjects = currentUser?.userType === 'organization';
+
   return (
     <>
       <div className="mb-6">
@@ -158,7 +161,7 @@ export default function Projects() {
             data-testid="input-search-projects"
           />
         </div>
-        {currentUser?.organizationId && (
+        {canManageProjects && currentUser?.organizationId && (
           <CreateProjectDialog organizationId={currentUser.organizationId} />
         )}
       </div>
@@ -251,8 +254,12 @@ export default function Projects() {
                         <Link href={`/opportunities/${opp.id}`}>
                           <Button size="sm" variant="outline" data-testid={`button-view-opportunity-${opp.id}`}>View</Button>
                         </Link>
-                        <EditOpportunityDialog opportunity={opp} />
-                        <DeleteOpportunityDialog opportunity={opp} />
+                        {canManageProjects && (
+                          <>
+                            <EditOpportunityDialog opportunity={opp} />
+                            <DeleteOpportunityDialog opportunity={opp} />
+                          </>
+                        )}
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 ml-10">
@@ -291,12 +298,13 @@ export default function Projects() {
               progress={progress}
               isExpanded={isExpanded}
               onToggle={() => toggleProject(project.id)}
+              canManageProjects={canManageProjects}
             />
           );
         })}
       </div>
 
-      {filteredProjects.length === 0 && currentUser?.organizationId && (
+      {filteredProjects.length === 0 && canManageProjects && currentUser?.organizationId && (
         <Card className="p-12 text-center">
           <p className="text-gray-500 mb-4">No projects found</p>
           <CreateProjectDialog organizationId={currentUser.organizationId} />

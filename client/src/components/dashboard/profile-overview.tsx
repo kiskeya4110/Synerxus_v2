@@ -225,7 +225,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
       <CardContent className="space-y-4">
 
         {/* SDG Goals - Each individually clickable */}
-        {((isVolunteer && profile?.sdgGoals && profile.sdgGoals.length > 0) || 
+        {((isVolunteer && profile?.preferredSdgs && profile.preferredSdgs.length > 0) || 
           (!isVolunteer && profile?.primarySdgs && profile.primarySdgs.length > 0)) && (
           <div 
             className="space-y-3"
@@ -240,7 +240,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
             </div>
             <TooltipProvider>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
-                {[...(isVolunteer ? profile.sdgGoals : profile.primarySdgs)]
+                {[...(isVolunteer ? (profile.preferredSdgs || []) : (profile.primarySdgs || []))]
                   .sort((a: number, b: number) => a - b)
                   .map((goal: number) => (
                     <Tooltip key={goal}>

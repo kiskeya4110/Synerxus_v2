@@ -23,6 +23,7 @@ interface ProjectListCardProps {
   progress: number;
   isExpanded: boolean;
   onToggle: () => void;
+  canManageProjects?: boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -61,7 +62,8 @@ export const ProjectListCard = memo(function ProjectListCard({
   metrics,
   progress,
   isExpanded,
-  onToggle
+  onToggle,
+  canManageProjects = false
 }: ProjectListCardProps) {
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -98,8 +100,12 @@ export const ProjectListCard = memo(function ProjectListCard({
                   View Details
                 </Button>
               </Link>
-              <EditProjectDialog project={project} />
-              <DeleteProjectDialog project={project} />
+              {canManageProjects && (
+                <>
+                  <EditProjectDialog project={project} />
+                  <DeleteProjectDialog project={project} />
+                </>
+              )}
             </div>
           </div>
 
@@ -136,12 +142,12 @@ export const ProjectListCard = memo(function ProjectListCard({
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">Tasks</h3>
-                <CreateTaskDialog projectId={project.id} />
+                {canManageProjects && <CreateTaskDialog projectId={project.id} />}
               </div>
 
               {tasks.length === 0 ? (
                 <p className="text-sm text-gray-500 text-center py-4">
-                  No tasks yet. Click "Add Task" to create one.
+                  {canManageProjects ? 'No tasks yet. Click "Add Task" to create one.' : 'No tasks assigned yet.'}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -166,10 +172,12 @@ export const ProjectListCard = memo(function ProjectListCard({
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 ml-4">
-                        <EditTaskDialog task={task} />
-                        <DeleteTaskDialog task={task} />
-                      </div>
+                      {canManageProjects && (
+                        <div className="flex items-center gap-2 ml-4">
+                          <EditTaskDialog task={task} />
+                          <DeleteTaskDialog task={task} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

@@ -94,6 +94,9 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType
   });
 
+  // Determine dashboard type early (needed for data filtering) - must be before useMemo
+  const dashboardType = currentUser?.userType;
+
   // Fetch organization profile for organization users to get their selected SDGs
   const { data: orgProfile } = useQuery({
     queryKey: ["/api/profile/organization", userId],
@@ -107,9 +110,6 @@ export default function Dashboard() {
     },
     enabled: !!userId && currentUser?.userType === 'organization'
   });
-
-  // Determine dashboard type early (needed for data filtering)
-  const dashboardType = currentUser?.userType;
 
   // Filter data based on selected project
   // For volunteers, use dashboard data; for organizations, use separate queries

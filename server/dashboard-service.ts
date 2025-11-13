@@ -9,6 +9,45 @@ import { User, Opportunity } from "@shared/schema";
 const DEFAULT_MATCH_THRESHOLD = 40; // 40% match minimum
 
 /**
+ * Calculate organization impact score with normalized weighted metrics
+ * @param params - Monthly metrics and normalization baselines
+ * @returns Impact score (0-100)
+ */
+function calculateOrganizationImpactScore(params: {
+  hours: number;
+  beneficiaries: number;
+  completedTasks: number;
+  totalTasks: number;
+  volunteers: number;
+  sdgCount: number;
+  maxHours: number;
+  maxBeneficiaries: number;
+  maxVolunteers: number;
+  maxSDGs: number;
+}): number {
+  const {
+    hours, beneficiaries, completedTasks, totalTasks, volunteers, sdgCount,
+    maxHours, maxBeneficiaries, maxVolunteers, maxSDGs
+  } = params;
+
+  // Normalize each metric (0-100 scale) with fallbacks for zero denominators
+  const hoursScore = maxHours > 0 ? Math.min((hours / maxHours) * 100, 100) : 0;
+  const beneficiariesScore = maxBeneficiaries > 0 ? Math.min((beneficiaries / maxBeneficiaries) * 100, 100) : 0;
+  const completionsScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const engagementScore = maxVolunteers > 0 ? (volunteers / maxVolunteers) * 100 : 0;
+  const sdgScore = maxSDGs > 0 ? (sdgCount / maxSDGs) * 100 : 0;
+
+  // Weighted average (hours: 35%, beneficiaries: 25%, completions: 15%, engagement: 15%, SDG: 10%)
+  return Math.round(
+    hoursScore * 0.35 +
+    beneficiariesScore * 0.25 +
+    completionsScore * 0.15 +
+    engagementScore * 0.15 +
+    sdgScore * 0.10
+  );
+}
+
+/**
  * Get projects for a volunteer filtered by AI matching algorithm
  * Only returns projects above the match threshold
  */
@@ -313,6 +352,86 @@ export async function getDashboardDataForOrganization(userId: number) {
     const recentUnifiedActivities = unifiedActivities
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .slice(0, 20);
+
+    // Calculate monthly impact trend (7-month sliding window with two-pass normalization)
+    const now = new Date();
+    const months: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    }
+
+    // First pass: collect metrics for all months
+    const monthlyMetrics = months.map(monthKey => {
+      // Filter activities for this month
+      const monthActivities = organizationActivities.filter(a => {
+        const activityDate = new Date(a.date);
+        const activityMonthKey = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;
+        return activityMonthKey === monthKey;
+      });
+
+      // Filter impacts for this month
+      const monthImpacts = organizationImpacts.filter(i => {
+        const impactDate = new Date(i.date);
+        const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
+        return impactMonthKey === monthKey;
+      });
+
+      // Filter tasks for this month (by creation date)
+      const monthTasks = organizationTasks.filter(t => {
+        const taskDate = new Date(t.createdAt);
+        const taskMonthKey = `${taskDate.getFullYear()}-${String(taskDate.getMonth() + 1).padStart(2, '0')}`;
+        return taskMonthKey === monthKey;
+      });
+
+      // Calculate monthly aggregates
+      const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
+      const beneficiaries = monthImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+      const completedTasks = monthTasks.filter(t => t.status === 'Completed').length;
+      const totalTasks = monthTasks.length;
+      
+      // Count unique volunteers (filter out null userIds)
+      const volunteers = new Set(monthActivities.map(a => a.userId).filter((id): id is number => id !== null)).size;
+      
+      // Count unique SDGs from impacts
+      const sdgs = new Set<number>();
+      monthImpacts.forEach(i => {
+        if (i.sdgGoal) sdgs.add(i.sdgGoal);
+      });
+      
+      return {
+        month: monthKey,
+        hours,
+        beneficiaries,
+        completedTasks,
+        totalTasks,
+        volunteers,
+        sdgCount: sdgs.size,
+      };
+    });
+
+    // Second pass: compute max values across all months (for normalization)
+    const maxHours = Math.max(...monthlyMetrics.map(m => m.hours), 10); // Min 10 to avoid division by zero
+    const maxBeneficiaries = Math.max(...monthlyMetrics.map(m => m.beneficiaries), 5); // Min 5
+    const maxVolunteers = Math.max(...monthlyMetrics.map(m => m.volunteers), organizationVolunteers.length || 1);
+    const maxSDGs = Math.max(organizationPrimarySdgs.length, uniqueSDGs.size, 1); // Use larger of org SDGs or observed SDGs
+
+    // Third pass: calculate scores using normalized values
+    const monthlyImpactTrend = monthlyMetrics.map(metrics => ({
+      month: metrics.month,
+      score: calculateOrganizationImpactScore({
+        hours: metrics.hours,
+        beneficiaries: metrics.beneficiaries,
+        completedTasks: metrics.completedTasks,
+        totalTasks: metrics.totalTasks,
+        volunteers: metrics.volunteers,
+        sdgCount: metrics.sdgCount,
+        maxHours,
+        maxBeneficiaries,
+        maxVolunteers,
+        maxSDGs,
+      }),
+    }));
 
     return {
       summary: {

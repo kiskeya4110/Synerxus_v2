@@ -576,7 +576,7 @@ export default function Dashboard() {
           organizationSdgs={
             currentUser?.userType === 'organization' 
               ? dashboardData?.organizationPrimarySdgs 
-              : dashboardData?.volunteerProfile?.preferredSdgs
+              : undefined
           }
         />
       </div>

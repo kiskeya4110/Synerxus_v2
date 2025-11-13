@@ -10,26 +10,9 @@ import { Award, Target, MapPin, Heart, Building2, Users, Globe, Mail, Phone } fr
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
+import { SDGDetailDialog } from "@/components/sdg/sdg-detail-dialog";
+import { getSDGFullName } from "@shared/sdg-goals";
 
-const SDG_LABELS: Record<number, string> = {
-  1: "No Poverty",
-  2: "Zero Hunger",
-  3: "Good Health",
-  4: "Quality Education",
-  5: "Gender Equality",
-  6: "Clean Water",
-  7: "Clean Energy",
-  8: "Decent Work",
-  9: "Industry Innovation",
-  10: "Reduced Inequalities",
-  11: "Sustainable Cities",
-  12: "Responsible Consumption",
-  13: "Climate Action",
-  14: "Life Below Water",
-  15: "Life On Land",
-  16: "Peace and Justice",
-  17: "Partnerships"
-};
 
 interface ProfileOverviewProps {
   userId: string | null;
@@ -193,7 +176,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                     </div>
                   )}
                   <span className="text-xs sm:text-sm text-center font-medium leading-tight line-clamp-2">
-                    SDG {goal}: {SDG_LABELS[goal]}
+                    SDG {goal}: {getSDGFullName(goal)}
                   </span>
                 </div>
               ))}
@@ -262,7 +245,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
                             </div>
                           )}
                           <span className="text-[10px] sm:text-xs text-center line-clamp-2 font-medium leading-tight">
-                            {SDG_LABELS[goal]}
+                            {getSDGFullName(goal)}
                           </span>
                         </div>
                       </TooltipTrigger>
@@ -307,51 +290,12 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
       </DialogContent>
     </Dialog>
 
-    {/* Individual SDG Dialog */}
-    <Dialog open={showSDGDialog} onOpenChange={setShowSDGDialog}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>SDG {selectedSDG}: {selectedSDG ? SDG_LABELS[selectedSDG] : ''}</DialogTitle>
-          <DialogDescription>
-            Sustainable Development Goal details
-          </DialogDescription>
-        </DialogHeader>
-        <div className="mt-4 space-y-4">
-          {selectedSDG && (
-            <>
-              <div className="flex justify-center">
-                {UN_SDG_ICONS[selectedSDG] ? (
-                  <img 
-                    src={UN_SDG_ICONS[selectedSDG]} 
-                    alt={`SDG ${selectedSDG}`}
-                    className="w-32 h-32 rounded-lg shadow-md"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-4xl shadow-md">
-                    {selectedSDG}
-                  </div>
-                )}
-              </div>
-              <div className="text-center space-y-2">
-                <h3 className="text-xl font-bold">
-                  Goal {selectedSDG}: {SDG_LABELS[selectedSDG]}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {isVolunteer 
-                    ? 'You have selected this as one of your focus areas for volunteer work.' 
-                    : 'Your organization has committed to contributing to this global goal.'}
-                </p>
-              </div>
-              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-                <p className="text-sm">
-                  <strong>About this goal:</strong> This is one of the 17 United Nations Sustainable Development Goals designed to address global challenges and create a better future for all by 2030.
-                </p>
-              </div>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+    {/* Individual SDG Dialog - Reusable Component */}
+    <SDGDetailDialog 
+      sdgId={selectedSDG}
+      open={showSDGDialog}
+      onOpenChange={setShowSDGDialog}
+    />
     </>
   );
 }

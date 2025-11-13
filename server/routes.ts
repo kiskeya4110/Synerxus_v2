@@ -2286,6 +2286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...dashboardData.summary,
           projectsWithVolunteers: dashboardData.projectsWithVolunteers,
           volunteerSummaries: dashboardData.volunteerSummaries,
+          activities: dashboardData.activities,
+          impacts: dashboardData.impacts,
+          monthlyImpactTrend: dashboardData.monthlyImpactTrend,
         });
       } else if (user.userType === 'volunteer') {
         const dashboardData = await getDashboardDataForVolunteer(userIdNum);

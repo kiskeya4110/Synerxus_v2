@@ -12,7 +12,7 @@ interface ProjectCardProps {
   projectId?: string;
   title: string;
   description: string;
-  status: "Planning" | "In Progress" | "Completed" | "On Hold";
+  status: "Planning" | "In Progress" | "Completed" | "On Hold" | string;
   progress: number;
   timeRemaining: string;
   volunteers: {
@@ -20,6 +20,28 @@ interface ProjectCardProps {
     name: string;
     avatar?: string;
   }[];
+}
+
+// Helper function to normalize and capitalize project status
+function normalizeStatus(status: string): string {
+  if (!status) return "Planning";
+  
+  const normalized = status.toLowerCase().trim();
+  
+  if (normalized === "in progress" || normalized === "active" || normalized === "inprogress") {
+    return "In Progress";
+  } else if (normalized === "completed" || normalized === "done") {
+    return "Completed";
+  } else if (normalized === "planning" || normalized === "planned") {
+    return "Planning";
+  } else if (normalized === "on hold" || normalized === "onhold" || normalized === "paused") {
+    return "On Hold";
+  }
+  
+  // Capitalize first letter of each word as fallback
+  return status.split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+  ).join(' ');
 }
 
 export default function ProjectCard({
@@ -34,8 +56,10 @@ export default function ProjectCard({
 }: ProjectCardProps) {
   const [showDialog, setShowDialog] = useState(false);
   const actualProjectId = projectId || id;
+  const normalizedStatus = normalizeStatus(status);
+  
   const getStatusBadgeClasses = () => {
-    switch (status) {
+    switch (normalizedStatus) {
       case "Planning":
         return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400";
       case "In Progress":
@@ -57,7 +81,7 @@ export default function ProjectCard({
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{description}</p>
         </div>
         <Badge variant="outline" className={getStatusBadgeClasses()}>
-          {status}
+          {normalizedStatus}
         </Badge>
       </div>
       
@@ -131,7 +155,7 @@ export default function ProjectCard({
             {/* Status and Progress */}
             <div className="flex items-center justify-between">
               <Badge variant="outline" className={getStatusBadgeClasses()}>
-                {status}
+                {normalizedStatus}
               </Badge>
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <CalendarIcon className="h-4 w-4" />

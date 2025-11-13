@@ -14,6 +14,7 @@ import OpportunitiesTab from "@/components/dashboard/opportunities-tab";
 import ProfileOverview from "@/components/dashboard/profile-overview";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import { VolunteerInsightsSection } from "@/components/dashboard/volunteer-insights";
+import ImpactStorytelling from "@/components/impact/impact-storytelling";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -242,6 +243,35 @@ export default function Dashboard() {
       }));
   }, [calendarEvents]);
 
+  // Transform project impact data for ImpactStorytelling component
+  const projectImpactData = useMemo(() => {
+    return filteredData.projects.map((project: any) => {
+      const impacts = filteredData.impacts.filter((impact: any) => impact.projectId === project.id);
+      
+      const metrics = impacts.map((impact: any) => {
+        const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
+        const afterValue = Number(impact.value ?? 0);
+        const beforeValue = Number(impact.baselineValue ?? Math.floor(afterValue * 0.3));
+        
+        return {
+          label: metric?.name || "Impact Metric",
+          before: beforeValue,
+          after: afterValue,
+          unit: metric?.unit || "units"
+        };
+      });
+
+      return {
+        id: project.id.toString(),
+        name: project.name,
+        description: project.description || "",
+        metrics,
+        location: project.location || "Unknown Location",
+        date: project.startDate || project.createdAt
+      };
+    }).filter((p: any) => p.metrics.length > 0);
+  }, [filteredData.projects, filteredData.impacts, impactMetrics]);
+
   // Show loading state while fetching user
   if (isLoadingUser) {
     return (
@@ -314,12 +344,53 @@ export default function Dashboard() {
     switch (title) {
       case "Hours Contributed":
       case "Total Hours":
+        // Group hours by project with individual activities
+        const hoursByProject = new Map<string, { projectName: string; totalHours: number; activities: any[] }>();
+        
+        filteredData.activities.forEach((a: any) => {
+          // Use a string key to handle both valid IDs and undefined
+          const projectKey = a.projectId !== undefined && a.projectId !== null 
+            ? `project_${a.projectId}` 
+            : 'no_project';
+          
+          // Look up project name from filteredData.projects first, then fall back to global projects
+          let projectName = "Unknown Project";
+          if (a.projectId !== undefined && a.projectId !== null) {
+            const project = filteredData.projects.find((p: any) => p.id === a.projectId) ||
+                           projects.find((p: any) => p.id === a.projectId);
+            projectName = project?.name || "Unknown Project";
+          } else {
+            projectName = "Unassigned Activities";
+          }
+          
+          if (!hoursByProject.has(projectKey)) {
+            hoursByProject.set(projectKey, {
+              projectName,
+              totalHours: 0,
+              activities: []
+            });
+          }
+          
+          const projectData = hoursByProject.get(projectKey)!;
+          projectData.totalHours += Number(a.hours) || 0;
+          projectData.activities.push({
+            date: a.date,
+            hours: Number(a.hours) || 0,
+            description: a.description || a.activityType || 'Activity'
+          });
+        });
+        
         detailData = {
-          title: dashboardType === "volunteer" ? "Volunteer Hours Breakdown" : "Total Volunteer Hours",
-          items: filteredData.activities.map((a: any) => ({
-            label: formatDate(new Date(a.date)),
-            value: `${a.hours} hours`,
-            project: projects.find((p: any) => p.id === a.projectId)?.name,
+          title: dashboardType === "volunteer" ? "Volunteer Hours Breakdown" : "Total Volunteer Hours by Project",
+          items: Array.from(hoursByProject.values()).map((data) => ({
+            label: data.projectName,
+            value: `${parseFloat(data.totalHours.toFixed(2))} hours total`,
+            isProjectGroup: true,
+            activities: data.activities.map((act: any) => ({
+              date: formatDate(new Date(act.date)),
+              hours: `${parseFloat(act.hours.toFixed(2))} hours`,
+              description: act.description
+            }))
           })),
         };
         break;
@@ -652,6 +723,19 @@ export default function Dashboard() {
         />
       )}
 
+      {/* Impact Reports & Stories - Only for organizations */}
+      {dashboardType === 'organization' && projectImpactData.length > 0 && (
+        <div className="mt-6" data-testid="section-impact-stories">
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+            Impact Reports & Stories
+          </h2>
+          <ImpactStorytelling 
+            projectImpacts={projectImpactData}
+            savedStories={[]}
+          />
+        </div>
+      )}
+
       {/* Contact Volunteer Modal */}
       {currentUser && (
         <ContactVolunteerModal
@@ -730,6 +814,56 @@ export default function Dashboard() {
                 );
               }
               
+              // Project Group Item with Activity Breakdown (for Total Hours)
+              if (item.isProjectGroup && item.activities) {
+                return (
+                  <Collapsible key={index}>
+                    <div className="border rounded-lg">
+                      <CollapsibleTrigger className="w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" data-testid={`kpi-item-${index}`}>
+                        <div className="flex justify-between items-center gap-4">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                              <Clock className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                            </div>
+                            <div className="flex-1 text-left">
+                              <h4 className="font-medium">{item.label}</h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {item.activities.length} activities • Click to view details
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+                              {item.value}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-gray-500 transition-transform ui-open:rotate-180" />
+                          </div>
+                        </div>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <div className="border-t p-4 space-y-2 bg-gray-50 dark:bg-gray-900/50">
+                          {item.activities.map((activity: any, aIndex: number) => (
+                            <div key={aIndex} className="p-3 bg-white dark:bg-gray-800 rounded-md border" data-testid={`activity-${index}-${aIndex}`}>
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium">{activity.description}</p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {activity.date}
+                                  </p>
+                                </div>
+                                <span className="text-sm font-semibold text-primary-600 dark:text-primary-400 ml-2">
+                                  {activity.hours}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </div>
+                  </Collapsible>
+                );
+              }
+
               // SDG Item with Collapsible Projects List
               if (isSDGItem) {
                 return (

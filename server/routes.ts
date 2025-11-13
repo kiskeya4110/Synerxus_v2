@@ -29,8 +29,17 @@ import { updateVolunteerProfileWithUser } from "./profile-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
-// Helper function to handle validation errors
+// Helper function to handle validation and authorization errors
 function handleValidationError(err: unknown) {
+  // Handle authorization errors (plain objects with status/message)
+  if (err && typeof err === 'object' && 'status' in err && 'message' in err) {
+    return {
+      status: (err as any).status,
+      message: (err as any).message
+    };
+  }
+  
+  // Handle Zod validation errors
   if (err instanceof ZodError) {
     const validationError = fromZodError(err);
     return {
@@ -38,10 +47,50 @@ function handleValidationError(err: unknown) {
       message: validationError.message
     };
   }
+  
+  // Handle unknown errors
   return {
     status: 500,
     message: err instanceof Error ? err.message : "Unknown error occurred"
   };
+}
+
+// Authorization helper to extract userId from request
+function extractUserId(req: any): number | null {
+  const userIdStr = req.body.userId || req.query.userId || req.headers['x-user-id'];
+  if (!userIdStr) return null;
+  const userId = parseInt(userIdStr as string);
+  return isNaN(userId) ? null : userId;
+}
+
+// Authorization helper to require organization user
+async function requireOrgUser(req: any) {
+  const userId = extractUserId(req);
+  if (!userId) {
+    throw { status: 401, message: "Authentication required" };
+  }
+  
+  const user = await storage.getUser(userId);
+  if (!user) {
+    throw { status: 401, message: "Authentication required" };
+  }
+  
+  if (user.userType !== 'organization') {
+    throw { status: 403, message: "Organization authorization required" };
+  }
+  
+  if (!user.organizationId) {
+    throw { status: 403, message: "Organization authorization required" };
+  }
+  
+  return user;
+}
+
+// Authorization helper to verify resource ownership
+function verifyOwnership(user: any, resource: any) {
+  if (resource.organizationId !== user.organizationId) {
+    throw { status: 403, message: "Resource not owned by your organization" };
+  }
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -341,7 +390,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/projects", async (req, res) => {
     try {
+      // Authorization: require organization user
+      const user = await requireOrgUser(req);
+      
       const projectData = insertProjectSchema.parse(req.body);
+      
+      // Verify ownership: payload organizationId must match user's organizationId
+      if (projectData.organizationId !== user.organizationId) {
+        return res.status(403).json({ message: "Resource not owned by your organization" });
+      }
+      
       const project = await storage.createProject(projectData);
       
       broadcastUpdate("project_created", project);
@@ -354,7 +412,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/projects/:id", async (req, res) => {
     try {
+      // Authorization: require organization user
+      const user = await requireOrgUser(req);
+      
       const projectId = parseInt(req.params.id);
+      
+      // Verify ownership: fetch existing project
+      const existingProject = await storage.getProject(projectId);
+      if (!existingProject) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+      verifyOwnership(user, existingProject);
+      
       const projectData = insertProjectSchema.partial().parse(req.body);
       
       const updatedProject = await storage.updateProject(projectId, projectData);
@@ -409,7 +478,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/tasks", async (req, res) => {
     try {
+      // Authorization: require organization user
+      const user = await requireOrgUser(req);
+      
       const taskData = insertTaskSchema.parse(req.body);
+      
+      // Verify ownership through parent project
+      if (taskData.projectId) {
+        const project = await storage.getProject(taskData.projectId);
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        verifyOwnership(user, project);
+      }
+      
       const task = await storage.createTask(taskData);
       
       // Recalculate project completion percentage when task is created
@@ -457,7 +539,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/tasks/:id", async (req, res) => {
     try {
+      // Authorization: require organization user
+      const user = await requireOrgUser(req);
+      
       const taskId = parseInt(req.params.id);
+      
+      // Verify ownership through parent project
+      const existingTask = await storage.getTask(taskId);
+      if (!existingTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+      if (existingTask.projectId) {
+        const project = await storage.getProject(existingTask.projectId);
+        if (project) {
+          verifyOwnership(user, project);
+        }
+      }
+      
       const taskData = insertTaskSchema.partial().parse(req.body);
       
       const updatedTask = await storage.updateTask(taskId, taskData);
@@ -1174,7 +1272,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/opportunities", async (req, res) => {
     try {
+      // Authorization: require organization user
+      const user = await requireOrgUser(req);
+      
       const opportunityData = insertOpportunitySchema.parse(req.body);
+      
+      // Verify ownership: payload organizationId must match user's organizationId
+      if (opportunityData.organizationId !== user.organizationId) {
+        return res.status(403).json({ message: "Resource not owned by your organization" });
+      }
+      
       const opportunity = await storage.createOpportunity(opportunityData);
       
       broadcastUpdate("opportunity_created", opportunity);
@@ -1187,7 +1294,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/opportunities/:id", async (req, res) => {
     try {
+      // Authorization: require organization user
+      const user = await requireOrgUser(req);
+      
       const opportunityId = parseInt(req.params.id);
+      
+      // Verify ownership: fetch existing opportunity
+      const existingOpportunity = await storage.getOpportunity(opportunityId);
+      if (!existingOpportunity) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+      verifyOwnership(user, existingOpportunity);
+      
       const opportunityData = insertOpportunitySchema.partial().parse(req.body);
       
       const updatedOpportunity = await storage.updateOpportunity(opportunityId, opportunityData);

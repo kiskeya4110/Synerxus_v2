@@ -148,18 +148,8 @@ export default function ImpactChart({ activities = [], projectImpacts = [], mont
                 labels: {
                   color: theme === "dark" ? "#f3f4f6" : "#1f2937",
                   usePointStyle: false,
-                  generateLabels: function(chart: any) {
-                    const datasets = chart.data.datasets;
-                    return datasets.map((dataset: any, i: number) => ({
-                      text: dataset.label,
-                      fillStyle: 'rgba(0, 0, 0, 0)', // Transparent fill
-                      strokeStyle: dataset.borderColor,
-                      lineWidth: 3,
-                      lineDash: dataset.borderDash || [],
-                      hidden: !chart.isDatasetVisible(i),
-                      datasetIndex: i
-                    }));
-                  }
+                  boxWidth: 40,
+                  padding: 15
                 }
               },
               tooltip: {

@@ -393,10 +393,13 @@ export async function getDashboardDataForOrganization(userId: number) {
       // Count unique volunteers (filter out null userIds)
       const volunteers = new Set(monthActivities.map(a => a.userId).filter((id): id is number => id !== null)).size;
       
-      // Count unique SDGs from impacts
+      // Count unique SDGs from projects with activities this month
+      const monthProjectIds = new Set(monthActivities.map(a => a.projectId).filter((id): id is number => id !== null));
       const sdgs = new Set<number>();
-      monthImpacts.forEach(i => {
-        if (i.sdgGoal) sdgs.add(i.sdgGoal);
+      organizationProjects.forEach(p => {
+        if (monthProjectIds.has(p.id) && p.sdgGoals) {
+          p.sdgGoals.forEach(sdg => sdgs.add(sdg));
+        }
       });
       
       return {
@@ -454,6 +457,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       volunteerSummaries, // Enriched volunteer data with summaries
       applications: organizationApplications,
       projectAssignments: organizationAssignments,
+      monthlyImpactTrend, // Algorithm-evaluated monthly impact trend
     };
   } catch (error) {
     console.error("Error getting dashboard data for organization:", error);

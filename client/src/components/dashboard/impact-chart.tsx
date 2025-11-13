@@ -9,6 +9,12 @@ export interface ImpactChartProps {
   monthlyImpactTrend?: Array<{ month: string; score: number }>;
 }
 
+// Numeric coercion helper to safely convert values to numbers
+function coerceNumber(value: any, fallback: number = 0): number {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
 export default function ImpactChart({ activities = [], projectImpacts = [], monthlyImpactTrend = [] }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
@@ -23,13 +29,13 @@ export default function ImpactChart({ activities = [], projectImpacts = [], mont
     activities.forEach((activity: any) => {
       const date = new Date(activity.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      monthlyHours[monthKey] = (monthlyHours[monthKey] || 0) + (activity.hours || 0);
+      monthlyHours[monthKey] = (monthlyHours[monthKey] || 0) + coerceNumber(activity.hours);
     });
 
     projectImpacts.forEach((impact: any) => {
       const date = new Date(impact.date);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      monthlyImpact[monthKey] = (monthlyImpact[monthKey] || 0) + (impact.value || 0);
+      monthlyImpact[monthKey] = (monthlyImpact[monthKey] || 0) + coerceNumber(impact.value);
     });
 
     // Get last 7 months
@@ -140,7 +146,20 @@ export default function ImpactChart({ activities = [], projectImpacts = [], mont
               legend: {
                 position: "top",
                 labels: {
-                  color: theme === "dark" ? "#f3f4f6" : "#1f2937"
+                  color: theme === "dark" ? "#f3f4f6" : "#1f2937",
+                  usePointStyle: false,
+                  generateLabels: function(chart: any) {
+                    const datasets = chart.data.datasets;
+                    return datasets.map((dataset: any, i: number) => ({
+                      text: dataset.label,
+                      fillStyle: 'rgba(0, 0, 0, 0)', // Transparent fill
+                      strokeStyle: dataset.borderColor,
+                      lineWidth: 3,
+                      lineDash: dataset.borderDash || [],
+                      hidden: !chart.isDatasetVisible(i),
+                      datasetIndex: i
+                    }));
+                  }
                 }
               },
               tooltip: {

@@ -1289,6 +1289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/opportunities/discover", async (req, res) => {
     try {
       const userIdParam = req.query.userId as string;
+      const thresholdParam = req.query.threshold as string;
       
       if (!userIdParam) {
         return res.status(400).json({ message: "userId parameter is required" });
@@ -1299,13 +1300,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "userId must be a valid number" });
       }
       
+      // Parse and validate threshold parameter (default: 50, range: 0-100)
+      let matchThreshold = 50; // Default to 50% for quality SDG-aligned matches
+      if (thresholdParam) {
+        const parsedThreshold = parseInt(thresholdParam);
+        if (!isNaN(parsedThreshold) && parsedThreshold >= 0 && parsedThreshold <= 100) {
+          matchThreshold = parsedThreshold;
+        }
+      }
+      
       const { getEnrichedOpportunities } = await import("./opportunity-enrichment-service");
       
       // Get enriched opportunities with match scores and organization data
+      // Default 50% threshold ensures volunteers see well-matched opportunities
+      // with strong SDG alignment and other matching criteria
       const enrichedOpportunities = await getEnrichedOpportunities(storage, {
         includeMatch: true,
         volunteerId: userId,
-        matchThreshold: 0, // Show all opportunities, even low matches
+        matchThreshold,
       });
       
       res.json(enrichedOpportunities);

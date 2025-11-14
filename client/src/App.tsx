@@ -19,6 +19,7 @@ import MobileDataCollection from "@/pages/mobile-data-collection";
 import ImpactStorytelling from "@/pages/impact-storytelling";
 import FieldSpecificMetrics from "@/pages/field-specific-metrics";
 import Opportunities from "@/pages/opportunities";
+import OpportunityDetail from "@/pages/opportunity-detail";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
 import MyTasks from "@/pages/my-tasks";
 import Profile from "@/pages/profile";
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
       <Route path="/impact-storytelling" component={ImpactStorytelling} />
       <Route path="/field-specific-metrics" component={FieldSpecificMetrics} />
+      <Route path="/opportunities/:id" component={OpportunityDetail} />
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route path="/post-core-opportunity" component={PostCoreOpportunity} />

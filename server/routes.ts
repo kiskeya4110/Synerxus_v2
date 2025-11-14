@@ -1738,6 +1738,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const vid = Number(volunteerId);
+      
+      // Check if volunteerId is a valid number
+      if (isNaN(vid)) {
+        return res.status(400).json({ message: "volunteerId must be a valid number" });
+      }
+      
       const [saved, rejected, applications] = await Promise.all([
         storage.listSavedOpportunitiesByVolunteer(vid),
         storage.listRejectedOpportunitiesByVolunteer(vid),

@@ -51,10 +51,15 @@ export default function DiscoverOpportunities() {
     queryFn: async () => {
       if (!userId) throw new Error("User ID required");
       const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch opportunity status");
+      if (!response.ok) {
+        // Return empty status on failure to prevent blocking opportunity display
+        console.warn("Failed to fetch opportunity status, continuing without status badges");
+        return { savedIds: [], rejectedIds: [], appliedIds: [] };
+      }
       return response.json();
     },
     enabled: !!userId,
+    retry: 1, // Only retry once to avoid blocking UI
   });
 
   // Extract unique categories and locations from actual opportunities data

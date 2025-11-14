@@ -9,6 +9,52 @@ import { User, Opportunity } from "@shared/schema";
 const DEFAULT_MATCH_THRESHOLD = 40; // 40% match minimum
 
 /**
+ * Get visible project IDs for a volunteer based on assignments and AI matches
+ * Enforces status-aware visibility rules:
+ * - Include projects with active, pending, completed, or on-hold assignments
+ * - Exclude projects with declined assignments
+ * - Optionally include AI-matched opportunities above threshold
+ */
+export async function getVisibleProjectIdsForVolunteer(
+  volunteerId: number, 
+  includeAIMatches: boolean = false,
+  matchThreshold: number = DEFAULT_MATCH_THRESHOLD
+): Promise<Set<number>> {
+  const visibleProjectIds = new Set<number>();
+
+  // Get all project assignments for this volunteer
+  const allAssignments = await storage.listProjectAssignments();
+  const volunteerAssignments = allAssignments.filter(
+    pa => pa.volunteerId === volunteerId && 
+    // Include: pending, active, completed, on-hold
+    // Exclude: declined
+    pa.status !== 'declined'
+  );
+
+  // Add project IDs from valid assignments
+  volunteerAssignments.forEach(assignment => {
+    visibleProjectIds.add(assignment.projectId);
+  });
+
+  // Optionally include AI-matched opportunities with high scores
+  if (includeAIMatches) {
+    try {
+      const matchedOpportunities = await getProjectsForVolunteer(volunteerId, matchThreshold);
+      matchedOpportunities.forEach((opp: any) => {
+        if (opp.projectId) {
+          visibleProjectIds.add(opp.projectId);
+        }
+      });
+    } catch (error) {
+      console.error("Error getting AI-matched projects:", error);
+      // Continue without AI matches if there's an error
+    }
+  }
+
+  return visibleProjectIds;
+}
+
+/**
  * Calculate organization impact score with normalized weighted metrics
  * @param params - Monthly metrics and normalization baselines
  * @returns Impact score (0-100)
@@ -489,20 +535,25 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const allApplications = await storage.listApplications();
     const allUsers = await storage.listUsers();
 
-    // Get projects the volunteer is assigned to
-    const volunteerAssignments = allProjectAssignments.filter(pa => pa.volunteerId === userId);
-    const assignedProjectIds = new Set(volunteerAssignments.map(pa => pa.projectId));
-    const assignedProjects = allProjects.filter(p => assignedProjectIds.has(p.id));
+    // Get visible project IDs using status-aware filtering
+    // Excludes declined assignments, includes pending/active/completed/on-hold
+    const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userId, false, matchThreshold);
+    const assignedProjects = allProjects.filter(p => visibleProjectIds.has(p.id));
+    
+    // Get volunteer's project assignments (excluding declined)
+    const volunteerAssignments = allProjectAssignments.filter(
+      pa => pa.volunteerId === userId && pa.status !== 'declined'
+    );
 
     // Filter activities to only this volunteer's
     const volunteerActivities = allActivities.filter(a => a.userId === userId);
     
-    // Filter impacts to only assigned projects
-    const volunteerImpacts = allImpacts.filter(i => i.projectId && assignedProjectIds.has(i.projectId));
+    // Filter impacts to only visible projects
+    const volunteerImpacts = allImpacts.filter(i => i.projectId && visibleProjectIds.has(i.projectId));
 
-    // Filter tasks to assigned projects or tasks assigned to this volunteer
+    // Filter tasks to visible projects or tasks directly assigned to this volunteer
     const volunteerTasks = allTasks.filter(t =>
-      (t.projectId && assignedProjectIds.has(t.projectId)) || t.assigneeId === userId
+      (t.projectId && visibleProjectIds.has(t.projectId)) || t.assigneeId === userId
     );
 
     // Get AI-matched opportunities above threshold

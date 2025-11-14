@@ -23,7 +23,7 @@ import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
 import { calculateMatchScore, findTopMatches, findTopVolunteers } from "./matching-algorithm";
-import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization } from "./dashboard-service";
+import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization, getVisibleProjectIdsForVolunteer } from "./dashboard-service";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import { updateVolunteerProfileWithUser } from "./profile-service";
 import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange } from "./notification-service";
@@ -328,10 +328,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { organizationId, userId } = req.query;
       
-      // Require either organizationId or userId for security
+      // Require either organizationId or userId for data partitioning and security
       if (!organizationId && !userId) {
-        return res.status(400).json({ 
-          message: "Either organizationId or userId must be provided for data security" 
+        return res.status(401).json({ 
+          message: "Authentication required: userId must be provided" 
         });
       }
 
@@ -352,13 +352,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Organization user - return only their organization's projects
           projects = await storage.listProjectsByOrganization(user.organizationId);
         } else if (user.userType === 'volunteer') {
-          // Volunteer user - return only assigned projects
+          // Volunteer user - return only visible projects (excludes declined assignments)
+          const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
           const allProjects = await storage.listProjects();
-          const assignments = await storage.listProjectAssignments();
-          const volunteerProjectIds = assignments
-            .filter(pa => pa.volunteerId === userIdNum)
-            .map(pa => pa.projectId);
-          projects = allProjects.filter(p => volunteerProjectIds.includes(p.id));
+          projects = allProjects.filter(p => visibleProjectIds.has(p.id));
         } else {
           return res.status(400).json({ message: "Invalid user type" });
         }
@@ -376,10 +373,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/projects/:id", async (req, res) => {
     try {
       const projectId = parseInt(req.params.id);
+      const { userId } = req.query;
+      
       const project = await storage.getProject(projectId);
       
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
+      }
+      
+      // Verify access permissions when userId is provided
+      // TODO: Make userId required in future auth refactor for proper data partitioning
+      if (userId) {
+        const userIdNum = parseInt(userId as string);
+        const user = await storage.getUser(userIdNum);
+        
+        if (user) {
+          if (user.userType === 'volunteer') {
+            // Check if volunteer has access to this project
+            const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
+            if (!visibleProjectIds.has(projectId)) {
+              return res.status(404).json({ message: "Project not found" });
+            }
+          } else if (user.userType === 'organization' && user.organizationId) {
+            // Check if project belongs to this organization
+            if (project.organizationId !== user.organizationId) {
+              return res.status(404).json({ message: "Project not found" });
+            }
+          }
+        }
       }
       
       res.json(project);
@@ -455,14 +476,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Task Routes ===
   app.get("/api/tasks", async (req, res) => {
     try {
-      const { projectId, assigneeId } = req.query;
+      const { projectId, assigneeId, userId } = req.query;
       
       let tasks;
       if (projectId) {
         tasks = await storage.listTasksByProject(parseInt(projectId as string));
       } else if (assigneeId) {
         tasks = await storage.listTasksByAssignee(parseInt(assigneeId as string));
+      } else if (userId) {
+        // Filter tasks for specific user based on their role
+        const userIdNum = parseInt(userId as string);
+        const user = await storage.getUser(userIdNum);
+        
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        if (user.userType === 'organization' && user.organizationId) {
+          // Organization user - return tasks from their projects
+          const orgProjects = await storage.listProjectsByOrganization(user.organizationId);
+          const orgProjectIds = new Set(orgProjects.map(p => p.id));
+          const allTasks = await storage.listTasks();
+          tasks = allTasks.filter(t => t.projectId && orgProjectIds.has(t.projectId));
+        } else if (user.userType === 'volunteer') {
+          // Volunteer user - return tasks from visible projects or directly assigned
+          const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
+          const allTasks = await storage.listTasks();
+          tasks = allTasks.filter(t =>
+            (t.projectId && visibleProjectIds.has(t.projectId)) || t.assigneeId === userIdNum
+          );
+        } else {
+          return res.status(400).json({ message: "Invalid user type" });
+        }
       } else {
+        // For backward compatibility, allow listing all tasks without userId
+        // TODO: Require userId for proper data partitioning in future auth refactor
         tasks = await storage.listTasks();
       }
       
@@ -476,10 +524,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tasks/:id", async (req, res) => {
     try {
       const taskId = parseInt(req.params.id);
+      const { userId } = req.query;
+      
       const task = await storage.getTask(taskId);
       
       if (!task) {
         return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Verify access permissions when userId is provided
+      // TODO: Make userId required in future auth refactor for proper data partitioning
+      if (userId) {
+        const userIdNum = parseInt(userId as string);
+        const user = await storage.getUser(userIdNum);
+        
+        if (user) {
+          if (user.userType === 'volunteer') {
+            // Check if volunteer has access to this task
+            const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
+            const hasProjectAccess = task.projectId && visibleProjectIds.has(task.projectId);
+            const isDirectlyAssigned = task.assigneeId === userIdNum;
+            
+            if (!hasProjectAccess && !isDirectlyAssigned) {
+              return res.status(404).json({ message: "Task not found" });
+            }
+          } else if (user.userType === 'organization' && user.organizationId) {
+            // Check if task belongs to this organization's projects
+            if (task.projectId) {
+              const project = await storage.getProject(task.projectId);
+              if (!project || project.organizationId !== user.organizationId) {
+                return res.status(404).json({ message: "Task not found" });
+              }
+            }
+          }
+        }
       }
       
       res.json(task);

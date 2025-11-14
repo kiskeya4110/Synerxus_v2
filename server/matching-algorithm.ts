@@ -12,6 +12,43 @@ interface MatchResult {
 }
 
 /**
+ * Normalize and tokenize skills for better matching
+ */
+function normalizeSkills(skills: string[] | null | undefined): string[] {
+  if (!skills || !Array.isArray(skills) || skills.length === 0) return [];
+  return skills
+    .filter(s => s && typeof s === 'string')
+    .map(s => s.toLowerCase().trim())
+    .filter(s => s.length > 0);
+}
+
+/**
+ * Normalize location string for better geographic matching
+ */
+function normalizeLocation(location: string | null | undefined): { 
+  full: string; 
+  city: string; 
+  country: string; 
+  parts: string[] 
+} {
+  if (!location || typeof location !== 'string') {
+    return { full: '', city: '', country: '', parts: [] };
+  }
+  
+  const normalized = location.toLowerCase().trim();
+  const parts = normalized.split(',').map(p => p.trim()).filter(p => p.length > 0);
+  
+  // Only treat first part as city if we have at least 2 components
+  // Otherwise, treat single value as country, not city
+  return {
+    full: normalized,
+    city: parts.length >= 2 ? parts[0] : '',
+    country: parts.length >= 2 ? parts[parts.length - 1] : (parts[0] || ''),
+    parts,
+  };
+}
+
+/**
  * AI-powered matching algorithm that calculates compatibility between
  * volunteers and opportunities using weighted scoring across multiple dimensions
  */
@@ -28,100 +65,152 @@ export function calculateMatchScore(
   const reasons: string[] = [];
 
   // 1. Skills Matching (35% weight) - Most important factor
-  if (volunteer.skills && volunteer.skills.length > 0 && opportunity.requiredSkills && opportunity.requiredSkills.length > 0) {
-    const volunteerSkills = volunteer.skills.map(s => s.toLowerCase().trim());
-    const requiredSkills = opportunity.requiredSkills.map(s => s.toLowerCase().trim());
-    
-    const matchingSkills = volunteerSkills.filter(skill =>
+  const volunteerSkills = normalizeSkills(volunteer.skills);
+  const requiredSkills = normalizeSkills(opportunity.requiredSkills);
+  const optionalSkills = normalizeSkills(opportunity.optionalSkills);
+  
+  if (volunteerSkills.length > 0 && requiredSkills.length > 0) {
+    // Match required skills
+    const matchingRequiredSkills = volunteerSkills.filter(skill =>
       requiredSkills.some(req => 
         req.includes(skill) || skill.includes(req) || skill === req
       )
     );
     
-    breakdown.skillMatch = Math.min(
-      (matchingSkills.length / requiredSkills.length) * 100,
-      100
+    // Match optional skills for bonus points
+    const matchingOptionalSkills = volunteerSkills.filter(skill =>
+      optionalSkills.some(opt => 
+        opt.includes(skill) || skill.includes(opt) || skill === opt
+      )
     );
     
-    if (matchingSkills.length > 0) {
-      reasons.push(`${matchingSkills.length} matching skill${matchingSkills.length > 1 ? 's' : ''}: ${matchingSkills.slice(0, 3).join(', ')}`);
+    // Calculate score: required skills are primary, optional skills add up to 20% bonus
+    const requiredScore = (matchingRequiredSkills.length / requiredSkills.length) * 100;
+    const optionalBonus = optionalSkills.length > 0 
+      ? Math.min((matchingOptionalSkills.length / optionalSkills.length) * 20, 20)
+      : 0;
+    
+    breakdown.skillMatch = Math.min(requiredScore + optionalBonus, 100);
+    
+    if (matchingRequiredSkills.length > 0) {
+      reasons.push(`${matchingRequiredSkills.length} matching skill${matchingRequiredSkills.length > 1 ? 's' : ''}: ${matchingRequiredSkills.slice(0, 3).join(', ')}`);
     }
-  } else if (!opportunity.requiredSkills || opportunity.requiredSkills.length === 0) {
+    if (matchingOptionalSkills.length > 0) {
+      reasons.push(`+${matchingOptionalSkills.length} bonus skill${matchingOptionalSkills.length > 1 ? 's' : ''}`);
+    }
+  } else if (requiredSkills.length === 0) {
     // No skills required - give moderate baseline score
     breakdown.skillMatch = 50;
     reasons.push("No specific skills required");
-  } else if (!volunteer.skills || volunteer.skills.length === 0) {
-    // Volunteer has no skills listed but opportunity requires them
-    breakdown.skillMatch = 0;
+  } else if (volunteerSkills.length === 0) {
+    // Volunteer has no skills listed but opportunity requires them - encourage profile completion
+    breakdown.skillMatch = 20; // Give some baseline rather than 0 to encourage exploration
+    reasons.push("Complete your skills profile for better matches");
   }
 
   // 2. Location Matching (25% weight)
-  if (opportunity.isRemote) {
+  if (opportunity.isRemote || opportunity.engagementType === 'remote') {
     breakdown.locationMatch = 100;
     reasons.push("Remote opportunity - location flexible");
-  } else if (volunteer.profile?.location && opportunity.location) {
-    const volLocation = volunteer.profile.location.toLowerCase().trim();
-    const oppLocation = opportunity.location.toLowerCase().trim();
-    
-    if (volLocation.includes(oppLocation) || oppLocation.includes(volLocation)) {
-      breakdown.locationMatch = 100;
-      reasons.push("Same location");
-    } else {
-      // Check for same country/region
-      const volParts = volLocation.split(',').map(p => p.trim());
-      const oppParts = oppLocation.split(',').map(p => p.trim());
-      
-      if (volParts.some(vp => oppParts.some(op => vp.includes(op) || op.includes(vp)))) {
-        breakdown.locationMatch = 50;
-        reasons.push("Same region/country");
-      } else {
-        breakdown.locationMatch = 0;
-      }
-    }
+  } else if (opportunity.engagementType === 'hybrid') {
+    // Hybrid opportunities are more flexible
+    breakdown.locationMatch = 75;
+    reasons.push("Hybrid work - flexible location");
   } else {
-    // Missing location data - no match
-    breakdown.locationMatch = 0;
+    const volLoc = normalizeLocation(volunteer.profile?.location);
+    const oppLoc = normalizeLocation(opportunity.location);
+    
+    if (volLoc.full && oppLoc.full) {
+      // Exact city match
+      if (volLoc.city && oppLoc.city && volLoc.city === oppLoc.city) {
+        breakdown.locationMatch = 100;
+        reasons.push("Same city");
+      }
+      // Same country match
+      else if (volLoc.country && oppLoc.country && volLoc.country === oppLoc.country) {
+        breakdown.locationMatch = 60;
+        reasons.push("Same country");
+      }
+      // Check for any overlapping parts
+      else if (volLoc.parts.some(vp => oppLoc.parts.some(op => vp.includes(op) || op.includes(vp)))) {
+        breakdown.locationMatch = 40;
+        reasons.push("Same region");
+      } else {
+        breakdown.locationMatch = 10; // Give small score for having location data
+      }
+    } else if (!volLoc.full && oppLoc.full) {
+      // Volunteer hasn't set location - encourage profile completion but don't penalize too much
+      breakdown.locationMatch = 30;
+      reasons.push("Add your location for better local matches");
+    } else if (!oppLoc.full) {
+      // Opportunity doesn't specify location - neutral score
+      breakdown.locationMatch = 50;
+    } else {
+      breakdown.locationMatch = 30;
+    }
   }
 
   // 3. SDG Overlap Matching (20% weight)
   // Check SDG alignment from volunteer's preferredSdgs field
-  const volSDGs = volunteer.profile?.preferredSdgs || [];
-  const oppSDGs = opportunity.sdgGoals || [];
+  const volSDGs = Array.isArray(volunteer.profile?.preferredSdgs) ? volunteer.profile.preferredSdgs : [];
+  const oppSDGs = Array.isArray(opportunity.sdgGoals) ? opportunity.sdgGoals : [];
   
   if (volSDGs.length > 0 && oppSDGs.length > 0) {
     const commonSDGs = volSDGs.filter(sdg => oppSDGs.includes(sdg));
     
     if (commonSDGs.length > 0) {
-      breakdown.sdgMatch = Math.min((commonSDGs.length / Math.max(volSDGs.length, oppSDGs.length)) * 100, 100);
+      // Score based on overlap percentage - rewards strong alignment
+      const overlapPercentage = (commonSDGs.length / Math.min(volSDGs.length, oppSDGs.length)) * 100;
+      breakdown.sdgMatch = Math.min(overlapPercentage, 100);
       reasons.push(`${commonSDGs.length} common SDG goal${commonSDGs.length > 1 ? 's' : ''}: #${commonSDGs.slice(0, 3).join(', #')}`);
     } else {
-      breakdown.sdgMatch = 0;
+      breakdown.sdgMatch = 10; // Small baseline for having SDG data even without overlap
     }
   } else if (oppSDGs.length === 0 && volSDGs.length === 0) {
     // Neither specified SDGs - neutral baseline
     breakdown.sdgMatch = 40;
+  } else if (volSDGs.length === 0 && oppSDGs.length > 0) {
+    // Volunteer hasn't set SDG preferences - encourage profile completion
+    breakdown.sdgMatch = 30;
+    reasons.push("Set SDG preferences for better mission-aligned matches");
   } else {
-    // One party specified SDGs but not the other - low match
-    breakdown.sdgMatch = 0;
+    // Opportunity doesn't specify SDGs - neutral
+    breakdown.sdgMatch = 40;
   }
 
   // 4. Interest/Cause Matching (20% weight)
-  if (volunteer.profile?.preferredCauses && volunteer.profile.preferredCauses.length > 0 && opportunity.category) {
-    const causes = volunteer.profile.preferredCauses.map(c => c.toLowerCase().trim());
+  const volCauses = Array.isArray(volunteer.profile?.preferredCauses) 
+    ? volunteer.profile.preferredCauses.map((c: string) => c.toLowerCase().trim()).filter((c: string) => c.length > 0)
+    : [];
+  const volInterests = Array.isArray(volunteer.profile?.interests)
+    ? volunteer.profile.interests.map((i: string) => i.toLowerCase().trim()).filter((i: string) => i.length > 0)
+    : [];
+  const allVolInterests = [...volCauses, ...volInterests];
+  
+  if (allVolInterests.length > 0 && opportunity.category) {
     const category = opportunity.category.toLowerCase().trim();
     
-    if (causes.some(cause => cause.includes(category) || category.includes(cause))) {
+    // Check for exact or partial match
+    const hasMatch = allVolInterests.some(interest => 
+      interest.includes(category) || category.includes(interest)
+    );
+    
+    if (hasMatch) {
       breakdown.interestMatch = 100;
       reasons.push(`Interest in ${opportunity.category}`);
     } else {
-      breakdown.interestMatch = 0;
+      breakdown.interestMatch = 20; // Small baseline for having interest data
     }
-  } else if (!opportunity.category && (!volunteer.profile?.preferredCauses || volunteer.profile.preferredCauses.length === 0)) {
+  } else if (!opportunity.category && allVolInterests.length === 0) {
     // Both missing - neutral baseline
     breakdown.interestMatch = 40;
+  } else if (allVolInterests.length === 0 && opportunity.category) {
+    // Volunteer hasn't set interests - encourage profile completion
+    breakdown.interestMatch = 30;
+    reasons.push("Add your interests for better cause-aligned matches");
   } else {
-    // One party has data, other doesn't - no match
-    breakdown.interestMatch = 0;
+    // Opportunity doesn't have category - neutral
+    breakdown.interestMatch = 40;
   }
 
   // Calculate weighted final score

@@ -31,10 +31,11 @@ export default function Logo({ className, showIcon = true, size = "md" }: LogoPr
     <div className={cn("inline-flex items-center gap-2", className)}>
       {showIcon && (
         <img 
-          src="/attached_assets/Untitled design_1762278844836.png" 
+          src="/attached_assets/Synerxus Modern Logo 2_1763102516922.png" 
           alt="Synerxus Logo" 
           className={cn(sizeClasses.logo, "object-contain flex-shrink-0")}
           style={{ maxWidth: '100%', height: 'auto' }}
+          loading="eager"
         />
       )}
       <span 

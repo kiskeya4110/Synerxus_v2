@@ -94,8 +94,49 @@ function calculateOrganizationImpactScore(params: {
 }
 
 /**
+ * Convert a project to opportunity format for matching
+ * Projects are internal work containers, but volunteers should be able to discover them
+ */
+function projectToOpportunity(project: any): Opportunity {
+  return {
+    id: project.id,
+    title: project.name, // Use project name as title
+    description: project.description || "",
+    organizationId: project.organizationId,
+    projectId: project.id, // Link back to the source project
+    requiredSkills: project.requiredSkills || [],
+    optionalSkills: project.optionalSkills || [],
+    location: project.location,
+    isRemote: false, // Projects don't have isRemote field, default to false
+    engagementType: project.engagementType,
+    timeCommitment: null,
+    commitmentType: project.commitmentType,
+    ongoingHoursPerWeek: project.ongoingHoursPerWeek,
+    projectTotalHours: project.projectTotalHours,
+    eventDate: null,
+    eventStartTime: null,
+    eventEndTime: null,
+    startDate: project.startDate,
+    endDate: project.endDate,
+    volunteersNeeded: 1, // Default to 1 if not specified
+    status: project.status === 'Active' || project.status === 'active' ? 'open' : project.status.toLowerCase(),
+    category: null, // Projects don't have category
+    sdgGoals: project.sdgGoals || [],
+    primarySdg: project.primarySdg,
+    impactMetricName: project.impactMetricName,
+    impactMetricUnit: project.impactMetricUnit,
+    benefits: null,
+    requirements: null,
+    isUrgent: false,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  } as Opportunity;
+}
+
+/**
  * Get projects for a volunteer filtered by AI matching algorithm
- * Only returns projects above the match threshold
+ * Returns BOTH opportunities and active projects as opportunities
+ * Only returns items above the match threshold
  */
 export async function getProjectsForVolunteer(volunteerId: number, matchThreshold: number = DEFAULT_MATCH_THRESHOLD) {
   try {
@@ -112,21 +153,31 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
     // Get all opportunities
     const opportunities = await storage.listOpportunities();
     
-    // Get all organizations to enrich opportunities with organization names
+    // Get all active projects and convert them to opportunity format
+    const allProjects = await storage.listProjects();
+    const activeProjects = allProjects.filter(p => 
+      p.status === 'Active' || p.status === 'active' || p.status === 'Planning'
+    );
+    const projectsAsOpportunities = activeProjects.map(projectToOpportunity);
+    
+    // Combine opportunities and projects
+    const allOpportunityLikeItems = [...opportunities, ...projectsAsOpportunities];
+    
+    // Get all organizations to enrich with organization names
     const allOrganizations = await storage.listOrganizations();
     const organizationMap = new Map(allOrganizations.map(org => [org.id, org]));
     
     // Combine user and profile for matching algorithm
     const volunteerWithProfile = { ...volunteer, profile: volunteerProfile };
 
-    // Calculate match scores for each opportunity and enrich with organization data
-    const matchedOpportunities = opportunities
-      .map((opportunity: Opportunity) => {
-        const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
-        const organization = organizationMap.get(opportunity.organizationId);
+    // Calculate match scores for each item and enrich with organization data
+    const matchedItems = allOpportunityLikeItems
+      .map((item: Opportunity) => {
+        const matchResult = calculateMatchScore(volunteerWithProfile, item);
+        const organization = organizationMap.get(item.organizationId);
         
         return {
-          ...opportunity,
+          ...item,
           organizationName: organization?.name || "Unknown Organization",
           matchScore: matchResult.score,
           matchPercentage: matchResult.score, // For frontend compatibility
@@ -134,10 +185,10 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
           matchReasons: matchResult.reasons,
         };
       })
-      .filter(opp => opp.matchScore >= matchThreshold)
+      .filter(item => item.matchScore >= matchThreshold)
       .sort((a, b) => b.matchScore - a.matchScore); // Sort by match score desc
 
-    return matchedOpportunities;
+    return matchedItems;
   } catch (error) {
     console.error("Error getting projects for volunteer:", error);
     throw error;

@@ -10,27 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import { sdgGoals } from "@shared/sdg-goals";
+import type { Opportunity } from "@shared/schema";
 
-interface OpportunityMatch {
-  id: number;
-  title: string;
-  description: string;
+interface OpportunityMatch extends Opportunity {
   organizationName?: string;
-  location: string;
-  isRemote: boolean;
-  requiredSkills: string[];
-  optionalSkills?: string[];
-  sdgGoals: number[];
-  category: string;
-  volunteersNeeded: number;
-  commitmentType: string;
-  timeCommitment?: string;
-  engagementType?: string;
-  startDate: string;
-  endDate: string;
-  benefits?: string;
-  requirements?: string;
-  isUrgent?: boolean;
   matchPercentage: number;
   matchReasons: string[];
   matchBreakdown?: {
@@ -39,7 +22,6 @@ interface OpportunityMatch {
     sdgMatch: number;
     interestMatch: number;
   };
-  status: string;
 }
 
 interface OpportunityStatus {

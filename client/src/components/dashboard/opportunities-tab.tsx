@@ -143,7 +143,7 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
   };
 
   const filteredOpportunities = opportunities.filter(
-    opp => !opportunityStatus?.rejectedIds.includes(opp.id)
+    opp => !opportunityStatus?.rejectedIds.includes(opp.id) && !opportunityStatus?.appliedIds.includes(opp.id)
   );
 
   if (isLoading) {

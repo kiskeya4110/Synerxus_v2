@@ -1558,12 +1558,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         
         if (!alreadyAssigned) {
-          // Create project assignment
+          // Create project assignment with active status (not pending)
           await storage.createProjectAssignment({
             projectId: opportunity.projectId,
             volunteerId: application.volunteerId,
             role: "Volunteer",
-            assignedAt: new Date()
+            status: "active",
+            assignedAt: new Date(),
+            respondedAt: new Date() // Mark as responded since they applied and were accepted
           });
           
           // Notify volunteer of new assignment

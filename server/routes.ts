@@ -1372,6 +1372,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get opportunity status for a volunteer (saved/applied/rejected)
+  // IMPORTANT: This route must be defined BEFORE /api/opportunities/:id to avoid matching "status" as :id
+  app.get("/api/opportunities/status", async (req, res) => {
+    try {
+      const volunteerId = req.query.volunteerId as string;
+      
+      if (!volunteerId) {
+        return res.status(400).json({ message: "volunteerId is required" });
+      }
+      
+      const vid = Number(volunteerId);
+      
+      // Check if volunteerId is a valid number
+      if (isNaN(vid)) {
+        return res.status(400).json({ message: "volunteerId must be a valid number" });
+      }
+      
+      const [saved, rejected, applications] = await Promise.all([
+        storage.listSavedOpportunitiesByVolunteer(vid),
+        storage.listRejectedOpportunitiesByVolunteer(vid),
+        storage.listApplicationsByVolunteer(vid)
+      ]);
+      
+      const savedIds = saved.map(s => s.opportunityId);
+      const rejectedIds = rejected.map(r => r.opportunityId);
+      const appliedIds = applications.map(a => a.opportunityId);
+      
+      res.json({ savedIds, rejectedIds, appliedIds });
+    } catch (err) {
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
   app.get("/api/opportunities/:id", async (req, res) => {
     try {
       const opportunityId = parseInt(req.params.id);
@@ -1722,39 +1756,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const rejected = await storage.listRejectedOpportunitiesByVolunteer(Number(volunteerId));
       res.json(rejected);
-    } catch (err) {
-      const error = handleValidationError(err);
-      res.status(error.status).json({ message: error.message });
-    }
-  });
-
-  // Get opportunity status for a volunteer (saved/applied/rejected)
-  app.get("/api/opportunities/status", async (req, res) => {
-    try {
-      const volunteerId = req.query.volunteerId as string;
-      
-      if (!volunteerId) {
-        return res.status(400).json({ message: "volunteerId is required" });
-      }
-      
-      const vid = Number(volunteerId);
-      
-      // Check if volunteerId is a valid number
-      if (isNaN(vid)) {
-        return res.status(400).json({ message: "volunteerId must be a valid number" });
-      }
-      
-      const [saved, rejected, applications] = await Promise.all([
-        storage.listSavedOpportunitiesByVolunteer(vid),
-        storage.listRejectedOpportunitiesByVolunteer(vid),
-        storage.listApplicationsByVolunteer(vid)
-      ]);
-      
-      const savedIds = saved.map(s => s.opportunityId);
-      const rejectedIds = rejected.map(r => r.opportunityId);
-      const appliedIds = applications.map(a => a.opportunityId);
-      
-      res.json({ savedIds, rejectedIds, appliedIds });
     } catch (err) {
       const error = handleValidationError(err);
       res.status(error.status).json({ message: error.message });

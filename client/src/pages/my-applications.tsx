@@ -26,10 +26,18 @@ export default function MyApplicationsPage() {
   const { data: matchedOpportunities = [], isLoading: isLoadingMatches } = useQuery({
     queryKey: ["/api/opportunities/discover", userId],
     queryFn: async () => {
-      if (!userId) throw new Error("User ID required");
-      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
-      if (!response.ok) return [];
-      return response.json();
+      if (!userId) return [];
+      try {
+        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
+        if (!response.ok) {
+          console.warn("Failed to fetch match scores for applications");
+          return [];
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching match scores:", error);
+        return [];
+      }
     },
     enabled: !!userId
   });

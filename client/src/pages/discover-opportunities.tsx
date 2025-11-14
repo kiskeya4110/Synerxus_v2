@@ -41,25 +41,43 @@ export default function DiscoverOpportunities() {
 
   // Fetch opportunities with AI matches and organization data
   const { data: opportunities = [], isLoading } = useQuery<EnrichedOpportunity[]>({
-    queryKey: userId ? [`/api/opportunities/discover?userId=${userId}`] : [],
-    enabled: !!userId, // Only fetch if we have a userId
+    queryKey: [`/api/opportunities/discover`, userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      try {
+        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
+        if (!response.ok) {
+          console.warn("Failed to fetch opportunities, showing empty list");
+          return [];
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching opportunities:", error);
+        return [];
+      }
+    },
+    enabled: !!userId,
   });
 
   // Fetch opportunity status (saved, rejected, applied)
-  const { data: opportunityStatus } = useQuery<OpportunityStatus>({
+  const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] } } = useQuery<OpportunityStatus>({
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
-      if (!userId) throw new Error("User ID required");
-      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
-      if (!response.ok) {
-        // Return empty status on failure to prevent blocking opportunity display
-        console.warn("Failed to fetch opportunity status, continuing without status badges");
+      if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
+      try {
+        const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+        if (!response.ok) {
+          console.warn("Failed to fetch opportunity status, continuing without status badges");
+          return { savedIds: [], rejectedIds: [], appliedIds: [] };
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching opportunity status:", error);
         return { savedIds: [], rejectedIds: [], appliedIds: [] };
       }
-      return response.json();
     },
     enabled: !!userId,
-    retry: 1, // Only retry once to avoid blocking UI
+    retry: 1,
   });
 
   // Extract unique categories and locations from actual opportunities data

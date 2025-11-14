@@ -27,15 +27,24 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
   const userId = localStorage.getItem('currentUserId');
 
   // Check if user has already applied to this opportunity
-  const { data: opportunityStatus } = useQuery({
+  const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] } } = useQuery({
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
-      if (!userId) throw new Error("User ID required");
-      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch opportunity status");
-      return response.json();
+      if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
+      try {
+        const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+        if (!response.ok) {
+          console.warn("Failed to fetch opportunity status in dialog, allowing application");
+          return { savedIds: [], rejectedIds: [], appliedIds: [] };
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Error fetching opportunity status in dialog:", error);
+        return { savedIds: [], rejectedIds: [], appliedIds: [] };
+      }
     },
     enabled: !!userId && open,
+    retry: 1,
   });
 
   const hasApplied = opportunityStatus?.appliedIds?.includes(opportunity.id) || false;

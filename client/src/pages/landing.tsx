@@ -130,11 +130,11 @@ export default function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-10 sm:py-12 border-y bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8" data-testid="text-benefits-title">Why Organizations Choose Synerxus</h2>
-          <div className="grid grid-cols-3 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+          <div className="grid grid-cols-3 gap-0 border-2 border-primary/30 rounded-lg sm:rounded-xl overflow-hidden">
             {benefits.map((benefit, index) => (
               <button
                 key={index}
-                className="group relative overflow-hidden rounded-lg sm:rounded-xl p-2.5 sm:p-3 md:p-5 text-left transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-100 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 hover:from-primary/20 hover:via-purple-500/20 hover:to-pink-500/20 border-2 border-transparent hover:border-primary/30 min-h-[120px] sm:min-h-0 sm:aspect-[2/1.5]"
+                className="group relative overflow-hidden p-2.5 sm:p-3 md:p-5 text-left transition-all duration-300 hover:scale-105 hover:shadow-lg hover:z-10 active:scale-100 bg-gradient-to-br from-primary/10 via-purple-500/10 to-pink-500/10 hover:from-primary/20 hover:via-purple-500/20 hover:to-pink-500/20 border border-primary/20 min-h-[120px] sm:min-h-[140px] md:min-h-[160px]"
                 data-testid={`benefit-item-${index}`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

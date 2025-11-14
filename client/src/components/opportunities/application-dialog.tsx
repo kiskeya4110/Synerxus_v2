@@ -5,11 +5,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Opportunity } from "@shared/schema";
-import { MapPin, Clock, Sparkles, FileText } from "lucide-react";
+import { MapPin, Clock, Sparkles, FileText, AlertCircle } from "lucide-react";
 
 interface ApplicationDialogProps {
   opportunity: Opportunity & { matchScore?: number; matchReasons?: string[] };
@@ -22,6 +22,23 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
   const [resumeUrl, setResumeUrl] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const { toast } = useToast();
+
+  // Get current user ID from localStorage
+  const userId = localStorage.getItem('currentUserId');
+
+  // Check if user has already applied to this opportunity
+  const { data: opportunityStatus } = useQuery({
+    queryKey: ["/api/opportunities/status", userId],
+    queryFn: async () => {
+      if (!userId) throw new Error("User ID required");
+      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch opportunity status");
+      return response.json();
+    },
+    enabled: !!userId && open,
+  });
+
+  const hasApplied = opportunityStatus?.appliedIds?.includes(opportunity.id) || false;
 
   const applyMutation = useMutation({
     mutationFn: async (data: { opportunityId: number; coverLetter: string; resumeUrl?: string; volunteerId: number }) => {
@@ -121,6 +138,23 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Already Applied Warning */}
+          {hasApplied && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
+                    You've Already Applied
+                  </h4>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    You have already submitted an application for this opportunity. You can view your application status in the "My Applications" page.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Opportunity Details */}
           <div className="grid grid-cols-2 gap-4 py-4 border-y">
             {opportunity.location && (
@@ -279,14 +313,14 @@ export default function ApplicationDialog({ opportunity, open, onOpenChange }: A
                 disabled={applyMutation.isPending}
                 data-testid="button-cancel-application"
               >
-                Cancel
+                {hasApplied ? "Close" : "Cancel"}
               </Button>
               <Button
                 type="submit"
-                disabled={applyMutation.isPending || !coverLetter.trim()}
+                disabled={applyMutation.isPending || !coverLetter.trim() || hasApplied}
                 data-testid="button-submit-application"
               >
-                {applyMutation.isPending ? "Submitting..." : "Submit Application"}
+                {hasApplied ? "Already Applied" : applyMutation.isPending ? "Submitting..." : "Submit Application"}
               </Button>
             </DialogFooter>
           </form>

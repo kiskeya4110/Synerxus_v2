@@ -23,6 +23,12 @@ interface EnrichedOpportunity extends Opportunity {
   };
 }
 
+interface OpportunityStatus {
+  savedIds: number[];
+  rejectedIds: number[];
+  appliedIds: number[];
+}
+
 export default function DiscoverOpportunities() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
@@ -37,6 +43,18 @@ export default function DiscoverOpportunities() {
   const { data: opportunities = [], isLoading } = useQuery<EnrichedOpportunity[]>({
     queryKey: userId ? [`/api/opportunities/discover?userId=${userId}`] : [],
     enabled: !!userId, // Only fetch if we have a userId
+  });
+
+  // Fetch opportunity status (saved, rejected, applied)
+  const { data: opportunityStatus } = useQuery<OpportunityStatus>({
+    queryKey: ["/api/opportunities/status", userId],
+    queryFn: async () => {
+      if (!userId) throw new Error("User ID required");
+      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch opportunity status");
+      return response.json();
+    },
+    enabled: !!userId,
   });
 
   // Extract unique categories and locations from actual opportunities data
@@ -60,7 +78,7 @@ export default function DiscoverOpportunities() {
     return Array.from(locations).sort();
   }, [opportunities]);
 
-  // Filter opportunities based on search and filters
+  // Filter opportunities based on search, filters, and status
   const filteredOpportunities = opportunities.filter((opp) => {
     const matchesSearch = searchQuery
       ? opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -70,8 +88,11 @@ export default function DiscoverOpportunities() {
     const matchesCategory = categoryFilter === "all" || opp.category === categoryFilter;
     const matchesLocation = locationFilter === "all" || 
       (locationFilter === "remote" ? opp.isRemote : opp.location?.includes(locationFilter));
+    
+    // Filter out rejected opportunities
+    const isNotRejected = !opportunityStatus?.rejectedIds.includes(opp.id);
 
-    return matchesSearch && matchesCategory && matchesLocation;
+    return matchesSearch && matchesCategory && matchesLocation && isNotRejected;
   });
 
   const getMatchBadge = (score?: number) => {
@@ -85,6 +106,20 @@ export default function DiscoverOpportunities() {
       return <Badge variant="outline">Fair Match</Badge>;
     }
     return null;
+  };
+
+  const getOpportunityStatusBadge = (opportunityId: number) => {
+    if (opportunityStatus?.appliedIds.includes(opportunityId)) {
+      return <Badge variant="default" className="bg-green-600 text-white">Applied</Badge>;
+    }
+    if (opportunityStatus?.savedIds.includes(opportunityId)) {
+      return <Badge variant="secondary">Saved</Badge>;
+    }
+    return null;
+  };
+
+  const hasApplied = (opportunityId: number) => {
+    return opportunityStatus?.appliedIds.includes(opportunityId) || false;
   };
 
   if (isLoading) {
@@ -180,9 +215,14 @@ export default function DiscoverOpportunities() {
                   data-testid={`card-recommended-${opportunity.id}`}
                 >
                   <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <CardTitle className="text-lg">{opportunity.title}</CardTitle>
-                      {getMatchBadge(opportunity.matchScore)}
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{opportunity.title}</CardTitle>
+                      </div>
+                      <div className="flex flex-col gap-1 items-end">
+                        {getMatchBadge(opportunity.matchScore)}
+                        {getOpportunityStatusBadge(opportunity.id)}
+                      </div>
                     </div>
                     <CardDescription className="line-clamp-2">
                       {opportunity.description}
@@ -222,11 +262,15 @@ export default function DiscoverOpportunities() {
                       className="w-full" 
                       data-testid={`button-apply-${opportunity.id}`}
                       onClick={() => {
-                        setSelectedOpportunity(opportunity);
-                        setApplicationDialogOpen(true);
+                        if (!hasApplied(opportunity.id)) {
+                          setSelectedOpportunity(opportunity);
+                          setApplicationDialogOpen(true);
+                        }
                       }}
+                      disabled={hasApplied(opportunity.id)}
+                      variant={hasApplied(opportunity.id) ? "secondary" : "default"}
                     >
-                      Apply Now
+                      {hasApplied(opportunity.id) ? "Already Applied" : "Apply Now"}
                     </Button>
                   </CardContent>
                 </Card>
@@ -277,7 +321,10 @@ export default function DiscoverOpportunities() {
                         </div>
                       )}
                     </div>
-                    {getMatchBadge(opportunity.matchScore)}
+                    <div className="flex flex-col gap-1 items-end">
+                      {getMatchBadge(opportunity.matchScore)}
+                      {getOpportunityStatusBadge(opportunity.id)}
+                    </div>
                   </div>
                   <CardDescription className="line-clamp-2">
                     {opportunity.description}
@@ -412,11 +459,15 @@ export default function DiscoverOpportunities() {
                       className="w-full" 
                       data-testid={`button-view-${opportunity.id}`}
                       onClick={() => {
-                        setSelectedOpportunity(opportunity);
-                        setApplicationDialogOpen(true);
+                        if (!hasApplied(opportunity.id)) {
+                          setSelectedOpportunity(opportunity);
+                          setApplicationDialogOpen(true);
+                        }
                       }}
+                      disabled={hasApplied(opportunity.id)}
+                      variant={hasApplied(opportunity.id) ? "secondary" : "default"}
                     >
-                      Apply Now
+                      {hasApplied(opportunity.id) ? "Already Applied" : "Apply Now"}
                     </Button>
                   </div>
                 </CardContent>

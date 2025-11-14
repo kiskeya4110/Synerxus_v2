@@ -584,7 +584,7 @@ export default function ImpactVisualization() {
                   onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
                   data-testid="metric-people-impacted"
                 >
-                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total People Impacted</div>
+                  <div className="text-xs sm:text-sm font-semibold text-primary dark:text-primary-400 mb-1">Total People Impacted</div>
                   <div className="text-2xl sm:text-3xl font-bold text-primary mt-1">
                     {aggregatedMetrics.totalPeople.toLocaleString()}
                   </div>
@@ -596,7 +596,7 @@ export default function ImpactVisualization() {
                   onClick={() => handleMetricClick("Communities Served", aggregatedMetrics.communitiesServed)}
                   data-testid="metric-communities"
                 >
-                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Communities Served</div>
+                  <div className="text-xs sm:text-sm font-semibold text-green-600 dark:text-green-400 mb-1">Communities Served</div>
                   <div className="text-2xl sm:text-3xl font-bold text-green-500 mt-1">{aggregatedMetrics.communitiesServed}</div>
                   <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
                 </Button>
@@ -606,7 +606,7 @@ export default function ImpactVisualization() {
                   onClick={() => handleMetricClick("Volunteer Hours", aggregatedMetrics.totalHours)}
                   data-testid="metric-hours"
                 >
-                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Volunteer Hours</div>
+                  <div className="text-xs sm:text-sm font-semibold text-purple-600 dark:text-purple-400 mb-1">Volunteer Hours</div>
                   <div className="text-2xl sm:text-3xl font-bold text-purple-500 mt-1">
                     {aggregatedMetrics.totalHours.toLocaleString()}
                   </div>
@@ -618,7 +618,7 @@ export default function ImpactVisualization() {
                   onClick={() => handleMetricClick("SDGs Addressed", aggregatedMetrics.sdgsAddressed)}
                   data-testid="metric-sdgs"
                 >
-                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">SDGs Addressed</div>
+                  <div className="text-xs sm:text-sm font-semibold text-amber-600 dark:text-amber-400 mb-1">SDGs Addressed</div>
                   <div className="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">{aggregatedMetrics.sdgsAddressed}</div>
                   <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
                 </Button>

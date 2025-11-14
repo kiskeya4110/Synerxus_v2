@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -188,11 +188,16 @@ export default function MobileDataCollection() {
     impactMutation.mutate(data);
   };
 
-  // Filter tasks by selected project
+  // Filter tasks by selected project and reset task selection when project changes
   const selectedProjectId = activityForm.watch("projectId");
   const filteredTasks = selectedProjectId 
     ? tasks.filter((task: any) => task.projectId === parseInt(selectedProjectId))
     : [];
+  
+  // Reset taskId when project changes
+  useEffect(() => {
+    activityForm.setValue("taskId", "");
+  }, [selectedProjectId, activityForm]);
 
   return (
     <div className="space-y-6">
@@ -256,20 +261,31 @@ export default function MobileDataCollection() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Task (Optional)</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={!selectedProjectId}
+                        >
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a task (optional)" />
+                            <SelectTrigger disabled={!selectedProjectId}>
+                              <SelectValue placeholder={selectedProjectId ? "Select a task (optional)" : "Select a project first"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {filteredTasks.map((task: any) => (
-                              <SelectItem key={task.id} value={task.id.toString()}>
-                                {task.title}
-                              </SelectItem>
-                            ))}
+                            {filteredTasks.length > 0 ? (
+                              filteredTasks.map((task: any) => (
+                                <SelectItem key={task.id} value={task.id.toString()}>
+                                  {task.title}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>No tasks available for this project</SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
+                        <FormDescription>
+                          {selectedProjectId ? "Select a task from the chosen project, or leave empty to log general activity" : "Please select a project to see available tasks"}
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

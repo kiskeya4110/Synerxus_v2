@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { Check, X, Building2, Calendar, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,16 @@ export default function Assignments() {
 
   // Fetch projects to get details
   const { data: projects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects"],
+    queryKey: ["/api/projects", currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return [];
+      const response = await fetch(`/api/projects?userId=${currentUser.id}`, {
+        credentials: "include"
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!currentUser?.id
   });
 
   // Fetch organizations to get details
@@ -163,7 +173,11 @@ export default function Assignments() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-lg">{assignment.project?.name || "Unknown Project"}</CardTitle>
+                      <CardTitle className="text-lg cursor-pointer hover:text-primary transition-colors">
+                        <Link href={`/projects/${assignment.projectId}`} className="hover:underline" data-testid={`link-project-${assignment.projectId}`}>
+                          {assignment.project?.name || "Unknown Project"}
+                        </Link>
+                      </CardTitle>
                       <CardDescription className="flex items-center gap-1 mt-1">
                         <Building2 className="w-3 h-3" />
                         {assignment.organization?.name || "Unknown Organization"}
@@ -242,7 +256,11 @@ export default function Assignments() {
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-base">{assignment.project?.name || "Unknown Project"}</CardTitle>
+                      <CardTitle className="text-base cursor-pointer hover:text-primary transition-colors">
+                        <Link href={`/projects/${assignment.projectId}`} className="hover:underline" data-testid={`link-project-${assignment.projectId}`}>
+                          {assignment.project?.name || "Unknown Project"}
+                        </Link>
+                      </CardTitle>
                       <CardDescription className="flex items-center gap-1 mt-1 text-xs">
                         <Building2 className="w-3 h-3" />
                         {assignment.organization?.name || "Unknown Organization"}

@@ -2000,6 +2000,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization's accepted volunteers endpoint - returns volunteers with accepted project assignments
+  app.get("/api/organizations/:id/volunteers", async (req, res) => {
+    try {
+      const requestedUserId = parseInt(req.params.id); // This is the user ID
+      
+      // Get authenticated user - trust the header for service-to-service calls
+      const authenticatedUserId = extractUserId(req);
+      if (!authenticatedUserId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Fetch the user to get their organization - use authenticated user ID
+      const user = await storage.getUser(authenticatedUserId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (user.userType !== 'organization') {
+        return res.status(403).json({ message: "Only organizations can access this endpoint" });
+      }
+      
+      if (!user.organizationId) {
+        return res.status(400).json({ message: "User is not linked to an organization" });
+      }
+      
+      const organizationId = user.organizationId;
+      
+      // Get all projects for this organization
+      const allProjects = await storage.listProjects();
+      const organizationProjects = allProjects.filter(p => p.organizationId === organizationId);
+      const projectIds = new Set(organizationProjects.map(p => p.id));
+      
+      // Get all assignments for these projects with accepted statuses
+      // Include: accepted, active, completed, on-hold (all statuses where volunteer has agreed to participate)
+      const allAssignments = await storage.listProjectAssignments();
+      const organizationAssignments = allAssignments.filter(a => 
+        projectIds.has(a.projectId) && 
+        ['accepted', 'active', 'completed', 'on-hold'].includes(a.status?.toLowerCase() || '')
+      );
+      
+      // Get unique volunteer IDs from assignments
+      const volunteerIds = new Set(organizationAssignments.map(a => a.volunteerId));
+      
+      // Get all users and filter to volunteers with assignments
+      const allUsers = await storage.listUsers();
+      const organizationVolunteers = allUsers.filter(u => 
+        u.userType === 'volunteer' && volunteerIds.has(u.id)
+      );
+      
+      // Only fetch profiles for volunteers who have accepted assignments (optimization)
+      const volunteersWithProfiles = await Promise.all(
+        organizationVolunteers.map(async (volunteer) => {
+          const profile = volunteer.email ? await storage.getVolunteerByEmail(volunteer.email) : null;
+          return { ...volunteer, profile };
+        })
+      );
+      
+      // Get all activities for these volunteers
+      const allActivities = await storage.listVolunteerActivities();
+      
+      // Calculate stats for each volunteer
+      const volunteersWithStats = volunteersWithProfiles.map(volunteer => {
+        // Get this volunteer's accepted assignments for the organization
+        const volunteerAssignments = organizationAssignments.filter(pa => pa.volunteerId === volunteer.id);
+        
+        // Get assigned project IDs
+        const assignedProjectIds = volunteerAssignments.map(pa => pa.projectId);
+        const volunteerProjects = organizationProjects.filter(p => assignedProjectIds.includes(p.id));
+        
+        // Filter activities to include all activities from organization projects
+        // where the volunteer has an accepted assignment (regardless of timing)
+        // This allows for backfilled data and retroactive assignments
+        const volunteerActivities = allActivities.filter(activity => {
+          if (!activity.projectId || activity.userId !== volunteer.id) return false;
+          if (!projectIds.has(activity.projectId)) return false;
+          
+          // Verify the volunteer has an accepted assignment for this project
+          const hasAssignment = volunteerAssignments.some(a => a.projectId === activity.projectId);
+          return hasAssignment;
+        });
+        
+        const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+        const activityCount = volunteerActivities.length;
+        
+        // Return consistent structure with all expected fields defaulted
+        return {
+          id: volunteer.id,
+          displayName: volunteer.displayName || '',
+          email: volunteer.email || '',
+          avatar: volunteer.avatar || null,
+          skills: Array.isArray(volunteer.profile?.skills) ? volunteer.profile.skills : [],
+          hours: totalHours || 0,
+          tasksCompleted: activityCount || 0,
+          projectCount: volunteerProjects.length || 0,
+          projects: volunteerProjects.map(p => ({ id: p.id, name: p.name || 'Unnamed Project' })) || []
+        };
+      });
+      
+      res.json(volunteersWithStats);
+    } catch (err) {
+      console.error("Error fetching organization volunteers:", err);
+      res.status(500).json({ message: "Failed to fetch organization volunteers", error: err instanceof Error ? err.message : String(err) });
+    }
+  });
+
   // AI-matched volunteers endpoint - returns volunteers matched to organization's needs
   app.get("/api/volunteers/matches", async (req, res) => {
     try {

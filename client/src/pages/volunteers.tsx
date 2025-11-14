@@ -38,14 +38,18 @@ export default function Volunteers() {
     enabled: !!userId
   });
 
-  // Use AI matching for organizations, regular list for admin/other users
+  // For organizations, show accepted volunteers. For admin/other users, show all volunteers
   const isOrganization = currentUser?.userType === 'organization';
   
   const { data: volunteers = [], isLoading } = useQuery<any[]>({ 
-    queryKey: isOrganization ? ["/api/volunteers/matches", userId] : ["/api/users"],
+    queryKey: isOrganization ? ["/api/organizations", userId, "volunteers"] : ["/api/users"],
     queryFn: async () => {
       if (isOrganization && userId) {
-        const response = await fetch(`/api/volunteers/matches?userId=${userId}`);
+        const response = await fetch(`/api/organizations/${userId}/volunteers`, {
+          headers: {
+            'x-user-id': userId
+          }
+        });
         if (!response.ok) return [];
         return response.json();
       } else {
@@ -134,6 +138,12 @@ export default function Volunteers() {
   };
 
   const volunteersWithStats = useMemo(() => {
+    // For organizations, the stats are already included from the backend
+    if (isOrganization) {
+      return volunteers;
+    }
+    
+    // For admin/other users, calculate stats from activities
     return volunteers.map((volunteer: any) => {
       const activities = volunteerActivities.filter((a: any) => a.userId === volunteer.id);
       const totalHours = activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
@@ -145,7 +155,7 @@ export default function Volunteers() {
         skills: volunteer.skills || [],
       };
     });
-  }, [volunteers, volunteerActivities]);
+  }, [volunteers, volunteerActivities, isOrganization]);
 
   const filteredVolunteers = volunteersWithStats.filter((volunteer: any) => {
     const matchesSearch = volunteer.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -231,11 +241,11 @@ export default function Volunteers() {
         {filteredVolunteers.map((volunteer: any) => (
           <Card key={volunteer.id} className="hover:shadow-lg transition-shadow relative">
             <CardHeader className="pb-3">
-              {isOrganization && volunteer.matchPercentage && (
+              {isOrganization && volunteer.projectCount > 0 && (
                 <div className="absolute top-3 right-3">
                   <Badge variant="secondary" className="gap-1">
-                    <Target className="h-3 w-3" />
-                    {volunteer.matchPercentage}% Match
+                    <Briefcase className="h-3 w-3" />
+                    {volunteer.projectCount} Project{volunteer.projectCount !== 1 ? 's' : ''}
                   </Badge>
                 </div>
               )}
@@ -358,10 +368,10 @@ export default function Volunteers() {
                     )}
                   </div>
                 </div>
-                {volunteersWithStats.find((v: any) => v.id === selectedVolunteerId)?.matchPercentage && (
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 text-lg px-3 py-1">
-                    <Target className="w-4 h-4 mr-1" />
-                    {volunteersWithStats.find((v: any) => v.id === selectedVolunteerId).matchPercentage}% Match
+                {isOrganization && volunteersWithStats.find((v: any) => v.id === selectedVolunteerId)?.projectCount && (
+                  <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 text-lg px-3 py-1">
+                    <Briefcase className="w-4 h-4 mr-1" />
+                    {volunteersWithStats.find((v: any) => v.id === selectedVolunteerId).projectCount} Active Project{volunteersWithStats.find((v: any) => v.id === selectedVolunteerId).projectCount !== 1 ? 's' : ''}
                   </Badge>
                 )}
               </div>

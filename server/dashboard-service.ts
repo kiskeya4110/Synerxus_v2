@@ -548,13 +548,87 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     // Filter activities to only this volunteer's
     const volunteerActivities = allActivities.filter(a => a.userId === userId);
     
-    // Filter impacts to only visible projects
-    const volunteerImpacts = allImpacts.filter(i => i.projectId && visibleProjectIds.has(i.projectId));
+    // Filter impacts to only visible projects AND only impacts recorded during active assignment periods
+    // This prevents volunteers from inheriting historical project data they didn't contribute to
+    // Handles multiple assignments to same project (e.g., volunteer left and rejoined)
+    const volunteerImpacts = allImpacts.filter(i => {
+      if (!i.projectId || !visibleProjectIds.has(i.projectId)) {
+        return false;
+      }
+      
+      // Find ALL assignments for this project (volunteer could have multiple assignment periods)
+      const projectAssignments = volunteerAssignments
+        .filter(va => va.projectId === i.projectId)
+        .sort((a, b) => new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime());
+      
+      if (projectAssignments.length === 0) {
+        return false; // Should not happen, but safety check
+      }
+      
+      const impactDate = new Date(i.date);
+      
+      // Check if impact falls within ANY active assignment window
+      return projectAssignments.some((assignment, index) => {
+        // Only count accepted assignments (status: active, completed, on-hold)
+        if (assignment.status === 'pending' || assignment.status === 'declined') {
+          return false;
+        }
+        
+        // Assignment window starts when volunteer accepted (respondedAt) or was assigned (assignedAt as fallback)
+        const startDate = assignment.respondedAt 
+          ? new Date(assignment.respondedAt)
+          : new Date(assignment.assignedAt);
+        
+        // Assignment window ends based on status and available timestamps
+        let endDate: Date;
+        if (assignment.completedAt) {
+          // Explicit completion timestamp - use it
+          endDate = new Date(assignment.completedAt);
+        } else if (assignment.status === 'active' || assignment.status === 'on-hold') {
+          // Assignment is ongoing - window extends to present
+          endDate = new Date();
+        } else if (assignment.status === 'completed') {
+          // Completed without timestamp - derive from volunteer activities within this assignment period
+          const nextAssignment = projectAssignments[index + 1];
+          const maxPossibleEnd = nextAssignment 
+            ? new Date(nextAssignment.assignedAt) 
+            : (() => {
+                const oneYearAfterStart = new Date(startDate);
+                oneYearAfterStart.setFullYear(oneYearAfterStart.getFullYear() + 1);
+                return oneYearAfterStart;
+              })();
+          
+          // Find activities that fall within this specific assignment period
+          const scopedActivities = volunteerActivities.filter(a => 
+            a.projectId === i.projectId &&
+            new Date(a.date) >= startDate &&
+            new Date(a.date) < maxPossibleEnd // Before next assignment or 1 year
+          );
+          
+          if (scopedActivities.length > 0) {
+            // Use last scoped activity as end date (actual last contribution)
+            endDate = new Date(Math.max(...scopedActivities.map(a => new Date(a.date).getTime())));
+          } else {
+            // No activities in this period - conservative: allow 30 days from start
+            const thirtyDaysAfterStart = new Date(startDate);
+            thirtyDaysAfterStart.setDate(thirtyDaysAfterStart.getDate() + 30);
+            endDate = Math.min(thirtyDaysAfterStart.getTime(), maxPossibleEnd.getTime()) < maxPossibleEnd.getTime()
+              ? thirtyDaysAfterStart
+              : maxPossibleEnd;
+          }
+        } else {
+          // Unknown/pending/declined status - skip this assignment
+          return false;
+        }
+        
+        // Impact must fall within this assignment window
+        return impactDate >= startDate && impactDate <= endDate;
+      });
+    });
 
-    // Filter tasks to visible projects or tasks directly assigned to this volunteer
-    const volunteerTasks = allTasks.filter(t =>
-      (t.projectId && visibleProjectIds.has(t.projectId)) || t.assigneeId === userId
-    );
+    // Filter tasks to ONLY tasks directly assigned to this volunteer
+    // Strict data partitioning: volunteers only see tasks they're explicitly assigned to
+    const volunteerTasks = allTasks.filter(t => t.assigneeId === userId);
 
     // Get AI-matched opportunities above threshold
     const matchedOpportunities = await getProjectsForVolunteer(userId, matchThreshold);

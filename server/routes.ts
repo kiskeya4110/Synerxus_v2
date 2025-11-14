@@ -499,12 +499,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const allTasks = await storage.listTasks();
           tasks = allTasks.filter(t => t.projectId && orgProjectIds.has(t.projectId));
         } else if (user.userType === 'volunteer') {
-          // Volunteer user - return tasks from visible projects or directly assigned
-          const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
-          const allTasks = await storage.listTasks();
-          tasks = allTasks.filter(t =>
-            (t.projectId && visibleProjectIds.has(t.projectId)) || t.assigneeId === userIdNum
-          );
+          // Volunteer user - return ONLY tasks directly assigned to them
+          // Strict data partitioning: volunteers only see tasks they're explicitly assigned to
+          tasks = await storage.listTasksByAssignee(userIdNum);
         } else {
           return res.status(400).json({ message: "Invalid user type" });
         }
@@ -540,12 +537,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (user) {
           if (user.userType === 'volunteer') {
-            // Check if volunteer has access to this task
-            const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
-            const hasProjectAccess = task.projectId && visibleProjectIds.has(task.projectId);
+            // Strict data partitioning: volunteers can only access tasks directly assigned to them
             const isDirectlyAssigned = task.assigneeId === userIdNum;
             
-            if (!hasProjectAccess && !isDirectlyAssigned) {
+            if (!isDirectlyAssigned) {
               return res.status(404).json({ message: "Task not found" });
             }
           } else if (user.userType === 'organization' && user.organizationId) {

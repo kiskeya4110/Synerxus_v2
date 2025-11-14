@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Check, X, Building2, Calendar, Clock, AlertCircle } from "lucide-react";
+import { Check, X, Building2, Calendar, Clock, AlertCircle, Users, Activity } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,11 +30,11 @@ export default function Assignments() {
     retry: false
   });
 
-  // Fetch volunteer's project assignments
+  // Fetch volunteer's enriched project assignments with team members and activities
   const { data: assignments = [], isLoading: assignmentsLoading } = useQuery<any[]>({
-    queryKey: ["/api/project-assignments", "volunteer", currentUser?.id],
+    queryKey: ["/api/project-assignments/details", currentUser?.id],
     queryFn: async () => {
-      const response = await fetch(`/api/project-assignments?volunteerId=${currentUser?.id}`, {
+      const response = await fetch(`/api/project-assignments/details?volunteerId=${currentUser?.id}`, {
         credentials: "include"
       });
       if (!response.ok) return [];
@@ -271,7 +271,7 @@ export default function Assignments() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-3">
                   {assignment.role && (
                     <Badge variant="secondary" className="text-xs">
                       {assignment.role}
@@ -285,6 +285,50 @@ export default function Assignments() {
                     <p className="text-xs text-muted-foreground">
                       Committed: {assignment.hoursCommitted} hrs
                     </p>
+                  )}
+
+                  {/* Team Members */}
+                  {assignment.teamMembers && assignment.teamMembers.length > 0 && (
+                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-1 mb-1">
+                        <Users className="w-3 h-3 text-primary" />
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Team Members ({assignment.teamMembers.length})</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {assignment.teamMembers.slice(0, 3).map((member: any) => (
+                          <Badge key={member.id} variant="outline" className="text-xs">
+                            {member.displayName || member.username}
+                          </Badge>
+                        ))}
+                        {assignment.teamMembers.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{assignment.teamMembers.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Activities */}
+                  {assignment.activities && assignment.activities.length > 0 && (
+                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-1 mb-1">
+                        <Activity className="w-3 h-3 text-green-600" />
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Recent Activities ({assignment.activities.length})</span>
+                      </div>
+                      <div className="space-y-1">
+                        {assignment.activities.slice(0, 2).map((activity: any) => (
+                          <div key={activity.id} className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 p-1.5 rounded">
+                            <div className="font-medium truncate">{activity.description}</div>
+                            <div className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-500">
+                              <span>{activity.hours} hrs</span>
+                              <span>•</span>
+                              <span>{new Date(activity.date).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>

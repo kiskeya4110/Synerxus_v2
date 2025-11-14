@@ -1869,6 +1869,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/project-assignments/details", async (req, res) => {
+    try {
+      const { volunteerId } = req.query;
+      
+      if (!volunteerId) {
+        return res.status(400).json({ message: "volunteerId is required" });
+      }
+      
+      const volId = parseInt(volunteerId as string);
+      
+      // SECURITY: Verify the requesting user is the volunteer whose data is being requested
+      const requestingUserId = extractUserId(req);
+      if (!requestingUserId || requestingUserId !== volId) {
+        return res.status(403).json({ message: "Unauthorized: You can only access your own assignment details" });
+      }
+      
+      const assignments = await storage.listProjectAssignmentsByVolunteer(volId);
+      
+      // Enrich each assignment with team members and activities
+      const enrichedAssignments = await Promise.all(
+        assignments.map(async (assignment: any) => {
+          try {
+            // Get team members (other volunteers on this project)
+            const allAssignments = await storage.listProjectAssignmentsByProject(assignment.projectId);
+            const teamMembers = await Promise.all(
+              allAssignments
+                .filter((a: any) => a.volunteerId !== volId && a.status === 'active')
+                .slice(0, 5) // Limit to 5 team members for performance
+                .map(async (a: any) => {
+                  const user = await storage.getUser(a.volunteerId);
+                  return user ? {
+                    id: user.id,
+                    username: user.username,
+                    displayName: user.displayName,
+                    avatar: user.avatar,
+                    role: a.role
+                  } : null;
+                })
+            );
+            
+            // Get recent activities for this volunteer on this project
+            const allActivities = await storage.listVolunteerActivities();
+            const activities = allActivities
+              .filter((activity: any) => 
+                activity.projectId === assignment.projectId && 
+                activity.userId === volId
+              )
+              .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+              .slice(0, 5); // Last 5 activities
+            
+            return {
+              ...assignment,
+              teamMembers: teamMembers.filter((m: any) => m !== null),
+              activities
+            };
+          } catch (error) {
+            console.error(`Error enriching assignment ${assignment.id}:`, error);
+            return {
+              ...assignment,
+              teamMembers: [],
+              activities: []
+            };
+          }
+        })
+      );
+      
+      res.json(enrichedAssignments);
+    } catch (err) {
+      console.error("Error fetching enriched assignments:", err);
+      res.status(500).json({ message: "Failed to fetch enriched assignments" });
+    }
+  });
+
   app.delete("/api/project-assignments/:id", async (req, res) => {
     try {
       const assignmentId = parseInt(req.params.id);

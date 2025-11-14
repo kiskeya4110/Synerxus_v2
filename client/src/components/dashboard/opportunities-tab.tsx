@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MapPin, Calendar, Users, Target, ExternalLink, Bookmark, BookmarkCheck, X, FileText, Building2, Clock, AlertCircle, Sparkles, CalendarDays } from "lucide-react";
+import { MapPin, Calendar, Users, Target, ExternalLink, Bookmark, BookmarkCheck, X, FileText, Building2, Clock, AlertCircle, Sparkles, CalendarDays, Check } from "lucide-react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -38,6 +38,7 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
   const { toast } = useToast();
   const [selectedOpportunity, setSelectedOpportunity] = useState<OpportunityMatch | null>(null);
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const { data: opportunities = [], isLoading, error } = useQuery<OpportunityMatch[]>({
     queryKey: ["/api/opportunities/matches", userId],
@@ -142,9 +143,24 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
     return null;
   };
 
-  const filteredOpportunities = opportunities.filter(
+  // Separate opportunities into applied and available
+  const appliedOpportunities = opportunities.filter(
+    opp => opportunityStatus?.appliedIds.includes(opp.id)
+  );
+  
+  const availableOpportunities = opportunities.filter(
     opp => !opportunityStatus?.rejectedIds.includes(opp.id) && !opportunityStatus?.appliedIds.includes(opp.id)
   );
+
+  // Get unique categories from available opportunities
+  const categories = Array.from(
+    new Set(availableOpportunities.map(opp => opp.category).filter(Boolean))
+  ).sort();
+
+  // Apply category filter
+  const filteredAvailableOpportunities = selectedCategory === "all"
+    ? availableOpportunities
+    : availableOpportunities.filter(opp => opp.category === selectedCategory);
 
   if (isLoading) {
     return (
@@ -179,7 +195,7 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
     );
   }
 
-  if (filteredOpportunities.length === 0) {
+  if (filteredAvailableOpportunities.length === 0 && appliedOpportunities.length === 0) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
@@ -209,19 +225,41 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
 
   return (
     <>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-            {filteredOpportunities.length} Matching Opportunities
-          </h3>
-          <Link href="/opportunities">
-            <Button variant="outline" size="sm" className="text-xs h-7">
-              View All <ExternalLink className="ml-1 h-3 w-3" />
+      <div className="space-y-4">
+        {/* Category Filter */}
+        {categories.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant={selectedCategory === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("all")}
+              data-testid="category-all"
+            >
+              All ({availableOpportunities.length})
             </Button>
-          </Link>
-        </div>
+            {categories.map((category) => (
+              <Button
+                key={category}
+                variant={selectedCategory === category ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(category as string)}
+                data-testid={`category-${category}`}
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+        )}
 
-        {filteredOpportunities.map((opp) => {
+        {/* Applied Opportunities Section */}
+        {appliedOpportunities.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-600" />
+              Applied Opportunities ({appliedOpportunities.length})
+            </h3>
+            <div className="space-y-3">
+              {appliedOpportunities.map((opp) => {
           const isSaved = opportunityStatus?.savedIds.includes(opp.id);
           const isApplied = opportunityStatus?.appliedIds.includes(opp.id);
 
@@ -418,6 +456,132 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
             </Card>
           );
         })}
+            </div>
+          </div>
+        )}
+
+        {/* Available/Matching Opportunities Section */}
+        {filteredAvailableOpportunities.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+              <Target className="h-4 w-4 text-primary" />
+              Matching Opportunities ({filteredAvailableOpportunities.length})
+            </h3>
+            <div className="space-y-3">
+              {filteredAvailableOpportunities.map((opp) => {
+                const isSaved = opportunityStatus?.savedIds.includes(opp.id);
+                const isApplied = opportunityStatus?.appliedIds.includes(opp.id);
+
+                return (
+                  <Card key={opp.id} className="hover:shadow-md transition-shadow" data-testid={`opportunity-card-${opp.id}`}>
+                    <CardHeader className="p-3 pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            <CardTitle className="text-sm leading-tight">{opp.title}</CardTitle>
+                            {opp.isUrgent && (
+                              <Badge className="bg-red-500 text-white text-xs px-2 py-0">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Urgent
+                              </Badge>
+                            )}
+                            {getOpportunityStatusBadge(opp.id)}
+                          </div>
+                          {opp.organizationName && (
+                            <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              <Building2 className="h-3 w-3 mr-1" />
+                              <span className="font-medium">{opp.organizationName}</span>
+                            </div>
+                          )}
+                          <div className="flex flex-wrap gap-1.5">
+                            <Badge className={`${getMatchColor(opp.matchPercentage)} text-xs px-2 py-0`} data-testid={`match-badge-${opp.id}`}>
+                              <Sparkles className="h-3 w-3 mr-1" />
+                              {opp.matchPercentage}% Match
+                            </Badge>
+                            {opp.category && (
+                              <Badge variant="outline" className="text-xs px-2 py-0">{opp.category}</Badge>
+                            )}
+                            {opp.engagementType && (
+                              <Badge variant="secondary" className="text-xs px-2 py-0 capitalize">{opp.engagementType}</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            variant={isSaved ? "default" : "outline"}
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => handleSaveToggle(opp.id)}
+                            disabled={isApplied}
+                            data-testid={`save-opportunity-${opp.id}`}
+                          >
+                            {isSaved ? <BookmarkCheck className="h-3.5 w-3.5" /> : <Bookmark className="h-3.5 w-3.5" />}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleReject(opp.id)}
+                            disabled={isApplied}
+                            data-testid={`reject-opportunity-${opp.id}`}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-3 pt-0 space-y-3">
+                      {/* Description */}
+                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                        {opp.description}
+                      </p>
+
+                      {/* Rest of the card content from the original code */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                          <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                          <span className="truncate">{opp.location || "Location not specified"}</span>
+                        </div>
+                        {opp.timeCommitment && (
+                          <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                            <Clock className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                            <span>{opp.timeCommitment}</span>
+                            {opp.commitmentType && <span className="ml-1">({opp.commitmentType})</span>}
+                          </div>
+                        )}
+                        {opp.volunteersNeeded && (
+                          <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                            <Users className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                            <span>{opp.volunteersNeeded} volunteer{opp.volunteersNeeded > 1 ? 's' : ''} needed</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="grid grid-cols-2 gap-2 pt-2">
+                        <Link href={`/opportunities/${opp.id}`}>
+                          <Button size="sm" variant="outline" className="w-full text-xs h-7" data-testid={`view-opportunity-${opp.id}`}>
+                            <FileText className="mr-1 h-3 w-3" />
+                            View Details
+                          </Button>
+                        </Link>
+                        <Button 
+                          size="sm" 
+                          className="w-full text-xs h-7" 
+                          onClick={() => handleApplyClick(opp)}
+                          disabled={isApplied}
+                          data-testid={`apply-opportunity-${opp.id}`}
+                        >
+                          {isApplied ? "Applied" : "Apply Now"}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {selectedOpportunity && (

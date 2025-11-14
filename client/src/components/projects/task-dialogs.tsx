@@ -244,9 +244,9 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch AI-recommended volunteers sorted by match score
+  // Fetch AI-recommended volunteers sorted by match score from project
   const { data: recommendedVolunteers = [], isLoading: loadingRecommendations } = useQuery<VolunteerWithScore[]>({
-    queryKey: ["/api/tasks", task.id, "recommended-volunteers"],
+    queryKey: ["/api/projects", task.projectId, "recommended-volunteers"],
     enabled: open && !!task.projectId,
   });
 

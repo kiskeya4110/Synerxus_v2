@@ -11,8 +11,8 @@ const DEFAULT_MATCH_THRESHOLD = 40; // 40% match minimum
 /**
  * Get visible project IDs for a volunteer based on assignments and AI matches
  * Enforces status-aware visibility rules:
- * - Include projects with active, pending, completed, or on-hold assignments
- * - Exclude projects with declined assignments
+ * - Include projects with active, completed, or on-hold assignments (accepted assignments only)
+ * - Exclude projects with pending or declined assignments
  * - Optionally include AI-matched opportunities above threshold
  */
 export async function getVisibleProjectIdsForVolunteer(
@@ -24,12 +24,16 @@ export async function getVisibleProjectIdsForVolunteer(
 
   // Get all project assignments for this volunteer
   const allAssignments = await storage.listProjectAssignments();
-  const volunteerAssignments = allAssignments.filter(
-    pa => pa.volunteerId === volunteerId && 
-    // Include: pending, active, completed, on-hold
-    // Exclude: declined
-    pa.status !== 'declined'
-  );
+  const volunteerAssignments = allAssignments.filter(pa => {
+    if (pa.volunteerId !== volunteerId) return false;
+    
+    // Normalize status to handle database inconsistencies (Active vs active, Pending vs pending)
+    const status = pa.status?.toLowerCase() || '';
+    
+    // Include: active, completed, on-hold (accepted assignments only)
+    // Exclude: pending (not yet accepted), declined (rejected)
+    return status !== 'declined' && status !== 'pending';
+  });
 
   // Add project IDs from valid assignments
   volunteerAssignments.forEach(assignment => {
@@ -215,7 +219,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       }
     ).length;
 
-    const completedTasks = organizationTasks.filter(t => t.status === 'Completed').length;
+    const completedTasks = organizationTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
     const totalTasks = organizationTasks.length;
 
     // Count unique SDGs addressed
@@ -230,7 +234,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     const hoursScore = Math.min((totalHours / 100) * 100, 100);
     const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     const sdgScore = (uniqueSDGs.size / 17) * 100;
-    const acceptedApplications = organizationApplications.filter(app => app.status === 'accepted').length;
+    const acceptedApplications = organizationApplications.filter(app => app.status?.toLowerCase() === 'accepted').length;
     const matchScore = organizationApplications.length > 0
       ? (acceptedApplications / organizationApplications.length) * 100
       : 0;
@@ -262,7 +266,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       if (progress === 0) {
         const projectTasks = organizationTasks.filter(t => t.projectId === project.id);
         if (projectTasks.length > 0) {
-          const completedCount = projectTasks.filter(t => t.status === 'Completed').length;
+          const completedCount = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
           progress = Math.round((completedCount / projectTasks.length) * 100);
         }
       }
@@ -377,7 +381,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     });
 
     // Add task completions
-    const completedTaskActivities = organizationTasks.filter(t => t.status === 'Completed');
+    const completedTaskActivities = organizationTasks.filter(t => t.status?.toLowerCase() === 'completed');
     completedTaskActivities.forEach(task => {
       const assignee = task.assigneeId ? userMap.get(task.assigneeId) : null;
       const project = task.projectId ? projectMap.get(task.projectId) : undefined;
@@ -433,7 +437,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       // Calculate monthly aggregates
       const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
       const beneficiaries = monthImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
-      const completedTasks = monthTasks.filter(t => t.status === 'Completed').length;
+      const completedTasks = monthTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
       const totalTasks = monthTasks.length;
       
       // Count unique volunteers (filter out null userIds)
@@ -536,14 +540,18 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const allUsers = await storage.listUsers();
 
     // Get visible project IDs using status-aware filtering
-    // Excludes declined assignments, includes pending/active/completed/on-hold
+    // Excludes declined and pending assignments, includes only accepted assignments (active/completed/on-hold)
     const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userId, false, matchThreshold);
     const assignedProjects = allProjects.filter(p => visibleProjectIds.has(p.id));
     
-    // Get volunteer's project assignments (excluding declined)
-    const volunteerAssignments = allProjectAssignments.filter(
-      pa => pa.volunteerId === userId && pa.status !== 'declined'
-    );
+    // Get volunteer's project assignments (excluding declined and pending)
+    const volunteerAssignments = allProjectAssignments.filter(pa => {
+      if (pa.volunteerId !== userId) return false;
+      
+      // Normalize status to handle database inconsistencies
+      const status = pa.status?.toLowerCase() || '';
+      return status !== 'declined' && status !== 'pending';
+    });
 
     // Filter activities to only this volunteer's
     const volunteerActivities = allActivities.filter(a => a.userId === userId);
@@ -569,8 +577,11 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       
       // Check if impact falls within ANY active assignment window
       return projectAssignments.some((assignment, index) => {
+        // Normalize status to handle database inconsistencies (Active vs active, Completed vs completed)
+        const status = assignment.status?.toLowerCase() || '';
+        
         // Only count accepted assignments (status: active, completed, on-hold)
-        if (assignment.status === 'pending' || assignment.status === 'declined') {
+        if (status === 'pending' || status === 'declined') {
           return false;
         }
         
@@ -584,10 +595,10 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         if (assignment.completedAt) {
           // Explicit completion timestamp - use it
           endDate = new Date(assignment.completedAt);
-        } else if (assignment.status === 'active' || assignment.status === 'on-hold') {
+        } else if (status === 'active' || status === 'on-hold') {
           // Assignment is ongoing - window extends to present
           endDate = new Date();
-        } else if (assignment.status === 'completed') {
+        } else if (status === 'completed') {
           // Completed without timestamp - derive from volunteer activities within this assignment period
           const nextAssignment = projectAssignments[index + 1];
           const maxPossibleEnd = nextAssignment 
@@ -639,9 +650,12 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     // Calculate summary metrics
     const totalHours = volunteerActivities.reduce((sum, activity) => sum + activity.hours, 0);
     const activeProjects = assignedProjects.filter(
-      project => project.status === 'In Progress' || project.status === 'Active'
+      project => {
+        const status = project.status?.toLowerCase() || '';
+        return status === 'in progress' || status === 'active';
+      }
     ).length;
-    const completedTasks = volunteerTasks.filter(t => t.status === 'Completed').length;
+    const completedTasks = volunteerTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
     const totalTasks = volunteerTasks.length;
 
     // Count unique SDGs from assigned projects
@@ -656,7 +670,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const hoursScore = Math.min((totalHours / 100) * 100, 100);
     const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     const sdgScore = (uniqueSDGs.size / 17) * 100;
-    const acceptedApplications = volunteerApplications.filter(app => app.status === 'accepted').length;
+    const acceptedApplications = volunteerApplications.filter(app => app.status?.toLowerCase() === 'accepted').length;
     const matchScore = volunteerApplications.length > 0
       ? (acceptedApplications / volunteerApplications.length) * 100
       : 0;
@@ -692,8 +706,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     }));
 
     // Calculate application statistics
-    const pendingApplications = volunteerApplications.filter(app => app.status === 'pending').length;
-    const rejectedApplications = volunteerApplications.filter(app => app.status === 'rejected').length;
+    const pendingApplications = volunteerApplications.filter(app => app.status?.toLowerCase() === 'pending').length;
+    const rejectedApplications = volunteerApplications.filter(app => app.status?.toLowerCase() === 'rejected').length;
 
     // Calculate hours breakdown by project
     const hoursByProject = assignedProjects.map(project => {
@@ -753,9 +767,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
       // Calculate monthly metrics
       const monthHours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
-      const monthCompletedTasks = monthTasks.filter(t => t.status === 'Completed').length;
+      const monthCompletedTasks = monthTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
       const monthTotalTasks = monthTasks.length;
-      const monthAcceptedApps = monthApplications.filter(app => app.status === 'accepted').length;
+      const monthAcceptedApps = monthApplications.filter(app => app.status?.toLowerCase() === 'accepted').length;
 
       // Calculate scores (same formula as overall impact score)
       const monthHoursScore = Math.min((monthHours / 20) * 100, 100); // Normalized to 20 hours/month

@@ -18,6 +18,7 @@ import {
   savedOpportunities,
   rejectedOpportunities,
   messages,
+  notifications,
   type User, 
   type InsertUser,
   type Organization,
@@ -55,7 +56,9 @@ import {
   type RejectedOpportunity,
   type InsertRejectedOpportunity,
   type Message,
-  type InsertMessage
+  type InsertMessage,
+  type Notification,
+  type InsertNotification
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
@@ -223,6 +226,12 @@ export interface IStorage {
   listMessagesByReceiver(receiverId: number): Promise<Message[]>;
   listConversation(userId1: number, userId2: number): Promise<Message[]>;
   markMessageAsRead(id: number): Promise<Message | undefined>;
+
+  // Notification operations
+  getNotification(id: number): Promise<Notification | undefined>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(userId: number): Promise<Notification[]>;
+  markNotificationRead(notificationId: number): Promise<Notification | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -934,6 +943,34 @@ export class DatabaseStorage implements IStorage {
       .update(messages)
       .set({ read: true })
       .where(eq(messages.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async getNotification(id: number): Promise<Notification | undefined> {
+    const [result] = await db.select().from(notifications).where(eq(notifications.id, id));
+    return result || undefined;
+  }
+
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db.insert(notifications).values(notification).returning();
+    return newNotification;
+  }
+
+  async getNotifications(userId: number): Promise<Notification[]> {
+    const { desc } = await import("drizzle-orm");
+    return await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
+  }
+
+  async markNotificationRead(notificationId: number): Promise<Notification | undefined> {
+    const [result] = await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.id, notificationId))
       .returning();
     return result || undefined;
   }

@@ -26,6 +26,7 @@ import { calculateMatchScore, findTopMatches, findTopVolunteers } from "./matchi
 import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization } from "./dashboard-service";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import { updateVolunteerProfileWithUser } from "./profile-service";
+import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange } from "./notification-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
@@ -431,6 +432,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Project not found" });
       }
       
+      const assignments = await storage.listProjectAssignmentsByProject(projectId);
+      const activeAssignments = assignments.filter(a => a.status === 'active' || a.status === 'pending');
+      
+      for (const assignment of activeAssignments) {
+        await notifyProjectUpdate(
+          projectId,
+          assignment.volunteerId,
+          "Project details have been updated",
+          updatedProject.name
+        );
+      }
+      
       broadcastUpdate("project_updated", updatedProject);
       res.json(updatedProject);
     } catch (err) {
@@ -493,6 +506,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const task = await storage.createTask(taskData);
+      
+      // Notify assignee if task was assigned
+      if (task.assigneeId) {
+        await notifyTaskAssigned(
+          task.assigneeId,
+          task.id,
+          task.title,
+          task.projectId || undefined
+        );
+      }
       
       // Recalculate project completion percentage when task is created
       if (task.projectId) {
@@ -561,6 +584,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedTask = await storage.updateTask(taskId, taskData);
       if (!updatedTask) {
         return res.status(404).json({ message: "Task not found" });
+      }
+      
+      // Notify new assignee if assignee was changed
+      if (taskData.assigneeId && taskData.assigneeId !== existingTask.assigneeId) {
+        await notifyTaskAssigned(
+          taskData.assigneeId,
+          updatedTask.id,
+          updatedTask.title,
+          updatedTask.projectId || undefined
+        );
       }
       
       // If task status was updated and task belongs to a project, recalculate project completion
@@ -1460,6 +1493,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             assignedAt: new Date()
           });
           
+          // Notify volunteer of new assignment
+          const project = await storage.getProject(opportunity.projectId);
+          if (project && project.organizationId) {
+            await notifyNewAssignment(
+              application.volunteerId,
+              opportunity.projectId,
+              project.organizationId
+            );
+          }
+          
           // Create activity entry for the assignment
           await storage.createVolunteerActivity({
             userId: application.volunteerId,
@@ -1470,6 +1513,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
+      
+      // Notify volunteer of application status change
+      await notifyApplicationStatusChange(
+        application.volunteerId,
+        application.opportunityId,
+        status,
+        opportunity.title
+      );
       
       broadcastUpdate("application_reviewed", updatedApplication);
       res.json(updatedApplication);
@@ -1703,6 +1754,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate request payload with schema
       const assignmentData = insertProjectAssignmentSchema.parse(req.body);
       const newAssignment = await storage.createProjectAssignment(assignmentData);
+      
+      const project = await storage.getProject(assignmentData.projectId);
+      if (project && project.organizationId) {
+        await notifyNewAssignment(
+          assignmentData.volunteerId,
+          assignmentData.projectId,
+          project.organizationId
+        );
+      }
       
       broadcastUpdate("project_assignment_created", newAssignment);
       res.status(201).json(newAssignment);
@@ -3204,15 +3264,33 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(400).json({ message: "userId must be a valid number" });
       }
       
-      // For now, return empty array
-      // Future: Query notifications table and filter by userId
-      // Future: Generate SDG-based matching notifications
-      const notifications: any[] = [];
+      const notifications = await storage.getNotifications(userId);
       
       res.json(notifications);
     } catch (err) {
       console.error("Error fetching notifications:", err);
       res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/notifications/:id/read", async (req, res) => {
+    try {
+      const notificationId = parseInt(req.params.id);
+      
+      if (isNaN(notificationId)) {
+        return res.status(400).json({ message: "Invalid notification ID" });
+      }
+      
+      const notification = await storage.markNotificationRead(notificationId);
+      
+      if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+      }
+      
+      res.json(notification);
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+      res.status(500).json({ message: "Failed to mark notification as read" });
     }
   });
 

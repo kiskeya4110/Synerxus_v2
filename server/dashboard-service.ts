@@ -755,6 +755,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const allApplications = await storage.listApplications();
     const allUsers = await storage.listUsers();
     const allOrganizations = await storage.listOrganizations();
+    const allImpactMetrics = await storage.listImpactMetrics();
 
     // Get visible project IDs using status-aware filtering
     // Excludes declined and pending assignments, includes only accepted assignments (active/completed/on-hold)
@@ -1040,6 +1041,36 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       };
     });
 
+    // Derive people metric IDs (same logic as organization dashboard)
+    const peopleMetricIds = new Set<number>();
+    allImpactMetrics.forEach(metric => {
+      const unit = (metric.unit || '').toLowerCase();
+      const category = (metric.category || '').toLowerCase();
+      const name = (metric.name || '').toLowerCase();
+      
+      if (
+        unit.includes('people') || 
+        unit.includes('person') || 
+        unit.includes('beneficiar') ||
+        category.includes('people') || 
+        category.includes('beneficiar') ||
+        name.includes('people') || 
+        name.includes('beneficiar')
+      ) {
+        peopleMetricIds.add(metric.id);
+      }
+    });
+
+    // Compute real monthly hours and people impacted using shared utility
+    const monthlyImpactSeries = buildMonthlyImpactSeries(
+      months,
+      volunteerActivities,
+      volunteerImpacts,
+      peopleMetricIds
+    );
+    const monthlyImpactData = monthlyImpactSeries.monthly;
+    const impactGrowthSeries = monthlyImpactSeries.cumulative;
+
     return {
       summary: {
         activeVolunteers: 1, // Only themselves
@@ -1065,6 +1096,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       },
       hoursByProject, // Enriched with organization names
       monthlyImpactTrend, // Algorithm-evaluated monthly impact trend with month keys
+      monthlyImpactData, // Real monthly hours and people impacted for Impact Over Time chart
+      impactGrowthSeries, // Cumulative impact growth over time for visualization
       projects: projectsWithOrganization, // Enriched projects with organization information - ALL consumers get this
       tasks: tasksWithProjects, // Enriched tasks with project and organization metadata
       activities: volunteerActivities,

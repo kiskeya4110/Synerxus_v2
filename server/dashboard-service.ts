@@ -59,6 +59,85 @@ export async function getVisibleProjectIdsForVolunteer(
 }
 
 /**
+ * Shared utility: Calculate total people impacted from impact metrics
+ * Filters impacts to only people-related metrics and sums their values
+ */
+function calculatePeopleImpacted(impacts: any[], peopleMetricIds: Set<number>): number {
+  return impacts
+    .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
+    .reduce((sum, i) => sum + (i.value || 0), 0);
+}
+
+/**
+ * Shared utility: Build monthly and cumulative impact time series
+ * Used by both volunteer and organization dashboards to ensure consistent calculations
+ */
+interface MonthlyImpactSeries {
+  monthly: Array<{ month: string; hours: number; peopleImpacted: number }>;
+  cumulative: Array<{ month: string; cumulativeHours: number; cumulativePeople: number; monthlyHours: number; monthlyPeople: number }>;
+}
+
+function buildMonthlyImpactSeries(
+  monthKeys: string[],
+  scopedActivities: any[],
+  scopedImpacts: any[],
+  peopleMetricIds: Set<number>
+): MonthlyImpactSeries {
+  // First pass: collect metrics for all months
+  const monthlyMetrics = monthKeys.map(monthKey => {
+    // Filter activities for this month
+    const monthActivities = scopedActivities.filter(a => {
+      const activityDate = new Date(a.date);
+      const activityMonthKey = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;
+      return activityMonthKey === monthKey;
+    });
+
+    const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
+
+    return { month: monthKey, hours };
+  });
+
+  // Build monthly impact data with people counts
+  const monthlyImpactData = monthlyMetrics.map(metrics => {
+    const monthImpacts = scopedImpacts.filter(i => {
+      const impactDate = new Date(i.date);
+      const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
+      return impactMonthKey === metrics.month;
+    });
+
+    const peopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
+
+    return {
+      month: metrics.month,
+      hours: metrics.hours,
+      peopleImpacted,
+    };
+  });
+
+  // Build cumulative growth series
+  let cumulativeHours = 0;
+  let cumulativePeople = 0;
+  
+  const impactGrowthSeries = monthlyImpactData.map(monthData => {
+    cumulativeHours += monthData.hours;
+    cumulativePeople += monthData.peopleImpacted;
+
+    return {
+      month: monthData.month,
+      cumulativeHours,
+      cumulativePeople,
+      monthlyHours: monthData.hours,
+      monthlyPeople: monthData.peopleImpacted,
+    };
+  });
+
+  return {
+    monthly: monthlyImpactData,
+    cumulative: impactGrowthSeries,
+  };
+}
+
+/**
  * Calculate organization impact score with normalized weighted metrics
  * @param params - Monthly metrics and normalization baselines
  * @returns Impact score (0-100)
@@ -204,13 +283,6 @@ export async function getDashboardDataForOrganization(userId: number) {
         })
         .map(m => m.id)
     );
-    
-    // Helper function to calculate people impacted from impacts
-    const calculatePeopleImpacted = (impacts: typeof organizationImpacts) => {
-      return impacts
-        .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
-        .reduce((sum, i) => sum + (i.value || 0), 0);
-    };
 
     // Filter project assignments to only organization's projects
     const organizationAssignments = allProjectAssignments.filter(pa => organizationProjectIds.has(pa.projectId));
@@ -545,7 +617,7 @@ export async function getDashboardDataForOrganization(userId: number) {
         return impactMonthKey === metrics.month;
       });
       
-      const peopleImpacted = calculatePeopleImpacted(monthImpacts);
+      const peopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
       
       return {
         month: metrics.month,
@@ -555,7 +627,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     });
 
     // Calculate total people impacted using helper
-    const totalPeopleImpacted = calculatePeopleImpacted(organizationImpacts);
+    const totalPeopleImpacted = calculatePeopleImpacted(organizationImpacts, peopleMetricIds);
 
     // Build cumulative impact growth series for Impact Visualization
     let cumulativeHours = 0;
@@ -619,7 +691,7 @@ export async function getDashboardDataForOrganization(userId: number) {
         
         // Add people impacted from impacts on this project using helper
         const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
-        sdgData.peopleImpacted += calculatePeopleImpacted(projectImpacts);
+        sdgData.peopleImpacted += calculatePeopleImpacted(projectImpacts, peopleMetricIds);
       });
     });
     

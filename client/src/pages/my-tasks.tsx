@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp } from "lucide-react";
+import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Task, Project, ProjectAssignment, User } from "@shared/schema";
+import type { Task, Project, ProjectAssignment, User, Organization } from "@shared/schema";
 
 interface TaskWithProject extends Task {
   project?: Project;
@@ -58,8 +58,17 @@ export default function MyTasks() {
     queryKey: ["/api/projects"]
   });
 
+  // Fetch all organizations to enrich project data
+  const { data: allOrganizations = [] } = useQuery<Organization[]>({
+    queryKey: ["/api/organizations"]
+  });
+
   const getProject = (projectId: number) => {
     return allProjects.find(p => p.id === projectId);
+  };
+
+  const getOrganization = (organizationId: number) => {
+    return allOrganizations.find(org => org.id === organizationId);
   };
 
   // Mutation to update task status
@@ -212,6 +221,7 @@ export default function MyTasks() {
             <div className="space-y-3">
               {tasksByStatus.todo.map((task) => {
                 const project = getProject(task.projectId!);
+                const organization = project && project.organizationId ? getOrganization(project.organizationId) : null;
                 return (
                   <Card key={task.id}>
                     <CardContent className="pt-6">
@@ -227,10 +237,18 @@ export default function MyTasks() {
                             <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                           )}
                           {project && (
-                            <p className="text-sm text-gray-500">
-                              <FolderKanban className="inline h-3 w-3 mr-1" />
-                              {project.name}
-                            </p>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm text-gray-500">
+                                <FolderKanban className="inline h-3 w-3 mr-1" />
+                                {project.name}
+                              </p>
+                              {organization && (
+                                <p className="text-sm text-gray-400">
+                                  <Building2 className="inline h-3 w-3 mr-1" />
+                                  {organization.name}
+                                </p>
+                              )}
+                            </div>
                           )}
                         </div>
                         <Button 
@@ -259,6 +277,7 @@ export default function MyTasks() {
             <div className="space-y-3">
               {tasksByStatus.inProgress.map((task) => {
                 const project = getProject(task.projectId!);
+                const organization = project && project.organizationId ? getOrganization(project.organizationId) : null;
                 return (
                   <Card key={task.id} className="border-blue-200">
                     <CardContent className="pt-6">
@@ -274,10 +293,18 @@ export default function MyTasks() {
                             <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                           )}
                           {project && (
-                            <p className="text-sm text-gray-500">
-                              <FolderKanban className="inline h-3 w-3 mr-1" />
-                              {project.name}
-                            </p>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm text-gray-500">
+                                <FolderKanban className="inline h-3 w-3 mr-1" />
+                                {project.name}
+                              </p>
+                              {organization && (
+                                <p className="text-sm text-gray-400">
+                                  <Building2 className="inline h-3 w-3 mr-1" />
+                                  {organization.name}
+                                </p>
+                              )}
+                            </div>
                           )}
                         </div>
                         <Button 
@@ -305,6 +332,7 @@ export default function MyTasks() {
             <div className="space-y-3">
               {tasksByStatus.completed.slice(0, 5).map((task) => {
                 const project = getProject(task.projectId!);
+                const organization = project && project.organizationId ? getOrganization(project.organizationId) : null;
                 return (
                   <Card key={task.id} className="opacity-75">
                     <CardContent className="pt-6">
@@ -317,10 +345,18 @@ export default function MyTasks() {
                             </Badge>
                           </div>
                           {project && (
-                            <p className="text-sm text-gray-500">
-                              <FolderKanban className="inline h-3 w-3 mr-1" />
-                              {project.name}
-                            </p>
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm text-gray-500">
+                                <FolderKanban className="inline h-3 w-3 mr-1" />
+                                {project.name}
+                              </p>
+                              {organization && (
+                                <p className="text-sm text-gray-400">
+                                  <Building2 className="inline h-3 w-3 mr-1" />
+                                  {organization.name}
+                                </p>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -338,6 +374,7 @@ export default function MyTasks() {
         <TabsContent value="projects" className="space-y-4">
           {projectAssignments.map((assignment) => {
             const project = getProject(assignment.projectId);
+            const organization = project && project.organizationId ? getOrganization(project.organizationId) : null;
             const projectTasks = tasks.filter(t => t.projectId === assignment.projectId);
             const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
             const taskProgress = projectTasks.length > 0
@@ -357,6 +394,12 @@ export default function MyTasks() {
                           {assignment.status}
                         </Badge>
                       </div>
+                      {organization && (
+                        <p className="text-sm text-gray-500 mb-1">
+                          <Building2 className="inline h-3 w-3 mr-1" />
+                          {organization.name}
+                        </p>
+                      )}
                       {assignment.role && (
                         <p className="text-sm text-gray-600">Role: {assignment.role}</p>
                       )}

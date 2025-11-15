@@ -181,8 +181,8 @@ export default function MyApplicationsPage() {
                           <Link href={`/opportunities/${app.opportunityId}`} className="hover:underline">
                             <CardTitle className="text-lg cursor-pointer">{app.opportunity?.title || "Unknown Opportunity"}</CardTitle>
                           </Link>
-                          {app.opportunity?.organization && (
-                            <p className="text-sm text-muted-foreground mt-1">{app.opportunity.organization}</p>
+                          {app.opportunity?.organization?.name && (
+                            <p className="text-sm text-muted-foreground mt-1">{app.opportunity.organization.name}</p>
                           )}
                           <div className="mt-2 flex flex-wrap gap-2">
                             {getStatusBadge(app.status)}
@@ -258,8 +258,8 @@ export default function MyApplicationsPage() {
                           <Link href={`/opportunities/${app.opportunityId}`} className="hover:underline">
                             <CardTitle className="text-lg cursor-pointer">{app.opportunity?.title || "Unknown Opportunity"}</CardTitle>
                           </Link>
-                          {app.opportunity?.organization && (
-                            <p className="text-sm text-muted-foreground mt-1">{app.opportunity.organization}</p>
+                          {app.opportunity?.organization?.name && (
+                            <p className="text-sm text-muted-foreground mt-1">{app.opportunity.organization.name}</p>
                           )}
                           <div className="mt-2 flex flex-wrap gap-2">
                             {getStatusBadge(app.status)}
@@ -320,8 +320,8 @@ export default function MyApplicationsPage() {
                           <Link href={`/opportunities/${app.opportunityId}`} className="hover:underline">
                             <CardTitle className="text-lg cursor-pointer">{app.opportunity?.title || "Unknown Opportunity"}</CardTitle>
                           </Link>
-                          {app.opportunity?.organization && (
-                            <p className="text-sm text-muted-foreground mt-1">{app.opportunity.organization}</p>
+                          {app.opportunity?.organization?.name && (
+                            <p className="text-sm text-muted-foreground mt-1">{app.opportunity.organization.name}</p>
                           )}
                           <div className="mt-2 flex flex-wrap gap-2">
                             {getStatusBadge(app.status)}

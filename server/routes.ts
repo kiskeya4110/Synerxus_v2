@@ -1415,7 +1415,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Opportunity not found" });
       }
       
-      res.json(opportunity);
+      // Enrich with organization information
+      let enrichedOpportunity: any = { ...opportunity };
+      if (opportunity.organizationId) {
+        const organization = await storage.getOrganization(opportunity.organizationId);
+        if (organization) {
+          enrichedOpportunity.organizationName = organization.name; // For consistency with enrichment service
+          enrichedOpportunity.organization = organization; // Full organization object for frontend
+        }
+      }
+      
+      res.json(enrichedOpportunity);
     } catch (err) {
       console.error("Error fetching opportunity:", err);
       res.status(500).json({ message: "Failed to fetch opportunity" });

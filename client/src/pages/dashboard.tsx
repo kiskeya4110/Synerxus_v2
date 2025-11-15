@@ -344,55 +344,68 @@ export default function Dashboard() {
     switch (title) {
       case "Hours Contributed":
       case "Total Hours":
-        // Group hours by project with individual activities
-        const hoursByProject = new Map<string, { projectName: string; totalHours: number; activities: any[] }>();
-        
-        filteredData.activities.forEach((a: any) => {
-          // Use a string key to handle both valid IDs and undefined
-          const projectKey = a.projectId !== undefined && a.projectId !== null 
-            ? `project_${a.projectId}` 
-            : 'no_project';
+        // For organization dashboards, use backend-computed projectHours
+        if (dashboardType === "organization" && dashboardData?.projectHours) {
+          detailData = {
+            title: "Total Volunteer Hours by Project",
+            items: dashboardData.projectHours.map((ph: any) => ({
+              label: ph.projectName,
+              value: `${parseFloat(ph.hours.toFixed(2))} hours`,
+              organizationName: ph.organizationName,
+            })),
+            totalHours: dashboardData.projectHours.reduce((sum: number, ph: any) => sum + ph.hours, 0),
+          };
+        } else {
+          // For volunteers, group hours by project with individual activities
+          const hoursByProject = new Map<string, { projectName: string; totalHours: number; activities: any[] }>();
           
-          // Look up project name from filteredData.projects first, then fall back to global projects
-          let projectName = "Unknown Project";
-          if (a.projectId !== undefined && a.projectId !== null) {
-            const project = filteredData.projects.find((p: any) => p.id === a.projectId) ||
-                           projects.find((p: any) => p.id === a.projectId);
-            projectName = project?.name || "Unknown Project";
-          } else {
-            projectName = "Unassigned Activities";
-          }
-          
-          if (!hoursByProject.has(projectKey)) {
-            hoursByProject.set(projectKey, {
-              projectName,
-              totalHours: 0,
-              activities: []
+          filteredData.activities.forEach((a: any) => {
+            // Use a string key to handle both valid IDs and undefined
+            const projectKey = a.projectId !== undefined && a.projectId !== null 
+              ? `project_${a.projectId}` 
+              : 'no_project';
+            
+            // Look up project name from filteredData.projects first, then fall back to global projects
+            let projectName = "Unknown Project";
+            if (a.projectId !== undefined && a.projectId !== null) {
+              const project = filteredData.projects.find((p: any) => p.id === a.projectId) ||
+                             projects.find((p: any) => p.id === a.projectId);
+              projectName = project?.name || "Unknown Project";
+            } else {
+              projectName = "Unassigned Activities";
+            }
+            
+            if (!hoursByProject.has(projectKey)) {
+              hoursByProject.set(projectKey, {
+                projectName,
+                totalHours: 0,
+                activities: []
+              });
+            }
+            
+            const projectData = hoursByProject.get(projectKey)!;
+            projectData.totalHours += Number(a.hours) || 0;
+            projectData.activities.push({
+              date: a.date,
+              hours: Number(a.hours) || 0,
+              description: a.description || a.activityType || 'Activity'
             });
-          }
-          
-          const projectData = hoursByProject.get(projectKey)!;
-          projectData.totalHours += Number(a.hours) || 0;
-          projectData.activities.push({
-            date: a.date,
-            hours: Number(a.hours) || 0,
-            description: a.description || a.activityType || 'Activity'
           });
-        });
-        
-        detailData = {
-          title: dashboardType === "volunteer" ? "Volunteer Hours Breakdown" : "Total Volunteer Hours by Project",
-          items: Array.from(hoursByProject.values()).map((data) => ({
-            label: data.projectName,
-            value: `${parseFloat(data.totalHours.toFixed(2))} hours total`,
-            isProjectGroup: true,
-            activities: data.activities.map((act: any) => ({
-              date: formatDate(new Date(act.date)),
-              hours: `${parseFloat(act.hours.toFixed(2))} hours`,
-              description: act.description
-            }))
-          })),
-        };
+          
+          detailData = {
+            title: "Volunteer Hours Breakdown",
+            items: Array.from(hoursByProject.values()).map((data) => ({
+              label: data.projectName,
+              value: `${parseFloat(data.totalHours.toFixed(2))} hours total`,
+              isProjectGroup: true,
+              activities: data.activities.map((act: any) => ({
+                date: formatDate(new Date(act.date)),
+                hours: `${parseFloat(act.hours.toFixed(2))} hours`,
+                description: act.description
+              }))
+            })),
+          };
+        }
         break;
       case "Tasks Completed":
         detailData = {
@@ -691,6 +704,41 @@ export default function Dashboard() {
             )}
           </TabsList>
           <TabsContent value="tasks" className="mt-4">
+            {/* Task KPIs */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Total Tasks</div>
+                  <div className="text-xl font-bold">{filteredData.tasks.length}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Completed</div>
+                  <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                    {filteredData.tasks.filter((t: any) => t.status?.toLowerCase() === 'completed').length}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-gray-600 dark:text-gray-400">In Progress</div>
+                  <div className="text-xl font-bold text-yellow-600 dark:text-yellow-400">
+                    {filteredData.tasks.filter((t: any) => t.status?.toLowerCase() === 'in progress').length}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-3">
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Completion Rate</div>
+                  <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                    {filteredData.tasks.length > 0 
+                      ? Math.round((filteredData.tasks.filter((t: any) => t.status?.toLowerCase() === 'completed').length / filteredData.tasks.length) * 100)
+                      : 0}%
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
             <TaskTable tasks={formatTasksForTable(filteredData.tasks, projects)} />
           </TabsContent>
           <TabsContent value="activity" className="mt-4">

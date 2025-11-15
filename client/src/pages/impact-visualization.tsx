@@ -202,6 +202,29 @@ export default function ImpactVisualization() {
 
   // Prepare time series chart data
   const impactOverTimeData = useMemo(() => {
+    // For organizations, use backend-computed monthlyImpactData if available
+    if (currentUser?.userType === 'organization' && dashboardData?.monthlyImpactData) {
+      const labels = dashboardData.monthlyImpactData.map((m: any) => {
+        const [year, monthNum] = m.month.split('-');
+        const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+        return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      });
+      const values = dashboardData.monthlyImpactData.map((m: any) => m.peopleImpacted);
+
+      return {
+        labels,
+        datasets: [{
+          label: 'People Impacted',
+          data: values,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true,
+          tension: 0.4,
+        }],
+      };
+    }
+
+    // Fallback: compute manually from projectImpacts
     const monthlyData = new Map();
     projectImpacts.forEach((impact: any) => {
       const date = new Date(impact.date);
@@ -231,10 +254,30 @@ export default function ImpactVisualization() {
         tension: 0.4,
       }],
     };
-  }, [projectImpacts]);
+  }, [projectImpacts, dashboardData, currentUser]);
 
   // Prepare volunteer hours chart data
   const volunteerHoursData = useMemo(() => {
+    // For organizations, use backend-computed monthlyImpactData if available
+    if (currentUser?.userType === 'organization' && dashboardData?.monthlyImpactData) {
+      const labels = dashboardData.monthlyImpactData.map((m: any) => {
+        const [year, monthNum] = m.month.split('-');
+        const date = new Date(parseInt(year), parseInt(monthNum) - 1);
+        return date.toLocaleDateString('en-US', { month: 'short' });
+      });
+      const values = dashboardData.monthlyImpactData.map((m: any) => m.hours);
+
+      return {
+        labels,
+        datasets: [{
+          label: 'Hours',
+          data: values,
+          backgroundColor: 'rgba(147, 51, 234, 0.8)',
+        }],
+      };
+    }
+
+    // Fallback: compute manually from volunteerActivities
     const monthlyHours = new Map();
     volunteerActivities.forEach((activity: any) => {
       const date = new Date(activity.date);
@@ -261,10 +304,29 @@ export default function ImpactVisualization() {
         backgroundColor: 'rgba(147, 51, 234, 0.8)',
       }],
     };
-  }, [volunteerActivities]);
+  }, [volunteerActivities, dashboardData, currentUser]);
 
   // Prepare SDG radar chart data
   const sdgRadarData = useMemo(() => {
+    // For organizations, use backend-computed impactBySDG if available
+    if (currentUser?.userType === 'organization' && dashboardData?.impactBySDG) {
+      const sortedSDGs = dashboardData.impactBySDG.sort((a: any, b: any) => a.sdgGoal - b.sdgGoal);
+      const labels = sortedSDGs.map((item: any) => getSDGName(item.sdgGoal));
+      const values = sortedSDGs.map((item: any) => item.peopleImpacted || item.hours);
+
+      return {
+        labels,
+        datasets: [{
+          label: 'Impact Score',
+          data: values,
+          backgroundColor: 'rgba(34, 197, 94, 0.2)',
+          borderColor: 'rgb(34, 197, 94)',
+          borderWidth: 2,
+        }],
+      };
+    }
+
+    // Fallback: compute manually from projects and projectImpacts
     const sdgImpacts = new Map();
     projects.forEach((project: any) => {
       if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
@@ -293,7 +355,7 @@ export default function ImpactVisualization() {
         borderWidth: 2,
       }],
     };
-  }, [projects, projectImpacts]);
+  }, [projects, projectImpacts, dashboardData, currentUser]);
 
   const handleMetricClick = (metricName: string, value: number) => {
     let details: any = { title: metricName, items: [] };

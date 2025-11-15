@@ -171,6 +171,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     const allProjectAssignments = await storage.listProjectAssignments();
     const allApplications = await storage.listApplications();
     const allUsers = await storage.listUsers();
+    const allImpactMetrics = await storage.listImpactMetrics();
 
     // Filter to ONLY this organization's projects
     const organizationProjects = allProjects.filter(p => p.organizationId === organizationId);
@@ -184,6 +185,32 @@ export async function getDashboardDataForOrganization(userId: number) {
 
     // Filter impacts to only organization's projects
     const organizationImpacts = allImpacts.filter(i => i.projectId && organizationProjectIds.has(i.projectId));
+    
+    // Identify metrics that represent people/beneficiaries
+    // Check unit, category, or name for people-related keywords
+    const peopleMetricIds = new Set(
+      allImpactMetrics
+        .filter(metric => {
+          const unit = metric.unit?.toLowerCase() || '';
+          const category = metric.category?.toLowerCase() || '';
+          const name = metric.name?.toLowerCase() || '';
+          return unit.includes('people') || 
+                 unit.includes('person') || 
+                 unit.includes('beneficiar') ||
+                 category.includes('beneficiar') ||
+                 category.includes('people') ||
+                 name.includes('people impacted') ||
+                 name.includes('beneficiar');
+        })
+        .map(m => m.id)
+    );
+    
+    // Helper function to calculate people impacted from impacts
+    const calculatePeopleImpacted = (impacts: typeof organizationImpacts) => {
+      return impacts
+        .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
+        .reduce((sum, i) => sum + (i.value || 0), 0);
+    };
 
     // Filter project assignments to only organization's projects
     const organizationAssignments = allProjectAssignments.filter(pa => organizationProjectIds.has(pa.projectId));
@@ -486,6 +513,118 @@ export async function getDashboardDataForOrganization(userId: number) {
       }),
     }));
 
+    // Calculate project hours breakdown for "Total Volunteer Hours by Project" dialog
+    const projectHoursMap = new Map<number, { projectId: number; projectName: string; organizationName: string; hours: number }>();
+    organizationActivities.forEach(activity => {
+      if (!activity.projectId) return;
+      
+      const project = organizationProjects.find(p => p.id === activity.projectId);
+      if (!project) return;
+      
+      if (!projectHoursMap.has(activity.projectId)) {
+        projectHoursMap.set(activity.projectId, {
+          projectId: activity.projectId,
+          projectName: project.name,
+          organizationName: user.displayName || user.username || 'Unknown Organization',
+          hours: 0
+        });
+      }
+      
+      const entry = projectHoursMap.get(activity.projectId)!;
+      entry.hours += activity.hours;
+    });
+    
+    const projectHours = Array.from(projectHoursMap.values()).sort((a, b) => b.hours - a.hours);
+
+    // Calculate real monthly impact data (hours and peopleImpacted) for Impact Over Time chart
+    const monthlyImpactData = monthlyMetrics.map(metrics => {
+      // Calculate people impacted from impacts table using helper
+      const monthImpacts = organizationImpacts.filter(i => {
+        const impactDate = new Date(i.date);
+        const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
+        return impactMonthKey === metrics.month;
+      });
+      
+      const peopleImpacted = calculatePeopleImpacted(monthImpacts);
+      
+      return {
+        month: metrics.month,
+        hours: metrics.hours,
+        peopleImpacted,
+      };
+    });
+
+    // Calculate total people impacted using helper
+    const totalPeopleImpacted = calculatePeopleImpacted(organizationImpacts);
+
+    // Build cumulative impact growth series for Impact Visualization
+    let cumulativeHours = 0;
+    let cumulativePeople = 0;
+    const impactGrowthSeries = monthlyImpactData.map(monthData => {
+      cumulativeHours += monthData.hours;
+      cumulativePeople += monthData.peopleImpacted;
+      
+      return {
+        month: monthData.month,
+        cumulativeHours,
+        cumulativePeople,
+        monthlyHours: monthData.hours,
+        monthlyPeople: monthData.peopleImpacted,
+      };
+    });
+
+    // Enrich recent activities with project and organization names (last 10 only)
+    const enrichedRecentActivities = recentUnifiedActivities.slice(0, 10).map(activity => {
+      // Extract project name from target if it's a task completion
+      let projectName = '';
+      let organizationName = user.displayName || user.username || 'Unknown Organization';
+      
+      if (activity.type === 'hours_logged' || activity.type === 'volunteer_assigned') {
+        projectName = activity.target;
+      } else if (activity.type === 'task_completed') {
+        // Extract project name from "Task Title" in ProjectName format
+        const match = activity.target.match(/in (.+)$/);
+        projectName = match ? match[1] : '';
+      }
+      
+      return {
+        ...activity,
+        projectName,
+        organizationName,
+      };
+    });
+
+    // Calculate impact by SDG from real project and activity data
+    const impactBySDGMap = new Map<number, { sdgGoal: number; hours: number; projects: number; peopleImpacted: number }>();
+    
+    organizationProjects.forEach(project => {
+      if (!project.sdgGoals || !Array.isArray(project.sdgGoals)) return;
+      
+      project.sdgGoals.forEach(sdgGoal => {
+        if (!impactBySDGMap.has(sdgGoal)) {
+          impactBySDGMap.set(sdgGoal, {
+            sdgGoal,
+            hours: 0,
+            projects: 0,
+            peopleImpacted: 0,
+          });
+        }
+        
+        const sdgData = impactBySDGMap.get(sdgGoal)!;
+        sdgData.projects += 1;
+        
+        // Add hours from activities on this project
+        const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
+        sdgData.hours += projectActivities.reduce((sum, a) => sum + a.hours, 0);
+        
+        // Add people impacted from impacts on this project using helper
+        const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
+        sdgData.peopleImpacted += calculatePeopleImpacted(projectImpacts);
+      });
+    });
+    
+    const impactBySDG = Array.from(impactBySDGMap.values()).sort((a, b) => b.hours - a.hours);
+
     return {
       summary: {
         activeVolunteers,
@@ -495,19 +634,24 @@ export async function getDashboardDataForOrganization(userId: number) {
         totalTasks,
         sdgsAddressed: uniqueSDGs.size,
         impactScore,
-        recentActivities: recentUnifiedActivities, // Unified activity feed with all activity types
+        recentActivities: enrichedRecentActivities, // Last 10 activities with project/org names
         organizationPrimarySdgs, // Organization's selected SDGs from profile settings
       },
       projects: organizationProjects,
       projectsWithVolunteers, // Enriched projects with volunteers and progress
       tasks: tasksWithProjects, // Enriched tasks with project metadata
-      activities: recentUnifiedActivities, // Unified activity feed for activity tab
+      activities: enrichedRecentActivities, // Last 10 activities for activity tab
       impacts: organizationImpacts,
       volunteers: organizationVolunteers,
       volunteerSummaries, // Enriched volunteer data with summaries
       applications: organizationApplications,
       projectAssignments: organizationAssignments,
-      monthlyImpactTrend, // Algorithm-evaluated monthly impact trend
+      monthlyImpactTrend, // Algorithm-evaluated monthly impact trend (normalized scores)
+      projectHours, // Project-level hours breakdown for dialog
+      monthlyImpactData, // Real monthly hours and people impacted for Impact Over Time chart
+      impactGrowthSeries, // Cumulative impact growth over time for visualization
+      impactBySDG, // Real impact aggregated by SDG for Impact by SDG chart
+      totalPeopleImpacted, // Total people impacted across all projects
     };
   } catch (error) {
     console.error("Error getting dashboard data for organization:", error);

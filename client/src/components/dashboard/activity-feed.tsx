@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { BellIcon, Clock, User, Target } from "lucide-react";
+import { BellIcon, Clock, User, Target, FolderKanban, Building2 } from "lucide-react";
 import { Link } from "wouter";
 
 export interface Activity {
@@ -17,6 +17,8 @@ export interface Activity {
   action: string;
   target: string;
   time: string;
+  projectName?: string;
+  organizationName?: string;
 }
 
 interface ActivityFeedProps {
@@ -153,6 +155,26 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
                     <p className="text-base">{selectedActivity.time}</p>
                   </div>
                 </div>
+
+                {selectedActivity.projectName && (
+                  <div className="flex items-start gap-2">
+                    <FolderKanban className="h-4 w-4 text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Project</p>
+                      <p className="text-base font-semibold">{selectedActivity.projectName}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedActivity.organizationName && (
+                  <div className="flex items-start gap-2">
+                    <Building2 className="h-4 w-4 text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Organization</p>
+                      <p className="text-base font-semibold">{selectedActivity.organizationName}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="border-t pt-4">

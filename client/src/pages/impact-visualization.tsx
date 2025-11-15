@@ -388,8 +388,12 @@ export default function ImpactVisualization() {
     setSelectedMetric(details);
   };
 
-  // Check if we have any data to display
-  const hasData = projects.length > 0 || projectImpacts.length > 0 || volunteerActivities.length > 0;
+  // Check if we have any data to display (use backend monthlyImpactData as primary source)
+  const hasData = 
+    (dashboardData?.monthlyImpactData && dashboardData.monthlyImpactData.length > 0) ||
+    projects.length > 0 || 
+    projectImpacts.length > 0 || 
+    volunteerActivities.length > 0;
 
   return (
     <>

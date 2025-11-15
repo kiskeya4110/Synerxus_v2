@@ -445,6 +445,20 @@ export default function DiscoverOpportunities() {
                     </div>
                   )}
 
+                  {/* Match Reasons - Why this matches you */}
+                  {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
+                    <div className="p-2.5 bg-blue-50 dark:bg-blue-950 rounded-md">
+                      <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
+                        Why this matches you:
+                      </p>
+                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
+                        {opportunity.matchReasons.slice(0, 3).map((reason, idx) => (
+                          <li key={idx}>• {reason}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {/* Requirements */}
                   {opportunity.requirements && (
                     <div>
@@ -456,23 +470,8 @@ export default function DiscoverOpportunities() {
                   {/* Benefits */}
                   {opportunity.benefits && (
                     <div>
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Benefits:</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.benefits}</p>
-                    </div>
-                  )}
-
-                  {/* Match Reasons */}
-                  {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Why this matches you:</p>
-                      <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
-                        {opportunity.matchReasons.slice(0, 2).map((reason, idx) => (
-                          <li key={idx} className="flex items-start">
-                            <span className="mr-1.5">•</span>
-                            <span className="line-clamp-1">{reason}</span>
-                          </li>
-                        ))}
-                      </ul>
                     </div>
                   )}
 

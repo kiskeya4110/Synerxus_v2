@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CalendarIcon, Edit, Eye } from "lucide-react";
+import { CalendarIcon, Edit, Eye, Building2 } from "lucide-react";
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -20,6 +20,8 @@ interface ProjectCardProps {
     name: string;
     avatar?: string;
   }[];
+  organizationName?: string;
+  organizationId?: number;
 }
 
 // Helper function to normalize and capitalize project status
@@ -52,7 +54,9 @@ export default function ProjectCard({
   status,
   progress,
   timeRemaining,
-  volunteers
+  volunteers,
+  organizationName,
+  organizationId
 }: ProjectCardProps) {
   const [showDialog, setShowDialog] = useState(false);
   const actualProjectId = projectId || id;
@@ -76,8 +80,16 @@ export default function ProjectCard({
   const CardContent = () => (
     <>
       <div className="flex justify-between items-start">
-        <div>
-          <h3 className="font-medium text-lg">{title}</h3>
+        <div className="flex-1 mr-2">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-medium text-lg">{title}</h3>
+          </div>
+          {organizationName && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
+              <Building2 className="w-3 h-3" />
+              <span>{organizationName}</span>
+            </div>
+          )}
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">{description}</p>
         </div>
         <Badge variant="outline" className={getStatusBadgeClasses()}>
@@ -154,9 +166,17 @@ export default function ProjectCard({
           <div className="space-y-6 mt-4">
             {/* Status and Progress */}
             <div className="flex items-center justify-between">
-              <Badge variant="outline" className={getStatusBadgeClasses()}>
-                {normalizedStatus}
-              </Badge>
+              <div className="flex gap-2 items-center">
+                <Badge variant="outline" className={getStatusBadgeClasses()}>
+                  {normalizedStatus}
+                </Badge>
+                {organizationName && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Building2 className="w-3 h-3" />
+                    {organizationName}
+                  </Badge>
+                )}
+              </div>
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <CalendarIcon className="h-4 w-4" />
                 <span>{timeRemaining}</span>

@@ -538,6 +538,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const allProjectAssignments = await storage.listProjectAssignments();
     const allApplications = await storage.listApplications();
     const allUsers = await storage.listUsers();
+    const allOrganizations = await storage.listOrganizations();
 
     // Get visible project IDs using status-aware filtering
     // Excludes declined and pending assignments, includes only accepted assignments (active/completed/on-hold)
@@ -682,9 +683,33 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       matchScore * 0.10
     );
 
-    // Create project map from assigned projects
+    // Create organization map for enrichment
+    const organizationMap = new Map(
+      allOrganizations.map(org => [org.id, { name: org.name, logo: org.logo }])
+    );
+
+    // Enrich assigned projects with organization information
+    const projectsWithOrganization = assignedProjects.map(project => ({
+      ...project,
+      organizationName: project.organizationId 
+        ? organizationMap.get(project.organizationId)?.name || 'Unknown Organization'
+        : undefined,
+      organizationLogo: project.organizationId 
+        ? organizationMap.get(project.organizationId)?.logo
+        : undefined,
+    }));
+
+    // Create project map from enriched projects
     const projectMap = new Map(
-      assignedProjects.map(p => [p.id, { name: p.name, status: p.status }])
+      projectsWithOrganization.map(p => [
+        p.id, 
+        { 
+          name: p.name, 
+          status: p.status,
+          organizationName: p.organizationName,
+          organizationId: p.organizationId,
+        }
+      ])
     );
 
     // Create a map of user data for assignee lookup
@@ -692,30 +717,37 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       allUsers.map(u => [u.id, { name: u.displayName || u.username || 'Unknown', avatar: u.avatar }])
     );
 
-    // Enrich volunteer tasks with project metadata and assignee details
-    const tasksWithProjects = volunteerTasks.map(task => ({
-      ...task,
-      projectId: task.projectId,
-      projectName: task.projectId ? projectMap.get(task.projectId)?.name || 'Unknown Project' : undefined,
-      projectStatus: task.projectId ? projectMap.get(task.projectId)?.status : undefined,
-      assignee: task.assigneeId ? {
-        id: task.assigneeId.toString(),
-        name: userMap.get(task.assigneeId)?.name || 'Unknown',
-        avatar: userMap.get(task.assigneeId)?.avatar,
-      } : undefined,
-    }));
+    // Enrich volunteer tasks with project metadata, organization, and assignee details
+    const tasksWithProjects = volunteerTasks.map(task => {
+      const projectInfo = task.projectId ? projectMap.get(task.projectId) : undefined;
+      return {
+        ...task,
+        projectId: task.projectId,
+        projectName: projectInfo?.name || 'Unknown Project',
+        projectStatus: projectInfo?.status,
+        organizationName: projectInfo?.organizationName,
+        organizationId: projectInfo?.organizationId,
+        assignee: task.assigneeId ? {
+          id: task.assigneeId.toString(),
+          name: userMap.get(task.assigneeId)?.name || 'Unknown',
+          avatar: userMap.get(task.assigneeId)?.avatar,
+        } : undefined,
+      };
+    });
 
     // Calculate application statistics
     const pendingApplications = volunteerApplications.filter(app => app.status?.toLowerCase() === 'pending').length;
     const rejectedApplications = volunteerApplications.filter(app => app.status?.toLowerCase() === 'rejected').length;
 
-    // Calculate hours breakdown by project
-    const hoursByProject = assignedProjects.map(project => {
+    // Calculate hours breakdown by project with organization info
+    const hoursByProject = projectsWithOrganization.map(project => {
       const projectActivities = volunteerActivities.filter(a => a.projectId === project.id);
       const projectHours = projectActivities.reduce((sum, a) => sum + a.hours, 0);
       return {
         projectId: project.id,
         projectName: project.name,
+        organizationName: project.organizationName,
+        organizationId: project.organizationId,
         hours: projectHours,
         activityCount: projectActivities.length,
       };
@@ -815,10 +847,10 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         accepted: acceptedApplications,
         rejected: rejectedApplications,
       },
-      hoursByProject,
+      hoursByProject, // Enriched with organization names
       monthlyImpactTrend, // Algorithm-evaluated monthly impact trend with month keys
-      projects: assignedProjects,
-      tasks: tasksWithProjects, // Enriched tasks with project metadata
+      projects: projectsWithOrganization, // Enriched projects with organization information - ALL consumers get this
+      tasks: tasksWithProjects, // Enriched tasks with project and organization metadata
       activities: volunteerActivities,
       impacts: volunteerImpacts, // Project impacts for assigned projects
       applications: volunteerApplications,

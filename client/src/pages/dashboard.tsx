@@ -666,6 +666,8 @@ export default function Dashboard() {
               progress={project.completionPercentage || 0}
               timeRemaining={getTimeRemaining(project.endDate)}
               volunteers={project.volunteers || []}
+              organizationName={project.organizationName}
+              organizationId={project.organizationId}
             />
           ))}
           {filteredData.projects.length === 0 && (

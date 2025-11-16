@@ -15,14 +15,17 @@ export default function Logo({
   const sizes = {
     sm: {
       logo: "h-8",
+      text: "text-[1.4rem]",
       letterSpacing: "0.02em",
     },
     md: {
       logo: "h-14 sm:h-12",
+      text: "text-[2.4rem] sm:text-[2.2rem]",
       letterSpacing: "0.03em",
     },
     lg: {
       logo: "h-16",
+      text: "text-[2.85rem]",
       letterSpacing: "0.04em",
     },
   };
@@ -40,7 +43,7 @@ export default function Logo({
         />
       )}
       <span
-        className={cn(sizeClasses.logo, "font-bold whitespace-nowrap leading-none flex items-center")}
+        className={cn("font-bold whitespace-nowrap leading-none flex items-center", sizeClasses.text)}
         style={{ letterSpacing: sizeClasses.letterSpacing }}
       >
         <span style={{ color: "#1e3a8a" }}>SYNER</span>

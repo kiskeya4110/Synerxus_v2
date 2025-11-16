@@ -359,19 +359,19 @@ export default function Volunteers() {
                       <p className="text-white/90 text-sm mb-3">{volunteerProfile.volunteerProfile?.bio || "Volunteer"}</p>
                       <div className="flex items-center gap-4 text-sm flex-wrap">
                         <div className="flex items-center gap-1.5">
-                          <Award className="w-4 h-4" />
-                          <span className="font-semibold">
-                            {selectedVolunteerData?.hours ? `${Math.min(5, Math.round((selectedVolunteerData.hours / 20) * 10) / 10)}` : "4.5"} Rating
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
                           <Clock className="w-4 h-4" />
-                          <span>{selectedVolunteerData?.hours || 0} Hours Contributed</span>
+                          <span className="font-semibold">{selectedVolunteerData?.hours || 0} Hours</span>
                         </div>
+                        {selectedVolunteerData?.tasksCompleted !== undefined && (
+                          <div className="flex items-center gap-1.5">
+                            <Award className="w-4 h-4" />
+                            <span>{selectedVolunteerData.tasksCompleted} Tasks Completed</span>
+                          </div>
+                        )}
                         {volunteerProfile.volunteerProfile?.location && (
                           <div className="flex items-center gap-1.5">
                             <MapPin className="w-4 h-4" />
-                            <span>{volunteerProfile.volunteerProfile.location.split(',').pop()?.trim() || volunteerProfile.volunteerProfile.location} Timezone</span>
+                            <span>{volunteerProfile.volunteerProfile.location}</span>
                           </div>
                         )}
                       </div>

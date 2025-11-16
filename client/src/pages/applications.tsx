@@ -119,6 +119,23 @@ export default function ApplicationsPage() {
     enabled: !!selectedVolunteerId && profileDialogOpen
   });
 
+  // Fetch AI match analysis when viewing application profile
+  const { data: matchAnalysis } = useQuery<{
+    score: number;
+    breakdown: {
+      skillMatch: number;
+      locationMatch: number;
+      sdgMatch: number;
+      interestMatch: number;
+    };
+    reasons: string[];
+  }>({
+    queryKey: profileApplication?.id 
+      ? [`/api/applications/${profileApplication.id}/match-analysis`]
+      : ["/api/applications/null/match-analysis"],
+    enabled: !!profileApplication?.id && profileDialogOpen
+  });
+
   // Assign volunteer to project mutation
   const assignProjectMutation = useMutation({
     mutationFn: async ({ volunteerId, projectId }: { volunteerId: number; projectId: number }) => {
@@ -524,6 +541,63 @@ export default function ApplicationsPage() {
                   </Badge>
                 )}
               </div>
+
+              {/* AI Match Analysis */}
+              {profileApplication && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                    <Target className="w-5 h-5 text-primary" />
+                    AI Match Analysis
+                  </h4>
+                  {matchAnalysis ? (
+                    <>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <Card className="bg-blue-50 dark:bg-blue-900/20">
+                          <CardContent className="p-4 text-center">
+                            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{Math.round(matchAnalysis.breakdown?.skillMatch || 0)}%</p>
+                            <p className="text-xs text-muted-foreground mt-1">Skills Match</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-green-50 dark:bg-green-900/20">
+                          <CardContent className="p-4 text-center">
+                            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{Math.round(matchAnalysis.breakdown?.locationMatch || 0)}%</p>
+                            <p className="text-xs text-muted-foreground mt-1">Location Match</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-purple-50 dark:bg-purple-900/20">
+                          <CardContent className="p-4 text-center">
+                            <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{Math.round(matchAnalysis.breakdown?.sdgMatch || 0)}%</p>
+                            <p className="text-xs text-muted-foreground mt-1">SDG Alignment</p>
+                          </CardContent>
+                        </Card>
+                        <Card className="bg-orange-50 dark:bg-orange-900/20">
+                          <CardContent className="p-4 text-center">
+                            <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{Math.round(matchAnalysis.breakdown?.interestMatch || 0)}%</p>
+                            <p className="text-xs text-muted-foreground mt-1">Interest Match</p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                      {matchAnalysis.reasons && matchAnalysis.reasons.length > 0 && (
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                          <p className="text-sm font-medium mb-2">Match Insights:</p>
+                          <ul className="space-y-1">
+                            {matchAnalysis.reasons.map((reason: string, index: number) => (
+                              <li key={index} className="text-sm text-muted-foreground flex items-start gap-2">
+                                <span className="text-primary mt-0.5">•</span>
+                                {reason}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-center py-8">
+                      <p className="text-sm text-muted-foreground">Loading match analysis...</p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Skills */}
               {volunteerProfile.volunteerProfile?.skills && volunteerProfile.volunteerProfile.skills.length > 0 && (

@@ -4,8 +4,7 @@ import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export interface ImpactChartProps {
-  activities?: any[];
-  projectImpacts?: any[];
+  monthlyImpactData?: Array<{ month: string; hours: number; peopleImpacted: number }>;
   monthlyImpactTrend?: Array<{ month: string; score: number }>;
 }
 
@@ -15,50 +14,26 @@ function coerceNumber(value: any, fallback: number = 0): number {
   return Number.isFinite(num) ? num : fallback;
 }
 
-export default function ImpactChart({ activities = [], projectImpacts = [], monthlyImpactTrend = [] }: ImpactChartProps) {
+export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend = [] }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
 
-  // Process data for chart
+  // Process backend-computed data for chart
   const chartData = useMemo(() => {
-    // Group activities by month
-    const monthlyHours: Record<string, number> = {};
-    const monthlyImpact: Record<string, number> = {};
-    
-    activities.forEach((activity: any) => {
-      const date = new Date(activity.date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      monthlyHours[monthKey] = (monthlyHours[monthKey] || 0) + coerceNumber(activity.hours);
-    });
-
-    projectImpacts.forEach((impact: any) => {
-      const date = new Date(impact.date);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      monthlyImpact[monthKey] = (monthlyImpact[monthKey] || 0) + coerceNumber(impact.value);
-    });
-
-    // Get last 7 months
-    const months: string[] = [];
-    const now = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
-    }
-
     // Create a map of algorithm scores by month key for easy lookup
     const algorithmScoreMap = new Map(monthlyImpactTrend.map(item => [item.month, item.score]));
 
     return {
-      labels: months.map(m => {
-        const [year, month] = m.split('-');
+      labels: monthlyImpactData.map(item => {
+        const [year, month] = item.month.split('-');
         return new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'short' });
       }),
-      hours: months.map(m => monthlyHours[m] || 0),
-      impact: months.map(m => monthlyImpact[m] || 0),
-      algorithmScores: months.map(m => algorithmScoreMap.get(m) || 0),
+      hours: monthlyImpactData.map(item => item.hours),
+      impact: monthlyImpactData.map(item => item.peopleImpacted),
+      algorithmScores: monthlyImpactData.map(item => algorithmScoreMap.get(item.month) || 0),
     };
-  }, [activities, projectImpacts, monthlyImpactTrend]);
+  }, [monthlyImpactData, monthlyImpactTrend]);
 
   useEffect(() => {
     if (chartRef.current) {

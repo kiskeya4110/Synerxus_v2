@@ -105,21 +105,41 @@ export default function ImpactVisualization() {
     };
   }, [projects, projectImpacts, volunteerActivities, impactMetrics]);
 
-  // Process project outcomes from real data
+  // Process project outcomes from real data with metric combination
   const projectOutcomes = useMemo(() => {
     return projects.slice(0, 3).map((project: any) => {
       const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
       const activities = volunteerActivities.filter((a: any) => a.projectId === project.id);
       
-      const outcomes = impacts.map((impact: any) => {
+      // Group impacts by metric name and combine similar metrics
+      const metricMap = new Map<string, { value: number; unit: string }>();
+      
+      impacts.forEach((impact: any) => {
         const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
-        return {
-          metric: metric?.name || "Unknown Metric",
-          value: impact.value || 0,
-          unit: metric?.unit || "",
-        };
+        const metricName = metric?.name || "Unknown Metric";
+        const unit = metric?.unit || "";
+        
+        if (metricMap.has(metricName)) {
+          // Combine with existing metric
+          const existing = metricMap.get(metricName)!;
+          existing.value += impact.value || 0;
+        } else {
+          // Add new metric
+          metricMap.set(metricName, {
+            value: impact.value || 0,
+            unit
+          });
+        }
       });
 
+      // Convert map to array of outcomes
+      const outcomes = Array.from(metricMap.entries()).map(([metricName, data]) => ({
+        metric: metricName,
+        value: data.value,
+        unit: data.unit,
+      }));
+
+      // Add volunteer hours as a separate metric
       if (activities.length > 0) {
         outcomes.push({
           metric: "Volunteer Hours",
@@ -147,9 +167,9 @@ export default function ImpactVisualization() {
       .map((project: any) => {
         const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
         
-        // Calculate metrics before and after
-        const beforeMetrics: any[] = [];
-        const afterMetrics: any[] = [];
+        // Group metrics by name to combine similar metrics
+        const beforeMetricMap = new Map<string, { value: number; unit: string }>();
+        const afterMetricMap = new Map<string, { value: number; unit: string }>();
         
         // Collect all evidence URLs for images
         const allEvidenceUrls: string[] = [];
@@ -162,23 +182,39 @@ export default function ImpactVisualization() {
         impacts.forEach((impact: any) => {
           const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
           if (metric) {
+            const metricName = metric.name;
+            const unit = metric.unit || "";
             // Use baseline value if available, otherwise calculate as 30% for demonstration
             const beforeValue = impact.baselineValue || Math.floor((impact.value || 0) * 0.3);
             const afterValue = impact.value || 0;
             
-            beforeMetrics.push({
-              label: metric.name,
-              value: beforeValue,
-              unit: metric.unit || ""
-            });
+            // Combine similar metrics by name
+            if (beforeMetricMap.has(metricName)) {
+              beforeMetricMap.get(metricName)!.value += beforeValue;
+            } else {
+              beforeMetricMap.set(metricName, { value: beforeValue, unit });
+            }
             
-            afterMetrics.push({
-              label: metric.name,
-              value: afterValue,
-              unit: metric.unit || ""
-            });
+            if (afterMetricMap.has(metricName)) {
+              afterMetricMap.get(metricName)!.value += afterValue;
+            } else {
+              afterMetricMap.set(metricName, { value: afterValue, unit });
+            }
           }
         });
+        
+        // Convert maps to arrays
+        const beforeMetrics = Array.from(beforeMetricMap.entries()).map(([label, data]) => ({
+          label,
+          value: data.value,
+          unit: data.unit
+        }));
+        
+        const afterMetrics = Array.from(afterMetricMap.entries()).map(([label, data]) => ({
+          label,
+          value: data.value,
+          unit: data.unit
+        }));
 
         // Use evidence URLs if available, otherwise fall back to coverImage or placeholder
         const beforeImage = allEvidenceUrls[0] || project.coverImage || "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800";

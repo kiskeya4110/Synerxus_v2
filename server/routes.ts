@@ -1662,6 +1662,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get AI match analysis for an application
+  app.get("/api/applications/:id/match-analysis", async (req, res) => {
+    try {
+      const applicationId = parseInt(req.params.id);
+      
+      // Get application details
+      const application = await storage.getApplication(applicationId);
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+      
+      // Get opportunity and volunteer details
+      const opportunity = await storage.getOpportunity(application.opportunityId);
+      const volunteer = await storage.getUser(application.volunteerId);
+      
+      if (!opportunity || !volunteer) {
+        return res.status(404).json({ message: "Opportunity or volunteer not found" });
+      }
+      
+      // Get volunteer profile
+      let volunteerProfile = null;
+      if (volunteer.email) {
+        volunteerProfile = await storage.getVolunteerByEmail(volunteer.email);
+      }
+      
+      // Calculate match score with breakdown
+      const volunteerWithProfile = {
+        ...volunteer,
+        profile: volunteerProfile || undefined
+      } as any;
+      
+      const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
+      
+      // Normalize breakdown values to percentages (0-100) and ensure all keys exist
+      // calculateMatchScore returns 0-1 values, so multiply by 100 to get percentages
+      const breakdown = matchResult.breakdown || {};
+      const normalizedBreakdown = {
+        skillMatch: (breakdown.skillMatch || 0),
+        locationMatch: (breakdown.locationMatch || 0),
+        sdgMatch: (breakdown.sdgMatch || 0),
+        interestMatch: (breakdown.interestMatch || 0),
+      };
+      
+      res.json({
+        score: Math.round(matchResult.score || 0),
+        breakdown: normalizedBreakdown,
+        reasons: matchResult.reasons || [],
+        volunteer: {
+          id: volunteer.id,
+          name: volunteer.displayName || volunteer.username,
+          skills: volunteer.skills || [],
+          location: volunteerProfile?.location || null
+        },
+        opportunity: {
+          id: opportunity.id,
+          title: opportunity.title,
+          requiredSkills: opportunity.requiredSkills || [],
+          optionalSkills: opportunity.optionalSkills || [],
+          location: opportunity.location || null,
+          isRemote: opportunity.isRemote || false
+        }
+      });
+    } catch (err) {
+      console.error("Error getting match analysis:", err);
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
   // === Saved Opportunities Routes ===
   app.post("/api/saved-opportunities", async (req, res) => {
     try {
@@ -2631,7 +2700,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tasks: dashboardData.tasks,
           activities: dashboardData.activities,
           impacts: dashboardData.impacts,
+          monthlyImpactData: dashboardData.monthlyImpactData,
           monthlyImpactTrend: dashboardData.monthlyImpactTrend,
+          impactBySDG: dashboardData.impactBySDG,
+          impactGrowthSeries: dashboardData.impactGrowthSeries,
+          projectHours: dashboardData.projectHours,
+          totalPeopleImpacted: dashboardData.totalPeopleImpacted,
           projects: dashboardData.projects,
         });
       } else if (user.userType === 'volunteer') {
@@ -2643,6 +2717,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           applicationStats: dashboardData.applicationStats,
           hoursByProject: dashboardData.hoursByProject,
           monthlyImpactTrend: dashboardData.monthlyImpactTrend,
+          monthlyImpactData: dashboardData.monthlyImpactData,
+          impactBySDG: dashboardData.impactBySDG,
+          impactGrowthSeries: dashboardData.impactGrowthSeries,
           projects: dashboardData.projects,
           tasks: dashboardData.tasks,
           activities: dashboardData.activities,

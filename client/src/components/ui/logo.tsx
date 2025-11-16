@@ -19,7 +19,7 @@ export default function Logo({
       letterSpacing: "0.02em",
     },
     md: {
-      logo: "h-10 w-10 sm:h-12 sm:w-12",
+      logo: "h-14 w-14 sm:h-12 sm:w-12",
       text: "text-lg sm:text-xl",
       letterSpacing: "0.03em",
     },

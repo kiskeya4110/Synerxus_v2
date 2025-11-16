@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar } from "lucide-react";
+import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -165,6 +165,12 @@ export default function Volunteers() {
   });
 
   const allSkills = Array.from(new Set(volunteersWithStats.flatMap((v: any) => v.skills || [])));
+
+  // Memoize selected volunteer to avoid repeated .find() calls
+  const selectedVolunteerData = useMemo(() => {
+    if (!selectedVolunteerId) return null;
+    return volunteersWithStats.find((v: any) => v.id === selectedVolunteerId) || null;
+  }, [selectedVolunteerId, volunteersWithStats]);
 
   return (
     <>
@@ -368,10 +374,10 @@ export default function Volunteers() {
                     )}
                   </div>
                 </div>
-                {isOrganization && volunteersWithStats.find((v: any) => v.id === selectedVolunteerId)?.projectCount && (
+                {isOrganization && selectedVolunteerData?.projectCount && (
                   <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 text-lg px-3 py-1">
                     <Briefcase className="w-4 h-4 mr-1" />
-                    {volunteersWithStats.find((v: any) => v.id === selectedVolunteerId).projectCount} Active Project{volunteersWithStats.find((v: any) => v.id === selectedVolunteerId).projectCount !== 1 ? 's' : ''}
+                    {selectedVolunteerData.projectCount} Active Project{selectedVolunteerData.projectCount !== 1 ? 's' : ''}
                   </Badge>
                 )}
               </div>
@@ -465,6 +471,41 @@ export default function Volunteers() {
                 </div>
               )}
 
+              {/* Assigned Projects Section */}
+              {isOrganization && selectedVolunteerData?.projects && 
+               selectedVolunteerData.projects.length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <Briefcase className="w-5 h-5" />
+                    Assigned Projects ({selectedVolunteerData.projects.length})
+                  </h4>
+                  <div className="grid gap-3">
+                    {selectedVolunteerData.projects.map((project: any) => (
+                      <Card key={project.id} className="bg-gray-50 dark:bg-gray-800">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <FolderKanban className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{project.name}</p>
+                                <p className="text-xs text-muted-foreground">Active assignment</p>
+                              </div>
+                            </div>
+                            <Link href={`/projects/${project.id}`}>
+                              <Button variant="ghost" size="sm">
+                                View Project
+                              </Button>
+                            </Link>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Project Assignment Section */}
               {isOrganization && orgProjects.length > 0 && (
                 <div className="border-t pt-4">
@@ -518,9 +559,8 @@ export default function Volunteers() {
               <Button
                 onClick={() => {
                   closeProfileDialog();
-                  const volunteer = volunteersWithStats.find((v: any) => v.id === selectedVolunteerId);
-                  if (volunteer) {
-                    setSelectedVolunteer(volunteer);
+                  if (selectedVolunteerData) {
+                    setSelectedVolunteer(selectedVolunteerData);
                     setShowContactModal(true);
                   }
                 }}

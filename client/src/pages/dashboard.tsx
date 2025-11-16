@@ -651,8 +651,7 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ImpactChart 
-          activities={filteredData.activities}
-          projectImpacts={filteredData.impacts}
+          monthlyImpactData={dashboardData?.monthlyImpactData || []}
           monthlyImpactTrend={dashboardData?.monthlyImpactTrend}
         />
         <SDGChart 

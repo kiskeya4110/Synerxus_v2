@@ -14,18 +14,15 @@ export default function Logo({
 }: LogoProps) {
   const sizes = {
     sm: {
-      logo: "h-8 w-8",
-      text: "text-base",
+      logo: "h-8",
       letterSpacing: "0.02em",
     },
     md: {
-      logo: "h-14 w-14 sm:h-12 sm:w-12",
-      text: "text-lg sm:text-xl",
+      logo: "h-14 sm:h-12",
       letterSpacing: "0.03em",
     },
     lg: {
-      logo: "h-16 w-16",
-      text: "text-2xl sm:text-3xl",
+      logo: "h-16",
       letterSpacing: "0.04em",
     },
   };
@@ -38,12 +35,12 @@ export default function Logo({
         <img
           src={logoImage}
           alt="Synerxus Logo"
-          className={cn(sizeClasses.logo, "object-contain flex-shrink-0")}
+          className={cn(sizeClasses.logo, "w-auto object-contain flex-shrink-0")}
           loading="eager"
         />
       )}
       <span
-        className={cn(sizeClasses.text, "font-bold whitespace-nowrap")}
+        className={cn(sizeClasses.logo, "font-bold whitespace-nowrap leading-none flex items-center")}
         style={{ letterSpacing: sizeClasses.letterSpacing }}
       >
         <span style={{ color: "#1e3a8a" }}>SYNER</span>

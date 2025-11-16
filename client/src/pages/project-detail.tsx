@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCirc
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -217,9 +218,7 @@ export default function ProjectDetail() {
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1 space-y-4">
               <div className="flex items-center gap-3">
-                <Badge variant="outline" className={getStatusColor(project.status)}>
-                  {project.status}
-                </Badge>
+                <StatusBadge status={project.status} />
                 {project.aiTrackingEnabled && (
                   <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
                     <TrendingUp className="h-3 w-3 mr-1" />
@@ -482,12 +481,7 @@ export default function ProjectDetail() {
                           <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                         )}
                       </div>
-                      <Badge
-                        variant="outline"
-                        className={task.status === "Completed" ? "bg-green-100 dark:bg-green-900/30" : ""}
-                      >
-                        {task.status}
-                      </Badge>
+                      <StatusBadge status={task.status} />
                     </div>
                   ))}
                 </div>

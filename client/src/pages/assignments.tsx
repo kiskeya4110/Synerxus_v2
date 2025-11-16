@@ -4,6 +4,7 @@ import { Check, X, Building2, Calendar, Clock, AlertCircle, Users, Activity } fr
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -183,9 +184,7 @@ export default function Assignments() {
                         {assignment.organization?.name || "Unknown Organization"}
                       </CardDescription>
                     </div>
-                    <Badge variant="outline" className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
-                      Pending
-                    </Badge>
+                    <StatusBadge status="pending" />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -266,9 +265,7 @@ export default function Assignments() {
                         {assignment.organization?.name || "Unknown Organization"}
                       </CardDescription>
                     </div>
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                      Active
-                    </Badge>
+                    <StatusBadge status="active" />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">

@@ -3,11 +3,11 @@ import { Link } from "wouter";
 import { Users, CheckSquare, Clock, TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { EditProjectDialog, DeleteProjectDialog } from "./project-dialogs";
 import { CreateTaskDialog, EditTaskDialog, DeleteTaskDialog } from "./task-dialogs";
+import { StatusBadge } from "@/components/ui/status-badge";
 import type { Project, Task } from "@shared/schema";
 
 interface ProjectMetrics {
@@ -25,36 +25,6 @@ interface ProjectListCardProps {
   onToggle: () => void;
   canManageProjects?: boolean;
 }
-
-const getStatusColor = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case "active":
-    case "in progress":
-      return "bg-green-100 text-green-800";
-    case "completed":
-      return "bg-gray-100 text-gray-800";
-    case "planning":
-      return "bg-blue-100 text-blue-800";
-    case "on-hold":
-      return "bg-yellow-100 text-yellow-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
-
-const getTaskStatusColor = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case "completed":
-      return "bg-green-100 text-green-800";
-    case "in progress":
-      return "bg-blue-100 text-blue-800";
-    case "todo":
-    case "pending":
-      return "bg-gray-100 text-gray-800";
-    default:
-      return "bg-gray-100 text-gray-800";
-  }
-};
 
 export const ProjectListCard = memo(function ProjectListCard({
   project,
@@ -86,9 +56,7 @@ export const ProjectListCard = memo(function ProjectListCard({
                     {project.name}
                   </CardTitle>
                 </Link>
-                <Badge className={getStatusColor(project.status)}>
-                  {project.status}
-                </Badge>
+                <StatusBadge status={project.status} />
               </div>
               {project.description && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 ml-11">{project.description}</p>
@@ -159,9 +127,7 @@ export const ProjectListCard = memo(function ProjectListCard({
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{task.title}</h4>
-                          <Badge className={getTaskStatusColor(task.status)} variant="outline">
-                            {task.status}
-                          </Badge>
+                          <StatusBadge status={task.status} />
                         </div>
                         {task.description && (
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{task.description}</p>

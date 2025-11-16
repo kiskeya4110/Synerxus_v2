@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -229,9 +230,7 @@ export default function MyTasks() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-medium">{task.title}</h4>
-                            <Badge className={getTaskStatusColor(task.status)}>
-                              {task.status}
-                            </Badge>
+                            <StatusBadge status={task.status} />
                           </div>
                           {task.description && (
                             <p className="text-sm text-gray-600 mb-2">{task.description}</p>
@@ -285,9 +284,7 @@ export default function MyTasks() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-medium">{task.title}</h4>
-                            <Badge className={getTaskStatusColor(task.status)}>
-                              {task.status}
-                            </Badge>
+                            <StatusBadge status={task.status} />
                           </div>
                           {task.description && (
                             <p className="text-sm text-gray-600 mb-2">{task.description}</p>
@@ -340,9 +337,7 @@ export default function MyTasks() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h4 className="font-medium line-through">{task.title}</h4>
-                            <Badge className={getTaskStatusColor(task.status)}>
-                              {task.status}
-                            </Badge>
+                            <StatusBadge status={task.status} />
                           </div>
                           {project && (
                             <div className="flex flex-col gap-1">

@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { PlusIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -27,20 +27,6 @@ interface TaskTableProps {
 
 export default function TaskTable({ tasks }: TaskTableProps) {
   const [, setLocation] = useLocation();
-  const getStatusBadgeClasses = (status: Task["status"]) => {
-    switch (status) {
-      case "To Do":
-        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400";
-      case "In Progress":
-        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-400";
-      case "Completed":
-        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400";
-      case "Overdue":
-        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400";
-      default:
-        return "bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-400";
-    }
-  };
 
   return (
     <Card>
@@ -89,9 +75,7 @@ export default function TaskTable({ tasks }: TaskTableProps) {
                     </TableCell>
                     <TableCell className="text-gray-600 dark:text-gray-400 text-xs py-2">{task.dueDate}</TableCell>
                     <TableCell className="py-2">
-                      <Badge variant="outline" className={`${getStatusBadgeClasses(task.status)} text-xs px-2 py-0`}>
-                        {task.status}
-                      </Badge>
+                      <StatusBadge status={task.status} className="text-xs" />
                     </TableCell>
                     <TableCell className="py-2">
                       {task.assignee ? (

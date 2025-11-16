@@ -349,9 +349,11 @@ export default function Dashboard() {
           detailData = {
             title: "Total Volunteer Hours by Project",
             items: dashboardData.projectHours.map((ph: any) => ({
+              id: ph.projectId,
               label: ph.projectName,
               value: `${parseFloat(ph.hours.toFixed(2))} hours`,
               organizationName: ph.organizationName,
+              isProjectItem: true,
             })),
             totalHours: dashboardData.projectHours.reduce((sum: number, ph: any) => sum + ph.hours, 0),
           };
@@ -422,10 +424,12 @@ export default function Dashboard() {
           items: filteredData.projects.filter((p: any) => 
             p.status?.toLowerCase() === "in progress" || p.status?.toLowerCase() === "active"
           ).map((p: any) => ({
+            id: p.id,
             label: p.name,
             value: p.status,
             location: p.location,
             completion: `${p.completionPercentage || 0}% complete`,
+            isProjectItem: true,
           })),
         };
         break;
@@ -823,6 +827,8 @@ export default function Dashboard() {
               const isVolunteerItem = item.avatar !== undefined && item.id;
               // Check if this is an SDG item (has isSDG flag)
               const isSDGItem = item.isSDG === true;
+              // Check if this is a project item (has isProjectItem flag)
+              const isProjectItem = item.isProjectItem === true;
               
               // Impact Score Component Breakdown
               if (isImpactScoreItem) {
@@ -960,9 +966,9 @@ export default function Dashboard() {
                 );
               }
               
-              // Regular or Volunteer Item
+              // Regular, Volunteer, or Project Item
               const content = (
-                <div className={`p-4 border rounded-lg ${isVolunteerItem ? 'hover:border-primary-500 hover:shadow-md transition-all cursor-pointer' : ''}`} data-testid={`kpi-item-${index}`}>
+                <div className={`p-4 border rounded-lg ${isVolunteerItem || isProjectItem ? 'hover:border-primary-500 hover:shadow-md transition-all cursor-pointer' : ''}`} data-testid={`kpi-item-${index}`}>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex items-center gap-3 flex-1">
                       {isVolunteerItem && (
@@ -1005,14 +1011,22 @@ export default function Dashboard() {
                 </div>
               );
 
-              // Wrap in Link if it's a volunteer item
-              return isVolunteerItem ? (
-                <Link key={index} href={`/volunteers/${item.id}`}>
-                  {content}
-                </Link>
-              ) : (
-                <div key={index}>{content}</div>
-              );
+              // Wrap in Link if it's a volunteer or project item
+              if (isVolunteerItem) {
+                return (
+                  <Link key={index} href={`/volunteers/${item.id}`}>
+                    {content}
+                  </Link>
+                );
+              } else if (isProjectItem) {
+                return (
+                  <Link key={index} href={`/projects/${item.id}`}>
+                    {content}
+                  </Link>
+                );
+              } else {
+                return <div key={index}>{content}</div>;
+              }
             })}
             {selectedKPI?.items.length === 0 && (
               <p className="text-center text-gray-500 dark:text-gray-400 py-8">

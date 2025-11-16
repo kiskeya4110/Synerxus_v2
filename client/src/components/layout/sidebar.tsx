@@ -86,7 +86,7 @@ export default function Sidebar() {
         <div className="px-4 py-6">
           <Link href="/">
             <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity">
-              <Logo size="md" />
+              <Logo size="sm" />
             </div>
           </Link>
           <div className="text-center py-8">
@@ -159,7 +159,7 @@ export default function Sidebar() {
         <div className="px-4 py-6">
           <Link href="/">
             <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity" data-testid="logo-synerxus">
-              <Logo size="md" />
+              <Logo size="sm" />
             </div>
           </Link>
           

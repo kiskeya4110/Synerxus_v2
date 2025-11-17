@@ -79,12 +79,26 @@ export default function Profile() {
   const { data: activities } = useQuery({
     queryKey: ["/api/volunteer-activities", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/volunteer-activities?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    }
   });
 
-  // Fetch current projects (via assignments)
+  // Fetch current projects (via project assignments)
   const { data: assignments } = useQuery({
-    queryKey: ["/api/assignments", userId],
+    queryKey: ["/api/project-assignments", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/project-assignments?volunteerId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    }
   });
 
   const isLoading = isLoadingUser || isLoadingVolunteer || isLoadingOrg;

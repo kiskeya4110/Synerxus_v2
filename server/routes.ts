@@ -635,21 +635,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/tasks/:id", async (req, res) => {
     try {
-      // Authorization: require organization user
-      const user = await requireOrgUser(req);
-      
       const taskId = parseInt(req.params.id);
       
-      // Verify ownership through parent project
+      // Get task first to check permissions
       const existingTask = await storage.getTask(taskId);
       if (!existingTask) {
         return res.status(404).json({ message: "Task not found" });
       }
-      if (existingTask.projectId) {
-        const project = await storage.getProject(existingTask.projectId);
-        if (project) {
-          verifyOwnership(user, project);
+      
+      // Try session-based auth first (for organizations), then explicit userId (for volunteers)
+      let currentUser;
+      
+      // First try requireOrgUser for existing organization flows
+      try {
+        currentUser = await requireOrgUser(req);
+      } catch (err) {
+        // If session auth fails, try explicit userId (for volunteer flows)
+        const userIdFromQuery = req.query.userId ? parseInt(req.query.userId as string) : null;
+        const userIdFromBody = req.body.userId ? parseInt(req.body.userId) : null;
+        const currentUserId = userIdFromQuery || userIdFromBody;
+        
+        if (currentUserId && !isNaN(currentUserId)) {
+          currentUser = await storage.getUser(currentUserId);
         }
+      }
+      
+      if (!currentUser) {
+        return res.status(401).json({ message: "Unauthorized - please log in" });
+      }
+      
+      // Authorization: Allow either organization owner OR assigned volunteer
+      let isAuthorized = false;
+      
+      // Check if user is organization owner
+      if (currentUser.userType === 'organization' && existingTask.projectId) {
+        const project = await storage.getProject(existingTask.projectId);
+        if (project && project.organizationId === currentUser.organizationId) {
+          isAuthorized = true;
+        }
+      }
+      
+      // Check if user is the assigned volunteer
+      if (currentUser.userType === 'volunteer' && existingTask.assigneeId === currentUser.id) {
+        isAuthorized = true;
+      }
+      
+      if (!isAuthorized) {
+        return res.status(403).json({ message: "Not authorized to update this task" });
       }
       
       const taskData = insertTaskSchema.partial().parse(req.body);
@@ -1542,8 +1574,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Create application with pending status (default from schema)
-      const application = await storage.createApplication(validatedData);
+      // Calculate match score before creating application
+      let matchScore = null;
+      try {
+        const volunteer = await storage.getUser(volunteerId);
+        const opportunity = await storage.getOpportunity(opportunityId);
+        
+        if (volunteer && opportunity) {
+          // Get volunteer profile for more accurate matching
+          let volunteerProfile = null;
+          if (volunteer.email) {
+            volunteerProfile = await storage.getVolunteerProfileByUserId(volunteerId);
+          }
+          
+          const volunteerWithProfile = {
+            ...volunteer,
+            profile: volunteerProfile || undefined
+          } as any;
+          
+          const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
+          matchScore = Math.round(matchResult.score || 0);
+        }
+      } catch (err) {
+        console.error("Error calculating match score (non-critical):", err);
+        // Continue with application creation even if match score calculation fails
+      }
+      
+      // Create application with pending status and calculated match score
+      const application = await storage.createApplication({
+        ...validatedData,
+        matchScore
+      });
       
       broadcastUpdate("application_created", application);
       res.status(201).json(application);
@@ -3004,7 +3065,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(403).json({ message: "User is not a volunteer" });
       }
       
-      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName } = req.body;
+      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName, skillRatings } = req.body;
       
       // Use profile service to atomically update both users and volunteer_profiles tables
       await updateVolunteerProfileWithUser(userId, {
@@ -3014,7 +3075,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         skills,
         interests,
         location,
-        preferredSdgs: sdgGoals
+        preferredSdgs: sdgGoals,
+        skillRatings
       });
       
       // Update legacy volunteer matching profile (best effort, outside transaction)

@@ -173,67 +173,75 @@ export default function Profile() {
         {/* Volunteer Stats Cards */}
         {isVolunteer && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Overall Rating</CardTitle>
-                <Star className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2">
-                  <div className="text-2xl font-bold">{(profile?.overallRating || 0).toFixed(1)}</div>
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Star
-                        key={star}
-                        className={`h-4 w-4 ${star <= (profile?.overallRating || 0) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
-                      />
-                    ))}
+            <Link href="/volunteer-profile">
+              <Card className="cursor-pointer hover:border-primary/50 transition-colors" data-testid="card-overall-rating">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Overall Rating</CardTitle>
+                  <Star className="h-4 w-4 text-yellow-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-2">
+                    <div className="text-2xl font-bold">{(profile?.overallRating || 0).toFixed(1)}</div>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-4 w-4 ${star <= (profile?.overallRating || 0) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
+                        />
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Based on performance
-                </p>
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Click to edit profile
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Availability</CardTitle>
-                <Clock className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0} hrs</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Per week
-                </p>
-              </CardContent>
-            </Card>
+            <Link href="/volunteer-profile">
+              <Card className="cursor-pointer hover:border-primary/50 transition-colors" data-testid="card-availability">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Availability</CardTitle>
+                  <Clock className="h-4 w-4 text-blue-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0} hrs</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Click to update availability
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalHours}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Across {totalActivities} activities
-                </p>
-              </CardContent>
-            </Card>
+            <Link href="/calendar">
+              <Card className="cursor-pointer hover:border-primary/50 transition-colors" data-testid="card-total-hours">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalHours}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Click to view activities
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Projects</CardTitle>
-                <FolderKanban className="h-4 w-4 text-purple-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeProjects}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Active • {completedProjects} completed
-                </p>
-              </CardContent>
-            </Card>
+            <Link href="/assignments">
+              <Card className="cursor-pointer hover:border-primary/50 transition-colors" data-testid="card-projects">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Projects</CardTitle>
+                  <FolderKanban className="h-4 w-4 text-purple-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{activeProjects}</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Click to view assignments
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
           </div>
         )}
 

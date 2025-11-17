@@ -104,9 +104,9 @@ export function VolunteerInsightsSection({
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Volunteer Insights</h2>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Volunteer Profile Card - Always render */}
-        <Card data-testid="card-volunteer-profile">
+      
+      {/* Row 1: Your Profile (Full Width) */}
+      <Card data-testid="card-volunteer-profile">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
@@ -314,6 +314,8 @@ export function VolunteerInsightsSection({
           </CardContent>
         </Card>
 
+      {/* Row 2: Applications and Hours (2 Columns) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Application Stats Card */}
         <Card data-testid="card-application-stats">
           <CardHeader>

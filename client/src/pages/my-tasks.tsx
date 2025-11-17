@@ -75,7 +75,9 @@ export default function MyTasks() {
   // Mutation to update task status
   const updateTaskMutation = useMutation({
     mutationFn: async ({ taskId, status }: { taskId: number; status: string }) => {
-      const response = await apiRequest("PATCH", `/api/tasks/${taskId}`, { status });
+      const userId = localStorage.getItem('currentUserId');
+      const url = userId ? `/api/tasks/${taskId}?userId=${userId}` : `/api/tasks/${taskId}`;
+      const response = await apiRequest("PATCH", url, { status });
       return response.json();
     },
     onSuccess: () => {

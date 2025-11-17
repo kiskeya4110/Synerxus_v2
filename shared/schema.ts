@@ -230,6 +230,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   country: text("country"),
   languages: text("languages").array(),
   skills: text("skills").array(),
+  skillRatings: jsonb("skill_ratings"), // { skillName: percentage } for self-assessed proficiency
   interests: text("interests").array(),
   experience: jsonb("experience"), // Array of experience objects
   education: jsonb("education"), // Array of education objects
@@ -242,6 +243,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   phoneNumber: text("phone_number"),
   emergencyContact: jsonb("emergency_contact"), // {name, phone, relationship}
   resumeUrl: text("resume_url"), // URL or path to default resume
+  overallRating: doublePrecision("overall_rating").default(0), // Overall volunteer rating (0-5 stars)
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -4,8 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Mail, MapPin, Award, Briefcase, Target, Users } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Mail, MapPin, Award, Briefcase, Target, Users, 
+  Star, Clock, TrendingUp, Calendar, FolderKanban,
+  Activity, CheckCircle2
+} from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
+import { Link } from "wouter";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -69,10 +75,37 @@ export default function Profile() {
     }
   });
 
+  // Fetch volunteer activities for contribution stats
+  const { data: activities } = useQuery({
+    queryKey: ["/api/volunteer-activities", userId],
+    enabled: !!userId && currentUser?.userType === 'volunteer',
+  });
+
+  // Fetch current projects (via assignments)
+  const { data: assignments } = useQuery({
+    queryKey: ["/api/assignments", userId],
+    enabled: !!userId && currentUser?.userType === 'volunteer',
+  });
+
   const isLoading = isLoadingUser || isLoadingVolunteer || isLoadingOrg;
   const volunteerProfile = volunteerData?.volunteerProfile;
   const organizationData = orgData?.organization;
   const matchableOrgData = orgData?.matchableOrganization;
+
+  // Calculate contribution stats for volunteers
+  const activitiesArray = Array.isArray(activities) ? activities : [];
+  const assignmentsArray = Array.isArray(assignments) ? assignments : [];
+  
+  const totalHours = activitiesArray.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
+  const totalActivities = activitiesArray.length;
+  const activeProjects = assignmentsArray.filter((a: any) => a.status === 'active').length;
+  const completedProjects = assignmentsArray.filter((a: any) => a.status === 'completed').length;
+  
+  // Recent activities (last 5)
+  const recentActivities = activitiesArray.slice(0, 5);
+  
+  // Current projects from active assignments
+  const currentProjects = assignmentsArray.filter((a: any) => a.status === 'active').slice(0, 5);
 
   if (isLoading) {
     return (
@@ -137,19 +170,179 @@ export default function Profile() {
           </CardContent>
         </Card>
 
-        {/* Skills/Needs Section */}
+        {/* Volunteer Stats Cards */}
+        {isVolunteer && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Overall Rating</CardTitle>
+                <Star className="h-4 w-4 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-bold">{(profile?.overallRating || 0).toFixed(1)}</div>
+                  <div className="flex gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        className={`h-4 w-4 ${star <= (profile?.overallRating || 0) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Based on performance
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Availability</CardTitle>
+                <Clock className="h-4 w-4 text-blue-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0} hrs</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Per week
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+                <TrendingUp className="h-4 w-4 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalHours}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Across {totalActivities} activities
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Projects</CardTitle>
+                <FolderKanban className="h-4 w-4 text-purple-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{activeProjects}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Active • {completedProjects} completed
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Skills with Ratings - Enhanced Version */}
         {isVolunteer && profile?.skills && profile.skills.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Award className="h-5 w-5" />
-                Skills
+                Skills & Proficiency
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Self-assessed skill proficiency levels
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {profile.skills.map((skill: string, index: number) => {
+                  const skillRatings = profile.skillRatings as Record<string, number> || {};
+                  const rating = skillRatings[skill] || 0;
+                  return (
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{skill}</span>
+                        <span className="text-sm text-muted-foreground">{rating}%</span>
+                      </div>
+                      <Progress value={rating} className="h-2" />
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <Link href="/volunteer-profile">
+                  <a className="text-sm text-primary hover:underline">
+                    Edit skills and ratings in Settings →
+                  </a>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Activity */}
+        {isVolunteer && recentActivities.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Activity
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill: string, index: number) => (
-                  <Badge key={index} variant="outline">{skill}</Badge>
+              <div className="space-y-4">
+                {recentActivities.map((activity: any, index: number) => (
+                  <div key={index} className="flex items-start gap-3 pb-3 border-b last:border-0">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">{activity.description || 'Activity logged'}</p>
+                        <Badge variant="secondary">{activity.hours} hrs</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(activity.date).toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                      {activity.skillsApplied && activity.skillsApplied.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {activity.skillsApplied.map((skill: string, i: number) => (
+                            <Badge key={i} variant="outline" className="text-xs">{skill}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Current Projects */}
+        {isVolunteer && currentProjects.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FolderKanban className="h-5 w-5" />
+                Current Projects
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {currentProjects.map((assignment: any, index: number) => (
+                  <Link key={index} href={`/projects/${assignment.projectId}`}>
+                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        <div>
+                          <p className="font-medium">{assignment.projectName || `Project #${assignment.projectId}`}</p>
+                          {assignment.role && (
+                            <p className="text-sm text-muted-foreground">{assignment.role}</p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge>{assignment.hoursCompleted || 0} hrs</Badge>
+                    </div>
+                  </Link>
                 ))}
               </div>
             </CardContent>

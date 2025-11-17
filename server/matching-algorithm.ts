@@ -68,9 +68,17 @@ export function calculateMatchScore(
   const volunteerSkills = normalizeSkills(volunteer.skills);
   const requiredSkills = normalizeSkills(opportunity.requiredSkills);
   const optionalSkills = normalizeSkills(opportunity.optionalSkills);
+  const rawSkillRatings = (volunteer.profile?.skillRatings as Record<string, number>) || {};
+  
+  // Create normalized skill-to-rating map for efficient proficiency lookups
+  const normalizedRatings: Record<string, number> = {};
+  Object.keys(rawSkillRatings).forEach(skill => {
+    const normalizedKey = skill.toLowerCase().trim();
+    normalizedRatings[normalizedKey] = rawSkillRatings[skill];
+  });
   
   if (volunteerSkills.length > 0 && requiredSkills.length > 0) {
-    // Match required skills
+    // Match required skills with proficiency weighting
     const matchingRequiredSkills = volunteerSkills.filter(skill =>
       requiredSkills.some(req => 
         req.includes(skill) || skill.includes(req) || skill === req
@@ -84,16 +92,46 @@ export function calculateMatchScore(
       )
     );
     
-    // Calculate score: required skills are primary, optional skills add up to 20% bonus
-    const requiredScore = (matchingRequiredSkills.length / requiredSkills.length) * 100;
-    const optionalBonus = optionalSkills.length > 0 
-      ? Math.min((matchingOptionalSkills.length / optionalSkills.length) * 20, 20)
-      : 0;
+    // Calculate proficiency-weighted score for required skills
+    let proficiencyWeightedScore = 0;
+    if (matchingRequiredSkills.length > 0) {
+      // For each matching skill, factor in proficiency rating if available
+      const proficiencyScores = matchingRequiredSkills.map(skill => {
+        // Use normalized skill to lookup rating - explicit undefined check to preserve 0% ratings
+        const proficiency = normalizedRatings[skill] !== undefined ? normalizedRatings[skill] / 100 : 0.7; // Default 70% if no rating
+        return proficiency;
+      });
+      
+      // Average proficiency of matching skills
+      const avgProficiency = proficiencyScores.reduce((sum, p) => sum + p, 0) / proficiencyScores.length;
+      
+      // Base score from skill count, enhanced by proficiency
+      const baseScore = (matchingRequiredSkills.length / requiredSkills.length) * 100;
+      proficiencyWeightedScore = baseScore * (0.7 + (avgProficiency * 0.3)); // 70% count, 30% proficiency
+    }
     
-    breakdown.skillMatch = Math.min(requiredScore + optionalBonus, 100);
+    // Calculate optional bonus with proficiency consideration
+    let optionalBonus = 0;
+    if (optionalSkills.length > 0 && matchingOptionalSkills.length > 0) {
+      const optionalProficiencies = matchingOptionalSkills.map(skill => {
+        return normalizedRatings[skill] !== undefined ? normalizedRatings[skill] / 100 : 0.7;
+      });
+      const avgOptionalProficiency = optionalProficiencies.reduce((sum, p) => sum + p, 0) / optionalProficiencies.length;
+      optionalBonus = Math.min((matchingOptionalSkills.length / optionalSkills.length) * 20 * avgOptionalProficiency, 20);
+    }
+    
+    breakdown.skillMatch = Math.min(proficiencyWeightedScore + optionalBonus, 100);
     
     if (matchingRequiredSkills.length > 0) {
-      reasons.push(`${matchingRequiredSkills.length} matching skill${matchingRequiredSkills.length > 1 ? 's' : ''}: ${matchingRequiredSkills.slice(0, 3).join(', ')}`);
+      const highProficiencySkills = matchingRequiredSkills.filter(skill => {
+        return normalizedRatings[skill] && normalizedRatings[skill] >= 75;
+      });
+      
+      if (highProficiencySkills.length > 0) {
+        reasons.push(`${matchingRequiredSkills.length} matching skill${matchingRequiredSkills.length > 1 ? 's' : ''} (${highProficiencySkills.length} highly proficient): ${matchingRequiredSkills.slice(0, 3).join(', ')}`);
+      } else {
+        reasons.push(`${matchingRequiredSkills.length} matching skill${matchingRequiredSkills.length > 1 ? 's' : ''}: ${matchingRequiredSkills.slice(0, 3).join(', ')}`);
+      }
     }
     if (matchingOptionalSkills.length > 0) {
       reasons.push(`+${matchingOptionalSkills.length} bonus skill${matchingOptionalSkills.length > 1 ? 's' : ''}`);

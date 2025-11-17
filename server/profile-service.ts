@@ -14,6 +14,7 @@ interface ProfileUpdateData {
   location?: string;
   interests?: string[];
   preferredSdgs?: number[];
+  skillRatings?: Record<string, number>;
 }
 
 /**
@@ -56,7 +57,7 @@ export async function updateVolunteerProfileWithUser(
       .where(eq(volunteerProfiles.userId, userId));
     
     const profileUpdates: Partial<InsertVolunteerProfile> = {};
-    // volunteer_profiles stores skills, interests, location, and preferredSdgs
+    // volunteer_profiles stores skills, interests, location, preferredSdgs, and skillRatings
     // Keep skills in both tables for consistency with intake form
     if (profileData.skills !== undefined) {
       profileUpdates.skills = profileData.skills || [];
@@ -69,6 +70,9 @@ export async function updateVolunteerProfileWithUser(
     }
     if (profileData.preferredSdgs !== undefined) {
       profileUpdates.preferredSdgs = profileData.preferredSdgs || [];
+    }
+    if (profileData.skillRatings !== undefined) {
+      profileUpdates.skillRatings = profileData.skillRatings;
     }
     
     let updatedProfile: VolunteerProfile;
@@ -97,6 +101,7 @@ export async function updateVolunteerProfileWithUser(
         interests: profileData.interests || [],
         location: profileData.location || null,
         preferredSdgs: profileData.preferredSdgs || [],
+        skillRatings: profileData.skillRatings || {},
         onboardingCompleted: false
       };
       

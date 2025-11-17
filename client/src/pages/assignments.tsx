@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Check, X, Building2, Calendar, Clock, AlertCircle, Users, Activity } from "lucide-react";
+import { Check, X, Building2, Calendar, Clock, AlertCircle, Users, Activity, ChevronDown, ChevronUp, CheckCircle, ListTodo, Target } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +13,12 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
 
 export default function Assignments() {
   const { toast } = useToast();
+  const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
   // Get current user from server session (no localStorage dependency)
   const { data: currentUser, isLoading: userLoading } = useQuery({
@@ -63,6 +66,47 @@ export default function Assignments() {
     queryKey: ["/api/organizations"],
   });
 
+  // Filter assignments by status (default to empty array to prevent crashes during loading)
+  const pendingAssignments = (assignments || []).filter((a: any) => a.status === "pending");
+  const activeAssignments = (assignments || []).filter((a: any) => a.status === "active");
+  const declinedAssignments = (assignments || []).filter((a: any) => a.status === "declined");
+
+  // Fetch tasks for active projects
+  const projectIds = activeAssignments.map((a: any) => a.projectId);
+  const { data: allTasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/tasks", projectIds.join(',')],
+    queryFn: async () => {
+      if (projectIds.length === 0) return [];
+      const tasksPromises = projectIds.map(async (projectId: number) => {
+        try {
+          const response = await fetch(`/api/tasks?projectId=${projectId}`, {
+            credentials: "include"
+          });
+          if (!response.ok) return [];
+          const tasks = await response.json();
+          return tasks.map((task: any) => ({ ...task, projectId }));
+        } catch {
+          return [];
+        }
+      });
+      const tasksArrays = await Promise.all(tasksPromises);
+      return tasksArrays.flat();
+    },
+    enabled: projectIds.length > 0
+  });
+
+  const toggleProject = (projectId: number) => {
+    setExpandedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
+  };
+
   // Respond to assignment mutation (accept or decline)
   const respondMutation = useMutation({
     mutationFn: async ({ assignmentId, status }: { assignmentId: number; status: "active" | "declined" }) => {
@@ -98,11 +142,6 @@ export default function Assignments() {
       });
     }
   });
-
-  // Filter pending assignments
-  const pendingAssignments = assignments.filter((a: any) => a.status === "pending");
-  const activeAssignments = assignments.filter((a: any) => a.status === "active");
-  const declinedAssignments = assignments.filter((a: any) => a.status === "declined");
 
   // Enrich assignments with project and organization details
   const enrichedPendingAssignments = pendingAssignments.map((assignment: any) => {

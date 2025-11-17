@@ -1,11 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, XCircle, Clock, Briefcase, MapPin, Calendar, ExternalLink, Sparkles, TrendingUp, FileText } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Briefcase, MapPin, Calendar, ExternalLink, Sparkles, TrendingUp, FileText, Users, Target, Zap, ChevronDown, ChevronUp } from "lucide-react";
 import { Link } from "wouter";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
 
 interface Application {
   id: number;
@@ -13,14 +15,91 @@ interface Application {
   status: string;
   coverLetter: string;
   matchScore?: number;
+  matchBreakdown?: any;
   appliedAt: string;
   reviewedAt?: string;
   notes?: string;
   opportunity?: any;
 }
 
+// Helper component to render detailed metrics for an opportunity
+function OpportunityMetrics({ opportunity }: { opportunity: any }) {
+  if (!opportunity) return null;
+
+  const getDuration = () => {
+    if (opportunity.startDate && opportunity.endDate) {
+      const start = new Date(opportunity.startDate);
+      const end = new Date(opportunity.endDate);
+      const months = Math.round((end.getTime() - start.getTime()) / (30 * 24 * 60 * 60 * 1000));
+      return `${months} month${months !== 1 ? 's' : ''}`;
+    }
+    return opportunity.timeCommitment || 'Flexible';
+  };
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+      {/* Duration */}
+      {(opportunity.startDate || opportunity.timeCommitment) && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="w-4 h-4 flex-shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground">Duration</p>
+            <p className="font-medium text-foreground">{getDuration()}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Commitment */}
+      {opportunity.commitmentType && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Zap className="w-4 h-4 flex-shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground">Commitment</p>
+            <p className="font-medium text-foreground capitalize">{opportunity.commitmentType}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Team Size */}
+      {opportunity.volunteersNeeded && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Users className="w-4 h-4 flex-shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground">Team Size</p>
+            <p className="font-medium text-foreground">{opportunity.volunteersNeeded} volunteers</p>
+          </div>
+        </div>
+      )}
+
+      {/* Impact Metric */}
+      {opportunity.impactMetricName && (
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Target className="w-4 h-4 flex-shrink-0" />
+          <div>
+            <p className="text-xs text-muted-foreground">Target Impact</p>
+            <p className="font-medium text-foreground">{opportunity.impactMetricName}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MyApplicationsPage() {
   const userId = localStorage.getItem('currentUserId');
+  const [expandedApps, setExpandedApps] = useState<Set<number>>(new Set());
+
+  const toggleExpanded = (appId: number) => {
+    setExpandedApps(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(appId)) {
+        newSet.delete(appId);
+      } else {
+        newSet.add(appId);
+      }
+      return newSet;
+    });
+  };
 
   // Fetch all opportunities with match scores
   const { data: matchedOpportunities = [], isLoading: isLoadingMatches } = useQuery({
@@ -198,6 +277,7 @@ export default function MyApplicationsPage() {
                         </p>
                       </Link>
 
+                      {/* Location and Applied Date */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         {app.opportunity?.location && (
                           <div className="flex items-center gap-2 text-muted-foreground">
@@ -211,6 +291,28 @@ export default function MyApplicationsPage() {
                         </div>
                       </div>
 
+                      {/* Comprehensive Metrics */}
+                      <OpportunityMetrics opportunity={app.opportunity} />
+
+                      {/* Skills Required */}
+                      {app.opportunity?.requiredSkills && app.opportunity.requiredSkills.length > 0 && (
+                        <div className="pt-2 border-t">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Skills Required</p>
+                          <div className="flex flex-wrap gap-1">
+                            {app.opportunity.requiredSkills.slice(0, 6).map((skill: string, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {app.opportunity.requiredSkills.length > 6 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{app.opportunity.requiredSkills.length - 6} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {app.notes && (
                         <div className="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg">
                           <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-1">
@@ -223,7 +325,7 @@ export default function MyApplicationsPage() {
                       <div className="flex gap-2">
                         <Link href={`/opportunities/${app.opportunityId}`} className="flex-1">
                           <Button variant="outline" className="w-full">
-                            View Details
+                            Learn More
                             <ExternalLink className="w-4 h-4 ml-2" />
                           </Button>
                         </Link>
@@ -275,6 +377,7 @@ export default function MyApplicationsPage() {
                         </p>
                       </Link>
 
+                      {/* Location and Applied Date */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         {app.opportunity?.location && (
                           <div className="flex items-center gap-2 text-muted-foreground">
@@ -288,6 +391,28 @@ export default function MyApplicationsPage() {
                         </div>
                       </div>
 
+                      {/* Comprehensive Metrics */}
+                      <OpportunityMetrics opportunity={app.opportunity} />
+
+                      {/* Skills Required */}
+                      {app.opportunity?.requiredSkills && app.opportunity.requiredSkills.length > 0 && (
+                        <div className="pt-2 border-t">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Skills Required</p>
+                          <div className="flex flex-wrap gap-1">
+                            {app.opportunity.requiredSkills.slice(0, 6).map((skill: string, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {app.opportunity.requiredSkills.length > 6 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{app.opportunity.requiredSkills.length - 6} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg">
                         <p className="text-sm text-yellow-800 dark:text-yellow-200">
                           Your application is being reviewed. You'll be notified once a decision is made.
@@ -296,7 +421,7 @@ export default function MyApplicationsPage() {
 
                       <Link href={`/opportunities/${app.opportunityId}`}>
                         <Button variant="outline" className="w-full">
-                          View Details
+                          Learn More
                           <ExternalLink className="w-4 h-4 ml-2" />
                         </Button>
                       </Link>
@@ -342,6 +467,28 @@ export default function MyApplicationsPage() {
                         {app.reviewedAt && ` • Reviewed ${new Date(app.reviewedAt).toLocaleDateString()}`}
                       </div>
 
+                      {/* Comprehensive Metrics */}
+                      <OpportunityMetrics opportunity={app.opportunity} />
+
+                      {/* Skills Required */}
+                      {app.opportunity?.requiredSkills && app.opportunity.requiredSkills.length > 0 && (
+                        <div className="pt-2 border-t">
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Skills Required</p>
+                          <div className="flex flex-wrap gap-1">
+                            {app.opportunity.requiredSkills.slice(0, 6).map((skill: string, idx: number) => (
+                              <Badge key={idx} variant="secondary" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {app.opportunity.requiredSkills.length > 6 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{app.opportunity.requiredSkills.length - 6} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {app.notes && (
                         <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                           <p className="text-sm text-muted-foreground">{app.notes}</p>
@@ -350,8 +497,8 @@ export default function MyApplicationsPage() {
 
                       <Link href={`/opportunities/${app.opportunityId}`}>
                         <Button variant="ghost" className="w-full">
-                          View Details
-                          <ExternalLink className="w-4 h-4 ml-2" />
+                          Learn More
+                          <ExternalLink className="w-4 h-4" />
                         </Button>
                       </Link>
                     </CardContent>

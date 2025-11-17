@@ -17,6 +17,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { uploadProfilePhoto } from "@/lib/upload";
 import { Loader2, Plus, X, User, MapPin, Target, Heart, Camera, Upload, Lock, Shield, Trash2 } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Slider } from "@/components/ui/slider";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential, setPersistence, browserLocalPersistence, browserSessionPersistence, deleteUser as firebaseDeleteUser } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useLocation } from "wouter";
@@ -64,6 +65,9 @@ export default function VolunteerProfile() {
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Skill ratings state (percentage for each skill)
+  const [skillRatings, setSkillRatings] = useState<Record<string, number>>({});
   
   // Security settings state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -116,10 +120,27 @@ export default function VolunteerProfile() {
         form.setValue("interests", volunteerProfile.interests || []);
         form.setValue("location", volunteerProfile.location || "");
         form.setValue("sdgGoals", volunteerProfile.preferredSdgs || []); // Fix: use preferredSdgs from backend
+        
+        // Load existing skill ratings
+        if (volunteerProfile.skillRatings) {
+          setSkillRatings(volunteerProfile.skillRatings as Record<string, number>);
+        } else {
+          // Initialize all skills with default 70% if no ratings exist
+          const initialRatings: Record<string, number> = {};
+          (volunteerProfile.skills || []).forEach((skill: string) => {
+            initialRatings[skill] = 70;
+          });
+          setSkillRatings(initialRatings);
+        }
       } else {
         // Initialize with user's skills if no volunteer profile exists
         if (user.skills && user.skills.length > 0) {
           form.setValue("skills", user.skills);
+          const initialRatings: Record<string, number> = {};
+          user.skills.forEach((skill: string) => {
+            initialRatings[skill] = 70;
+          });
+          setSkillRatings(initialRatings);
         }
       }
     }
@@ -204,6 +225,7 @@ export default function VolunteerProfile() {
       const response = await apiRequest("PATCH", url, {
         ...data,
         profilePhotoUrl: photoUrl,
+        skillRatings, // Include skill ratings in the update
       });
       return response.json();
     },
@@ -254,6 +276,11 @@ export default function VolunteerProfile() {
       const currentSkills = form.getValues("skills");
       if (!currentSkills.includes(skillInput.trim())) {
         form.setValue("skills", [...currentSkills, skillInput.trim()]);
+        // Initialize new skill with default 70% rating
+        setSkillRatings(prev => ({
+          ...prev,
+          [skillInput.trim()]: 70
+        }));
         setSkillInput("");
       }
     }
@@ -262,6 +289,19 @@ export default function VolunteerProfile() {
   const removeSkill = (skill: string) => {
     const currentSkills = form.getValues("skills");
     form.setValue("skills", currentSkills.filter(s => s !== skill));
+    // Remove rating for the removed skill
+    setSkillRatings(prev => {
+      const newRatings = { ...prev };
+      delete newRatings[skill];
+      return newRatings;
+    });
+  };
+
+  const updateSkillRating = (skill: string, rating: number) => {
+    setSkillRatings(prev => ({
+      ...prev,
+      [skill]: rating
+    }));
   };
 
   const addInterest = () => {
@@ -595,26 +635,46 @@ export default function VolunteerProfile() {
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="space-y-4 mt-2">
                   {form.watch("skills").map((skill) => (
-                    <Badge key={skill} variant="secondary" className="gap-1" data-testid={`badge-skill-${skill}`}>
-                      {skill}
-                      <button
-                        type="button"
-                        onClick={() => removeSkill(skill)}
-                        className="ml-1 hover:bg-secondary-foreground/10 rounded-full"
-                        data-testid={`button-remove-skill-${skill}`}
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
+                    <div key={skill} className="border rounded-lg p-4 space-y-3" data-testid={`skill-item-${skill}`}>
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{skill}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeSkill(skill)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          data-testid={`button-remove-skill-${skill}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <Label className="text-muted-foreground">Proficiency Level</Label>
+                          <span className="font-medium text-primary">{skillRatings[skill] || 70}%</span>
+                        </div>
+                        <Slider
+                          value={[skillRatings[skill] || 70]}
+                          onValueChange={(value) => updateSkillRating(skill, value[0])}
+                          min={0}
+                          max={100}
+                          step={5}
+                          className="w-full"
+                          data-testid={`slider-skill-${skill}`}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          0% = Beginner • 50% = Intermediate • 100% = Expert
+                        </p>
+                      </div>
+                    </div>
                   ))}
                 </div>
                 {form.formState.errors.skills && (
                   <p className="text-sm text-destructive">{form.formState.errors.skills.message}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Skills are weighted at 35% in the matching algorithm
+                  Skills and proficiency are weighted at 35% in the matching algorithm (70% count + 30% proficiency)
                 </p>
               </div>
 

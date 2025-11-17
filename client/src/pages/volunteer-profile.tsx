@@ -52,6 +52,7 @@ const formSchema = z.object({
   interests: z.array(z.string()).default([]), // Optional - can be empty
   location: z.string().optional(), // Optional - can be empty
   sdgGoals: z.array(z.number()).default([]), // Optional - can be empty
+  skillRatings: z.record(z.number()).default({}), // Skill proficiency ratings
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -104,6 +105,7 @@ export default function VolunteerProfile() {
       interests: [],
       location: "",
       sdgGoals: [],
+      skillRatings: {},
     },
   });
 
@@ -121,16 +123,16 @@ export default function VolunteerProfile() {
         form.setValue("location", volunteerProfile.location || "");
         form.setValue("sdgGoals", volunteerProfile.preferredSdgs || []); // Fix: use preferredSdgs from backend
         
-        // Load existing skill ratings
+        // Load existing skill ratings into form
         if (volunteerProfile.skillRatings) {
-          setSkillRatings(volunteerProfile.skillRatings as Record<string, number>);
+          form.setValue("skillRatings", volunteerProfile.skillRatings as Record<string, number>);
         } else {
           // Initialize all skills with default 70% if no ratings exist
           const initialRatings: Record<string, number> = {};
           (volunteerProfile.skills || []).forEach((skill: string) => {
             initialRatings[skill] = 70;
           });
-          setSkillRatings(initialRatings);
+          form.setValue("skillRatings", initialRatings);
         }
       } else {
         // Initialize with user's skills if no volunteer profile exists
@@ -140,7 +142,7 @@ export default function VolunteerProfile() {
           user.skills.forEach((skill: string) => {
             initialRatings[skill] = 70;
           });
-          setSkillRatings(initialRatings);
+          form.setValue("skillRatings", initialRatings);
         }
       }
     }
@@ -225,7 +227,7 @@ export default function VolunteerProfile() {
       const response = await apiRequest("PATCH", url, {
         ...data,
         profilePhotoUrl: photoUrl,
-        skillRatings, // Include skill ratings in the update
+        // skillRatings already included in data from form
       });
       return response.json();
     },
@@ -276,11 +278,12 @@ export default function VolunteerProfile() {
       const currentSkills = form.getValues("skills");
       if (!currentSkills.includes(skillInput.trim())) {
         form.setValue("skills", [...currentSkills, skillInput.trim()]);
-        // Initialize new skill with default 70% rating
-        setSkillRatings(prev => ({
-          ...prev,
+        // Initialize new skill with default 70% rating in form
+        const currentRatings = form.getValues("skillRatings");
+        form.setValue("skillRatings", {
+          ...currentRatings,
           [skillInput.trim()]: 70
-        }));
+        });
         setSkillInput("");
       }
     }
@@ -289,19 +292,19 @@ export default function VolunteerProfile() {
   const removeSkill = (skill: string) => {
     const currentSkills = form.getValues("skills");
     form.setValue("skills", currentSkills.filter(s => s !== skill));
-    // Remove rating for the removed skill
-    setSkillRatings(prev => {
-      const newRatings = { ...prev };
-      delete newRatings[skill];
-      return newRatings;
-    });
+    // Remove rating for the removed skill from form
+    const currentRatings = form.getValues("skillRatings");
+    const newRatings = { ...currentRatings };
+    delete newRatings[skill];
+    form.setValue("skillRatings", newRatings);
   };
 
   const updateSkillRating = (skill: string, rating: number) => {
-    setSkillRatings(prev => ({
-      ...prev,
+    const currentRatings = form.getValues("skillRatings");
+    form.setValue("skillRatings", {
+      ...currentRatings,
       [skill]: rating
-    }));
+    });
   };
 
   const addInterest = () => {
@@ -652,10 +655,10 @@ export default function VolunteerProfile() {
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
                           <Label className="text-muted-foreground">Proficiency Level</Label>
-                          <span className="font-medium text-primary">{skillRatings[skill] || 70}%</span>
+                          <span className="font-medium text-primary">{form.watch("skillRatings")[skill] ?? 70}%</span>
                         </div>
                         <Slider
-                          value={[skillRatings[skill] || 70]}
+                          value={[form.watch("skillRatings")[skill] ?? 70]}
                           onValueChange={(value) => updateSkillRating(skill, value[0])}
                           min={0}
                           max={100}

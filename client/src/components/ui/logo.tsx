@@ -38,12 +38,18 @@ export default function Logo({
         <img
           src={logoImage}
           alt="Synerxus Logo"
-          className={cn(sizeClasses.logo, "w-auto object-contain flex-shrink-0")}
+          className={cn(
+            sizeClasses.logo,
+            "w-auto object-contain flex-shrink-0",
+          )}
           loading="eager"
         />
       )}
       <span
-        className={cn("font-bold whitespace-nowrap leading-none flex items-center", sizeClasses.text)}
+        className={cn(
+          "font-bold whitespace-nowrap leading-none flex items-center",
+          sizeClasses.text,
+        )}
         style={{ letterSpacing: sizeClasses.letterSpacing }}
       >
         <span style={{ color: "#1e3a8a" }}>SYNER</span>

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Users, Calendar, Briefcase, Plus, AlertCircle } from "lucide-react";
 import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
@@ -34,19 +35,6 @@ export default function Opportunities() {
     },
     enabled: !!userId
   });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "open":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "closed":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-      case "filled":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
   if (isLoading) {
     return (
@@ -140,9 +128,7 @@ export default function Opportunities() {
                     <CardTitle className="text-lg">{opportunity.title}</CardTitle>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className={getStatusColor(opportunity.status)}>
-                      {opportunity.status}
-                    </Badge>
+                    <StatusBadge status={opportunity.status} />
                     <EditOpportunityDialog opportunity={opportunity} />
                     <DeleteOpportunityDialog opportunity={opportunity} />
                   </div>

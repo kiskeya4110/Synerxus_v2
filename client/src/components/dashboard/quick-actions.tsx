@@ -26,11 +26,11 @@ export default function QuickActions({ userType = "volunteer", onContactVoluntee
       href: "/mobile-data-collection"
     },
     {
-      id: "my-tasks",
-      label: "My Tasks",
+      id: "my-work",
+      label: "My Work",
       icon: <CheckSquare className="h-5 w-5 mb-1" />,
       color: "text-primary-500",
-      href: "/my-tasks"
+      href: "/my-work"
     },
     {
       id: "find-opportunities",

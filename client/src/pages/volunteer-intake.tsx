@@ -554,9 +554,11 @@ export default function VolunteerProfileSettings() {
                         min="1"
                         placeholder="e.g., 5"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value))
-                        }
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value === "" ? "" : parseInt(value) || "");
+                        }}
                         data-testid="input-volunteer-weekly-hours"
                       />
                     </FormControl>

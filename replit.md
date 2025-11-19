@@ -20,6 +20,22 @@ The platform includes a rebranded landing page with an interactive SDG wheel. Th
 ### System Design Choices
 Authentication is managed via Firebase Auth with Google OAuth. Client-server communication utilizes RESTful APIs, WebSockets for real-time updates, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon.
 
+## Recent Changes (November 2025)
+
+### Availability Matching Integration
+- **Matching Algorithm Enhancement**: Added availability as a fifth matching factor (15% weight) alongside Skills (30%), Location (20%), SDG (20%), and Interests (15%)
+- **Time Commitment Scoring**: Compares volunteer's weeklyAvailability against opportunity's ongoingHoursPerWeek with graduated scoring (60pts for ≤70% commitment, 40pts for 70-100%, 10pts for over-commitment)
+- **Work Style Matching**: Compares volunteer's preferredWorkStyle (remote/in-person/hybrid) with opportunity's engagementType, with 40pt bonus for matches and hybrid flexibility
+- **Profile Display**: Added comprehensive "Availability & Work Preferences" section to volunteer profiles showing weekly hours, work style preference, and detailed time slots with defensive handling for incomplete data
+
+### People Impacted Metrics Expansion
+- **Broader Impact Tracking**: Expanded "People Impacted" keyword filtering from basic terms (people/person/beneficiar) to include: students, children, adults, families, participants, recipients, attendees, individuals, community members, meals, services, healthcare, education, and training
+- **Data Accuracy**: Applied expanded filtering to both organization and volunteer dashboard calculations to capture diverse human-impact metrics like "Students Educated", "Meals Provided", and "Healthcare Services Delivered"
+
+### UI Improvements
+- **Impact Chart Cleanup**: Removed unwanted filter menu from Impact Over Time visualization for cleaner, more focused chart display
+- **Visual Consistency**: Maintained consistent chart styling and user-type-specific labels across all impact visualizations
+
 ## External Dependencies
 
 -   **Authentication & User Management**: Firebase Auth, Firebase Firestore, Firebase Storage

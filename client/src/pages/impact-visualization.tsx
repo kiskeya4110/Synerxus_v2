@@ -637,9 +637,14 @@ export default function ImpactVisualization() {
           
           <Card>
             <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">Aggregated Impact Metrics</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">
+                {currentUser?.userType === 'volunteer' ? 'Your Impact Metrics' : 'Organization Impact Metrics'}
+              </CardTitle>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Click on any metric to see detailed breakdown
+                {currentUser?.userType === 'volunteer' 
+                  ? 'Track the impact of your volunteer contributions' 
+                  : 'Track your organization\'s collective impact'
+                }
               </p>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
@@ -650,7 +655,9 @@ export default function ImpactVisualization() {
                   onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
                   data-testid="metric-people-impacted"
                 >
-                  <div className="text-xs sm:text-sm font-semibold text-primary dark:text-primary-400 mb-1">Total People Impacted</div>
+                  <div className="text-xs sm:text-sm font-semibold text-primary dark:text-primary-400 mb-1">
+                    {currentUser?.userType === 'volunteer' ? 'People You Impacted' : 'Total People Impacted'}
+                  </div>
                   <div className="text-2xl sm:text-3xl font-bold text-primary mt-1">
                     {aggregatedMetrics.totalPeople.toLocaleString()}
                   </div>
@@ -662,7 +669,9 @@ export default function ImpactVisualization() {
                   onClick={() => handleMetricClick("Communities Served", aggregatedMetrics.communitiesServed)}
                   data-testid="metric-communities"
                 >
-                  <div className="text-xs sm:text-sm font-semibold text-green-600 dark:text-green-400 mb-1">Communities Served</div>
+                  <div className="text-xs sm:text-sm font-semibold text-green-600 dark:text-green-400 mb-1">
+                    {currentUser?.userType === 'volunteer' ? 'Communities You Served' : 'Communities Served'}
+                  </div>
                   <div className="text-2xl sm:text-3xl font-bold text-green-500 mt-1">{aggregatedMetrics.communitiesServed}</div>
                   <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
                 </Button>
@@ -672,7 +681,9 @@ export default function ImpactVisualization() {
                   onClick={() => handleMetricClick("Volunteer Hours", aggregatedMetrics.totalHours)}
                   data-testid="metric-hours"
                 >
-                  <div className="text-xs sm:text-sm font-semibold text-purple-600 dark:text-purple-400 mb-1">Volunteer Hours</div>
+                  <div className="text-xs sm:text-sm font-semibold text-purple-600 dark:text-purple-400 mb-1">
+                    {currentUser?.userType === 'volunteer' ? 'Your Volunteer Hours' : 'Total Volunteer Hours'}
+                  </div>
                   <div className="text-2xl sm:text-3xl font-bold text-purple-500 mt-1">
                     {aggregatedMetrics.totalHours.toLocaleString()}
                   </div>
@@ -696,7 +707,15 @@ export default function ImpactVisualization() {
         <TabsContent value="time-series" className="space-y-4 sm:space-y-6">
           <Card>
             <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="text-lg sm:text-xl">Impact Growth Over Time</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">
+                {currentUser?.userType === 'volunteer' ? 'Your Impact Growth Over Time' : 'Organization Impact Growth Over Time'}
+              </CardTitle>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {currentUser?.userType === 'volunteer' 
+                  ? 'Track how your volunteer contributions have grown' 
+                  : 'Track how your organization\'s impact has grown'
+                }
+              </p>
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="h-[300px] sm:h-[400px]">
@@ -720,7 +739,9 @@ export default function ImpactVisualization() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             <Card>
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Volunteer Hours by Month</CardTitle>
+                <CardTitle className="text-base sm:text-lg">
+                  {currentUser?.userType === 'volunteer' ? 'Your Hours by Month' : 'Volunteer Hours by Month'}
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
                 <div className="h-[250px] sm:h-[300px]">
@@ -743,7 +764,9 @@ export default function ImpactVisualization() {
             
             <Card>
               <CardHeader className="p-4 sm:p-6">
-                <CardTitle className="text-base sm:text-lg">Impact by SDG</CardTitle>
+                <CardTitle className="text-base sm:text-lg">
+                  {currentUser?.userType === 'volunteer' ? 'Your Impact by SDG' : 'Organization Impact by SDG'}
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
                 <div className="h-[250px] sm:h-[300px]">

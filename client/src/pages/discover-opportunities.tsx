@@ -400,6 +400,110 @@ export default function DiscoverOpportunities() {
                     )}
                   </div>
 
+                  {/* 2-Column Layout: AI Analysis & Details */}
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {/* Column 1: AI Analysis, Requirements, Benefits */}
+                    <div className="space-y-3">
+                      {/* Match Reasons - Why this matches you */}
+                      {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
+                        <div className="p-2.5 bg-blue-50 dark:bg-blue-950 rounded-md">
+                          <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1 flex items-center gap-1">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Why this matches you
+                          </p>
+                          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
+                            {opportunity.matchReasons.slice(0, 3).map((reason, idx) => (
+                              <li key={idx} className="flex items-start">
+                                <span className="mr-1.5">•</span>
+                                <span>{reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Requirements */}
+                      {opportunity.requirements && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.requirements}</p>
+                        </div>
+                      )}
+
+                      {/* Benefits */}
+                      {opportunity.benefits && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.benefits}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Column 2: SDG Goals & Skills */}
+                    <div className="space-y-3">
+                      {/* SDG Goals */}
+                      {opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {opportunity.sdgGoals.slice(0, 4).map((sdgId) => {
+                              const sdg = sdgGoals[sdgId];
+                              return sdg ? (
+                                <Badge 
+                                  key={sdgId} 
+                                  style={{ backgroundColor: sdg.color, color: '#fff' }}
+                                  className="text-xs px-2 py-0"
+                                >
+                                  SDG {sdgId}
+                                </Badge>
+                              ) : null;
+                            })}
+                            {opportunity.sdgGoals.length > 4 && (
+                              <Badge variant="outline" className="text-xs px-2 py-0">
+                                +{opportunity.sdgGoals.length - 4}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Required Skills */}
+                      {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {opportunity.requiredSkills.slice(0, 4).map((skill, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {opportunity.requiredSkills.length > 4 && (
+                              <Badge variant="outline" className="text-xs px-2 py-0">
+                                +{opportunity.requiredSkills.length - 4}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Target Impact Metric */}
+                      {opportunity.impactMetricName && (
+                        <div className="p-2.5 bg-purple-50 dark:bg-purple-950 rounded-md">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Target className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300" />
+                            <p className="text-xs font-semibold text-purple-900 dark:text-purple-100">
+                              Target Impact
+                            </p>
+                          </div>
+                          <p className="text-xs text-purple-800 dark:text-purple-200">
+                            {opportunity.impactMetricName}
+                            {opportunity.impactMetricUnit && ` (${opportunity.impactMetricUnit})`}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Category and Engagement Type */}
                   <div className="flex flex-wrap gap-1.5">
                     {opportunity.category && (
@@ -410,74 +514,13 @@ export default function DiscoverOpportunities() {
                     )}
                   </div>
 
-                  {/* SDG Goals */}
-                  {opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {opportunity.sdgGoals.slice(0, 4).map((sdgId) => {
-                          const sdg = sdgGoals[sdgId];
-                          return sdg ? (
-                            <Badge 
-                              key={sdgId} 
-                              style={{ backgroundColor: sdg.color, color: '#fff' }}
-                              className="text-xs px-2 py-0"
-                            >
-                              SDG {sdgId}
-                            </Badge>
-                          ) : null;
-                        })}
-                        {opportunity.sdgGoals.length > 4 && (
-                          <Badge variant="outline" className="text-xs px-2 py-0">
-                            +{opportunity.sdgGoals.length - 4}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Required Skills */}
-                  {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {opportunity.requiredSkills.slice(0, 3).map((skill, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs px-2 py-0">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {opportunity.requiredSkills.length > 3 && (
-                          <Badge variant="outline" className="text-xs px-2 py-0">
-                            +{opportunity.requiredSkills.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Target Impact Metric */}
-                  {opportunity.impactMetricName && (
-                    <div className="p-2.5 bg-purple-50 dark:bg-purple-950 rounded-md">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Target className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300" />
-                        <p className="text-xs font-semibold text-purple-900 dark:text-purple-100">
-                          Target Impact
-                        </p>
-                      </div>
-                      <p className="text-xs text-purple-800 dark:text-purple-200">
-                        {opportunity.impactMetricName}
-                        {opportunity.impactMetricUnit && ` (${opportunity.impactMetricUnit})`}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Skills Match Breakdown */}
+                  {/* Skills Match Breakdown - Collapsible */}
                   {opportunity.matchBreakdown && (
                     <Collapsible>
                       <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
                         <div className="flex items-center gap-2">
                           <CheckCircle className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
-                          <span className="text-xs font-medium">Skills Match Breakdown</span>
+                          <span className="text-xs font-medium">Match Breakdown</span>
                         </div>
                         <ChevronDown className="w-4 h-4" />
                       </CollapsibleTrigger>
@@ -512,65 +555,6 @@ export default function DiscoverOpportunities() {
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
-                  )}
-
-                  {/* AI Tips - Placeholder for now, would need backend enhancement */}
-                  {opportunity.matchScore && opportunity.matchScore >= 50 && (
-                    <div className="p-2.5 bg-yellow-50 dark:bg-yellow-950 rounded-md">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Lightbulb className="w-3.5 h-3.5 text-yellow-700 dark:text-yellow-300" />
-                        <p className="text-xs font-semibold text-yellow-900 dark:text-yellow-100">
-                          AI Insights
-                        </p>
-                      </div>
-                      <div className="space-y-1">
-                        {opportunity.matchBreakdown?.skillMatch && opportunity.matchBreakdown.skillMatch < 70 && (
-                          <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                            🎓 <strong>Learning Opportunity:</strong> Develop new skills while leveraging your experience
-                          </p>
-                        )}
-                        {opportunity.matchBreakdown?.skillMatch && opportunity.matchBreakdown.skillMatch >= 80 && (
-                          <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                            ⭐ <strong>Skills Optimization:</strong> Your skills are a perfect match - you'll make immediate impact
-                          </p>
-                        )}
-                        {opportunity.commitmentType === 'ongoing' && opportunity.ongoingHoursPerWeek && (
-                          <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                            ⏰ <strong>Time Commitment:</strong> {opportunity.ongoingHoursPerWeek} hrs/week allows for balanced engagement
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Match Reasons - Why this matches you */}
-                  {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
-                    <div className="p-2.5 bg-blue-50 dark:bg-blue-950 rounded-md">
-                      <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                        Why this matches you:
-                      </p>
-                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
-                        {opportunity.matchReasons.slice(0, 3).map((reason, idx) => (
-                          <li key={idx}>• {reason}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Requirements */}
-                  {opportunity.requirements && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.requirements}</p>
-                    </div>
-                  )}
-
-                  {/* Benefits */}
-                  {opportunity.benefits && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Benefits:</p>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.benefits}</p>
-                    </div>
                   )}
 
                   {/* Action Buttons */}

@@ -286,51 +286,95 @@ export default function MyApplicationsPage() {
                         </p>
                       </Link>
 
-                      {/* Why this Matches You - AI Analysis */}
-                      {app.matchReasons && app.matchReasons.length > 0 && (
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
-                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                              Why this matches you:
-                            </p>
-                          </div>
-                          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                            {app.matchReasons.slice(0, 3).map((reason: string, idx: number) => (
-                              <li key={idx} className="flex items-start gap-1.5">
-                                <Award className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                                <span>{reason}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      {/* 2-Column Layout: AI Analysis & Details */}
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {/* Column 1: AI Analysis & Requirements */}
+                        <div className="space-y-3">
+                          {/* Why this Matches You - AI Analysis */}
+                          {app.matchReasons && app.matchReasons.length > 0 && (
+                            <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
+                              <div className="flex items-center gap-1.5 mb-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
+                                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                                  Why this matches you
+                                </p>
+                              </div>
+                              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                                {app.matchReasons.slice(0, 3).map((reason: string, idx: number) => (
+                                  <li key={idx} className="flex items-start gap-1.5">
+                                    <span className="mt-0.5">•</span>
+                                    <span>{reason}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
 
-                      {/* SDG Goals */}
-                      {app.opportunity?.sdgGoals && app.opportunity.sdgGoals.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {app.opportunity.sdgGoals.slice(0, 4).map((sdgId: number) => {
-                              const sdg = sdgGoals[sdgId];
-                              return sdg ? (
-                                <Badge 
-                                  key={sdgId} 
-                                  style={{ backgroundColor: sdg.color, color: '#fff' }}
-                                  className="text-xs px-2 py-0"
-                                >
-                                  SDG {sdgId}
-                                </Badge>
-                              ) : null;
-                            })}
-                            {app.opportunity.sdgGoals.length > 4 && (
-                              <Badge variant="outline" className="text-xs px-2 py-0">
-                                +{app.opportunity.sdgGoals.length - 4}
-                              </Badge>
-                            )}
-                          </div>
+                          {/* Requirements */}
+                          {app.opportunity?.requirements && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{app.opportunity.requirements}</p>
+                            </div>
+                          )}
+
+                          {/* Benefits */}
+                          {app.opportunity?.benefits && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{app.opportunity.benefits}</p>
+                            </div>
+                          )}
                         </div>
-                      )}
+
+                        {/* Column 2: SDG Goals & Skills */}
+                        <div className="space-y-3">
+                          {/* SDG Goals */}
+                          {app.opportunity?.sdgGoals && app.opportunity.sdgGoals.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {app.opportunity.sdgGoals.slice(0, 4).map((sdgId: number) => {
+                                  const sdg = sdgGoals[sdgId];
+                                  return sdg ? (
+                                    <Badge 
+                                      key={sdgId} 
+                                      style={{ backgroundColor: sdg.color, color: '#fff' }}
+                                      className="text-xs px-2 py-0"
+                                    >
+                                      SDG {sdgId}
+                                    </Badge>
+                                  ) : null;
+                                })}
+                                {app.opportunity.sdgGoals.length > 4 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0">
+                                    +{app.opportunity.sdgGoals.length - 4}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Skills Required */}
+                          {app.opportunity?.requiredSkills && app.opportunity.requiredSkills.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {app.opportunity.requiredSkills.slice(0, 4).map((skill: string, idx: number) => (
+                                  <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                                {app.opportunity.requiredSkills.length > 4 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0">
+                                    +{app.opportunity.requiredSkills.length - 4}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       {/* Location and Applied Date */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -348,25 +392,6 @@ export default function MyApplicationsPage() {
 
                       {/* Comprehensive Metrics */}
                       <OpportunityMetrics opportunity={app.opportunity} />
-
-                      {/* Skills Required */}
-                      {app.opportunity?.requiredSkills && app.opportunity.requiredSkills.length > 0 && (
-                        <div className="pt-2 border-t">
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Skills Required</p>
-                          <div className="flex flex-wrap gap-1">
-                            {app.opportunity.requiredSkills.slice(0, 6).map((skill: string, idx: number) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
-                            {app.opportunity.requiredSkills.length > 6 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{app.opportunity.requiredSkills.length - 6} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
 
                       {app.notes && (
                         <div className="p-3 bg-green-50 dark:bg-green-900/10 rounded-lg">
@@ -432,51 +457,95 @@ export default function MyApplicationsPage() {
                         </p>
                       </Link>
 
-                      {/* Why this Matches You - AI Analysis */}
-                      {app.matchReasons && app.matchReasons.length > 0 && (
-                        <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
-                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                              Why this matches you:
-                            </p>
-                          </div>
-                          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                            {app.matchReasons.slice(0, 3).map((reason: string, idx: number) => (
-                              <li key={idx} className="flex items-start gap-1.5">
-                                <Award className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                                <span>{reason}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      {/* 2-Column Layout: AI Analysis & Details */}
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {/* Column 1: AI Analysis & Requirements */}
+                        <div className="space-y-3">
+                          {/* Why this Matches You - AI Analysis */}
+                          {app.matchReasons && app.matchReasons.length > 0 && (
+                            <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
+                              <div className="flex items-center gap-1.5 mb-1.5">
+                                <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
+                                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                                  Why this matches you
+                                </p>
+                              </div>
+                              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                                {app.matchReasons.slice(0, 3).map((reason: string, idx: number) => (
+                                  <li key={idx} className="flex items-start gap-1.5">
+                                    <span className="mt-0.5">•</span>
+                                    <span>{reason}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
 
-                      {/* SDG Goals */}
-                      {app.opportunity?.sdgGoals && app.opportunity.sdgGoals.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {app.opportunity.sdgGoals.slice(0, 4).map((sdgId: number) => {
-                              const sdg = sdgGoals[sdgId];
-                              return sdg ? (
-                                <Badge 
-                                  key={sdgId} 
-                                  style={{ backgroundColor: sdg.color, color: '#fff' }}
-                                  className="text-xs px-2 py-0"
-                                >
-                                  SDG {sdgId}
-                                </Badge>
-                              ) : null;
-                            })}
-                            {app.opportunity.sdgGoals.length > 4 && (
-                              <Badge variant="outline" className="text-xs px-2 py-0">
-                                +{app.opportunity.sdgGoals.length - 4}
-                              </Badge>
-                            )}
-                          </div>
+                          {/* Requirements */}
+                          {app.opportunity?.requirements && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{app.opportunity.requirements}</p>
+                            </div>
+                          )}
+
+                          {/* Benefits */}
+                          {app.opportunity?.benefits && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{app.opportunity.benefits}</p>
+                            </div>
+                          )}
                         </div>
-                      )}
+
+                        {/* Column 2: SDG Goals & Skills */}
+                        <div className="space-y-3">
+                          {/* SDG Goals */}
+                          {app.opportunity?.sdgGoals && app.opportunity.sdgGoals.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {app.opportunity.sdgGoals.slice(0, 4).map((sdgId: number) => {
+                                  const sdg = sdgGoals[sdgId];
+                                  return sdg ? (
+                                    <Badge 
+                                      key={sdgId} 
+                                      style={{ backgroundColor: sdg.color, color: '#fff' }}
+                                      className="text-xs px-2 py-0"
+                                    >
+                                      SDG {sdgId}
+                                    </Badge>
+                                  ) : null;
+                                })}
+                                {app.opportunity.sdgGoals.length > 4 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0">
+                                    +{app.opportunity.sdgGoals.length - 4}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Skills Required */}
+                          {app.opportunity?.requiredSkills && app.opportunity.requiredSkills.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {app.opportunity.requiredSkills.slice(0, 4).map((skill: string, idx: number) => (
+                                  <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                                {app.opportunity.requiredSkills.length > 4 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0">
+                                    +{app.opportunity.requiredSkills.length - 4}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
                       {/* Location and Applied Date */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -494,25 +563,6 @@ export default function MyApplicationsPage() {
 
                       {/* Comprehensive Metrics */}
                       <OpportunityMetrics opportunity={app.opportunity} />
-
-                      {/* Skills Required */}
-                      {app.opportunity?.requiredSkills && app.opportunity.requiredSkills.length > 0 && (
-                        <div className="pt-2 border-t">
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Skills Required</p>
-                          <div className="flex flex-wrap gap-1">
-                            {app.opportunity.requiredSkills.slice(0, 6).map((skill: string, idx: number) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
-                            {app.opportunity.requiredSkills.length > 6 && (
-                              <Badge variant="secondary" className="text-xs">
-                                +{app.opportunity.requiredSkills.length - 6} more
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
 
                       <div className="p-3 bg-yellow-50 dark:bg-yellow-900/10 rounded-lg">
                         <p className="text-sm text-yellow-800 dark:text-yellow-200">

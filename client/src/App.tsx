@@ -34,6 +34,7 @@ import PostUrgentOpportunity from "@/pages/post-urgent-opportunity";
 import Applications from "@/pages/applications";
 import MyApplications from "@/pages/my-applications";
 import Assignments from "@/pages/assignments";
+import MyWork from "@/pages/my-work";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/my-applications" component={MyApplications} />
       <Route path="/assignments" component={Assignments} />
       <Route path="/my-tasks" component={MyTasks} />
+      <Route path="/my-work" component={MyWork} />
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile" component={VolunteerProfile} />
       <Route path="/organization-profile" component={OrganizationProfile} />

@@ -328,99 +328,62 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                 </p>
 
                 {/* Basic Info */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                    <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                  <div className="flex items-center">
+                    <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
                     <span className="truncate">{opp.location || "Location not specified"}</span>
                   </div>
-                  {opp.timeCommitment && (
-                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                      <Clock className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                      <span>{opp.timeCommitment}</span>
-                      {opp.commitmentType && <span className="ml-1">({opp.commitmentType})</span>}
-                    </div>
-                  )}
                   {opp.volunteersNeeded && (
-                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                      <Users className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                    <div className="flex items-center">
+                      <Users className="h-3 w-3 mr-1 flex-shrink-0" />
                       <span>{opp.volunteersNeeded} volunteer{opp.volunteersNeeded > 1 ? 's' : ''} needed</span>
-                    </div>
-                  )}
-                  {(opp.startDate || opp.endDate) && (
-                    <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                      <CalendarDays className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                      <span>
-                        {opp.startDate && new Date(opp.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {opp.startDate && opp.endDate && ' - '}
-                        {opp.endDate && new Date(opp.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </span>
                     </div>
                   )}
                 </div>
 
-                {/* 2-Column Layout: AI Analysis & Details */}
+                {/* 2-Column Section: Why this matches you (LEFT) | SDG & Skills (RIGHT) */}
                 <div className="grid md:grid-cols-2 gap-3">
-                  {/* Column 1: AI Analysis */}
-                  <div className="space-y-3">
-                    {/* Match Reasons */}
-                    {opp.matchReasons && opp.matchReasons.length > 0 && (
-                      <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-lg">
-                        <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1.5 flex items-center gap-1">
-                          <Sparkles className="h-3 w-3" />
-                          Why this matches you
-                        </p>
-                        <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
-                          {opp.matchReasons.slice(0, 3).map((reason, idx) => (
-                            <li key={idx} className="flex items-start">
-                              <span className="mr-1.5">•</span>
-                              <span>{reason}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* Requirements/Responsibilities */}
-                    {opp.requirements && (
-                      <div>
-                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.requirements}</p>
-                      </div>
-                    )}
-
-                    {/* Benefits */}
-                    {opp.benefits && (
-                      <div>
-                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.benefits}</p>
-                      </div>
+                  {/* LEFT Column: Why this matches you */}
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                    <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Why this matches you
+                    </p>
+                    {opp.matchReasons && opp.matchReasons.length > 0 ? (
+                      <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                        {opp.matchReasons.slice(0, 3).map((reason, idx) => (
+                          <li key={idx} className="flex items-start">
+                            <span className="mr-1.5">•</span>
+                            <span>{reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-xs text-blue-800 dark:text-blue-200">
+                        Great match based on your profile
+                      </p>
                     )}
                   </div>
 
-                  {/* Column 2: SDG Goals & Skills */}
-                  <div className="space-y-3">
+                  {/* RIGHT Column: SDG Goals & Skills */}
+                  <div className="space-y-2">
                     {/* SDG Goals */}
                     {opp.sdgGoals && opp.sdgGoals.length > 0 && (
                       <div>
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
                         <div className="flex flex-wrap gap-1">
-                          {opp.sdgGoals.slice(0, 4).map((sdgId) => {
+                          {opp.sdgGoals.map((sdgId) => {
                             const sdg = sdgGoals[sdgId];
                             return sdg ? (
                               <Badge 
                                 key={sdgId} 
                                 style={{ backgroundColor: sdg.color, color: '#fff' }}
-                                className="text-xs px-2 py-0"
+                                className="text-xs px-2 py-0.5"
                               >
                                 SDG {sdgId}
                               </Badge>
                             ) : null;
                           })}
-                          {opp.sdgGoals.length > 4 && (
-                            <Badge variant="outline" className="text-xs px-2 py-0">
-                              +{opp.sdgGoals.length - 4}
-                            </Badge>
-                          )}
                         </div>
                       </div>
                     )}
@@ -430,16 +393,11 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                       <div>
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
                         <div className="flex flex-wrap gap-1">
-                          {opp.requiredSkills.slice(0, 4).map((skill, idx) => (
-                            <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
+                          {opp.requiredSkills.map((skill, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs px-2 py-0.5">
                               {skill}
                             </Badge>
                           ))}
-                          {opp.requiredSkills.length > 4 && (
-                            <Badge variant="outline" className="text-xs px-2 py-0">
-                              +{opp.requiredSkills.length - 4}
-                            </Badge>
-                          )}
                         </div>
                       </div>
                     )}
@@ -447,16 +405,16 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-2 gap-2 pt-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Link href={`/opportunities/${opp.id}`}>
-                    <Button size="sm" variant="outline" className="w-full text-xs h-7" data-testid={`view-opportunity-${opp.id}`}>
+                    <Button size="sm" variant="outline" className="w-full text-xs" data-testid={`view-opportunity-${opp.id}`}>
                       <FileText className="mr-1 h-3 w-3" />
                       View Details
                     </Button>
                   </Link>
                   <Button 
                     size="sm" 
-                    className="w-full text-xs h-7" 
+                    className="w-full text-xs bg-blue-500 hover:bg-blue-600" 
                     onClick={() => handleApplyClick(opp)}
                     disabled={isApplied}
                     data-testid={`apply-opportunity-${opp.id}`}
@@ -549,99 +507,62 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                       </p>
 
                       {/* Basic Info */}
-                      <div className="space-y-1.5">
-                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                          <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                      <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center">
+                          <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
                           <span className="truncate">{opp.location || "Location not specified"}</span>
                         </div>
-                        {opp.timeCommitment && (
-                          <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                            <Clock className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                            <span>{opp.timeCommitment}</span>
-                            {opp.commitmentType && <span className="ml-1">({opp.commitmentType})</span>}
-                          </div>
-                        )}
                         {opp.volunteersNeeded && (
-                          <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                            <Users className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                          <div className="flex items-center">
+                            <Users className="h-3 w-3 mr-1 flex-shrink-0" />
                             <span>{opp.volunteersNeeded} volunteer{opp.volunteersNeeded > 1 ? 's' : ''} needed</span>
-                          </div>
-                        )}
-                        {(opp.startDate || opp.endDate) && (
-                          <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                            <CalendarDays className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                            <span>
-                              {opp.startDate && new Date(opp.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                              {opp.startDate && opp.endDate && ' - '}
-                              {opp.endDate && new Date(opp.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
                           </div>
                         )}
                       </div>
 
-                      {/* 2-Column Layout: AI Analysis & Details */}
+                      {/* 2-Column Section: Why this matches you (LEFT) | SDG & Skills (RIGHT) */}
                       <div className="grid md:grid-cols-2 gap-3">
-                        {/* Column 1: AI Analysis */}
-                        <div className="space-y-3">
-                          {/* Match Reasons */}
-                          {opp.matchReasons && opp.matchReasons.length > 0 && (
-                            <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-lg">
-                              <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1.5 flex items-center gap-1">
-                                <Sparkles className="h-3 w-3" />
-                                Why this matches you
-                              </p>
-                              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
-                                {opp.matchReasons.slice(0, 3).map((reason, idx) => (
-                                  <li key={idx} className="flex items-start">
-                                    <span className="mr-1.5">•</span>
-                                    <span>{reason}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-
-                          {/* Requirements/Responsibilities */}
-                          {opp.requirements && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.requirements}</p>
-                            </div>
-                          )}
-
-                          {/* Benefits */}
-                          {opp.benefits && (
-                            <div>
-                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.benefits}</p>
-                            </div>
+                        {/* LEFT Column: Why this matches you */}
+                        <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                          <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-2 flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" />
+                            Why this matches you
+                          </p>
+                          {opp.matchReasons && opp.matchReasons.length > 0 ? (
+                            <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                              {opp.matchReasons.slice(0, 3).map((reason, idx) => (
+                                <li key={idx} className="flex items-start">
+                                  <span className="mr-1.5">•</span>
+                                  <span>{reason}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-xs text-blue-800 dark:text-blue-200">
+                              Great match based on your profile
+                            </p>
                           )}
                         </div>
 
-                        {/* Column 2: SDG Goals & Skills */}
-                        <div className="space-y-3">
+                        {/* RIGHT Column: SDG Goals & Skills */}
+                        <div className="space-y-2">
                           {/* SDG Goals */}
                           {opp.sdgGoals && opp.sdgGoals.length > 0 && (
                             <div>
                               <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
                               <div className="flex flex-wrap gap-1">
-                                {opp.sdgGoals.slice(0, 4).map((sdgId) => {
+                                {opp.sdgGoals.map((sdgId) => {
                                   const sdg = sdgGoals[sdgId];
                                   return sdg ? (
                                     <Badge 
                                       key={sdgId} 
                                       style={{ backgroundColor: sdg.color, color: '#fff' }}
-                                      className="text-xs px-2 py-0"
+                                      className="text-xs px-2 py-0.5"
                                     >
                                       SDG {sdgId}
                                     </Badge>
                                   ) : null;
                                 })}
-                                {opp.sdgGoals.length > 4 && (
-                                  <Badge variant="outline" className="text-xs px-2 py-0">
-                                    +{opp.sdgGoals.length - 4}
-                                  </Badge>
-                                )}
                               </div>
                             </div>
                           )}
@@ -651,16 +572,11 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                             <div>
                               <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
                               <div className="flex flex-wrap gap-1">
-                                {opp.requiredSkills.slice(0, 4).map((skill, idx) => (
-                                  <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
+                                {opp.requiredSkills.map((skill, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs px-2 py-0.5">
                                     {skill}
                                   </Badge>
                                 ))}
-                                {opp.requiredSkills.length > 4 && (
-                                  <Badge variant="outline" className="text-xs px-2 py-0">
-                                    +{opp.requiredSkills.length - 4}
-                                  </Badge>
-                                )}
                               </div>
                             </div>
                           )}
@@ -668,16 +584,16 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="grid grid-cols-2 gap-2 pt-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <Link href={`/opportunities/${opp.id}`}>
-                          <Button size="sm" variant="outline" className="w-full text-xs h-7" data-testid={`view-opportunity-${opp.id}`}>
+                          <Button size="sm" variant="outline" className="w-full text-xs" data-testid={`view-opportunity-${opp.id}`}>
                             <FileText className="mr-1 h-3 w-3" />
                             View Details
                           </Button>
                         </Link>
                         <Button 
                           size="sm" 
-                          className="w-full text-xs h-7" 
+                          className="w-full text-xs bg-blue-500 hover:bg-blue-600" 
                           onClick={() => handleApplyClick(opp)}
                           disabled={isApplied}
                           data-testid={`apply-opportunity-${opp.id}`}

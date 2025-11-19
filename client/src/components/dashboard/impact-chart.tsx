@@ -1,12 +1,50 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useState } from "react";
 import { useTheme } from "@/components/layout/theme-provider";
 import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Define a mapping for old metrics to new standardized metrics
+const metricsMapping: { [key: string]: string } = {
+  studentsEducated: "People Educated",
+  healthcareServicesDelivered: "People Served",
+  mealsProvided: "People Fed",
+  servicesProvided: "People Served", // New definition
+  mealsDelivered: "People Fed", // New definition
+};
+
+// Function to standardize metric names
+const standardizeMetricName = (metricKey: string): string => {
+  return (
+    metricsMapping[metricKey] ||
+    `People ${metricKey.replace(/([A-Z])/g, " $1").trim()}`
+  );
+};
+
+// Function to count metrics based on new definitions
+const countPeopleMetrics = (metrics: { [key: string]: number }) => {
+  const standardizedMetrics = Object.keys(metrics).reduce(
+    (acc, key) => {
+      const standardizedKey = standardizeMetricName(key);
+      acc[standardizedKey] = (acc[standardizedKey] || 0) + metrics[key]; // Sum counts for identical metrics
+      return acc;
+    },
+    {} as { [key: string]: number },
+  );
+
+  return standardizedMetrics;
+};
+
+// Suggested metrics to track
+const suggestedMetrics = Object.values(metricsMapping);
+
 export interface ImpactChartProps {
-  monthlyImpactData?: Array<{ month: string; hours: number; peopleImpacted: number }>;
+  monthlyImpactData?: Array<{
+    month: string;
+    hours: number;
+    peopleImpacted: number;
+  }>;
   monthlyImpactTrend?: Array<{ month: string; score: number }>;
-  userType?: 'volunteer' | 'organization';
+  userType?: "volunteer" | "organization";
 }
 
 // Numeric coercion helper to safely convert values to numbers
@@ -15,43 +53,77 @@ function coerceNumber(value: any, fallback: number = 0): number {
   return Number.isFinite(num) ? num : fallback;
 }
 
-export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend = [], userType = 'organization' }: ImpactChartProps) {
+export default function ImpactChart({
+  monthlyImpactData = [],
+  monthlyImpactTrend = [],
+  userType = "organization",
+}: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
+  const [inputValue, setInputValue] = useState("");
+  const [selectedMetric, setSelectedMetric] = useState("");
 
   // Dynamic labels based on user type
-  const labels = useMemo(() => ({
-    hours: userType === 'volunteer' ? 'Your Hours (Entered Data)' : 'Volunteer Hours (Entered Data)',
-    impact: userType === 'volunteer' ? 'People You Impacted (Entered Data)' : 'People Impacted (Entered Data)',
-    score: userType === 'volunteer' ? 'Your Impact Score (Algorithm)' : 'Impact Score (Algorithm Evaluation)',
-  }), [userType]);
+  const labels = useMemo(
+    () => ({
+      hours:
+        userType === "volunteer"
+          ? "Your Hours (Entered Data)"
+          : "Volunteer Hours (Entered Data)",
+      impact:
+        userType === "volunteer"
+          ? "People You Impacted (Entered Data)"
+          : "People Impacted (Entered Data)",
+      score:
+        userType === "volunteer"
+          ? "Your Impact Score (Algorithm)"
+          : "Impact Score (Algorithm Evaluation)",
+    }),
+    [userType],
+  );
 
   // Process backend-computed data for chart
   const chartData = useMemo(() => {
     // Create a map of algorithm scores by month key for easy lookup
-    const algorithmScoreMap = new Map(monthlyImpactTrend.map(item => [item.month, item.score]));
+    const algorithmScoreMap = new Map(
+      monthlyImpactTrend.map((item) => [item.month, item.score]),
+    );
 
     return {
-      labels: monthlyImpactData.map(item => {
-        const [year, month] = item.month.split('-');
-        return new Date(parseInt(year), parseInt(month) - 1).toLocaleString('default', { month: 'short' });
+      labels: monthlyImpactData.map((item) => {
+        const [year, month] = item.month.split("-");
+        return new Date(parseInt(year), parseInt(month) - 1).toLocaleString(
+          "default",
+          { month: "short" },
+        );
       }),
-      hours: monthlyImpactData.map(item => item.hours),
-      impact: monthlyImpactData.map(item => item.peopleImpacted),
-      algorithmScores: monthlyImpactData.map(item => algorithmScoreMap.get(item.month) || 0),
+      hours: monthlyImpactData.map((item) => item.hours),
+      impact: monthlyImpactData.map((item) => item.peopleImpacted),
+      algorithmScores: monthlyImpactData.map(
+        (item) => algorithmScoreMap.get(item.month) || 0,
+      ),
     };
   }, [monthlyImpactData, monthlyImpactTrend]);
+
+  const filteredMetrics = suggestedMetrics.filter((metric) =>
+    metric.toLowerCase().includes(inputValue.toLowerCase()),
+  );
+
+  const handleSelectMetric = (metric: string) => {
+    setSelectedMetric(metric);
+    setInputValue(metric); // Optionally, fill input with selected metric
+  };
 
   useEffect(() => {
     if (chartRef.current) {
       const ctx = chartRef.current.getContext("2d");
-      
+
       if (ctx) {
         if (chartInstance.current) {
           chartInstance.current.destroy();
         }
-        
+
         chartInstance.current = new Chart(ctx, {
           type: "line",
           data: {
@@ -69,7 +141,7 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
                 pointBorderColor: "#fff",
                 pointBorderWidth: 2,
                 pointRadius: 4,
-                pointHoverRadius: 6
+                pointHoverRadius: 6,
               },
               {
                 label: labels.impact,
@@ -83,7 +155,7 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
                 pointBorderColor: "#fff",
                 pointBorderWidth: 2,
                 pointRadius: 4,
-                pointHoverRadius: 6
+                pointHoverRadius: 6,
               },
               {
                 label: labels.score,
@@ -99,9 +171,9 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
                 pointBorderWidth: 2,
                 pointRadius: 5,
                 pointHoverRadius: 7,
-                pointStyle: 'rect' // Different point style
-              }
-            ]
+                pointStyle: "rect", // Different point style
+              },
+            ],
           },
           options: {
             responsive: true,
@@ -110,20 +182,23 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
               y: {
                 beginAtZero: true,
                 grid: {
-                  color: theme === "dark" ? "rgba(75, 85, 99, 0.2)" : "rgba(160, 174, 192, 0.2)"
+                  color:
+                    theme === "dark"
+                      ? "rgba(75, 85, 99, 0.2)"
+                      : "rgba(160, 174, 192, 0.2)",
                 },
                 ticks: {
-                  color: theme === "dark" ? "#d1d5db" : "#4b5563"
-                }
+                  color: theme === "dark" ? "#d1d5db" : "#4b5563",
+                },
               },
               x: {
                 grid: {
-                  display: false
+                  display: false,
                 },
                 ticks: {
-                  color: theme === "dark" ? "#d1d5db" : "#4b5563"
-                }
-              }
+                  color: theme === "dark" ? "#d1d5db" : "#4b5563",
+                },
+              },
             },
             plugins: {
               legend: {
@@ -132,8 +207,8 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
                   color: theme === "dark" ? "#f3f4f6" : "#1f2937",
                   usePointStyle: false,
                   boxWidth: 40,
-                  padding: 15
-                }
+                  padding: 15,
+                },
               },
               tooltip: {
                 enabled: true,
@@ -145,24 +220,24 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
                 padding: 12,
                 displayColors: true,
                 callbacks: {
-                  label: function(context: any) {
-                    let label = context.dataset.label || '';
+                  label: function (context: any) {
+                    let label = context.dataset.label || "";
                     if (label) {
-                      label += ': ';
+                      label += ": ";
                     }
                     if (context.parsed.y !== null) {
                       label += Math.round(context.parsed.y);
                     }
                     return label;
-                  }
-                }
-              }
-            }
-          }
+                  },
+                },
+              },
+            },
+          },
         });
       }
     }
-    
+
     return () => {
       if (chartInstance.current) {
         chartInstance.current.destroy();
@@ -171,7 +246,8 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
     };
   }, [theme, chartData, labels]);
 
-  const cardTitle = userType === 'volunteer' ? 'Your Impact Over Time' : 'Impact Over Time';
+  const cardTitle =
+    userType === "volunteer" ? "Your Impact Over Time" : "Impact Over Time";
 
   return (
     <Card>
@@ -182,6 +258,26 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
         <div className="h-[300px]">
           <canvas ref={chartRef}></canvas>
         </div>
+        <input
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder="Type to suggest metrics..."
+          className="border p-2 rounded"
+        />
+        {inputValue && (
+          <ul className="suggestion-list">
+            {filteredMetrics.map((metric, index) => (
+              <li
+                key={index}
+                onClick={() => handleSelectMetric(metric)}
+                className="cursor-pointer hover:bg-gray-200"
+              >
+                {metric}
+              </li>
+            ))}
+          </ul>
+        )}
       </CardContent>
     </Card>
   );

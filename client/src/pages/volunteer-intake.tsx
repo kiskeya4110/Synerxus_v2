@@ -1,805 +1,844 @@
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { sdgGoals } from "@shared/sdg-goals";
-import { VolunteerProfile, User } from "@shared/schema";
-import { ArrowRight, ArrowLeft, Check, UserCircle, Globe, Heart, Clock, MessageSquare, Phone } from "lucide-react";
-import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
+import {
+  Loader2,
+  Plus,
+  X,
+  User,
+  MapPin,
+  Target,
+  Heart,
+  Clock,
+  Calendar,
+} from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const skillOptions = [
-  "Project Management", "Marketing", "Graphic Design", "Web Development", "Data Analysis",
-  "Content Writing", "Social Media", "Fundraising", "Event Planning", "Teaching",
-  "Healthcare", "Legal Advice", "Accounting", "Translation", "Photography",
-  "Video Editing", "Public Speaking", "Grant Writing", "Research", "Mentoring"
+// SDG options (1-17)
+const SDG_OPTIONS = [
+  { value: 1, label: "1. No Poverty" },
+  { value: 2, label: "2. Zero Hunger" },
+  { value: 3, label: "3. Good Health and Well-being" },
+  { value: 4, label: "4. Quality Education" },
+  { value: 5, label: "5. Gender Equality" },
+  { value: 6, label: "6. Clean Water and Sanitation" },
+  { value: 7, label: "7. Affordable and Clean Energy" },
+  { value: 8, label: "8. Decent Work and Economic Growth" },
+  { value: 9, label: "9. Industry, Innovation and Infrastructure" },
+  { value: 10, label: "10. Reduced Inequalities" },
+  { value: 11, label: "11. Sustainable Cities and Communities" },
+  { value: 12, label: "12. Responsible Consumption and Production" },
+  { value: 13, label: "13. Climate Action" },
+  { value: 14, label: "14. Life Below Water" },
+  { value: 15, label: "15. Life on Land" },
+  { value: 16, label: "16. Peace, Justice and Strong Institutions" },
+  { value: 17, label: "17. Partnerships for the Goals" },
 ];
 
-const interestOptions = [
-  "Education", "Environment", "Health", "Poverty", "Clean Water",
-  "Gender Equality", "Climate Action", "Community Development", "Youth Empowerment",
-  "Animal Welfare", "Arts & Culture", "Technology", "Human Rights", "Disaster Relief"
+// Days of the week
+const DAYS_OF_WEEK = [
+  { value: "monday", label: "Monday" },
+  { value: "tuesday", label: "Tuesday" },
+  { value: "wednesday", label: "Wednesday" },
+  { value: "thursday", label: "Thursday" },
+  { value: "friday", label: "Friday" },
+  { value: "saturday", label: "Saturday" },
+  { value: "sunday", label: "Sunday" },
 ];
 
-const volunteerProfileSchema = z.object({
-  volunteerName: z.string().min(2, "Your name is required"),
-  location: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  country: z.string().min(1, "Country is required"),
-  languages: z.array(z.string()).min(1, "Select at least one language"),
-  skills: z.array(z.string()).min(1, "Add at least one skill"),
-  interests: z.array(z.string()).min(1, "Select at least one interest"),
-  preferredCauses: z.array(z.string()).optional(),
-  weeklyAvailability: z.coerce.number().min(1, "Please specify hours per week").max(168),
-  preferredWorkStyle: z.enum(["remote", "in-person", "hybrid"]),
-  preferredSdgs: z.array(z.number()).min(1, "Select at least one SDG goal"),
-  motivations: z.string().min(10, "Please share why you want to volunteer"),
-  phoneNumber: z.string().optional(),
-  emergencyContact: z.object({
-    name: z.string().optional(),
-    phone: z.string().optional(),
-    relationship: z.string().optional()
-  }).optional(),
-  onboardingCompleted: z.boolean().default(true)
+// Time slots
+const TIME_SLOTS = [
+  "06:00",
+  "07:00",
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+  "22:00",
+];
+
+// Availability schema
+const availabilitySlotSchema = z.object({
+  day: z.enum([
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
+  ]),
+  startTime: z.string().min(1, "Start time is required"),
+  endTime: z.string().min(1, "End time is required"),
 });
 
-type VolunteerProfileForm = z.infer<typeof volunteerProfileSchema>;
+// Form schema
+const formSchema = insertVolunteerSchema.extend({
+  email: z.string().email("Valid email is required"),
+  name: z.string().min(1, "Name is required"),
+  skills: z.array(z.string()).min(1, "At least one skill is required"),
+  interests: z.array(z.string()).min(1, "At least one interest is required"),
+  location: z.string().min(1, "Location is required"),
+  sdgGoals: z.array(z.number()).min(1, "At least one SDG goal is required"),
+  weeklyHours: z.number().min(1, "At least 1 hour is required"),
+  // Enhanced availability schema
+  availability: z
+    .array(availabilitySlotSchema)
+    .min(1, "At least one availability slot is required"),
+  timezone: z.string().min(1, "Timezone is required"),
+  preferredCommitment: z.enum([
+    "one-time",
+    "short-term",
+    "long-term",
+    "flexible",
+  ]),
+});
 
-export default function VolunteerIntake() {
-  const [, navigate] = useLocation();
+type FormData = z.infer<typeof formSchema>;
+type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
+
+export default function VolunteerProfileSettings() {
   const { toast } = useToast();
-  const { user: firebaseUser } = useAuth();
-  const [step, setStep] = useState(1);
-  const [customSkill, setCustomSkill] = useState("");
-  const [customLanguage, setCustomLanguage] = useState("");
-  const [customInterest, setCustomInterest] = useState("");
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
-  
-  // Get database user ID from localStorage
-  const userId = localStorage.getItem('currentUserId');
+  const [skillInput, setSkillInput] = useState("");
+  const [interestInput, setInterestInput] = useState("");
 
-  const { data: existingProfile, isLoading } = useQuery<VolunteerProfile | null>({
-    queryKey: ["/api/intake/volunteer-profile", userId],
-    queryFn: async () => {
-      if (!userId) throw new Error("User ID is required");
-      const response = await fetch(`/api/intake/volunteer-profile?userId=${userId}`);
-      if (!response.ok) {
-        if (response.status === 404) return null;
-        throw new Error("Failed to fetch volunteer profile");
-      }
-      return response.json();
-    },
-    enabled: !!userId
+  // Fetch current user to get email
+  const userId = localStorage.getItem("currentUserId");
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me"],
   });
 
-  // Fetch user data to get avatar and displayName
-  const { data: userData } = useQuery<User>({
-    queryKey: ["/api/users/me", userId],
-    queryFn: async () => {
-      if (!userId) throw new Error("User ID is required");
-      const response = await fetch(`/api/users/me?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch user data");
-      return response.json();
+  // Fetch existing volunteer profile by filtering all volunteers
+  const { data: volunteers, isLoading: loadingProfile } = useQuery<Volunteer[]>(
+    {
+      queryKey: ["/api/volunteers"],
     },
-    enabled: !!userId
-  });
+  );
 
-  const form = useForm<VolunteerProfileForm>({
-    resolver: zodResolver(volunteerProfileSchema),
+  // Find the volunteer profile for current user (match by email)
+  const existingProfile = volunteers?.find(
+    (v) => v.email === currentUser?.email,
+  );
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      volunteerName: "",
-      city: "",
-      country: "",
-      languages: [],
+      email: "",
+      name: "",
       skills: [],
       interests: [],
-      preferredCauses: [],
-      weeklyAvailability: 5,
-      preferredWorkStyle: "remote",
-      preferredSdgs: [],
-      motivations: "",
-      phoneNumber: "",
-      emergencyContact: {
-        name: "",
-        phone: "",
-        relationship: ""
-      },
-      onboardingCompleted: true
-    }
+      location: "",
+      sdgGoals: [],
+      weeklyHours: 1,
+      availability: [],
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      preferredCommitment: "flexible",
+    },
+    values: existingProfile
+      ? {
+          email: existingProfile.email,
+          name: existingProfile.name,
+          skills: existingProfile.skills,
+          interests: existingProfile.interests,
+          location: existingProfile.location,
+          sdgGoals: existingProfile.sdgGoals,
+          weeklyHours: existingProfile.weeklyHours || 1,
+          availability: existingProfile.availability || [],
+          timezone:
+            existingProfile.timezone ||
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+          preferredCommitment:
+            existingProfile.preferredCommitment || "flexible",
+        }
+      : undefined,
   });
 
-  // Reset form when existing profile data loads
+  // Update form when currentUser loads (for new profile creation)
   useEffect(() => {
-    if (existingProfile && !isLoading && userData) {
-      const profileData = {
-        volunteerName: userData.displayName || firebaseUser?.displayName || "",
-        city: existingProfile.city || "",
-        country: existingProfile.country || "",
-        languages: existingProfile.languages || [],
-        skills: existingProfile.skills || [],
-        interests: existingProfile.interests || [],
-        preferredCauses: existingProfile.preferredCauses || [],
-        weeklyAvailability: existingProfile.weeklyAvailability || 5,
-        preferredWorkStyle: (existingProfile.preferredWorkStyle as "remote" | "in-person" | "hybrid") || "remote",
-        preferredSdgs: existingProfile.preferredSdgs || [],
-        motivations: existingProfile.motivations || "",
-        phoneNumber: existingProfile.phoneNumber || "",
-        emergencyContact: (existingProfile.emergencyContact as { name?: string; phone?: string; relationship?: string }) || {
-          name: "",
-          phone: "",
-          relationship: ""
-        },
-        onboardingCompleted: true
-      };
-      form.reset(profileData);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [existingProfile, isLoading, userData, firebaseUser]);
-
-  // Load profile photo from user data when it becomes available
-  useEffect(() => {
-    if (userData?.avatar && !profilePhotoUrl) {
-      setProfilePhotoUrl(userData.avatar);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userData]);
-
-  const submitMutation = useMutation({
-    mutationFn: async (data: VolunteerProfileForm) => {
-      console.log('[Volunteer Intake Mutation] Starting mutation');
-      console.log('[Volunteer Intake Mutation] userId:', userId);
-      
-      if (!userId) {
-        throw new Error("User ID not found. Please log in again.");
+    if (currentUser?.email && !existingProfile) {
+      form.setValue("email", currentUser.email);
+      if (currentUser.displayName) {
+        form.setValue("name", currentUser.displayName);
       }
-      
-      // Backend will automatically update userType when creating profile
-      const result = await apiRequest(
-        "POST",
-        `/api/intake/volunteer-profile?userId=${userId}`,
-        {
-          ...data,
-          location: `${data.city}, ${data.country}`,
-          profilePhotoUrl
-        }
-      );
-      console.log('[Volunteer Intake Mutation] Success:', result);
-      return result;
+    }
+  }, [currentUser, existingProfile, form]);
+
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      return apiRequest("POST", "/api/volunteers", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", userId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
-      toast({
-        title: "Profile completed!",
-        description: "Your volunteer profile has been successfully created."
+      const id = localStorage.getItem("currentUserId");
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/profile/volunteer", id],
       });
-      navigate("/dashboard");
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      toast({
+        title: "Profile created!",
+        description: "Your volunteer profile has been created successfully.",
+      });
     },
-    onError: (error: any) => {
-      // If user not found (404 status), clear localStorage and redirect to login
-      const isUserNotFound = error.status === 404 || 
-                            error.message?.includes("User not found") || 
-                            error.message?.includes("404");
-      
-      if (isUserNotFound) {
-        localStorage.removeItem('currentUserId');
-        toast({
-          title: "Session Expired",
-          description: "Please log in again to continue.",
-          variant: "destructive"
-        });
-        setTimeout(() => navigate("/login"), 2000);
-        return;
-      }
-      
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to save profile",
-        variant: "destructive"
+        description: error.message,
+        variant: "destructive",
       });
-    }
+    },
   });
 
-  const onSubmit = (data: VolunteerProfileForm) => {
-    console.log('[Volunteer Intake] Form submission triggered');
-    console.log('[Volunteer Intake] Form data:', data);
-    console.log('[Volunteer Intake] User ID:', userId);
-    console.log('[Volunteer Intake] Form errors:', form.formState.errors);
-    submitMutation.mutate(data);
-  };
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      if (!existingProfile?.id) throw new Error("No profile found to update");
+      return apiRequest("PATCH", `/api/volunteers/${existingProfile.id}`, data);
+    },
+    onSuccess: () => {
+      const id = localStorage.getItem("currentUserId");
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/profile/volunteer", id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      toast({
+        title: "Profile updated!",
+        description: "Your volunteer profile has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
-  const toggleInterest = (interest: string) => {
-    const current = form.getValues("interests") || [];
-    if (current.includes(interest)) {
-      form.setValue("interests", current.filter(i => i !== interest));
+  const onSubmit = (data: FormData) => {
+    if (existingProfile) {
+      updateMutation.mutate(data);
     } else {
-      form.setValue("interests", [...current, interest]);
+      createMutation.mutate(data);
     }
   };
 
-  const addCustomInterest = () => {
-    if (customInterest.trim()) {
-      const current = form.getValues("interests") || [];
-      if (!current.includes(customInterest.trim())) {
-        form.setValue("interests", [...current, customInterest.trim()]);
+  const addSkill = () => {
+    if (skillInput.trim()) {
+      const currentSkills = form.getValues("skills");
+      if (!currentSkills.includes(skillInput.trim())) {
+        form.setValue("skills", [...currentSkills, skillInput.trim()]);
+        setSkillInput("");
       }
-      setCustomInterest("");
     }
   };
 
-  const toggleLanguage = (lang: string) => {
-    const current = form.getValues("languages") || [];
-    if (current.includes(lang)) {
-      form.setValue("languages", current.filter(l => l !== lang));
-    } else {
-      form.setValue("languages", [...current, lang]);
-    }
+  const removeSkill = (skill: string) => {
+    const currentSkills = form.getValues("skills");
+    form.setValue(
+      "skills",
+      currentSkills.filter((s) => s !== skill),
+    );
   };
 
-  const addCustomLanguage = () => {
-    if (customLanguage.trim()) {
-      const current = form.getValues("languages") || [];
-      if (!current.includes(customLanguage.trim())) {
-        form.setValue("languages", [...current, customLanguage.trim()]);
+  const addInterest = () => {
+    if (interestInput.trim()) {
+      const currentInterests = form.getValues("interests");
+      if (!currentInterests.includes(interestInput.trim())) {
+        form.setValue("interests", [...currentInterests, interestInput.trim()]);
+        setInterestInput("");
       }
-      setCustomLanguage("");
     }
   };
 
-  const toggleSDG = (sdgNumber: number) => {
-    const current = form.getValues("preferredSdgs") || [];
-    if (current.includes(sdgNumber)) {
-      form.setValue("preferredSdgs", current.filter(s => s !== sdgNumber));
+  const removeInterest = (interest: string) => {
+    const currentInterests = form.getValues("interests");
+    form.setValue(
+      "interests",
+      currentInterests.filter((i) => i !== interest),
+    );
+  };
+
+  const toggleSDG = (sdgValue: number) => {
+    const currentSDGs = form.getValues("sdgGoals");
+    if (currentSDGs.includes(sdgValue)) {
+      form.setValue(
+        "sdgGoals",
+        currentSDGs.filter((s) => s !== sdgValue),
+      );
     } else {
-      form.setValue("preferredSdgs", [...current, sdgNumber]);
+      form.setValue("sdgGoals", [...currentSDGs, sdgValue]);
     }
   };
 
-  const totalSteps = 5;
+  // Availability management
+  const addAvailabilitySlot = () => {
+    const currentAvailability = form.getValues("availability");
+    form.setValue("availability", [
+      ...currentAvailability,
+      { day: "monday", startTime: "09:00", endTime: "17:00" },
+    ]);
+  };
+
+  const updateAvailabilitySlot = (
+    index: number,
+    field: keyof AvailabilitySlot,
+    value: string,
+  ) => {
+    const currentAvailability = form.getValues("availability");
+    const updatedAvailability = [...currentAvailability];
+    updatedAvailability[index] = {
+      ...updatedAvailability[index],
+      [field]: value,
+    };
+    form.setValue("availability", updatedAvailability);
+  };
+
+  const removeAvailabilitySlot = (index: number) => {
+    const currentAvailability = form.getValues("availability");
+    form.setValue(
+      "availability",
+      currentAvailability.filter((_, i) => i !== index),
+    );
+  };
+
+  if (loadingProfile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Synerxus!</h1>
-          <p className="text-gray-600 dark:text-gray-300">Let's set up your volunteer profile</p>
-        </div>
+    <div className="container mx-auto py-8 px-4 max-w-4xl">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
+        <p className="text-muted-foreground">
+          Create or update your volunteer profile to get matched with
+          organizations that align with your skills, interests, and goals.
+        </p>
+      </div>
 
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            {Array.from({ length: totalSteps }, (_, i) => i + 1).map((s) => (
-              <div key={s} className="flex items-center flex-1">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-                  s < step ? "bg-green-500 text-white" : s === step ? "bg-blue-500 text-white" : "bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                }`}>
-                  {s < step ? <Check className="w-6 h-6" /> : s}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            {existingProfile ? "Update Your Profile" : "Create Your Profile"}
+          </CardTitle>
+          <CardDescription>
+            This information will be used to match you with organizations and
+            opportunities
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Email - Read-only, linked to user account */}
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        readOnly
+                        disabled
+                        className="bg-muted"
+                        data-testid="input-volunteer-email"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      This email is linked to your account
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Name */}
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your full name"
+                        {...field}
+                        data-testid="input-volunteer-name"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Location */}
+              <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Location
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., New York, USA"
+                        {...field}
+                        data-testid="input-volunteer-location"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Your location helps match you with local or remote
+                      opportunities
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Timezone */}
+              <FormField
+                control={form.control}
+                name="timezone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Timezone</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your timezone" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="America/New_York">
+                          Eastern Time (ET)
+                        </SelectItem>
+                        <SelectItem value="America/Chicago">
+                          Central Time (CT)
+                        </SelectItem>
+                        <SelectItem value="America/Denver">
+                          Mountain Time (MT)
+                        </SelectItem>
+                        <SelectItem value="America/Los_Angeles">
+                          Pacific Time (PT)
+                        </SelectItem>
+                        <SelectItem value="Europe/London">
+                          Greenwich Mean Time (GMT)
+                        </SelectItem>
+                        <SelectItem value="Europe/Paris">
+                          Central European Time (CET)
+                        </SelectItem>
+                        <SelectItem value="Asia/Kolkata">
+                          India Standard Time (IST)
+                        </SelectItem>
+                        <SelectItem value="Asia/Tokyo">
+                          Japan Standard Time (JST)
+                        </SelectItem>
+                        <SelectItem value="Australia/Sydney">
+                          Australian Eastern Time (AET)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Your local timezone for scheduling purposes
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Preferred Commitment */}
+              <FormField
+                control={form.control}
+                name="preferredCommitment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Commitment Type</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select commitment type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="one-time">One-time event</SelectItem>
+                        <SelectItem value="short-term">
+                          Short-term (1-3 months)
+                        </SelectItem>
+                        <SelectItem value="long-term">
+                          Long-term (3+ months)
+                        </SelectItem>
+                        <SelectItem value="flexible">
+                          Flexible / Open to all
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      What type of volunteering commitment are you looking for?
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Weekly Hours */}
+              <FormField
+                control={form.control}
+                name="weeklyHours"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Weekly Hours Available</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder="e.g., 5"
+                        {...field}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value))
+                        }
+                        data-testid="input-volunteer-weekly-hours"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter the total number of hours you can volunteer each
+                      week
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Availability Schedule */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Availability Schedule
+                  </Label>
+                  <Button
+                    type="button"
+                    onClick={addAvailabilitySlot}
+                    variant="outline"
+                    size="sm"
+                    data-testid="button-add-availability"
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Time Slot
+                  </Button>
                 </div>
-                {s < totalSteps && (
-                  <div className={`flex-1 h-1 mx-2 ${s < step ? "bg-green-500" : "bg-gray-300 dark:bg-gray-700"}`} />
+
+                <div className="space-y-3">
+                  {form.watch("availability").map((slot, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 p-3 border rounded-lg"
+                    >
+                      <Select
+                        value={slot.day}
+                        onValueChange={(value) =>
+                          updateAvailabilitySlot(index, "day", value)
+                        }
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DAYS_OF_WEEK.map((day) => (
+                            <SelectItem key={day.value} value={day.value}>
+                              {day.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={slot.startTime}
+                        onValueChange={(value) =>
+                          updateAvailabilitySlot(index, "startTime", value)
+                        }
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_SLOTS.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <span className="text-muted-foreground">to</span>
+
+                      <Select
+                        value={slot.endTime}
+                        onValueChange={(value) =>
+                          updateAvailabilitySlot(index, "endTime", value)
+                        }
+                      >
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_SLOTS.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {time}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeAvailabilitySlot(index)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {form.watch("availability").length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed rounded-lg">
+                    <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No availability slots added yet. Click "Add Time Slot" to
+                      specify when you're available.
+                    </p>
+                  </div>
+                )}
+
+                {form.formState.errors.availability && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.availability.message}
+                  </p>
                 )}
               </div>
-            ))}
-          </div>
-        </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {step === 1 && (
-              <Card data-testid="card-step-1">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UserCircle className="w-6 h-6" />
-                    Basic Information
-                  </CardTitle>
-                  <CardDescription>Tell us where you're from and what languages you speak</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ProfilePictureUpload
-                    currentPhotoUrl={profilePhotoUrl}
-                    onPhotoChange={setProfilePhotoUrl}
-                    userId={userId || ""}
-                    userType="volunteer"
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="volunteerName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Name</FormLabel>
-                        <FormDescription>What should we call you?</FormDescription>
-                        <FormControl>
-                          <Input
-                            data-testid="input-volunteer-name"
-                            placeholder="e.g., Sarah Johnson"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="city"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>City</FormLabel>
-                          <FormControl>
-                            <Input data-testid="input-city" placeholder="e.g., San Francisco" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="country"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Country</FormLabel>
-                          <FormControl>
-                            <Input data-testid="input-country" placeholder="e.g., United States" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="languages"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Languages You Speak</FormLabel>
-                        <FormDescription>Select all that apply</FormDescription>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {["English", "Spanish", "French", "Mandarin", "Arabic", "Portuguese", "Hindi"].map((lang) => (
-                            <Badge
-                              key={lang}
-                              data-testid={`badge-language-${lang.toLowerCase()}`}
-                              variant={form.watch("languages")?.includes(lang) ? "default" : "outline"}
-                              className="cursor-pointer"
-                              onClick={() => toggleLanguage(lang)}
-                            >
-                              {lang}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                          <Input
-                            data-testid="input-custom-language"
-                            placeholder="Add other language"
-                            value={customLanguage}
-                            onChange={(e) => setCustomLanguage(e.target.value)}
-                            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addCustomLanguage())}
-                          />
-                          <Button data-testid="button-add-language" type="button" onClick={addCustomLanguage} variant="outline">
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {form.watch("languages")?.filter(lang => !["English", "Spanish", "French", "Mandarin", "Arabic", "Portuguese", "Hindi"].includes(lang)).map((lang) => (
-                            <Badge
-                              key={lang}
-                              variant="default"
-                              className="cursor-pointer"
-                              onClick={() => toggleLanguage(lang)}
-                            >
-                              {lang} ×
-                            </Badge>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number (Optional)</FormLabel>
-                        <FormControl>
-                          <Input data-testid="input-phone" placeholder="+1 (555) 123-4567" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {step === 2 && (
-              <Card data-testid="card-step-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Heart className="w-6 h-6" />
-                    Skills & Interests
-                  </CardTitle>
-                  <CardDescription>What skills and interests do you have?</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="skills"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Your Skills</FormLabel>
-                        <FormDescription>Select skills you possess</FormDescription>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {skillOptions.map((skill) => (
-                            <Badge
-                              key={skill}
-                              data-testid={`badge-skill-${skill.toLowerCase().replace(/\s+/g, '-')}`}
-                              variant={form.watch("skills")?.includes(skill) ? "default" : "outline"}
-                              className="cursor-pointer"
-                              onClick={() => {
-                                const current = form.getValues("skills") || [];
-                                if (current.includes(skill)) {
-                                  form.setValue("skills", current.filter(s => s !== skill));
-                                } else {
-                                  form.setValue("skills", [...current, skill]);
-                                }
-                              }}
-                            >
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                          <Input
-                            data-testid="input-custom-skill"
-                            placeholder="Add custom skill"
-                            value={customSkill}
-                            onChange={(e) => setCustomSkill(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                if (customSkill.trim()) {
-                                  const current = form.getValues("skills") || [];
-                                  if (!current.includes(customSkill.trim())) {
-                                    form.setValue("skills", [...current, customSkill.trim()]);
-                                  }
-                                  setCustomSkill("");
-                                }
-                              }
-                            }}
-                          />
-                          <Button 
-                            data-testid="button-add-skill" 
-                            type="button" 
-                            onClick={() => {
-                              if (customSkill.trim()) {
-                                const current = form.getValues("skills") || [];
-                                if (!current.includes(customSkill.trim())) {
-                                  form.setValue("skills", [...current, customSkill.trim()]);
-                                }
-                                setCustomSkill("");
-                              }
-                            }} 
-                            variant="outline"
-                          >
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {form.watch("skills")?.filter(skill => !skillOptions.includes(skill)).map((skill) => (
-                            <Badge
-                              key={skill}
-                              variant="default"
-                              className="cursor-pointer"
-                              onClick={() => {
-                                const current = form.getValues("skills") || [];
-                                form.setValue("skills", current.filter(s => s !== skill));
-                              }}
-                            >
-                              {skill} ×
-                            </Badge>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="interests"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Areas of Interest</FormLabel>
-                        <FormDescription>Select all that interest you</FormDescription>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {interestOptions.map((interest) => (
-                            <Badge
-                              key={interest}
-                              data-testid={`badge-interest-${interest.toLowerCase().replace(/\s+/g, '-')}`}
-                              variant={form.watch("interests")?.includes(interest) ? "default" : "outline"}
-                              className="cursor-pointer"
-                              onClick={() => toggleInterest(interest)}
-                            >
-                              {interest}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                          <Input
-                            data-testid="input-custom-interest"
-                            placeholder="Add custom interest"
-                            value={customInterest}
-                            onChange={(e) => setCustomInterest(e.target.value)}
-                            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addCustomInterest())}
-                          />
-                          <Button data-testid="button-add-interest" type="button" onClick={addCustomInterest} variant="outline">
-                            Add
-                          </Button>
-                        </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {form.watch("interests")?.filter(int => !interestOptions.includes(int)).map((interest) => (
-                            <Badge
-                              key={interest}
-                              variant="default"
-                              className="cursor-pointer"
-                              onClick={() => toggleInterest(interest)}
-                            >
-                              {interest} ×
-                            </Badge>
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="motivations"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Why do you want to volunteer?</FormLabel>
-                        <FormDescription>Share your story and motivations</FormDescription>
-                        <FormControl>
-                          <Textarea
-                            data-testid="textarea-motivations"
-                            placeholder="I want to volunteer because..."
-                            className="min-h-[120px]"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {step === 3 && (
-              <Card data-testid="card-step-3">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Globe className="w-6 h-6" />
-                    SDG Goals
-                  </CardTitle>
-                  <CardDescription>Which UN Sustainable Development Goals do you care about?</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="preferredSdgs"
-                    render={({ field }) => {
-                      const currentSdgs = field.value || [];
-                      return (
-                        <FormItem>
-                          <FormLabel>Select Your Preferred SDGs</FormLabel>
-                          <FormDescription>Choose the goals you want to contribute to</FormDescription>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
-                            {Object.values(sdgGoals).map((sdg) => (
-                              <div
-                                key={sdg.id}
-                                data-testid={`card-sdg-${sdg.id}`}
-                                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                                  currentSdgs.includes(sdg.id)
-                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                    : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
-                                }`}
-                                onClick={() => {
-                                  const newSdgs = currentSdgs.includes(sdg.id)
-                                    ? currentSdgs.filter(s => s !== sdg.id)
-                                    : [...currentSdgs, sdg.id];
-                                  field.onChange(newSdgs);
-                                }}
-                              >
-                                <div className="flex items-start gap-2">
-                                  <div onClick={(e) => e.stopPropagation()}>
-                                    <Checkbox
-                                      checked={currentSdgs.includes(sdg.id)}
-                                      className="mt-1"
-                                      onCheckedChange={(checked) => {
-                                        const newSdgs = checked
-                                          ? [...currentSdgs, sdg.id]
-                                          : currentSdgs.filter(s => s !== sdg.id);
-                                        field.onChange(newSdgs);
-                                      }}
-                                    />
-                                  </div>
-                                  <div>
-                                    <p className="font-semibold text-sm">SDG {sdg.id}</p>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400">{sdg.name}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      );
+              {/* Skills */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Skills
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add a skill (e.g., Python, Teaching, Marketing)"
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSkill();
+                      }
                     }}
+                    data-testid="input-add-skill"
                   />
-                </CardContent>
-              </Card>
-            )}
+                  <Button
+                    type="button"
+                    onClick={addSkill}
+                    variant="secondary"
+                    data-testid="button-add-skill"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.watch("skills").map((skill) => (
+                    <Badge
+                      key={skill}
+                      variant="secondary"
+                      className="gap-1"
+                      data-testid={`badge-skill-${skill}`}
+                    >
+                      {skill}
+                      <button
+                        type="button"
+                        onClick={() => removeSkill(skill)}
+                        className="ml-1 hover:bg-secondary-foreground/10 rounded-full"
+                        data-testid={`button-remove-skill-${skill}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                {form.formState.errors.skills && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.skills.message}
+                  </p>
+                )}
+              </div>
 
-            {step === 4 && (
-              <Card data-testid="card-step-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-6 h-6" />
-                    Availability
-                  </CardTitle>
-                  <CardDescription>When and how would you like to volunteer?</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="weeklyAvailability"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Weekly Availability (hours)</FormLabel>
-                        <FormDescription>How many hours per week can you volunteer?</FormDescription>
-                        <FormControl>
-                          <Input data-testid="input-weekly-hours" type="number" min="1" max="168" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+              {/* Interests */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Heart className="h-4 w-4" />
+                  Interests & Causes
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add an interest (e.g., Education, Healthcare, Environment)"
+                    value={interestInput}
+                    onChange={(e) => setInterestInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addInterest();
+                      }
+                    }}
+                    data-testid="input-add-interest"
                   />
+                  <Button
+                    type="button"
+                    onClick={addInterest}
+                    variant="secondary"
+                    data-testid="button-add-interest"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.watch("interests").map((interest) => (
+                    <Badge
+                      key={interest}
+                      variant="secondary"
+                      className="gap-1"
+                      data-testid={`badge-interest-${interest}`}
+                    >
+                      {interest}
+                      <button
+                        type="button"
+                        onClick={() => removeInterest(interest)}
+                        className="ml-1 hover:bg-secondary-foreground/10 rounded-full"
+                        data-testid={`button-remove-interest-${interest}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                {form.formState.errors.interests && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.interests.message}
+                  </p>
+                )}
+              </div>
 
-                  <FormField
-                    control={form.control}
-                    name="preferredWorkStyle"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Preferred Work Style</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-work-style">
-                              <SelectValue placeholder="Select your preference" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="remote">Remote / Virtual</SelectItem>
-                            <SelectItem value="in-person">In-Person</SelectItem>
-                            <SelectItem value="hybrid">Hybrid (Both)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            )}
+              {/* SDG Goals */}
+              <div className="space-y-2">
+                <Label>Sustainable Development Goals (SDGs)</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Select the UN SDGs you're passionate about
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {SDG_OPTIONS.map((sdg) => (
+                    <Button
+                      key={sdg.value}
+                      type="button"
+                      variant={
+                        form.watch("sdgGoals").includes(sdg.value)
+                          ? "default"
+                          : "outline"
+                      }
+                      className="justify-start text-left h-auto py-2"
+                      onClick={() => toggleSDG(sdg.value)}
+                      data-testid={`button-sdg-${sdg.value}`}
+                    >
+                      {sdg.label}
+                    </Button>
+                  ))}
+                </div>
+                {form.formState.errors.sdgGoals && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.sdgGoals.message}
+                  </p>
+                )}
+              </div>
 
-            {step === 5 && (
-              <Card data-testid="card-step-5">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="w-6 h-6" />
-                    Emergency Contact (Optional)
-                  </CardTitle>
-                  <CardDescription>For in-person volunteering activities</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input data-testid="input-emergency-name" placeholder="Emergency contact name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <FormControl>
-                          <Input data-testid="input-emergency-phone" placeholder="+1 (555) 123-4567" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="emergencyContact.relationship"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Relationship</FormLabel>
-                        <FormControl>
-                          <Input data-testid="input-emergency-relationship" placeholder="e.g., Spouse, Parent, Friend" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="flex justify-between gap-4">
-              <Button
-                data-testid="button-previous"
-                type="button"
-                variant="outline"
-                onClick={() => setStep(Math.max(1, step - 1))}
-                disabled={step === 1}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Previous
-              </Button>
-
-              {step < totalSteps ? (
+              <div className="flex gap-3 pt-4">
                 <Button
-                  data-testid="button-next"
-                  type="button"
-                  onClick={() => setStep(Math.min(totalSteps, step + 1))}
-                >
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  data-testid="button-submit"
                   type="submit"
-                  disabled={submitMutation.isPending}
+                  disabled={
+                    createMutation.isPending || updateMutation.isPending
+                  }
+                  data-testid="button-save-profile"
                 >
-                  {submitMutation.isPending ? "Submitting..." : "Complete Profile"}
-                  <Check className="w-4 h-4 ml-2" />
+                  {(createMutation.isPending || updateMutation.isPending) && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {existingProfile ? "Update Profile" : "Create Profile"}
                 </Button>
-              )}
-            </div>
-          </form>
-        </Form>
-      </div>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

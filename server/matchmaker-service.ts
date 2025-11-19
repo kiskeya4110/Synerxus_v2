@@ -1,13 +1,14 @@
-import { spawn } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import type { Volunteer, MatchableOrganization } from '@shared/schema';
+import { spawn } from "child_process";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import type { Volunteer, MatchableOrganization } from "@shared/schema";
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Define the structure of match results
 export interface MatchResult {
   volunteer_id: string;
   organization_id: string;
@@ -21,125 +22,131 @@ export interface MatchResult {
   reasons: string[];
 }
 
+// Response structure for the matchmaker
 export interface MatchmakerResponse {
   success: boolean;
-  matches?: MatchResult[];
+  matches?: MatchResult[]; // Array of match results
   stats?: {
-    total_volunteers: number;
-    total_organizations: number;
-    matches_found: number;
-    threshold: number;
+    total_volunteers: number; // Total number of volunteers considered
+    total_organizations: number; // Total number of organizations considered
+    matches_found: number; // Number of successful matches
+    threshold: number; // Match score threshold used
   };
-  error?: string;
-  error_type?: string;
+  error?: string; // Error message if any
+  error_type?: string; // Type of error encountered
 }
 
+// Input structure for the matchmaker
 export interface MatchmakerInput {
   volunteers: Volunteer[];
   organizations: MatchableOrganization[];
-  threshold?: number;
+  threshold?: number; // Minimum match score threshold
 }
+
+// Centralized error handling function
+const handleError = (error: Error, reject: (reason?: any) => void) => {
+  console.error(error.message); // Log the error message to the console
+  reject(error); // Reject the promise with the error
+};
 
 /**
  * Call the Python matchmaker script to compute volunteer-organization matches
- * 
+ *
  * @param volunteers - Array of volunteer profiles
  * @param organizations - Array of organization profiles
  * @param threshold - Minimum match score threshold (default: 40.0)
+ * @param timeoutDuration - Time allowed for the process to complete (default: 30 seconds)
  * @returns Promise with match results
  */
 export function runMatchmaker(
   volunteers: Volunteer[],
   organizations: MatchableOrganization[],
-  threshold: number = 40.0
+  threshold: number = 40.0, // Default match threshold
+  timeoutDuration: number = 30000, // Default timeout in milliseconds
 ): Promise<MatchmakerResponse> {
   return new Promise((resolve, reject) => {
-    // Get absolute path to Python script
-    const scriptPath = path.join(__dirname, 'matchmaker.py');
-    
-    // Spawn Python process with unbuffered output (-u flag)
-    const python = spawn('python3', ['-u', scriptPath], {
-      stdio: ['pipe', 'pipe', 'pipe']
+    // Get absolute path to the Python script
+    const scriptPath = path.join(__dirname, "matchmaker.py");
+
+    // Spawn a new Python process to run the matchmaker script
+    const python = spawn("python3", ["-u", scriptPath], {
+      stdio: ["pipe", "pipe", "pipe"],
     });
-    
-    // Prepare input data
-    const inputData: MatchmakerInput = {
-      volunteers,
-      organizations,
-      threshold
-    };
-    
-    // Buffers to collect output
-    let stdoutData: Buffer[] = [];
-    let stderrData: Buffer[] = [];
-    
-    // Set timeout (30 seconds)
+
+    // Prepare input data for the Python script
+    const inputData: MatchmakerInput = { volunteers, organizations, threshold };
+    let stdoutData: Buffer[] = []; // Buffer to collect standard output
+    let stderrData: Buffer[] = []; // Buffer to collect standard error
+
+    // Set a timeout to avoid long-running processes
     const timeout = setTimeout(() => {
-      python.kill('SIGTERM');
-      reject(new Error('Matchmaker process timed out after 30 seconds'));
-    }, 30000);
-    
-    // Collect stdout data
-    python.stdout.on('data', (data) => {
-      stdoutData.push(data);
-    });
-    
-    // Collect stderr data (for debugging)
-    python.stderr.on('data', (data) => {
-      stderrData.push(data);
-    });
-    
-    // Handle process completion
-    python.on('close', (code) => {
-      clearTimeout(timeout);
-      
-      const stdout = Buffer.concat(stdoutData).toString();
-      const stderr = Buffer.concat(stderrData).toString();
-      
-      // Log stderr if present (warnings, debug info)
-      if (stderr) {
-        console.error('Python matchmaker stderr:', stderr);
-      }
-      
+      python.kill("SIGTERM"); // Terminate the process
+      handleError(new Error("Matchmaker process timed out"), reject); // Reject with timeout error
+    }, timeoutDuration);
+
+    // Collect data from standard output
+    python.stdout.on("data", (data) => stdoutData.push(data));
+    // Collect data from standard error (for debugging)
+    python.stderr.on("data", (data) => stderrData.push(data));
+
+    // Handle the process completion
+    python.on("close", (code) => {
+      clearTimeout(timeout); // Clear the timeout once process is complete
+      const stdout = Buffer.concat(stdoutData).toString(); // Combine stdout into a single string
+
+      // If the process exited with a non-zero code, handle the error
       if (code !== 0) {
-        reject(new Error(`Matchmaker exited with code ${code}: ${stderr || stdout}`));
+        handleError(
+          new Error(
+            `Matchmaker exited with code ${code}: ${stderrData.join("") || stdout}`,
+          ),
+          reject,
+        );
         return;
       }
-      
+
       try {
-        // Parse JSON output from Python
+        // Parse the JSON output received from the Python script
         const result: MatchmakerResponse = JSON.parse(stdout);
-        
         if (result.success) {
-          resolve(result);
+          resolve(result); // Resolve the promise with the match results
         } else {
-          reject(new Error(result.error || 'Unknown matchmaker error'));
+          handleError(
+            new Error(result.error || "Unknown matchmaker error"),
+            reject,
+          );
         }
       } catch (parseError) {
-        reject(new Error(`Failed to parse matchmaker output: ${stdout}`));
+        handleError(
+          new Error(`Failed to parse matchmaker output: ${stdout}`),
+          reject,
+        ); // Handle JSON parse errors
       }
     });
-    
-    // Handle spawn errors
-    python.on('error', (error) => {
+
+    // Handle any errors that occur while spawning the Python process
+    python.on("error", (error) => {
       clearTimeout(timeout);
-      reject(new Error(`Failed to start Python process: ${error.message}`));
+      handleError(
+        new Error(`Failed to start Python process: ${error.message}`),
+        reject,
+      );
     });
-    
+
     // Send input data to Python via stdin
     try {
-      python.stdin.write(JSON.stringify(inputData));
-      python.stdin.end();
+      python.stdin.write(JSON.stringify(inputData)); // Convert input data to JSON and write to stdin
+      python.stdin.end(); // End the stdin stream
     } catch (error) {
       clearTimeout(timeout);
-      reject(new Error(`Failed to send data to Python: ${error}`));
+      handleError(new Error(`Failed to send data to Python: ${error}`), reject); // Handle errors during writing
     }
   });
 }
 
 /**
  * Get top matches for a specific volunteer
- * 
+ *
  * @param volunteerId - ID of the volunteer
  * @param volunteers - Array of all volunteers
  * @param organizations - Array of all organizations
@@ -151,30 +158,30 @@ export async function getVolunteerMatches(
   volunteerId: string,
   volunteers: Volunteer[],
   organizations: MatchableOrganization[],
-  limit: number = 10,
-  threshold: number = 40.0
+  limit: number = 10, // Default limit on matches
+  threshold: number = 40.0, // Default threshold
 ): Promise<MatchResult[]> {
-  // Find the specific volunteer
-  const volunteer = volunteers.find(v => v.id === volunteerId);
-  
+  // Find the specific volunteer by ID
+  const volunteer = volunteers.find((v) => v.id === volunteerId);
+
   if (!volunteer) {
-    throw new Error(`Volunteer with id ${volunteerId} not found`);
+    throw new Error(`Volunteer with id ${volunteerId} not found`); // Handle case where volunteer isn't found
   }
-  
-  // Run matchmaker with just this volunteer
+
+  // Run the matchmaker with the specified volunteer and organization list
   const result = await runMatchmaker([volunteer], organizations, threshold);
-  
+
   if (!result.success || !result.matches) {
-    throw new Error(result.error || 'Matchmaker failed');
+    throw new Error(result.error || "Matchmaker failed"); // Handle matchmaker failure
   }
-  
-  // Return top matches (already sorted by score)
+
+  // Return top matches based on the limit
   return result.matches.slice(0, limit);
 }
 
 /**
  * Get top volunteers for a specific organization
- * 
+ *
  * @param organizationId - ID of the organization
  * @param volunteers - Array of all volunteers
  * @param organizations - Array of all organizations
@@ -186,23 +193,23 @@ export async function getOrganizationMatches(
   organizationId: string,
   volunteers: Volunteer[],
   organizations: MatchableOrganization[],
-  limit: number = 10,
-  threshold: number = 40.0
+  limit: number = 10, // Default limit on matches
+  threshold: number = 40.0, // Default threshold
 ): Promise<MatchResult[]> {
-  // Find the specific organization
-  const organization = organizations.find(o => o.id === organizationId);
-  
+  // Find the specific organization by ID
+  const organization = organizations.find((o) => o.id === organizationId);
+
   if (!organization) {
-    throw new Error(`Organization with id ${organizationId} not found`);
+    throw new Error(`Organization with id ${organizationId} not found`); // Handle case where organization isn't found
   }
-  
-  // Run matchmaker with just this organization
+
+  // Run the matchmaker with the specified organization and volunteer list
   const result = await runMatchmaker(volunteers, [organization], threshold);
-  
+
   if (!result.success || !result.matches) {
-    throw new Error(result.error || 'Matchmaker failed');
+    throw new Error(result.error || "Matchmaker failed"); // Handle matchmaker failure
   }
-  
-  // Return top matches (already sorted by score)
+
+  // Return top matches based on the limit
   return result.matches.slice(0, limit);
 }

@@ -1,53 +1,64 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+// Define the structure for the data used in the component
 interface BeforeAfterData {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  date: string;
-  beforeImage: string;
-  afterImage: string;
+  id: string; // Unique identifier for each before/after comparison
+  title: string; // Title of the comparison
+  description: string; // Description of the project or impact
+  location: string; // Location where the impact occurred
+  date: string; // Date of the comparison
+  beforeImage: string; // URL of the 'before' image
+  afterImage: string; // URL of the 'after' image
   beforeMetrics: {
-    label: string;
-    value: number;
-    unit: string;
+    // Metrics before the project
+    label: string; // Metric label (e.g., "People Educated")
+    value: number; // Metric value
+    unit: string; // Unit of measurement (e.g., "people", "hours")
   }[];
   afterMetrics: {
-    label: string;
-    value: number;
-    unit: string;
+    // Metrics after the project
+    label: string; // Metric label
+    value: number; // Metric value
+    unit: string; // Unit of measurement
   }[];
 }
 
+// Define props for the BeforeAfterComparison component
 interface BeforeAfterComparisonProps {
-  data: BeforeAfterData[];
+  data: BeforeAfterData[]; // Array of data for the comparison
 }
 
-export default function BeforeAfterComparison({ data }: BeforeAfterComparisonProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [view, setView] = useState<"side-by-side" | "slider">("side-by-side");
-  const [sliderPosition, setSliderPosition] = useState(50);
-  
+// Main component definition
+export default function BeforeAfterComparison({
+  data,
+}: BeforeAfterComparisonProps) {
+  const [activeIndex, setActiveIndex] = useState(0); // Track the current index of data
+  const [view, setView] = useState<"side-by-side" | "slider">("side-by-side"); // Track the view mode
+  const [sliderPosition, setSliderPosition] = useState(50); // Track the position of the slider
+
+  // Get the currently active data based on the active index
   const activeData = data[activeIndex];
-  
+
+  // Function to handle navigating to the previous data
   const handlePrevious = () => {
-    setActiveIndex((prev) => (prev > 0 ? prev - 1 : data.length - 1));
-  };
-  
-  const handleNext = () => {
-    setActiveIndex((prev) => (prev < data.length - 1 ? prev + 1 : 0));
-  };
-  
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSliderPosition(parseInt(e.target.value));
+    setActiveIndex((prev) => (prev > 0 ? prev - 1 : data.length - 1)); // Wrap around to last item if at the beginning
   };
 
-  // Show empty state if no data
+  // Function to handle navigating to the next data
+  const handleNext = () => {
+    setActiveIndex((prev) => (prev < data.length - 1 ? prev + 1 : 0)); // Wrap around to first item if at the end
+  };
+
+  // Function to handle slider position change
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSliderPosition(parseInt(e.target.value)); // Update the slider position based on user input
+  };
+
+  // Show empty state if no data is available
   if (!data || data.length === 0) {
     return (
       <Card className="overflow-hidden">
@@ -57,7 +68,9 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
         <CardContent>
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400">
-              No before & after data available yet. Once your projects record impact metrics with baseline and current values, they'll appear here.
+              No before & after data available yet. Once your projects record
+              impact metrics with baseline and current values, they'll appear
+              here.
             </p>
           </div>
         </CardContent>
@@ -70,7 +83,10 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle>Before & After Impact</CardTitle>
-          <Tabs value={view} onValueChange={(v) => setView(v as "side-by-side" | "slider")}>
+          <Tabs
+            value={view}
+            onValueChange={(v) => setView(v as "side-by-side" | "slider")}
+          >
             <TabsList className="grid grid-cols-2">
               <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
               <TabsTrigger value="slider">Slider</TabsTrigger>
@@ -82,25 +98,33 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
         <div className="p-4">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-lg font-semibold">{activeData.title}</h3>
-            <span className="text-sm text-gray-500 dark:text-gray-400">{activeData.date}</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {activeData.date}
+            </span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{activeData.description}</p>
-          <div className="text-sm text-gray-600 dark:text-gray-400">Location: {activeData.location}</div>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            {activeData.description}
+          </p>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Location: {activeData.location}
+          </div>
         </div>
-        
+
         {/* Side by side view */}
         {view === "side-by-side" && (
           <div className="grid grid-cols-2 gap-2 p-4">
             <div>
               <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mb-3">
-                <img 
-                  src={activeData.beforeImage} 
-                  alt={`Before: ${activeData.title}`} 
+                {/* Display the 'before' image */}
+                <img
+                  src={activeData.beforeImage}
+                  alt={`Before: ${activeData.title}`}
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="text-center font-medium mb-2">Before</div>
               <div className="space-y-2">
+                {/* Display before metrics */}
                 {activeData.beforeMetrics.map((metric, idx) => (
                   <div key={idx} className="flex justify-between text-sm">
                     <span>{metric.label}:</span>
@@ -111,19 +135,25 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
                 ))}
               </div>
             </div>
+            {/* Spacer for visual separation */}
+            <div className="flex flex-col justify-center items-center">
+              <div className="h-16"></div> {/* Add a fixed height for space */}
+            </div>
             <div>
               <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mb-3">
-                <img 
-                  src={activeData.afterImage} 
+                {/* Display the 'after' image */}
+                <img
+                  src={activeData.afterImage}
                   alt={`After: ${activeData.title}`}
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div className="text-center font-medium mb-2">After</div>
               <div className="space-y-2">
+                {/* Display after metrics and changes compared to before metrics */}
                 {activeData.afterMetrics.map((metric, idx) => {
                   const beforeMetric = activeData.beforeMetrics.find(
-                    (m) => m.label === metric.label
+                    (m) => m.label === metric.label,
                   );
                   const change = beforeMetric
                     ? metric.value - beforeMetric.value
@@ -131,7 +161,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
                   const changePercent = beforeMetric
                     ? Math.round((change / beforeMetric.value) * 100)
                     : 100;
-                    
+
                   return (
                     <div key={idx} className="flex justify-between text-sm">
                       <span>{metric.label}:</span>
@@ -160,7 +190,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
             </div>
           </div>
         )}
-        
+
         {/* Slider view */}
         {view === "slider" && (
           <div className="p-4">
@@ -169,6 +199,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
                 className="absolute top-0 left-0 h-full overflow-hidden"
                 style={{ width: `${sliderPosition}%` }}
               >
+                {/* Display the 'before' image */}
                 <img
                   src={activeData.beforeImage}
                   alt={`Before: ${activeData.title}`}
@@ -183,6 +214,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
                 className="absolute top-0 right-0 h-full overflow-hidden"
                 style={{ width: `${100 - sliderPosition}%` }}
               >
+                {/* Display the 'after' image */}
                 <img
                   src={activeData.afterImage}
                   alt={`After: ${activeData.title}`}
@@ -198,6 +230,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
                 style={{ left: `calc(${sliderPosition}% - 2px)` }}
               ></div>
             </div>
+            {/* Slider input for user interaction */}
             <input
               type="range"
               min="0"
@@ -206,11 +239,12 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
               onChange={handleSliderChange}
               className="w-full"
             />
-            
+
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div>
                 <h4 className="font-medium mb-2 text-sm">Before Metrics</h4>
                 <div className="space-y-2">
+                  {/* Display before metrics */}
                   {activeData.beforeMetrics.map((metric, idx) => (
                     <div key={idx} className="flex justify-between text-sm">
                       <span>{metric.label}:</span>
@@ -224,9 +258,10 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
               <div>
                 <h4 className="font-medium mb-2 text-sm">After Metrics</h4>
                 <div className="space-y-2">
+                  {/* Display after metrics and changes compared to before metrics */}
                   {activeData.afterMetrics.map((metric, idx) => {
                     const beforeMetric = activeData.beforeMetrics.find(
-                      (m) => m.label === metric.label
+                      (m) => m.label === metric.label,
                     );
                     const change = beforeMetric
                       ? metric.value - beforeMetric.value
@@ -234,7 +269,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
                     const changePercent = beforeMetric
                       ? Math.round((change / beforeMetric.value) * 100)
                       : 100;
-                      
+
                     return (
                       <div key={idx} className="flex justify-between text-sm">
                         <span>{metric.label}:</span>
@@ -264,7 +299,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
             </div>
           </div>
         )}
-        
+
         {/* Navigation controls */}
         <div className="flex justify-between p-4 border-t border-gray-200 dark:border-gray-700">
           <Button
@@ -277,7 +312,7 @@ export default function BeforeAfterComparison({ data }: BeforeAfterComparisonPro
             Previous
           </Button>
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            {activeIndex + 1} of {data.length}
+            {activeIndex + 1} of {data.length} {/* Current item count */}
           </div>
           <Button
             variant="outline"

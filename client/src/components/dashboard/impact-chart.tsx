@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export interface ImpactChartProps {
   monthlyImpactData?: Array<{ month: string; hours: number; peopleImpacted: number }>;
   monthlyImpactTrend?: Array<{ month: string; score: number }>;
+  userType?: 'volunteer' | 'organization';
 }
 
 // Numeric coercion helper to safely convert values to numbers
@@ -14,10 +15,17 @@ function coerceNumber(value: any, fallback: number = 0): number {
   return Number.isFinite(num) ? num : fallback;
 }
 
-export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend = [] }: ImpactChartProps) {
+export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend = [], userType = 'organization' }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
+
+  // Dynamic labels based on user type
+  const labels = useMemo(() => ({
+    hours: userType === 'volunteer' ? 'Your Hours (Entered Data)' : 'Volunteer Hours (Entered Data)',
+    impact: userType === 'volunteer' ? 'People You Impacted (Entered Data)' : 'People Impacted (Entered Data)',
+    score: userType === 'volunteer' ? 'Your Impact Score (Algorithm)' : 'Impact Score (Algorithm Evaluation)',
+  }), [userType]);
 
   // Process backend-computed data for chart
   const chartData = useMemo(() => {
@@ -50,7 +58,7 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
             labels: chartData.labels,
             datasets: [
               {
-                label: "Volunteer Hours (Entered Data)",
+                label: labels.hours,
                 data: chartData.hours,
                 borderColor: "#3B82F6",
                 backgroundColor: "rgba(59, 130, 246, 0.1)",
@@ -64,7 +72,7 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
                 pointHoverRadius: 6
               },
               {
-                label: "People Impacted (Entered Data)",
+                label: labels.impact,
                 data: chartData.impact,
                 borderColor: "#10B981",
                 backgroundColor: "rgba(16, 185, 129, 0.1)",
@@ -78,7 +86,7 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
                 pointHoverRadius: 6
               },
               {
-                label: "Impact Score (Algorithm Evaluation)",
+                label: labels.score,
                 data: chartData.algorithmScores,
                 borderColor: "#F59E0B",
                 backgroundColor: "rgba(245, 158, 11, 0.05)",
@@ -161,12 +169,14 @@ export default function ImpactChart({ monthlyImpactData = [], monthlyImpactTrend
         chartInstance.current = null;
       }
     };
-  }, [theme, chartData]);
+  }, [theme, chartData, labels]);
+
+  const cardTitle = userType === 'volunteer' ? 'Your Impact Over Time' : 'Impact Over Time';
 
   return (
     <Card>
       <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-        <CardTitle className="text-lg font-semibold">Impact Over Time</CardTitle>
+        <CardTitle className="text-lg font-semibold">{cardTitle}</CardTitle>
       </CardHeader>
       <CardContent className="p-4">
         <div className="h-[300px]">

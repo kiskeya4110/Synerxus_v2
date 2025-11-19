@@ -358,81 +358,93 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                   )}
                 </div>
 
-                {/* SDG Goals */}
-                {opp.sdgGoals && opp.sdgGoals.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {opp.sdgGoals.slice(0, 5).map((sdgId) => {
-                        const sdg = sdgGoals[sdgId];
-                        return sdg ? (
-                          <Badge 
-                            key={sdgId} 
-                            style={{ backgroundColor: sdg.color, color: '#fff' }}
-                            className="text-xs px-2 py-0"
-                          >
-                            SDG {sdgId}
-                          </Badge>
-                        ) : null;
-                      })}
-                      {opp.sdgGoals.length > 5 && (
-                        <Badge variant="outline" className="text-xs px-2 py-0">
-                          +{opp.sdgGoals.length - 5}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* 2-Column Layout: AI Analysis & Details */}
+                <div className="grid md:grid-cols-2 gap-3">
+                  {/* Column 1: AI Analysis */}
+                  <div className="space-y-3">
+                    {/* Match Reasons */}
+                    {opp.matchReasons && opp.matchReasons.length > 0 && (
+                      <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-lg">
+                        <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1.5 flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          Why this matches you
+                        </p>
+                        <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
+                          {opp.matchReasons.slice(0, 3).map((reason, idx) => (
+                            <li key={idx} className="flex items-start">
+                              <span className="mr-1.5">•</span>
+                              <span>{reason}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
-                {/* Required Skills */}
-                {opp.requiredSkills && opp.requiredSkills.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {opp.requiredSkills.slice(0, 4).map((skill, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
-                          {skill}
-                        </Badge>
-                      ))}
-                      {opp.requiredSkills.length > 4 && (
-                        <Badge variant="outline" className="text-xs px-2 py-0">
-                          +{opp.requiredSkills.length - 4}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                )}
+                    {/* Requirements/Responsibilities */}
+                    {opp.requirements && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.requirements}</p>
+                      </div>
+                    )}
 
-                {/* Requirements/Responsibilities */}
-                {opp.requirements && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.requirements}</p>
+                    {/* Benefits */}
+                    {opp.benefits && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.benefits}</p>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                {/* Benefits */}
-                {opp.benefits && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.benefits}</p>
-                  </div>
-                )}
+                  {/* Column 2: SDG Goals & Skills */}
+                  <div className="space-y-3">
+                    {/* SDG Goals */}
+                    {opp.sdgGoals && opp.sdgGoals.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {opp.sdgGoals.slice(0, 4).map((sdgId) => {
+                            const sdg = sdgGoals[sdgId];
+                            return sdg ? (
+                              <Badge 
+                                key={sdgId} 
+                                style={{ backgroundColor: sdg.color, color: '#fff' }}
+                                className="text-xs px-2 py-0"
+                              >
+                                SDG {sdgId}
+                              </Badge>
+                            ) : null;
+                          })}
+                          {opp.sdgGoals.length > 4 && (
+                            <Badge variant="outline" className="text-xs px-2 py-0">
+                              +{opp.sdgGoals.length - 4}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-                {/* Match Reasons */}
-                {opp.matchReasons && opp.matchReasons.length > 0 && (
-                  <div>
-                    <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Why this matches you:</p>
-                    <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-0.5">
-                      {opp.matchReasons.slice(0, 3).map((reason, idx) => (
-                        <li key={idx} className="flex items-start">
-                          <span className="mr-1.5">•</span>
-                          <span className="line-clamp-1">{reason}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {/* Required Skills */}
+                    {opp.requiredSkills && opp.requiredSkills.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {opp.requiredSkills.slice(0, 4).map((skill, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {opp.requiredSkills.length > 4 && (
+                            <Badge variant="outline" className="text-xs px-2 py-0">
+                              +{opp.requiredSkills.length - 4}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* Action Buttons */}
                 <div className="grid grid-cols-2 gap-2 pt-2">
@@ -536,7 +548,7 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                         {opp.description}
                       </p>
 
-                      {/* Rest of the card content from the original code */}
+                      {/* Basic Info */}
                       <div className="space-y-1.5">
                         <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
                           <MapPin className="h-3 w-3 mr-1.5 flex-shrink-0" />
@@ -555,6 +567,104 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
                             <span>{opp.volunteersNeeded} volunteer{opp.volunteersNeeded > 1 ? 's' : ''} needed</span>
                           </div>
                         )}
+                        {(opp.startDate || opp.endDate) && (
+                          <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                            <CalendarDays className="h-3 w-3 mr-1.5 flex-shrink-0" />
+                            <span>
+                              {opp.startDate && new Date(opp.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              {opp.startDate && opp.endDate && ' - '}
+                              {opp.endDate && new Date(opp.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 2-Column Layout: AI Analysis & Details */}
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {/* Column 1: AI Analysis */}
+                        <div className="space-y-3">
+                          {/* Match Reasons */}
+                          {opp.matchReasons && opp.matchReasons.length > 0 && (
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-lg">
+                              <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1.5 flex items-center gap-1">
+                                <Sparkles className="h-3 w-3" />
+                                Why this matches you
+                              </p>
+                              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
+                                {opp.matchReasons.slice(0, 3).map((reason, idx) => (
+                                  <li key={idx} className="flex items-start">
+                                    <span className="mr-1.5">•</span>
+                                    <span>{reason}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Requirements/Responsibilities */}
+                          {opp.requirements && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.requirements}</p>
+                            </div>
+                          )}
+
+                          {/* Benefits */}
+                          {opp.benefits && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opp.benefits}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Column 2: SDG Goals & Skills */}
+                        <div className="space-y-3">
+                          {/* SDG Goals */}
+                          {opp.sdgGoals && opp.sdgGoals.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {opp.sdgGoals.slice(0, 4).map((sdgId) => {
+                                  const sdg = sdgGoals[sdgId];
+                                  return sdg ? (
+                                    <Badge 
+                                      key={sdgId} 
+                                      style={{ backgroundColor: sdg.color, color: '#fff' }}
+                                      className="text-xs px-2 py-0"
+                                    >
+                                      SDG {sdgId}
+                                    </Badge>
+                                  ) : null;
+                                })}
+                                {opp.sdgGoals.length > 4 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0">
+                                    +{opp.sdgGoals.length - 4}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Required Skills */}
+                          {opp.requiredSkills && opp.requiredSkills.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
+                              <div className="flex flex-wrap gap-1">
+                                {opp.requiredSkills.slice(0, 4).map((skill, idx) => (
+                                  <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
+                                    {skill}
+                                  </Badge>
+                                ))}
+                                {opp.requiredSkills.length > 4 && (
+                                  <Badge variant="outline" className="text-xs px-2 py-0">
+                                    +{opp.requiredSkills.length - 4}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       {/* Action Buttons */}

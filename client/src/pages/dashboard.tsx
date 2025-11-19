@@ -657,6 +657,7 @@ export default function Dashboard() {
         <ImpactChart 
           monthlyImpactData={dashboardData?.monthlyImpactData || []}
           monthlyImpactTrend={dashboardData?.monthlyImpactTrend}
+          userType={currentUser?.userType}
         />
         <SDGChart 
           projects={filteredData.projects}

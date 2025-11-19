@@ -298,6 +298,99 @@ export default function Profile() {
           </Card>
         )}
 
+        {/* Availability Details */}
+        {isVolunteer && volunteerProfile && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Availability & Work Preferences
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Your time commitment and work style preferences
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Weekly Availability */}
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Weekly Availability</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {volunteerProfile.weeklyAvailability || 0} hours/week
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Time you can commit to volunteer work
+                    </p>
+                  </div>
+                </div>
+
+                {/* Preferred Work Style */}
+                {volunteerProfile.preferredWorkStyle && (
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
+                      <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">Preferred Work Style</p>
+                      <Badge variant="secondary" className="mt-1 capitalize">
+                        {volunteerProfile.preferredWorkStyle}
+                      </Badge>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {volunteerProfile.preferredWorkStyle === 'remote' && 'You prefer working remotely from anywhere'}
+                        {volunteerProfile.preferredWorkStyle === 'in-person' && 'You prefer working on-site in person'}
+                        {volunteerProfile.preferredWorkStyle === 'hybrid' && 'You\'re flexible with both remote and in-person work'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Time Slots */}
+                {volunteerProfile.availability && Array.isArray(volunteerProfile.availability) && volunteerProfile.availability.length > 0 && (
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium mb-3">Available Time Slots</p>
+                      <div className="space-y-2">
+                        {(volunteerProfile.availability as any[]).map((slot: any, index: number) => {
+                          const hasValidTimes = slot.startTime && slot.endTime;
+                          const timeDisplay = hasValidTimes 
+                            ? `${slot.startTime} - ${slot.endTime}` 
+                            : 'Time not specified';
+                          
+                          return (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <Badge variant="outline" className="capitalize min-w-[100px]">
+                                {slot.day || 'Unspecified'}
+                              </Badge>
+                              <span className={hasValidTimes ? 'text-muted-foreground' : 'text-muted-foreground italic'}>
+                                {timeDisplay}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 pt-6 border-t">
+                <Link href="/volunteer-profile">
+                  <a className="text-sm text-primary hover:underline">
+                    Update availability in Settings →
+                  </a>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Recent Activity */}
         {isVolunteer && recentActivities.length > 0 && (
           <Card>

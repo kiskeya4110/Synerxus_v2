@@ -151,7 +151,7 @@ export default function ApplicationsPage() {
         title: "Project Assigned",
         description: "Volunteer will receive a notification to accept or decline this assignment",
       });
-      // Invalidate project assignments, volunteer profile, and volunteers/applications lists
+      // Invalidate project assignments, volunteer profile, volunteers/applications lists, and dashboard
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", variables.volunteerId] });
       queryClient.invalidateQueries({ 
@@ -159,7 +159,8 @@ export default function ApplicationsPage() {
           const key = query.queryKey[0];
           return typeof key === 'string' && (
             key.startsWith('/api/volunteers') ||
-            key.startsWith('/api/applications')
+            key.startsWith('/api/applications') ||
+            key.startsWith('/api/dashboard/summary')
           );
         }
       });

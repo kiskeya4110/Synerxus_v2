@@ -89,8 +89,12 @@ export default function ProjectEdit() {
       return response.json();
     },
     onSuccess: () => {
+      const userId = localStorage.getItem('currentUserId');
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
       toast({
         title: "Success",
         description: "Project updated successfully",

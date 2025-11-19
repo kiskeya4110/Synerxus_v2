@@ -144,6 +144,9 @@ export default function MobileDataCollection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", userId] });
       activityForm.reset();
       toast({
         title: "Activity logged!",
@@ -173,6 +176,9 @@ export default function MobileDataCollection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", userId] });
       impactForm.reset();
       toast({
         title: "Impact recorded!",

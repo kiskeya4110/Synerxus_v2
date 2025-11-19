@@ -273,13 +273,21 @@ export async function getDashboardDataForOrganization(userId: number) {
           const unit = metric.unit?.toLowerCase() || '';
           const category = metric.category?.toLowerCase() || '';
           const name = metric.name?.toLowerCase() || '';
-          return unit.includes('people') || 
-                 unit.includes('person') || 
-                 unit.includes('beneficiar') ||
-                 category.includes('beneficiar') ||
-                 category.includes('people') ||
-                 name.includes('people impacted') ||
-                 name.includes('beneficiar');
+          // Expanded keywords to capture more human-impact metrics
+          const peopleKeywords = [
+            'people', 'person', 'beneficiar', 'student', 'child', 'children',
+            'adult', 'family', 'families', 'participant', 'recipient',
+            'attendee', 'individual', 'community member'
+          ];
+          const serviceKeywords = [
+            'meal', 'service', 'healthcare', 'education', 'training'
+          ];
+          
+          return peopleKeywords.some(keyword => 
+            unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
+          ) || serviceKeywords.some(keyword => 
+            unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
+          );
         })
         .map(m => m.id)
     );
@@ -974,15 +982,23 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const category = (metric.category || '').toLowerCase();
       const name = (metric.name || '').toLowerCase();
       
-      if (
-        unit.includes('people') || 
-        unit.includes('person') || 
-        unit.includes('beneficiar') ||
-        category.includes('people') || 
-        category.includes('beneficiar') ||
-        name.includes('people') || 
-        name.includes('beneficiar')
-      ) {
+      // Expanded keywords to capture more human-impact metrics
+      const peopleKeywords = [
+        'people', 'person', 'beneficiar', 'student', 'child', 'children',
+        'adult', 'family', 'families', 'participant', 'recipient',
+        'attendee', 'individual', 'community member'
+      ];
+      const serviceKeywords = [
+        'meal', 'service', 'healthcare', 'education', 'training'
+      ];
+      
+      const isPeopleMetric = peopleKeywords.some(keyword => 
+        unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
+      ) || serviceKeywords.some(keyword => 
+        unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
+      );
+      
+      if (isPeopleMetric) {
         peopleMetricIds.add(metric.id);
       }
     });

@@ -27,6 +27,7 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Time Commitment Scoring**: Compares volunteer's weeklyAvailability against opportunity's ongoingHoursPerWeek with graduated scoring (60pts for ≤70% commitment, 40pts for 70-100%, 10pts for over-commitment)
 - **Work Style Matching**: Compares volunteer's preferredWorkStyle (remote/in-person/hybrid) with opportunity's engagementType, with 40pt bonus for matches and hybrid flexibility
 - **Profile Display**: Added comprehensive "Availability & Work Preferences" section to volunteer profiles showing weekly hours, work style preference, and detailed time slots with defensive handling for incomplete data
+- **Profile Settings Fix**: Updated volunteer-profile-settings.tsx to use correct `/api/intake/volunteer-profile` endpoint and properly map `weeklyHours` form field to `weeklyAvailability` database field, enabling volunteers to save availability data that feeds into profile display and matching algorithm
 
 ### People Impacted Metrics Expansion
 - **Broader Impact Tracking**: Expanded "People Impacted" keyword filtering from basic terms (people/person/beneficiar) to include: students, children, adults, families, participants, recipients, attendees, individuals, community members, meals, services, healthcare, education, and training

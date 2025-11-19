@@ -143,7 +143,7 @@ export default function MobileDataCollection() {
       return apiRequest("POST", "/api/volunteer-activities", payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities", userId] });
       activityForm.reset();
       toast({
         title: "Activity logged!",

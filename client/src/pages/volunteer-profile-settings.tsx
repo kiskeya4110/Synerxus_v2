@@ -694,16 +694,15 @@ export default function VolunteerProfileSettings() {
 
   // Data fetching
   const userId = localStorage.getItem("currentUserId");
-  const { data: currentUser } = useQuery({ queryKey: ["/api/users/me"] });
-  const { data: volunteers, isLoading: loadingProfile } = useQuery<Volunteer[]>(
-    {
-      queryKey: ["/api/volunteers"],
-    },
-  );
-
-  const existingProfile = volunteers?.find(
-    (v) => v.email === currentUser?.email,
-  );
+  const { data: currentUser } = useQuery<{ id: number; email: string; displayName?: string }>({ 
+    queryKey: ["/api/users/me"] 
+  });
+  
+  // Fetch volunteer profile using intake API which includes all availability fields
+  const { data: existingProfile, isLoading: loadingProfile } = useQuery<any>({
+    queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
+    enabled: !!currentUser?.id,
+  });
 
   // Form setup
   const form = useForm<FormData>({
@@ -723,13 +722,13 @@ export default function VolunteerProfileSettings() {
     },
     values: existingProfile
       ? {
-          email: existingProfile.email,
-          name: existingProfile.name,
-          skills: existingProfile.skills,
-          interests: existingProfile.interests,
-          location: existingProfile.location,
-          sdgGoals: existingProfile.sdgGoals,
-          weeklyHours: existingProfile.weeklyHours || 1,
+          email: currentUser?.email || "",
+          name: existingProfile.volunteerName || currentUser?.displayName || "",
+          skills: existingProfile.skills || [],
+          interests: existingProfile.interests || [],
+          location: existingProfile.location || "",
+          sdgGoals: existingProfile.sdgGoals || [],
+          weeklyHours: existingProfile.weeklyAvailability || 1,
           availability: existingProfile.availability || [],
           timezone:
             existingProfile.timezone ||
@@ -754,14 +753,15 @@ export default function VolunteerProfileSettings() {
   // Mutations
   const mutationConfig = {
     onSuccess: () => {
-      const id = localStorage.getItem("currentUserId");
+      const id = currentUser?.id;
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/profile/volunteer", id],
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] });
       toast({
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
@@ -776,16 +776,25 @@ export default function VolunteerProfileSettings() {
     },
   };
 
-  const createMutation = useMutation({
-    mutationFn: async (data: FormData) =>
-      apiRequest("POST", "/api/volunteers", data),
-    ...mutationConfig,
-  });
-
-  const updateMutation = useMutation({
+  const profileMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      if (!existingProfile?.id) throw new Error("No profile found to update");
-      return apiRequest("PATCH", `/api/volunteers/${existingProfile.id}`, data);
+      if (!currentUser?.id) throw new Error("User not authenticated");
+      
+      // Transform form data to match volunteer profile API
+      const profileData = {
+        volunteerName: data.name,
+        skills: data.skills,
+        interests: data.interests,
+        location: data.location,
+        sdgGoals: data.sdgGoals,
+        weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
+        availability: data.availability,
+        timezone: data.timezone,
+        preferredCommitment: data.preferredCommitment,
+        preferredWorkStyle: data.preferredWorkStyle,
+      };
+      
+      return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
     },
     ...mutationConfig,
   });
@@ -795,11 +804,7 @@ export default function VolunteerProfileSettings() {
   const availabilityOps = useAvailabilityManagement(form);
 
   const onSubmit = (data: FormData) => {
-    if (existingProfile) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
-    }
+    profileMutation.mutate(data);
   };
 
   if (loadingProfile) {
@@ -810,7 +815,7 @@ export default function VolunteerProfileSettings() {
     );
   }
 
-  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+  const isSubmitting = profileMutation.isPending;
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">

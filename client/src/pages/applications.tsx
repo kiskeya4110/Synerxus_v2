@@ -151,7 +151,7 @@ export default function ApplicationsPage() {
         title: "Project Assigned",
         description: "Volunteer will receive a notification to accept or decline this assignment",
       });
-      // Invalidate project assignments, volunteer profile, volunteers/applications lists, and dashboard
+      // Invalidate project assignments, volunteer profile, volunteers/applications lists (including org-scoped), and dashboard
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", variables.volunteerId] });
       queryClient.invalidateQueries({ 
@@ -160,10 +160,12 @@ export default function ApplicationsPage() {
           return typeof key === 'string' && (
             key.startsWith('/api/volunteers') ||
             key.startsWith('/api/applications') ||
-            key.startsWith('/api/dashboard/summary')
+            key.startsWith('/api/dashboard/summary') ||
+            key.startsWith('/api/organizations')
           );
         }
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setSelectedProjectId("");
     },
     onError: (error: Error) => {
@@ -189,7 +191,7 @@ export default function ApplicationsPage() {
         title: "Application Reviewed",
         description: `Application ${reviewAction === "accepted" ? "accepted" : "rejected"} successfully`,
       });
-      // Invalidate all relevant queries to update volunteer lists and dashboard
+      // Invalidate all relevant queries to update volunteer lists (including org-scoped), profiles, and dashboard
       // Use predicate to match all queries starting with these paths (handles user-scoped keys)
       queryClient.invalidateQueries({ 
         predicate: (query) => {
@@ -198,10 +200,16 @@ export default function ApplicationsPage() {
             key.startsWith('/api/applications') ||
             key.startsWith('/api/volunteers') ||
             key.startsWith('/api/projects') ||
-            key.startsWith('/api/dashboard/summary')
+            key.startsWith('/api/dashboard/summary') ||
+            key.startsWith('/api/organizations') ||
+            key.startsWith('/api/profile/volunteer') ||
+            key.startsWith('/api/volunteer-activities') ||
+            key.startsWith('/api/tasks')
           );
         }
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
       setReviewDialogOpen(false);
       setSelectedApplication(null);
       setReviewNotes("");

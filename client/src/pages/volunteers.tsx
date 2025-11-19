@@ -106,18 +106,22 @@ export default function Volunteers() {
         title: "Project Assigned",
         description: "Volunteer will receive a notification to accept or decline this assignment",
       });
-      // Invalidate project assignments, volunteer profile, volunteers list, and dashboard
+      // Invalidate project assignments, volunteer profile, volunteers list (including org-scoped), and dashboard
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", variables.volunteerId] });
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const key = query.queryKey[0];
-          return typeof key === 'string' && key.startsWith('/api/volunteers');
+          return typeof key === 'string' && (
+            key.startsWith('/api/volunteers') ||
+            key.startsWith('/api/organizations')
+          );
         }
       });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", variables.volunteerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setSelectedProjectId("");
     },
     onError: (error: Error) => {

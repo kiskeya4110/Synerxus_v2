@@ -38,6 +38,18 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Impact Chart Cleanup**: Removed unwanted filter menu from Impact Over Time visualization for cleaner, more focused chart display
 - **Visual Consistency**: Maintained consistent chart styling and user-type-specific labels across all impact visualizations
 
+### Dashboard Live Updates & Query Invalidation (November 2025)
+- **Comprehensive Query Invalidation**: Implemented consistent cache invalidation across all data mutation points to ensure dashboard KPIs and SDG Distribution chart update in real-time when data is entered
+- **Mutation Points Updated**:
+  - Mobile Data Collection (activity & impact mutations): Invalidate `/api/dashboard/summary`, `/api/projects`, and `/api/volunteer-activities` on success
+  - Project Edit: Invalidate all project query variants (global, by ID, by user) plus dashboard summaries when projects are updated
+  - Volunteers & Applications (assignment mutations): Invalidate project assignments, volunteer profiles, organization-scoped lists, dashboard summaries, and `/api/users` cache
+  - Applications (review mutations): Comprehensive predicate-based invalidation covering applications, volunteers, projects, dashboard, organizations, profiles, activities, and tasks
+- **Organization-Scoped Query Support**: All mutations now properly invalidate organization-scoped queries like `["/api/organizations", userId, "volunteers"]` in addition to direct volunteer queries
+- **SDG Chart Live Updates**: SDG Distribution chart updates automatically when project data changes since it derives from the projects query (no dedicated SDG cache needed)
+- **KPI Consistency**: Dashboard KPIs (Hours Contributed, Tasks Completed, Active Projects) display project names and update live across all user types and mutation surfaces
+- **Predicate-Based Invalidation**: Used TanStack Query predicates to efficiently invalidate all variants of scoped queries without hardcoding every user ID combination
+
 ## External Dependencies
 
 -   **Authentication & User Management**: Firebase Auth, Firebase Firestore, Firebase Storage

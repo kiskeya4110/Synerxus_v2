@@ -28,6 +28,7 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Work Style Matching**: Compares volunteer's preferredWorkStyle (remote/in-person/hybrid) with opportunity's engagementType, with 40pt bonus for matches and hybrid flexibility
 - **Profile Display**: Added comprehensive "Availability & Work Preferences" section to volunteer profiles showing weekly hours, work style preference, and detailed time slots with defensive handling for incomplete data
 - **Profile Settings Fix**: Updated volunteer-profile-settings.tsx to use correct `/api/intake/volunteer-profile` endpoint and properly map `weeklyHours` form field to `weeklyAvailability` database field, enabling volunteers to save availability data that feeds into profile display and matching algorithm
+- **Volunteer Intake Form Fix**: Fixed volunteer-intake.tsx to use `/api/intake/volunteer-profile` endpoint instead of deprecated `/api/volunteers` endpoint, ensuring data saves correctly to volunteerProfiles table with all availability fields. Fixed NaN error in weeklyHours input field with proper empty string handling. Both intake and settings forms now use the same API and database table for data consistency.
 
 ### People Impacted Metrics Expansion
 - **Broader Impact Tracking**: Expanded "People Impacted" keyword filtering from basic terms (people/person/beneficiar) to include: students, children, adults, families, participants, recipients, attendees, individuals, community members, meals, services, healthcare, education, and training

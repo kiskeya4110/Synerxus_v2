@@ -1953,9 +1953,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let assignments;
       if (projectId) {
-        assignments = await storage.listProjectAssignmentsByProject(parseInt(projectId as string));
+        if (projectId === 'undefined' || projectId === 'null') {
+          return res.status(400).json({ message: "Project ID must be a valid number" });
+        }
+        const projId = parseInt(projectId as string);
+        if (isNaN(projId)) {
+          return res.status(400).json({ message: "Project ID must be a valid number" });
+        }
+        assignments = await storage.listProjectAssignmentsByProject(projId);
       } else if (volunteerId) {
-        assignments = await storage.listProjectAssignmentsByVolunteer(parseInt(volunteerId as string));
+        if (volunteerId === 'undefined' || volunteerId === 'null') {
+          return res.status(400).json({ message: "Volunteer ID must be a valid number" });
+        }
+        const volId = parseInt(volunteerId as string);
+        if (isNaN(volId)) {
+          return res.status(400).json({ message: "Volunteer ID must be a valid number" });
+        }
+        assignments = await storage.listProjectAssignmentsByVolunteer(volId);
       } else {
         assignments = await storage.listProjectAssignments();
       }
@@ -1969,7 +1983,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/project-assignments/:id", async (req, res) => {
     try {
-      const assignmentId = parseInt(req.params.id);
+      const { id } = req.params;
+      
+      if (!id || id === 'undefined' || id === 'null') {
+        return res.status(400).json({ message: "Assignment ID is required and must be a valid number" });
+      }
+      
+      const assignmentId = parseInt(id);
+      
+      if (isNaN(assignmentId)) {
+        return res.status(400).json({ message: "Assignment ID must be a valid number" });
+      }
+      
       const assignment = await storage.getProjectAssignment(assignmentId);
       
       if (!assignment) {
@@ -2032,11 +2057,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { volunteerId } = req.query;
       
-      if (!volunteerId) {
-        return res.status(400).json({ message: "volunteerId is required" });
+      if (!volunteerId || volunteerId === 'undefined' || volunteerId === 'null') {
+        return res.status(400).json({ message: "volunteerId is required and must be a valid number" });
       }
       
       const volId = parseInt(volunteerId as string);
+      
+      if (isNaN(volId)) {
+        return res.status(400).json({ message: "volunteerId must be a valid number" });
+      }
       
       // SECURITY: Verify the requesting user is the volunteer whose data is being requested
       const requestingUserId = extractUserId(req);

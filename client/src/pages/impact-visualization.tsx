@@ -238,6 +238,8 @@ export default function ImpactVisualization() {
 
   // Prepare time series chart data
   const impactOverTimeData = useMemo(() => {
+    const datasetLabel = currentUser?.userType === 'volunteer' ? 'People You Impacted' : 'People Impacted';
+    
     // Use backend-computed monthlyImpactData for both volunteers and organizations
     if (dashboardData?.monthlyImpactData) {
       const labels = dashboardData.monthlyImpactData.map((m: any) => {
@@ -250,7 +252,7 @@ export default function ImpactVisualization() {
       return {
         labels,
         datasets: [{
-          label: 'People Impacted',
+          label: datasetLabel,
           data: values,
           borderColor: 'rgb(59, 130, 246)',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -264,7 +266,7 @@ export default function ImpactVisualization() {
     return {
       labels: [],
       datasets: [{
-        label: 'People Impacted',
+        label: datasetLabel,
         data: [],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -272,10 +274,12 @@ export default function ImpactVisualization() {
         tension: 0.4,
       }],
     };
-  }, [dashboardData]);
+  }, [dashboardData, currentUser]);
 
   // Prepare volunteer hours chart data
   const volunteerHoursData = useMemo(() => {
+    const datasetLabel = currentUser?.userType === 'volunteer' ? 'Your Hours' : 'Volunteer Hours';
+    
     // Use backend-computed monthlyImpactData for both volunteers and organizations
     if (dashboardData?.monthlyImpactData) {
       const labels = dashboardData.monthlyImpactData.map((m: any) => {
@@ -288,7 +292,7 @@ export default function ImpactVisualization() {
       return {
         labels,
         datasets: [{
-          label: 'Hours',
+          label: datasetLabel,
           data: values,
           backgroundColor: 'rgba(147, 51, 234, 0.8)',
         }],
@@ -299,15 +303,17 @@ export default function ImpactVisualization() {
     return {
       labels: [],
       datasets: [{
-        label: 'Hours',
+        label: datasetLabel,
         data: [],
         backgroundColor: 'rgba(147, 51, 234, 0.8)',
       }],
     };
-  }, [dashboardData]);
+  }, [dashboardData, currentUser]);
 
   // Prepare SDG radar chart data
   const sdgRadarData = useMemo(() => {
+    const datasetLabel = currentUser?.userType === 'volunteer' ? 'Your Impact Score' : 'Impact Score';
+    
     // For organizations, use backend-computed impactBySDG if available
     if (currentUser?.userType === 'organization' && dashboardData?.impactBySDG) {
       const sortedSDGs = dashboardData.impactBySDG.sort((a: any, b: any) => a.sdgGoal - b.sdgGoal);
@@ -317,7 +323,7 @@ export default function ImpactVisualization() {
       return {
         labels,
         datasets: [{
-          label: 'Impact Score',
+          label: datasetLabel,
           data: values,
           backgroundColor: 'rgba(34, 197, 94, 0.2)',
           borderColor: 'rgb(34, 197, 94)',
@@ -348,7 +354,7 @@ export default function ImpactVisualization() {
     return {
       labels,
       datasets: [{
-        label: 'Impact Score',
+        label: datasetLabel,
         data: values,
         backgroundColor: 'rgba(34, 197, 94, 0.2)',
         borderColor: 'rgb(34, 197, 94)',

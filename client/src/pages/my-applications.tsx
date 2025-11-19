@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle2, XCircle, Clock, Briefcase, MapPin, Calendar, ExternalLink, Sparkles, TrendingUp, FileText, Users, Target, Zap, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Briefcase, MapPin, Calendar, ExternalLink, Sparkles, TrendingUp, FileText, Users, Target, Zap, ChevronDown, ChevronUp, Award } from "lucide-react";
 import { Link } from "wouter";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
+import { sdgGoals } from "@shared/sdg-goals";
 
 interface Application {
   id: number;
@@ -15,6 +16,7 @@ interface Application {
   status: string;
   coverLetter: string;
   matchScore?: number;
+  matchReasons?: string[];
   matchBreakdown?: any;
   appliedAt: string;
   reviewedAt?: string;
@@ -151,7 +153,7 @@ export default function MyApplicationsPage() {
     enabled: !!userId
   });
 
-  // Merge match scores after both queries resolve
+  // Merge match scores and AI analysis after both queries resolve
   const enrichedApplications = useMemo(() => {
     if (!matchedOpportunities.length || !applications.length) {
       return applications;
@@ -161,7 +163,14 @@ export default function MyApplicationsPage() {
       const matchedOpp = matchedOpportunities.find((opp: any) => opp.id === app.opportunityId);
       return {
         ...app,
-        matchScore: matchedOpp?.matchScore || app.matchScore || 0
+        matchScore: matchedOpp?.matchScore || app.matchScore || 0,
+        matchReasons: matchedOpp?.matchReasons || [],
+        matchBreakdown: matchedOpp?.matchBreakdown,
+        // Merge SDG goals from matched opportunity if available
+        opportunity: app.opportunity ? {
+          ...app.opportunity,
+          sdgGoals: app.opportunity.sdgGoals || matchedOpp?.sdgGoals
+        } : null
       };
     });
   }, [applications, matchedOpportunities]);
@@ -277,6 +286,52 @@ export default function MyApplicationsPage() {
                         </p>
                       </Link>
 
+                      {/* Why this Matches You - AI Analysis */}
+                      {app.matchReasons && app.matchReasons.length > 0 && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
+                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                              Why this matches you:
+                            </p>
+                          </div>
+                          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                            {app.matchReasons.slice(0, 3).map((reason: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-1.5">
+                                <Award className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                <span>{reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* SDG Goals */}
+                      {app.opportunity?.sdgGoals && app.opportunity.sdgGoals.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {app.opportunity.sdgGoals.slice(0, 4).map((sdgId: number) => {
+                              const sdg = sdgGoals[sdgId];
+                              return sdg ? (
+                                <Badge 
+                                  key={sdgId} 
+                                  style={{ backgroundColor: sdg.color, color: '#fff' }}
+                                  className="text-xs px-2 py-0"
+                                >
+                                  SDG {sdgId}
+                                </Badge>
+                              ) : null;
+                            })}
+                            {app.opportunity.sdgGoals.length > 4 && (
+                              <Badge variant="outline" className="text-xs px-2 py-0">
+                                +{app.opportunity.sdgGoals.length - 4}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Location and Applied Date */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                         {app.opportunity?.location && (
@@ -376,6 +431,52 @@ export default function MyApplicationsPage() {
                           {app.opportunity?.description || "No description available"}
                         </p>
                       </Link>
+
+                      {/* Why this Matches You - AI Analysis */}
+                      {app.matchReasons && app.matchReasons.length > 0 && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-300" />
+                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                              Why this matches you:
+                            </p>
+                          </div>
+                          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                            {app.matchReasons.slice(0, 3).map((reason: string, idx: number) => (
+                              <li key={idx} className="flex items-start gap-1.5">
+                                <Award className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                                <span>{reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* SDG Goals */}
+                      {app.opportunity?.sdgGoals && app.opportunity.sdgGoals.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {app.opportunity.sdgGoals.slice(0, 4).map((sdgId: number) => {
+                              const sdg = sdgGoals[sdgId];
+                              return sdg ? (
+                                <Badge 
+                                  key={sdgId} 
+                                  style={{ backgroundColor: sdg.color, color: '#fff' }}
+                                  className="text-xs px-2 py-0"
+                                >
+                                  SDG {sdgId}
+                                </Badge>
+                              ) : null;
+                            })}
+                            {app.opportunity.sdgGoals.length > 4 && (
+                              <Badge variant="outline" className="text-xs px-2 py-0">
+                                +{app.opportunity.sdgGoals.length - 4}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Location and Applied Date */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">

@@ -62,7 +62,7 @@ import {
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
-import { eq, and, or, asc, inArray } from "drizzle-orm";
+import { eq, and, or, asc, desc, inArray } from "drizzle-orm";
 
 // Custom error for duplicate project assignments
 export class DuplicateAssignmentError extends Error {
@@ -433,7 +433,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async listVolunteerActivitiesByUser(userId: number): Promise<VolunteerActivity[]> {
-    return await db.select().from(volunteerActivities).where(eq(volunteerActivities.userId, userId));
+    return await db.select().from(volunteerActivities)
+      .where(eq(volunteerActivities.userId, userId))
+      .orderBy(desc(volunteerActivities.date))
+      .limit(10);
   }
 
   async listVolunteerActivitiesByProject(projectId: number): Promise<VolunteerActivity[]> {

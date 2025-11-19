@@ -90,7 +90,15 @@ export default function MobileDataCollection() {
 
   // Fetch recent volunteer activities
   const { data: recentActivities = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteer-activities"],
+    queryKey: ["/api/volunteer-activities", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/volunteer-activities?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId
   });
 
   // Activity form

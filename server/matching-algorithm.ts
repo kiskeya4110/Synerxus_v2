@@ -7,6 +7,7 @@ interface MatchResult {
     locationMatch: number;
     sdgMatch: number;
     interestMatch: number;
+    availabilityMatch: number;
   };
   reasons: string[];
 }
@@ -62,6 +63,7 @@ export function calculateMatchScore(
     locationMatch: 0,
     sdgMatch: 0,
     interestMatch: 0,
+    availabilityMatch: 0,
   };
   const reasons: string[] = [];
 
@@ -268,19 +270,77 @@ export function calculateMatchScore(
     breakdown.interestMatch = 40;
   }
 
+  // 5. Availability Matching (15% weight)
+  const volWeeklyAvailability = volunteer.profile?.weeklyAvailability;
+  const volPreferredWorkStyle = volunteer.profile?.preferredWorkStyle?.toLowerCase();
+  const oppHoursPerWeek = opportunity.ongoingHoursPerWeek;
+  const oppEngagementType = opportunity.engagementType?.toLowerCase();
+
+  let availabilityScore = 0;
+  let hasAvailabilityData = false;
+
+  // Check hours availability compatibility
+  if (volWeeklyAvailability && oppHoursPerWeek) {
+    hasAvailabilityData = true;
+    const hoursRatio = oppHoursPerWeek / volWeeklyAvailability;
+    
+    if (hoursRatio <= 0.7) {
+      // Opportunity requires ≤70% of available time - excellent fit
+      availabilityScore += 60;
+      reasons.push(`⏰ Great time fit: ${oppHoursPerWeek}hrs/week (${Math.round(hoursRatio * 100)}% of your availability)`);
+    } else if (hoursRatio <= 1.0) {
+      // Opportunity requires 70-100% of available time - good fit
+      availabilityScore += 40;
+      reasons.push(`⏰ Fits your schedule: ${oppHoursPerWeek}hrs/week commitment`);
+    } else {
+      // Opportunity exceeds available time
+      availabilityScore += 10;
+      reasons.push(`⚠️ Requires ${oppHoursPerWeek}hrs/week (more than your ${volWeeklyAvailability}hrs/week availability)`);
+    }
+  }
+
+  // Check work style compatibility
+  if (volPreferredWorkStyle && oppEngagementType) {
+    hasAvailabilityData = true;
+    const workStyleMatch = volPreferredWorkStyle === oppEngagementType || 
+                           volPreferredWorkStyle === 'hybrid' || 
+                           oppEngagementType === 'hybrid';
+    
+    if (workStyleMatch) {
+      availabilityScore += 40;
+      const styleLabel = oppEngagementType.charAt(0).toUpperCase() + oppEngagementType.slice(1);
+      reasons.push(`💼 ${styleLabel} work matches your preference`);
+    } else {
+      availabilityScore += 10;
+    }
+  }
+
+  // Set final availability match score
+  if (hasAvailabilityData) {
+    breakdown.availabilityMatch = availabilityScore;
+  } else {
+    // No availability data - neutral score
+    breakdown.availabilityMatch = 50;
+    if (!volWeeklyAvailability || !volPreferredWorkStyle) {
+      reasons.push("💡 Add availability info for better time-based matching");
+    }
+  }
+
   // Calculate weighted final score
   const weights = {
-    skillMatch: 0.35,
-    locationMatch: 0.25,
-    sdgMatch: 0.2,
-    interestMatch: 0.2,
+    skillMatch: 0.30,
+    locationMatch: 0.20,
+    sdgMatch: 0.20,
+    interestMatch: 0.15,
+    availabilityMatch: 0.15,
   };
 
   const finalScore = Math.round(
     breakdown.skillMatch * weights.skillMatch +
       breakdown.locationMatch * weights.locationMatch +
       breakdown.sdgMatch * weights.sdgMatch +
-      breakdown.interestMatch * weights.interestMatch,
+      breakdown.interestMatch * weights.interestMatch +
+      breakdown.availabilityMatch * weights.availabilityMatch,
   );
 
   // Add overall assessment reason

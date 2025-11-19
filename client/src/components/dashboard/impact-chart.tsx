@@ -1,41 +1,7 @@
-import { useEffect, useRef, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useTheme } from "@/components/layout/theme-provider";
 import Chart from "chart.js/auto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-// Define a mapping for old metrics to new standardized metrics
-const metricsMapping: { [key: string]: string } = {
-  studentsEducated: "People Educated",
-  healthcareServicesDelivered: "People Served",
-  mealsProvided: "People Fed",
-  servicesProvided: "People Served", // New definition
-  mealsDelivered: "People Fed", // New definition
-};
-
-// Function to standardize metric names
-const standardizeMetricName = (metricKey: string): string => {
-  return (
-    metricsMapping[metricKey] ||
-    `People ${metricKey.replace(/([A-Z])/g, " $1").trim()}`
-  );
-};
-
-// Function to count metrics based on new definitions
-const countPeopleMetrics = (metrics: { [key: string]: number }) => {
-  const standardizedMetrics = Object.keys(metrics).reduce(
-    (acc, key) => {
-      const standardizedKey = standardizeMetricName(key);
-      acc[standardizedKey] = (acc[standardizedKey] || 0) + metrics[key]; // Sum counts for identical metrics
-      return acc;
-    },
-    {} as { [key: string]: number },
-  );
-
-  return standardizedMetrics;
-};
-
-// Suggested metrics to track
-const suggestedMetrics = Object.values(metricsMapping);
 
 export interface ImpactChartProps {
   monthlyImpactData?: Array<{
@@ -47,12 +13,6 @@ export interface ImpactChartProps {
   userType?: "volunteer" | "organization";
 }
 
-// Numeric coercion helper to safely convert values to numbers
-function coerceNumber(value: any, fallback: number = 0): number {
-  const num = Number(value);
-  return Number.isFinite(num) ? num : fallback;
-}
-
 export default function ImpactChart({
   monthlyImpactData = [],
   monthlyImpactTrend = [],
@@ -61,8 +21,6 @@ export default function ImpactChart({
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const { theme } = useTheme();
-  const [inputValue, setInputValue] = useState("");
-  const [selectedMetric, setSelectedMetric] = useState("");
 
   // Dynamic labels based on user type
   const labels = useMemo(
@@ -105,15 +63,6 @@ export default function ImpactChart({
       ),
     };
   }, [monthlyImpactData, monthlyImpactTrend]);
-
-  const filteredMetrics = suggestedMetrics.filter((metric) =>
-    metric.toLowerCase().includes(inputValue.toLowerCase()),
-  );
-
-  const handleSelectMetric = (metric: string) => {
-    setSelectedMetric(metric);
-    setInputValue(metric); // Optionally, fill input with selected metric
-  };
 
   useEffect(() => {
     if (chartRef.current) {
@@ -258,26 +207,6 @@ export default function ImpactChart({
         <div className="h-[300px]">
           <canvas ref={chartRef}></canvas>
         </div>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          placeholder="Type to suggest metrics..."
-          className="border p-2 rounded"
-        />
-        {inputValue && (
-          <ul className="suggestion-list">
-            {filteredMetrics.map((metric, index) => (
-              <li
-                key={index}
-                onClick={() => handleSelectMetric(metric)}
-                className="cursor-pointer hover:bg-gray-200"
-              >
-                {metric}
-              </li>
-            ))}
-          </ul>
-        )}
       </CardContent>
     </Card>
   );

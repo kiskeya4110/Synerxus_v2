@@ -146,21 +146,15 @@ export default function VolunteerProfileSettings() {
 
   // Fetch current user to get email
   const userId = localStorage.getItem("currentUserId");
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<{ id: number; email: string; displayName?: string }>({
     queryKey: ["/api/users/me"],
   });
 
-  // Fetch existing volunteer profile by filtering all volunteers
-  const { data: volunteers, isLoading: loadingProfile } = useQuery<Volunteer[]>(
-    {
-      queryKey: ["/api/volunteers"],
-    },
-  );
-
-  // Find the volunteer profile for current user (match by email)
-  const existingProfile = volunteers?.find(
-    (v) => v.email === currentUser?.email,
-  );
+  // Fetch existing volunteer profile using intake API which includes all availability fields
+  const { data: existingProfile, isLoading: loadingProfile } = useQuery<any>({
+    queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
+    enabled: !!currentUser?.id,
+  });
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -205,52 +199,40 @@ export default function VolunteerProfileSettings() {
     }
   }, [currentUser, existingProfile, form]);
 
-  // Create mutation
-  const createMutation = useMutation({
+  // Profile mutation (create or update)
+  const profileMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return apiRequest("POST", "/api/volunteers", data);
+      if (!currentUser?.id) throw new Error("User not authenticated");
+      
+      // Transform form data to match volunteer profile API
+      const profileData = {
+        volunteerName: data.name,
+        skills: data.skills,
+        interests: data.interests,
+        location: data.location,
+        sdgGoals: data.sdgGoals,
+        weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
+        availability: data.availability,
+        timezone: data.timezone,
+        preferredCommitment: data.preferredCommitment,
+        preferredWorkStyle: "", // Will be set through settings page
+      };
+      
+      return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
     },
     onSuccess: () => {
-      const id = localStorage.getItem("currentUserId");
+      const id = currentUser?.id;
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/profile/volunteer", id],
-      });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] });
       toast({
-        title: "Profile created!",
-        description: "Your volunteer profile has been created successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Update mutation
-  const updateMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      if (!existingProfile?.id) throw new Error("No profile found to update");
-      return apiRequest("PATCH", `/api/volunteers/${existingProfile.id}`, data);
-    },
-    onSuccess: () => {
-      const id = localStorage.getItem("currentUserId");
-      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/profile/volunteer", id],
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
-      toast({
-        title: "Profile updated!",
-        description: "Your volunteer profile has been updated successfully.",
+        title: `Profile ${existingProfile ? "updated" : "created"}!`,
+        description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
     },
     onError: (error: Error) => {
@@ -263,11 +245,7 @@ export default function VolunteerProfileSettings() {
   });
 
   const onSubmit = (data: FormData) => {
-    if (existingProfile) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
-    }
+    profileMutation.mutate(data);
   };
 
   const addSkill = () => {
@@ -826,12 +804,10 @@ export default function VolunteerProfileSettings() {
               <div className="flex gap-3 pt-4">
                 <Button
                   type="submit"
-                  disabled={
-                    createMutation.isPending || updateMutation.isPending
-                  }
+                  disabled={profileMutation.isPending}
                   data-testid="button-save-profile"
                 >
-                  {(createMutation.isPending || updateMutation.isPending) && (
+                  {profileMutation.isPending && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   {existingProfile ? "Update Profile" : "Create Profile"}

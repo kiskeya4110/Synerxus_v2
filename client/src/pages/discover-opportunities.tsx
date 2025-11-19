@@ -155,7 +155,7 @@ export default function DiscoverOpportunities() {
     return (
       <div className="p-6">
         <h1 className="text-3xl font-bold mb-6">Discover Opportunities</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
           ))}
@@ -233,7 +233,7 @@ export default function DiscoverOpportunities() {
             <Sparkles className="w-5 h-5 mr-2 text-primary-500" />
             Recommended for You
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {opportunities
               .filter(opp => (opp.matchScore ?? 0) >= 70)
               .slice(0, 3)
@@ -324,7 +324,7 @@ export default function DiscoverOpportunities() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredOpportunities.map((opportunity) => (
               <Card
                 key={opportunity.id}

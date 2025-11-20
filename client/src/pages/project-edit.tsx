@@ -89,12 +89,16 @@ export default function ProjectEdit() {
       return response.json();
     },
     onSuccess: () => {
-      const userId = localStorage.getItem('currentUserId');
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", userId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
+      // Use predicate to invalidate all projects-related queries (handles all userId variants)
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const key = query.queryKey[0];
+          return typeof key === 'string' && (
+            key.startsWith('/api/projects') ||
+            key.startsWith('/api/dashboard/summary')
+          );
+        }
+      });
       toast({
         title: "Success",
         description: "Project updated successfully",

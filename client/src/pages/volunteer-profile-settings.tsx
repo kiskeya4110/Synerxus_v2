@@ -841,6 +841,8 @@ export default function VolunteerProfileSettings() {
         profilePhotoUrl: profilePhotoUrl,
       };
       
+      console.log(`[Settings Mutation] Submitting weeklyAvailability: ${profileData.weeklyAvailability}`);
+      
       // Add timeout protection - 15 seconds max
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Profile save timeout. Please try again.")), 15000)
@@ -851,6 +853,7 @@ export default function VolunteerProfileSettings() {
           apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData),
           timeoutPromise
         ]) as any;
+        console.log(`[Settings Mutation] Backend response received`, result);
         return result;
       } catch (error) {
         console.error("Profile mutation error:", error);

@@ -108,59 +108,62 @@ export default function ImpactStorytellingPage() {
   const addressedSDGs = sdgData?.sdgContributions?.map((s: any) => s.sdgNumber) || [];
 
   // PROJECT-LEVEL AGGREGATION (NO DUPLICATION)
-  // CONSOLIDATED KPI AGGREGATION - STRICT DEDUPLICATION
+  // CONSOLIDATED KPI AGGREGATION - AGGRESSIVE DEDUPLICATION
   const aggregatedKPIs = useMemo(() => {
     const kpiMap = new Map<string, number>();
     
-    projectImpacts.forEach((impact: any) => {
-      // Use the metric name if available, otherwise use description
-      let label = impact.metricName || impact.description || 'Unknown Impact';
-      const value = impact.value || 0;
+    if (!projectImpacts || projectImpacts.length === 0) {
+      console.log('[DEBUG] No projectImpacts found');
+      return [];
+    }
+    
+    projectImpacts.forEach((impact: any, idx: number) => {
+      // Get the actual label from available fields
+      let label = impact.name || impact.metricName || impact.description || 'Unknown';
+      const value = Number(impact.value) || 0;
       
-      // Skip hours and time entries (tracked separately)
-      if (label.toLowerCase().match(/^(hour|time|volunteer|effort)$/i)) {
-        return;
+      // Skip if no value or hours/time
+      if (value === 0 || !label) return;
+      if (label.toLowerCase().match(/^(hour|time|volunteer|effort)$/)) return;
+      
+      // AGGRESSIVE NORMALIZATION: lowercase and use exact label as key first
+      const exactKey = label.toLowerCase().trim();
+      
+      // Then map to category
+      let category = exactKey;
+      
+      // All health-related metrics -> same bucket
+      if (exactKey.includes('health') || exactKey.includes('medical') || exactKey.includes('doctor') || 
+          exactKey.includes('clinic') || exactKey.includes('healthcare') || exactKey.includes('hospital')) {
+        category = 'health services delivered';
+      }
+      // All meals/food -> same bucket
+      else if (exactKey.includes('meal') || exactKey.includes('food') || exactKey.includes('provide')) {
+        category = 'meals provided';
+      }
+      // All education -> same bucket
+      else if (exactKey.includes('education') || exactKey.includes('train') || exactKey.includes('school')) {
+        category = 'people trained';
+      }
+      // All water/sanitation -> same bucket
+      else if (exactKey.includes('water') || exactKey.includes('sanitation') || exactKey.includes('hygiene')) {
+        category = 'water/sanitation access';
       }
       
-      // Normalize label: lowercase, trim, single spaces
-      label = label.toLowerCase().replace(/\s+/g, ' ').trim();
-      
-      // Group similar metrics
-      let normalized = label;
-      
-      if (label.match(/health|medical|doctor|clinic|healthcare|hospital|wellness|service/)) {
-        normalized = 'health services delivered';
-      } else if (label.match(/meal|food|feed|nutrition|diet|provided/)) {
-        normalized = 'meals provided';
-      } else if (label.match(/education|student|school|train|course|workshop|learning|people.*educated/)) {
-        normalized = 'people trained/educated';
-      } else if (label.match(/water|sanitation|hygiene|wash|clean/)) {
-        normalized = 'people with water access';
-      } else if (label.match(/shelter|housing|home|accommodation|housed/)) {
-        normalized = 'people housed';
-      } else if (label.match(/child|youth|young people/)) {
-        normalized = 'children supported';
-      } else if (label.match(/women|girl|female|maternal|gender/)) {
-        normalized = 'women/girls supported';
-      } else if (label.match(/elderly|senior|elder|aged/)) {
-        normalized = 'elderly people supported';
-      } else if (label.match(/community|village|neighborhood|members|families/)) {
-        normalized = 'communities/families served';
-      } else if (label.match(/people|person|beneficiary|beneficiar|individual|participant|attend/)) {
-        normalized = 'people impacted';
-      }
-      
-      // Aggregate - add value to existing normalized metric
-      kpiMap.set(normalized, (kpiMap.get(normalized) || 0) + value);
+      // Accumulate: SUM all values for the same category
+      const currentValue = kpiMap.get(category) || 0;
+      kpiMap.set(category, currentValue + value);
     });
     
-    // Convert to sorted array
+    console.log('[DEBUG] Aggregated KPIs:', Array.from(kpiMap.entries()));
+    
+    // Convert to array and sort
     return Array.from(kpiMap.entries())
       .map(([label, value]) => ({ 
         label: label.charAt(0).toUpperCase() + label.slice(1),
-        value 
+        value: Math.round(value)
       }))
-      .sort((a, b) => b.value - a.value); // Sort by value descending
+      .sort((a, b) => b.value - a.value);
   }, [projectImpacts]);
 
   const projectAggregations = useMemo(() => {

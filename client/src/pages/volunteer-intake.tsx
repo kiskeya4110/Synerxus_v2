@@ -167,6 +167,26 @@ type FormData = z.infer<typeof formSchema>;
 type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
 type SkillProficiency = z.infer<typeof skillProficiencySchema>;
 
+// Helper function to parse skills from storage format to form format
+const parseSkills = (skillsArray: any[]): SkillProficiency[] => {
+  if (!Array.isArray(skillsArray)) return [];
+  return skillsArray
+    .map((skill) => {
+      if (typeof skill === 'string') {
+        // Parse "Skill Name (85%)" format
+        const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
+        if (match) {
+          return { name: match[1], proficiency: parseInt(match[2]) };
+        }
+        // Fallback: treat whole string as skill name with 50% proficiency
+        return { name: skill, proficiency: 50 };
+      }
+      // Already an object
+      return skill;
+    })
+    .filter((skill) => skill && skill.name);
+};
+
 export default function VolunteerProfileSettings() {
   const { toast } = useToast();
   const [skillInput, setSkillInput] = useState("");
@@ -200,11 +220,11 @@ export default function VolunteerProfileSettings() {
       yearsOfExperience: existingProfile?.yearsOfExperience || "",
       linkedinProfile: existingProfile?.linkedinProfile || "",
       languages: existingProfile?.languages || [],
-      skills: existingProfile?.skills || [],
+      skills: parseSkills(existingProfile?.skills),
       interests: existingProfile?.interests || [],
       location: existingProfile?.location || "",
-      sdgGoals: existingProfile?.sdgGoals || [],
-      weeklyHours: existingProfile?.weeklyHours || 1,
+      sdgGoals: existingProfile?.preferredSdgs || [],
+      weeklyHours: existingProfile?.weeklyAvailability || 1,
       availability: existingProfile?.availability || [],
       timezone:
         existingProfile?.timezone ||
@@ -232,11 +252,11 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: existingProfile?.yearsOfExperience || "",
         linkedinProfile: existingProfile?.linkedinProfile || "",
         languages: existingProfile?.languages || [],
-        skills: existingProfile?.skills || [],
+        skills: parseSkills(existingProfile?.skills),
         interests: existingProfile?.interests || [],
         location: existingProfile?.location || "",
-        sdgGoals: existingProfile?.sdgGoals || [],
-        weeklyHours: existingProfile?.weeklyHours || 1,
+        sdgGoals: existingProfile?.preferredSdgs || [],
+        weeklyHours: existingProfile?.weeklyAvailability || 1,
         availability: existingProfile?.availability || [],
         timezone:
           existingProfile?.timezone ||

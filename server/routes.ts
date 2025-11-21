@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, DuplicateAssignmentError } from "./storage";
 import { WebSocketServer } from "ws";
@@ -31,16 +31,16 @@ import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
 // Helper function to calculate volunteer profile completion percentage
-function calculateProfileCompletion(profile: any): number {
+function calculateProfileCompletion(profile: Record<string, any>): number {
   let completedFields = 0;
   const totalFields = 7;
   
-  if (profile.skills && profile.skills.length > 0) completedFields++;
+  if (profile.skills && Array.isArray(profile.skills) && profile.skills.length > 0) completedFields++;
   if (profile.location) completedFields++;
   if (profile.bio) completedFields++;
-  if (profile.preferredSdgs && profile.preferredSdgs.length > 0) completedFields++;
-  if (profile.interests && profile.interests.length > 0) completedFields++;
-  if (profile.weeklyAvailability && profile.weeklyAvailability > 0) completedFields++;
+  if (profile.preferredSdgs && Array.isArray(profile.preferredSdgs) && profile.preferredSdgs.length > 0) completedFields++;
+  if (profile.interests && Array.isArray(profile.interests) && profile.interests.length > 0) completedFields++;
+  if (typeof profile.weeklyAvailability === 'number' && profile.weeklyAvailability > 0) completedFields++;
   if (profile.preferredWorkStyle) completedFields++;
   
   return Math.round((completedFields / totalFields) * 100);
@@ -73,10 +73,10 @@ function handleValidationError(err: unknown) {
 }
 
 // Authorization helper to extract userId from request
-function extractUserId(req: any): number | null {
-  const userIdStr = req.body.userId || req.query.userId || req.headers['x-user-id'];
+function extractUserId(req: Request): number | null {
+  const userIdStr = (req.body as Record<string, any>).userId || (req.query.userId as string) || (req.headers['x-user-id'] as string);
   if (!userIdStr) return null;
-  const userId = parseInt(userIdStr as string);
+  const userId = parseInt(userIdStr);
   return isNaN(userId) ? null : userId;
 }
 
@@ -87,8 +87,8 @@ async function calculateProjectProgress(projectId: number): Promise<number> {
     if (!project) return 0;
 
     // Get project tasks, activities, and impacts
-    const tasks = (await storage.listTasks()).filter((t: any) => t.projectId === projectId);
-    const activities = (await storage.listVolunteerActivities()).filter((a: any) => a.projectId === projectId);
+    const tasks = (await storage.listTasks()).filter((t) => t.projectId === projectId);
+    const activities = (await storage.listVolunteerActivities()).filter((a) => a.projectId === projectId);
     const impacts = await storage.listProjectImpactsByProject(projectId);
 
     // Calculate three progress metrics (weighted)
@@ -96,13 +96,13 @@ async function calculateProjectProgress(projectId: number): Promise<number> {
 
     // **40% Weight: Task Completion Ratio**
     if (tasks.length > 0) {
-      const completedTasks = tasks.filter((t: any) => t.status?.toLowerCase() === "completed").length;
+      const completedTasks = tasks.filter((t) => t.status?.toLowerCase() === "completed").length;
       const taskProgress = (completedTasks / tasks.length) * 100;
       progressScore += taskProgress * 0.4;
     }
 
     // **35% Weight: Hours Logged vs Expected Hours**
-    const totalHoursLogged = activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+    const totalHoursLogged = activities.reduce((sum: number, a) => sum + (a.hours || 0), 0);
     if (project.projectTotalHours || (project.ongoingHoursPerWeek && project.ongoingHoursPerWeek > 0)) {
       const expectedHours = project.projectTotalHours || (project.ongoingHoursPerWeek! * 4); // Assume 4 weeks
       const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
@@ -124,7 +124,7 @@ async function calculateProjectProgress(projectId: number): Promise<number> {
 }
 
 // Authorization helper to require organization user
-async function requireOrgUser(req: any) {
+async function requireOrgUser(req: Request) {
   const userId = extractUserId(req);
   if (!userId) {
     throw { status: 401, message: "Authentication required" };

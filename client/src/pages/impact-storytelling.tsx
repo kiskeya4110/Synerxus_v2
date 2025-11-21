@@ -113,7 +113,6 @@ export default function ImpactStorytellingPage() {
     const kpiMap = new Map<string, number>();
     
     if (!projectImpacts || projectImpacts.length === 0) {
-      console.log('[DEBUG] No projectImpacts found');
       return [];
     }
     
@@ -154,8 +153,6 @@ export default function ImpactStorytellingPage() {
       const currentValue = kpiMap.get(category) || 0;
       kpiMap.set(category, currentValue + value);
     });
-    
-    console.log('[DEBUG] Aggregated KPIs:', Array.from(kpiMap.entries()));
     
     // Convert to array and sort
     return Array.from(kpiMap.entries())

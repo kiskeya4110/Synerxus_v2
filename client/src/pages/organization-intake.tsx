@@ -338,7 +338,7 @@ export default function OrganizationIntake() {
                   <ProfilePictureUpload
                     currentPhotoUrl={profilePhotoUrl}
                     onPhotoChange={setProfilePhotoUrl}
-                    userId={user?.id || ""}
+                    userId={currentUser?.id?.toString() || ""}
                     userType="organization"
                   />
                   <FormField

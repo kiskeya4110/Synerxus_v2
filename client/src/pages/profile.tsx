@@ -236,18 +236,20 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold">{(profile?.overallRating || calculateSkillScore()).toFixed(1)}</div>
+                      <div className="text-2xl font-bold">{(calculateSkillScore() || 0).toFixed(1)}</div>
                       <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`h-4 w-4 ${star <= (profile?.overallRating || calculateSkillScore()) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
+                            className={`h-4 w-4 ${star <= (calculateSkillScore() || 0) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
                           />
                         ))}
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {profile?.overallRating ? 'From feedback' : 'Based on skills'}
+                      {volunteerProfile?.skills && volunteerProfile.skills.length > 0 
+                        ? `${volunteerProfile.skills.length} skills rated` 
+                        : 'Add skills to see rating'}
                     </p>
                   </CardContent>
                 </Card>
@@ -262,11 +264,11 @@ export default function Profile() {
                     <Clock className="h-4 w-4 text-blue-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0} <span className="text-sm font-normal">hrs/week</span></div>
+                    <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0}</div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {profile?.availability && Array.isArray(profile.availability) && profile.availability.length > 0 
                         ? `${profile.availability.length} time slots set` 
-                        : 'No time slots set'}
+                        : 'Set your availability'}
                     </p>
                   </CardContent>
                 </Card>
@@ -282,7 +284,9 @@ export default function Profile() {
                 <CardContent>
                   <div className="text-2xl font-bold">{totalHours}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Click to view activities
+                    {totalActivities > 0 
+                      ? `${totalActivities} activities recorded` 
+                      : 'No activities logged yet'}
                   </p>
                 </CardContent>
               </Card>
@@ -297,7 +301,9 @@ export default function Profile() {
                 <CardContent>
                   <div className="text-2xl font-bold">{activeProjects}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Click to view assignments
+                    {completedProjects > 0 
+                      ? `${completedProjects} completed` 
+                      : 'Active projects'}
                   </p>
                 </CardContent>
               </Card>

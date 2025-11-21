@@ -2076,10 +2076,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const assignments = await storage.listProjectAssignmentsByVolunteer(volId);
       
-      // Enrich each assignment with team members and activities
+      // Enrich each assignment with team members, activities, and project info
       const enrichedAssignments = await Promise.all(
         assignments.map(async (assignment: any) => {
           try {
+            // Fetch project details (for fallback hoursCommitted and organization info)
+            const project = await storage.getProject(assignment.projectId);
+            
+            // Fetch organization details
+            let organization = null;
+            if (project?.organizationId) {
+              organization = await storage.getOrganization(project.organizationId);
+            }
+            
+            // Use hoursCommitted from assignment, or fallback to project's ongoingHoursPerWeek
+            const hoursCommitted = assignment.hoursCommitted || project?.ongoingHoursPerWeek || 0;
+            
             // Get team members (other volunteers on this project)
             const allAssignments = await storage.listProjectAssignmentsByProject(assignment.projectId);
             const teamMembers = await Promise.all(
@@ -2110,6 +2122,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             
             return {
               ...assignment,
+              hoursCommitted, // Use fallback value if not set
+              project: project ? {
+                id: project.id,
+                name: project.name,
+                description: project.description
+              } : null,
+              organization: organization ? {
+                id: organization.id,
+                name: organization.name
+              } : null,
               teamMembers: teamMembers.filter((m: any) => m !== null),
               activities
             };
@@ -2117,6 +2139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             console.error(`Error enriching assignment ${assignment.id}:`, error);
             return {
               ...assignment,
+              hoursCommitted: assignment.hoursCommitted || 0,
               teamMembers: [],
               activities: []
             };

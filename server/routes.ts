@@ -3891,6 +3891,47 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
     }
   });
 
+  // Helper: Deduplicate and aggregate metrics from stories
+  function deduplicateMetrics(text: string): string {
+    if (!text) return "";
+    
+    const metricMap = new Map<string, number>();
+    
+    // Pattern to find metrics like "X increased by Y (percentage%)" or just "X: Y"
+    const metricPattern = /([A-Za-z\s]+?)\s+(?:increased\s+)?(?:by\s+)?(\d+)/gi;
+    let match;
+    
+    while ((match = metricPattern.exec(text)) !== null) {
+      const metricName = match[1].toLowerCase().trim();
+      const value = parseInt(match[2]);
+      
+      // Aggregate - sum duplicate metrics
+      metricMap.set(metricName, (metricMap.get(metricName) || 0) + value);
+    }
+    
+    // Rebuild the text without duplicates
+    let cleanText = text;
+    metricMap.forEach((total, metric) => {
+      // Remove all occurrences of this metric
+      const pattern = new RegExp(`${metric}\\s+(?:increased\\s+)?(?:by\\s+)?\\d+[^,\\.]*`, 'gi');
+      cleanText = cleanText.replace(pattern, '');
+    });
+    
+    // Add aggregated metrics once
+    let aggregatedMetrics = "";
+    metricMap.forEach((total, metric) => {
+      aggregatedMetrics += `${metric} (${total}), `;
+    });
+    
+    // Clean up the text and append aggregated metrics
+    cleanText = cleanText.replace(/\s{2,}/g, ' ').trim();
+    if (aggregatedMetrics) {
+      cleanText = cleanText + "\n\nKey Impact Metrics: " + aggregatedMetrics.slice(0, -2);
+    }
+    
+    return cleanText;
+  }
+
   // AI-Powered Impact Report Generation
   app.post("/api/generate-impact-report", async (req, res) => {
     try {
@@ -3912,20 +3953,24 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       }
 
       try {
+        // DEDUPLICATE the keyStories to remove repeated metrics
+        const cleanStories = deduplicateMetrics(keyStories);
+        
         const openai = new OpenAI({
           apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
           baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
         });
 
         const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant. 
-        
-CRITICAL RULES:
-- Each metric should appear ONLY ONCE in the report
-- Always use aggregated totals (SUM all values together, NOT list them separately)
-- Never repeat the same metric or data point
-- For beneficiary metrics: Sum all beneficiary types into a single total impact number
-- Present metrics as running totals, not individual line items
-- Format the report as a professional document.`;
+
+MANDATORY RULES - NON-NEGOTIABLE:
+- EACH METRIC APPEARS EXACTLY ONCE - NO EXCEPTIONS
+- NEVER list the same metric multiple times
+- SUM all similar metrics into a single total (not separate line items)
+- Example: DO NOT say "Students Educated: 35" then "Students Educated: 35" again
+- Example DO: "Students Educated: 70" (if there were two instances of 35)
+- Treat ALL beneficiary-type metrics as ONE "Total People Impacted" figure
+- Format as a professional, compelling narrative`;
 
         // Extract aggregated totals from metrics
         const volunteerCount = metrics?.activeVolunteers || metrics?.totalVolunteers || 0;
@@ -3933,37 +3978,35 @@ CRITICAL RULES:
         const projectCount = metrics?.activeProjects || 0;
         const beneficiaryTotal = metrics?.totalBeneficiariesReached || 0;
 
-        const userPrompt = `Generate a UNIQUE Synerxus Impact Report with NO DUPLICATE METRICS:
+        const userPrompt = `Generate a professional Synerxus Impact Report with ZERO metric duplication:
 
 ORGANIZATION: ${organizationName}
 PROJECT: ${projectTitle}
 REPORTING PERIOD: ${reportingPeriod}
 LOCATIONS: ${locationsServed}
 
-AGGREGATED TOTALS (use these numbers as your single source of truth):
-- Total Volunteers Engaged: ${volunteerCount}
-- Total Volunteer Hours: ${totalHours}
-- Total Active Projects: ${projectCount}
-- Total Beneficiaries Impacted: ${beneficiaryTotal}
+MASTER METRICS (these are the ONLY numbers to reference, each once):
+- Volunteers: ${volunteerCount}
+- Hours: ${totalHours}
+- Projects: ${projectCount}
+- Total People Impacted: ${beneficiaryTotal}
 
-KEY STORY: ${keyStories}
+IMPACT STORY (already deduplicated):
+${cleanStories}
 
-CSR/ESG CONTRIBUTION: ${csrAlignment}
+CSR/ESG: ${csrAlignment}
 
-CUSTOMIZATION:
-- Target Audience: ${targetAudience}
-- Tone: ${tone}
-- Primary Focus: ${impactFocus}
+Target: ${targetAudience} | Tone: ${tone} | Focus: ${impactFocus}
 
-REPORT STRUCTURE (ONE METRIC = ONE VALUE, NO REPEATS):
-1. Professional Header with Organization Name and Date
-2. Executive Summary (${volunteerCount} volunteers contributed ${totalHours} hours across ${projectCount} projects, impacting ${beneficiaryTotal} beneficiaries)
-3. Key Performance Indicators (list each metric only once with its total)
-4. Impact Story Section (feature the provided story)
+REPORT FORMAT:
+1. Header (Organization, Date)
+2. Executive Summary (use the master metrics ONCE each)
+3. Key Achievements (reference master metrics, no duplication)
+4. Impact Story (from deduplicated story above)
 5. CSR/ESG Alignment
-6. Call to Action and Next Steps
+6. Next Steps
 
-IMPORTANT: Each metric appears EXACTLY ONCE. No duplication. No repeated stats.`;
+CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY appear once in the entire report. If similar metrics exist, combine them into totals.`;
 
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -3971,7 +4014,7 @@ IMPORTANT: Each metric appears EXACTLY ONCE. No duplication. No repeated stats.`
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          temperature: 0.6,
+          temperature: 0.5,
           max_tokens: 2500,
         });
 

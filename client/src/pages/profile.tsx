@@ -452,6 +452,22 @@ export default function Profile() {
                     </p>
                   </div>
                 )}
+
+                {/* Years of Experience */}
+                {volunteerProfile.yearsOfExperience && (
+                  <div className="flex flex-col gap-2">
+                    <div className="h-10 w-10 rounded-lg bg-orange-100 dark:bg-orange-900/20 flex items-center justify-center">
+                      <Award className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <p className="font-medium">Experience</p>
+                    <Badge variant="secondary" className="w-fit">
+                      {volunteerProfile.yearsOfExperience}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      years in field
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Time Slots */}

@@ -3,6 +3,9 @@ import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import { SDGWheel } from "@/components/sdg/sdg-wheel";
 import { ArrowRight, Check } from "lucide-react";
+import communityVolunteersImg from "@assets/Community Volunteers_1763707388972.png";
+import doctorsVolunteeringImg from "@assets/Doctors Volunteering_1763707388972.png";
+import villageVolunteersImg from "@assets/Village Volunteers_1763707388973.png";
 
 export default function Landing() {
   return (
@@ -45,21 +48,30 @@ export default function Landing() {
 
       {/* Profile Cards Section */}
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
           <div className="flex justify-center">
-            <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-2xl bg-gradient-to-br from-amber-100 to-amber-200 flex items-center justify-center text-6xl sm:text-7xl shadow-2xl">
-              👨‍💼
-            </div>
+            <img 
+              src={communityVolunteersImg}
+              alt="Community Volunteers"
+              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl hover:shadow-3xl transition-shadow"
+              loading="lazy"
+            />
           </div>
           <div className="flex justify-center">
-            <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-2xl bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-6xl sm:text-7xl shadow-2xl">
-              👨‍⚕️
-            </div>
+            <img 
+              src={doctorsVolunteeringImg}
+              alt="Doctors Volunteering"
+              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl hover:shadow-3xl transition-shadow"
+              loading="lazy"
+            />
           </div>
           <div className="flex justify-center">
-            <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-2xl bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center text-6xl sm:text-7xl shadow-2xl">
-              👩‍🌾
-            </div>
+            <img 
+              src={villageVolunteersImg}
+              alt="Village Volunteers"
+              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl hover:shadow-3xl transition-shadow"
+              loading="lazy"
+            />
           </div>
         </div>
 

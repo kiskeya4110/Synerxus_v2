@@ -81,6 +81,35 @@ const PROFILE_STATS = {
   },
 };
 
+const IMPACT_FACTS = {
+  volunteers: [
+    "🙋🏽‍♂️ Over 1 billion people volunteer globally, contributing the equivalent of 109 million full-time workers.",
+    "🙋🏽‍♂️ 70% of volunteer work is informal, happening outside of organizations—especially in lower-income regions.",
+    "🙋🏽‍♂️ Women perform 57% of global volunteer work, often in community-based, care-driven roles.",
+    "🙋🏽‍♂️ Volunteers are 66% more likely to donate financially to the causes they support.",
+    "🙋🏽‍♂️ The average value of volunteer time is $28.54/hour, with over $184 billion contributed annually in the U.S. alone.",
+  ],
+  ngos: [
+    "🌍 India has over 3.1 million NGOs, the U.S. over 1.5 million, and the EU employs 11.9 million people in the nonprofit sector.",
+    "🌍 NGOs operate in over 190 countries, reaching urban centers and remote villages alike.",
+    "🌍 Leading sectors: Health (WHO, Doctors Without Borders), Education (UNICEF, Save the Children), Environment (WWF, Greenpeace).",
+    "🌍 Human Rights organizations like Amnesty International and Human Rights Watch drive global accountability.",
+    "🌍 Top challenges: funding volatility, operational efficiency, cultural integration, and impact measurement.",
+  ],
+  csr: [
+    "🏢 CSR (Corporate Social Responsibility) focuses on internal values—volunteering, ethics, and community engagement.",
+    "🏢 ESG (Environmental, Social, Governance) is investor-facing, with measurable metrics for sustainability and ethical performance.",
+    "🏢 71% of consumers consider sustainability when making purchases; 66% of millennials factor ESG into job decisions.",
+    "🏢 ESG scores influence investment, talent acquisition, and brand reputation—making it a strategic imperative, not just a moral one.",
+    "🏢 CSR boosts morale and retention, while ESG drives transparency and accountability across operations.",
+  ],
+};
+
+function getRandomFact(category: 'volunteers' | 'ngos' | 'csr'): string {
+  const facts = IMPACT_FACTS[category];
+  return facts[Math.floor(Math.random() * facts.length)];
+}
+
 interface WorldMapHeaderProps {
   selectedCountry: string | null;
   setSelectedCountry: (country: string | null) => void;
@@ -346,6 +375,9 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
 
 export default function Landing() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const [volunteerFact, setVolunteerFact] = useState(() => getRandomFact('volunteers'));
+  const [ngoFact, setNgoFact] = useState(() => getRandomFact('ngos'));
+  const [csrFact, setCsrFact] = useState(() => getRandomFact('csr'));
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -392,36 +424,60 @@ export default function Landing() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
           <button
             onClick={() => setSelectedCountry("community")}
-            className="flex justify-center cursor-pointer group"
+            onMouseEnter={() => setVolunteerFact(getRandomFact('volunteers'))}
+            className="flex justify-center cursor-pointer group relative"
           >
-            <img 
-              src={communityVolunteersImg}
-              alt="Community Volunteers"
-              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl group-hover:shadow-3xl transition-shadow"
-              loading="lazy"
-            />
+            <div className="w-full h-64 sm:h-72 rounded-2xl overflow-hidden shadow-2xl group-hover:shadow-3xl transition-shadow">
+              <img 
+                src={communityVolunteersImg}
+                alt="Community Volunteers"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-end p-4">
+                <p className="text-white text-sm leading-relaxed font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {volunteerFact}
+                </p>
+              </div>
+            </div>
           </button>
           <button
             onClick={() => setSelectedCountry("doctors")}
-            className="flex justify-center cursor-pointer group"
+            onMouseEnter={() => setNgoFact(getRandomFact('ngos'))}
+            className="flex justify-center cursor-pointer group relative"
           >
-            <img 
-              src={doctorsVolunteeringImg}
-              alt="Doctors Volunteering"
-              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl group-hover:shadow-3xl transition-shadow"
-              loading="lazy"
-            />
+            <div className="w-full h-64 sm:h-72 rounded-2xl overflow-hidden shadow-2xl group-hover:shadow-3xl transition-shadow">
+              <img 
+                src={doctorsVolunteeringImg}
+                alt="Doctors Volunteering"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-end p-4">
+                <p className="text-white text-sm leading-relaxed font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {ngoFact}
+                </p>
+              </div>
+            </div>
           </button>
           <button
             onClick={() => setSelectedCountry("village")}
-            className="flex justify-center cursor-pointer group"
+            onMouseEnter={() => setCsrFact(getRandomFact('csr'))}
+            className="flex justify-center cursor-pointer group relative"
           >
-            <img 
-              src={villageVolunteersImg}
-              alt="Village Volunteers"
-              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl group-hover:shadow-3xl transition-shadow"
-              loading="lazy"
-            />
+            <div className="w-full h-64 sm:h-72 rounded-2xl overflow-hidden shadow-2xl group-hover:shadow-3xl transition-shadow">
+              <img 
+                src={villageVolunteersImg}
+                alt="Village Volunteers"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/60 transition-all duration-300 flex items-end p-4">
+                <p className="text-white text-sm leading-relaxed font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  {csrFact}
+                </p>
+              </div>
+            </div>
           </button>
         </div>
       </section>

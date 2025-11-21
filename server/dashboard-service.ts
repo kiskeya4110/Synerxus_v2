@@ -22,22 +22,17 @@ export async function getVisibleProjectIdsForVolunteer(
 ): Promise<Set<number>> {
   const visibleProjectIds = new Set<number>();
 
-  // Get all project assignments for this volunteer
-  const allAssignments = await storage.listProjectAssignments();
-  const volunteerAssignments = allAssignments.filter(pa => {
-    if (pa.volunteerId !== volunteerId) return false;
-    
-    // Normalize status to handle database inconsistencies (Active vs active, Pending vs pending)
+  // OPTIMIZATION: Query only this volunteer's assignments instead of all assignments (N+1 fix)
+  const volunteerAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
+  
+  // Filter for accepted assignments only (active, completed, on-hold)
+  volunteerAssignments.forEach(pa => {
     const status = pa.status?.toLowerCase() || '';
-    
     // Include: active, completed, on-hold (accepted assignments only)
     // Exclude: pending (not yet accepted), declined (rejected)
-    return status !== 'declined' && status !== 'pending';
-  });
-
-  // Add project IDs from valid assignments
-  volunteerAssignments.forEach(assignment => {
-    visibleProjectIds.add(assignment.projectId);
+    if (status !== 'declined' && status !== 'pending') {
+      visibleProjectIds.add(pa.projectId);
+    }
   });
 
   // Optionally include AI-matched opportunities with high scores
@@ -83,33 +78,36 @@ function buildMonthlyImpactSeries(
   scopedImpacts: any[],
   peopleMetricIds: Set<number>
 ): MonthlyImpactSeries {
-  // First pass: collect metrics for all months
-  const monthlyMetrics = monthKeys.map(monthKey => {
-    // Filter activities for this month
-    const monthActivities = scopedActivities.filter(a => {
-      const activityDate = new Date(a.date);
-      const activityMonthKey = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;
-      return activityMonthKey === monthKey;
-    });
+  // OPTIMIZATION: Single pass - group activities and impacts by month instead of filtering multiple times
+  const activitiesByMonth: Record<string, any[]> = {};
+  const impactsByMonth: Record<string, any[]> = {};
 
-    const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
-
-    return { month: monthKey, hours };
+  // Group activities by month
+  scopedActivities.forEach(a => {
+    const activityDate = new Date(a.date);
+    const monthKey = `${activityDate.getFullYear()}-${String(activityDate.getMonth() + 1).padStart(2, '0')}`;
+    if (!activitiesByMonth[monthKey]) activitiesByMonth[monthKey] = [];
+    activitiesByMonth[monthKey].push(a);
   });
 
-  // Build monthly impact data with people counts
-  const monthlyImpactData = monthlyMetrics.map(metrics => {
-    const monthImpacts = scopedImpacts.filter(i => {
-      const impactDate = new Date(i.date);
-      const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
-      return impactMonthKey === metrics.month;
-    });
+  // Group impacts by month
+  scopedImpacts.forEach(i => {
+    const impactDate = new Date(i.date);
+    const monthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
+    if (!impactsByMonth[monthKey]) impactsByMonth[monthKey] = [];
+    impactsByMonth[monthKey].push(i);
+  });
 
+  // Single pass through months to build all data
+  const monthlyImpactData = monthKeys.map(monthKey => {
+    const monthActivities = activitiesByMonth[monthKey] || [];
+    const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
+    const monthImpacts = impactsByMonth[monthKey] || [];
     const peopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
 
     return {
-      month: metrics.month,
-      hours: metrics.hours,
+      month: monthKey,
+      hours,
       peopleImpacted,
     };
   });

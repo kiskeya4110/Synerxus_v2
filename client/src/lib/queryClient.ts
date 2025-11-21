@@ -66,7 +66,9 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      // OPTIMIZATION: Use realistic stale times instead of Infinity to allow periodic background updates
+      // 5 minutes for most data, 10 minutes for profile/user data which changes less frequently
+      staleTime: 5 * 60 * 1000, // 5 minutes
       retry: false,
     },
     mutations: {

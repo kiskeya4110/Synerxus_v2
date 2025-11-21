@@ -108,47 +108,53 @@ export default function ImpactStorytellingPage() {
   const addressedSDGs = sdgData?.sdgContributions?.map((s: any) => s.sdgNumber) || [];
 
   // PROJECT-LEVEL AGGREGATION (NO DUPLICATION)
-  // CONSOLIDATED KPI AGGREGATION - NO DUPLICATION
+  // CONSOLIDATED KPI AGGREGATION - STRICT DEDUPLICATION
   const aggregatedKPIs = useMemo(() => {
-    const kpiMap = new Map<string, { value: number; category: string }>();
+    const kpiMap = new Map<string, number>();
+    const seenImpactIds = new Set<string>();
     
     projectImpacts.forEach((impact: any) => {
-      const desc = impact.description?.toLowerCase().trim() || 'unknown';
+      // Skip if already counted (use metricId + projectId to avoid double counting)
+      const impactKey = `${impact.metricId || impact.id}-${impact.projectId || 'global'}`;
+      if (seenImpactIds.has(impactKey)) return;
+      seenImpactIds.add(impactKey);
       
-      // Categorize and normalize KPI descriptions
-      let category = 'other';
+      const desc = impact.description?.toLowerCase().trim() || 'other';
+      
+      // Categorize and normalize - more aggressive matching
       let normalized = desc;
       
-      if (desc.includes('health') || desc.includes('medical') || desc.includes('doctor') || desc.includes('clinic')) {
-        category = 'health';
+      if (desc.match(/health|medical|doctor|clinic|healthcare|hospital|wellness/)) {
         normalized = 'health services delivered';
-      } else if (desc.includes('meal') || desc.includes('food') || desc.includes('feed')) {
-        category = 'food';
+      } else if (desc.match(/meal|food|feed|nutrition|diet/)) {
         normalized = 'meals provided';
-      } else if (desc.includes('education') || desc.includes('student') || desc.includes('school') || desc.includes('train')) {
-        category = 'education';
+      } else if (desc.match(/education|student|school|train|course|workshop|learning/)) {
         normalized = 'people trained/educated';
-      } else if (desc.includes('water') || desc.includes('sanitation') || desc.includes('hygiene')) {
-        category = 'water';
+      } else if (desc.match(/water|sanitation|hygiene|wash/)) {
         normalized = 'people with water access';
-      } else if (desc.includes('shelter') || desc.includes('housing')) {
-        category = 'shelter';
+      } else if (desc.match(/shelter|housing|home|accommodation/)) {
         normalized = 'people housed';
+      } else if (desc.match(/child|youth|young people/)) {
+        normalized = 'children supported';
+      } else if (desc.match(/women|girl|female|maternal/)) {
+        normalized = 'women/girls supported';
+      } else if (desc.match(/elderly|senior|elder|aged/)) {
+        normalized = 'elderly people supported';
+      } else if (desc.match(/community|village|neighborhood/)) {
+        normalized = 'communities served';
+      } else if (desc.match(/volunteer|hour|time|effort/)) {
+        // Skip volunteer hours - already tracked separately
+        return;
       }
       
-      const key = normalized;
-      if (!kpiMap.has(key)) {
-        kpiMap.set(key, { value: 0, category });
-      }
-      const current = kpiMap.get(key)!;
-      current.value += (impact.value || 0);
+      // Add or accumulate
+      kpiMap.set(normalized, (kpiMap.get(normalized) || 0) + (impact.value || 0));
     });
     
-    return Array.from(kpiMap.entries()).map(([label, data]) => ({
-      label,
-      value: data.value,
-      category: data.category
-    }));
+    // Convert to sorted array
+    return Array.from(kpiMap.entries())
+      .map(([label, value]) => ({ label, value }))
+      .sort((a, b) => b.value - a.value); // Sort by value descending
   }, [projectImpacts]);
 
   const projectAggregations = useMemo(() => {
@@ -353,13 +359,13 @@ export default function ImpactStorytellingPage() {
             </CardContent>
           </Card>
 
-          {/* Key Metrics Table */}
+          {/* Key Metrics - Organization Level Only */}
           <Card>
             <CardHeader>
-              <CardTitle>Consolidated Key Metrics</CardTitle>
-              <CardDescription>Unified totals across all projects - no duplication</CardDescription>
+              <CardTitle>Key Metrics</CardTitle>
+              <CardDescription>Organization-level totals</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <tbody className="divide-y">
@@ -380,10 +386,6 @@ export default function ImpactStorytellingPage() {
                       <td className="py-3 px-4 text-right text-lg font-bold text-green-600 dark:text-green-400">{completedProjects}</td>
                     </tr>
                     <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <td className="py-3 px-4 font-semibold">Beneficiaries Reached</td>
-                      <td className="py-3 px-4 text-right text-lg font-bold text-orange-600 dark:text-orange-400">{totalBeneficiariesReached}</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
                       <td className="py-3 px-4 font-semibold">Geographic Reach</td>
                       <td className="py-3 px-4 text-right text-lg font-bold text-purple-600 dark:text-purple-400">{uniqueLocations} locations</td>
                     </tr>
@@ -401,23 +403,28 @@ export default function ImpactStorytellingPage() {
                   </tbody>
                 </table>
               </div>
-
-              {/* Aggregated KPI Breakdown */}
-              {aggregatedKPIs.length > 0 && (
-                <div className="border-t pt-4">
-                  <h4 className="font-semibold text-sm mb-3">Impact Breakdown (Consolidated)</h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {aggregatedKPIs.map((kpi, idx) => (
-                      <div key={idx} className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium uppercase">{kpi.label}</p>
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{kpi.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
+
+          {/* Consolidated Impact Metrics - NO DUPLICATION */}
+          {aggregatedKPIs.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Consolidated Impact Metrics</CardTitle>
+                <CardDescription>All beneficiary and outcome data aggregated across projects</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {aggregatedKPIs.map((kpi, idx) => (
+                    <div key={idx} className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium uppercase tracking-wide">{kpi.label}</p>
+                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{kpi.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

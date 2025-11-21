@@ -18,7 +18,6 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
-import { useCallback } from "react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import {
   Loader2,
@@ -946,7 +945,7 @@ export default function VolunteerProfileSettings() {
   // Interest operations
   const addInterest = useCallback(() => {
     if (interestInput.trim()) {
-      const currentInterests = form.getValues("interests");
+      const currentInterests = form.getValues("interests") || [];
       if (!currentInterests.includes(interestInput.trim())) {
         form.setValue("interests", [...currentInterests, interestInput.trim()]);
         setInterestInput("");
@@ -955,7 +954,7 @@ export default function VolunteerProfileSettings() {
   }, [interestInput, form]);
 
   const removeInterest = useCallback((interest: string) => {
-    const currentInterests = form.getValues("interests");
+    const currentInterests = form.getValues("interests") || [];
     form.setValue(
       "interests",
       currentInterests.filter((i: string) => i !== interest)

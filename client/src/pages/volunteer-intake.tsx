@@ -138,8 +138,8 @@ const formSchema = insertVolunteerSchema.extend({
   // Existing fields
   skills: z.array(skillProficiencySchema).min(1, "At least one skill is required"),
   interests: z.array(z.string()).optional(),
-  location: z.string().min(1, "Location is required"),
-  sdgGoals: z.array(z.number()).min(1, "At least one SDG goal is required"),
+  location: z.string().optional(),
+  sdgGoals: z.array(z.number()).optional(),
   weeklyHours: z.number().min(1, "At least 1 hour is required"),
   availability: z
     .array(availabilitySlotSchema)

@@ -2174,6 +2174,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Organization invite volunteers endpoint - CREATE pending assignment
+  app.post("/api/project-assignments/invite", async (req, res) => {
+    try {
+      const { volunteerId, projectId, hoursCommitted } = req.body;
+      
+      if (!volunteerId || !projectId) {
+        return res.status(400).json({ message: "volunteerId and projectId are required" });
+      }
+
+      // Create pending assignment (status="pending" is default)
+      const assignmentData = {
+        volunteerId: parseInt(volunteerId),
+        projectId: parseInt(projectId),
+        hoursCommitted: hoursCommitted || 10,
+        status: "pending", // Pending invitation
+      };
+
+      const newAssignment = await storage.createProjectAssignment(assignmentData);
+      
+      const project = await storage.getProject(projectId);
+      if (project && project.organizationId) {
+        await notifyNewAssignment(
+          volunteerId,
+          projectId,
+          project.organizationId
+        );
+      }
+
+      broadcastUpdate("project_assignment_created", newAssignment);
+      res.status(201).json({
+        ...newAssignment,
+        message: "Invitation sent to volunteer"
+      });
+    } catch (err) {
+      if (err instanceof DuplicateAssignmentError) {
+        return res.status(409).json({ message: err.message });
+      }
+      const error = handleValidationError(err);
+      res.status(error.status).json({ message: error.message });
+    }
+  });
+
   app.patch("/api/project-assignments/:id", async (req, res) => {
     try {
       const assignmentId = parseInt(req.params.id);

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { SDGDetailDialog } from "@/components/sdg/sdg-detail-dialog";
 import { SDG_GOALS } from "@shared/sdg-goals";
-import synerxusLogo from "@assets/Synerxus Modern Logo  NBG_1763712176737.png";
 
 export function SDGCircularWheel() {
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
@@ -183,16 +182,6 @@ export function SDGCircularWheel() {
             />
           </svg>
 
-          {/* Center Logo - Absolute positioned */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-white rounded-full p-8 shadow-2xl">
-              <img
-                src={synerxusLogo}
-                alt="Synerxus Logo"
-                className="w-40 h-40 object-contain"
-              />
-            </div>
-          </div>
         </div>
 
         {/* Mobile: Grid layout */}

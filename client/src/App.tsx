@@ -87,6 +87,8 @@ function Router() {
       <Route path="/organization-profile" component={OrganizationProfile} />
       <Route path="/volunteer-intake" component={VolunteerIntake} />
       <Route path="/organization-intake" component={OrganizationIntake} />
+      <Route path="/volunteer-profile-settings" component={VolunteerIntake} />
+      <Route path="/organization-profile-settings" component={OrganizationIntake} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -350,7 +350,7 @@ export default function VolunteerProfileSettings() {
 
   const addInterest = () => {
     if (interestInput.trim()) {
-      const currentInterests = form.getValues("interests");
+      const currentInterests = form.getValues("interests") || [];
       if (!currentInterests.includes(interestInput.trim())) {
         form.setValue("interests", [...currentInterests, interestInput.trim()]);
         setInterestInput("");
@@ -359,7 +359,7 @@ export default function VolunteerProfileSettings() {
   };
 
   const removeInterest = (interest: string) => {
-    const currentInterests = form.getValues("interests");
+    const currentInterests = form.getValues("interests") || [];
     form.setValue(
       "interests",
       currentInterests.filter((i) => i !== interest),
@@ -367,7 +367,7 @@ export default function VolunteerProfileSettings() {
   };
 
   const toggleSDG = (sdgValue: number) => {
-    const currentSDGs = form.getValues("sdgGoals");
+    const currentSDGs = form.getValues("sdgGoals") || [];
     if (currentSDGs.includes(sdgValue)) {
       form.setValue(
         "sdgGoals",

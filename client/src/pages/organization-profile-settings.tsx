@@ -14,6 +14,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertMatchableOrganizationSchema, type MatchableOrganization } from "@shared/schema";
 import { Loader2, Plus, X, Building2, MapPin, Target, Heart } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import { useEffect } from "react";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -51,6 +53,7 @@ type FormData = z.infer<typeof formSchema>;
 export default function OrganizationProfileSettings() {
   const { toast } = useToast();
   const [needInput, setNeedInput] = useState("");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   
   // Fetch current user to get organization info
   const { data: currentUser } = useQuery({
@@ -64,6 +67,13 @@ export default function OrganizationProfileSettings() {
 
   // Find the organization profile for current user (match by email)
   const existingProfile = organizations?.find(o => o.email === currentUser?.email);
+
+  // Update profile photo when existing profile loads
+  useEffect(() => {
+    if (existingProfile?.profilePhotoUrl) {
+      setProfilePhotoUrl(existingProfile.profilePhotoUrl);
+    }
+  }, [existingProfile]);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -98,7 +108,10 @@ export default function OrganizationProfileSettings() {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return apiRequest("POST", "/api/matchable-organizations", data);
+      return apiRequest("POST", "/api/matchable-organizations", {
+        ...data,
+        profilePhotoUrl,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] });
@@ -120,7 +133,10 @@ export default function OrganizationProfileSettings() {
   const updateMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (!existingProfile?.id) throw new Error("No profile found to update");
-      return apiRequest("PATCH", `/api/matchable-organizations/${existingProfile.id}`, data);
+      return apiRequest("PATCH", `/api/matchable-organizations/${existingProfile.id}`, {
+        ...data,
+        profilePhotoUrl,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] });

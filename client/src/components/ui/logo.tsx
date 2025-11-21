@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import logoImage from "@assets/New Modern Synerxus Logo.jpg";
+import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
 interface LogoProps {
   className?: string;

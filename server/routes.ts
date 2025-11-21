@@ -3649,6 +3649,22 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(404).json({ message: "User not found" });
       }
       
+      // Validate availability hours don't exceed weekly availability
+      if (req.body.availability && req.body.weeklyAvailability) {
+        const totalAvailabilityHours = (req.body.availability as any[]).reduce((sum, slot) => {
+          const start = parseInt(slot.startTime?.split(':')[0] || 0);
+          const end = parseInt(slot.endTime?.split(':')[0] || 0);
+          return sum + (end - start);
+        }, 0);
+        
+        if (totalAvailabilityHours > req.body.weeklyAvailability) {
+          console.log(`[Intake POST] Validation failed: Availability hours (${totalAvailabilityHours}) exceed weekly hours (${req.body.weeklyAvailability})`);
+          return res.status(400).json({ 
+            message: `Total availability hours (${totalAvailabilityHours}h) cannot exceed weekly hours available (${req.body.weeklyAvailability}h)` 
+          });
+        }
+      }
+      
       console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));
       console.log(`[Intake POST] Received availability for user ${userId}:`, JSON.stringify(req.body.availability));
       console.log(`[Intake POST] Received yearsOfExperience for user ${userId}:`, JSON.stringify(req.body.yearsOfExperience));

@@ -172,6 +172,19 @@ const formSchema = insertVolunteerSchema.extend({
     geographicPreference: z.number().min(1).max(5).default(3),
     impactPotential: z.number().min(1).max(5).default(3),
   }).optional(),
+}).refine((data) => {
+  // Calculate total hours from availability slots
+  const totalHours = data.availability.reduce((sum, slot) => {
+    const start = parseInt(slot.startTime.split(':')[0]);
+    const end = parseInt(slot.endTime.split(':')[0]);
+    return sum + (end - start);
+  }, 0);
+  
+  // Ensure total availability hours don't exceed weekly hours
+  return totalHours <= data.weeklyHours;
+}, {
+  message: "Total availability hours cannot exceed weekly hours available",
+  path: ["availability"],
 });
 
 type FormData = z.infer<typeof formSchema>;

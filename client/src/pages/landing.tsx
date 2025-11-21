@@ -101,32 +101,60 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19,
+        opacity: 0.7,
       }).addTo(map.current);
     }
 
-    // Clear existing markers
-    map.current.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
+    // Clear existing markers and polylines
+    map.current.eachLayer((layer: any) => {
+      if (layer instanceof L.Marker || layer instanceof L.Polyline) {
         map.current!.removeLayer(layer);
+      }
+    });
+
+    // Define country coordinates
+    const countryCoords: { [key: string]: [number, number] } = {
+      philippines: [12.8797, 121.7740],
+      usa: [37.0902, -95.7129],
+      mexico: [23.6345, -102.5528],
+      haiti: [18.9712, -72.2852],
+      zimbabwe: [-19.0134, 29.1549],
+      zambia: [-13.1339, 27.8493],
+    };
+
+    // Add polylines connecting countries
+    const connections = [
+      ['usa', 'mexico'],
+      ['usa', 'haiti'],
+      ['mexico', 'haiti'],
+      ['usa', 'philippines'],
+      ['usa', 'zimbabwe'],
+      ['mexico', 'zambia'],
+      ['haiti', 'zimbabwe'],
+      ['zimbabwe', 'zambia'],
+      ['philippines', 'zimbabwe'],
+      ['philippines', 'zambia'],
+    ];
+
+    connections.forEach(([from, to]) => {
+      const fromCoord = countryCoords[from];
+      const toCoord = countryCoords[to];
+      if (fromCoord && toCoord) {
+        L.polyline([fromCoord, toCoord], {
+          color: '#f97316',
+          weight: 2,
+          opacity: 0.6,
+          dashArray: '5, 5',
+        }).addTo(map.current!);
       }
     });
 
     // Add country markers
     Object.entries(COUNTRY_DATA).forEach(([key, country]) => {
-      const marker = L.circleMarker([
-        key === 'philippines' ? 12.8797 : 
-        key === 'usa' ? 37.0902 : 
-        key === 'mexico' ? 23.6345 : 
-        key === 'haiti' ? 18.9712 : 
-        key === 'zimbabwe' ? -19.0134 : 
-        -13.1339,
-        key === 'philippines' ? 121.7740 : 
-        key === 'usa' ? -95.7129 : 
-        key === 'mexico' ? -102.5528 : 
-        key === 'haiti' ? -72.2852 : 
-        key === 'zimbabwe' ? 29.1549 : 
-        27.8493
-      ], {
+      const coords = countryCoords[key];
+      if (!coords) return;
+
+      const marker = L.circleMarker(coords, {
         radius: 10,
         fillColor: '#b45309',
         color: '#b45309',

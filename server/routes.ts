@@ -3646,18 +3646,21 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       }
       
       console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));
+      console.log(`[Intake POST] Received availability for user ${userId}:`, JSON.stringify(req.body.availability));
       
       const existingProfile = await storage.getVolunteerProfileByUserId(userId);
       
-      // Ensure skillRatings are preserved in the update
+      // Ensure skillRatings and availability are preserved in the update
       const profileData = {
         ...req.body,
         userId,
         onboardingCompleted: true,
-        skillRatings: req.body.skillRatings || {} // Explicitly preserve skillRatings
+        skillRatings: req.body.skillRatings || {}, // Explicitly preserve skillRatings
+        availability: req.body.availability || [] // Explicitly preserve availability
       };
       
       console.log(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));
+      console.log(`[Intake POST] Saving profile data with availability:`, JSON.stringify(profileData.availability));
       
       let profile;
       if (existingProfile) {

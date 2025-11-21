@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,8 @@ import {
 import communityVolunteersImg from "@assets/Community Volunteers_1763707388972.png";
 import doctorsVolunteeringImg from "@assets/Doctors Volunteering_1763707388972.png";
 import villageVolunteersImg from "@assets/Village Volunteers_1763707388973.png";
-import worldMapImg from "@assets/image_1763709456060.png";
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 const COUNTRY_DATA = {
   philippines: {
@@ -87,78 +88,67 @@ interface WorldMapHeaderProps {
 
 const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderProps) => {
   const selectedData = selectedCountry ? COUNTRY_DATA[selectedCountry as keyof typeof COUNTRY_DATA] : null;
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (!mapContainer.current) return;
+
+    // Initialize map
+    if (!map.current) {
+      map.current = L.map(mapContainer.current).setView([20, 0], 2);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(map.current);
+    }
+
+    // Clear existing markers
+    map.current.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.current!.removeLayer(layer);
+      }
+    });
+
+    // Add country markers
+    Object.entries(COUNTRY_DATA).forEach(([key, country]) => {
+      const marker = L.circleMarker([
+        key === 'philippines' ? 12.8797 : 
+        key === 'usa' ? 37.0902 : 
+        key === 'mexico' ? 23.6345 : 
+        key === 'haiti' ? 18.9712 : 
+        key === 'zimbabwe' ? -19.0134 : 
+        -13.1339,
+        key === 'philippines' ? 121.7740 : 
+        key === 'usa' ? -95.7129 : 
+        key === 'mexico' ? -102.5528 : 
+        key === 'haiti' ? -72.2852 : 
+        key === 'zimbabwe' ? 29.1549 : 
+        27.8493
+      ], {
+        radius: 10,
+        fillColor: '#b45309',
+        color: '#b45309',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+      });
+
+      marker.bindPopup(`<div class="font-semibold">${country.name}</div><div class="text-sm">${country.pilot}</div>`);
+      marker.on('click', () => setSelectedCountry(key));
+      marker.addTo(map.current!);
+    });
+  }, [setSelectedCountry]);
 
   return (
     <div className="w-full mb-16 px-4 sm:px-6">
-      <style>{`
-        @keyframes dash-animation {
-          0% { stroke-dashoffset: 1000; }
-          100% { stroke-dashoffset: 0; }
-        }
-        .flight-path {
-          stroke-dasharray: 1000;
-          animation: dash-animation 8s ease-in-out infinite;
-          stroke: #f97316;
-          stroke-width: 1.5;
-          opacity: 0.6;
-        }
-        .country-marker-interactive {
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .country-marker-interactive:hover circle:first-child {
-          fill: #ea580c;
-          filter: drop-shadow(0 0 6px rgba(234, 88, 12, 0.8));
-        }
-        .country-marker-interactive:hover circle:last-child {
-          stroke-width: 2;
-          opacity: 0.8;
-        }
-      `}</style>
-
-      {/* Interactive Map with Image Background */}
-      <div className="relative w-full max-w-6xl mx-auto mb-8">
-        <img 
-          src={worldMapImg}
-          alt="World Map"
-          className="w-full h-auto rounded-lg"
-        />
-        
-        {/* Overlay SVG for interactive markers and connections */}
-        <svg viewBox="0 0 960 600" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
-          {/* Flight path connections */}
-          <g className="flight-path">
-            <path d="M 750 220 Q 600 200 300 270" fill="none" strokeLinecap="round" />
-            <path d="M 220 200 Q 160 220 200 270" fill="none" strokeLinecap="round" />
-            <path d="M 200 270 Q 250 270 300 270" fill="none" strokeLinecap="round" />
-            <path d="M 300 270 Q 260 230 220 200" fill="none" strokeLinecap="round" />
-            <path d="M 220 200 Q 400 250 600 420" fill="none" strokeLinecap="round" />
-            <path d="M 200 270 Q 350 330 580 390" fill="none" strokeLinecap="round" />
-            <path d="M 600 420 Q 590 410 580 390" fill="none" strokeLinecap="round" />
-            <path d="M 750 220 Q 680 300 600 420" fill="none" strokeLinecap="round" />
-            <path d="M 750 220 Q 680 290 580 390" fill="none" strokeLinecap="round" />
-          </g>
-
-          {/* Interactive Country Markers */}
-          {Object.entries(COUNTRY_DATA).map(([key, country]) => (
-            <g key={key} className="country-marker-interactive" onClick={() => setSelectedCountry(key)} style={{ cursor: 'pointer' }}>
-              <circle cx={country.coords.x} cy={country.coords.y} r="8" fill="#b45309" />
-              <circle cx={country.coords.x} cy={country.coords.y} r="14" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.4" />
-              <text
-                x={country.coords.x}
-                y={country.coords.y + 45}
-                fontSize="12"
-                fontWeight="600"
-                fill="#1e3a8a"
-                textAnchor="middle"
-                className="pointer-events-none"
-              >
-                {country.name}
-              </text>
-            </g>
-          ))}
-        </svg>
-      </div>
+      {/* Leaflet Map */}
+      <div 
+        ref={mapContainer}
+        className="w-full max-w-6xl mx-auto rounded-lg overflow-hidden shadow-lg"
+        style={{ height: '500px' }}
+      />
 
       {/* Interactive Dialog for Country or Stats */}
       <Dialog open={!!selectedCountry} onOpenChange={(open) => !open && setSelectedCountry(null)}>

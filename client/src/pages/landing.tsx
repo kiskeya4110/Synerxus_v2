@@ -136,10 +136,18 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
 
     // Initialize map
     if (!map.current) {
+      // Detect if mobile for responsive zoom
+      const isMobile = window.innerWidth < 768;
+      const initialZoom = isMobile ? 1 : 2;
+      
       map.current = L.map(mapContainer.current, {
-        minZoom: 2,
-        maxZoom: 4,
-      }).setView([20, 0], 2);
+        minZoom: isMobile ? 1 : 2,
+        maxZoom: 5,
+        dragging: true,
+        touchZoom: true,
+        scrollWheelZoom: false,
+        boxZoom: true,
+      }).setView([20, 0], initialZoom);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
@@ -236,25 +244,28 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
     });
 
     // Add country markers
+    const isMobile = window.innerWidth < 768;
     Object.entries(COUNTRY_DATA).forEach(([key, country]) => {
       const coords = countryCoords[key];
       if (!coords) return;
 
+      const markerRadius = isMobile ? 6 : 10;
+      
       const marker = L.circleMarker(coords, {
-        radius: 10,
+        radius: markerRadius,
         fillColor: '#b45309',
         color: '#b45309',
-        weight: 2,
+        weight: isMobile ? 1.5 : 2,
         opacity: 1,
         fillOpacity: 0.8
       });
 
       marker.bindPopup(`<div class="font-semibold">${country.name}</div><div class="text-sm">${country.pilot}</div>`);
       marker.bindTooltip(country.name, {
-        permanent: true,
+        permanent: !isMobile,
         direction: 'top',
-        offset: [0, -15],
-        className: 'country-label-tooltip'
+        offset: [0, isMobile ? -10 : -15],
+        className: 'country-label-tooltip text-xs md:text-sm'
       });
       marker.on('click', () => {
         setSelectedCountry(key);
@@ -277,8 +288,11 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
       {/* Leaflet Map */}
       <div 
         ref={mapContainer}
-        className="w-full max-w-6xl mx-auto rounded-lg overflow-hidden shadow-lg"
-        style={{ height: 'min(500px, 70vh)', minHeight: '300px' }}
+        className="w-full max-w-6xl mx-auto rounded-lg overflow-hidden shadow-lg border border-slate-200"
+        style={{ 
+          height: 'clamp(280px, 60vw, 600px)',
+          maxHeight: 'calc(100vh - 300px)'
+        }}
       />
 
       {/* Interactive Dialog for Country or Stats */}
@@ -397,9 +411,7 @@ export default function Landing() {
         <div className="container mx-auto px-3 sm:px-6 py-2 sm:py-4 flex justify-between items-center gap-2 sm:gap-4">
           <Link href="/">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
-              <Logo size="sm" className="sm:hidden" />
-              <Logo size="sm" className="hidden sm:block md:hidden" />
-              <Logo size="md" className="hidden md:block" />
+              <Logo size="sm" />
             </div>
           </Link>
           <div className="flex gap-1.5 sm:gap-3 flex-shrink-0">

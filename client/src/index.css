@@ -21,18 +21,25 @@
 
 /* Country label tooltips */
 .country-label-tooltip {
-  background: rgba(30, 58, 138, 0.9) !important;
+  background: rgba(30, 58, 138, 0.95) !important;
   border: 1px solid #b45309 !important;
   border-radius: 4px !important;
-  padding: 4px 8px !important;
-  font-size: 12px !important;
+  padding: 3px 6px !important;
+  font-size: 11px !important;
   font-weight: 600 !important;
   color: #fff !important;
   white-space: nowrap;
 }
 
+@media (min-width: 768px) {
+  .country-label-tooltip {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+}
+
 .country-label-tooltip::before {
-  border-top-color: rgba(30, 58, 138, 0.9) !important;
+  border-top-color: rgba(30, 58, 138, 0.95) !important;
 }
 
 /* Scrolling facts banner animation */

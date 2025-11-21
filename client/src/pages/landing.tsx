@@ -434,7 +434,7 @@ export default function Landing() {
           {/* Left Content */}
           <div className="flex flex-col justify-center order-2 md:order-1">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 leading-tight" data-testid="text-hero-title">
-              <span className="text-blue-900">Connect. Manage.</span><br />
+              <span className="text-blue-900">Connect. Collaborate.</span><br />
               <span className="text-amber-600">Impact Globally.</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">

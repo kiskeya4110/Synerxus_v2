@@ -424,29 +424,6 @@ export default function VolunteerProfileSettings() {
     );
   }
 
-  // If profile is already completed, show message and redirect option
-  if (existingProfile?.onboardingCompleted) {
-    return (
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="text-green-700">Profile Already Completed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 mb-4">
-              Your volunteer profile has already been set up. You can now access all features or return to the dashboard.
-            </p>
-            <Link href="/dashboard">
-              <Button className="bg-primary">
-                Go to Dashboard
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-8">

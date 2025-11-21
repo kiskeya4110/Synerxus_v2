@@ -210,6 +210,12 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
       });
 
       marker.bindPopup(`<div class="font-semibold">${country.name}</div><div class="text-sm">${country.pilot}</div>`);
+      marker.bindTooltip(country.name, {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -15],
+        className: 'country-label-tooltip'
+      });
       marker.on('click', () => setSelectedCountry(key));
       marker.addTo(map.current!);
     });
@@ -217,6 +223,11 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
 
   return (
     <div className="w-full mb-16 px-4 sm:px-6">
+      {/* Section Title */}
+      <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 text-center mb-8">
+        Active Pilot Programs
+      </h2>
+      
       {/* Leaflet Map */}
       <div 
         ref={mapContainer}

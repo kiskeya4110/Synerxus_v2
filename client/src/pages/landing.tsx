@@ -430,26 +430,22 @@ export default function Landing() {
           </div>
 
           {/* Right Collage Image */}
-          <Link href="/login" className="flex justify-center cursor-pointer group">
-            <div className="relative w-full max-w-md h-96 sm:h-full rounded-2xl shadow-2xl overflow-hidden group-hover:shadow-3xl transition-shadow">
-              <img 
-                src={collageImg}
-                alt="Volunteer Collage"
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      {/* Kofi Annan Quote */}
-      <section className="bg-gradient-to-r from-blue-50 to-amber-50 py-12 sm:py-16">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <p className="text-lg sm:text-xl md:text-2xl italic text-slate-700 max-w-3xl mx-auto leading-relaxed font-medium" data-testid="text-kofi-annan-quote">
-            "Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family." — Kofi Annan
-          </p>
+          <div className="flex flex-col items-center gap-6">
+            <Link href="/login" className="flex justify-center cursor-pointer group w-full">
+              <div className="relative w-full max-w-md h-96 sm:h-full rounded-2xl shadow-2xl overflow-hidden group-hover:shadow-3xl transition-shadow">
+                <img 
+                  src={collageImg}
+                  alt="Volunteer Collage"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
+              </div>
+            </Link>
+            <p className="text-sm sm:text-base italic text-slate-600 text-center leading-relaxed" data-testid="text-kofi-annan-quote">
+              "Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family." — Kofi Annan
+            </p>
+          </div>
         </div>
       </section>
 

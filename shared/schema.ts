@@ -221,6 +221,34 @@ export const rejectedOpportunities = pgTable("rejected_opportunities", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Feedback - MVP Feedback Loop for learning and optimization
+export const feedback = pgTable("feedback", {
+  id: serial("id").primaryKey(),
+  type: text("type").notNull(), // "volunteer" or "organization"
+  senderId: integer("sender_id").references(() => users.id).notNull(),
+  receiverId: integer("receiver_id").references(() => users.id).notNull(),
+  applicationId: integer("application_id").references(() => applications.id),
+  assignmentId: integer("assignment_id").references(() => projectAssignments.id),
+  rating: integer("rating").notNull(), // 1-5 star rating
+  fitQuestion: text("fit_question"), // "Was the volunteer a Strong Fit?" or "Would you volunteer again?"
+  fitResponse: text("fit_response"), // yes, no, maybe
+  additionalComments: text("additional_comments"), // Optional free-form feedback
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Matching Weights - Admin panel for simple weight adjustments (Optimization Layer)
+export const matchingWeights = pgTable("matching_weights", {
+  id: serial("id").primaryKey(),
+  skillWeight: doublePrecision("skill_weight").default(0.40), // Skill Match: 40%
+  availabilityWeight: doublePrecision("availability_weight").default(0.30), // Availability: 30%
+  sdgWeight: doublePrecision("sdg_weight").default(0.20), // SDG/Mission: 20%
+  locationWeight: doublePrecision("location_weight").default(0.10), // Location: 10%
+  updatedBy: integer("updated_by").references(() => users.id), // Admin who made the change
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Volunteer Profiles - Extended volunteer information
 export const volunteerProfiles = pgTable("volunteer_profiles", {
   id: serial("id").primaryKey(),

@@ -327,12 +327,17 @@ export function calculateMatchScore(
   }
 
   // Calculate weighted final score
+  // MVP Rule-Based Matching Weights:
+  // - Skill Match: 40% (non-negotiable for project success)
+  // - Availability/Time Match: 30% (non-negotiable for retention & completion)
+  // - SDG/Mission Overlap: 20% (essential for alignment & satisfaction)
+  // - Language/Location: 10% (necessary filter but lower weight)
   const weights = {
-    skillMatch: 0.30,
-    locationMatch: 0.20,
+    skillMatch: 0.40,
+    locationMatch: 0.10,
     sdgMatch: 0.20,
-    interestMatch: 0.15,
-    availabilityMatch: 0.15,
+    interestMatch: 0.00, // Absorbed into SDG matching
+    availabilityMatch: 0.30,
   };
 
   const finalScore = Math.round(
@@ -358,7 +363,22 @@ export function calculateMatchScore(
     score: finalScore,
     breakdown,
     reasons,
+    matchCategory: getMatchCategory(finalScore),
   };
+}
+
+/**
+ * Categorize match score into MVP tiers for admin decision-making
+ * - Nexus Match (≥80): Auto-connect - perfect fit
+ * - Strong Candidate (60-79): Admin Review - solid match requiring verification
+ * - Gap Detected (40-59): Manual Intervention - promising but needs discussion
+ * - Below 40: Not a match
+ */
+export function getMatchCategory(score: number): "nexus" | "strong" | "gap" | "no-match" {
+  if (score >= 80) return "nexus";
+  if (score >= 60) return "strong";
+  if (score >= 40) return "gap";
+  return "no-match";
 }
 
 /**

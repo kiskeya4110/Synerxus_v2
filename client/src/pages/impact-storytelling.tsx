@@ -108,8 +108,53 @@ export default function ImpactStorytellingPage() {
   const addressedSDGs = sdgData?.sdgContributions?.map((s: any) => s.sdgNumber) || [];
 
   // PROJECT-LEVEL AGGREGATION (NO DUPLICATION)
+  // CONSOLIDATED KPI AGGREGATION - NO DUPLICATION
+  const aggregatedKPIs = useMemo(() => {
+    const kpiMap = new Map<string, { value: number; category: string }>();
+    
+    projectImpacts.forEach((impact: any) => {
+      const desc = impact.description?.toLowerCase().trim() || 'unknown';
+      
+      // Categorize and normalize KPI descriptions
+      let category = 'other';
+      let normalized = desc;
+      
+      if (desc.includes('health') || desc.includes('medical') || desc.includes('doctor') || desc.includes('clinic')) {
+        category = 'health';
+        normalized = 'health services delivered';
+      } else if (desc.includes('meal') || desc.includes('food') || desc.includes('feed')) {
+        category = 'food';
+        normalized = 'meals provided';
+      } else if (desc.includes('education') || desc.includes('student') || desc.includes('school') || desc.includes('train')) {
+        category = 'education';
+        normalized = 'people trained/educated';
+      } else if (desc.includes('water') || desc.includes('sanitation') || desc.includes('hygiene')) {
+        category = 'water';
+        normalized = 'people with water access';
+      } else if (desc.includes('shelter') || desc.includes('housing')) {
+        category = 'shelter';
+        normalized = 'people housed';
+      }
+      
+      const key = normalized;
+      if (!kpiMap.has(key)) {
+        kpiMap.set(key, { value: 0, category });
+      }
+      const current = kpiMap.get(key)!;
+      current.value += (impact.value || 0);
+    });
+    
+    return Array.from(kpiMap.entries()).map(([label, data]) => ({
+      label,
+      value: data.value,
+      category: data.category
+    }));
+  }, [projectImpacts]);
+
   const projectAggregations = useMemo(() => {
-    return projects.map((project: any): any => {
+    let cumulativeHours = 0;
+    
+    return projects.map((project: any, idx: number): any => {
       const impacts = projectImpacts.filter((i: any) => i.projectId === project.id);
       
       // Aggregate metrics for this project only
@@ -119,6 +164,8 @@ export default function ImpactStorytellingPage() {
         }
         return sum;
       }, 0);
+
+      cumulativeHours += projectHours;
 
       const projectBeneficiaries = impacts.reduce((sum: number, i: any) => {
         if (['people', 'beneficiar', 'students', 'individuals', 'participants', 'families']
@@ -150,10 +197,12 @@ export default function ImpactStorytellingPage() {
         location: project.location || "Unknown",
         startDate: project.startDate,
         hours: projectHours,
+        cumulativeHours: cumulativeHours,
         beneficiaries: projectBeneficiaries,
         volunteersInvolved: projectVolunteers,
         metrics: projectMetrics,
-        sdgs: project.sdgIds || []
+        sdgs: project.sdgIds || [],
+        projectIndex: idx + 1
       };
     });
   }, [projects, projectImpacts, impactMetrics]);
@@ -307,9 +356,10 @@ export default function ImpactStorytellingPage() {
           {/* Key Metrics Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Key Metrics</CardTitle>
+              <CardTitle>Consolidated Key Metrics</CardTitle>
+              <CardDescription>Unified totals across all projects - no duplication</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <tbody className="divide-y">
@@ -351,6 +401,21 @@ export default function ImpactStorytellingPage() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Aggregated KPI Breakdown */}
+              {aggregatedKPIs.length > 0 && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-sm mb-3">Impact Breakdown (Consolidated)</h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {aggregatedKPIs.map((kpi, idx) => (
+                      <div key={idx} className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 font-medium uppercase">{kpi.label}</p>
+                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{kpi.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -440,9 +505,34 @@ export default function ImpactStorytellingPage() {
           </Card>
         </TabsContent>
 
-        {/* PROJECT-BY-PROJECT BREAKDOWN */}
+        {/* PROJECT-BY-PROJECT BREAKDOWN WITH RUNNING TOTALS */}
         <TabsContent value="projects" className="space-y-6">
-          {projectAggregations.map((project: any, idx: number) => (
+          {/* Running Total Summary */}
+          <Card className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-indigo-200 dark:border-indigo-800">
+            <CardHeader>
+              <CardTitle className="text-lg">Running Total Impact</CardTitle>
+              <CardDescription>Cumulative contribution across all projects</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">Total Projects</p>
+                  <p className="text-3xl font-bold text-indigo-700 dark:text-indigo-300">{projectAggregations.length}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase">Total Hours</p>
+                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{projectAggregations.reduce((sum, p) => sum + p.hours, 0)}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase">Total Impact Points</p>
+                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">{projectAggregations.reduce((sum, p) => sum + p.beneficiaries, 0)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Individual Projects */}
+          {projectAggregations.map((project: any) => (
             <Card key={project.id} className="border-l-4 border-l-blue-500">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -450,17 +540,21 @@ export default function ImpactStorytellingPage() {
                     <CardTitle className="text-lg">{project.name}</CardTitle>
                     <CardDescription className="mt-1">{project.location} • {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Ongoing'}</CardDescription>
                   </div>
-                  <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Project {idx + 1}</Badge>
+                  <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Project {project.projectIndex}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-gray-700 dark:text-gray-300">{project.description}</p>
                 
-                {/* Project-level KPI running tally */}
+                {/* Project-level metrics */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
                   <div>
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">Hours</p>
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">This Project Hours</p>
                     <p className="text-xl font-bold text-blue-600">{project.hours}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">Cumulative Hours</p>
+                    <p className="text-xl font-bold text-indigo-600">{project.cumulativeHours}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">Beneficiaries</p>
@@ -469,10 +563,6 @@ export default function ImpactStorytellingPage() {
                   <div>
                     <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">Volunteers</p>
                     <p className="text-xl font-bold text-green-600">{project.volunteersInvolved}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 dark:text-gray-400">Metrics</p>
-                    <p className="text-xl font-bold text-purple-600">{project.metrics.length}</p>
                   </div>
                 </div>
 

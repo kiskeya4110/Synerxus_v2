@@ -12,41 +12,107 @@ export function SDGCircularWheel() {
   const totalSDGs = sortedSDGData.length;
   const angleSlice = 360 / totalSDGs;
 
-  // Single ring parameters
-  const radiusDesktop = 240; // Distance from center for SDG icons
-  const radiusMobile = 140;
+  // SVG parameters for wedge design
+  const viewBoxSize = 900;
+  const centerX = viewBoxSize / 2;
+  const centerY = viewBoxSize / 2;
+  const innerRadius = 120; // Inner hole for logo
+  const outerRadius = 380; // Outer edge of wedges
 
-  const getPosition = (index: number, isMobile: boolean) => {
-    const angle = (index * angleSlice) - 90;
-    const radius = isMobile ? radiusMobile : radiusDesktop;
-    const radians = (angle * Math.PI) / 180;
-    const x = Math.cos(radians) * radius;
-    const y = Math.sin(radians) * radius;
-    return { x, y };
+  const createWedgePath = (
+    startAngle: number,
+    endAngle: number,
+    innerR: number,
+    outerR: number
+  ) => {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const startRad = toRad(startAngle);
+    const endRad = toRad(endAngle);
+
+    const x1 = centerX + innerR * Math.cos(startRad);
+    const y1 = centerY + innerR * Math.sin(startRad);
+    const x2 = centerX + outerR * Math.cos(startRad);
+    const y2 = centerY + outerR * Math.sin(startRad);
+    const x3 = centerX + outerR * Math.cos(endRad);
+    const y3 = centerY + outerR * Math.sin(endRad);
+    const x4 = centerX + innerR * Math.cos(endRad);
+    const y4 = centerY + innerR * Math.sin(endRad);
+
+    const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+
+    return `M ${x1} ${y1} L ${x2} ${y2} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x3} ${y3} L ${x4} ${y4} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x1} ${y1}`;
+  };
+
+  const getIconPosition = (index: number) => {
+    const angle = index * angleSlice + angleSlice / 2 - 90;
+    const rad = (angle * Math.PI) / 180;
+    const radius = (innerRadius + outerRadius) / 2;
+    return {
+      x: centerX + radius * Math.cos(rad),
+      y: centerY + radius * Math.sin(rad),
+    };
   };
 
   return (
     <>
       <div className="w-full flex justify-center">
-        {/* Desktop: Single ring circular layout */}
+        {/* Desktop: Wedge wheel layout */}
         <div className="hidden md:block relative w-full max-w-3xl" style={{ aspectRatio: '1/1' }}>
-          <div className="relative w-full h-full flex items-center justify-center">
-            {/* SDG Icons positioned in circle */}
+          <svg
+            viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
+            className="w-full h-auto drop-shadow-2xl"
+            style={{ maxWidth: "700px" }}
+          >
+            {/* Render wedges */}
             {sortedSDGData.map((sdg, index) => {
-              const { x, y } = getPosition(index, false);
+              const startAngle = index * angleSlice - 90;
+              const endAngle = startAngle + angleSlice;
+
+              return (
+                <g key={`sdg-${sdg.id}`}>
+                  {/* Wedge path */}
+                  <path
+                    d={createWedgePath(startAngle, endAngle, innerRadius, outerRadius)}
+                    fill={sdg.color}
+                    stroke="white"
+                    strokeWidth="2"
+                    className="transition-opacity duration-300 cursor-pointer hover:opacity-90"
+                    onClick={() => setSelectedSDG(sdg.id)}
+                    data-testid={`sdg-wedge-${sdg.id}`}
+                  />
+                </g>
+              );
+            })}
+
+            {/* Center circle background */}
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={innerRadius - 2}
+              fill="white"
+              stroke="white"
+              strokeWidth="2"
+              className="drop-shadow-lg"
+            />
+          </svg>
+
+          {/* Overlay SDG icons on wedges */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            {sortedSDGData.map((sdg, index) => {
+              const { x, y } = getIconPosition(index);
               const sdgIcon = UN_SDG_ICONS[sdg.id];
 
               return (
                 <button
-                  key={sdg.id}
+                  key={`icon-${sdg.id}`}
                   onClick={() => setSelectedSDG(sdg.id)}
-                  className="group absolute w-28 h-28 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:z-50 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:ring-offset-2"
+                  className="group absolute w-20 h-20 rounded-full overflow-hidden shadow-md transition-all duration-300 hover:scale-110 hover:shadow-xl hover:z-50 focus:outline-none"
                   style={{
-                    transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                    left: '50%',
-                    top: '50%',
+                    left: `calc(50% + ${x}px)`,
+                    top: `calc(50% + ${y}px)`,
+                    transform: 'translate(-50%, -50%)',
                   }}
-                  data-testid={`sdg-button-circular-${sdg.id}`}
+                  data-testid={`sdg-icon-${sdg.id}`}
                   title={`SDG ${sdg.id}: ${sdg.name}`}
                 >
                   {sdgIcon ? (
@@ -57,32 +123,25 @@ export function SDGCircularWheel() {
                     />
                   ) : (
                     <div 
-                      className="absolute inset-0 flex flex-col items-center justify-center p-2 text-white"
+                      className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg"
                       style={{ backgroundColor: sdg.color }}
                     >
-                      <div className="text-2xl font-bold">{sdg.id}</div>
+                      {sdg.id}
                     </div>
                   )}
-                  
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-2">
-                    <div className="text-white text-xs font-semibold text-center">
-                      <div className="font-bold">{sdg.name}</div>
-                    </div>
-                  </div>
                 </button>
               );
             })}
+          </div>
 
-            {/* Center logo */}
-            <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-              <div className="bg-white rounded-full p-4 shadow-2xl border-4 border-slate-100">
-                <img
-                  src={synerxusLogo}
-                  alt="Synerxus Logo"
-                  className="w-28 h-28 object-contain"
-                />
-              </div>
+          {/* Center logo */}
+          <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <div className="bg-white rounded-full p-4 shadow-2xl border-4 border-slate-100">
+              <img
+                src={synerxusLogo}
+                alt="Synerxus Logo"
+                className="w-32 h-32 object-contain"
+              />
             </div>
           </div>
         </div>
@@ -94,7 +153,7 @@ export function SDGCircularWheel() {
               <img
                 src={synerxusLogo}
                 alt="Synerxus Logo"
-                className="w-16 h-16 object-contain"
+                className="w-20 h-20 object-contain"
               />
             </div>
           </div>
@@ -118,10 +177,10 @@ export function SDGCircularWheel() {
                     />
                   ) : (
                     <div 
-                      className="absolute inset-0 flex flex-col items-center justify-center p-2 text-white"
+                      className="absolute inset-0 flex items-center justify-center text-white font-bold text-lg"
                       style={{ backgroundColor: sdg.color }}
                     >
-                      <div className="text-lg font-bold">{sdg.id}</div>
+                      {sdg.id}
                     </div>
                   )}
                   

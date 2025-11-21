@@ -96,7 +96,10 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
 
     // Initialize map
     if (!map.current) {
-      map.current = L.map(mapContainer.current).setView([20, 0], 2);
+      map.current = L.map(mapContainer.current, {
+        minZoom: 2,
+        maxZoom: 4,
+      }).setView([20, 0], 2);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
@@ -280,35 +283,41 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
           Get Involved and See Your Impact
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
-              1
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-3">Create Profile</h3>
-            <p className="text-slate-600 leading-relaxed">
-              Sign up, get verified, connect with NGOs worldwide and volunteer.
-            </p>
-          </div>
+          <Link href="/login">
+            <button className="w-full text-center hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
+                1
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Create Profile</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Sign up, get verified, connect with NGOs worldwide and volunteer.
+              </p>
+            </button>
+          </Link>
 
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
-              2
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-3">Match to Project</h3>
-            <p className="text-slate-600 leading-relaxed">
-              Activate your skills, volunteer, collaborate with global partners.
-            </p>
-          </div>
+          <Link href="/login">
+            <button className="w-full text-center hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
+                2
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Match to Project</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Activate your skills, volunteer, collaborate with global partners.
+              </p>
+            </button>
+          </Link>
 
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
-              3
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-3">Track Impact SDGs</h3>
-            <p className="text-slate-600 leading-relaxed">
-              Measure and manage the positive changes you create.
-            </p>
-          </div>
+          <Link href="/login">
+            <button className="w-full text-center hover:opacity-80 transition-opacity">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
+                3
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-3">Track Impact SDGs</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Measure and manage the positive changes you create.
+              </p>
+            </button>
+          </Link>
         </div>
       </div>
     </div>

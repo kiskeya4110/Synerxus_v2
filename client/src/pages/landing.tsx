@@ -126,19 +126,20 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
     };
 
     // Helper function to create curved path with bezier interpolation
-    const createCurvedPath = (start: [number, number], end: [number, number], segments: number = 50): [number, number][] => {
+    const createCurvedPath = (start: [number, number], end: [number, number], curveDirection: number = 1, segments: number = 50): [number, number][] => {
       const path: [number, number][] = [];
       const midLat = (start[0] + end[0]) / 2;
       const midLon = (start[1] + end[1]) / 2;
       
-      // Create a control point that curves the path upward
+      // Create a control point that curves the path up or down
       const latDiff = end[0] - start[0];
       const lonDiff = end[1] - start[1];
       const distance = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff);
       
       // Control point is perpendicular to the line, at distance/3
-      const perpLat = -lonDiff / distance * (distance / 3);
-      const perpLon = latDiff / distance * (distance / 3);
+      // Multiply by curveDirection to alternate up/down curves
+      const perpLat = -lonDiff / distance * (distance / 3) * curveDirection;
+      const perpLon = latDiff / distance * (distance / 3) * curveDirection;
       
       const controlLat = midLat + perpLat;
       const controlLon = midLon + perpLon;
@@ -172,7 +173,9 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
       const fromCoord = countryCoords[from];
       const toCoord = countryCoords[to];
       if (fromCoord && toCoord) {
-        const curvedPath = createCurvedPath(fromCoord, toCoord);
+        // Alternate curve direction: odd indices curve up, even indices curve down
+        const curveDirection = index % 2 === 0 ? 1 : -1;
+        const curvedPath = createCurvedPath(fromCoord, toCoord, curveDirection);
         const polyline = L.polyline(curvedPath, {
           color: '#f97316',
           weight: 2,

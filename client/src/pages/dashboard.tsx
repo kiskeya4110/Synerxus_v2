@@ -557,7 +557,9 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            {currentUser?.displayName || currentUser?.name || (dashboardType === "volunteer" ? "Your" : "Organization")} Impact Overview
+            {dashboardType === "organization" 
+              ? (orgProfile?.user?.name || currentUser?.displayName || currentUser?.name || "Organization")
+              : (currentUser?.displayName || currentUser?.name || "Your")} Impact Overview
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {dashboardType === "volunteer" 

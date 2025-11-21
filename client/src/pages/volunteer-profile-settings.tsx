@@ -745,7 +745,7 @@ export default function VolunteerProfileSettings() {
           skills: existingProfile.skills || [],
           interests: existingProfile.interests || [],
           location: existingProfile.location || "",
-          sdgGoals: existingProfile.sdgGoals || [],
+          sdgGoals: existingProfile.preferredSdgs || [],
           weeklyHours: existingProfile.weeklyAvailability || 1,
           availability: existingProfile.availability || [],
           timezone:

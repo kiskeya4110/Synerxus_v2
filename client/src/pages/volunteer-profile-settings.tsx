@@ -922,6 +922,21 @@ export default function VolunteerProfileSettings() {
   const availabilityOps = useAvailabilityManagement(form);
 
   const onSubmit = async (data: FormData) => {
+    console.log(`[Settings Form Submit] User clicked save - weeklyHours value: ${data.weeklyHours}`);
+    console.log(`[Settings Form Submit] Full form data:`, data);
+    
+    // Validate weeklyHours is set
+    if (!data.weeklyHours || data.weeklyHours <= 0) {
+      console.error(`[Settings Form Submit] Invalid weeklyHours: ${data.weeklyHours}`);
+      toast({
+        title: "Invalid Weekly Hours",
+        description: "Weekly Hours Available must be greater than 0",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    console.log(`[Settings Form Submit] Submitting mutation with weeklyHours: ${data.weeklyHours}`);
     profileMutation.mutate(data);
   };
 

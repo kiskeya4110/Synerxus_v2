@@ -543,83 +543,76 @@ export default function Landing() {
 
       {/* SDG Wheel Section */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-6xl mx-auto">
           {/* Section Title */}
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-2">
               The UN Sustainable Development Goals
             </h2>
-            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
-              A universal call to action to end poverty, protect the planet, and ensure prosperity for all by 2030
+            <p className="text-base sm:text-lg text-slate-600">
+              17 interconnected goals to end poverty, protect the planet, and ensure prosperity by 2030
             </p>
           </div>
 
-          {/* SDG Wheel and Description Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-16">
-            {/* SDG Wheel */}
+          {/* SDG Wheel and Compact Info Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            {/* SDG Wheel - Larger */}
             <div className="relative flex justify-center items-center">
               {/* Background glow effect */}
               <div className="absolute inset-0 flex justify-center items-center">
-                <div className="w-96 h-96 bg-gradient-to-r from-blue-900/5 to-amber-600/5 rounded-full blur-3xl"></div>
+                <div className="w-full h-96 bg-gradient-to-r from-blue-900/5 to-amber-600/5 rounded-full blur-3xl"></div>
               </div>
               
               {/* SDG Wheel */}
-              <div className="relative z-10 w-full max-w-md mx-auto">
+              <div className="relative z-10 w-full h-96 flex items-center justify-center">
                 <SDGCircularWheel />
               </div>
             </div>
 
-            {/* Description and History */}
-            <div className="space-y-6">
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg border border-slate-200 dark:border-slate-700">
-                <h3 className="text-2xl font-bold text-blue-900 dark:text-blue-400 mb-4">About the SDGs</h3>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
-                  The Sustainable Development Goals (SDGs) are a collection of <strong>17 interlinked global goals</strong> designed as a "blueprint to achieve a better and more sustainable future for all." Adopted by all United Nations Member States in 2015, they form part of the 2030 Agenda for Sustainable Development.
-                </p>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                  Each goal addresses critical global challenges including poverty, inequality, climate change, environmental degradation, peace, and justice. The goals are interconnected—success in one area affects outcomes in others—requiring coordinated global action.
+            {/* Compact Info Cards */}
+            <div className="space-y-4">
+              {/* About Card */}
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-lg border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-bold text-blue-900 dark:text-blue-400 mb-2">About the SDGs</h3>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  17 interlinked global goals adopted by all UN Member States in 2015. Each addresses critical challenges: poverty, inequality, climate change, environmental protection, peace, and justice. Success in one area affects outcomes in others.
                 </p>
               </div>
 
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-lg border border-slate-200 dark:border-slate-700">
-                <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4">A Brief History</h3>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed mb-4">
-                  Building on the success of the Millennium Development Goals (MDGs) which ran from 2000-2015, the SDGs represent a more ambitious and comprehensive framework. The 2030 Agenda was adopted at the UN Sustainable Development Summit in September 2015, with all 193 UN member states committing to achieve these goals by 2030.
-                </p>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
-                  The SDGs recognize that ending poverty must go hand-in-hand with strategies that build economic growth and address social needs while tackling climate change and environmental protection.
+              {/* History Card */}
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-lg border border-slate-200 dark:border-slate-700">
+                <h3 className="text-lg font-bold text-amber-600 dark:text-amber-400 mb-2">Brief History</h3>
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  Building on the Millennium Development Goals (2000-2015), the 2030 Agenda was adopted at the UN Summit in September 2015. All 193 member states committed to achieve these goals by 2030 through coordinated global action.
                 </p>
               </div>
 
-              <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg p-6 shadow-lg border-2 border-red-200 dark:border-red-800">
-                <h3 className="text-2xl font-bold text-red-700 dark:text-red-400 mb-4 flex items-center gap-2">
-                  <span className="text-3xl">⚠️</span> Progress Update: We're Behind
+              {/* Progress Update Card */}
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 rounded-lg p-4 shadow-lg border-2 border-red-200 dark:border-red-800">
+                <h3 className="text-lg font-bold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+                  <span>⚠️</span> Progress Update
                 </h3>
-                <p className="text-slate-800 dark:text-slate-200 leading-relaxed mb-3">
-                  As of 2024, <strong className="text-red-600 dark:text-red-400">only 15% of SDG targets are on track</strong>. The UN reports that progress has stalled or reversed on many goals, with poverty rising for the first time in decades and climate action falling short of what's needed.
-                </p>
-                <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
-                  <li>• <strong>6 years remain</strong> to achieve the 2030 targets</li>
-                  <li>• Climate action needs to <strong>accelerate 7x faster</strong></li>
-                  <li>• <strong>575 million people</strong> will still live in extreme poverty by 2030 at current rates</li>
-                  <li>• Collective action and volunteer engagement are critical to closing the gap</li>
+                <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
+                  <li>• Only <strong>15% of targets on track</strong></li>
+                  <li>• <strong>6 years remaining</strong> to achieve 2030 goals</li>
+                  <li>• Climate action needs <strong>7x faster acceleration</strong></li>
+                  <li>• Volunteer action is critical to closing the gap</li>
                 </ul>
               </div>
             </div>
           </div>
 
           {/* CTA Text */}
-          <div className="text-center mt-16 px-4">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6">
+          <div className="text-center mt-12 px-4">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-4">
               <span className="text-blue-900">From Local Service</span><br />
-              <span className="text-amber-600">to Global Legacy...</span><br />
-              <span className="text-slate-700">Where Purpose Meets Progress</span>
+              <span className="text-amber-600">to Global Legacy</span>
             </h2>
-            <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Every volunteer action contributes to sustainable development. Join thousands making a measurable impact across all 17 SDGs worldwide.
+            <p className="text-base sm:text-lg text-slate-600 mb-6 max-w-2xl mx-auto">
+              Join thousands making measurable impact across all 17 SDGs worldwide.
             </p>
             <Link href="/login">
-              <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold text-lg px-8 rounded-xl">
+              <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl">
                 Start Your Legacy Today
               </Button>
             </Link>

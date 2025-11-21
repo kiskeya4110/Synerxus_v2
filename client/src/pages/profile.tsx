@@ -157,7 +157,7 @@ export default function Profile() {
     if (!volunteerProfile?.skillRatings) return 0;
     const ratings = typeof volunteerProfile.skillRatings === 'object' ? Object.values(volunteerProfile.skillRatings) : [];
     if (ratings.length === 0) return 0;
-    const avgRating = (ratings.reduce((sum: any, r: any) => sum + (typeof r === 'number' ? r : 0), 0) / ratings.length);
+    const avgRating = (ratings.reduce((sum: number, r: unknown) => sum + (typeof r === 'number' ? r : 0), 0) / ratings.length);
     return Math.round(avgRating / 20); // Convert 0-100 to 0-5 star scale
   };
 
@@ -264,10 +264,10 @@ export default function Profile() {
                     <Clock className="h-4 w-4 text-blue-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0}</div>
+                    <div className="text-2xl font-bold">{volunteerProfile?.weeklyAvailability || 0}</div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {profile?.availability && Array.isArray(profile.availability) && profile.availability.length > 0 
-                        ? `${profile.availability.length} time slots set` 
+                      {volunteerProfile?.availability && Array.isArray(volunteerProfile.availability) && volunteerProfile.availability.length > 0 
+                        ? `${volunteerProfile.availability.length} time slots set` 
                         : 'Set your availability'}
                     </p>
                   </CardContent>

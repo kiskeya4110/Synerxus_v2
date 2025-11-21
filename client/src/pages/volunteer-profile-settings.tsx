@@ -219,13 +219,32 @@ const useFormOperations = (form: any) => {
 };
 
 const useAvailabilityManagement = (form: any) => {
+  const updateWeeklyHoursBasedOnSlots = useCallback((availability: any[]) => {
+    // Calculate total hours from slots
+    const totalSlotHours = availability.reduce((sum, slot) => {
+      const start = parseInt(slot.startTime?.split(':')[0] || 0);
+      const end = parseInt(slot.endTime?.split(':')[0] || 0);
+      return sum + (end - start);
+    }, 0);
+    
+    // Get current weekly hours input
+    const currentWeeklyHours = form.getValues("weeklyHours");
+    
+    // Set to lesser of the two values
+    const availabilityHours = Math.min(currentWeeklyHours, totalSlotHours);
+    form.setValue("weeklyHours", availabilityHours);
+    console.log(`[Availability Management] Updated weekly hours to min(${currentWeeklyHours}, ${totalSlotHours}) = ${availabilityHours}`);
+  }, [form]);
+
   const addAvailabilitySlot = useCallback(() => {
     const currentAvailability = form.getValues("availability");
-    form.setValue("availability", [
+    const newAvailability = [
       ...currentAvailability,
       { day: "monday", startTime: "09:00", endTime: "17:00" },
-    ]);
-  }, [form]);
+    ];
+    form.setValue("availability", newAvailability);
+    updateWeeklyHoursBasedOnSlots(newAvailability);
+  }, [form, updateWeeklyHoursBasedOnSlots]);
 
   const updateAvailabilitySlot = useCallback(
     (index: number, field: keyof AvailabilitySlot, value: string) => {
@@ -237,30 +256,22 @@ const useAvailabilityManagement = (form: any) => {
       };
       form.setValue("availability", updatedAvailability);
       
-      // Auto-update weekly hours if availability hours exceed them
-      const totalHours = updatedAvailability.reduce((sum, slot) => {
-        const start = parseInt(slot.startTime?.split(':')[0] || 0);
-        const end = parseInt(slot.endTime?.split(':')[0] || 0);
-        return sum + (end - start);
-      }, 0);
-      
-      const currentWeeklyHours = form.getValues("weeklyHours");
-      if (totalHours >= currentWeeklyHours) {
-        form.setValue("weeklyHours", totalHours);
-      }
+      // Real-time update: set weekly hours to lesser of input vs slot hours
+      updateWeeklyHoursBasedOnSlots(updatedAvailability);
     },
-    [form],
+    [form, updateWeeklyHoursBasedOnSlots],
   );
 
   const removeAvailabilitySlot = useCallback(
     (index: number) => {
       const currentAvailability = form.getValues("availability");
-      form.setValue(
-        "availability",
-        currentAvailability.filter((_: any, i: number) => i !== index),
-      );
+      const updatedAvailability = currentAvailability.filter((_: any, i: number) => i !== index);
+      form.setValue("availability", updatedAvailability);
+      
+      // Real-time update: recalculate weekly hours after removing slot
+      updateWeeklyHoursBasedOnSlots(updatedAvailability);
     },
-    [form],
+    [form, updateWeeklyHoursBasedOnSlots],
   );
 
   return {

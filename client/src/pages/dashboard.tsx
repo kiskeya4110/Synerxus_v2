@@ -77,6 +77,16 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType && !!userId
   });
 
+  // Log volunteer profile data for debugging
+  if (currentUser?.userType === 'volunteer' && dashboardData?.volunteerProfile) {
+    console.log('[Dashboard] volunteerProfile received:', {
+      id: dashboardData.volunteerProfile.id,
+      userId: dashboardData.volunteerProfile.userId,
+      weeklyAvailability: dashboardData.volunteerProfile.weeklyAvailability,
+      _debug: dashboardData.volunteerProfile._debug_weeklyAvailability,
+    });
+  }
+
   // Use scoped data from dashboard service instead of global endpoints
   const tasks = dashboardData?.tasks || [];
   const volunteerActivities = dashboardData?.activities || [];

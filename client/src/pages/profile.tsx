@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Mail, MapPin, Award, Briefcase, Target, Users, 
   Star, Clock, TrendingUp, Calendar, FolderKanban,
-  Activity, CheckCircle2, Globe
+  Activity, CheckCircle2, Globe, X
 } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
@@ -35,7 +37,28 @@ const SDG_LABELS = {
   17: "Partnerships"
 };
 
+const SDG_DESCRIPTIONS = {
+  1: "End poverty in all its forms. Eradicate extreme poverty and promote shared prosperity through economic growth and social protection.",
+  2: "End hunger and achieve food security. Promote sustainable agriculture and support rural development for a world without hunger.",
+  3: "Ensure healthy lives and promote well-being. Achieve universal health coverage and reduce mortality rates across all age groups.",
+  4: "Quality education for all. Ensure inclusive and equitable education opportunities and lifelong learning for everyone.",
+  5: "Achieve gender equality and empower all women and girls worldwide through equal rights and participation.",
+  6: "Clean water and sanitation for all. Ensure access to safe water and improve sanitation and hygiene globally.",
+  7: "Affordable and clean energy. Increase use of renewable energy and improve energy efficiency for sustainable development.",
+  8: "Decent work and economic growth. Promote sustained economic growth and decent work opportunities for all.",
+  9: "Build resilient infrastructure and foster innovation. Promote sustainable industrialization and technological advancement.",
+  10: "Reduce inequality within and among countries. Promote social, economic, and political inclusion of all people.",
+  11: "Sustainable cities and communities. Create inclusive, safe, resilient, and sustainable cities and human settlements.",
+  12: "Responsible consumption and production. Ensure sustainable production and consumption patterns.",
+  13: "Climate action. Combat climate change and its impacts through urgent and ambitious action.",
+  14: "Protect and conserve oceans, seas, and marine life for sustainable development.",
+  15: "Protect forests and combat desertification. Promote sustainable use of terrestrial ecosystems and biodiversity.",
+  16: "Promote just, peaceful, and inclusive societies. Strengthen institutions and reduce all forms of violence.",
+  17: "Partnerships for the goals. Strengthen global partnerships for sustainable development implementation."
+};
+
 export default function Profile() {
+  const [selectedSdg, setSelectedSdg] = useState<number | null>(null);
   const userId = localStorage.getItem('currentUserId');
   
   // First, fetch basic user info to determine userType
@@ -328,34 +351,72 @@ export default function Profile() {
               <TooltipProvider>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {[...sdgsToDisplay].sort((a: number, b: number) => a - b).map((goal: number) => (
-                    <Link key={goal} href="/discover-opportunities">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer hover:border-primary/50" data-testid={`sdg-button-${goal}`}>
-                            {UN_SDG_ICONS[goal] ? (
-                              <img 
-                                src={UN_SDG_ICONS[goal]} 
-                                alt={`SDG ${goal}`}
-                                className="w-15 h-15 rounded"
-                              />
-                            ) : (
-                              <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
-                                {goal}
-                              </div>
-                            )}
-                            <span className="text-xs text-center line-clamp-2 font-medium">
-                              {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
-                            </span>
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>View opportunities aligned with SDG {goal}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </Link>
+                    <Tooltip key={goal}>
+                      <TooltipTrigger asChild>
+                        <button
+                          onClick={() => setSelectedSdg(goal)}
+                          className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer hover:border-primary/50"
+                          data-testid={`sdg-button-${goal}`}
+                        >
+                          {UN_SDG_ICONS[goal] ? (
+                            <img 
+                              src={UN_SDG_ICONS[goal]} 
+                              alt={`SDG ${goal}`}
+                              className="w-15 h-15 rounded"
+                            />
+                          ) : (
+                            <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                              {goal}
+                            </div>
+                          )}
+                          <span className="text-xs text-center line-clamp-2 font-medium">
+                            {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
+                          </span>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Learn more about SDG {goal}</p>
+                      </TooltipContent>
+                    </Tooltip>
                   ))}
                 </div>
               </TooltipProvider>
+
+              {/* SDG Details Modal */}
+              <Dialog open={selectedSdg !== null} onOpenChange={(open) => !open && setSelectedSdg(null)}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <div className="flex items-center gap-3 mb-4">
+                      {UN_SDG_ICONS[selectedSdg as number] ? (
+                        <img 
+                          src={UN_SDG_ICONS[selectedSdg as number]} 
+                          alt={`SDG ${selectedSdg}`}
+                          className="w-12 h-12 rounded"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                          {selectedSdg}
+                        </div>
+                      )}
+                      <div>
+                        <DialogTitle className="text-lg">
+                          SDG {selectedSdg}: {SDG_LABELS[selectedSdg as keyof typeof SDG_LABELS]}
+                        </DialogTitle>
+                      </div>
+                    </div>
+                  </DialogHeader>
+                  <DialogDescription className="text-base leading-relaxed">
+                    {SDG_DESCRIPTIONS[selectedSdg as keyof typeof SDG_DESCRIPTIONS]}
+                  </DialogDescription>
+                  <Button 
+                    onClick={() => setSelectedSdg(null)}
+                    className="w-full mt-4"
+                    variant="outline"
+                  >
+                    Close
+                  </Button>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         )}

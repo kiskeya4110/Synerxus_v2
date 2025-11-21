@@ -115,9 +115,7 @@ export default function Sidebar() {
     { href: "/profile", label: "Profile", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/volunteer-profile", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/my-applications", label: "My Applications", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/assignments", label: "My Assignments", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/my-tasks", label: "My Tasks", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
@@ -171,7 +169,7 @@ export default function Sidebar() {
                   href={item.href}
                   className={cn(
                     "flex items-center px-3 py-3 min-h-[44px] text-sm font-medium rounded-lg transition-colors",
-                    location === item.href 
+                    (location === item.href || (item.href === '/my-work' && (location === '/my-applications' || location === '/assignments' || location === '/my-tasks')))
                       ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400" 
                       : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   )}

@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import {
   Loader2,
   Plus,
@@ -219,8 +220,17 @@ const useAvailabilityManagement = (form: any) => {
 };
 
 // Reusable form sections
-const PersonalInfoSection = () => (
+const PersonalInfoSection = ({ onPhotoChange, currentPhotoUrl, userId }: any) => (
   <>
+    <div className="mb-6">
+      <ProfilePictureUpload
+        currentPhotoUrl={currentPhotoUrl}
+        onPhotoChange={onPhotoChange}
+        userId={userId}
+        userType="volunteer"
+      />
+    </div>
+
     <FormField
       name="email"
       render={({ field }) => (
@@ -691,6 +701,7 @@ export default function VolunteerProfileSettings() {
   const { toast } = useToast();
   const [skillInput, setSkillInput] = useState("");
   const [interestInput, setInterestInput] = useState("");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
 
   // Data fetching
   const userId = localStorage.getItem("currentUserId");

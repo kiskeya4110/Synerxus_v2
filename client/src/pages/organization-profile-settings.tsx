@@ -55,7 +55,7 @@ export default function OrganizationProfileSettings() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   
   // Fetch current user to get organization info
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<any>({
     queryKey: ["/api/users/me"],
   });
 

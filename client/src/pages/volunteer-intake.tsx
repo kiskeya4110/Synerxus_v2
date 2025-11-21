@@ -270,7 +270,7 @@ export default function VolunteerProfileSettings() {
         skills: data.skills.map((s) => `${s.name} (${s.proficiency}%)`), // Convert to display format for storage
         interests: data.interests || [],
         location: data.location,
-        sdgGoals: data.sdgGoals,
+        preferredSdgs: data.sdgGoals || [], // Map sdgGoals to preferredSdgs for backend compatibility
         weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
         availability: data.availability,
         timezone: data.timezone,
@@ -283,7 +283,7 @@ export default function VolunteerProfileSettings() {
           geographicPreference: 3,
           impactPotential: 3,
         },
-        skillProficiency: data.skills, // Send full proficiency objects for matching algorithm
+        skillRatings: Object.fromEntries(data.skills.map((s) => [s.name, s.proficiency])), // Proficiency ratings in JSON format
         onboardingCompleted: !existingProfile, // Mark as completed on first submission only
       };
       
@@ -867,6 +867,11 @@ export default function VolunteerProfileSettings() {
                 </div>
 
                 <div className="space-y-2">
+                  {form.watch("skills").length > 0 && (
+                    <div className="text-xs text-muted-foreground font-semibold px-1 mb-2">
+                      {form.watch("skills").length} skill{form.watch("skills").length !== 1 ? 's' : ''} added
+                    </div>
+                  )}
                   {form.watch("skills").map((skill) => (
                     <div
                       key={skill.name}
@@ -874,7 +879,12 @@ export default function VolunteerProfileSettings() {
                       data-testid={`skill-item-${skill.name}`}
                     >
                       <div className="flex-1">
-                        <p className="font-medium text-sm">{skill.name}</p>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="font-medium text-sm">{skill.name}</p>
+                          <span className="text-xs font-semibold bg-primary/10 text-primary px-2 py-1 rounded">
+                            {skill.proficiency}% proficiency
+                          </span>
+                        </div>
                         <div className="flex items-center gap-2">
                           <input
                             type="range"
@@ -887,9 +897,6 @@ export default function VolunteerProfileSettings() {
                             className="flex-1"
                             data-testid={`slider-proficiency-${skill.name}`}
                           />
-                          <span className="text-sm font-semibold min-w-[40px]">
-                            {skill.proficiency}%
-                          </span>
                         </div>
                       </div>
                       <Button

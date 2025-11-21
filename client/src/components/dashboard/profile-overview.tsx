@@ -152,7 +152,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
           </div>
         );
       case 'sdgs':
-        const sdgList = isVolunteer ? profile.sdgGoals : profile.primarySdgs;
+        const sdgList = isVolunteer ? (profile.preferredSdgs || profile.sdgGoals) : profile.primarySdgs;
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -208,7 +208,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
       <CardContent className="space-y-4">
 
         {/* SDG Goals - Each individually clickable */}
-        {((isVolunteer && profile?.preferredSdgs && profile.preferredSdgs.length > 0) || 
+        {((isVolunteer && (profile?.preferredSdgs?.length > 0 || profile?.sdgGoals?.length > 0)) || 
           (!isVolunteer && profile?.primarySdgs && profile.primarySdgs.length > 0)) && (
           <div 
             className="space-y-3"

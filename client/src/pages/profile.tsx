@@ -293,9 +293,9 @@ export default function Profile() {
               </div>
               <div className="mt-4 pt-4 border-t">
                 <Link href="/volunteer-profile">
-                  <a className="text-sm text-primary hover:underline">
+                  <span className="text-sm text-primary hover:underline cursor-pointer">
                     Edit skills and ratings in Settings →
-                  </a>
+                  </span>
                 </Link>
               </div>
             </CardContent>
@@ -386,9 +386,9 @@ export default function Profile() {
 
               <div className="mt-6 pt-6 border-t">
                 <Link href="/volunteer-profile">
-                  <a className="text-sm text-primary hover:underline">
+                  <span className="text-sm text-primary hover:underline cursor-pointer">
                     Update availability in Settings →
-                  </a>
+                  </span>
                 </Link>
               </div>
             </CardContent>

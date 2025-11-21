@@ -35,6 +35,24 @@
   border-top-color: rgba(30, 58, 138, 0.9) !important;
 }
 
+/* Scrolling facts banner animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 40s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}
+
 :root {
   /* Lighter, fresher color scheme */
   --background: 210 20% 98%; /* #F7F9FC - Very light blue-gray */

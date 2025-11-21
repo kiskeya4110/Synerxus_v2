@@ -107,6 +107,15 @@ const IMPACT_FACTS = {
   ],
 };
 
+const GLOBAL_FACTS = [
+  "💸 Estimated global value of volunteer time: $390 billion USD annually.",
+  "💸 Annual spending on volunteer infrastructure and coordination exceeds $20 billion globally.",
+  "⚠️ Up to 85% of volunteer efforts are not formally measured or reported, especially in informal settings.",
+  "⚠️ Only 15% of working-age people globally engage in formal volunteering monthly.",
+  "👩 Women dominate informal volunteering, while formal roles skew male—highlighting a gendered data gap.",
+  "🎯 NGOs struggle with retention, matching, and reporting, leading to wasted hours and underutilized talent.",
+];
+
 function getRandomFact(category: 'volunteers' | 'ngos' | 'csr'): string {
   const facts = IMPACT_FACTS[category];
   return facts[Math.floor(Math.random() * facts.length)];
@@ -445,6 +454,24 @@ export default function Landing() {
             <p className="text-sm sm:text-base italic text-slate-600 text-center leading-relaxed" data-testid="text-kofi-annan-quote">
               "Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family." — Kofi Annan
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Global Volunteerism Facts Banner */}
+      <section className="bg-gradient-to-r from-blue-900/5 to-amber-600/5 py-6 sm:py-8 overflow-hidden border-y border-slate-200">
+        <div className="space-y-2">
+          <h3 className="text-center text-sm font-semibold text-slate-700 mb-4 px-4">
+            Global Volunteerism: The Scale and the Gap
+          </h3>
+          <div className="relative overflow-hidden">
+            <div className="animate-scroll flex whitespace-nowrap gap-8">
+              {[...GLOBAL_FACTS, ...GLOBAL_FACTS].map((fact, index) => (
+                <div key={index} className="px-4 py-2 flex-shrink-0">
+                  <p className="text-sm text-slate-700 font-medium">{fact}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

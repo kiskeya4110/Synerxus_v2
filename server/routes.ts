@@ -2995,7 +2995,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           impacts: dashboardData.impacts,
           monthlyImpactData: dashboardData.monthlyImpactData,
           monthlyImpactTrend: dashboardData.monthlyImpactTrend,
-          impactBySDG: dashboardData.impactBySDG,
           impactGrowthSeries: dashboardData.impactGrowthSeries,
           projectHours: dashboardData.projectHours,
           totalPeopleImpacted: dashboardData.totalPeopleImpacted,

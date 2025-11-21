@@ -506,12 +506,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createOpportunity(opportunity: InsertOpportunity): Promise<Opportunity> {
-    const [newOpportunity] = await db.insert(opportunities).values(opportunity).returning();
+    const data: any = { ...opportunity };
+    if (data.startDate && typeof data.startDate === 'string') {
+      data.startDate = new Date(data.startDate);
+    }
+    if (data.endDate && typeof data.endDate === 'string') {
+      data.endDate = new Date(data.endDate);
+    }
+    if (data.eventDate && typeof data.eventDate === 'string') {
+      data.eventDate = new Date(data.eventDate);
+    }
+    const [newOpportunity] = await db.insert(opportunities).values(data).returning();
     return newOpportunity;
   }
 
   async updateOpportunity(id: number, opportunity: Partial<InsertOpportunity>): Promise<Opportunity | undefined> {
-    const [result] = await db.update(opportunities).set(opportunity).where(eq(opportunities.id, id)).returning();
+    const data: any = { ...opportunity };
+    if (data.startDate && typeof data.startDate === 'string') {
+      data.startDate = new Date(data.startDate);
+    }
+    if (data.endDate && typeof data.endDate === 'string') {
+      data.endDate = new Date(data.endDate);
+    }
+    if (data.eventDate && typeof data.eventDate === 'string') {
+      data.eventDate = new Date(data.eventDate);
+    }
+    const [result] = await db.update(opportunities).set(data).where(eq(opportunities.id, id)).returning();
     return result || undefined;
   }
 

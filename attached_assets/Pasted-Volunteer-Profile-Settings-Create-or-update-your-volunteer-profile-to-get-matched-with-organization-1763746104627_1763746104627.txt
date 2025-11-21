@@ -1,0 +1,104 @@
+Volunteer Profile Settings
+Create or update your volunteer profile to get matched with organizations that align with your skills, interests, and goals.
+
+Create Your Profile
+This information will be used to match you with organizations and opportunities
+Email
+test+g3xa-f@example.com
+This email is linked to your account
+
+Full Name
+Test Contact
+Professional Title (Optional)
+e.g., Data Scientist, Marketing Manager
+Your current or most recent job title
+
+Years of Experience (Optional)
+
+Select experience level
+
+LinkedIn Profile (Optional)
+https://linkedin.com/in/yourprofile
+Your LinkedIn profile URL
+
+Location
+e.g., New York, USA
+Your location helps match you with local or remote opportunities
+
+Timezone
+Pacific Time (PT)
+
+Your local timezone for scheduling purposes
+
+Preferred Commitment Type
+Flexible / Open to all
+
+What type of volunteering commitment are you looking for?
+
+Weekly Hours Available
+1
+Enter the total number of hours you can volunteer each week
+
+Availability Schedule
+Add Time Slot
+No availability slots added yet. Click "Add Time Slot" to specify when you're available.
+
+Skills & Proficiency
+Add a skill (e.g., Python, Teaching, Marketing)
+
+50%
+
+No skills added yet. Add your skills and rate your proficiency level to help organizations find the right match.
+
+Interests & Causes
+Add an interest (e.g., Education, Healthcare, Environment)
+
+Sustainable Development Goals (SDGs)
+Select the UN SDGs you're passionate about
+
+1. No Poverty
+2. Zero Hunger
+3. Good Health and Well-being
+4. Quality Education
+5. Gender Equality
+6. Clean Water and Sanitation
+7. Affordable and Clean Energy
+8. Decent Work and Economic Growth
+9. Industry, Innovation and Infrastructure
+10. Reduced Inequalities
+11. Sustainable Cities and Communities
+12. Responsible Consumption and Production
+13. Climate Action
+14. Life Below Water
+15. Life on Land
+16. Peace, Justice and Strong Institutions
+17. Partnerships for the Goals
+Preferred Work Style (Optional)
+Select work preference
+
+How you prefer to volunteer
+
+Matching Priorities
+Rate the importance of each factor when matching you with opportunities (1 = Not Important, 5 = Very Important)
+
+Skills Match
+3/5
+How important is matching your skills?
+
+Cause Alignment
+3/5
+How important is alignment with your causes?
+
+Time Flexibility
+3/5
+How important is scheduling flexibility?
+
+Geographic Preference
+3/5
+How important is location match?
+
+Impact Potential
+3/5
+How important is making a big impact?
+
+Create Profile

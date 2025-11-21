@@ -971,7 +971,7 @@ export default function VolunteerProfileSettings() {
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {form.watch("interests").map((interest) => (
+                  {(form.watch("interests") || []).map((interest) => (
                     <Badge
                       key={interest}
                       variant="secondary"
@@ -1009,7 +1009,7 @@ export default function VolunteerProfileSettings() {
                       key={sdg.value}
                       type="button"
                       variant={
-                        form.watch("sdgGoals").includes(sdg.value)
+                        (form.watch("sdgGoals") || []).includes(sdg.value)
                           ? "default"
                           : "outline"
                       }
@@ -1217,6 +1217,85 @@ export default function VolunteerProfileSettings() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* Security & Account Settings */}
+      {existingProfile && (
+        <>
+          {/* Change Password */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Account Security
+              </CardTitle>
+              <CardDescription>
+                Manage your password and security settings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button variant="outline" className="w-full" data-testid="button-change-password">
+                Change Password
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Update your password regularly to keep your account secure. You'll be signed out after changing your password.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Session Settings */}
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Session Settings
+              </CardTitle>
+              <CardDescription>
+                Manage your active sessions and login devices
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center p-3 border rounded-lg">
+                <div>
+                  <p className="font-medium text-sm">Current Session</p>
+                  <p className="text-xs text-muted-foreground">This browser</p>
+                </div>
+                <Badge>Active</Badge>
+              </div>
+              <Button variant="outline" className="w-full" data-testid="button-signout-all">
+                Sign Out All Devices
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Sign out of Synerxus on all devices. You'll need to sign in again on each device.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone */}
+          <Card className="mt-4 border-destructive/50">
+            <CardHeader>
+              <CardTitle className="text-destructive flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Danger Zone
+              </CardTitle>
+              <CardDescription>
+                Irreversible actions that affect your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                variant="destructive" 
+                className="w-full" 
+                data-testid="button-delete-account"
+              >
+                Delete Account
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

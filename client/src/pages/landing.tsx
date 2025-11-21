@@ -430,14 +430,17 @@ export default function Landing() {
           </div>
 
           {/* Right Collage Image */}
-          <div className="flex justify-center">
-            <img 
-              src={collageImg}
-              alt="Volunteer Collage"
-              className="w-full max-w-md rounded-2xl shadow-2xl object-cover"
-              loading="lazy"
-            />
-          </div>
+          <Link href="/login" className="flex justify-center cursor-pointer group">
+            <div className="relative w-full max-w-md h-96 sm:h-full rounded-2xl shadow-2xl overflow-hidden group-hover:shadow-3xl transition-shadow">
+              <img 
+                src={collageImg}
+                alt="Volunteer Collage"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
+            </div>
+          </Link>
         </div>
       </section>
 

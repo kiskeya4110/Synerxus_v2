@@ -265,16 +265,36 @@ export const organizationProfiles = pgTable("organization_profiles", {
   missionStatement: text("mission_statement"),
   focusAreas: text("focus_areas").array(),
   organizationType: text("organization_type"), // nonprofit, NGO, social enterprise, etc.
+  organizationLegalName: text("organization_legal_name"), // Full legal registration name
+  commonName: text("common_name"), // Public-facing name (DBA)
   size: text("size"), // small, medium, large
   yearFounded: integer("year_founded"),
   taxId: text("tax_id"), // For verification
   registrationNumber: text("registration_number"),
+  registrationStatus: text("registration_status"), // registered, pending, informal
   primarySdgs: integer("primary_sdgs").array(), // Main SDG focus areas
   geographicScope: text("geographic_scope"), // local, regional, national, international
+  geographicLocation: text("geographic_location"), // City/Region of operation
+  languages: text("languages").array(), // Languages spoken in organization
   targetBeneficiaries: text("target_beneficiaries"), // Who they serve
   volunteerNeeds: text("volunteer_needs").array(), // Types of volunteers they need
+  requiredSkills: text("required_skills").array(), // Specific skills needed
+  preferredVolunteerType: text("preferred_volunteer_type"), // local, diaspora, remote, on-site
+  minimumCommitment: text("minimum_commitment"), // hours/week or duration
+  languageRequirements: text("language_requirements"),
+  techRequirements: text("tech_requirements"), // phone, laptop, internet required
+  reportingPreference: text("reporting_preference"), // PDF, dashboard, infographic, narrative
+  reportingFrequency: text("reporting_frequency"), // monthly, quarterly, annually
+  willingToShareData: boolean("willing_to_share_data").default(false),
+  willingForImpactVerification: boolean("willing_for_impact_verification").default(false),
+  cobranded: boolean("cobranded").default(false), // Open to co-branded CSR campaigns
+  diasporaEngagement: boolean("diaspora_engagement").default(false),
+  preferredCommunication: text("preferred_communication").array(), // email, whatsapp, zoom, etc.
+  timezone: text("timezone"), // Organization timezone
+  bestTimeToConnect: text("best_time_to_connect"), // Preferred contact hours
   impactStats: jsonb("impact_stats"),
-  socialMedia: jsonb("social_media"),
+  socialMedia: jsonb("social_media"), // {facebook, twitter, instagram, linkedIn, website}
+  websiteUrl: text("website_url"),
   verificationStatus: text("verification_status").default("pending"), // pending, verified, rejected
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),

@@ -19,6 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import { VolunteerSkillSection } from "@/components/forms/volunteer-skill-section";
+import { VolunteerSDGSection } from "@/components/forms/volunteer-sdg-section";
 import {
   Loader2,
   Plus,
@@ -585,101 +587,17 @@ const SkillsInterestsSection = ({
   removeInterest,
 }: any) => (
   <>
-    <div className="space-y-4">
-      <Label className="flex items-center gap-2">
-        <Target className="h-4 w-4" />
-        Skills & Proficiency
-      </Label>
-      <div className="space-y-2">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Add a skill (e.g., Python, Teaching, Marketing)"
-            value={skillInput}
-            onChange={(e) => setSkillInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                addSkill();
-              }
-            }}
-            data-testid="input-add-skill"
-          />
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={skillProficiency}
-            onChange={(e) => setSkillProficiency(parseInt(e.target.value))}
-            className="w-24"
-            data-testid="slider-skill-proficiency"
-          />
-          <span className="text-sm font-semibold min-w-[40px]">{skillProficiency}%</span>
-          <Button
-            type="button"
-            onClick={addSkill}
-            variant="secondary"
-            data-testid="button-add-skill"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {form.watch("skills").map((skill: any) => (
-          <div
-            key={skill.name}
-            className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50"
-            data-testid={`skill-item-${skill.name}`}
-          >
-            <div className="flex-1">
-              <p className="font-medium text-sm">{skill.name}</p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={skill.proficiency}
-                  onChange={(e) =>
-                    updateSkillProficiency(skill.name, parseInt(e.target.value))
-                  }
-                  className="flex-1"
-                  data-testid={`slider-proficiency-${skill.name}`}
-                />
-                <span className="text-sm font-semibold min-w-[40px]">
-                  {skill.proficiency}%
-                </span>
-              </div>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => removeSkill(skill.name)}
-              className="text-destructive hover:text-destructive"
-              data-testid={`button-remove-skill-${skill.name}`}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-      </div>
-
-      {form.watch("skills").length === 0 && (
-        <div className="text-center py-6 border-2 border-dashed rounded-lg">
-          <Target className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">
-            No skills added yet. Add your skills and rate your proficiency level.
-          </p>
-        </div>
-      )}
-
-      {form.formState.errors.skills && (
-        <p className="text-sm text-destructive">
-          {form.formState.errors.skills.message}
-        </p>
-      )}
-    </div>
+    <VolunteerSkillSection
+      skills={form.watch("skills")}
+      skillInput={skillInput}
+      setSkillInput={setSkillInput}
+      skillProficiency={skillProficiency}
+      setSkillProficiency={setSkillProficiency}
+      onAddSkill={addSkill}
+      onRemoveSkill={removeSkill}
+      onUpdateSkillProficiency={updateSkillProficiency}
+      formErrors={form.formState.errors}
+    />
 
     <div className="space-y-2">
       <Label className="flex items-center gap-2">
@@ -754,33 +672,11 @@ const SDGGoalsSection = ({ form }: { form: any }) => {
   );
 
   return (
-    <div className="space-y-2">
-      <Label>Sustainable Development Goals (SDGs)</Label>
-      <p className="text-sm text-muted-foreground mb-2">
-        Select the UN SDGs you're passionate about
-      </p>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {SDG_OPTIONS.map((sdg) => (
-          <Button
-            key={sdg.value}
-            type="button"
-            variant={
-              form.watch("sdgGoals").includes(sdg.value) ? "default" : "outline"
-            }
-            className="justify-start text-left h-auto py-2"
-            onClick={() => toggleSDG(sdg.value)}
-            data-testid={`button-sdg-${sdg.value}`}
-          >
-            {sdg.label}
-          </Button>
-        ))}
-      </div>
-      {form.formState.errors.sdgGoals && (
-        <p className="text-sm text-destructive">
-          {form.formState.errors.sdgGoals.message}
-        </p>
-      )}
-    </div>
+    <VolunteerSDGSection
+      selectedSDGs={form.watch("sdgGoals")}
+      onToggleSDG={toggleSDG}
+      formErrors={form.formState.errors}
+    />
   );
 };
 

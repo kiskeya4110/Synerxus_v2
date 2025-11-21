@@ -772,10 +772,8 @@ export default function VolunteerProfileSettings() {
   useEffect(() => {
     if (existingProfile?.profilePhotoUrl) {
       setProfilePhotoUrl(existingProfile.profilePhotoUrl);
-    } else if (currentUser?.avatar) {
-      setProfilePhotoUrl(currentUser.avatar);
     }
-  }, [existingProfile, currentUser]);
+  }, [existingProfile]);
 
   // Mutations
   const mutationConfig = {

@@ -64,6 +64,49 @@ function extractUserId(req: any): number | null {
   return isNaN(userId) ? null : userId;
 }
 
+// **AI Algorithm**: Calculate project completion percentage based on multiple factors
+async function calculateProjectProgress(projectId: number): Promise<number> {
+  try {
+    const project = await storage.getProject(projectId);
+    if (!project) return 0;
+
+    // Get project tasks, activities, and impacts
+    const tasks = (await storage.listTasks()).filter((t: any) => t.projectId === projectId);
+    const activities = (await storage.listVolunteerActivities()).filter((a: any) => a.projectId === projectId);
+    const impacts = await storage.listProjectImpactsByProject(projectId);
+
+    // Calculate three progress metrics (weighted)
+    let progressScore = 0;
+
+    // **40% Weight: Task Completion Ratio**
+    if (tasks.length > 0) {
+      const completedTasks = tasks.filter((t: any) => t.status?.toLowerCase() === "completed").length;
+      const taskProgress = (completedTasks / tasks.length) * 100;
+      progressScore += taskProgress * 0.4;
+    }
+
+    // **35% Weight: Hours Logged vs Expected Hours**
+    const totalHoursLogged = activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+    if (project.projectTotalHours || project.ongoingHoursPerWeek) {
+      const expectedHours = project.projectTotalHours || (project.ongoingHoursPerWeek * 4); // Assume 4 weeks
+      const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
+      progressScore += hoursProgress * 0.35;
+    } else {
+      // If no hours target set, assume logged hours indicate progress
+      progressScore += Math.min(totalHoursLogged * 5, 100) * 0.35; // Each hour = 5%
+    }
+
+    // **25% Weight: Impact Metrics Logged**
+    const impactProgress = impacts.length > 0 ? 100 : Math.min(totalHoursLogged * 2, 50); // Activities contribute up to 50%
+    progressScore += impactProgress * 0.25;
+
+    return Math.round(Math.min(progressScore, 100));
+  } catch (err) {
+    console.error("Error calculating project progress:", err);
+    return 0;
+  }
+}
+
 // Authorization helper to require organization user
 async function requireOrgUser(req: any) {
   const userId = extractUserId(req);
@@ -990,9 +1033,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
               status: totalHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
             });
           }
+          
+          // **AI Algorithm**: Auto-calculate and update project completion percentage
+          const progressPercentage = await calculateProjectProgress(activity.projectId);
+          await storage.updateProject(activity.projectId, {
+            completionPercentage: progressPercentage,
+            totalHoursLogged: totalHoursLogged
+          });
         } catch (updateErr) {
-          console.error("Error updating assignment hoursCompleted:", updateErr);
-          // Don't fail the activity creation if assignment update fails
+          console.error("Error updating assignment or project progress:", updateErr);
+          // Don't fail the activity creation if update fails
         }
       }
       
@@ -1160,6 +1210,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const impactData = insertProjectImpactSchema.parse(req.body);
       const impact = await storage.createProjectImpact(impactData);
+      
+      // **AI Algorithm**: Auto-calculate and update project completion percentage when impact is logged
+      if (impact.projectId) {
+        try {
+          const progressPercentage = await calculateProjectProgress(impact.projectId);
+          await storage.updateProject(impact.projectId, {
+            completionPercentage: progressPercentage
+          });
+        } catch (updateErr) {
+          console.error("Error updating project progress:", updateErr);
+          // Don't fail impact creation if progress update fails
+        }
+      }
       
       broadcastUpdate("project_impact_created", impact);
       res.status(201).json(impact);

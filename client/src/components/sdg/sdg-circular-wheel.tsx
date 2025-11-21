@@ -2,7 +2,7 @@ import { useState } from "react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { SDGDetailDialog } from "@/components/sdg/sdg-detail-dialog";
 import { SDG_GOALS } from "@shared/sdg-goals";
-import synerxusLogo from "@assets/Synerxus Modern Logo  NBG_1763711692916.png";
+import synerxusLogo from "@assets/Synerxus Modern Logo  NBG_1763712176737.png";
 
 export function SDGCircularWheel() {
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
@@ -14,11 +14,11 @@ export function SDGCircularWheel() {
   const angleSlice = 360 / totalSDGs;
 
   // SVG rendering for concentric wheel
-  const viewBoxSize = 600;
+  const viewBoxSize = 800;
   const centerX = viewBoxSize / 2;
   const centerY = viewBoxSize / 2;
-  const innerRadius = 60; // For the center logo area
-  const outerRadius = 280; // Full radius
+  const innerRadius = 100; // For the center logo area
+  const outerRadius = 380; // Full radius
   const segmentWidth = (outerRadius - innerRadius) / 2; // Divide into 2 rings
 
   const createWedgePath = (
@@ -60,11 +60,11 @@ export function SDGCircularWheel() {
     <>
       <div className="w-full flex justify-center">
         {/* Desktop: Concentric SVG Wheel */}
-        <div className="hidden md:block relative w-full max-w-2xl">
+        <div className="hidden md:block relative w-full max-w-4xl">
           <svg
             viewBox={`0 0 ${viewBoxSize} ${viewBoxSize}`}
-            className="w-full h-auto drop-shadow-lg"
-            style={{ maxWidth: "600px" }}
+            className="w-full h-auto drop-shadow-2xl"
+            style={{ maxWidth: "700px" }}
           >
             {/* Render wedges */}
             {sortedSDGData.map((sdg, index) => {
@@ -83,8 +83,8 @@ export function SDGCircularWheel() {
                     )}
                     fill={sdg.color}
                     stroke="white"
-                    strokeWidth="2"
-                    className="transition-opacity duration-300 cursor-pointer hover:opacity-80"
+                    strokeWidth="3"
+                    className="transition-opacity duration-300 cursor-pointer hover:opacity-90"
                     onClick={() => setSelectedSDG(sdg.id)}
                     onMouseEnter={() => setHoveredSDG(sdg.id)}
                     onMouseLeave={() => setHoveredSDG(null)}
@@ -100,36 +100,73 @@ export function SDGCircularWheel() {
                       innerRadius + segmentWidth
                     )}
                     fill={sdg.color}
-                    fillOpacity="0.6"
+                    fillOpacity="0.7"
                     stroke="white"
-                    strokeWidth="2"
-                    className="transition-opacity duration-300 cursor-pointer hover:opacity-80"
+                    strokeWidth="3"
+                    className="transition-opacity duration-300 cursor-pointer hover:opacity-90"
                     onClick={() => setSelectedSDG(sdg.id)}
                     onMouseEnter={() => setHoveredSDG(sdg.id)}
                     onMouseLeave={() => setHoveredSDG(null)}
                   />
 
-                  {/* SDG Number/Icon text - outer ring */}
-                  {hoveredSDG === sdg.id && (
-                    <g>
-                      <text
-                        x={getTextPosition(index, 1).x}
-                        y={getTextPosition(index, 1).y}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fill="white"
-                        fontSize="20"
-                        fontWeight="bold"
-                        className="pointer-events-none"
-                        style={{
-                          textShadow: "0 2px 4px rgba(0,0,0,0.5)",
-                          filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
-                        }}
-                      >
-                        {sdg.id}
-                      </text>
-                    </g>
-                  )}
+                  {/* Outer ring labels - SDG number and name */}
+                  <g>
+                    {/* SDG Number */}
+                    <text
+                      x={getTextPosition(index, 1).x}
+                      y={getTextPosition(index, 1).y - 12}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="white"
+                      fontSize="18"
+                      fontWeight="bold"
+                      className="pointer-events-none select-none"
+                      style={{
+                        textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                      }}
+                    >
+                      SDG {sdg.id}
+                    </text>
+
+                    {/* SDG Name */}
+                    <text
+                      x={getTextPosition(index, 1).x}
+                      y={getTextPosition(index, 1).y + 10}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="white"
+                      fontSize="13"
+                      fontWeight="600"
+                      className="pointer-events-none select-none"
+                      style={{
+                        textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+                        filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))",
+                      }}
+                    >
+                      {sdg.shortName}
+                    </text>
+                  </g>
+
+                  {/* Inner ring labels - SDG Goal Description (abbreviated) */}
+                  <g>
+                    <text
+                      x={getTextPosition(index, 0).x}
+                      y={getTextPosition(index, 0).y}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="white"
+                      fontSize="16"
+                      fontWeight="bold"
+                      className="pointer-events-none select-none"
+                      style={{
+                        textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+                        filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                      }}
+                    >
+                      {sdg.id}
+                    </text>
+                  </g>
                 </g>
               );
             })}
@@ -138,20 +175,21 @@ export function SDGCircularWheel() {
             <circle
               cx={centerX}
               cy={centerY}
-              r={innerRadius - 5}
+              r={innerRadius - 8}
               fill="white"
               stroke="white"
-              strokeWidth="2"
+              strokeWidth="3"
+              className="drop-shadow-lg"
             />
           </svg>
 
           {/* Center Logo - Absolute positioned */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-white rounded-full p-6 shadow-2xl border-4 border-slate-50">
+            <div className="bg-white rounded-full p-8 shadow-2xl">
               <img
                 src={synerxusLogo}
                 alt="Synerxus Logo"
-                className="w-32 h-32 object-contain"
+                className="w-40 h-40 object-contain"
               />
             </div>
           </div>
@@ -164,7 +202,7 @@ export function SDGCircularWheel() {
               <img
                 src={synerxusLogo}
                 alt="Synerxus Logo"
-                className="w-20 h-20 object-contain"
+                className="w-24 h-24 object-contain"
               />
             </div>
           </div>
@@ -178,6 +216,7 @@ export function SDGCircularWheel() {
                   className="group relative rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:ring-offset-2"
                   style={{ aspectRatio: '1/1' }}
                   data-testid={`sdg-button-mobile-${sdg.id}`}
+                  title={`SDG ${sdg.id}: ${sdg.name}`}
                 >
                   {sdgIcon ? (
                     <img 
@@ -191,12 +230,14 @@ export function SDGCircularWheel() {
                       style={{ backgroundColor: sdg.color }}
                     >
                       <div className="text-lg font-bold">{sdg.id}</div>
+                      <div className="text-xs font-semibold">{sdg.shortName}</div>
                     </div>
                   )}
                   
                   <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-2">
                     <div className="text-white text-xs font-semibold text-center">
-                      Learn more
+                      <div className="font-bold">{sdg.name}</div>
+                      <div className="text-[10px] mt-1">{sdg.description}</div>
                     </div>
                   </div>
                 </button>

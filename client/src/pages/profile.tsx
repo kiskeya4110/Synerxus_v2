@@ -293,7 +293,17 @@ export default function Profile() {
                     <Clock className="h-4 w-4 text-blue-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{volunteerProfile?.weeklyAvailability || 0} hrs</div>
+                    {(() => {
+                      const weeklyHours = volunteerProfile?.weeklyAvailability || 0;
+                      const totalSlotHours = (volunteerProfile?.availability || []).reduce((sum: number, slot: any) => {
+                        const start = parseInt(slot.startTime?.split(':')[0] || 0);
+                        const end = parseInt(slot.endTime?.split(':')[0] || 0);
+                        return sum + (end - start);
+                      }, 0);
+                      const actualAvailability = Math.min(weeklyHours, totalSlotHours);
+                      console.log(`[Profile] Availability Card: min(${weeklyHours}, ${totalSlotHours}) = ${actualAvailability}`);
+                      return <div className="text-2xl font-bold">{actualAvailability} hrs</div>;
+                    })()}
                     <p className="text-xs text-muted-foreground mt-1">
                       {volunteerProfile?.availability && Array.isArray(volunteerProfile.availability) && volunteerProfile.availability.length > 0 
                         ? `${volunteerProfile.availability.length} time slot${volunteerProfile.availability.length > 1 ? 's' : ''} set` 
@@ -504,7 +514,15 @@ export default function Profile() {
                   </div>
                   <p className="font-medium">Weekly Availability</p>
                   <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                    {volunteerProfile.weeklyAvailability || 0} hrs
+                    {(() => {
+                      const weeklyHours = volunteerProfile.weeklyAvailability || 0;
+                      const totalSlotHours = (volunteerProfile?.availability || []).reduce((sum: number, slot: any) => {
+                        const start = parseInt(slot.startTime?.split(':')[0] || 0);
+                        const end = parseInt(slot.endTime?.split(':')[0] || 0);
+                        return sum + (end - start);
+                      }, 0);
+                      return Math.min(weeklyHours, totalSlotHours);
+                    })()} hrs
                   </p>
                   <p className="text-xs text-muted-foreground">
                     per week commitment

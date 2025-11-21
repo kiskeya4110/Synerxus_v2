@@ -3511,6 +3511,9 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       let volunteerProfile = null;
       try {
         volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+        if (volunteerProfile) {
+          console.log(`[Profile GET] Retrieved profile for user ${userId}, skillRatings:`, JSON.stringify(volunteerProfile.skillRatings));
+        }
       } catch (err) {
         console.error("Error fetching volunteer profile:", err);
       }
@@ -3642,22 +3645,30 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(404).json({ message: "User not found" });
       }
       
+      console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));
+      
       const existingProfile = await storage.getVolunteerProfileByUserId(userId);
+      
+      // Ensure skillRatings are preserved in the update
+      const profileData = {
+        ...req.body,
+        userId,
+        onboardingCompleted: true,
+        skillRatings: req.body.skillRatings || {} // Explicitly preserve skillRatings
+      };
+      
+      console.log(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));
       
       let profile;
       if (existingProfile) {
-        profile = await storage.updateVolunteerProfile(existingProfile.id, {
-          ...req.body,
-          userId,
-          onboardingCompleted: true
-        });
+        profile = await storage.updateVolunteerProfile(existingProfile.id, profileData);
       } else {
-        profile = await storage.createVolunteerProfile({
-          ...req.body,
-          userId,
-          onboardingCompleted: true
-        });
+        profile = await storage.createVolunteerProfile(profileData);
       }
+      
+      console.log(`[Intake POST] Profile saved. Fetching to verify...`);
+      const savedProfile = await storage.getVolunteerProfileByUserId(userId);
+      console.log(`[Intake POST] Verified saved skillRatings:`, JSON.stringify(savedProfile?.skillRatings));
       
       // Update user's displayName, userType, skills, and profile photo if needed
       const updates: any = {};

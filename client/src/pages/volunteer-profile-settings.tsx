@@ -303,6 +303,13 @@ const AvailabilitySection = ({
   availabilityOps: any;
 }) => (
   <>
+    <div className="border-t pt-6">
+      <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
+        <Calendar className="h-5 w-5" />
+        Availability & Work Preferences
+      </h3>
+    </div>
+
     <FormField
       name="timezone"
       render={({ field }) => (

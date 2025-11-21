@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Download } from "lucide-react";
 
 const reportFormSchema = z.object({
   projectTitle: z.string().min(1, "Project title required"),
@@ -104,29 +104,27 @@ export default function ImpactReportGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/20 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-white dark:bg-slate-900 p-6">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white">Synerxus Impact Report</h1>
-              <p className="text-gray-600 dark:text-gray-400 mt-2">Generate AI-powered, funder-ready impact reports</p>
-            </div>
+        <div className="mb-8 pb-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-4">
+            <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">LOGO HERE</div>
             <div className="text-right">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Organization</p>
-              <p className="font-semibold text-slate-900 dark:text-white">{currentUser?.name || "Loading..."}</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">Synerxus</h1>
+              <p className="text-xs text-orange-500">Connect. Collaborate. Impact.</p>
             </div>
           </div>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Impact Report Generator</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Provide structured inputs for a funder-ready, SDG-aligned report.</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Form */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-6">
+          <div>
+            <Card className="border-slate-200 dark:border-slate-700">
               <CardHeader>
                 <CardTitle className="text-lg">Report Configuration</CardTitle>
-                <CardDescription>Customize your impact report</CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
@@ -136,11 +134,11 @@ export default function ImpactReportGenerator() {
                       name="projectTitle"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Project Title</FormLabel>
+                          <FormLabel>Project / Program Title *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Health Initiative 2024" {...field} />
+                            <Input placeholder="e.g., Skills for Success & Economic Empowerment" {...field} />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -150,11 +148,11 @@ export default function ImpactReportGenerator() {
                       name="reportingPeriod"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Reporting Period</FormLabel>
+                          <FormLabel>Reporting Period *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Q1 2024" {...field} />
+                            <Input placeholder="MM/DD/YYYY" {...field} />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -164,11 +162,11 @@ export default function ImpactReportGenerator() {
                       name="locationsServed"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Locations Served</FormLabel>
+                          <FormLabel>Locations Served *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Philippines, Haiti, Zimbabwe" {...field} />
+                            <Input placeholder="e.g., Ndola, Zambia; Haiti; Philippines" {...field} />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -178,11 +176,11 @@ export default function ImpactReportGenerator() {
                       name="keyStories"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">Key Stories/Case Studies</FormLabel>
+                          <FormLabel>Key Stories / Case Studies *</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Describe 1-2 key volunteer stories or case studies..." className="text-xs h-20" {...field} />
+                            <Textarea placeholder="Share volunteer stories and beneficiary testimonials..." className="h-24" {...field} />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
@@ -192,86 +190,88 @@ export default function ImpactReportGenerator() {
                       name="csrAlignment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-xs">CSR/ESG Alignment</FormLabel>
+                          <FormLabel>Corporate CSR/ESG Alignment *</FormLabel>
                           <FormControl>
-                            <Textarea placeholder="ESG indicators, employee participation..." className="text-xs h-20" {...field} />
+                            <Textarea placeholder="Employee participation, ESG indicators, verified impact..." className="h-24" {...field} />
                           </FormControl>
-                          <FormMessage className="text-xs" />
+                          <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="targetAudience"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Target Audience</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <FormControl>
-                              <SelectTrigger className="text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="funder">Funder</SelectItem>
-                              <SelectItem value="csr_team">CSR Team</SelectItem>
-                              <SelectItem value="ngo_partner">NGO Partner</SelectItem>
-                              <SelectItem value="volunteer">Volunteer</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-3 gap-3">
+                      <FormField
+                        control={form.control}
+                        name="targetAudience"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Target Audience *</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="funder">Funder</SelectItem>
+                                <SelectItem value="csr_team">CSR Team</SelectItem>
+                                <SelectItem value="ngo_partner">NGO Partner</SelectItem>
+                                <SelectItem value="volunteer">Volunteer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="tone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Tone</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <FormControl>
-                              <SelectTrigger className="text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="professional">Professional</SelectItem>
-                              <SelectItem value="inspirational">Inspirational</SelectItem>
-                              <SelectItem value="data-driven">Data-Driven</SelectItem>
-                              <SelectItem value="warm">Warm</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="tone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Tone *</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="professional">Professional</SelectItem>
+                                <SelectItem value="inspirational">Inspirational</SelectItem>
+                                <SelectItem value="data-driven">Data-Driven</SelectItem>
+                                <SelectItem value="warm">Warm</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="impactFocus"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Impact Focus</FormLabel>
-                          <Select value={field.value} onValueChange={field.onChange}>
-                            <FormControl>
-                              <SelectTrigger className="text-xs">
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="sdg_alignment">SDG Alignment</SelectItem>
-                              <SelectItem value="beneficiary_reach">Beneficiary Reach</SelectItem>
-                              <SelectItem value="volunteer_hours">Volunteer Hours</SelectItem>
-                              <SelectItem value="esg_metrics">ESG Metrics</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="impactFocus"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm">Impact Focus *</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="sdg_alignment">SDG Alignment</SelectItem>
+                                <SelectItem value="beneficiary_reach">Beneficiary Reach</SelectItem>
+                                <SelectItem value="volunteer_hours">Volunteer Hours</SelectItem>
+                                <SelectItem value="esg_metrics">ESG Metrics</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
                     <Button type="submit" disabled={generating} className="w-full mt-6">
                       {generating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -284,11 +284,11 @@ export default function ImpactReportGenerator() {
           </div>
 
           {/* Report Preview */}
-          <div className="lg:col-span-2">
+          <div>
             {generatedReport ? (
-              <Card className="bg-white dark:bg-slate-800">
-                <CardHeader>
-                  <CardTitle>Generated Impact Report</CardTitle>
+              <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                  <CardTitle>Generated Report</CardTitle>
                   <Button
                     variant="outline"
                     size="sm"
@@ -301,24 +301,21 @@ export default function ImpactReportGenerator() {
                       element.click();
                       document.body.removeChild(element);
                     }}
-                    className="absolute top-4 right-4"
                   >
-                    Download
+                    <Download className="w-4 h-4 mr-1" /> Download
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed font-serif bg-slate-50 dark:bg-slate-900/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto">
-                      {generatedReport}
-                    </div>
+                  <div className="whitespace-pre-wrap text-sm leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700 max-h-[600px] overflow-y-auto font-sans">
+                    {generatedReport}
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-dashed">
-                <CardContent className="pt-12 pb-12 text-center">
-                  <p className="text-gray-600 dark:text-gray-400 mb-2">Your generated report will appear here</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500">Fill out the form and click "Generate Report" to create your AI-powered impact report</p>
+              <Card className="bg-slate-50 dark:bg-slate-800/50 border-dashed border-slate-300 dark:border-slate-600">
+                <CardContent className="pt-16 pb-16 text-center">
+                  <p className="text-gray-600 dark:text-gray-400 mb-2">Report preview will appear here</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">Fill the form and click "Generate Report"</p>
                 </CardContent>
               </Card>
             )}

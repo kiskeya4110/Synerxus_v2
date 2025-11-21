@@ -1034,7 +1034,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       volunteerProfile: volunteerProfile ? {
         ...volunteerProfile,
         profileCompleteness,
-        _debug_weeklyAvailability: volunteerProfile.weeklyAvailability,
+        weeklyAvailability: volunteerProfile.weeklyAvailability,
+        availability: volunteerProfile.availability,
+        skillRatings: volunteerProfile.skillRatings,
       } : null,
       applicationStats: {
         total: volunteerApplications.length,

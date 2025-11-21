@@ -196,24 +196,35 @@ export default function VolunteerProfileSettings() {
 
   // Fetch current user to get email - ALWAYS fetch fresh, never cache
   const userId = localStorage.getItem("currentUserId");
-  const { data: currentUser, isLoading: userLoading } = useQuery<{ id: number; email: string; displayName?: string }>({
+  const { data: currentUser, isLoading: userLoading, refetch: refetchCurrentUser } = useQuery<{ id: number; email: string; displayName?: string }>({
     queryKey: ["/api/users/me"],
     staleTime: 0, // Always fetch fresh user data
+    refetchOnMount: true, // Force refetch on component mount
   });
+
+  // Invalidate and refetch user data when component mounts to bust cache
+  useEffect(() => {
+    console.log(`[Intake] Component mounted, invalidating user cache`);
+    queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+  }, []);
 
   // Fetch existing volunteer profile using intake API which includes all availability fields
   const { data: existingProfile, isLoading: loadingProfile } = useQuery<any>({
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return null;
-      console.log(`[Intake Profile Query] Fetching profile for user ${currentUser.id}, email: ${currentUser.email}`);
+      console.log(`[Intake Profile Query CRITICAL] Fetching profile for user ${currentUser.id}, email: ${currentUser.email}`);
       const response = await fetch(`/api/intake/volunteer-profile?userId=${currentUser.id}`);
       if (!response.ok) return null;
       const data = await response.json();
-      console.log(`[Intake Profile Query] Loaded profile for user ${currentUser.id}:`, data);
+      console.log(`[Intake Profile Query CRITICAL] Loaded profile for user ${currentUser.id}, userId in response: ${data.userId}`, data);
+      if (data.userId !== currentUser.id) {
+        console.error(`[Intake Profile Query CRITICAL] MISMATCH! Requested user ${currentUser.id} but got profile for user ${data.userId}`);
+      }
       return data;
     },
     enabled: !!currentUser?.id,
+    refetchOnMount: true, // Force refetch when component mounts
   });
 
   const form = useForm<FormData>({

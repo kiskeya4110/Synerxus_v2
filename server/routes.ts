@@ -3295,7 +3295,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(403).json({ message: "User is not a volunteer" });
       }
       
-      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName, skillRatings, weeklyAvailability, availability, preferredWorkStyle, volunteerName, professionalTitle, matchingPriorities } = req.body;
+      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName, skillRatings, weeklyAvailability, availability, preferredWorkStyle, volunteerName, professionalTitle, yearsOfExperience, linkedinProfile, timezone, preferredCommitment, matchingPriorities } = req.body;
       
       // Use profile service to atomically update both users and volunteer_profiles tables
       await updateVolunteerProfileWithUser(userId, {
@@ -3312,6 +3312,10 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         preferredWorkStyle,
         volunteerName,
         professionalTitle,
+        yearsOfExperience,
+        linkedinProfile,
+        timezone,
+        preferredCommitment,
         matchingPriorities
       });
       
@@ -3647,20 +3651,23 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       
       console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));
       console.log(`[Intake POST] Received availability for user ${userId}:`, JSON.stringify(req.body.availability));
+      console.log(`[Intake POST] Received yearsOfExperience for user ${userId}:`, JSON.stringify(req.body.yearsOfExperience));
       
       const existingProfile = await storage.getVolunteerProfileByUserId(userId);
       
-      // Ensure skillRatings and availability are preserved in the update
+      // Ensure skillRatings, availability, and yearsOfExperience are preserved in the update
       const profileData = {
         ...req.body,
         userId,
         onboardingCompleted: true,
         skillRatings: req.body.skillRatings || {}, // Explicitly preserve skillRatings
-        availability: req.body.availability || [] // Explicitly preserve availability
+        availability: req.body.availability || [], // Explicitly preserve availability
+        yearsOfExperience: req.body.yearsOfExperience || null // Explicitly preserve yearsOfExperience
       };
       
       console.log(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));
       console.log(`[Intake POST] Saving profile data with availability:`, JSON.stringify(profileData.availability));
+      console.log(`[Intake POST] Saving profile data with yearsOfExperience:`, JSON.stringify(profileData.yearsOfExperience));
       
       let profile;
       if (existingProfile) {
@@ -3672,6 +3679,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       console.log(`[Intake POST] Profile saved. Fetching to verify...`);
       const savedProfile = await storage.getVolunteerProfileByUserId(userId);
       console.log(`[Intake POST] Verified saved skillRatings:`, JSON.stringify(savedProfile?.skillRatings));
+      console.log(`[Intake POST] Verified saved availability:`, JSON.stringify(savedProfile?.availability));
+      console.log(`[Intake POST] Verified saved yearsOfExperience:`, JSON.stringify(savedProfile?.yearsOfExperience));
       
       // Update user's displayName, userType, skills, and profile photo if needed
       const updates: any = {};

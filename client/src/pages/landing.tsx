@@ -9,7 +9,7 @@ import villageVolunteersImg from "@assets/Village Volunteers_1763707388973.png";
 
 const WorldMapHeader = () => {
   return (
-    <div className="relative w-full h-64 sm:h-80 mb-8">
+    <div className="w-full mb-12 px-4 sm:px-6">
       <style>{`
         @keyframes dash-animation {
           0% { stroke-dashoffset: 1000; }
@@ -17,68 +17,99 @@ const WorldMapHeader = () => {
         }
         .flight-path {
           stroke-dasharray: 1000;
-          animation: dash-animation 4s ease-in-out infinite;
+          animation: dash-animation 6s ease-in-out infinite;
           stroke: #f97316;
-          stroke-width: 2;
-          opacity: 0.7;
+          stroke-width: 2.5;
+          opacity: 0.8;
+          filter: drop-shadow(0 0 2px rgba(249, 115, 22, 0.5));
+        }
+        .map-background {
+          opacity: 0.15;
+        }
+        .country-marker {
+          filter: drop-shadow(0 0 3px rgba(180, 83, 9, 0.6));
         }
       `}</style>
 
-      {/* Faint world map background */}
-      <div className="absolute inset-0 opacity-10">
-        <svg viewBox="0 0 1440 900" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
-          {/* Simplified world map */}
-          <g fill="none" stroke="#64748b" strokeWidth="0.5">
-            {/* Europe */}
-            <path d="M 600 150 L 650 140 L 670 160 L 640 180 L 600 170 Z" />
-            {/* Africa */}
-            <path d="M 700 250 L 750 240 L 780 300 L 750 350 L 700 330 Z" />
-            {/* Asia */}
-            <path d="M 850 200 L 950 190 L 960 280 L 900 300 L 850 280 Z" />
-            {/* North America */}
-            <path d="M 200 150 L 300 140 L 320 250 L 250 280 L 200 200 Z" />
-            {/* South America */}
-            <path d="M 300 350 L 380 340 L 390 500 L 320 520 L 300 420 Z" />
-          </g>
-        </svg>
-      </div>
+      <svg viewBox="0 0 1200 500" className="w-full max-w-5xl mx-auto h-auto" preserveAspectRatio="xMidYMid meet">
+        {/* Faint world map background */}
+        <g className="map-background" fill="none" stroke="#94a3b8" strokeWidth="1">
+          {/* Africa outline */}
+          <path d="M 700 150 L 750 140 L 800 160 L 820 220 L 800 300 L 750 320 L 700 310 L 680 240 Z" />
+          {/* Asia outline */}
+          <path d="M 900 120 L 1000 110 L 1050 200 L 1000 250 L 900 240 Z" />
+          {/* North America outline */}
+          <path d="M 150 100 L 280 90 L 300 220 L 250 260 L 150 200 Z" />
+          {/* South America outline */}
+          <path d="M 300 280 L 380 270 L 400 420 L 320 450 L 300 380 Z" />
+          {/* Europe outline */}
+          <path d="M 550 80 L 620 70 L 650 120 L 600 150 L 550 140 Z" />
+        </g>
 
-      {/* SVG with flight paths and country labels */}
-      <svg viewBox="0 0 1440 900" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice">
         {/* Flight paths with animation */}
         <g className="flight-path">
-          {/* Philippines -> Mexico */}
-          <path d="M 1100 300 Q 900 200 300 350" fill="none" />
+          {/* Philippines -> USA */}
+          <path d="M 1020 180 Q 800 120 280 160" fill="none" strokeLinecap="round" />
+          {/* USA -> Mexico */}
+          <path d="M 280 160 Q 240 180 200 240" fill="none" strokeLinecap="round" />
           {/* Mexico -> Haiti */}
-          <path d="M 300 350 Q 200 300 150 280" fill="none" />
-          {/* Haiti -> United States */}
-          <path d="M 150 280 Q 200 200 250 180" fill="none" />
-          {/* United States -> Zimbabwe */}
-          <path d="M 250 180 Q 600 150 750 300" fill="none" />
+          <path d="M 200 240 Q 170 220 140 200" fill="none" strokeLinecap="round" />
+          {/* Haiti -> USA */}
+          <path d="M 140 200 Q 200 160 280 160" fill="none" strokeLinecap="round" />
+          {/* USA -> Zimbabwe */}
+          <path d="M 280 160 Q 500 100 750 220" fill="none" strokeLinecap="round" />
           {/* Mexico -> Zambia */}
-          <path d="M 300 350 Q 500 400 800 350" fill="none" />
+          <path d="M 200 240 Q 450 280 780 280" fill="none" strokeLinecap="round" />
+          {/* Zimbabwe -> Zambia */}
+          <path d="M 750 220 Q 760 250 780 280" fill="none" strokeLinecap="round" />
+          {/* Philippines -> Zimbabwe */}
+          <path d="M 1020 180 Q 880 200 750 220" fill="none" strokeLinecap="round" />
+          {/* Philippines -> Zambia */}
+          <path d="M 1020 180 Q 900 240 780 280" fill="none" strokeLinecap="round" />
         </g>
 
         {/* Country markers and labels */}
         {/* Philippines */}
-        <circle cx="1100" cy="300" r="6" fill="#b45309" opacity="0.8" />
-        <text x="1100" y="340" fontSize="14" fill="#1e3a8a" textAnchor="middle" fontWeight="600" opacity="0.9">Philippines</text>
+        <g className="country-marker">
+          <circle cx="1020" cy="180" r="7" fill="#b45309" />
+          <circle cx="1020" cy="180" r="11" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.5" />
+        </g>
+        <text x="1020" y="220" fontSize="13" fontWeight="600" fill="#1e3a8a" textAnchor="middle">Philippines</text>
+
+        {/* USA */}
+        <g className="country-marker">
+          <circle cx="280" cy="160" r="7" fill="#b45309" />
+          <circle cx="280" cy="160" r="11" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.5" />
+        </g>
+        <text x="280" y="100" fontSize="13" fontWeight="600" fill="#1e3a8a" textAnchor="middle">United States</text>
 
         {/* Mexico */}
-        <circle cx="300" cy="350" r="6" fill="#b45309" opacity="0.8" />
-        <text x="300" y="390" fontSize="14" fill="#1e3a8a" textAnchor="middle" fontWeight="600" opacity="0.9">Mexico</text>
+        <g className="country-marker">
+          <circle cx="200" cy="240" r="7" fill="#b45309" />
+          <circle cx="200" cy="240" r="11" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.5" />
+        </g>
+        <text x="200" y="290" fontSize="13" fontWeight="600" fill="#1e3a8a" textAnchor="middle">Mexico</text>
 
         {/* Haiti */}
-        <circle cx="150" cy="280" r="6" fill="#b45309" opacity="0.8" />
-        <text x="150" y="320" fontSize="14" fill="#1e3a8a" textAnchor="middle" fontWeight="600" opacity="0.9">Haiti</text>
+        <g className="country-marker">
+          <circle cx="140" cy="200" r="7" fill="#b45309" />
+          <circle cx="140" cy="200" r="11" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.5" />
+        </g>
+        <text x="140" y="320" fontSize="13" fontWeight="600" fill="#1e3a8a" textAnchor="middle">Haiti</text>
 
         {/* Zimbabwe */}
-        <circle cx="750" cy="300" r="6" fill="#b45309" opacity="0.8" />
-        <text x="750" y="340" fontSize="14" fill="#1e3a8a" textAnchor="middle" fontWeight="600" opacity="0.9">Zimbabwe</text>
+        <g className="country-marker">
+          <circle cx="750" cy="220" r="7" fill="#b45309" />
+          <circle cx="750" cy="220" r="11" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.5" />
+        </g>
+        <text x="750" y="260" fontSize="13" fontWeight="600" fill="#1e3a8a" textAnchor="middle">Zimbabwe</text>
 
         {/* Zambia */}
-        <circle cx="800" cy="350" r="6" fill="#b45309" opacity="0.8" />
-        <text x="800" y="390" fontSize="14" fill="#1e3a8a" textAnchor="middle" fontWeight="600" opacity="0.9">Zambia</text>
+        <g className="country-marker">
+          <circle cx="780" cy="280" r="7" fill="#b45309" />
+          <circle cx="780" cy="280" r="11" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.5" />
+        </g>
+        <text x="780" y="330" fontSize="13" fontWeight="600" fill="#1e3a8a" textAnchor="middle">Zambia</text>
       </svg>
     </div>
   );

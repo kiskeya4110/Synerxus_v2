@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Link } from "wouter";
 import {
   Card,
   CardContent,
@@ -216,6 +217,7 @@ export default function VolunteerProfileSettings() {
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
         preferredWorkStyle: "", // Will be set through settings page
+        onboardingCompleted: !existingProfile, // Mark as completed on first submission only
       };
       
       return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
@@ -234,6 +236,12 @@ export default function VolunteerProfileSettings() {
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
+      // Redirect to dashboard if first time completing onboarding
+      if (!existingProfile) {
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -331,6 +339,29 @@ export default function VolunteerProfileSettings() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If profile is already completed, show message and redirect option
+  if (existingProfile?.onboardingCompleted) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-700">Profile Already Completed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 mb-4">
+              Your volunteer profile has already been set up. You can now access all features or return to the dashboard.
+            </p>
+            <Link href="/dashboard">
+              <Button className="bg-primary">
+                Go to Dashboard
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }

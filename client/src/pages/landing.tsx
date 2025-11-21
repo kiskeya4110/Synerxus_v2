@@ -17,37 +17,37 @@ import worldMapImg from "@assets/image_1763709456060.png";
 const COUNTRY_DATA = {
   philippines: {
     name: "Philippines",
-    coords: { x: 800, y: 260 },
+    coords: { x: 805, y: 255 },
     pilot: "Healthcare & Community Development",
     description: "Partnering with local NGOs to deliver medical missions and sustainable community health programs.",
   },
   usa: {
     name: "United States",
-    coords: { x: 240, y: 180 },
+    coords: { x: 225, y: 169 },
     pilot: "Skills Matching & Training",
     description: "Advanced volunteer skill assessment and professional development programs.",
   },
   mexico: {
     name: "Mexico",
-    coords: { x: 200, y: 280 },
+    coords: { x: 207, y: 216 },
     pilot: "Education & Environmental",
     description: "Focused on environmental conservation and education initiatives across rural communities.",
   },
   haiti: {
     name: "Haiti",
-    coords: { x: 320, y: 280 },
+    coords: { x: 287, y: 233 },
     pilot: "Infrastructure & Relief",
     description: "Disaster relief and infrastructure development programs supporting vulnerable populations.",
   },
   zimbabwe: {
     name: "Zimbabwe",
-    coords: { x: 620, y: 440 },
+    coords: { x: 558, y: 367 },
     pilot: "Women's Empowerment",
     description: "Supporting women entrepreneurs and community leaders through mentorship and resource access.",
   },
   zambia: {
     name: "Zambia",
-    coords: { x: 600, y: 410 },
+    coords: { x: 554, y: 346 },
     pilot: "Water, Sanitation & Health",
     description: "Implementing WASH initiatives and health education programs across rural areas.",
   },

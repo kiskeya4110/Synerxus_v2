@@ -10,7 +10,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, Loader2, Share2, Save, Copy } from "lucide-react";
+import { Sparkles, Loader2, Share2, Save, Copy, Download, Eye } from "lucide-react";
 
 interface ImpactStoryData {
   id: string;
@@ -55,6 +55,7 @@ export default function ImpactStorytelling({
   const [generatedStory, setGeneratedStory] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"generate" | "saved">("generate");
   const [stories, setStories] = useState<ImpactStoryData[]>(savedStories);
+  const [expandedStoryId, setExpandedStoryId] = useState<string | null>(null);
 
   // Get the selected project data
   const selectedProjectData = projectImpacts.find(p => p.id === selectedProject);
@@ -149,6 +150,20 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
         title: "Copied to clipboard",
         description: "The story has been copied to your clipboard",
       });
+    });
+  };
+
+  const downloadStory = (story: ImpactStoryData) => {
+    const element = document.createElement("a");
+    const file = new Blob([story.generatedStory], { type: "text/plain" });
+    element.href = URL.createObjectURL(file);
+    element.download = `${story.title.replace(/\s+/g, "-")}-${new Date().toISOString().split("T")[0]}.txt`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    toast({
+      title: "Story downloaded",
+      description: "Your impact story has been downloaded",
     });
   };
 
@@ -403,17 +418,50 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="prose prose-sm dark:prose-invert max-w-none">
-                    {story.generatedStory.split('\n').slice(0, 2).map((line, i) => (
-                      <p key={i}>{line}</p>
-                    ))}
-                    {story.generatedStory.split('\n').length > 2 && (
-                      <p className="text-sm text-muted-foreground">
-                        [Click to view full story]
-                      </p>
+                    {expandedStoryId === story.id ? (
+                      // Full story view
+                      story.generatedStory.split('\n').map((line, i) => (
+                        <p key={i}>{line}</p>
+                      ))
+                    ) : (
+                      // Preview view
+                      <>
+                        {story.generatedStory.split('\n').slice(0, 2).map((line, i) => (
+                          <p key={i}>{line}</p>
+                        ))}
+                        {story.generatedStory.split('\n').length > 2 && (
+                          <p className="text-sm text-muted-foreground italic">...</p>
+                        )}
+                      </>
                     )}
                   </div>
+                  
+                  {story.generatedStory.split('\n').length > 2 && (
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedStoryId(expandedStoryId === story.id ? null : story.id)}
+                        className="flex-1 min-h-[40px]"
+                        data-testid={`button-view-story-${story.id}`}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        {expandedStoryId === story.id ? "Collapse Story" : "View Full Story"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadStory(story)}
+                        className="flex-1 min-h-[40px]"
+                        data-testid={`button-download-story-${story.id}`}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download Report
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))

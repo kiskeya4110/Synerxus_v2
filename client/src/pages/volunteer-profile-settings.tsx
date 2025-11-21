@@ -180,11 +180,12 @@ const formSchema = insertVolunteerSchema.extend({
     return sum + (end - start);
   }, 0);
   
-  // Ensure total availability hours don't exceed weekly hours
-  return totalHours <= data.weeklyHours;
-}, {
-  message: "Total availability hours cannot exceed weekly hours available",
-  path: ["availability"],
+  // If slot hours >= weekly hours, update weekly hours to slot hours
+  if (totalHours >= data.weeklyHours) {
+    data.weeklyHours = totalHours;
+  }
+  
+  return true;
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -237,6 +238,18 @@ const useAvailabilityManagement = (form: any) => {
         [field]: value,
       };
       form.setValue("availability", updatedAvailability);
+      
+      // Auto-update weekly hours if availability hours exceed them
+      const totalHours = updatedAvailability.reduce((sum, slot) => {
+        const start = parseInt(slot.startTime?.split(':')[0] || 0);
+        const end = parseInt(slot.endTime?.split(':')[0] || 0);
+        return sum + (end - start);
+      }, 0);
+      
+      const currentWeeklyHours = form.getValues("weeklyHours");
+      if (totalHours >= currentWeeklyHours) {
+        form.setValue("weeklyHours", totalHours);
+      }
     },
     [form],
   );

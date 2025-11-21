@@ -107,22 +107,37 @@ export default function OrganizationProfileSettings() {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      return apiRequest("POST", "/api/matchable-organizations", {
-        ...data,
-        profilePhotoUrl,
-      });
+      // Add timeout protection - 15 seconds max
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Profile creation timeout. Please try again.")), 15000)
+      );
+      
+      try {
+        const result = await Promise.race([
+          apiRequest("POST", "/api/matchable-organizations", {
+            ...data,
+            profilePhotoUrl,
+          }),
+          timeoutPromise
+        ]) as any;
+        return result;
+      } catch (error) {
+        console.error("Create mutation error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch(() => {});
       toast({
         title: "Profile created!",
         description: "Your organization profile has been created successfully.",
       });
     },
     onError: (error: Error) => {
+      console.error("Profile create error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to create profile. Please try again.",
         variant: "destructive",
       });
     },
@@ -132,22 +147,38 @@ export default function OrganizationProfileSettings() {
   const updateMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (!existingProfile?.id) throw new Error("No profile found to update");
-      return apiRequest("PATCH", `/api/matchable-organizations/${existingProfile.id}`, {
-        ...data,
-        profilePhotoUrl,
-      });
+      
+      // Add timeout protection - 15 seconds max
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Profile update timeout. Please try again.")), 15000)
+      );
+      
+      try {
+        const result = await Promise.race([
+          apiRequest("PATCH", `/api/matchable-organizations/${existingProfile.id}`, {
+            ...data,
+            profilePhotoUrl,
+          }),
+          timeoutPromise
+        ]) as any;
+        return result;
+      } catch (error) {
+        console.error("Update mutation error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch(() => {});
       toast({
         title: "Profile updated!",
         description: "Your organization profile has been updated successfully.",
       });
     },
     onError: (error: Error) => {
+      console.error("Profile update error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to update profile. Please try again.",
         variant: "destructive",
       });
     },

@@ -866,23 +866,26 @@ export default function VolunteerProfileSettings() {
   const mutationConfig = {
     onSuccess: () => {
       const id = currentUser?.id;
-      // Invalidate all relevant queries
-      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      // Invalidate queries without waiting for all to complete
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
+      // These can happen in background without blocking the toast
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] });
+      
       toast({
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
     },
     onError: (error: Error) => {
+      console.error("Profile save error:", error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to save profile. Please try again.",
         variant: "destructive",
       });
     },
@@ -907,7 +910,21 @@ export default function VolunteerProfileSettings() {
         profilePhotoUrl: profilePhotoUrl,
       };
       
-      return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
+      // Add timeout protection - 15 seconds max
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Profile save timeout. Please try again.")), 15000)
+      );
+      
+      try {
+        const result = await Promise.race([
+          apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData),
+          timeoutPromise
+        ]) as any;
+        return result;
+      } catch (error) {
+        console.error("Profile mutation error:", error);
+        throw error;
+      }
     },
     ...mutationConfig,
   });

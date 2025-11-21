@@ -56,30 +56,46 @@ export default function ImpactReportGenerator() {
   const onSubmit = async (data: ReportFormData) => {
     setGenerating(true);
     try {
+      const payload = {
+        ...data,
+        organizationName: currentUser?.name || "Organization",
+        metrics: {
+          activeVolunteers: dashboardData?.activeVolunteers || 0,
+          totalHours: dashboardData?.totalHours || 0,
+          activeProjects: dashboardData?.activeProjects || 0,
+          totalBeneficiariesReached: dashboardData?.totalBeneficiariesReached || 0,
+          totalVolunteers: dashboardData?.activeVolunteers || 0,
+        },
+      };
+
+      console.log("Sending report request:", payload);
+
       const response = await fetch("/api/generate-impact-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          organizationName: currentUser?.name || "Organization",
-          organizationLogo: currentUser?.profilePictureUrl || "",
-          metrics: dashboardData || {},
-          userId: currentUser?.id,
-        }),
+        body: JSON.stringify(payload),
       });
-
-      if (!response.ok) throw new Error("Failed to generate report");
 
       const result = await response.json();
-      setGeneratedReport(result.report);
-      toast({
-        title: "Success",
-        description: "Impact report generated successfully!",
-      });
-    } catch (error) {
+      
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to generate report");
+      }
+
+      if (result.report) {
+        setGeneratedReport(result.report);
+        toast({
+          title: "Success",
+          description: "Impact report generated successfully!",
+        });
+      } else {
+        throw new Error("No report content received");
+      }
+    } catch (error: any) {
+      console.error("Report generation error:", error);
       toast({
         title: "Error",
-        description: "Failed to generate report. Please try again.",
+        description: error.message || "Failed to generate report. Please try again.",
         variant: "destructive",
       });
     } finally {

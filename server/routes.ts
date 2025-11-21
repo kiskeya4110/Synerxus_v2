@@ -87,8 +87,8 @@ async function calculateProjectProgress(projectId: number): Promise<number> {
 
     // **35% Weight: Hours Logged vs Expected Hours**
     const totalHoursLogged = activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-    if (project.projectTotalHours || project.ongoingHoursPerWeek) {
-      const expectedHours = project.projectTotalHours || (project.ongoingHoursPerWeek * 4); // Assume 4 weeks
+    if (project.projectTotalHours || (project.ongoingHoursPerWeek && project.ongoingHoursPerWeek > 0)) {
+      const expectedHours = project.projectTotalHours || (project.ongoingHoursPerWeek! * 4); // Assume 4 weeks
       const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
       progressScore += hoursProgress * 0.35;
     } else {
@@ -2953,7 +2953,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hoursByProject: dashboardData.hoursByProject,
           monthlyImpactTrend: dashboardData.monthlyImpactTrend,
           monthlyImpactData: dashboardData.monthlyImpactData,
-          impactBySDG: dashboardData.impactBySDG,
+          impactBySDG: dashboardData.impactBySDG || [],
           impactGrowthSeries: dashboardData.impactGrowthSeries,
           projects: dashboardData.projects,
           tasks: dashboardData.tasks,
@@ -3905,75 +3905,78 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         impactFocus,
         organizationName,
         metrics,
-        userId,
       } = req.body;
 
       if (!projectTitle || !reportingPeriod) {
         return res.status(400).json({ message: "Missing required fields" });
       }
 
-      const openai = new OpenAI({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      });
+      try {
+        const openai = new OpenAI({
+          apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+          baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+        });
 
-      const prompt = `Generate a professional Synerxus Impact Report using the following data:
+        const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant. Format the report as a professional document.`;
 
-Organization: ${organizationName}
-Project: ${projectTitle}
-Reporting Period: ${reportingPeriod}
-Locations: ${locationsServed}
+        const userPrompt = `Generate a Synerxus Impact Report:
 
-Key Metrics:
-- Volunteers Engaged: ${metrics?.activeVolunteers || 0}
+ORGANIZATION: ${organizationName}
+PROJECT: ${projectTitle}
+REPORTING PERIOD: ${reportingPeriod}
+LOCATIONS: ${locationsServed}
+
+KEY METRICS:
+- Volunteers Engaged: ${metrics?.activeVolunteers || metrics?.totalVolunteers || 0}
 - Hours Contributed: ${metrics?.totalHours || 0}
 - Active Projects: ${metrics?.activeProjects || 0}
 - Beneficiaries Reached: ${metrics?.totalBeneficiariesReached || 0}
 
-Stories from the Ground:
-${keyStories}
+STORIES: ${keyStories}
+CSR/ESG: ${csrAlignment}
 
-CSR/ESG Alignment:
-${csrAlignment}
+REPORT CUSTOMIZATION:
+- Audience: ${targetAudience}
+- Tone: ${tone}
+- Focus: ${impactFocus}
 
-Customize the report for:
-- Target Audience: ${targetAudience} (funder/CSR team/NGO partner/volunteer)
-- Tone: ${tone} (professional/inspirational/data-driven/warm)
-- Impact Focus: ${impactFocus} (SDG alignment/beneficiary reach/volunteer hours/ESG metrics)
+Create a professional report with these sections:
+1. Header and Executive Summary
+2. Key Achievements (with metrics)
+3. Impact Stories
+4. SDG Alignment
+5. CSR/ESG Contributions
+6. Next Steps
 
-Format as a formal impact report with:
-1. Header with organization name and date
-2. Executive Summary (2-3 sentences)
-3. Key Metrics section with formatted table
-4. Impact Stories (2 highlighted stories)
-5. SDG Alignment section
-6. CSR/ESG Alignment section
-7. Next Steps and Call to Action
+Format it as a polished document ready for ${targetAudience}.`;
 
-Make it compelling, data-driven, and ready for presentation to ${targetAudience}. Use a ${tone} tone throughout. Focus primarily on ${impactFocus}.`;
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.7,
+          max_tokens: 2500,
+        });
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert impact report writer for nonprofit organizations. Create compelling, data-driven reports that resonate with different audiences.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 2000,
-      });
+        const reportContent = completion.choices[0]?.message?.content;
+        if (!reportContent) {
+          return res.status(500).json({ message: "Failed to generate report content" });
+        }
 
-      const reportContent = completion.choices[0]?.message?.content || "";
-
-      res.json({
-        report: reportContent,
-        generatedAt: new Date().toISOString(),
-      });
+        return res.json({
+          report: reportContent,
+          generatedAt: new Date().toISOString(),
+          success: true,
+        });
+      } catch (openaiErr: any) {
+        console.error("OpenAI API Error:", openaiErr.message || openaiErr);
+        return res.status(503).json({ 
+          message: "OpenAI service unavailable. Check API key configuration.",
+          error: openaiErr.message 
+        });
+      }
     } catch (err) {
       console.error("Error generating impact report:", err);
       res.status(500).json({ message: "Failed to generate impact report" });

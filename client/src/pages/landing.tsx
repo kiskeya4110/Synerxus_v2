@@ -397,7 +397,7 @@ export default function Landing() {
         <div className="container mx-auto px-3 sm:px-6 py-2 sm:py-4 flex justify-between items-center gap-2 sm:gap-4">
           <Link href="/">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
-              <Logo size="xs" className="sm:hidden" />
+              <Logo size="sm" className="sm:hidden" />
               <Logo size="sm" className="hidden sm:block md:hidden" />
               <Logo size="md" className="hidden md:block" />
             </div>
@@ -407,7 +407,7 @@ export default function Landing() {
               <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200" data-testid="button-login">Log In</Button>
             </Link>
             <Link href="/login">
-              <Button size="xs" className="sm:size-sm min-h-[40px] sm:min-h-auto whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm px-3 sm:px-4" data-testid="button-get-started">
+              <Button size="sm" className="min-h-[40px] sm:min-h-auto whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm px-3 sm:px-4" data-testid="button-get-started">
                 <span className="sm:hidden">Start</span>
                 <span className="hidden sm:inline">Get Started</span>
               </Button>

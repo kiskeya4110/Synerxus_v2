@@ -312,7 +312,7 @@ export default function Profile() {
         )}
 
         {/* Skills with Ratings - Enhanced Version */}
-        {isVolunteer && profile?.skills && profile.skills.length > 0 && (
+        {isVolunteer && volunteerProfile?.skills && volunteerProfile.skills.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -325,20 +325,46 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {profile.skills.map((skill: string, index: number) => {
-                  const skillRatings = profile.skillRatings as Record<string, number> || {};
-                  const rating = skillRatings[skill] || 0;
+                {volunteerProfile.skills.map((skill: string, index: number) => {
+                  const skillRatings = (volunteerProfile.skillRatings as Record<string, number>) || {};
+                  
+                  // Parse skill name and rating
+                  // If stored as "Skill (85%)", extract the skill name
+                  const skillNameMatch = skill.match(/^([^(]*)/);
+                  const cleanSkillName = skillNameMatch ? skillNameMatch[1].trim() : skill;
+                  
+                  // Look up rating from skillRatings by clean name first, otherwise try original
+                  const rating = skillRatings[cleanSkillName] || skillRatings[skill] || 0;
+                  
                   return (
                     <div key={index} className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{skill}</span>
-                        <span className="text-sm text-muted-foreground">{rating}%</span>
+                        <span className="font-medium text-base">{cleanSkillName}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-primary">{rating}%</span>
+                        </div>
                       </div>
-                      <Progress value={rating} className="h-2" />
+                      <Progress value={rating} className="h-2.5" />
                     </div>
                   );
                 })}
               </div>
+              
+              {/* Skills Summary */}
+              <div className="mt-6 pt-4 border-t">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-sm font-medium">Skills Summary</p>
+                  <Badge variant="secondary">
+                    {volunteerProfile.skills.length} skills
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Average proficiency: {volunteerProfile.skillRatings 
+                    ? Math.round((Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0) / Object.keys(volunteerProfile.skillRatings as Record<string, number>).length) || 0)
+                    : 0}%
+                </p>
+              </div>
+              
               <div className="mt-4 pt-4 border-t">
                 <Link href="/volunteer-intake">
                   <span className="text-sm text-primary hover:underline cursor-pointer">

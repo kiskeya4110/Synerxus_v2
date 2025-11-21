@@ -81,18 +81,18 @@ export default function Landing() {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Navigation */}
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-4">
           <Link href="/">
-            <div className="cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
               <Logo size="md" />
             </div>
           </Link>
-          <div className="flex gap-2 sm:gap-3">
+          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto" data-testid="button-login">Log In</Button>
+              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap" data-testid="button-login">Log In</Button>
             </Link>
             <Link href="/login">
-              <Button size="sm" className="min-h-[44px] sm:min-h-auto" data-testid="button-get-started">Get Started</Button>
+              <Button size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap" data-testid="button-get-started">Get Started</Button>
             </Link>
           </div>
         </div>

@@ -51,7 +51,7 @@ const SDG_COLORS: Record<number, string> = {
 };
 
 export default function ImpactStorytellingPage() {
-  const [reportViewTab, setReportViewTab] = useState("metrics");
+  const [reportViewTab, setReportViewTab] = useState("letter");
   const userId = localStorage.getItem('currentUserId');
   
   const { data: currentUser } = useQuery<any>({
@@ -109,36 +109,44 @@ export default function ImpactStorytellingPage() {
   const projects = dashboardData?.projects || [];
   const projectImpacts = dashboardData?.impacts || [];
 
-  const projectImpactData = projects.map((project: any) => {
-    const impacts = projectImpacts.filter((impact: any) => impact.projectId === project.id);
-    
-    const metrics = impacts.map((impact: any) => {
-      const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
-      const beforeValue = impact.baselineValue || Math.floor((impact.value || 0) * 0.3);
-      const afterValue = impact.value || 0;
-      
+  // Consolidate metrics - avoid duplication
+  const projectImpactData = projects
+    .filter((project: any) => {
+      const impacts = projectImpacts.filter((impact: any) => impact.projectId === project.id);
+      return impacts.length > 0;
+    })
+    .map((project: any) => {
+      const impacts = projectImpacts.filter((impact: any) => impact.projectId === project.id);
+      const metrics = impacts.map((impact: any) => {
+        const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
+        const beforeValue = impact.baselineValue || Math.floor((impact.value || 0) * 0.3);
+        const afterValue = impact.value || 0;
+        
+        return {
+          label: metric?.name || "Impact Metric",
+          before: beforeValue,
+          after: afterValue,
+          unit: metric?.unit || "units"
+        };
+      });
+
       return {
-        label: metric?.name || "Impact Metric",
-        before: beforeValue,
-        after: afterValue,
-        unit: metric?.unit || "units"
+        id: project.id.toString(),
+        name: project.name,
+        description: project.description || "",
+        metrics,
+        location: project.location || "Unknown Location",
+        date: project.startDate || project.createdAt
       };
     });
 
-    return {
-      id: project.id.toString(),
-      name: project.name,
-      description: project.description || "",
-      metrics,
-      location: project.location || "Unknown Location",
-      date: project.startDate || project.createdAt
-    };
-  }).filter((p: any) => p.metrics.length > 0);
-
-  // Calculate key metrics
+  // Calculate metrics once (consolidated, no duplication)
   const totalVolunteers = volunteerStats?.length || 0;
   const totalHoursContributed = sdgData?.totalEngagementHours || 0;
   const activeProjects = projects.filter((p: any) => p.status !== 'completed').length;
+  const completedProjects = projects.filter((p: any) => p.status === 'completed').length;
+  const completionPercent = projects.length > 0 ? Math.round((completedProjects / projects.length) * 100) : 0;
+  
   const totalBeneficiariesReached = projectImpacts.reduce((sum: number, impact: any) => {
     if (impact.description?.toLowerCase().includes('people') || 
         impact.description?.toLowerCase().includes('beneficiar') ||
@@ -148,20 +156,22 @@ export default function ImpactStorytellingPage() {
     }
     return sum;
   }, 0);
+  
   const uniqueLocations = new Set(projects.map((p: any) => p.location).filter(Boolean)).size;
-
-  // Get SDGs addressed
   const addressedSDGs = sdgData?.sdgContributions?.map((s: any) => s.sdgNumber) || [];
+  const retentionRate = totalVolunteers > 0 ? Math.round((totalHoursContributed / (totalVolunteers * 40)) * 100) : 0;
+
+  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <>
-      {/* Page Header */}
+      {/* Page Header with Export/Share */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-3xl font-bold">Impact Report & Stories</h1>
             <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Track SDG contributions, metrics, and transform impact data into compelling narratives
+              Comprehensive impact assessment and narrative documentation
             </p>
           </div>
           <div className="flex gap-2">
@@ -177,169 +187,171 @@ export default function ImpactStorytellingPage() {
         </div>
       </div>
 
-      {/* Tabs for Report Sections */}
+      {/* Tabs for Report Views */}
       <Tabs value={reportViewTab} onValueChange={setReportViewTab} className="space-y-6">
-        <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full" data-testid="tabs-report-sections">
-          <TabsTrigger value="metrics" className="text-xs sm:text-sm">📊 Metrics</TabsTrigger>
-          <TabsTrigger value="executive" className="text-xs sm:text-sm">📋 Executive</TabsTrigger>
-          <TabsTrigger value="dashboard" className="text-xs sm:text-sm">📈 Dashboard</TabsTrigger>
-          <TabsTrigger value="stories" className="text-xs sm:text-sm">📖 Stories</TabsTrigger>
-          <TabsTrigger value="csr" className="text-xs sm:text-sm">🏢 CSR/ESG</TabsTrigger>
-          <TabsTrigger value="next" className="text-xs sm:text-sm">🎯 Next Steps</TabsTrigger>
+        <TabsList className="grid grid-cols-2 lg:grid-cols-3 w-full" data-testid="tabs-report-views">
+          <TabsTrigger value="letter" className="text-xs sm:text-sm">📄 Formal Report</TabsTrigger>
+          <TabsTrigger value="dashboard" className="text-xs sm:text-sm">📊 Impact Dashboard</TabsTrigger>
+          <TabsTrigger value="stories" className="text-xs sm:text-sm">📖 Stories & Cases</TabsTrigger>
         </TabsList>
 
-        {/* SECTION 1: KEY METRICS */}
-        <TabsContent value="metrics" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <span>📊 Key Metrics Overview</span>
-              </CardTitle>
-              <CardDescription>Core performance indicators across volunteer engagement, projects, and impact</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              {/* Volunteer Engagement Section */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-blue-900 dark:text-blue-100">Volunteer Engagement</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalVolunteers}</div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Number of Volunteers</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalHoursContributed}</div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Hours Contributed</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        {totalVolunteers > 0 ? Math.round((totalHoursContributed / (totalVolunteers * 40)) * 100) : 0}%
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Retention Rate</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Project Outcomes Section */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-green-900 dark:text-green-100">Project Outcomes</h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">{activeProjects}</div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Active Projects</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        {projects.length > 0 ? Math.round(((projects.length - activeProjects) / projects.length) * 100) : 0}%
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Completion Status</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">{uniqueLocations}</div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Locations Served</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* SDG Alignment Section */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-purple-900 dark:text-purple-100">SDG Alignment</h3>
-                <div className="space-y-3">
+        {/* FORMAL LETTER REPORT */}
+        <TabsContent value="letter" className="space-y-6">
+          <Card className="border-2 border-slate-300 dark:border-slate-600">
+            <CardContent className="pt-12 p-8 leading-relaxed font-serif text-gray-900 dark:text-gray-100 space-y-6">
+              {/* Letterhead */}
+              <div className="border-b-2 border-slate-400 pb-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <p className="text-sm font-medium mb-2">Goals Addressed: {addressedSDGs.length > 0 ? addressedSDGs.join(", ") : "None yet"}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {addressedSDGs.map((sdg: number) => (
-                        <Badge key={sdg} style={{ backgroundColor: SDG_COLORS[sdg] }} className="text-white">
-                          SDG {sdg}
-                        </Badge>
-                      ))}
-                    </div>
+                    <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Synerxus</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Connect. Collaborate. Impact Globally.</p>
+                  </div>
+                  <div className="text-right text-xs text-gray-600 dark:text-gray-400">
+                    <p>Synerxus Foundation</p>
+                    <p>impact@synerxus.org</p>
+                    <p>+1 (555) 123-4567</p>
                   </div>
                 </div>
               </div>
 
-              {/* Beneficiary Impact Section */}
-              <div>
-                <h3 className="text-lg font-semibold mb-4 text-orange-900 dark:text-orange-100">Beneficiary Impact</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">{totalBeneficiariesReached}</div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">People Reached</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800">
-                    <CardContent className="pt-6">
-                      <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-                        {projectImpacts.filter((i: any) => 
-                          i.description?.toLowerCase().includes('health') ||
-                          i.description?.toLowerCase().includes('medical')
-                        ).length}
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Services Delivered</p>
-                    </CardContent>
-                  </Card>
-                </div>
+              {/* Date and Reference */}
+              <div className="space-y-1 text-sm">
+                <p>{currentDate}</p>
+                <p className="font-semibold">{projects.length > 0 ? projects[0].name : "Comprehensive Impact Report"}</p>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        {/* SECTION 2: EXECUTIVE SUMMARY */}
-        <TabsContent value="executive" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>📋 Executive Summary</CardTitle>
-              <CardDescription>Overview of project goals, activities, and outcomes</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-lg space-y-4">
-                <div>
-                  <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-1">Project/Program Name</h4>
-                  <p className="text-lg font-bold">{projects.length > 0 ? projects[0].name : "Overall Impact Program"}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              {/* Salutation */}
+              <div>
+                <p>Dear Stakeholder,</p>
+              </div>
+
+              {/* Introduction/Executive Summary */}
+              <div className="space-y-4">
+                <p>
+                  We are pleased to present this comprehensive impact report documenting the significant progress and outcomes achieved 
+                  through our volunteer engagement initiatives. This report synthesizes key metrics, performance indicators, and qualitative 
+                  narratives that demonstrate our commitment to advancing the United Nations Sustainable Development Goals across six pilot 
+                  countries: Philippines, USA, Mexico, Haiti, Zimbabwe, and Zambia.
+                </p>
+              </div>
+
+              {/* Key Performance Indicators - Consolidated */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-4">Performance Summary</h3>
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
                   <div>
-                    <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-1">Date</h4>
-                    <p className="text-sm">{new Date().toLocaleDateString()}</p>
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalVolunteers}</div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Volunteers Engaged</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-1">Locations</h4>
-                    <p className="text-sm">{projects.length > 0 ? projects.map((p: any) => p.location).filter(Boolean).join(", ") || "Multiple" : "TBD"}</p>
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalHoursContributed}</div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Hours Contributed</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{retentionRate}%</div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Retention Rate</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{activeProjects}</div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Active Projects</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{completionPercent}%</div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Project Completion</p>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{totalBeneficiariesReached}</div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Beneficiaries Reached</p>
                   </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-sm text-gray-600 dark:text-gray-400 mb-2">Brief Overview</h4>
-                  <p className="text-sm leading-relaxed">
-                    {projects.length > 0 
-                      ? projects[0].description || "Project focused on creating sustainable impact through volunteer engagement."
-                      : "Impact initiative connecting global volunteers with opportunities to drive sustainable development across 6 pilot countries."}
+                
+                {/* Bullet-point KPIs */}
+                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300 list-disc list-inside">
+                  <li>Geographic reach across {uniqueLocations} distinct locations</li>
+                  <li>Alignment with {addressedSDGs.length} United Nations Sustainable Development Goals</li>
+                  <li>Average volunteer commitment: {totalVolunteers > 0 ? Math.round(totalHoursContributed / totalVolunteers) : 0} hours per volunteer</li>
+                  <li>Project completion rate demonstrates operational excellence and execution capacity</li>
+                </ul>
+              </div>
+
+              {/* Key Findings Section */}
+              <div className="space-y-4">
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white">Key Findings</h3>
+                <div className="space-y-3 text-sm">
+                  <p>
+                    <strong>Volunteer Engagement:</strong> Our platform successfully engaged {totalVolunteers} dedicated volunteers who contributed 
+                    {totalHoursContributed} hours toward meaningful social impact. This represents a {retentionRate}% retention rate, indicative of 
+                    strong program satisfaction and volunteer commitment.
+                  </p>
+                  <p>
+                    <strong>Project Delivery:</strong> With {activeProjects} active projects and a {completionPercent}% completion rate, 
+                    we demonstrate consistent project execution and stakeholder accountability across all operational regions.
+                  </p>
+                  <p>
+                    <strong>Beneficiary Impact:</strong> Our initiatives directly reached {totalBeneficiariesReached} individuals, delivering 
+                    tangible services and sustainable development outcomes in underserved communities.
+                  </p>
+                  <p>
+                    <strong>SDG Alignment:</strong> All volunteer efforts contribute to {addressedSDGs.length} distinct UN SDGs, ensuring 
+                    our work is strategically aligned with global development priorities and maximizes long-term systemic change.
                   </p>
                 </div>
               </div>
+
+              {/* SDG Alignment Details */}
+              {addressedSDGs.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="font-bold text-slate-900 dark:text-white">Sustainable Development Goals Addressed</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {addressedSDGs.map((sdg: number) => (
+                      <Badge key={sdg} style={{ backgroundColor: SDG_COLORS[sdg] }} className="text-white text-xs">
+                        SDG {sdg}: {SDG_LABELS[sdg]}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Next Steps and Call to Action */}
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 space-y-4">
+                <h3 className="font-bold text-slate-900 dark:text-white">Next Steps and Recommendations</h3>
+                <ul className="space-y-2 text-sm list-disc list-inside text-gray-700 dark:text-gray-300">
+                  <li>Scale volunteer onboarding and skills-matching capabilities across remaining pilot geographies</li>
+                  <li>Implement advanced real-time impact tracking and dashboard analytics for stakeholder transparency</li>
+                  <li>Develop corporate partnership frameworks to align ESG objectives with community impact initiatives</li>
+                  <li>Establish measurement methodologies for long-term beneficiary outcome tracking and sustainability verification</li>
+                </ul>
+              </div>
+
+              {/* Closing and Signature Area */}
+              <div className="space-y-6 pt-6 border-t border-gray-300 dark:border-gray-600">
+                <p>
+                  We remain committed to connecting global volunteers with meaningful opportunities for sustainable impact. Through continued 
+                  collaboration with stakeholders, partners, and beneficiary communities, we will amplify our reach and deepen our contributions 
+                  to global development priorities.
+                </p>
+                <p>
+                  We welcome your engagement and partnership in this important work.
+                </p>
+                <div className="space-y-1">
+                  <p>Sincerely,</p>
+                  <div className="h-16"></div>
+                  <p className="font-semibold">Synerxus Impact Team</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Prepared: {currentDate}</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* SECTION 3: IMPACT DASHBOARD */}
+        {/* IMPACT DASHBOARD TAB */}
         <TabsContent value="dashboard" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>📈 Impact Dashboard</CardTitle>
-              <CardDescription>Visual representation of volunteer hours, SDG distribution, and geographic reach</CardDescription>
+              <CardTitle>SDG Impact Distribution</CardTitle>
+              <CardDescription>Volunteer contributions and project metrics by Sustainable Development Goal</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent>
               {isLoadingSDG ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
@@ -348,7 +360,6 @@ export default function ImpactStorytellingPage() {
                 </div>
               ) : sdgData?.sdgContributions && sdgData.sdgContributions.length > 0 ? (
                 <div className="space-y-4">
-                  <h4 className="font-semibold mb-4">SDG Distribution</h4>
                   {sdgData.sdgContributions.map((sdg: any) => {
                     const percentage = sdgData.totalEngagementHours > 0
                       ? (sdg.hours / sdgData.totalEngagementHours) * 100
@@ -392,120 +403,19 @@ export default function ImpactStorytellingPage() {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p>No SDG contributions recorded yet.</p>
+                  <p>No SDG contributions recorded yet. Begin tracking volunteer activities to generate impact data.</p>
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* SECTION 4: STORIES FROM THE GROUND */}
+        {/* STORIES AND CASE STUDIES TAB */}
         <TabsContent value="stories" className="space-y-6">
           <ImpactStorytelling 
             projectImpacts={projectImpactData}
             savedStories={[]}
           />
-        </TabsContent>
-
-        {/* SECTION 5: CSR/ESG ALIGNMENT */}
-        <TabsContent value="csr" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>🏢 Corporate CSR/ESG Alignment</CardTitle>
-              <CardDescription>Employee participation and verified impact metrics for sustainability audits</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800">
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">{totalVolunteers}</div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Employee Participation</p>
-                  </CardContent>
-                </Card>
-                <Card className="bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800">
-                  <CardContent className="pt-6">
-                    <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">{totalHoursContributed}</div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Verified Hours</p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-lg p-6 space-y-4">
-                <h4 className="font-semibold text-teal-900 dark:text-teal-100">ESG Indicators</h4>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <Badge className="mt-1">✓</Badge>
-                    <span><strong>Social Impact:</strong> {totalBeneficiariesReached} beneficiaries reached through volunteer initiatives</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Badge className="mt-1">✓</Badge>
-                    <span><strong>Environmental Focus:</strong> {addressedSDGs.includes(13) || addressedSDGs.includes(14) || addressedSDGs.includes(15) ? "Yes" : "Not yet"} - Climate, water, and land conservation SDGs addressed</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Badge className="mt-1">✓</Badge>
-                    <span><strong>Governance:</strong> Transparent reporting aligned with UN Sustainable Development Goals</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-                <h4 className="font-semibold text-green-900 dark:text-green-100 mb-3">Verified Impact for Audit</h4>
-                <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                  <li>✓ {activeProjects} active projects with measurable outcomes</li>
-                  <li>✓ {uniqueLocations} geographic locations with documented impact</li>
-                  <li>✓ {addressedSDGs.length} UN Sustainable Development Goals directly supported</li>
-                  <li>✓ Transparent volunteer hour tracking and beneficiary data collection</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* SECTION 6: NEXT STEPS */}
-        <TabsContent value="next" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>🎯 Next Steps & Call to Action</CardTitle>
-              <CardDescription>Planned activities and opportunities for further engagement</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-6 space-y-4">
-                <h4 className="font-semibold text-indigo-900 dark:text-indigo-100">Planned Activities</h4>
-                <ul className="space-y-2 text-sm list-disc list-inside">
-                  <li>Expand volunteer network across remaining pilot countries</li>
-                  <li>Scale impact measurement and real-time dashboard analytics</li>
-                  <li>Develop advanced skill-matching algorithms for opportunity pairing</li>
-                  <li>Launch corporate partnership programs for ESG alignment</li>
-                </ul>
-              </div>
-
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 space-y-4">
-                <h4 className="font-semibold text-blue-900 dark:text-blue-100">Opportunities for Further Engagement</h4>
-                <ul className="space-y-2 text-sm list-disc list-inside">
-                  <li>Partner with us to support specific SDG initiatives</li>
-                  <li>Host training workshops and skill-building sessions</li>
-                  <li>Provide pro-bono services or corporate volunteering</li>
-                  <li>Co-develop impact frameworks and measurement methodologies</li>
-                </ul>
-              </div>
-
-              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 space-y-4">
-                <h4 className="font-semibold text-green-900 dark:text-green-100">Call to Action</h4>
-                <p className="text-sm leading-relaxed">
-                  Join the global movement to connect volunteers with impact. Whether you're an individual looking to contribute your skills, 
-                  an organization seeking to amplify your reach, or a corporate partner committed to ESG excellence, Synerxus is your platform 
-                  for sustainable development. Together, we're building a more equitable world.
-                </p>
-              </div>
-
-              <div className="text-center pt-4">
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  Prepared by: <strong>Synerxus</strong><br />
-                  Contact: info@synerxus.org | +1 (555) 123-4567
-                </p>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </>

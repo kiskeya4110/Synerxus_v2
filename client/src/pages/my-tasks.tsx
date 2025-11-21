@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp, Building2 } from "lucide-react";
+import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp, Building2, Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,7 @@ interface TaskWithProject extends Task {
 
 export default function MyTasks() {
   const [activeTab, setActiveTab] = useState("tasks");
+  const [taskHours, setTaskHours] = useState<{ [key: number]: string }>({});
   const { toast } = useToast();
 
   // Fetch current user to get their ID
@@ -105,6 +107,38 @@ export default function MyTasks() {
   const handleCompleteTask = (taskId: number) => {
     updateTaskMutation.mutate({ taskId, status: "completed" });
   };
+
+  // Mutation to log hours for a task
+  const logHoursMutation = useMutation({
+    mutationFn: async ({ taskId, projectId, hours }: { taskId: number; projectId: number; hours: number }) => {
+      return await apiRequest("POST", "/api/volunteer-activities", {
+        userId: volunteerId,
+        projectId,
+        taskId,
+        hours,
+        date: new Date().toISOString(),
+        description: `Logged ${hours} hour(s) for task`
+      });
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Hours logged",
+        description: `Successfully logged ${variables.hours} hour(s)`,
+      });
+      // Reset input and invalidate queries for real-time updates
+      setTaskHours(prev => ({ ...prev, [variables.taskId]: "" }));
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const tasksByStatus = {
     todo: tasks.filter(t => t.status?.toLowerCase() === "todo" || t.status?.toLowerCase() === "pending"),
@@ -265,7 +299,7 @@ export default function MyTasks() {
                             <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                           )}
                           {project && (
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1 mb-3">
                               <p className="text-sm text-gray-500">
                                 <FolderKanban className="inline h-3 w-3 mr-1" />
                                 {project.name}
@@ -278,6 +312,39 @@ export default function MyTasks() {
                               )}
                             </div>
                           )}
+                          {/* Hours Input Section */}
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.5"
+                              placeholder="Hours"
+                              value={taskHours[task.id] || ""}
+                              onChange={(e) => setTaskHours(prev => ({ ...prev, [task.id]: e.target.value }))}
+                              className="w-20 h-8"
+                              data-testid={`input-hours-task-${task.id}`}
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const hours = parseFloat(taskHours[task.id]);
+                                if (!isNaN(hours) && hours > 0) {
+                                  logHoursMutation.mutate({ taskId: task.id, projectId: task.projectId!, hours });
+                                } else {
+                                  toast({
+                                    title: "Invalid input",
+                                    description: "Please enter a valid number of hours",
+                                    variant: "destructive"
+                                  });
+                                }
+                              }}
+                              disabled={logHoursMutation.isPending}
+                              data-testid={`button-log-hours-${task.id}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
                         </div>
                         <Button 
                           size="sm" 

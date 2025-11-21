@@ -121,6 +121,46 @@ export default function Profile() {
   // Current projects from active assignments
   const currentProjects = assignmentsArray.filter((a: any) => a.status === 'active').slice(0, 5);
 
+  // Calculate profile completion score based on settings data
+  const calculateProfileCompleteness = () => {
+    if (!volunteerProfile) return 0;
+    let completedFields = 0;
+    let totalFields = 0;
+    
+    // Check critical fields
+    if (volunteerProfile.volunteerName) completedFields++;
+    totalFields++;
+    
+    if (volunteerProfile.professionalTitle) completedFields++;
+    totalFields++;
+    
+    if (volunteerProfile.skills && Array.isArray(volunteerProfile.skills) && volunteerProfile.skills.length > 0) completedFields++;
+    totalFields++;
+    
+    if (typeof volunteerProfile.weeklyAvailability === 'number' && volunteerProfile.weeklyAvailability > 0) completedFields++;
+    totalFields++;
+    
+    if (volunteerProfile.preferredSdgs && Array.isArray(volunteerProfile.preferredSdgs) && volunteerProfile.preferredSdgs.length > 0) completedFields++;
+    totalFields++;
+    
+    if (volunteerProfile.preferredWorkStyle) completedFields++;
+    totalFields++;
+    
+    if (volunteerProfile.location) completedFields++;
+    totalFields++;
+    
+    return Math.round((completedFields / totalFields) * 100);
+  };
+
+  // Calculate skill diversity score from proficiency ratings
+  const calculateSkillScore = () => {
+    if (!volunteerProfile?.skillRatings) return 0;
+    const ratings = typeof volunteerProfile.skillRatings === 'object' ? Object.values(volunteerProfile.skillRatings) : [];
+    if (ratings.length === 0) return 0;
+    const avgRating = (ratings.reduce((sum: any, r: any) => sum + (typeof r === 'number' ? r : 0), 0) / ratings.length);
+    return Math.round(avgRating / 20); // Convert 0-100 to 0-5 star scale
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -196,18 +236,18 @@ export default function Profile() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-2">
-                      <div className="text-2xl font-bold">{(profile?.overallRating || 0).toFixed(1)}</div>
+                      <div className="text-2xl font-bold">{(profile?.overallRating || calculateSkillScore()).toFixed(1)}</div>
                       <div className="flex gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`h-4 w-4 ${star <= (profile?.overallRating || 0) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
+                            className={`h-4 w-4 ${star <= (profile?.overallRating || calculateSkillScore()) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'}`}
                           />
                         ))}
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Click to edit profile
+                      {profile?.overallRating ? 'From feedback' : 'Based on skills'}
                     </p>
                   </CardContent>
                 </Card>
@@ -222,9 +262,11 @@ export default function Profile() {
                     <Clock className="h-4 w-4 text-blue-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0} hrs</div>
+                    <div className="text-2xl font-bold">{profile?.weeklyAvailability || 0} <span className="text-sm font-normal">hrs/week</span></div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Click to update availability
+                      {profile?.availability && Array.isArray(profile.availability) && profile.availability.length > 0 
+                        ? `${profile.availability.length} time slots set` 
+                        : 'No time slots set'}
                     </p>
                   </CardContent>
                 </Card>

@@ -106,6 +106,7 @@ export default function Profile() {
   const { data: activities } = useQuery({
     queryKey: ["/api/volunteer-activities", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
+    staleTime: 0, // Always refetch fresh data for real-time updates
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];
@@ -119,6 +120,7 @@ export default function Profile() {
   const { data: assignments } = useQuery({
     queryKey: ["/api/project-assignments", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
+    staleTime: 0, // Always refetch fresh data for real-time updates
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return [];

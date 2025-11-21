@@ -28,9 +28,9 @@ export default function Landing() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/95 backdrop-blur">
+      <nav className="sticky top-0 z-50 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-4">
           <Link href="/">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
@@ -39,7 +39,7 @@ export default function Landing() {
           </Link>
           <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap text-white hover:bg-slate-800" data-testid="button-login">Log In</Button>
+              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap text-slate-800 hover:bg-slate-200" data-testid="button-login">Log In</Button>
             </Link>
             <Link href="/login">
               <Button size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white" data-testid="button-get-started">Get Started</Button>
@@ -58,10 +58,10 @@ export default function Landing() {
             </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 text-white leading-tight" data-testid="text-hero-title">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 text-slate-900 leading-tight" data-testid="text-hero-title">
             Reaching the Nexus Together
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-slate-300 mb-8 sm:mb-10 font-medium" data-testid="text-hero-description">
+          <p className="text-lg sm:text-xl md:text-2xl text-slate-600 mb-8 sm:mb-10 font-medium" data-testid="text-hero-description">
             Empowering all to implement SDGs and ignite impact.
           </p>
 
@@ -100,10 +100,10 @@ export default function Landing() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           {/* Left content */}
           <div>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6" data-testid="text-targets-title">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6" data-testid="text-targets-title">
               How Can You Meet the 2030 Targets?
             </h2>
-            <p className="text-slate-300 text-lg mb-6 leading-relaxed" data-testid="text-targets-description">
+            <p className="text-slate-700 text-lg mb-6 leading-relaxed" data-testid="text-targets-description">
               Achieving the SDGs takes more than good intentions—it takes strategic action. You need dedicated volunteers and NGO partners who understand your target outcomes.
             </p>
           </div>
@@ -147,12 +147,12 @@ export default function Landing() {
       </section>
 
       {/* Welcome Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 bg-slate-800/50 rounded-lg">
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 bg-slate-100 rounded-lg">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 text-center" data-testid="text-welcome-title">
+          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-6 text-center" data-testid="text-welcome-title">
             Welcome to Your Nexus
           </h2>
-          <p className="text-slate-300 text-lg leading-relaxed text-center mb-8" data-testid="text-welcome-description">
+          <p className="text-slate-700 text-lg leading-relaxed text-center mb-8" data-testid="text-welcome-description">
             Synerxus is an AI-powered platform that aligns volunteers and organizations to shared goals, dreads of service, and locations. Achieve your SDG targets with a trusted nexus of impact.
           </p>
 
@@ -169,8 +169,8 @@ export default function Landing() {
           {countries.map((country, index) => (
             <div key={index} className="text-center" data-testid={`country-card-${index}`}>
               <div className="text-6xl mb-4 flex justify-center">{country.flag}</div>
-              <h3 className="text-xl font-bold text-white mb-2">{country.name}</h3>
-              <p className="text-slate-400 text-sm">{country.description}</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">{country.name}</h3>
+              <p className="text-slate-600 text-sm">{country.description}</p>
             </div>
           ))}
         </div>
@@ -186,8 +186,8 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 bg-slate-950">
-        <div className="container mx-auto px-4 text-center text-sm text-slate-400">
+      <footer className="border-t border-slate-200 py-8 bg-slate-100">
+        <div className="container mx-auto px-4 text-center text-sm text-slate-600">
           <p>© 2025 Synerxus. Intelligent connections for sustainable development worldwide.</p>
         </div>
       </footer>

@@ -187,7 +187,7 @@ export default function Profile() {
         {/* Volunteer Stats Cards */}
         {isVolunteer && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link href="/volunteer-profile">
+            <Link href="/volunteer-intake">
               <div className="cursor-pointer">
                 <Card className="hover:border-primary/50 transition-colors" data-testid="card-overall-rating">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -214,7 +214,7 @@ export default function Profile() {
               </div>
             </Link>
 
-            <Link href="/volunteer-profile">
+            <Link href="/volunteer-intake">
               <div className="cursor-pointer">
                 <Card className="hover:border-primary/50 transition-colors" data-testid="card-availability">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -292,7 +292,7 @@ export default function Profile() {
                 })}
               </div>
               <div className="mt-4 pt-4 border-t">
-                <Link href="/volunteer-profile">
+                <Link href="/volunteer-intake">
                   <span className="text-sm text-primary hover:underline cursor-pointer">
                     Edit skills and ratings in Settings →
                   </span>

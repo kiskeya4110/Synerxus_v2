@@ -115,11 +115,17 @@ const availabilitySlotSchema = z.object({
   endTime: z.string().min(1, "End time is required"),
 });
 
+// Skill proficiency schema (0-100 scale)
+const skillProficiencySchema = z.object({
+  name: z.string().min(1, "Skill name is required"),
+  proficiency: z.number().min(0).max(100, "Proficiency must be 0-100"),
+});
+
 // Form schema
 const formSchema = insertVolunteerSchema.extend({
   email: z.string().email("Valid email is required"),
   name: z.string().min(1, "Name is required"),
-  skills: z.array(z.string()).min(1, "At least one skill is required"),
+  skills: z.array(skillProficiencySchema).min(1, "At least one skill is required"),
   interests: z.array(z.string()).min(1, "At least one interest is required"),
   location: z.string().min(1, "Location is required"),
   sdgGoals: z.array(z.number()).min(1, "At least one SDG goal is required"),
@@ -139,10 +145,12 @@ const formSchema = insertVolunteerSchema.extend({
 
 type FormData = z.infer<typeof formSchema>;
 type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
+type SkillProficiency = z.infer<typeof skillProficiencySchema>;
 
 export default function VolunteerProfileSettings() {
   const { toast } = useToast();
   const [skillInput, setSkillInput] = useState("");
+  const [skillProficiency, setSkillProficiency] = useState(50); // Default 50%
   const [interestInput, setInterestInput] = useState("");
 
   // Fetch current user to get email
@@ -175,7 +183,7 @@ export default function VolunteerProfileSettings() {
       ? {
           email: existingProfile.email,
           name: existingProfile.name,
-          skills: existingProfile.skills,
+          skills: existingProfile.skills || [],
           interests: existingProfile.interests,
           location: existingProfile.location,
           sdgGoals: existingProfile.sdgGoals,
@@ -208,7 +216,7 @@ export default function VolunteerProfileSettings() {
       // Transform form data to match volunteer profile API
       const profileData = {
         volunteerName: data.name,
-        skills: data.skills,
+        skills: data.skills.map((s) => `${s.name} (${s.proficiency}%)`), // Convert to display format for storage
         interests: data.interests,
         location: data.location,
         sdgGoals: data.sdgGoals,
@@ -217,6 +225,7 @@ export default function VolunteerProfileSettings() {
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
         preferredWorkStyle: "", // Will be set through settings page
+        skillProficiency: data.skills, // Send full proficiency objects for matching algorithm
         onboardingCompleted: !existingProfile, // Mark as completed on first submission only
       };
       
@@ -259,18 +268,29 @@ export default function VolunteerProfileSettings() {
   const addSkill = () => {
     if (skillInput.trim()) {
       const currentSkills = form.getValues("skills");
-      if (!currentSkills.includes(skillInput.trim())) {
-        form.setValue("skills", [...currentSkills, skillInput.trim()]);
+      if (!currentSkills.find((s) => s.name === skillInput.trim())) {
+        form.setValue("skills", [...currentSkills, { name: skillInput.trim(), proficiency: skillProficiency }]);
         setSkillInput("");
+        setSkillProficiency(50); // Reset to default
       }
     }
   };
 
-  const removeSkill = (skill: string) => {
+  const removeSkill = (skillName: string) => {
     const currentSkills = form.getValues("skills");
     form.setValue(
       "skills",
-      currentSkills.filter((s) => s !== skill),
+      currentSkills.filter((s) => s.name !== skillName),
+    );
+  };
+
+  const updateSkillProficiency = (skillName: string, proficiency: number) => {
+    const currentSkills = form.getValues("skills");
+    form.setValue(
+      "skills",
+      currentSkills.map((s) =>
+        s.name === skillName ? { ...s, proficiency } : s
+      )
     );
   };
 
@@ -691,54 +711,97 @@ export default function VolunteerProfileSettings() {
                 )}
               </div>
 
-              {/* Skills */}
-              <div className="space-y-2">
+              {/* Skills with Proficiency */}
+              <div className="space-y-4">
                 <Label className="flex items-center gap-2">
                   <Target className="h-4 w-4" />
-                  Skills
+                  Skills & Proficiency
                 </Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add a skill (e.g., Python, Teaching, Marketing)"
-                    value={skillInput}
-                    onChange={(e) => setSkillInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addSkill();
-                      }
-                    }}
-                    data-testid="input-add-skill"
-                  />
-                  <Button
-                    type="button"
-                    onClick={addSkill}
-                    variant="secondary"
-                    data-testid="button-add-skill"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {form.watch("skills").map((skill) => (
-                    <Badge
-                      key={skill}
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Add a skill (e.g., Python, Teaching, Marketing)"
+                      value={skillInput}
+                      onChange={(e) => setSkillInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addSkill();
+                        }
+                      }}
+                      data-testid="input-add-skill"
+                    />
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={skillProficiency}
+                      onChange={(e) => setSkillProficiency(parseInt(e.target.value))}
+                      className="w-24"
+                      data-testid="slider-skill-proficiency"
+                    />
+                    <span className="text-sm font-semibold min-w-[40px]">{skillProficiency}%</span>
+                    <Button
+                      type="button"
+                      onClick={addSkill}
                       variant="secondary"
-                      className="gap-1"
-                      data-testid={`badge-skill-${skill}`}
+                      data-testid="button-add-skill"
                     >
-                      {skill}
-                      <button
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {form.watch("skills").map((skill) => (
+                    <div
+                      key={skill.name}
+                      className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50"
+                      data-testid={`skill-item-${skill.name}`}
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{skill.name}</p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={skill.proficiency}
+                            onChange={(e) =>
+                              updateSkillProficiency(skill.name, parseInt(e.target.value))
+                            }
+                            className="flex-1"
+                            data-testid={`slider-proficiency-${skill.name}`}
+                          />
+                          <span className="text-sm font-semibold min-w-[40px]">
+                            {skill.proficiency}%
+                          </span>
+                        </div>
+                      </div>
+                      <Button
                         type="button"
-                        onClick={() => removeSkill(skill)}
-                        className="ml-1 hover:bg-secondary-foreground/10 rounded-full"
-                        data-testid={`button-remove-skill-${skill}`}
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSkill(skill.name)}
+                        className="text-destructive hover:text-destructive"
+                        data-testid={`button-remove-skill-${skill.name}`}
                       >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   ))}
                 </div>
+
+                {form.watch("skills").length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed rounded-lg">
+                    <Target className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No skills added yet. Add your skills and rate your proficiency level to help
+                      organizations find the right match.
+                    </p>
+                  </div>
+                )}
+
                 {form.formState.errors.skills && (
                   <p className="text-sm text-destructive">
                     {form.formState.errors.skills.message}

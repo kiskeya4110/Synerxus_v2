@@ -110,7 +110,7 @@ export default function OrganizationIntake() {
 
   // Fetch current user from database to get organizationId
   const userId = localStorage.getItem('currentUserId');
-  const { data: currentUser } = useQuery({
+  const { data: currentUser } = useQuery<{ id: number; organizationId?: number; avatar?: string }>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
@@ -122,7 +122,7 @@ export default function OrganizationIntake() {
     enabled: !!userId
   });
 
-  const { data: existingProfile } = useQuery({
+  const { data: existingProfile } = useQuery<OrganizationProfileForm | undefined>({
     queryKey: ["/api/intake/organization-profile", currentUser?.organizationId],
     enabled: !!currentUser?.organizationId
   });

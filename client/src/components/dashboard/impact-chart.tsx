@@ -155,8 +155,20 @@ export default function ImpactChart({
                 labels: {
                   color: theme === "dark" ? "#f3f4f6" : "#1f2937",
                   usePointStyle: false,
-                  boxWidth: 40,
+                  boxWidth: 18,
+                  boxHeight: 12,
                   padding: 15,
+                  borderRadius: 2,
+                  generateLabels: (chart: any) => {
+                    return chart.data.datasets.map((dataset: any, i: number) => ({
+                      text: dataset.label,
+                      fillStyle: dataset.borderColor,
+                      hidden: false,
+                      index: i,
+                      borderColor: dataset.borderColor,
+                      borderWidth: 2,
+                    }));
+                  },
                 },
               },
               tooltip: {

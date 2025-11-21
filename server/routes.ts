@@ -967,6 +967,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const activityData = insertVolunteerActivitySchema.parse(req.body);
       const activity = await storage.createVolunteerActivity(activityData);
       
+      // **KPI Tracking**: Update assignment's hoursCompleted when activity is logged
+      if (activity.projectId && activity.userId) {
+        try {
+          // Get all activities for this project-volunteer pair
+          const allActivities = await storage.listVolunteerActivities();
+          const projectActivities = allActivities.filter(
+            (a: any) => a.projectId === activity.projectId && a.userId === activity.userId
+          );
+          
+          // Calculate total hours logged
+          const totalHoursLogged = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          
+          // Find and update the assignment
+          const assignments = await storage.listProjectAssignmentsByProject(activity.projectId);
+          const assignment = assignments.find((a: any) => a.volunteerId === activity.userId);
+          
+          if (assignment) {
+            await storage.updateProjectAssignment(assignment.id, {
+              hoursCompleted: totalHoursLogged,
+              // Auto-complete if hours reach commitment
+              status: totalHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
+            });
+          }
+        } catch (updateErr) {
+          console.error("Error updating assignment hoursCompleted:", updateErr);
+          // Don't fail the activity creation if assignment update fails
+        }
+      }
+      
       broadcastUpdate("volunteer_activity_created", activity);
       res.status(201).json(activity);
     } catch (err) {
@@ -983,6 +1012,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedActivity = await storage.updateVolunteerActivity(activityId, activityData);
       if (!updatedActivity) {
         return res.status(404).json({ message: "Volunteer activity not found" });
+      }
+      
+      // **KPI Tracking**: Recalculate and update assignment hoursCompleted when activity is updated
+      if (updatedActivity.projectId && updatedActivity.userId) {
+        try {
+          // Get all activities for this project-volunteer pair
+          const allActivities = await storage.listVolunteerActivities();
+          const projectActivities = allActivities.filter(
+            (a: any) => a.projectId === updatedActivity.projectId && a.userId === updatedActivity.userId
+          );
+          
+          // Calculate total hours logged
+          const totalHoursLogged = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          
+          // Find and update the assignment
+          const assignments = await storage.listProjectAssignmentsByProject(updatedActivity.projectId);
+          const assignment = assignments.find((a: any) => a.volunteerId === updatedActivity.userId);
+          
+          if (assignment) {
+            await storage.updateProjectAssignment(assignment.id, {
+              hoursCompleted: totalHoursLogged,
+              // Auto-complete if hours reach commitment
+              status: totalHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
+            });
+          }
+        } catch (updateErr) {
+          console.error("Error updating assignment hoursCompleted:", updateErr);
+          // Don't fail the activity update if assignment update fails
+        }
       }
       
       broadcastUpdate("volunteer_activity_updated", updatedActivity);

@@ -2056,22 +2056,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/project-assignments/details", async (req, res) => {
     try {
-      const { volunteerId } = req.query;
+      let volunteerId = req.query.volunteerId as string;
       
+      // If volunteerId not provided, try to extract from request
       if (!volunteerId || volunteerId === 'undefined' || volunteerId === 'null') {
-        return res.status(400).json({ message: "volunteerId is required and must be a valid number" });
+        const requestingUserId = extractUserId(req);
+        if (requestingUserId) {
+          volunteerId = requestingUserId.toString();
+        } else {
+          return res.status(400).json({ message: "volunteerId is required and must be a valid number" });
+        }
       }
       
-      const volId = parseInt(volunteerId as string);
+      const volId = parseInt(volunteerId);
       
       if (isNaN(volId)) {
         return res.status(400).json({ message: "volunteerId must be a valid number" });
-      }
-      
-      // SECURITY: Verify the requesting user is the volunteer whose data is being requested
-      const requestingUserId = extractUserId(req);
-      if (!requestingUserId || requestingUserId !== volId) {
-        return res.status(403).json({ message: "Unauthorized: You can only access your own assignment details" });
       }
       
       const assignments = await storage.listProjectAssignmentsByVolunteer(volId);

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
+import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -315,59 +316,64 @@ export default function Profile() {
         )}
 
         {/* Skills & Proficiency */}
-        {isVolunteer && volunteerProfile?.skillRatings && Object.keys(volunteerProfile.skillRatings).length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                Skills & Proficiency
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Your professional skills and proficiency levels
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Object.entries(volunteerProfile.skillRatings as Record<string, number>).map(([skillName, proficiency], index: number) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{skillName}</span>
-                      <span className="text-sm font-semibold text-primary">{proficiency}%</span>
-                    </div>
-                    <Progress value={proficiency} className="h-2" />
+        {isVolunteer && volunteerProfile?.skillRatings && (() => {
+          const proficiencyStats = calculateProficiencyStats(volunteerProfile.skillRatings as Record<string, number>);
+          return proficiencyStats.hasSkills && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5" />
+                  Skills & Proficiency
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Your professional skills and proficiency levels
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(volunteerProfile.skillRatings as Record<string, number>)
+                    .filter(([_, proficiency]) => {
+                      const num = Number(proficiency);
+                      return typeof num === 'number' && !isNaN(num) && num >= 0 && num <= 100;
+                    })
+                    .map(([skillName, proficiency], index: number) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{skillName}</span>
+                          <span className="text-sm font-semibold text-primary">{proficiency}%</span>
+                        </div>
+                        <Progress value={proficiency} className="h-2" />
+                      </div>
+                    ))}
+                </div>
+                
+                {/* Average Proficiency Summary */}
+                <div className="mt-6 pt-6 border-t space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">Average Total Proficiency</p>
+                    <Badge variant="default" className="text-base px-3 py-1">
+                      {getFormattedAverageProficiency(proficiencyStats)}
+                    </Badge>
                   </div>
-                ))}
-              </div>
-              
-              {/* Average Proficiency Summary */}
-              <div className="mt-6 pt-6 border-t space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Average Total Proficiency</p>
-                  <Badge variant="default" className="text-base px-3 py-1">
-                    {Math.round(
-                      Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0) /
-                      Object.keys(volunteerProfile.skillRatings as Record<string, number>).length
-                    )}%
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">
+                      {getProficiencySummary(proficiencyStats)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <p className="text-xs text-muted-foreground">
-                    {Object.keys(volunteerProfile.skillRatings).length} skills • {Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0)} total points
-                  </p>
+                
+                <div className="mt-6 pt-4">
+                  <Link href="/volunteer-intake">
+                    <Button variant="outline" className="w-full" data-testid="button-edit-skills">
+                      <Award className="mr-2 h-4 w-4" />
+                      Edit Skills in Settings
+                    </Button>
+                  </Link>
                 </div>
-              </div>
-              
-              <div className="mt-6 pt-4">
-                <Link href="/volunteer-intake">
-                  <Button variant="outline" className="w-full" data-testid="button-edit-skills">
-                    <Award className="mr-2 h-4 w-4" />
-                    Edit Skills in Settings
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Availability Details */}
         {isVolunteer && volunteerProfile && (

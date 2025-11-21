@@ -6,9 +6,9 @@ import { ArrowRight, Check } from "lucide-react";
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-900/95 backdrop-blur">
+      <nav className="sticky top-0 z-50 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-4">
           <Link href="/">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
@@ -17,7 +17,7 @@ export default function Landing() {
           </Link>
           <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             <Link href="/login">
-              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap text-white hover:bg-slate-800" data-testid="button-login">Log In</Button>
+              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap text-slate-800 hover:bg-slate-200" data-testid="button-login">Log In</Button>
             </Link>
             <Link href="/login">
               <Button size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white" data-testid="button-get-started">Get Started</Button>
@@ -28,10 +28,10 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-28 text-center">
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 text-white leading-tight" data-testid="text-hero-title">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 text-slate-900 leading-tight" data-testid="text-hero-title">
           Connect. Manage.<br />Impact Globally.
         </h1>
-        <p className="text-lg sm:text-xl md:text-2xl text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed font-medium" data-testid="text-hero-description">
+        <p className="text-lg sm:text-xl md:text-2xl text-slate-700 mb-10 max-w-3xl mx-auto leading-relaxed font-medium" data-testid="text-hero-description">
           Implementing the SDGs and reaching the nexus of impact takes collective action. Our platform helps you join the effort, track outcomes, and manage projects.
         </p>
 
@@ -67,8 +67,8 @@ export default function Landing() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {/* Step 1 */}
           <div className="text-center md:text-left">
-            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">Get Involved and See Your Impact</h3>
-            <p className="text-slate-400 text-base leading-relaxed">
+            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Get Involved and See Your Impact</h3>
+            <p className="text-slate-700 text-base leading-relaxed">
               Join a global community of volunteers making tangible change. Track your contributions and visualize the collective impact you're creating.
             </p>
           </div>
@@ -78,8 +78,8 @@ export default function Landing() {
             <div className="inline-block bg-amber-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl mb-4">
               1
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">Create Profile</h3>
-            <p className="text-slate-400 text-base leading-relaxed">
+            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Create Profile</h3>
+            <p className="text-slate-700 text-base leading-relaxed">
               Sign up get verified, and join volunteers and NGOs worldwide to collaborate on meaningful projects.
             </p>
           </div>
@@ -89,8 +89,8 @@ export default function Landing() {
             <div className="inline-block bg-amber-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl mb-4">
               2
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-white mb-3">Track Impact</h3>
-            <p className="text-slate-400 text-base leading-relaxed">
+            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Track Impact</h3>
+            <p className="text-slate-700 text-base leading-relaxed">
               Activate your skills ad values in collaboration with global partners and track measurable outcomes.
             </p>
           </div>
@@ -98,13 +98,13 @@ export default function Landing() {
       </section>
 
       {/* SDG Section - Preserved */}
-      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24 bg-gradient-to-b from-slate-900 to-slate-800 rounded-lg mt-12 mb-12">
+      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24 bg-gradient-to-b from-slate-100 to-slate-200 rounded-lg mt-12 mb-12">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4" data-testid="text-sdg-title">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4" data-testid="text-sdg-title">
               The Sustainable Development Goals
             </h2>
-            <p className="text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto" data-testid="text-sdg-description">
+            <p className="text-lg sm:text-xl text-slate-700 max-w-3xl mx-auto" data-testid="text-sdg-description">
               Connect your volunteer projects to the United Nations' 17 Sustainable Development Goals. Click any goal to learn more about its targets and how your organization can contribute.
             </p>
           </div>
@@ -112,7 +112,7 @@ export default function Landing() {
           <SDGWheel />
 
           <div className="text-center mt-12">
-            <p className="text-base sm:text-lg text-slate-300 mb-6">
+            <p className="text-base sm:text-lg text-slate-700 mb-6">
               Synerxus helps you track and report your organization's contribution to these global goals
             </p>
             <Link href="/sdg-mapping">
@@ -127,10 +127,10 @@ export default function Landing() {
 
       {/* CTA Section */}
       <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 text-center mb-12">
-        <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6" data-testid="text-cta-title">
+        <h2 className="text-4xl sm:text-5xl font-bold text-slate-900 mb-6" data-testid="text-cta-title">
           Ready to Amplify Your Impact?
         </h2>
-        <p className="text-lg sm:text-xl text-slate-300 mb-8 max-w-2xl mx-auto" data-testid="text-cta-description">
+        <p className="text-lg sm:text-xl text-slate-700 mb-8 max-w-2xl mx-auto" data-testid="text-cta-description">
           Join organizations worldwide using Synerxus to demonstrate the power of volunteer action and achieve the SDGs.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -148,8 +148,8 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 bg-slate-950">
-        <div className="container mx-auto px-4 text-center text-sm text-slate-400">
+      <footer className="border-t border-slate-200 py-8 bg-slate-100">
+        <div className="container mx-auto px-4 text-center text-sm text-slate-600">
           <p>© 2025 Synerxus. Intelligent connections for sustainable development worldwide.</p>
         </div>
       </footer>

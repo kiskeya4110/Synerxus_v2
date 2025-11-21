@@ -312,7 +312,7 @@ export default function Profile() {
         )}
 
         {/* Skills with Ratings - Enhanced Version */}
-        {isVolunteer && volunteerProfile?.skills && volunteerProfile.skills.length > 0 && (
+        {isVolunteer && volunteerProfile?.skillRatings && Object.keys(volunteerProfile.skillRatings).length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -325,29 +325,17 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {volunteerProfile.skills.map((skill: string, index: number) => {
-                  const skillRatings = (volunteerProfile.skillRatings as Record<string, number>) || {};
-                  
-                  // Parse skill name and rating
-                  // If stored as "Skill (85%)", extract the skill name
-                  const skillNameMatch = skill.match(/^([^(]*)/);
-                  const cleanSkillName = skillNameMatch ? skillNameMatch[1].trim() : skill;
-                  
-                  // Look up rating from skillRatings by clean name first, otherwise try original
-                  const rating = skillRatings[cleanSkillName] || skillRatings[skill] || 0;
-                  
-                  return (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-base">{cleanSkillName}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-primary">{rating}%</span>
-                        </div>
+                {Object.entries(volunteerProfile.skillRatings as Record<string, number>).map(([skillName, rating], index: number) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-base">{skillName}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-primary">{rating}%</span>
                       </div>
-                      <Progress value={rating} className="h-2.5" />
                     </div>
-                  );
-                })}
+                    <Progress value={rating} className="h-2.5" />
+                  </div>
+                ))}
               </div>
               
               {/* Skills Summary */}
@@ -355,13 +343,14 @@ export default function Profile() {
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-medium">Skills Summary</p>
                   <Badge variant="secondary">
-                    {volunteerProfile.skills.length} skills
+                    {Object.keys(volunteerProfile.skillRatings).length} skills
                   </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Average proficiency: {volunteerProfile.skillRatings 
-                    ? Math.round((Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0) / Object.keys(volunteerProfile.skillRatings as Record<string, number>).length) || 0)
-                    : 0}%
+                  Average proficiency: {Math.round(
+                    Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0) / 
+                    Object.keys(volunteerProfile.skillRatings as Record<string, number>).length
+                  )}%
                 </p>
               </div>
               

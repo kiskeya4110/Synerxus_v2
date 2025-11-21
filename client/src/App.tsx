@@ -17,6 +17,7 @@ import SDGMapping from "@/pages/sdg-mapping";
 import ImpactVisualization from "@/pages/impact-visualization";
 import MobileDataCollection from "@/pages/mobile-data-collection";
 import ImpactStorytelling from "@/pages/impact-storytelling";
+import ImpactReportGenerator from "@/pages/impact-report-generator";
 import FieldSpecificMetrics from "@/pages/field-specific-metrics";
 import Opportunities from "@/pages/opportunities";
 import OpportunityDetail from "@/pages/opportunity-detail";
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/impact-visualization" component={ImpactVisualization} />
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
       <Route path="/impact-storytelling" component={ImpactStorytelling} />
+      <Route path="/impact-report-generator" component={ImpactReportGenerator} />
       <Route path="/field-specific-metrics" component={FieldSpecificMetrics} />
       <Route path="/opportunities/:id" component={OpportunityDetail} />
       <Route path="/opportunities" component={Opportunities} />

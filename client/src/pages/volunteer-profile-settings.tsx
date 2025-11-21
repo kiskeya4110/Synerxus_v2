@@ -227,7 +227,7 @@ const useAvailabilityManagement = (form: any) => {
 };
 
 // Reusable form sections
-const PersonalInfoSection = ({ onPhotoChange, currentPhotoUrl, userId }: any) => (
+const PersonalInfoSection = ({ form, onPhotoChange, currentPhotoUrl, userId }: any) => (
   <>
     <div className="mb-6">
       <ProfilePictureUpload
@@ -239,6 +239,7 @@ const PersonalInfoSection = ({ onPhotoChange, currentPhotoUrl, userId }: any) =>
     </div>
 
     <FormField
+      control={form.control}
       name="email"
       render={({ field }) => (
         <FormItem>
@@ -261,6 +262,7 @@ const PersonalInfoSection = ({ onPhotoChange, currentPhotoUrl, userId }: any) =>
     />
 
     <FormField
+      control={form.control}
       name="name"
       render={({ field }) => (
         <FormItem>
@@ -278,6 +280,7 @@ const PersonalInfoSection = ({ onPhotoChange, currentPhotoUrl, userId }: any) =>
     />
 
     <FormField
+      control={form.control}
       name="location"
       render={({ field }) => (
         <FormItem>
@@ -318,6 +321,7 @@ const AvailabilitySection = ({
     </div>
 
     <FormField
+      control={form.control}
       name="timezone"
       render={({ field }) => (
         <FormItem>
@@ -345,6 +349,7 @@ const AvailabilitySection = ({
     />
 
     <FormField
+      control={form.control}
       name="preferredCommitment"
       render={({ field }) => (
         <FormItem>
@@ -373,6 +378,7 @@ const AvailabilitySection = ({
     />
 
     <FormField
+      control={form.control}
       name="preferredWorkStyle"
       render={({ field }) => (
         <FormItem>
@@ -401,6 +407,7 @@ const AvailabilitySection = ({
     />
 
     <FormField
+      control={form.control}
       name="weeklyHours"
       render={({ field }) => (
         <FormItem>
@@ -978,6 +985,7 @@ export default function VolunteerProfileSettings() {
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <PersonalInfoSection 
+                form={form}
                 onPhotoChange={setProfilePhotoUrl}
                 currentPhotoUrl={profilePhotoUrl}
                 userId={currentUser?.id || ''}

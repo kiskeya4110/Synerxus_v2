@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -175,7 +175,8 @@ export default function OrganizationIntake() {
         `/api/intake/organization-profile?organizationId=${userId}`,
         {
           ...data,
-          profilePhotoUrl
+          profilePhotoUrl,
+          onboardingCompleted: !existingProfile, // Mark as completed on first submission only
         }
       );
     },
@@ -186,7 +187,12 @@ export default function OrganizationIntake() {
         title: "Profile completed!",
         description: "Your organization profile has been successfully created."
       });
-      navigate("/dashboard");
+      // Redirect to dashboard if first time completing onboarding
+      if (!existingProfile) {
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1000);
+      }
     },
     onError: (error: any) => {
       // If user not found (404 status), clear localStorage and redirect to login
@@ -268,6 +274,29 @@ export default function OrganizationIntake() {
   };
 
   const totalSteps = 4;
+
+  // If profile is already completed, show message and redirect option
+  if (existingProfile?.onboardingCompleted) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-700">Profile Already Completed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 mb-4">
+              Your organization profile has already been set up. You can now access all features or return to the dashboard.
+            </p>
+            <Link href="/dashboard">
+              <Button className="bg-primary">
+                Go to Dashboard
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-gray-900 dark:to-gray-800 py-8 px-4">

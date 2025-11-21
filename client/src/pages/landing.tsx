@@ -416,7 +416,7 @@ export default function Landing() {
             </p>
 
             <div className="flex gap-4 w-fit">
-              <Link href="/login">
+              <Link href="/volunteer-intake">
                 <Button size="lg" className="min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-now">
                   Join Now
                 </Button>

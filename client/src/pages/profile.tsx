@@ -9,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Mail, MapPin, Award, Briefcase, Target, Users, 
   Star, Clock, TrendingUp, Calendar, FolderKanban,
-  Activity, CheckCircle2
+  Activity, CheckCircle2, Globe
 } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
@@ -268,11 +268,11 @@ export default function Profile() {
                     <Clock className="h-4 w-4 text-blue-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{volunteerProfile?.weeklyAvailability || 0}</div>
+                    <div className="text-2xl font-bold">{volunteerProfile?.weeklyAvailability || 0} hrs</div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {volunteerProfile?.availability && Array.isArray(volunteerProfile.availability) && volunteerProfile.availability.length > 0 
-                        ? `${volunteerProfile.availability.length} time slots set` 
-                        : 'Set your availability'}
+                        ? `${volunteerProfile.availability.length} time slot${volunteerProfile.availability.length > 1 ? 's' : ''} set` 
+                        : 'No time slots set'}
                     </p>
                   </CardContent>
                 </Card>
@@ -425,6 +425,42 @@ export default function Profile() {
                   </div>
                 )}
 
+                {/* Preferred Commitment */}
+                {volunteerProfile.preferredCommitment && (
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">Preferred Commitment</p>
+                      <Badge variant="secondary" className="mt-1 capitalize">
+                        {volunteerProfile.preferredCommitment.replace('-', ' ')}
+                      </Badge>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {volunteerProfile.preferredCommitment === 'one-time' && 'You prefer one-time volunteer opportunities'}
+                        {volunteerProfile.preferredCommitment === 'short-term' && 'You prefer short-term engagements (weeks to months)'}
+                        {volunteerProfile.preferredCommitment === 'long-term' && 'You prefer long-term volunteer positions'}
+                        {volunteerProfile.preferredCommitment === 'flexible' && 'You\'re flexible with any commitment type'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Timezone */}
+                {volunteerProfile.timezone && (
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
+                      <Globe className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">Timezone</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {volunteerProfile.timezone}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Time Slots */}
                 {volunteerProfile.availability && Array.isArray(volunteerProfile.availability) && volunteerProfile.availability.length > 0 && (
                   <div className="flex items-start gap-3">
@@ -458,10 +494,11 @@ export default function Profile() {
               </div>
 
               <div className="mt-6 pt-6 border-t">
-                <Link href="/volunteer-profile">
-                  <span className="text-sm text-primary hover:underline cursor-pointer">
-                    Update availability in Settings →
-                  </span>
+                <Link href="/volunteer-intake">
+                  <Button variant="outline" className="w-full" data-testid="button-edit-availability">
+                    <Clock className="mr-2 h-4 w-4" />
+                    Update Availability in Settings
+                  </Button>
                 </Link>
               </div>
             </CardContent>

@@ -44,6 +44,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useFormField } from "@/components/ui/form";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -731,26 +732,30 @@ export default function VolunteerProfileSettings() {
               />
 
               {/* Availability Schedule */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Availability Schedule
-                  </Label>
-                  <Button
-                    type="button"
-                    onClick={addAvailabilitySlot}
-                    variant="outline"
-                    size="sm"
-                    data-testid="button-add-availability"
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Time Slot
-                  </Button>
-                </div>
+              <FormField
+                control={form.control}
+                name="availability"
+                render={() => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Availability Schedule
+                      </FormLabel>
+                      <Button
+                        type="button"
+                        onClick={addAvailabilitySlot}
+                        variant="outline"
+                        size="sm"
+                        data-testid="button-add-availability"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Time Slot
+                      </Button>
+                    </div>
 
-                <div className="space-y-3">
-                  {form.watch("availability").map((slot, index) => (
+                    <div className="space-y-3">
+                      {form.watch("availability").map((slot, index) => (
                     <div
                       key={index}
                       className="flex items-center gap-3 p-3 border rounded-lg"
@@ -834,12 +839,12 @@ export default function VolunteerProfileSettings() {
                   </div>
                 )}
 
-                {form.formState.errors.availability && (
-                  <p className="text-sm text-destructive">
-                    {form.formState.errors.availability.message}
-                  </p>
+                    </div>
+
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </div>
+              />
 
               {/* Skills with Proficiency */}
               <div className="space-y-4">

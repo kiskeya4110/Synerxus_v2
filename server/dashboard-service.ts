@@ -751,6 +751,13 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Get volunteer profile data
     const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+    console.log(`[Dashboard] Retrieved volunteer profile for user ${userId}:`, JSON.stringify({
+      id: volunteerProfile?.id,
+      userId: volunteerProfile?.userId,
+      weeklyAvailability: volunteerProfile?.weeklyAvailability,
+      skills: volunteerProfile?.skills?.slice(0, 2),
+      interests: volunteerProfile?.interests?.slice(0, 2),
+    }, null, 2));
 
     // Fetch data
     const allProjects = await storage.listProjects();
@@ -1027,6 +1034,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       volunteerProfile: volunteerProfile ? {
         ...volunteerProfile,
         profileCompleteness,
+        _debug_weeklyAvailability: volunteerProfile.weeklyAvailability,
       } : null,
       applicationStats: {
         total: volunteerApplications.length,

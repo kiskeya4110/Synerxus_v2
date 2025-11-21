@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -721,6 +721,7 @@ export default function VolunteerProfileSettings() {
   const [skillProficiency, setSkillProficiency] = useState(50);
   const [interestInput, setInterestInput] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
+  const hasInitializedRef = useRef(false); // Track if form has been initialized
 
   // Data fetching - ALWAYS use fresh user data, no caching
   const userId = localStorage.getItem("currentUserId");
@@ -760,11 +761,12 @@ export default function VolunteerProfileSettings() {
     },
   });
 
-  // Load profile data into form only once when profile loads - don't use values prop
-  // This allows users to add/edit fields without them resetting during re-renders
+  // Load profile data into form ONLY ONCE when profile first loads
+  // Use useRef to ensure this only runs one time, so users can edit availability without reset
   useEffect(() => {
-    if (existingProfile) {
-      console.log(`[Profile Load Effect] Loading profile data for user ${currentUser?.id}`);
+    if (!hasInitializedRef.current && existingProfile) {
+      console.log(`[Profile Load Effect] Loading profile data for user ${currentUser?.id} - ONCE ONLY`);
+      hasInitializedRef.current = true;
       form.reset({
         email: currentUser?.email || "",
         name: existingProfile.volunteerName || currentUser?.displayName || "",
@@ -778,14 +780,15 @@ export default function VolunteerProfileSettings() {
         preferredCommitment: existingProfile.preferredCommitment || "flexible",
         preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
       });
-    } else if (currentUser?.email) {
-      // New profile - just set email
+    } else if (!hasInitializedRef.current && !existingProfile && currentUser?.email) {
+      // New profile - initialize once
+      hasInitializedRef.current = true;
       form.setValue("email", currentUser.email);
       if (currentUser.displayName) {
         form.setValue("name", currentUser.displayName);
       }
     }
-  }, [existingProfile?.id, currentUser?.id]); // Only run when profile or user ID changes
+  }, []); // Empty dependency array - only run on mount
 
   // Load existing photo URL
   useEffect(() => {

@@ -338,7 +338,26 @@ export default function Profile() {
                   </div>
                 ))}
               </div>
-              <div className="mt-6 pt-4 border-t">
+              
+              {/* Average Proficiency Summary */}
+              <div className="mt-6 pt-6 border-t space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Average Total Proficiency</p>
+                  <Badge variant="default" className="text-base px-3 py-1">
+                    {Math.round(
+                      Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0) /
+                      Object.keys(volunteerProfile.skillRatings as Record<string, number>).length
+                    )}%
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    {Object.keys(volunteerProfile.skillRatings).length} skills • {Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0)} total points
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mt-6 pt-4">
                 <Link href="/volunteer-intake">
                   <Button variant="outline" className="w-full" data-testid="button-edit-skills">
                     <Award className="mr-2 h-4 w-4" />

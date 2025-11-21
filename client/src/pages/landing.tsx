@@ -497,15 +497,6 @@ export default function Landing() {
             <div className="relative z-10 w-full">
               <SDGCircularWheel />
             </div>
-
-            {/* Synerxus Logo Center Overlay */}
-            <div className="absolute inset-0 flex justify-center items-center z-20 pointer-events-none">
-              <div className="flex flex-col items-center justify-center">
-                <div className="bg-white rounded-full p-4 sm:p-6 shadow-2xl border-4 border-slate-50">
-                  <Logo size="lg" />
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* CTA Text */}

@@ -16,7 +16,7 @@ export function SDGCircularWheel() {
   const viewBoxSize = 800;
   const centerX = viewBoxSize / 2;
   const centerY = viewBoxSize / 2;
-  const innerRadius = 100; // For the center logo area
+  const innerRadius = 100; // Empty center
   const outerRadius = 380; // Full radius
   const segmentWidth = (outerRadius - innerRadius) / 2; // Divide into 2 rings
 

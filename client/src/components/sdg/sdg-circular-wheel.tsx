@@ -186,15 +186,6 @@ export function SDGCircularWheel() {
 
         {/* Mobile: Grid layout */}
         <div className="md:hidden max-w-2xl mx-auto w-full">
-          <div className="flex justify-center mb-8">
-            <div className="bg-white rounded-full p-4 shadow-2xl border-4 border-slate-50">
-              <img
-                src={synerxusLogo}
-                alt="Synerxus Logo"
-                className="w-24 h-24 object-contain"
-              />
-            </div>
-          </div>
           <div className="grid grid-cols-3 gap-3 px-2">
             {sortedSDGData.map((sdg) => {
               const sdgIcon = UN_SDG_ICONS[sdg.id];

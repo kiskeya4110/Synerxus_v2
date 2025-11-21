@@ -12,18 +12,17 @@ export function SDGCircularWheel() {
   const totalSDGs = sortedSDGData.length;
   
   // Calculate positions in circular pattern
-  // 360 / 17 = ~21.18 degrees per SDG
   const angleSlice = 360 / totalSDGs;
-  const radiusDesktop = 280; // pixels from center
+  const radiusDesktop = 280;
   const radiusMobile = 180;
 
   const getPosition = (index: number, isMobile: boolean) => {
-    const angle = (index * angleSlice) - 90; // Start from top
+    const angle = (index * angleSlice) - 90;
     const radius = isMobile ? radiusMobile : radiusDesktop;
     const radians = (angle * Math.PI) / 180;
     const x = Math.cos(radians) * radius;
     const y = Math.sin(radians) * radius;
-    return { x, y, angle };
+    return { x, y };
   };
 
   return (
@@ -31,11 +30,9 @@ export function SDGCircularWheel() {
       <div className="w-full flex justify-center">
         {/* Desktop: Circular layout */}
         <div className="hidden md:block relative w-full max-w-3xl" style={{ aspectRatio: '1/1' }}>
-          {/* Container for circular positioning */}
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* SDG Icons positioned in circle */}
             {sortedSDGData.map((sdg, index) => {
-              const { x, y, angle } = getPosition(index, false);
+              const { x, y } = getPosition(index, false);
               const sdgIcon = UN_SDG_ICONS[sdg.id];
 
               return (
@@ -44,7 +41,7 @@ export function SDGCircularWheel() {
                   onClick={() => setSelectedSDG(sdg.id)}
                   className="group absolute w-24 h-24 rounded-lg overflow-hidden shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:z-50 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:ring-offset-2"
                   style={{
-                    transform: `translate(${x}px, ${y}px) translate(-50%, -50%)`,
+                    transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
                     left: '50%',
                     top: '50%',
                   }}
@@ -66,7 +63,6 @@ export function SDGCircularWheel() {
                     </div>
                   )}
                   
-                  {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-2">
                     <div className="text-white text-xs font-semibold text-center">
                       Click to learn more
@@ -90,7 +86,7 @@ export function SDGCircularWheel() {
         </div>
 
         {/* Mobile: Grid layout */}
-        <div className="md:hidden max-w-2xl mx-auto">
+        <div className="md:hidden max-w-2xl mx-auto w-full">
           <div className="flex justify-center mb-8">
             <div className="bg-white rounded-full p-4 shadow-2xl border-4 border-slate-50">
               <img
@@ -100,7 +96,7 @@ export function SDGCircularWheel() {
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 px-2">
             {sortedSDGData.map((sdg) => {
               const sdgIcon = UN_SDG_ICONS[sdg.id];
               return (
@@ -126,7 +122,6 @@ export function SDGCircularWheel() {
                     </div>
                   )}
                   
-                  {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center p-2">
                     <div className="text-white text-xs font-semibold text-center">
                       Learn more

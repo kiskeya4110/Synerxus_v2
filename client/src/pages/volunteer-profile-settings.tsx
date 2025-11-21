@@ -807,8 +807,6 @@ export default function VolunteerProfileSettings() {
       // Invalidate queries without waiting for all to complete
       queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
       // These can happen in background without blocking the toast
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });

@@ -81,10 +81,12 @@ export default function Volunteers() {
 
   // Fetch volunteer profile when selected
   const { data: volunteerProfile } = useQuery({
-    queryKey: ["/api/profile/volunteer", selectedVolunteerId],
+    queryKey: ["/api/intake/volunteer-profile", selectedVolunteerId],
+    staleTime: 0,
+    refetchOnMount: true,
     queryFn: async () => {
       if (!selectedVolunteerId) return null;
-      const response = await fetch(`/api/profile/volunteer?userId=${selectedVolunteerId}`);
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${selectedVolunteerId}`);
       if (!response.ok) return null;
       return response.json();
     },
@@ -107,7 +109,7 @@ export default function Volunteers() {
       });
       // Invalidate project assignments, volunteer profile, volunteers list (including org-scoped), and dashboard
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", variables.volunteerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", variables.volunteerId] });
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const key = query.queryKey[0];

@@ -345,8 +345,6 @@ export default function VolunteerProfileSettings() {
       // Invalidate all relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] });

@@ -109,10 +109,12 @@ export default function ApplicationsPage() {
 
   // Fetch volunteer profile when selected
   const { data: volunteerProfile } = useQuery({
-    queryKey: ["/api/profile/volunteer", selectedVolunteerId],
+    queryKey: ["/api/intake/volunteer-profile", selectedVolunteerId],
+    staleTime: 0,
+    refetchOnMount: true,
     queryFn: async () => {
       if (!selectedVolunteerId) return null;
-      const response = await fetch(`/api/profile/volunteer?userId=${selectedVolunteerId}`);
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${selectedVolunteerId}`);
       if (!response.ok) return null;
       return response.json();
     },
@@ -153,7 +155,7 @@ export default function ApplicationsPage() {
       });
       // Invalidate project assignments, volunteer profile, volunteers/applications lists (including org-scoped), and dashboard
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", variables.volunteerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", variables.volunteerId] });
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const key = query.queryKey[0];
@@ -202,7 +204,7 @@ export default function ApplicationsPage() {
             key.startsWith('/api/projects') ||
             key.startsWith('/api/dashboard/summary') ||
             key.startsWith('/api/organizations') ||
-            key.startsWith('/api/profile/volunteer') ||
+            key.startsWith('/api/intake/volunteer-profile') ||
             key.startsWith('/api/volunteer-activities') ||
             key.startsWith('/api/tasks')
           );

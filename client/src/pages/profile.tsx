@@ -312,8 +312,8 @@ export default function Profile() {
           </div>
         )}
 
-        {/* Skills & Proficiency - Route to Settings */}
-        {isVolunteer && (
+        {/* Skills & Proficiency */}
+        {isVolunteer && volunteerProfile?.skillRatings && Object.keys(volunteerProfile.skillRatings).length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -321,19 +321,29 @@ export default function Profile() {
                 Skills & Proficiency
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Manage your skills and proficiency levels
+                Your professional skills and proficiency levels
               </p>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4">
-                View and update your skills, proficiency ratings, and professional experience in your Settings.
-              </p>
-              <Link href="/volunteer-intake">
-                <Button className="w-full" data-testid="button-edit-skills">
-                  <Award className="mr-2 h-4 w-4" />
-                  Go to Settings
-                </Button>
-              </Link>
+              <div className="space-y-4">
+                {Object.entries(volunteerProfile.skillRatings as Record<string, number>).map(([skillName, proficiency], index: number) => (
+                  <div key={index} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{skillName}</span>
+                      <span className="text-sm font-semibold text-primary">{proficiency}%</span>
+                    </div>
+                    <Progress value={proficiency} className="h-2" />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 pt-4 border-t">
+                <Link href="/volunteer-intake">
+                  <Button variant="outline" className="w-full" data-testid="button-edit-skills">
+                    <Award className="mr-2 h-4 w-4" />
+                    Edit Skills in Settings
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         )}

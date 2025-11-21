@@ -922,6 +922,9 @@ export default function VolunteerProfileSettings() {
   const availabilityOps = useAvailabilityManagement(form);
 
   const onSubmit = async (data: FormData) => {
+    console.log(`[Settings Form Submit CRITICAL] currentUser?.id = ${currentUser?.id}`);
+    console.log(`[Settings Form Submit CRITICAL] currentUser?.email = ${currentUser?.email}`);
+    console.log(`[Settings Form Submit CRITICAL] currentUser object:`, currentUser);
     console.log(`[Settings Form Submit] User clicked save - weeklyHours value: ${data.weeklyHours}`);
     console.log(`[Settings Form Submit] Full form data:`, data);
     

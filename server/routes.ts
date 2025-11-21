@@ -3644,10 +3644,14 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(400).json({ message: "userId must be a valid number" });
       }
       
+      console.log(`[Intake POST CRITICAL] ===== PROCESSING SAVE FOR USER ID: ${userId} =====`);
+      
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      
+      console.log(`[Intake POST CRITICAL] User email: ${user.email}, DisplayName: ${user.displayName}`);
       
       // Set weekly availability to the LESSER of weekly hours or total slot hours
       if (req.body.availability && req.body.weeklyAvailability) {
@@ -3658,7 +3662,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         }, 0);
         
         const availabilityHours = Math.min(req.body.weeklyAvailability, totalAvailabilityHours);
-        console.log(`[Intake POST] Setting availability to lesser of ${req.body.weeklyAvailability} and ${totalAvailabilityHours} = ${availabilityHours}`);
+        console.log(`[Intake POST CRITICAL] User ${userId} - Setting availability to lesser of ${req.body.weeklyAvailability} and ${totalAvailabilityHours} = ${availabilityHours}`);
         req.body.weeklyAvailability = availabilityHours;
       }
       
@@ -3684,13 +3688,16 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       
       let profile;
       if (existingProfile) {
+        console.log(`[Intake POST CRITICAL] UPDATING existing profile for user ${userId}. New weeklyAvailability: ${profileData.weeklyAvailability}`);
         profile = await storage.updateVolunteerProfile(existingProfile.id, profileData);
       } else {
+        console.log(`[Intake POST CRITICAL] CREATING new profile for user ${userId}. weeklyAvailability: ${profileData.weeklyAvailability}`);
         profile = await storage.createVolunteerProfile(profileData);
       }
       
-      console.log(`[Intake POST] Profile saved. Fetching to verify...`);
+      console.log(`[Intake POST CRITICAL] Profile saved for user ${userId}. Fetching to verify...`);
       const savedProfile = await storage.getVolunteerProfileByUserId(userId);
+      console.log(`[Intake POST CRITICAL] VERIFIED: User ${userId} now has weeklyAvailability = ${savedProfile?.weeklyAvailability}`);
       console.log(`[Intake POST] Verified saved skillRatings:`, JSON.stringify(savedProfile?.skillRatings));
       console.log(`[Intake POST] Verified saved availability:`, JSON.stringify(savedProfile?.availability));
       console.log(`[Intake POST] Verified saved yearsOfExperience:`, JSON.stringify(savedProfile?.yearsOfExperience));

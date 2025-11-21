@@ -3917,38 +3917,53 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
         });
 
-        const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant. Format the report as a professional document.`;
+        const systemPrompt = `You are an expert impact report writer for nonprofit organizations. Create compelling, funder-ready impact reports that are well-structured, data-driven, and emotionally resonant. 
+        
+CRITICAL RULES:
+- Each metric should appear ONLY ONCE in the report
+- Always use aggregated totals (SUM all values together, NOT list them separately)
+- Never repeat the same metric or data point
+- For beneficiary metrics: Sum all beneficiary types into a single total impact number
+- Present metrics as running totals, not individual line items
+- Format the report as a professional document.`;
 
-        const userPrompt = `Generate a Synerxus Impact Report:
+        // Extract aggregated totals from metrics
+        const volunteerCount = metrics?.activeVolunteers || metrics?.totalVolunteers || 0;
+        const totalHours = metrics?.totalHours || 0;
+        const projectCount = metrics?.activeProjects || 0;
+        const beneficiaryTotal = metrics?.totalBeneficiariesReached || 0;
+
+        const userPrompt = `Generate a UNIQUE Synerxus Impact Report with NO DUPLICATE METRICS:
 
 ORGANIZATION: ${organizationName}
 PROJECT: ${projectTitle}
 REPORTING PERIOD: ${reportingPeriod}
 LOCATIONS: ${locationsServed}
 
-KEY METRICS:
-- Volunteers Engaged: ${metrics?.activeVolunteers || metrics?.totalVolunteers || 0}
-- Hours Contributed: ${metrics?.totalHours || 0}
-- Active Projects: ${metrics?.activeProjects || 0}
-- Beneficiaries Reached: ${metrics?.totalBeneficiariesReached || 0}
+AGGREGATED TOTALS (use these numbers as your single source of truth):
+- Total Volunteers Engaged: ${volunteerCount}
+- Total Volunteer Hours: ${totalHours}
+- Total Active Projects: ${projectCount}
+- Total Beneficiaries Impacted: ${beneficiaryTotal}
 
-STORIES: ${keyStories}
-CSR/ESG: ${csrAlignment}
+KEY STORY: ${keyStories}
 
-REPORT CUSTOMIZATION:
-- Audience: ${targetAudience}
+CSR/ESG CONTRIBUTION: ${csrAlignment}
+
+CUSTOMIZATION:
+- Target Audience: ${targetAudience}
 - Tone: ${tone}
-- Focus: ${impactFocus}
+- Primary Focus: ${impactFocus}
 
-Create a professional report with these sections:
-1. Header and Executive Summary
-2. Key Achievements (with metrics)
-3. Impact Stories
-4. SDG Alignment
-5. CSR/ESG Contributions
-6. Next Steps
+REPORT STRUCTURE (ONE METRIC = ONE VALUE, NO REPEATS):
+1. Professional Header with Organization Name and Date
+2. Executive Summary (${volunteerCount} volunteers contributed ${totalHours} hours across ${projectCount} projects, impacting ${beneficiaryTotal} beneficiaries)
+3. Key Performance Indicators (list each metric only once with its total)
+4. Impact Story Section (feature the provided story)
+5. CSR/ESG Alignment
+6. Call to Action and Next Steps
 
-Format it as a polished document ready for ${targetAudience}.`;
+IMPORTANT: Each metric appears EXACTLY ONCE. No duplication. No repeated stats.`;
 
         const completion = await openai.chat.completions.create({
           model: "gpt-4o-mini",
@@ -3956,7 +3971,7 @@ Format it as a polished document ready for ${targetAudience}.`;
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          temperature: 0.7,
+          temperature: 0.6,
           max_tokens: 2500,
         });
 

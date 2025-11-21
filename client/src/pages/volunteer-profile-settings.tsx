@@ -722,10 +722,11 @@ export default function VolunteerProfileSettings() {
   const [interestInput, setInterestInput] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
 
-  // Data fetching
+  // Data fetching - ALWAYS use fresh user data, no caching
   const userId = localStorage.getItem("currentUserId");
-  const { data: currentUser } = useQuery<{ id: number; email: string; displayName?: string }>({ 
-    queryKey: ["/api/users/me"] 
+  const { data: currentUser, isLoading: userLoading } = useQuery<{ id: number; email: string; displayName?: string }>({ 
+    queryKey: ["/api/users/me"],
+    staleTime: 0, // Always fetch fresh - never cache user data
   });
   
   // Fetch volunteer profile using intake API which includes all availability fields
@@ -832,6 +833,9 @@ export default function VolunteerProfileSettings() {
     mutationFn: async (data: FormData) => {
       if (!currentUser?.id) throw new Error("User not authenticated");
       
+      const targetUserId = currentUser.id;
+      console.log(`[Settings Mutation CRITICAL] SAVING FOR USER ID: ${targetUserId}, EMAIL: ${currentUser.email}`);
+      
       // Transform form data to match volunteer profile API
       const profileData = {
         volunteerName: data.name,
@@ -847,7 +851,7 @@ export default function VolunteerProfileSettings() {
         profilePhotoUrl: profilePhotoUrl,
       };
       
-      console.log(`[Settings Mutation] Submitting weeklyAvailability: ${profileData.weeklyAvailability}`);
+      console.log(`[Settings Mutation] Submitting weeklyAvailability: ${profileData.weeklyAvailability} for user ${targetUserId}`);
       
       // Add timeout protection - 15 seconds max
       const timeoutPromise = new Promise((_, reject) =>
@@ -855,11 +859,15 @@ export default function VolunteerProfileSettings() {
       );
       
       try {
+        const url = `/api/intake/volunteer-profile?userId=${targetUserId}`;
+        console.log(`[Settings Mutation CRITICAL] API URL: ${url}`);
+        
         const result = await Promise.race([
-          apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData),
+          apiRequest("POST", url, profileData),
           timeoutPromise
         ]) as any;
-        console.log(`[Settings Mutation] Backend response received`, result);
+        
+        console.log(`[Settings Mutation CRITICAL] Backend response received for user ${targetUserId}`, result);
         return result;
       } catch (error) {
         console.error("Profile mutation error:", error);
@@ -943,10 +951,19 @@ export default function VolunteerProfileSettings() {
     profileMutation.mutate(data);
   };
 
-  if (loadingProfile) {
+  if (loadingProfile || userLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  // Safety check: ensure currentUser is available before rendering form
+  if (!currentUser?.id) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-red-500">Error: User not authenticated. Please log in again.</p>
       </div>
     );
   }

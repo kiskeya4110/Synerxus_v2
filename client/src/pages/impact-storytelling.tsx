@@ -183,18 +183,37 @@ export default function ImpactStorytellingPage() {
 
       const projectVolunteers = new Set(impacts.map((i: any) => i.userId)).size || 1;
 
-      const projectMetrics = impacts.map((impact: any) => {
+      // AGGREGATE PROJECT METRICS - DEDUPLICATE SIMILAR METRICS
+      const metricMap = new Map<string, { before: number; after: number; unit: string }>();
+      impacts.forEach((impact: any) => {
         const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
+        let label = metric?.name || impact.description || "Impact Metric";
         const beforeValue = impact.baselineValue || Math.floor((impact.value || 0) * 0.3);
         const afterValue = impact.value || 0;
         
-        return {
-          label: metric?.name || "Impact Metric",
-          before: beforeValue,
-          after: afterValue,
-          unit: metric?.unit || "units"
-        };
+        // Normalize metric label to prevent duplicates (e.g., "Healthcare Services", "Health Services" -> same)
+        label = label.toLowerCase().replace(/\s+/g, ' ').trim();
+        
+        if (metricMap.has(label)) {
+          // Aggregate similar metrics
+          const existing = metricMap.get(label)!;
+          existing.before += beforeValue;
+          existing.after += afterValue;
+        } else {
+          metricMap.set(label, {
+            before: beforeValue,
+            after: afterValue,
+            unit: metric?.unit || "units"
+          });
+        }
       });
+      
+      const projectMetrics = Array.from(metricMap.entries()).map(([label, data]) => ({
+        label: label.charAt(0).toUpperCase() + label.slice(1), // Capitalize first letter
+        before: data.before,
+        after: data.after,
+        unit: data.unit
+      }));
 
       return {
         id: project.id,
@@ -528,11 +547,11 @@ export default function ImpactStorytellingPage() {
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase">Total Hours</p>
-                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{projectAggregations.reduce((sum, p) => sum + p.hours, 0)}</p>
+                  <p className="text-3xl font-bold text-blue-700 dark:text-blue-300">{projectAggregations.reduce((sum: number, p: any) => sum + p.hours, 0)}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase">Total Impact Points</p>
-                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">{projectAggregations.reduce((sum, p) => sum + p.beneficiaries, 0)}</p>
+                  <p className="text-3xl font-bold text-green-700 dark:text-green-300">{projectAggregations.reduce((sum: number, p: any) => sum + p.beneficiaries, 0)}</p>
                 </div>
               </div>
             </CardContent>

@@ -719,6 +719,12 @@ export default function VolunteerProfileSettings() {
   // Fetch volunteer profile using intake API which includes all availability fields
   const { data: existingProfile, isLoading: loadingProfile } = useQuery<any>({
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${currentUser.id}`);
+      if (!response.ok) throw new Error('Failed to fetch profile');
+      return response.json();
+    },
     enabled: !!currentUser?.id,
   });
 

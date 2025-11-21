@@ -315,6 +315,49 @@ export default function Profile() {
           </div>
         )}
 
+        {/* SDG Goals Section */}
+        {sdgsToDisplay && sdgsToDisplay.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                {isVolunteer ? "Sustainable Development Goals" : "Primary SDG Focus Areas"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TooltipProvider>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                  {[...sdgsToDisplay].sort((a: number, b: number) => a - b).map((goal: number) => (
+                    <Tooltip key={goal}>
+                      <TooltipTrigger>
+                        <div className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          {UN_SDG_ICONS[goal] ? (
+                            <img 
+                              src={UN_SDG_ICONS[goal]} 
+                              alt={`SDG ${goal}`}
+                              className="w-15 h-15 rounded"
+                            />
+                          ) : (
+                            <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                              {goal}
+                            </div>
+                          )}
+                          <span className="text-xs text-center line-clamp-2 font-medium">
+                            {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>SDG {goal}: {SDG_LABELS[goal as keyof typeof SDG_LABELS]}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              </TooltipProvider>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Skills & Proficiency */}
         {isVolunteer && volunteerProfile?.skillRatings && (() => {
           const proficiencyStats = calculateProficiencyStats(volunteerProfile.skillRatings as Record<string, number>);
@@ -636,49 +679,6 @@ export default function Profile() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">{profile.goals}</p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* SDG Goals Section */}
-        {sdgsToDisplay && sdgsToDisplay.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                {isVolunteer ? "Sustainable Development Goals" : "Primary SDG Focus Areas"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TooltipProvider>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                  {[...sdgsToDisplay].sort((a: number, b: number) => a - b).map((goal: number) => (
-                    <Tooltip key={goal}>
-                      <TooltipTrigger>
-                        <div className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          {UN_SDG_ICONS[goal] ? (
-                            <img 
-                              src={UN_SDG_ICONS[goal]} 
-                              alt={`SDG ${goal}`}
-                              className="w-15 h-15 rounded"
-                            />
-                          ) : (
-                            <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
-                              {goal}
-                            </div>
-                          )}
-                          <span className="text-xs text-center line-clamp-2 font-medium">
-                            {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>SDG {goal}: {SDG_LABELS[goal as keyof typeof SDG_LABELS]}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-                </div>
-              </TooltipProvider>
             </CardContent>
           </Card>
         )}

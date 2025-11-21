@@ -42,13 +42,28 @@ export function ProfilePictureUpload({
     try {
       setIsUploading(true);
 
-      // Delete old photo if exists
-      if (storagePath) {
-        await deleteFile(storagePath);
+      // Validate userId
+      if (!userId) {
+        throw new Error("User ID is required. Please ensure you're logged in.");
       }
 
-      // Upload new photo
-      const result = await uploadProfilePhoto(file, userId, userType);
+      // Delete old photo if exists
+      if (storagePath) {
+        try {
+          await deleteFile(storagePath);
+        } catch (delErr) {
+          console.warn("Could not delete old photo:", delErr);
+        }
+      }
+
+      // Upload new photo with timeout
+      const uploadPromise = uploadProfilePhoto(file, userId, userType);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Upload timeout. Please try again.")), 30000)
+      );
+      
+      const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
+      
       setPhotoUrl(result.url);
       setStoragePath(result.path);
       onPhotoChange(result.url);
@@ -58,6 +73,7 @@ export function ProfilePictureUpload({
         description: "Your profile picture has been updated."
       });
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
         title: "Upload failed",
         description: error.message || "Failed to upload photo. Please try again.",
@@ -82,9 +98,10 @@ export function ProfilePictureUpload({
         description: "Your profile picture has been removed."
       });
     } catch (error: any) {
+      console.error("Remove photo error:", error);
       toast({
         title: "Error",
-        description: "Failed to remove photo.",
+        description: error.message || "Failed to remove photo.",
         variant: "destructive"
       });
     }

@@ -15,7 +15,6 @@ import { insertMatchableOrganizationSchema, type MatchableOrganization } from "@
 import { Loader2, Plus, X, Building2, MapPin, Target, Heart } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
-import { useEffect } from "react";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -216,6 +215,18 @@ export default function OrganizationProfileSettings() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Profile Photo */}
+              {currentUser?.id && (
+                <div className="mb-6">
+                  <ProfilePictureUpload
+                    currentPhotoUrl={profilePhotoUrl}
+                    onPhotoChange={setProfilePhotoUrl}
+                    userId={currentUser.id.toString()}
+                    userType="organization"
+                  />
+                </div>
+              )}
+
               {/* Email - Read-only, linked to user account */}
               <FormField
                 control={form.control}

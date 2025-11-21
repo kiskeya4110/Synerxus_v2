@@ -388,83 +388,77 @@ export default function Profile() {
               </p>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6 mb-6">
                 {/* Weekly Availability */}
-                <div className="flex items-start gap-3">
+                <div className="flex flex-col gap-2">
                   <div className="h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
                     <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="flex-1">
-                    <p className="font-medium">Weekly Availability</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {volunteerProfile.weeklyAvailability || 0} hours/week
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Time you can commit to volunteer work
-                    </p>
-                  </div>
+                  <p className="font-medium">Weekly Availability</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    {volunteerProfile.weeklyAvailability || 0} hrs
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    per week commitment
+                  </p>
                 </div>
 
                 {/* Preferred Work Style */}
                 {volunteerProfile.preferredWorkStyle && (
-                  <div className="flex items-start gap-3">
+                  <div className="flex flex-col gap-2">
                     <div className="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900/20 flex items-center justify-center">
                       <Briefcase className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Preferred Work Style</p>
-                      <Badge variant="secondary" className="mt-1 capitalize">
-                        {volunteerProfile.preferredWorkStyle}
-                      </Badge>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {volunteerProfile.preferredWorkStyle === 'remote' && 'You prefer working remotely from anywhere'}
-                        {volunteerProfile.preferredWorkStyle === 'in-person' && 'You prefer working on-site in person'}
-                        {volunteerProfile.preferredWorkStyle === 'hybrid' && 'You\'re flexible with both remote and in-person work'}
-                      </p>
-                    </div>
+                    <p className="font-medium">Work Style</p>
+                    <Badge variant="secondary" className="capitalize w-fit">
+                      {volunteerProfile.preferredWorkStyle}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      {volunteerProfile.preferredWorkStyle === 'remote' && 'Remote work'}
+                      {volunteerProfile.preferredWorkStyle === 'in-person' && 'On-site work'}
+                      {volunteerProfile.preferredWorkStyle === 'hybrid' && 'Flexible'}
+                    </p>
                   </div>
                 )}
 
                 {/* Preferred Commitment */}
                 {volunteerProfile.preferredCommitment && (
-                  <div className="flex items-start gap-3">
+                  <div className="flex flex-col gap-2">
                     <div className="h-10 w-10 rounded-lg bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
                       <Calendar className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Preferred Commitment</p>
-                      <Badge variant="secondary" className="mt-1 capitalize">
-                        {volunteerProfile.preferredCommitment.replace('-', ' ')}
-                      </Badge>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {volunteerProfile.preferredCommitment === 'one-time' && 'You prefer one-time volunteer opportunities'}
-                        {volunteerProfile.preferredCommitment === 'short-term' && 'You prefer short-term engagements (weeks to months)'}
-                        {volunteerProfile.preferredCommitment === 'long-term' && 'You prefer long-term volunteer positions'}
-                        {volunteerProfile.preferredCommitment === 'flexible' && 'You\'re flexible with any commitment type'}
-                      </p>
-                    </div>
+                    <p className="font-medium">Commitment</p>
+                    <Badge variant="secondary" className="capitalize w-fit">
+                      {volunteerProfile.preferredCommitment.replace('-', ' ')}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">
+                      {volunteerProfile.preferredCommitment === 'one-time' && 'One-time'}
+                      {volunteerProfile.preferredCommitment === 'short-term' && 'Weeks to months'}
+                      {volunteerProfile.preferredCommitment === 'long-term' && 'Long-term'}
+                      {volunteerProfile.preferredCommitment === 'flexible' && 'Flexible'}
+                    </p>
                   </div>
                 )}
 
                 {/* Timezone */}
                 {volunteerProfile.timezone && (
-                  <div className="flex items-start gap-3">
+                  <div className="flex flex-col gap-2">
                     <div className="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center">
                       <Globe className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium">Timezone</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {volunteerProfile.timezone}
-                      </p>
-                    </div>
+                    <p className="font-medium">Timezone</p>
+                    <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+                      {volunteerProfile.timezone}
+                    </p>
                   </div>
                 )}
+              </div>
 
-                {/* Time Slots */}
-                {volunteerProfile.availability && Array.isArray(volunteerProfile.availability) && volunteerProfile.availability.length > 0 && (
+              {/* Time Slots */}
+              {volunteerProfile.availability && Array.isArray(volunteerProfile.availability) && volunteerProfile.availability.length > 0 && (
+                <div className="mb-6 pb-6 border-b">
                   <div className="flex items-start gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
                       <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
                     </div>
                     <div className="flex-1">
@@ -490,8 +484,8 @@ export default function Profile() {
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               <div className="mt-6 pt-6 border-t">
                 <Link href="/volunteer-intake">

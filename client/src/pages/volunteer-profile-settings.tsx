@@ -180,10 +180,8 @@ const formSchema = insertVolunteerSchema.extend({
     return sum + (end - start);
   }, 0);
   
-  // If slot hours >= weekly hours, update weekly hours to slot hours
-  if (totalHours >= data.weeklyHours) {
-    data.weeklyHours = totalHours;
-  }
+  // Availability should be the LESSER of weekly hours or total slot hours
+  data.weeklyHours = Math.min(data.weeklyHours, totalHours);
   
   return true;
 });

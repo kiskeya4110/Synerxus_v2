@@ -3649,7 +3649,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Auto-update weekly availability if availability hours >= weeklyAvailability
+      // Set weekly availability to the LESSER of weekly hours or total slot hours
       if (req.body.availability && req.body.weeklyAvailability) {
         const totalAvailabilityHours = (req.body.availability as any[]).reduce((sum, slot) => {
           const start = parseInt(slot.startTime?.split(':')[0] || 0);
@@ -3657,10 +3657,9 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
           return sum + (end - start);
         }, 0);
         
-        if (totalAvailabilityHours >= req.body.weeklyAvailability) {
-          console.log(`[Intake POST] Auto-updating weekly hours from ${req.body.weeklyAvailability} to ${totalAvailabilityHours}`);
-          req.body.weeklyAvailability = totalAvailabilityHours;
-        }
+        const availabilityHours = Math.min(req.body.weeklyAvailability, totalAvailabilityHours);
+        console.log(`[Intake POST] Setting availability to lesser of ${req.body.weeklyAvailability} and ${totalAvailabilityHours} = ${availabilityHours}`);
+        req.body.weeklyAvailability = availabilityHours;
       }
       
       console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));

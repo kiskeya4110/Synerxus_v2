@@ -91,14 +91,13 @@ export default function Volunteers() {
     enabled: !!selectedVolunteerId && profileDialogOpen
   });
 
-  // Assign volunteer to project mutation
+  // Assign volunteer to project mutation (uses invite endpoint for organizations)
   const assignProjectMutation = useMutation({
     mutationFn: async ({ volunteerId, projectId }: { volunteerId: number; projectId: number }) => {
-      return await apiRequest("POST", `/api/project-assignments`, {
+      return await apiRequest("POST", `/api/project-assignments/invite`, {
         volunteerId,
         projectId,
-        status: "pending", // Volunteer must accept/decline
-        role: "Volunteer"
+        hoursCommitted: 10
       });
     },
     onSuccess: (_data, variables) => {

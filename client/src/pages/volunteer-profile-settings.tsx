@@ -375,91 +375,93 @@ const AvailabilitySection = ({
       </h3>
     </div>
 
-    <FormField
-      control={form.control}
-      name="timezone"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Timezone</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your timezone" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {TIMEZONES.map((tz) => (
-                <SelectItem key={tz.value} value={tz.value}>
-                  {tz.label}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <FormField
+        control={form.control}
+        name="timezone"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Timezone</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your timezone" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                {TIMEZONES.map((tz) => (
+                  <SelectItem key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FormDescription>
+              Your local timezone for scheduling purposes
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="preferredCommitment"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Preferred Commitment Type</FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select commitment type" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="one-time">One-time event</SelectItem>
+                <SelectItem value="short-term">
+                  Short-term (1-3 months)
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FormDescription>
-            Your local timezone for scheduling purposes
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+                <SelectItem value="long-term">Long-term (3+ months)</SelectItem>
+                <SelectItem value="flexible">Flexible / Open to all</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormDescription>
+              What type of volunteering commitment are you looking for?
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-    <FormField
-      control={form.control}
-      name="preferredCommitment"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Preferred Commitment Type</FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select commitment type" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectItem value="one-time">One-time event</SelectItem>
-              <SelectItem value="short-term">
-                Short-term (1-3 months)
-              </SelectItem>
-              <SelectItem value="long-term">Long-term (3+ months)</SelectItem>
-              <SelectItem value="flexible">Flexible / Open to all</SelectItem>
-            </SelectContent>
-          </Select>
-          <FormDescription>
-            What type of volunteering commitment are you looking for?
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-
-    <FormField
-      control={form.control}
-      name="preferredWorkStyle"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="flex items-center gap-2">
-            <Laptop className="h-4 w-4" />
-            Preferred Work Style
-          </FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value}>
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select work style" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectItem value="remote">Remote</SelectItem>
-              <SelectItem value="in-person">In-person</SelectItem>
-              <SelectItem value="hybrid">Hybrid</SelectItem>
-            </SelectContent>
-          </Select>
-          <FormDescription>
-            What kind of working style do you prefer?
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+      <FormField
+        control={form.control}
+        name="preferredWorkStyle"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Laptop className="h-4 w-4" />
+              Preferred Work Style
+            </FormLabel>
+            <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select work style" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="remote">Remote</SelectItem>
+                <SelectItem value="in-person">In-person</SelectItem>
+                <SelectItem value="hybrid">Hybrid</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormDescription>
+              What kind of working style do you prefer?
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
 
     <FormField
       control={form.control}

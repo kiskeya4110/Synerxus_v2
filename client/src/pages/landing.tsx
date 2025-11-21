@@ -18,39 +18,66 @@ import villageVolunteersImg from "@assets/Village Volunteers_1763707388973.png";
 const COUNTRY_DATA = {
   philippines: {
     name: "Philippines",
-    coords: { x: 1020, y: 180 },
+    coords: { x: 1050, y: 200 },
     pilot: "Healthcare & Community Development",
     description: "Partnering with local NGOs to deliver medical missions and sustainable community health programs.",
   },
   usa: {
     name: "United States",
-    coords: { x: 280, y: 160 },
+    coords: { x: 180, y: 170 },
     pilot: "Skills Matching & Training",
     description: "Advanced volunteer skill assessment and professional development programs.",
   },
   mexico: {
     name: "Mexico",
-    coords: { x: 200, y: 240 },
+    coords: { x: 150, y: 250 },
     pilot: "Education & Environmental",
     description: "Focused on environmental conservation and education initiatives across rural communities.",
   },
   haiti: {
     name: "Haiti",
-    coords: { x: 140, y: 200 },
+    coords: { x: 270, y: 240 },
     pilot: "Infrastructure & Relief",
     description: "Disaster relief and infrastructure development programs supporting vulnerable populations.",
   },
   zimbabwe: {
     name: "Zimbabwe",
-    coords: { x: 750, y: 220 },
+    coords: { x: 720, y: 420 },
     pilot: "Women's Empowerment",
     description: "Supporting women entrepreneurs and community leaders through mentorship and resource access.",
   },
   zambia: {
     name: "Zambia",
-    coords: { x: 780, y: 280 },
+    coords: { x: 700, y: 380 },
     pilot: "Water, Sanitation & Health",
     description: "Implementing WASH initiatives and health education programs across rural areas.",
+  },
+};
+
+const PROFILE_STATS = {
+  community: {
+    title: "Community Volunteers",
+    stats: [
+      { label: "Active Volunteers", value: "15,234" },
+      { label: "Hours Contributed", value: "487,621" },
+      { label: "Communities Served", value: "542" },
+    ],
+  },
+  doctors: {
+    title: "Healthcare Impact",
+    stats: [
+      { label: "Medical Professionals", value: "3,847" },
+      { label: "People Treated", value: "128,542" },
+      { label: "Health Projects", value: "216" },
+    ],
+  },
+  village: {
+    title: "Corporate CSR & NGO Partnerships",
+    stats: [
+      { label: "Corporate Partners", value: "287" },
+      { label: "NGO Networks", value: "451" },
+      { label: "CSR Initiatives", value: "1,203" },
+    ],
   },
 };
 
@@ -99,37 +126,41 @@ const WorldMapHeader = () => {
 
       {/* Interactive SVG Map */}
       <svg viewBox="0 0 1280 720" className="w-full max-w-6xl mx-auto h-auto" preserveAspectRatio="xMidYMid meet">
-        {/* Detailed World Map Background */}
-        <g className="world-map-bg" fill="none" stroke="#cbd5e1" strokeWidth="0.8">
+        {/* Detailed World Map Background - More Pronounced */}
+        <g fill="none" stroke="#64748b" strokeWidth="2" opacity="0.25">
           {/* North America */}
-          <path d="M 100 80 L 180 60 L 220 120 L 200 240 L 120 260 L 80 160 Z" />
-          {/* Central America */}
-          <path d="M 150 240 L 190 240 L 200 280 L 150 290 Z" />
+          <path d="M 80 80 L 200 60 L 240 140 L 220 300 L 100 320 L 60 160 Z" />
+          {/* Central America & Caribbean */}
+          <path d="M 200 300 L 240 300 L 260 360 L 200 380 Z" />
           {/* South America */}
-          <path d="M 150 290 L 220 280 L 250 450 L 180 480 L 140 380 Z" />
+          <path d="M 120 320 L 240 300 L 280 540 L 140 580 L 80 400 Z" />
           {/* Europe */}
-          <path d="M 480 40 L 560 30 L 600 90 L 520 110 L 480 80 Z" />
-          {/* Africa */}
-          <path d="M 550 140 L 650 120 L 700 200 L 720 350 L 650 380 L 580 300 L 550 220 Z" />
+          <path d="M 480 20 L 580 10 L 620 100 L 500 120 L 480 60 Z" />
+          {/* Africa - More Pronounced */}
+          <path d="M 560 140 L 700 120 L 780 240 L 820 420 L 720 480 L 600 360 L 560 220 Z" />
           {/* Middle East */}
-          <path d="M 650 120 L 720 100 L 750 180 L 700 200 Z" />
+          <path d="M 700 120 L 800 100 L 840 200 L 760 240 Z" />
+          {/* Central Asia */}
+          <path d="M 800 100 L 900 80 L 920 180 L 840 200 Z" />
           {/* Asia */}
-          <path d="M 720 100 L 900 80 L 950 280 L 850 300 L 750 180 Z" />
+          <path d="M 900 80 L 1080 50 L 1120 300 L 950 340 L 920 180 Z" />
           {/* Southeast Asia */}
-          <path d="M 850 250 L 920 240 L 940 340 L 880 350 Z" />
+          <path d="M 1000 250 L 1080 240 L 1100 380 L 1020 400 Z" />
+          {/* Oceania */}
+          <path d="M 1100 380 L 1140 360 L 1150 480 L 1110 500 Z" />
         </g>
 
         {/* Flight path connections */}
         <g className="flight-path">
-          <path d="M 1020 180 Q 800 120 280 160" fill="none" strokeLinecap="round" />
-          <path d="M 280 160 Q 240 180 200 240" fill="none" strokeLinecap="round" />
-          <path d="M 200 240 Q 170 220 140 200" fill="none" strokeLinecap="round" />
-          <path d="M 140 200 Q 200 160 280 160" fill="none" strokeLinecap="round" />
-          <path d="M 280 160 Q 500 100 750 220" fill="none" strokeLinecap="round" />
-          <path d="M 200 240 Q 450 280 780 300" fill="none" strokeLinecap="round" />
-          <path d="M 750 220 Q 770 260 780 300" fill="none" strokeLinecap="round" />
-          <path d="M 1020 180 Q 880 200 750 220" fill="none" strokeLinecap="round" />
-          <path d="M 1020 180 Q 900 240 780 300" fill="none" strokeLinecap="round" />
+          <path d="M 1050 200 Q 800 120 180 170" fill="none" strokeLinecap="round" />
+          <path d="M 180 170 Q 160 200 150 250" fill="none" strokeLinecap="round" />
+          <path d="M 150 250 Q 200 240 270 240" fill="none" strokeLinecap="round" />
+          <path d="M 270 240 Q 220 200 180 170" fill="none" strokeLinecap="round" />
+          <path d="M 180 170 Q 450 100 720 420" fill="none" strokeLinecap="round" />
+          <path d="M 150 250 Q 400 320 700 380" fill="none" strokeLinecap="round" />
+          <path d="M 720 420 Q 710 400 700 380" fill="none" strokeLinecap="round" />
+          <path d="M 1050 200 Q 880 260 720 420" fill="none" strokeLinecap="round" />
+          <path d="M 1050 200 Q 900 280 700 380" fill="none" strokeLinecap="round" />
         </g>
 
         {/* Interactive Country Markers */}
@@ -152,36 +183,59 @@ const WorldMapHeader = () => {
         ))}
       </svg>
 
-      {/* Interactive Dialog for Country Details */}
+      {/* Interactive Dialog for Country or Stats */}
       <Dialog open={!!selectedCountry} onOpenChange={(open) => !open && setSelectedCountry(null)}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-blue-900">
-              🌍 {selectedData?.name}
-            </DialogTitle>
-            <DialogDescription className="text-base pt-2">
-              Pilot Program Initiative
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-              <h3 className="font-semibold text-amber-900 mb-2">
-                {selectedData?.pilot}
-              </h3>
-              <p className="text-slate-700 text-sm">
-                {selectedData?.description}
-              </p>
-            </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">Status</h4>
-              <p className="text-slate-700 text-sm">
-                ✓ Active Pilot Program | Accepting Volunteers
-              </p>
-            </div>
-            <Button className="w-full bg-blue-900 hover:bg-blue-950">
-              Learn More About {selectedData?.name}
-            </Button>
-          </div>
+          {selectedData ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-blue-900">
+                  🌍 {selectedData.name}
+                </DialogTitle>
+                <DialogDescription className="text-base pt-2">
+                  Pilot Program Initiative
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-amber-900 mb-2">
+                    {selectedData.pilot}
+                  </h3>
+                  <p className="text-slate-700 text-sm">
+                    {selectedData.description}
+                  </p>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">Status</h4>
+                  <p className="text-slate-700 text-sm">
+                    ✓ Active Pilot Program | Accepting Volunteers
+                  </p>
+                </div>
+                <Button className="w-full bg-blue-900 hover:bg-blue-950">
+                  Learn More About {selectedData.name}
+                </Button>
+              </div>
+            </>
+          ) : selectedCountry && PROFILE_STATS[selectedCountry as keyof typeof PROFILE_STATS] ? (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-blue-900">
+                  {PROFILE_STATS[selectedCountry as keyof typeof PROFILE_STATS].title}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3 py-4">
+                {PROFILE_STATS[selectedCountry as keyof typeof PROFILE_STATS].stats.map((stat, idx) => (
+                  <div key={idx} className="bg-gradient-to-r from-blue-50 to-amber-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-slate-600 text-sm font-medium">{stat.label}</p>
+                    <p className="text-2xl font-bold text-blue-900">{stat.value}</p>
+                  </div>
+                ))}
+                <Button className="w-full bg-amber-500 hover:bg-amber-600 text-white mt-4">
+                  Explore Opportunities
+                </Button>
+              </div>
+            </>
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -274,98 +328,45 @@ export default function Landing() {
         {/* World Map with Flight Paths */}
         <WorldMapHeader />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto mb-12">
-          <div className="flex justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <button
+            onClick={() => setSelectedCountry("community-stats")}
+            className="flex justify-center cursor-pointer group"
+          >
             <img 
               src={communityVolunteersImg}
               alt="Community Volunteers"
-              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl hover:shadow-3xl transition-shadow"
+              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl group-hover:shadow-3xl transition-shadow"
               loading="lazy"
             />
-          </div>
-          <div className="flex justify-center">
+          </button>
+          <button
+            onClick={() => setSelectedCountry("doctors-stats")}
+            className="flex justify-center cursor-pointer group"
+          >
             <img 
               src={doctorsVolunteeringImg}
               alt="Doctors Volunteering"
-              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl hover:shadow-3xl transition-shadow"
+              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl group-hover:shadow-3xl transition-shadow"
               loading="lazy"
             />
-          </div>
-          <div className="flex justify-center">
+          </button>
+          <button
+            onClick={() => setSelectedCountry("village-stats")}
+            className="flex justify-center cursor-pointer group"
+          >
             <img 
               src={villageVolunteersImg}
               alt="Village Volunteers"
-              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl hover:shadow-3xl transition-shadow"
+              className="w-full h-64 sm:h-72 rounded-2xl object-cover shadow-2xl group-hover:shadow-3xl transition-shadow"
               loading="lazy"
             />
-          </div>
-        </div>
-
-        {/* Three Step Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {/* Step 1 */}
-          <div className="text-center md:text-left">
-            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Get Involved and See Your Impact</h3>
-            <p className="text-slate-700 text-base leading-relaxed">
-              Join a global community of volunteers making tangible change. Track your contributions and visualize the collective impact you're creating.
-            </p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="text-center">
-            <div className="inline-block bg-amber-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl mb-4">
-              1
-            </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Create Profile</h3>
-            <p className="text-slate-700 text-base leading-relaxed">
-              Sign up get verified, and join volunteers and NGOs worldwide to collaborate on meaningful projects.
-            </p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="text-center md:text-right">
-            <div className="inline-block bg-amber-500 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-xl mb-4">
-              2
-            </div>
-            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Track Impact</h3>
-            <p className="text-slate-700 text-base leading-relaxed">
-              Activate your skills ad values in collaboration with global partners and track measurable outcomes.
-            </p>
-          </div>
+          </button>
         </div>
       </section>
-
-      {/* SDG Section - Preserved */}
-      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24 bg-gradient-to-b from-slate-100 to-slate-200 rounded-lg mt-12 mb-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4" data-testid="text-sdg-title">
-              The Sustainable Development Goals
-            </h2>
-            <p className="text-lg sm:text-xl text-slate-700 max-w-3xl mx-auto" data-testid="text-sdg-description">
-              Connect your volunteer projects to the United Nations' 17 Sustainable Development Goals. Click any goal to learn more about its targets and how your organization can contribute.
-            </p>
-          </div>
-
-          <SDGWheel />
-
-          <div className="text-center mt-12">
-            <p className="text-base sm:text-lg text-slate-700 mb-6">
-              Synerxus helps you track and report your organization's contribution to these global goals
-            </p>
-            <Link href="/sdg-mapping">
-              <Button variant="outline" size="lg" className="gap-2 border-amber-500 text-amber-500 hover:bg-amber-500 hover:text-white" data-testid="button-explore-sdg-mapping">
-                Explore SDG Mapping Feature
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 py-8 bg-slate-100">
+      <footer className="border-t border-slate-200 py-8 bg-slate-100 mt-16">
         <div className="container mx-auto px-4 text-center text-sm text-slate-600">
           <p>© 2025 Synerxus. Intelligent connections for sustainable development worldwide.</p>
         </div>

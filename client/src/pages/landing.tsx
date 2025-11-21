@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
+import { SDGWheel } from "@/components/sdg/sdg-wheel";
 import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
@@ -479,6 +480,50 @@ export default function Landing() {
               </div>
             </div>
           </button>
+        </div>
+      </section>
+
+      {/* SDG Wheel Section */}
+      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="max-w-6xl mx-auto">
+          {/* SDG Wheel with Logo Center */}
+          <div className="relative flex justify-center items-center mb-12">
+            {/* Background glow effect */}
+            <div className="absolute inset-0 flex justify-center items-center">
+              <div className="w-96 h-96 sm:w-full sm:h-96 bg-gradient-to-r from-blue-900/5 to-amber-600/5 rounded-full blur-3xl"></div>
+            </div>
+            
+            {/* SDG Wheel */}
+            <div className="relative z-10 w-full">
+              <SDGWheel />
+            </div>
+
+            {/* Synerxus Logo Center Overlay */}
+            <div className="absolute inset-0 flex justify-center items-center z-20 pointer-events-none">
+              <div className="flex flex-col items-center justify-center">
+                <div className="bg-white rounded-full p-4 sm:p-6 shadow-2xl border-4 border-slate-50">
+                  <Logo size="lg" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Text */}
+          <div className="text-center mt-16 px-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight mb-6">
+              <span className="text-blue-900">From Local Service</span><br />
+              <span className="text-amber-600">to Global Legacy...</span><br />
+              <span className="text-slate-700">Where Purpose Meets Progress</span>
+            </h2>
+            <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Every volunteer action contributes to sustainable development. Join thousands making a measurable impact across all 17 SDGs worldwide.
+            </p>
+            <Link href="/login">
+              <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold text-lg px-8 rounded-xl">
+                Start Your Legacy Today
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -1,7 +1,7 @@
 # Synerxus - Connect. Collaborate. Impact Globally.
 
 ## Overview
-Synerxus is an AI-powered platform designed to connect global volunteers with opportunities and enable organizations to track, measure, and visualize the impact of their volunteer initiatives. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment and storytelling. The platform's core vision is "Intelligent connections for sustainable development worldwide."
+Synerxus is an AI-powered platform connecting global volunteers with opportunities and enabling organizations to track, measure, and visualize their impact, linking activities to humanitarian outcomes and Sustainable Development Goals (SDGs). Its core vision is "Intelligent connections for sustainable development worldwide," providing data-driven insights for impact assessment and storytelling.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
@@ -9,62 +9,16 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-The platform features a role-based dashboard with optimized color schemes, including UN SDG colors for charts. It is mobile-optimized with responsive layouts and utilizes `shadcn/ui` components built on `Radix UI`. The theme is light, with a very light blue-gray background and vibrant accent colors, an infinity loop logo, navy blue and orange-gold scheme, and consistent typography. Official UN SDG graphics are integrated and displayed numerically. Interactive elements like clickable profile sections and hover states are prevalent, with clear navigation cues. Interactive KPI cards on organization dashboards open dialogs with clickable project items. Volunteer profile dialogs feature a modern gradient header, action buttons, skills section, and recent activity. Impact visualization pages and dashboard charts dynamically differentiate volunteer-specific views ("Your Impact Over Time", "Your Hours", "People You Impacted") from organization-wide views ("Organization Impact Over Time", "Volunteer Hours", "People Impacted") in all metric labels, chart titles, and dataset labels. The ImpactChart component accepts a userType prop to render context-appropriate labels throughout the Impact Over Time visualization. All opportunity displays use a consistent 2-column layout: Column 1 features AI analysis with "Why this matches you" sections in blue backgrounds, requirements, and benefits; Column 2 displays SDG goals with official color-coded badges and required skills. This 2-column pattern is applied across the Find Opportunities dashboard tab, My Applications page, and Discover Opportunities page for visual consistency.
+The platform features a mobile-optimized, role-based dashboard with UN SDG-themed color schemes, `shadcn/ui` components built on `Radix UI`, and a light theme with vibrant accents. It includes consistent typography, an infinity loop logo, and interactive elements like clickable profile sections and hover states. Dashboards dynamically differentiate volunteer-specific from organization-wide views. Opportunity displays consistently use a 2-column layout for AI analysis and SDG alignment.
 
 ### Technical Implementations
-The frontend is built with React 18, TypeScript, Vite, Wouter for routing, TanStack Query, Tailwind CSS, Chart.js, React Hook Form, and date-fns. The backend uses Node.js with TypeScript, Express.js for REST APIs, WebSockets for real-time updates, and Drizzle ORM with Neon serverless PostgreSQL. The database schema is relational and comprehensive, including AI tracking fields and skill proficiency ratings. An AI matching algorithm, implemented in TypeScript, provides weighted scoring for volunteer-opportunity and volunteer-organization matches based on Skills (with proficiency weighting), Location, SDG, and Interests, with robust data normalization. The matching algorithm incorporates skill self-ratings using 70% skill count and 30% average proficiency weighting, with explicit undefined checks to preserve 0% ratings and normalized skill-to-rating maps for case-insensitive lookups. Multi-tenant security enforces strict data scoping by `organizationId` or `userId` at the database level. Volunteers have strict per-assignee scoping, seeing only data they directly contributed to (activities, assigned tasks, project impacts from accepted assignments). The application-to-assignment workflow automatically creates project assignments upon application acceptance. Applied opportunities are filtered from the "New Opportunities" list. Backend-computed metrics provide real KPI data for organization dashboards, including `projectHours`, `monthlyImpactData`, `impactGrowthSeries`, `impactBySDG`, `recentActivities`, and `totalPeopleImpacted`. Data consistency is maintained across all views, from opportunity details to hours breakdowns and time series utilities. Key features include email-based profile linking, a full messaging system, automatic project completion tracking, real-time volunteer list updates, and server-side enrichment of dashboard tasks. A comprehensive notification system creates real-time notifications for various event types. An AI tips service generates personalized learning potential and skills optimization recommendations for each opportunity based on skill proficiency, SDG alignment, and commitment compatibility.
+The frontend uses React 18, TypeScript, Vite, Wouter, TanStack Query, Tailwind CSS, Chart.js, React Hook Form, and date-fns. The backend is Node.js with TypeScript, Express.js for REST APIs, WebSockets, and Drizzle ORM with Neon serverless PostgreSQL. The database schema includes AI tracking fields and skill proficiency. An AI matching algorithm provides weighted scoring for volunteer-opportunity and volunteer-organization matches based on Skills (with proficiency weighting), Location, SDG, Interests, and Availability. Multi-tenant security enforces data scoping by `organizationId` or `userId`. Key features include email-based profile linking, a full messaging system, automatic project completion tracking, real-time volunteer list updates, and a comprehensive notification system. An AI tips service generates personalized recommendations.
 
 ### Feature Specifications
-The platform includes a rebranded landing page with an interactive SDG wheel. The dashboard offers role-based views with real-time KPIs, interactive cards, Impact Over Time and SDG Distribution visualizations, and AI-matched opportunities. A "Volunteer Insights" dashboard section provides comprehensive volunteer data. SDG mapping visualizes project alignment. Other features include mobile data collection, a full-featured calendar, interactive impact visualization, AI-powered impact storytelling, and core management pages with full CRUD capabilities for Projects, Tasks, Volunteers, Organizations, Calendar, Opportunities, and Applications. A robust volunteer opportunities system supports posting, discovery, and application tracking. The system supports dual user types (Volunteer/Organization) with distinct flows. Project-task hierarchy is supported with AI-powered volunteer recommendations for task assignments. Comprehensive profile settings with photo upload are available. Multi-step intake forms are provided for onboarding and opportunity posting. Assignment tracking allows volunteers to view enriched assignment details including team members and recent activities. Organizations have a dedicated Volunteers tab displaying aggregated volunteer statistics from accepted project assignments. A unified "My Work" page consolidates Applications, Assignments, and Tasks under one interface with hash-driven tab navigation (#applications, #assignments, #tasks) at /my-work, providing volunteers with a centralized view of all their work while maintaining backward compatibility with legacy individual routes.
+The platform includes a rebranded landing page with an interactive SDG wheel, a role-based dashboard with real-time KPIs and AI-matched opportunities, and a "Volunteer Insights" section. Features also encompass mobile data collection, a calendar, interactive impact visualization, AI-powered impact storytelling, and CRUD capabilities for Projects, Tasks, Volunteers, Organizations, Calendar, Opportunities, and Applications. It supports dual user types (Volunteer/Organization) with distinct flows, project-task hierarchy with AI-powered volunteer recommendations, comprehensive profile settings, multi-step intake forms, and assignment tracking. A unified "My Work" page consolidates Applications, Assignments, and Tasks.
 
 ### System Design Choices
-Authentication is managed via Firebase Auth with Google OAuth. Client-server communication utilizes RESTful APIs, WebSockets for real-time updates, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon.
-
-## Recent Changes (November 2025)
-
-### Professional Profile Enhancements (November 21, 2025)
-- **Enhanced Volunteer Profiles**: Added comprehensive professional fields to capture volunteer expertise and preferences:
-  - Professional Information: Title, years of experience, LinkedIn profile URL
-  - Languages: Array field for multilingual capabilities
-  - Work Style Preference: Remote, in-person, or hybrid volunteering preference
-  - Matching Priorities: 5-point sliders (1-5 scale) for personalizing opportunity matching:
-    - Skills Match priority
-    - Cause Alignment priority
-    - Time Flexibility priority
-    - Geographic Preference priority
-    - Impact Potential priority
-- **Database Schema Updates**: Extended volunteerProfiles table with new columns: professionalTitle, yearsOfExperience, linkedinProfile, languages, availability (schedule), timezone, preferredCommitment, matchingPriorities (JSONB)
-- **Volunteer Intake Form**: Added professional fields, work style selector, and matching priority sliders with real-time value display
-- **Volunteer Profile Settings**: Updated with same professional fields and matching priorities for profile editing
-- **Constants Library**: Created volunteer-constants.ts with predefined skill categories, experience levels, SDG data with emojis, time commitment options, and matching priority definitions
-
-### Availability Matching Integration
-- **Matching Algorithm Enhancement**: Added availability as a fifth matching factor (15% weight) alongside Skills (30%), Location (20%), SDG (20%), and Interests (15%)
-- **Time Commitment Scoring**: Compares volunteer's weeklyAvailability against opportunity's ongoingHoursPerWeek with graduated scoring (60pts for ≤70% commitment, 40pts for 70-100%, 10pts for over-commitment)
-- **Work Style Matching**: Compares volunteer's preferredWorkStyle (remote/in-person/hybrid) with opportunity's engagementType, with 40pt bonus for matches and hybrid flexibility
-- **Profile Display**: Added comprehensive "Availability & Work Preferences" section to volunteer profiles showing weekly hours, work style preference, and detailed time slots with defensive handling for incomplete data
-- **Profile Settings Fix**: Updated volunteer-profile-settings.tsx to use correct `/api/intake/volunteer-profile` endpoint and properly map `weeklyHours` form field to `weeklyAvailability` database field, enabling volunteers to save availability data that feeds into profile display and matching algorithm
-- **Volunteer Intake Form Fix**: Fixed volunteer-intake.tsx to use `/api/intake/volunteer-profile` endpoint instead of deprecated `/api/volunteers` endpoint, ensuring data saves correctly to volunteerProfiles table with all availability fields. Fixed NaN error in weeklyHours input field with proper empty string handling. Both intake and settings forms now use the same API and database table for data consistency.
-
-### People Impacted Metrics Expansion
-- **Broader Impact Tracking**: Expanded "People Impacted" keyword filtering from basic terms (people/person/beneficiar) to include: students, children, adults, families, participants, recipients, attendees, individuals, community members, meals, services, healthcare, education, and training
-- **Data Accuracy**: Applied expanded filtering to both organization and volunteer dashboard calculations to capture diverse human-impact metrics like "Students Educated", "Meals Provided", and "Healthcare Services Delivered"
-
-### UI Improvements
-- **Impact Chart Cleanup**: Removed unwanted filter menu from Impact Over Time visualization for cleaner, more focused chart display
-- **Visual Consistency**: Maintained consistent chart styling and user-type-specific labels across all impact visualizations
-
-### Dashboard Live Updates & Query Invalidation (November 2025)
-- **Comprehensive Query Invalidation**: Implemented consistent cache invalidation across all data mutation points to ensure dashboard KPIs and SDG Distribution chart update in real-time when data is entered
-- **Mutation Points Updated**:
-  - Mobile Data Collection (activity & impact mutations): Invalidate `/api/dashboard/summary`, `/api/projects`, and `/api/volunteer-activities` on success
-  - Project Edit: Invalidate all project query variants (global, by ID, by user) plus dashboard summaries when projects are updated
-  - Volunteers & Applications (assignment mutations): Invalidate project assignments, volunteer profiles, organization-scoped lists, dashboard summaries, and `/api/users` cache
-  - Applications (review mutations): Comprehensive predicate-based invalidation covering applications, volunteers, projects, dashboard, organizations, profiles, activities, and tasks
-- **Organization-Scoped Query Support**: All mutations now properly invalidate organization-scoped queries like `["/api/organizations", userId, "volunteers"]` in addition to direct volunteer queries
-- **SDG Chart Live Updates**: SDG Distribution chart updates automatically when project data changes since it derives from the projects query (no dedicated SDG cache needed)
-- **KPI Consistency**: Dashboard KPIs (Hours Contributed, Tasks Completed, Active Projects) display project names and update live across all user types and mutation surfaces
-- **Predicate-Based Invalidation**: Used TanStack Query predicates to efficiently invalidate all variants of scoped queries without hardcoding every user ID combination
+Authentication is managed via Firebase Auth with Google OAuth. Client-server communication uses RESTful APIs, WebSockets, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon.
 
 ## External Dependencies
 

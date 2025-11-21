@@ -64,11 +64,11 @@ export default function QuickActions({ userType = "volunteer", onContactVoluntee
       href: "/projects"
     },
     {
-      id: "recruit-volunteers",
-      label: "Find Volunteers",
+      id: "invite-volunteers",
+      label: "Invite Volunteers",
       icon: <UserPlus className="h-5 w-5 mb-1" />,
       color: "text-purple-500",
-      href: "/volunteers"
+      href: "/matched-volunteers"
     },
     {
       id: "create-report",

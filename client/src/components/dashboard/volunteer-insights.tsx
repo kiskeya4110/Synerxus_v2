@@ -21,12 +21,14 @@ import { Link } from "wouter";
 
 interface VolunteerProfile {
   skills?: string[];
+  skillRatings?: Record<string, number>;
   interests?: string[];
   location?: string;
   preferredSdgs?: number[];
   languages?: string[];
   motivations?: string;
   weeklyAvailability?: number;
+  availability?: Array<{day: string; startTime: string; endTime: string}>;
   preferredWorkStyle?: string;
   profileCompleteness?: number;
 }
@@ -153,30 +155,47 @@ export function VolunteerInsightsSection({
                   </div>
                 )}
 
-                {/* Skills */}
-                {volunteerProfile.skills && volunteerProfile.skills.length > 0 && (
+                {/* Skills with Proficiency Ratings */}
+                {volunteerProfile.skillRatings && Object.keys(volunteerProfile.skillRatings).length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                       <Briefcase className="h-4 w-4" />
-                      Skills
+                      Skills & Proficiency
                     </div>
-                    <div className="flex flex-wrap gap-1 ml-6">
-                      {volunteerProfile.skills.slice(0, 5).map((skill, idx) => (
-                        <Badge 
-                          key={idx} 
-                          variant="secondary" 
-                          className="text-xs"
-                          data-testid={`badge-skill-${idx}`}
-                        >
-                          {skill}
-                        </Badge>
+                    <div className="space-y-2 ml-6">
+                      {Object.entries(volunteerProfile.skillRatings).slice(0, 5).map(([skill, rating], idx) => (
+                        <div key={idx} className="flex items-center justify-between gap-2">
+                          <Badge 
+                            variant="secondary" 
+                            className="text-xs"
+                            data-testid={`badge-skill-${idx}`}
+                          >
+                            {skill}
+                          </Badge>
+                          <span className="text-xs text-gray-600 dark:text-gray-400 font-medium" data-testid={`text-skill-rating-${idx}`}>
+                            {rating}%
+                          </span>
+                        </div>
                       ))}
-                      {volunteerProfile.skills.length > 5 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{volunteerProfile.skills.length - 5} more
-                        </Badge>
+                      {Object.keys(volunteerProfile.skillRatings).length > 5 && (
+                        <span className="text-xs text-gray-500">
+                          +{Object.keys(volunteerProfile.skillRatings).length - 5} more skills
+                        </span>
                       )}
                     </div>
+                  </div>
+                )}
+
+                {/* Time Slots Available */}
+                {volunteerProfile.availability && volunteerProfile.availability.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <Clock className="h-4 w-4" />
+                      Available Time Slots
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 ml-6" data-testid="text-slot-count">
+                      {volunteerProfile.availability.length} {volunteerProfile.availability.length === 1 ? 'slot' : 'slots'} per week
+                    </p>
                   </div>
                 )}
 

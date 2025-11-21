@@ -308,7 +308,16 @@ export default function VolunteerProfileSettings() {
         onboardingCompleted: !existingProfile, // Mark as completed on first submission only
       };
       
-      return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
+      console.log('[Intake Mutation] Sending profileData to backend:', JSON.stringify({
+        userId: currentUser.id,
+        availability: profileData.availability,
+        weeklyAvailability: profileData.weeklyAvailability,
+        yearsOfExperience: profileData.yearsOfExperience,
+      }, null, 2));
+      
+      const response = await apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
+      console.log('[Intake Mutation] Backend response:', JSON.stringify(response, null, 2));
+      return response;
     },
     onSuccess: () => {
       const id = currentUser?.id;
@@ -341,6 +350,15 @@ export default function VolunteerProfileSettings() {
   });
 
   const onSubmit = (data: FormData) => {
+    console.log('[Intake Form Submit] Form data:', JSON.stringify({
+      name: data.name,
+      location: data.location,
+      availability: data.availability,
+      skills: data.skills,
+      yearsOfExperience: data.yearsOfExperience,
+      weeklyHours: data.weeklyHours,
+      timezone: data.timezone,
+    }, null, 2));
     profileMutation.mutate(data);
   };
 

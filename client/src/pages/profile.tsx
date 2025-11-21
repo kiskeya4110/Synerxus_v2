@@ -328,29 +328,31 @@ export default function Profile() {
               <TooltipProvider>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {[...sdgsToDisplay].sort((a: number, b: number) => a - b).map((goal: number) => (
-                    <Tooltip key={goal}>
-                      <TooltipTrigger>
-                        <div className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                          {UN_SDG_ICONS[goal] ? (
-                            <img 
-                              src={UN_SDG_ICONS[goal]} 
-                              alt={`SDG ${goal}`}
-                              className="w-15 h-15 rounded"
-                            />
-                          ) : (
-                            <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
-                              {goal}
-                            </div>
-                          )}
-                          <span className="text-xs text-center line-clamp-2 font-medium">
-                            {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
-                          </span>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>SDG {goal}: {SDG_LABELS[goal as keyof typeof SDG_LABELS]}</p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <Link key={goal} href="/discover-opportunities">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex flex-col items-center gap-2 p-3 border rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors cursor-pointer hover:border-primary/50" data-testid={`sdg-button-${goal}`}>
+                            {UN_SDG_ICONS[goal] ? (
+                              <img 
+                                src={UN_SDG_ICONS[goal]} 
+                                alt={`SDG ${goal}`}
+                                className="w-15 h-15 rounded"
+                              />
+                            ) : (
+                              <div className="w-15 h-15 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-lg">
+                                {goal}
+                              </div>
+                            )}
+                            <span className="text-xs text-center line-clamp-2 font-medium">
+                              {SDG_LABELS[goal as keyof typeof SDG_LABELS]}
+                            </span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>View opportunities aligned with SDG {goal}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </Link>
                   ))}
                 </div>
               </TooltipProvider>

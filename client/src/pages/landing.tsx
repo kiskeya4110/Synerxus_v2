@@ -1,8 +1,6 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
-import { SDGWheel } from "@/components/sdg/sdg-wheel";
-import { ArrowRight, Info } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -14,41 +12,42 @@ import {
 import communityVolunteersImg from "@assets/Community Volunteers_1763707388972.png";
 import doctorsVolunteeringImg from "@assets/Doctors Volunteering_1763707388972.png";
 import villageVolunteersImg from "@assets/Village Volunteers_1763707388973.png";
+import worldMapImg from "@assets/image_1763709456060.png";
 
 const COUNTRY_DATA = {
   philippines: {
     name: "Philippines",
-    coords: { x: 1050, y: 200 },
+    coords: { x: 750, y: 220 },
     pilot: "Healthcare & Community Development",
     description: "Partnering with local NGOs to deliver medical missions and sustainable community health programs.",
   },
   usa: {
     name: "United States",
-    coords: { x: 180, y: 170 },
+    coords: { x: 220, y: 200 },
     pilot: "Skills Matching & Training",
     description: "Advanced volunteer skill assessment and professional development programs.",
   },
   mexico: {
     name: "Mexico",
-    coords: { x: 150, y: 250 },
+    coords: { x: 200, y: 270 },
     pilot: "Education & Environmental",
     description: "Focused on environmental conservation and education initiatives across rural communities.",
   },
   haiti: {
     name: "Haiti",
-    coords: { x: 270, y: 240 },
+    coords: { x: 300, y: 270 },
     pilot: "Infrastructure & Relief",
     description: "Disaster relief and infrastructure development programs supporting vulnerable populations.",
   },
   zimbabwe: {
     name: "Zimbabwe",
-    coords: { x: 720, y: 420 },
+    coords: { x: 600, y: 420 },
     pilot: "Women's Empowerment",
     description: "Supporting women entrepreneurs and community leaders through mentorship and resource access.",
   },
   zambia: {
     name: "Zambia",
-    coords: { x: 700, y: 380 },
+    coords: { x: 580, y: 390 },
     pilot: "Water, Sanitation & Health",
     description: "Implementing WASH initiatives and health education programs across rural areas.",
   },
@@ -81,9 +80,12 @@ const PROFILE_STATS = {
   },
 };
 
-const WorldMapHeader = () => {
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+interface WorldMapHeaderProps {
+  selectedCountry: string | null;
+  setSelectedCountry: (country: string | null) => void;
+}
 
+const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderProps) => {
   const selectedData = selectedCountry ? COUNTRY_DATA[selectedCountry as keyof typeof COUNTRY_DATA] : null;
 
   return (
@@ -93,19 +95,12 @@ const WorldMapHeader = () => {
           0% { stroke-dashoffset: 1000; }
           100% { stroke-dashoffset: 0; }
         }
-        @keyframes pulse-marker {
-          0%, 100% { r: 8; }
-          50% { r: 12; }
-        }
         .flight-path {
           stroke-dasharray: 1000;
           animation: dash-animation 8s ease-in-out infinite;
           stroke: #f97316;
           stroke-width: 1.5;
           opacity: 0.6;
-        }
-        .world-map-bg {
-          opacity: 0.08;
         }
         .country-marker-interactive {
           cursor: pointer;
@@ -119,69 +114,51 @@ const WorldMapHeader = () => {
           stroke-width: 2;
           opacity: 0.8;
         }
-        .pulse {
-          animation: pulse-marker 2s ease-in-out infinite;
-        }
       `}</style>
 
-      {/* Interactive SVG Map */}
-      <svg viewBox="0 0 1280 720" className="w-full max-w-6xl mx-auto h-auto" preserveAspectRatio="xMidYMid meet">
-        {/* Detailed World Map Background - More Pronounced */}
-        <g fill="none" stroke="#64748b" strokeWidth="2" opacity="0.25">
-          {/* North America */}
-          <path d="M 80 80 L 200 60 L 240 140 L 220 300 L 100 320 L 60 160 Z" />
-          {/* Central America & Caribbean */}
-          <path d="M 200 300 L 240 300 L 260 360 L 200 380 Z" />
-          {/* South America */}
-          <path d="M 120 320 L 240 300 L 280 540 L 140 580 L 80 400 Z" />
-          {/* Europe */}
-          <path d="M 480 20 L 580 10 L 620 100 L 500 120 L 480 60 Z" />
-          {/* Africa - More Pronounced */}
-          <path d="M 560 140 L 700 120 L 780 240 L 820 420 L 720 480 L 600 360 L 560 220 Z" />
-          {/* Middle East */}
-          <path d="M 700 120 L 800 100 L 840 200 L 760 240 Z" />
-          {/* Central Asia */}
-          <path d="M 800 100 L 900 80 L 920 180 L 840 200 Z" />
-          {/* Asia */}
-          <path d="M 900 80 L 1080 50 L 1120 300 L 950 340 L 920 180 Z" />
-          {/* Southeast Asia */}
-          <path d="M 1000 250 L 1080 240 L 1100 380 L 1020 400 Z" />
-          {/* Oceania */}
-          <path d="M 1100 380 L 1140 360 L 1150 480 L 1110 500 Z" />
-        </g>
-
-        {/* Flight path connections */}
-        <g className="flight-path">
-          <path d="M 1050 200 Q 800 120 180 170" fill="none" strokeLinecap="round" />
-          <path d="M 180 170 Q 160 200 150 250" fill="none" strokeLinecap="round" />
-          <path d="M 150 250 Q 200 240 270 240" fill="none" strokeLinecap="round" />
-          <path d="M 270 240 Q 220 200 180 170" fill="none" strokeLinecap="round" />
-          <path d="M 180 170 Q 450 100 720 420" fill="none" strokeLinecap="round" />
-          <path d="M 150 250 Q 400 320 700 380" fill="none" strokeLinecap="round" />
-          <path d="M 720 420 Q 710 400 700 380" fill="none" strokeLinecap="round" />
-          <path d="M 1050 200 Q 880 260 720 420" fill="none" strokeLinecap="round" />
-          <path d="M 1050 200 Q 900 280 700 380" fill="none" strokeLinecap="round" />
-        </g>
-
-        {/* Interactive Country Markers */}
-        {Object.entries(COUNTRY_DATA).map(([key, country]) => (
-          <g key={key} className="country-marker-interactive" onClick={() => setSelectedCountry(key)}>
-            <circle cx={country.coords.x} cy={country.coords.y} r="8" fill="#b45309" />
-            <circle cx={country.coords.x} cy={country.coords.y} r="14" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.4" />
-            <text
-              x={country.coords.x}
-              y={country.coords.y + 45}
-              fontSize="12"
-              fontWeight="600"
-              fill="#1e3a8a"
-              textAnchor="middle"
-              className="pointer-events-none"
-            >
-              {country.name}
-            </text>
+      {/* Interactive Map with Image Background */}
+      <div className="relative w-full max-w-6xl mx-auto mb-8">
+        <img 
+          src={worldMapImg}
+          alt="World Map"
+          className="w-full h-auto rounded-lg"
+        />
+        
+        {/* Overlay SVG for interactive markers and connections */}
+        <svg viewBox="0 0 960 600" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
+          {/* Flight path connections */}
+          <g className="flight-path">
+            <path d="M 750 220 Q 600 200 300 270" fill="none" strokeLinecap="round" />
+            <path d="M 220 200 Q 160 220 200 270" fill="none" strokeLinecap="round" />
+            <path d="M 200 270 Q 250 270 300 270" fill="none" strokeLinecap="round" />
+            <path d="M 300 270 Q 260 230 220 200" fill="none" strokeLinecap="round" />
+            <path d="M 220 200 Q 400 250 600 420" fill="none" strokeLinecap="round" />
+            <path d="M 200 270 Q 350 330 580 390" fill="none" strokeLinecap="round" />
+            <path d="M 600 420 Q 590 410 580 390" fill="none" strokeLinecap="round" />
+            <path d="M 750 220 Q 680 300 600 420" fill="none" strokeLinecap="round" />
+            <path d="M 750 220 Q 680 290 580 390" fill="none" strokeLinecap="round" />
           </g>
-        ))}
-      </svg>
+
+          {/* Interactive Country Markers */}
+          {Object.entries(COUNTRY_DATA).map(([key, country]) => (
+            <g key={key} className="country-marker-interactive" onClick={() => setSelectedCountry(key)} style={{ cursor: 'pointer' }}>
+              <circle cx={country.coords.x} cy={country.coords.y} r="8" fill="#b45309" />
+              <circle cx={country.coords.x} cy={country.coords.y} r="14" fill="none" stroke="#b45309" strokeWidth="1" opacity="0.4" />
+              <text
+                x={country.coords.x}
+                y={country.coords.y + 45}
+                fontSize="12"
+                fontWeight="600"
+                fill="#1e3a8a"
+                textAnchor="middle"
+                className="pointer-events-none"
+              >
+                {country.name}
+              </text>
+            </g>
+          ))}
+        </svg>
+      </div>
 
       {/* Interactive Dialog for Country or Stats */}
       <Dialog open={!!selectedCountry} onOpenChange={(open) => !open && setSelectedCountry(null)}>
@@ -245,7 +222,6 @@ const WorldMapHeader = () => {
           Get Involved and See Your Impact
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Step 1 */}
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
               1
@@ -256,7 +232,6 @@ const WorldMapHeader = () => {
             </p>
           </div>
 
-          {/* Step 2 */}
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
               2
@@ -267,7 +242,6 @@ const WorldMapHeader = () => {
             </p>
           </div>
 
-          {/* Step 3 */}
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-500 text-white font-bold text-xl mb-4">
               3
@@ -284,6 +258,8 @@ const WorldMapHeader = () => {
 };
 
 export default function Landing() {
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Navigation */}
@@ -315,7 +291,6 @@ export default function Landing() {
           Implementing the SDGs and reaching the nexus of impact takes collective action. Our platform helps you join the effort, track outcomes, and manage projects.
         </p>
 
-        {/* Join Button */}
         <Link href="/login" className="inline-block">
           <Button size="lg" className="gap-2 min-h-[48px] bg-amber-500 hover:bg-amber-600 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-nexus">
             Join the Nexus
@@ -325,12 +300,11 @@ export default function Landing() {
 
       {/* Profile Cards Section */}
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        {/* World Map with Flight Paths */}
-        <WorldMapHeader />
+        <WorldMapHeader selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry} />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
           <button
-            onClick={() => setSelectedCountry("community-stats")}
+            onClick={() => setSelectedCountry("community")}
             className="flex justify-center cursor-pointer group"
           >
             <img 
@@ -341,7 +315,7 @@ export default function Landing() {
             />
           </button>
           <button
-            onClick={() => setSelectedCountry("doctors-stats")}
+            onClick={() => setSelectedCountry("doctors")}
             className="flex justify-center cursor-pointer group"
           >
             <img 
@@ -352,7 +326,7 @@ export default function Landing() {
             />
           </button>
           <button
-            onClick={() => setSelectedCountry("village-stats")}
+            onClick={() => setSelectedCountry("village")}
             className="flex justify-center cursor-pointer group"
           >
             <img 

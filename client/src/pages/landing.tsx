@@ -559,29 +559,29 @@ export default function Landing() {
       </section>
 
       {/* SDG Wheel Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-32">
         <div className="max-w-6xl mx-auto">
           {/* Section Title */}
-          <div className="text-center mb-6 sm:mb-8">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-2">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-3 sm:mb-4">
               The UN Sustainable Development Goals
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-slate-600 px-2">
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 px-2 max-w-2xl mx-auto">
               17 interconnected goals to end poverty, protect the planet, and ensure prosperity by 2030
             </p>
           </div>
 
           {/* SDG Wheel and Compact Info Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center lg:items-start">
             {/* SDG Wheel - Larger */}
             <div className="relative flex justify-center items-center order-2 lg:order-1">
-              {/* Background glow effect */}
-              <div className="absolute inset-0 flex justify-center items-center">
-                <div className="w-full h-64 sm:h-80 md:h-96 bg-gradient-to-r from-blue-900/5 to-amber-600/5 rounded-full blur-3xl"></div>
+              {/* Background glow effect - reduced size */}
+              <div className="absolute inset-center flex justify-center items-center pointer-events-none">
+                <div className="w-56 sm:w-64 md:w-72 h-56 sm:h-64 md:h-72 bg-gradient-to-r from-blue-900/3 to-amber-600/3 rounded-full blur-2xl"></div>
               </div>
               
               {/* SDG Wheel */}
-              <div className="relative z-10 w-full h-64 sm:h-80 md:h-96 flex items-center justify-center">
+              <div className="relative z-10 w-full max-w-sm h-64 sm:h-72 md:h-80 flex items-center justify-center">
                 <SDGCircularWheel />
               </div>
             </div>
@@ -620,12 +620,12 @@ export default function Landing() {
           </div>
 
           {/* CTA Text */}
-          <div className="text-center mt-8 sm:mt-12 px-4">
+          <div className="text-center mt-12 sm:mt-16 md:mt-20 pt-8 sm:pt-12 border-t border-slate-200 px-4">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3 sm:mb-4">
               <span className="text-blue-900">From Local Service</span><br />
               <span className="text-amber-600">to Global Legacy</span>
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-4 sm:mb-6 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Join thousands making measurable impact across all 17 SDGs worldwide.
             </p>
             <Link href="/login">

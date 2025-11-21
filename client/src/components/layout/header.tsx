@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import Logo from "@/components/ui/logo";
+import { queryClient } from "@/lib/queryClient";
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
@@ -95,21 +96,25 @@ export default function Header() {
   const handleNotificationClick = async (notification: any) => {
     try {
       // Mark notification as read on backend
-      await fetch(`/api/notifications/${notification.id}/read`, {
+      const response = await fetch(`/api/notifications/${notification.id}/read`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
       
+      if (!response.ok) {
+        throw new Error(`Failed to mark notification as read: ${response.statusText}`);
+      }
+      
       // Invalidate cache to refresh notification list
-      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
       
       // Navigate based on notification type
       const notificationType = notification.type || '';
       
       if (notificationType.includes('application')) {
-        setLocation('/my-applications');
+        setLocation('/my-work#applications');
       } else if (notificationType.includes('assignment')) {
-        setLocation('/assignments');
+        setLocation('/my-work#assignments');
       } else if (notificationType.includes('project')) {
         setLocation('/projects');
       } else if (notificationType.includes('volunteer')) {
@@ -121,10 +126,10 @@ export default function Header() {
         setLocation('/dashboard');
       }
     } catch (error) {
-      console.error("Error handling notification click:", error);
+      console.error("Error handling notification click:", error instanceof Error ? error.message : String(error));
       toast({
         title: "Error",
-        description: "Failed to open notification",
+        description: error instanceof Error ? error.message : "Failed to open notification",
         variant: "destructive"
       });
     }

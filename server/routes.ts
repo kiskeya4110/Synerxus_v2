@@ -30,6 +30,22 @@ import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApp
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
+// Helper function to calculate volunteer profile completion percentage
+function calculateProfileCompletion(profile: any): number {
+  let completedFields = 0;
+  const totalFields = 7;
+  
+  if (profile.skills && profile.skills.length > 0) completedFields++;
+  if (profile.location) completedFields++;
+  if (profile.bio) completedFields++;
+  if (profile.preferredSdgs && profile.preferredSdgs.length > 0) completedFields++;
+  if (profile.interests && profile.interests.length > 0) completedFields++;
+  if (profile.weeklyAvailability && profile.weeklyAvailability > 0) completedFields++;
+  if (profile.preferredWorkStyle) completedFields++;
+  
+  return Math.round((completedFields / totalFields) * 100);
+}
+
 // Helper function to handle validation and authorization errors
 function handleValidationError(err: unknown) {
   // Handle authorization errors (plain objects with status/message)
@@ -3453,13 +3469,15 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         console.error("Error fetching volunteer profile:", err);
       }
       
-      // Add profileComplete field to user based on onboardingCompleted status
-      const profileComplete = volunteerProfile?.onboardingCompleted || false;
+      // Calculate profile completion based on filled fields
+      const profileCompletion = volunteerProfile ? calculateProfileCompletion(volunteerProfile) : 0;
+      const profileComplete = profileCompletion === 100;
       
       res.json({
         user: {
           ...user,
-          profileComplete
+          profileComplete,
+          profileCompletion
         },
         volunteerProfile
       });
@@ -3584,12 +3602,14 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       if (existingProfile) {
         profile = await storage.updateVolunteerProfile(existingProfile.id, {
           ...req.body,
-          userId
+          userId,
+          onboardingCompleted: true
         });
       } else {
         profile = await storage.createVolunteerProfile({
           ...req.body,
-          userId
+          userId,
+          onboardingCompleted: true
         });
       }
       

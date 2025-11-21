@@ -10,7 +10,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Download } from "lucide-react";
+import { Loader2, Download, FileText } from "lucide-react";
+
+declare global {
+  interface Window {
+    html2pdf?: any;
+  }
+}
 
 const reportFormSchema = z.object({
   projectTitle: z.string().min(1, "Project title required"),
@@ -289,24 +295,50 @@ export default function ImpactReportGenerator() {
               <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                 <CardHeader className="flex flex-row items-center justify-between pb-3">
                   <CardTitle>Generated Report</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      const element = document.createElement("a");
-                      element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(generatedReport));
-                      element.setAttribute("download", "impact-report.txt");
-                      element.style.display = "none";
-                      document.body.appendChild(element);
-                      element.click();
-                      document.body.removeChild(element);
-                    }}
-                  >
-                    <Download className="w-4 h-4 mr-1" /> Download
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+                        script.onload = () => {
+                          const element = document.getElementById('report-content');
+                          if (element && window.html2pdf) {
+                            const opt = {
+                              margin: 10,
+                              filename: 'impact-report.pdf',
+                              image: { type: 'jpeg', quality: 0.98 },
+                              html2canvas: { scale: 2 },
+                              jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+                            };
+                            window.html2pdf().set(opt).from(element).save();
+                          }
+                        };
+                        document.head.appendChild(script);
+                      }}
+                    >
+                      <FileText className="w-4 h-4 mr-1" /> PDF
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const element = document.createElement("a");
+                        element.setAttribute("href", "data:text/plain;charset=utf-8," + encodeURIComponent(generatedReport));
+                        element.setAttribute("download", "impact-report.txt");
+                        element.style.display = "none";
+                        document.body.appendChild(element);
+                        element.click();
+                        document.body.removeChild(element);
+                      }}
+                    >
+                      <Download className="w-4 h-4 mr-1" /> TXT
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700 max-h-[600px] overflow-y-auto font-sans">
+                  <div id="report-content" className="whitespace-pre-wrap text-sm leading-relaxed bg-slate-50 dark:bg-slate-900/50 p-6 rounded-lg border border-slate-200 dark:border-slate-700 max-h-[600px] overflow-y-auto font-sans">
                     {generatedReport}
                   </div>
                 </CardContent>

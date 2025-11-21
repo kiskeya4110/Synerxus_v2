@@ -22,6 +22,22 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (November 2025)
 
+### Professional Profile Enhancements (November 21, 2025)
+- **Enhanced Volunteer Profiles**: Added comprehensive professional fields to capture volunteer expertise and preferences:
+  - Professional Information: Title, years of experience, LinkedIn profile URL
+  - Languages: Array field for multilingual capabilities
+  - Work Style Preference: Remote, in-person, or hybrid volunteering preference
+  - Matching Priorities: 5-point sliders (1-5 scale) for personalizing opportunity matching:
+    - Skills Match priority
+    - Cause Alignment priority
+    - Time Flexibility priority
+    - Geographic Preference priority
+    - Impact Potential priority
+- **Database Schema Updates**: Extended volunteerProfiles table with new columns: professionalTitle, yearsOfExperience, linkedinProfile, languages, availability (schedule), timezone, preferredCommitment, matchingPriorities (JSONB)
+- **Volunteer Intake Form**: Added professional fields, work style selector, and matching priority sliders with real-time value display
+- **Volunteer Profile Settings**: Updated with same professional fields and matching priorities for profile editing
+- **Constants Library**: Created volunteer-constants.ts with predefined skill categories, experience levels, SDG data with emojis, time commitment options, and matching priority definitions
+
 ### Availability Matching Integration
 - **Matching Algorithm Enhancement**: Added availability as a fifth matching factor (15% weight) alongside Skills (30%), Location (20%), SDG (20%), and Interests (15%)
 - **Time Commitment Scoring**: Compares volunteer's weeklyAvailability against opportunity's ongoingHoursPerWeek with graduated scoring (60pts for ≤70% commitment, 40pts for 70-100%, 10pts for over-commitment)

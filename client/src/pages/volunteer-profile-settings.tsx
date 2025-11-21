@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
@@ -32,6 +33,10 @@ import {
   Laptop,
   Users,
   AlertCircle,
+  Briefcase,
+  Globe,
+  Award,
+  Sliders,
 } from "lucide-react";
 import {
   Form,
@@ -136,6 +141,12 @@ const skillProficiencySchema = z.object({
 const formSchema = insertVolunteerSchema.extend({
   email: z.string().email("Valid email is required"),
   name: z.string().min(1, "Name is required"),
+  // New professional fields
+  professionalTitle: z.string().optional(),
+  yearsOfExperience: z.string().optional(),
+  linkedinProfile: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
+  languages: z.array(z.string()).optional(),
+  // Existing fields
   skills: z.array(skillProficiencySchema).min(1, "At least one skill is required"),
   interests: z.array(z.string()).optional(),
   location: z.string().optional(),
@@ -151,7 +162,15 @@ const formSchema = insertVolunteerSchema.extend({
     "long-term",
     "flexible",
   ]),
-  preferredWorkStyle: z.enum(["remote", "in-person", "hybrid"]),
+  preferredWorkStyle: z.enum(["remote", "in-person", "hybrid"]).optional(),
+  // New matching priorities
+  matchingPriorities: z.object({
+    skillsMatch: z.number().min(1).max(5).default(3),
+    causeAlignment: z.number().min(1).max(5).default(3),
+    timeFlexibility: z.number().min(1).max(5).default(3),
+    geographicPreference: z.number().min(1).max(5).default(3),
+    impactPotential: z.number().min(1).max(5).default(3),
+  }).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;

@@ -18,8 +18,12 @@ interface ProfileUpdateData {
   weeklyAvailability?: number;
   availability?: any[];
   preferredWorkStyle?: string;
+  timezone?: string;
+  preferredCommitment?: string;
   volunteerName?: string;
   professionalTitle?: string;
+  yearsOfExperience?: string;
+  linkedinProfile?: string;
   matchingPriorities?: Record<string, number>;
 }
 
@@ -89,11 +93,23 @@ export async function updateVolunteerProfileWithUser(
     if (profileData.preferredWorkStyle !== undefined) {
       profileUpdates.preferredWorkStyle = profileData.preferredWorkStyle;
     }
+    if (profileData.timezone !== undefined) {
+      profileUpdates.timezone = profileData.timezone;
+    }
+    if (profileData.preferredCommitment !== undefined) {
+      profileUpdates.preferredCommitment = profileData.preferredCommitment;
+    }
     if (profileData.volunteerName !== undefined) {
       profileUpdates.volunteerName = profileData.volunteerName;
     }
     if (profileData.professionalTitle !== undefined) {
       profileUpdates.professionalTitle = profileData.professionalTitle;
+    }
+    if (profileData.yearsOfExperience !== undefined) {
+      profileUpdates.yearsOfExperience = profileData.yearsOfExperience;
+    }
+    if (profileData.linkedinProfile !== undefined) {
+      profileUpdates.linkedinProfile = profileData.linkedinProfile;
     }
     if (profileData.matchingPriorities !== undefined) {
       profileUpdates.matchingPriorities = profileData.matchingPriorities;
@@ -129,8 +145,12 @@ export async function updateVolunteerProfileWithUser(
         weeklyAvailability: profileData.weeklyAvailability,
         availability: profileData.availability,
         preferredWorkStyle: profileData.preferredWorkStyle,
+        timezone: profileData.timezone,
+        preferredCommitment: profileData.preferredCommitment,
         volunteerName: profileData.volunteerName,
         professionalTitle: profileData.professionalTitle,
+        yearsOfExperience: profileData.yearsOfExperience,
+        linkedinProfile: profileData.linkedinProfile,
         matchingPriorities: profileData.matchingPriorities,
         onboardingCompleted: false
       };

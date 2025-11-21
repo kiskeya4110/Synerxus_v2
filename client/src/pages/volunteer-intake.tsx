@@ -194,10 +194,11 @@ export default function VolunteerProfileSettings() {
   const [skillProficiency, setSkillProficiency] = useState(50); // Default 50%
   const [interestInput, setInterestInput] = useState("");
 
-  // Fetch current user to get email
+  // Fetch current user to get email - ALWAYS fetch fresh, never cache
   const userId = localStorage.getItem("currentUserId");
-  const { data: currentUser } = useQuery<{ id: number; email: string; displayName?: string }>({
+  const { data: currentUser, isLoading: userLoading } = useQuery<{ id: number; email: string; displayName?: string }>({
     queryKey: ["/api/users/me"],
+    staleTime: 0, // Always fetch fresh user data
   });
 
   // Fetch existing volunteer profile using intake API which includes all availability fields
@@ -205,9 +206,12 @@ export default function VolunteerProfileSettings() {
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return null;
+      console.log(`[Intake Profile Query] Fetching profile for user ${currentUser.id}, email: ${currentUser.email}`);
       const response = await fetch(`/api/intake/volunteer-profile?userId=${currentUser.id}`);
       if (!response.ok) return null;
-      return response.json();
+      const data = await response.json();
+      console.log(`[Intake Profile Query] Loaded profile for user ${currentUser.id}:`, data);
+      return data;
     },
     enabled: !!currentUser?.id,
   });
@@ -281,6 +285,9 @@ export default function VolunteerProfileSettings() {
     mutationFn: async (data: FormData) => {
       if (!currentUser?.id) throw new Error("User not authenticated");
       
+      const targetUserId = currentUser.id;
+      console.log(`[Intake Mutation CRITICAL] SAVING FOR USER ID: ${targetUserId}, EMAIL: ${currentUser.email}`);
+      
       // Transform form data to match volunteer profile API
       const profileData = {
         volunteerName: data.name,
@@ -315,7 +322,10 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: profileData.yearsOfExperience,
       }, null, 2));
       
-      const response = await apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
+      const url = `/api/intake/volunteer-profile?userId=${targetUserId}`;
+      console.log(`[Intake Mutation CRITICAL] API URL: ${url}`);
+      const response = await apiRequest("POST", url, profileData);
+      console.log(`[Intake Mutation CRITICAL] Backend response for user ${targetUserId}`, response);
       console.log('[Intake Mutation] Backend response:', JSON.stringify(response, null, 2));
       return response;
     },
@@ -448,10 +458,19 @@ export default function VolunteerProfileSettings() {
     );
   };
 
-  if (loadingProfile) {
+  if (loadingProfile || userLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+  
+  // Safety check: ensure currentUser is available before rendering form
+  if (!currentUser?.id) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-red-500">Error: User not authenticated. Please log in again.</p>
       </div>
     );
   }

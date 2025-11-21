@@ -10,6 +10,7 @@ interface MatchResult {
     availabilityMatch: number;
   };
   reasons: string[];
+  matchCategory?: "nexus" | "strong" | "gap" | "no-match";
 }
 
 /**

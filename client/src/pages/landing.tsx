@@ -434,6 +434,22 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* CTA Buttons Section */}
+      <section className="bg-slate-100 py-12 sm:py-16">
+        <div className="container mx-auto px-4 sm:px-6 flex justify-center gap-4 sm:gap-6">
+          <Link href="/login">
+            <Button size="lg" className="min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-now">
+              Join Now
+            </Button>
+          </Link>
+          <Link href="/login">
+            <Button size="lg" className="min-h-[48px] bg-amber-600 hover:bg-amber-700 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-sign-in">
+              Sign In
+            </Button>
+          </Link>
+        </div>
+      </section>
+
       {/* Profile Cards Section */}
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <WorldMapHeader selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry} />

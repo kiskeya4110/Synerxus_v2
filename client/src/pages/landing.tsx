@@ -13,6 +13,7 @@ import {
 import communityVolunteersImg from "@assets/Community Volunteers_1763707388972.png";
 import doctorsVolunteeringImg from "@assets/Doctors Volunteering_1763707388972.png";
 import villageVolunteersImg from "@assets/Village Volunteers_1763707388973.png";
+import collageImg from "@assets/Gemini_Generated_Image_n3wsmrn3wsmrn3ws_1763713223121.png";
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -402,20 +403,35 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-28 text-center">
-        <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 leading-tight" data-testid="text-hero-title">
-          <span className="text-blue-900">Connect. Manage.</span><br />
-          <span className="text-amber-600">Impact Globally.</span>
-        </h1>
-        <p className="text-lg sm:text-xl md:text-2xl text-slate-700 mb-10 max-w-3xl mx-auto leading-relaxed font-medium" data-testid="text-hero-description">
-          Implementing the SDGs and reaching the nexus of impact takes collective action. Our platform helps you join the effort, track outcomes, and manage projects.
-        </p>
+      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-28">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+          {/* Left Content */}
+          <div className="flex flex-col justify-center">
+            <h1 className="text-5xl sm:text-6xl md:text-6xl font-bold mb-6 leading-tight" data-testid="text-hero-title">
+              <span className="text-blue-900">Connect. Manage.</span><br />
+              <span className="text-amber-600">Impact Globally.</span>
+            </h1>
+            <p className="text-lg sm:text-xl text-slate-700 mb-10 leading-relaxed font-medium" data-testid="text-hero-description">
+              Implementing the SDGs and reaching the nexus of impact takes collective action. Our platform helps you join the effort, track outcomes, and manage projects.
+            </p>
 
-        <Link href="/login" className="inline-block">
-          <Button size="lg" className="gap-2 min-h-[48px] bg-amber-500 hover:bg-amber-600 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-nexus">
-            Join the Nexus
-          </Button>
-        </Link>
+            <Link href="/login" className="inline-block w-fit">
+              <Button size="lg" className="gap-2 min-h-[48px] bg-amber-500 hover:bg-amber-600 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-nexus">
+                Join the Nexus
+              </Button>
+            </Link>
+          </div>
+
+          {/* Right Collage Image */}
+          <div className="flex justify-center">
+            <img 
+              src={collageImg}
+              alt="Volunteer Collage"
+              className="w-full max-w-md rounded-2xl shadow-2xl object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
       </section>
 
       {/* Profile Cards Section */}

@@ -265,7 +265,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
             <p className="text-sm text-muted-foreground mb-3" data-testid="text-empty-profile">
               Add your SDG focus areas to see them here
             </p>
-            <Link href="/settings">
+            <Link href={isVolunteer ? "/volunteer-intake" : "/organization-intake"}>
               <Button variant="outline" size="sm" data-testid="button-update-profile">
                 Update Profile
               </Button>

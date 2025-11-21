@@ -338,8 +338,8 @@ export default function ImpactStorytellingPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Impact Report & Stories</h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">Comprehensive impact assessment with project aggregations and running tallies</p>
+            <h1 className="text-4xl font-bold">Impact Reports & Stories</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">Professional funder-ready reports and impact narratives</p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" data-testid="button-export-report">
@@ -360,93 +360,101 @@ export default function ImpactStorytellingPage() {
           <TabsTrigger value="stories">📖 Stories</TabsTrigger>
         </TabsList>
 
-        {/* MAIN REPORT */}
+        {/* MAIN REPORT - PROFESSIONAL TEMPLATE */}
         <TabsContent value="report" className="space-y-6">
-          {/* Header Card */}
-          <Card className="border-2 border-slate-300 dark:border-slate-600 bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/20">
-            <CardContent className="pt-8 p-8">
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Synerxus</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Impact Report</p>
-                </div>
-                <div className="text-right text-sm text-gray-600 dark:text-gray-400">
-                  <p className="font-semibold">{currentDate}</p>
-                  <p>{uniqueLocations > 0 ? `${uniqueLocations} Locations` : 'Global'}</p>
+          {/* Professional Report Header */}
+          <Card className="border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 shadow-lg">
+            <CardContent className="p-10">
+              {/* Logo and Branding Header */}
+              <div className="flex items-center justify-between mb-8 pb-6 border-b-2 border-slate-200 dark:border-slate-700">
+                <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">ORGANIZATION LOGO</div>
+                <div className="text-right">
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Synerxus</h2>
+                  <p className="text-xs text-orange-500">Connect. Collaborate. Impact.</p>
                 </div>
               </div>
-              <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
-                <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-2">Executive Summary</h3>
-                <p className="text-sm leading-relaxed">
-                  This reporting period, Synerxus volunteers contributed <strong>{totalHoursContributed}</strong> hours across 
-                  <strong> {projects.length}</strong> projects, reaching <strong>{totalBeneficiariesReached}</strong> beneficiaries 
-                  through health, nutrition, education, and community development initiatives aligned with 
-                  <strong> {addressedSDGs.length}</strong> UN Sustainable Development Goals.
+
+              {/* Report Title and Date */}
+              <div className="mb-8">
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Impact Report</h1>
+                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                  <p><strong>Organization:</strong> {currentUser?.name || 'Organization'}</p>
+                  <p><strong>Date:</strong> {currentDate}</p>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2"><strong>Geographic Reach:</strong> {uniqueLocations > 0 ? `${uniqueLocations} Locations` : 'Global'}</p>
+              </div>
+
+              {/* Executive Summary */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-3">Executive Summary</h3>
+                <p className="text-sm leading-relaxed text-slate-800 dark:text-slate-200">
+                  This reporting period, our volunteers contributed <strong className="text-blue-600 dark:text-blue-400">{totalHoursContributed} hours</strong> across 
+                  <strong className="text-blue-600 dark:text-blue-400"> {projects.length} projects</strong>, directly impacting <strong className="text-blue-600 dark:text-blue-400">{totalBeneficiariesReached} beneficiaries</strong>. 
+                  Through targeted interventions in health, education, nutrition, and community development, we have advanced progress on <strong className="text-blue-600 dark:text-blue-400">{addressedSDGs.length} UN Sustainable Development Goals</strong>.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Key Metrics - Organization Level Only */}
-          <Card>
+          {/* Key Metrics - Professional Dashboard Table */}
+          <Card className="shadow-md">
             <CardHeader>
-              <CardTitle>Key Metrics</CardTitle>
-              <CardDescription>Organization-level totals</CardDescription>
+              <CardTitle className="text-lg">Key Performance Indicators</CardTitle>
+              <CardDescription>Organization-wide metrics and impact data</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <tbody className="divide-y">
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <td className="py-3 px-4 font-semibold">Volunteers Engaged</td>
-                      <td className="py-3 px-4 text-right text-lg font-bold text-blue-600 dark:text-blue-400">{totalVolunteers}</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <td className="py-3 px-4 font-semibold">Hours Contributed</td>
-                      <td className="py-3 px-4 text-right text-lg font-bold text-blue-600 dark:text-blue-400">{totalHoursContributed}</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <td className="py-3 px-4 font-semibold">Active Projects</td>
-                      <td className="py-3 px-4 text-right text-lg font-bold text-green-600 dark:text-green-400">{activeProjects}</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <td className="py-3 px-4 font-semibold">Completed Projects</td>
-                      <td className="py-3 px-4 text-right text-lg font-bold text-green-600 dark:text-green-400">{completedProjects}</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <td className="py-3 px-4 font-semibold">Geographic Reach</td>
-                      <td className="py-3 px-4 text-right text-lg font-bold text-purple-600 dark:text-purple-400">{uniqueLocations} locations</td>
-                    </tr>
-                    <tr className="hover:bg-slate-50 dark:hover:bg-slate-900/50">
-                      <td className="py-3 px-4 font-semibold">SDGs Addressed</td>
-                      <td className="py-3 px-4 text-right flex flex-wrap gap-1 justify-end">
-                        {addressedSDGs.slice(0, 5).map((sdg: number) => (
-                          <Badge key={sdg} style={{ backgroundColor: SDG_COLORS[sdg] }} className="text-white text-xs">
-                            {sdg}
-                          </Badge>
-                        ))}
-                        {addressedSDGs.length > 5 && <Badge className="text-xs">+{addressedSDGs.length - 5}</Badge>}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Volunteers Engaged</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{totalVolunteers}</p>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Hours Contributed</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{totalHoursContributed}</p>
+                </div>
+                <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Beneficiaries</p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{totalBeneficiariesReached}</p>
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Active Projects</p>
+                  <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{activeProjects}</p>
+                </div>
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">Completed</p>
+                  <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{completedProjects}</p>
+                </div>
+                <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase">SDGs Addressed</p>
+                  <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{addressedSDGs.length}</p>
+                </div>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg">
+                <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">SDG Focus Areas:</p>
+                <div className="flex flex-wrap gap-2">
+                  {addressedSDGs.map((sdg: number) => (
+                    <Badge key={sdg} style={{ backgroundColor: SDG_COLORS[sdg] }} className="text-white text-xs">
+                      SDG {sdg}: {SDG_LABELS[sdg]}
+                    </Badge>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Consolidated Impact Metrics - NO DUPLICATION */}
+          {/* Consolidated Impact Metrics - Beneficiary Outcomes */}
           {aggregatedKPIs.length > 0 && (
-            <Card>
+            <Card className="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-900/20">
               <CardHeader>
-                <CardTitle>Consolidated Impact Metrics</CardTitle>
+                <CardTitle className="text-lg">Consolidated Impact Outcomes</CardTitle>
                 <CardDescription>All beneficiary and outcome data aggregated across projects</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {aggregatedKPIs.map((kpi, idx) => (
-                    <div key={idx} className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <p className="text-xs text-gray-600 dark:text-gray-400 font-medium uppercase tracking-wide">{kpi.label}</p>
-                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{kpi.value}</p>
+                    <div key={idx} className="bg-white dark:bg-slate-800 p-5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold uppercase tracking-wide mb-2">{kpi.label}</p>
+                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{kpi.value.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>

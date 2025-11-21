@@ -72,18 +72,21 @@ export default function Profile() {
     }
   });
   
-  // Fetch volunteer profile data (combines user and volunteer matching data)
+  // Fetch volunteer profile data - use intake endpoint to get weeklyAvailability
   const { data: volunteerData, isLoading: isLoadingVolunteer } = useQuery({
-    queryKey: ["/api/profile/volunteer", userId],
+    queryKey: ["/api/intake/volunteer-profile", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
     staleTime: 0, // Always refetch fresh data
+    refetchOnMount: true, // Force fresh load on component mount
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
-      const url = `/api/profile/volunteer?userId=${id}`;
+      console.log(`[Profile] Fetching intake profile for user ${id}`);
+      const url = `/api/intake/volunteer-profile?userId=${id}`;
       const response = await fetch(url);
       if (!response.ok) return null;
       const data = await response.json();
+      console.log(`[Profile] Loaded weeklyAvailability: ${data?.weeklyAvailability}, availability slots: ${data?.availability?.length || 0}`);
       return data;
     }
   });

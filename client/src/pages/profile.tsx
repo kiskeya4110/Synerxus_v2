@@ -52,13 +52,15 @@ export default function Profile() {
   const { data: volunteerData, isLoading: isLoadingVolunteer } = useQuery({
     queryKey: ["/api/profile/volunteer", userId],
     enabled: !!userId && currentUser?.userType === 'volunteer',
+    staleTime: 0, // Always refetch fresh data
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
       const url = `/api/profile/volunteer?userId=${id}`;
       const response = await fetch(url);
       if (!response.ok) return null;
-      return response.json();
+      const data = await response.json();
+      return data;
     }
   });
 

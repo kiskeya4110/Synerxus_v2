@@ -729,7 +729,7 @@ export default function VolunteerProfileSettings() {
   });
   
   // Fetch volunteer profile using intake API which includes all availability fields
-  const { data: existingProfile, isLoading: loadingProfile } = useQuery<any>({
+  const profileQuery = useQuery<any>({
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return null;
@@ -739,6 +739,7 @@ export default function VolunteerProfileSettings() {
     },
     enabled: !!currentUser?.id,
   });
+  const { data: existingProfile, isLoading: loadingProfile } = profileQuery;
 
   // Form setup
   const form = useForm<FormData>({
@@ -797,6 +798,11 @@ export default function VolunteerProfileSettings() {
   const mutationConfig = {
     onSuccess: () => {
       const id = currentUser?.id;
+      console.log(`[Settings Mutation] Success - refetching profile data for user ${id}`);
+      
+      // Force immediate refetch of settings form data
+      profileQuery.refetch();
+      
       // Invalidate queries without waiting for all to complete
       queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});

@@ -140,7 +140,7 @@ const formSchema = insertVolunteerSchema.extend({
   skills: z.array(skillProficiencySchema).min(1, "At least one skill is required"),
   interests: z.array(z.string()).optional(),
   location: z.string().optional(),
-  sdgGoals: z.array(z.number()).optional(),
+  sdgGoals: z.array(z.number()).default([]),
   weeklyHours: z.number().min(1, "At least 1 hour is required"),
   availability: z
     .array(availabilitySlotSchema)
@@ -392,14 +392,10 @@ export default function VolunteerProfileSettings() {
 
   const toggleSDG = (sdgValue: number) => {
     const currentSDGs = form.getValues("sdgGoals") || [];
-    if (currentSDGs.includes(sdgValue)) {
-      form.setValue(
-        "sdgGoals",
-        currentSDGs.filter((s) => s !== sdgValue),
-      );
-    } else {
-      form.setValue("sdgGoals", [...currentSDGs, sdgValue]);
-    }
+    const newSDGs = currentSDGs.includes(sdgValue)
+      ? currentSDGs.filter((s) => s !== sdgValue)
+      : [...currentSDGs, sdgValue];
+    form.setValue("sdgGoals", newSDGs);
   };
 
   // Availability management

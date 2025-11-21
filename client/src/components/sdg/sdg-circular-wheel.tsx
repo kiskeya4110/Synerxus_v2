@@ -170,16 +170,6 @@ export function SDGCircularWheel() {
               );
             })}
 
-            {/* Center circle background */}
-            <circle
-              cx={centerX}
-              cy={centerY}
-              r={innerRadius - 8}
-              fill="white"
-              stroke="white"
-              strokeWidth="3"
-              className="drop-shadow-lg"
-            />
           </svg>
 
         </div>

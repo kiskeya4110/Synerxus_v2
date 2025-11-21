@@ -111,49 +111,55 @@ export default function ImpactStorytellingPage() {
   // CONSOLIDATED KPI AGGREGATION - STRICT DEDUPLICATION
   const aggregatedKPIs = useMemo(() => {
     const kpiMap = new Map<string, number>();
-    const seenImpactIds = new Set<string>();
     
     projectImpacts.forEach((impact: any) => {
-      // Skip if already counted (use metricId + projectId to avoid double counting)
-      const impactKey = `${impact.metricId || impact.id}-${impact.projectId || 'global'}`;
-      if (seenImpactIds.has(impactKey)) return;
-      seenImpactIds.add(impactKey);
+      // Use the metric name if available, otherwise use description
+      let label = impact.metricName || impact.description || 'Unknown Impact';
+      const value = impact.value || 0;
       
-      const desc = impact.description?.toLowerCase().trim() || 'other';
-      
-      // Categorize and normalize - more aggressive matching
-      let normalized = desc;
-      
-      if (desc.match(/health|medical|doctor|clinic|healthcare|hospital|wellness/)) {
-        normalized = 'health services delivered';
-      } else if (desc.match(/meal|food|feed|nutrition|diet/)) {
-        normalized = 'meals provided';
-      } else if (desc.match(/education|student|school|train|course|workshop|learning/)) {
-        normalized = 'people trained/educated';
-      } else if (desc.match(/water|sanitation|hygiene|wash/)) {
-        normalized = 'people with water access';
-      } else if (desc.match(/shelter|housing|home|accommodation/)) {
-        normalized = 'people housed';
-      } else if (desc.match(/child|youth|young people/)) {
-        normalized = 'children supported';
-      } else if (desc.match(/women|girl|female|maternal/)) {
-        normalized = 'women/girls supported';
-      } else if (desc.match(/elderly|senior|elder|aged/)) {
-        normalized = 'elderly people supported';
-      } else if (desc.match(/community|village|neighborhood/)) {
-        normalized = 'communities served';
-      } else if (desc.match(/volunteer|hour|time|effort/)) {
-        // Skip volunteer hours - already tracked separately
+      // Skip hours and time entries (tracked separately)
+      if (label.toLowerCase().match(/^(hour|time|volunteer|effort)$/i)) {
         return;
       }
       
-      // Add or accumulate
-      kpiMap.set(normalized, (kpiMap.get(normalized) || 0) + (impact.value || 0));
+      // Normalize label: lowercase, trim, single spaces
+      label = label.toLowerCase().replace(/\s+/g, ' ').trim();
+      
+      // Group similar metrics
+      let normalized = label;
+      
+      if (label.match(/health|medical|doctor|clinic|healthcare|hospital|wellness|service/)) {
+        normalized = 'health services delivered';
+      } else if (label.match(/meal|food|feed|nutrition|diet|provided/)) {
+        normalized = 'meals provided';
+      } else if (label.match(/education|student|school|train|course|workshop|learning|people.*educated/)) {
+        normalized = 'people trained/educated';
+      } else if (label.match(/water|sanitation|hygiene|wash|clean/)) {
+        normalized = 'people with water access';
+      } else if (label.match(/shelter|housing|home|accommodation|housed/)) {
+        normalized = 'people housed';
+      } else if (label.match(/child|youth|young people/)) {
+        normalized = 'children supported';
+      } else if (label.match(/women|girl|female|maternal|gender/)) {
+        normalized = 'women/girls supported';
+      } else if (label.match(/elderly|senior|elder|aged/)) {
+        normalized = 'elderly people supported';
+      } else if (label.match(/community|village|neighborhood|members|families/)) {
+        normalized = 'communities/families served';
+      } else if (label.match(/people|person|beneficiary|beneficiar|individual|participant|attend/)) {
+        normalized = 'people impacted';
+      }
+      
+      // Aggregate - add value to existing normalized metric
+      kpiMap.set(normalized, (kpiMap.get(normalized) || 0) + value);
     });
     
     // Convert to sorted array
     return Array.from(kpiMap.entries())
-      .map(([label, value]) => ({ label, value }))
+      .map(([label, value]) => ({ 
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+        value 
+      }))
       .sort((a, b) => b.value - a.value); // Sort by value descending
   }, [projectImpacts]);
 

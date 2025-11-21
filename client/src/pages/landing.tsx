@@ -444,6 +444,15 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Kofi Annan Quote */}
+      <section className="bg-gradient-to-r from-blue-50 to-amber-50 py-12 sm:py-16">
+        <div className="container mx-auto px-4 sm:px-6 text-center">
+          <p className="text-lg sm:text-xl md:text-2xl italic text-slate-700 max-w-3xl mx-auto leading-relaxed font-medium" data-testid="text-kofi-annan-quote">
+            "Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family." — Kofi Annan
+          </p>
+        </div>
+      </section>
+
       {/* Profile Cards Section */}
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <WorldMapHeader selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry} />

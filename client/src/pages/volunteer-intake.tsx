@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertVolunteerSchema, type Volunteer } from "@shared/schema";
@@ -28,6 +29,10 @@ import {
   Heart,
   Clock,
   Calendar,
+  Briefcase,
+  Globe,
+  Award,
+  Sliders,
 } from "lucide-react";
 import {
   Form,
@@ -184,6 +189,10 @@ export default function VolunteerProfileSettings() {
     defaultValues: {
       email: "",
       name: "",
+      professionalTitle: "",
+      yearsOfExperience: "",
+      linkedinProfile: "",
+      languages: [],
       skills: [],
       interests: [],
       location: "",
@@ -192,13 +201,25 @@ export default function VolunteerProfileSettings() {
       availability: [],
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       preferredCommitment: "flexible",
+      preferredWorkStyle: undefined,
+      matchingPriorities: {
+        skillsMatch: 3,
+        causeAlignment: 3,
+        timeFlexibility: 3,
+        geographicPreference: 3,
+        impactPotential: 3,
+      },
     },
     values: existingProfile
       ? {
           email: existingProfile.email,
           name: existingProfile.name,
+          professionalTitle: existingProfile.professionalTitle || "",
+          yearsOfExperience: existingProfile.yearsOfExperience || "",
+          linkedinProfile: existingProfile.linkedinProfile || "",
+          languages: existingProfile.languages || [],
           skills: existingProfile.skills || [],
-          interests: existingProfile.interests,
+          interests: existingProfile.interests || [],
           location: existingProfile.location,
           sdgGoals: existingProfile.sdgGoals,
           weeklyHours: existingProfile.weeklyHours || 1,
@@ -208,6 +229,14 @@ export default function VolunteerProfileSettings() {
             Intl.DateTimeFormat().resolvedOptions().timeZone,
           preferredCommitment:
             existingProfile.preferredCommitment || "flexible",
+          preferredWorkStyle: existingProfile.preferredWorkStyle || undefined,
+          matchingPriorities: existingProfile.matchingPriorities || {
+            skillsMatch: 3,
+            causeAlignment: 3,
+            timeFlexibility: 3,
+            geographicPreference: 3,
+            impactPotential: 3,
+          },
         }
       : undefined,
   });
@@ -230,15 +259,26 @@ export default function VolunteerProfileSettings() {
       // Transform form data to match volunteer profile API
       const profileData = {
         volunteerName: data.name,
+        professionalTitle: data.professionalTitle || null,
+        yearsOfExperience: data.yearsOfExperience || null,
+        linkedinProfile: data.linkedinProfile || null,
+        languages: data.languages || [],
         skills: data.skills.map((s) => `${s.name} (${s.proficiency}%)`), // Convert to display format for storage
-        interests: data.interests,
+        interests: data.interests || [],
         location: data.location,
         sdgGoals: data.sdgGoals,
         weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
         availability: data.availability,
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
-        preferredWorkStyle: "", // Will be set through settings page
+        preferredWorkStyle: data.preferredWorkStyle || null,
+        matchingPriorities: data.matchingPriorities || {
+          skillsMatch: 3,
+          causeAlignment: 3,
+          timeFlexibility: 3,
+          geographicPreference: 3,
+          impactPotential: 3,
+        },
         skillProficiency: data.skills, // Send full proficiency objects for matching algorithm
         onboardingCompleted: !existingProfile, // Mark as completed on first submission only
       };
@@ -462,6 +502,85 @@ export default function VolunteerProfileSettings() {
                         data-testid="input-volunteer-name"
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Professional Title */}
+              <FormField
+                control={form.control}
+                name="professionalTitle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Professional Title (Optional)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g., Data Scientist, Marketing Manager"
+                        {...field}
+                        data-testid="input-professional-title"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Your current or most recent job title
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Years of Experience */}
+              <FormField
+                control={form.control}
+                name="yearsOfExperience"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Award className="h-4 w-4" />
+                      Years of Experience (Optional)
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-years-experience">
+                          <SelectValue placeholder="Select experience level" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="0-1">0-1 years</SelectItem>
+                        <SelectItem value="1-2">1-2 years</SelectItem>
+                        <SelectItem value="3-5">3-5 years</SelectItem>
+                        <SelectItem value="5-10">5-10 years</SelectItem>
+                        <SelectItem value="10+">10+ years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* LinkedIn Profile */}
+              <FormField
+                control={form.control}
+                name="linkedinProfile"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      LinkedIn Profile (Optional)
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="https://linkedin.com/in/yourprofile"
+                        {...field}
+                        data-testid="input-linkedin-profile"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Your LinkedIn profile URL
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -907,6 +1026,179 @@ export default function VolunteerProfileSettings() {
                     {form.formState.errors.sdgGoals.message}
                   </p>
                 )}
+              </div>
+
+              {/* Preferred Work Style */}
+              <FormField
+                control={form.control}
+                name="preferredWorkStyle"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Preferred Work Style (Optional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-work-style">
+                          <SelectValue placeholder="Select work preference" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="remote">Remote Only</SelectItem>
+                        <SelectItem value="in-person">In-person Only</SelectItem>
+                        <SelectItem value="hybrid">Hybrid (Both)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      How you prefer to volunteer
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Matching Priorities */}
+              <div className="space-y-4 border-t pt-6 mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sliders className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-semibold">Matching Priorities</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Rate the importance of each factor when matching you with opportunities (1 = Not Important, 5 = Very Important)
+                </p>
+
+                {/* Skills Match Priority */}
+                <FormField
+                  control={form.control}
+                  name="matchingPriorities.skillsMatch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-2">
+                        <FormLabel>Skills Match</FormLabel>
+                        <span className="text-sm text-muted-foreground">{field.value || 3}/5</span>
+                      </div>
+                      <FormControl>
+                        <Slider
+                          min={1}
+                          max={5}
+                          step={1}
+                          value={[field.value || 3]}
+                          onValueChange={(vals) => field.onChange(vals[0])}
+                          data-testid="slider-skills-match"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        How important is matching your skills?
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Cause Alignment Priority */}
+                <FormField
+                  control={form.control}
+                  name="matchingPriorities.causeAlignment"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-2">
+                        <FormLabel>Cause Alignment</FormLabel>
+                        <span className="text-sm text-muted-foreground">{field.value || 3}/5</span>
+                      </div>
+                      <FormControl>
+                        <Slider
+                          min={1}
+                          max={5}
+                          step={1}
+                          value={[field.value || 3]}
+                          onValueChange={(vals) => field.onChange(vals[0])}
+                          data-testid="slider-cause-alignment"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        How important is alignment with your causes?
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Time Flexibility Priority */}
+                <FormField
+                  control={form.control}
+                  name="matchingPriorities.timeFlexibility"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-2">
+                        <FormLabel>Time Flexibility</FormLabel>
+                        <span className="text-sm text-muted-foreground">{field.value || 3}/5</span>
+                      </div>
+                      <FormControl>
+                        <Slider
+                          min={1}
+                          max={5}
+                          step={1}
+                          value={[field.value || 3]}
+                          onValueChange={(vals) => field.onChange(vals[0])}
+                          data-testid="slider-time-flexibility"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        How important is scheduling flexibility?
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Geographic Preference Priority */}
+                <FormField
+                  control={form.control}
+                  name="matchingPriorities.geographicPreference"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-2">
+                        <FormLabel>Geographic Preference</FormLabel>
+                        <span className="text-sm text-muted-foreground">{field.value || 3}/5</span>
+                      </div>
+                      <FormControl>
+                        <Slider
+                          min={1}
+                          max={5}
+                          step={1}
+                          value={[field.value || 3]}
+                          onValueChange={(vals) => field.onChange(vals[0])}
+                          data-testid="slider-geographic-preference"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        How important is location match?
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Impact Potential Priority */}
+                <FormField
+                  control={form.control}
+                  name="matchingPriorities.impactPotential"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex justify-between items-center mb-2">
+                        <FormLabel>Impact Potential</FormLabel>
+                        <span className="text-sm text-muted-foreground">{field.value || 3}/5</span>
+                      </div>
+                      <FormControl>
+                        <Slider
+                          min={1}
+                          max={5}
+                          step={1}
+                          value={[field.value || 3]}
+                          onValueChange={(vals) => field.onChange(vals[0])}
+                          data-testid="slider-impact-potential"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        How important is making a big impact?
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="flex gap-3 pt-4">

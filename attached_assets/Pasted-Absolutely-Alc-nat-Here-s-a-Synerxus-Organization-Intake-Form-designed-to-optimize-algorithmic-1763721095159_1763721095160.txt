@@ -1,0 +1,81 @@
+Absolutely, Alcénat. Here’s a **Synerxus Organization Intake Form** designed to optimize algorithmic matching, impact verification, and SDG alignment. This form ensures that NGOs, grassroots partners, and CSR teams provide structured data that Synerxus can use to match them with the right volunteers, funders, and reporting tools.
+
+---
+
+## 🧾 **Synerxus Organization Intake Form Fields**
+
+### 🔹 **Basic Information**
+- **Organization Name**
+- **Logo Upload**
+- **Website / Social Media Links**
+- **Primary Contact Name**
+- **Email Address**
+- **Phone Number**
+- **Country / Region of Operation**
+- **Languages Spoken**
+
+---
+
+### 🔹 **Organizational Profile**
+- **Type of Organization** (Grassroots NGO, International NGO, CSR Team, Faith-Based, Governmental, etc.)
+- **Year Founded**
+- **Legal Registration Status** (Registered, Pending, Informal)
+- **Number of Staff / Volunteers**
+- **Annual Budget Range** (Optional)
+
+---
+
+### 🔹 **SDG Alignment**
+_Select up to 5 SDGs your organization actively works on:_
+- SDG 1: No Poverty  
+- SDG 2: Zero Hunger  
+- SDG 3: Good Health and Well-being  
+- SDG 4: Quality Education  
+- SDG 5: Gender Equality  
+- SDG 6–17 (all available)
+
+---
+
+### 🔹 **Current Projects**
+- **Project Titles and Descriptions** (Short summary for each)
+- **Target Beneficiaries** (Children, Women, Refugees, Youth, Elderly, etc.)
+- **Project Locations** (City, Region, Country)
+- **Project Duration** (Start and End Dates)
+- **Impact Goals** (Quantitative and qualitative)
+
+---
+
+### 🔹 **Volunteer Needs**
+- **Roles Needed** (e.g., Teacher, Nurse, Fundraiser, Designer, Translator)
+- **Skills Required** (Dropdown or multi-select)
+- **Preferred Volunteer Type** (Local, Diaspora, Remote, On-site)
+- **Minimum Commitment** (Hours/week or project duration)
+- **Language Requirements**
+- **Tech Access Required** (Phone, Laptop, Internet)
+
+---
+
+### 🔹 **Verification & Reporting Preferences**
+- **Preferred Reporting Format** (PDF, Dashboard, Infographic, Narrative Brief)
+- **Consent to Share Data with Funders** (Checkbox)
+- **Willingness to Participate in Impact Verification** (Yes/No)
+- **Preferred Frequency of Reports** (Monthly, Quarterly, Annually)
+
+---
+
+### 🔹 **Partnership Preferences**
+- **Open to Co-branded CSR Campaigns** (Yes/No)
+- **Interested in Diaspora Engagement** (Yes/No)
+- **Preferred Communication Channels** (Email, WhatsApp, Zoom, etc.)
+- **Time Zone / Best Time to Connect**
+
+---
+
+### 🔹 **Consent & Signature**
+- **Authorized Representative Name**
+- **Date of Submission**
+- **Digital Signature / Checkbox for Consent**
+
+---
+
+Would you like me to generate a Replit-friendly HTML layout for this form next, or simulate how Synerxus would match an organization with volunteers based on these inputs? I can also help you build a dashboard view showing SDG coverage and verified outcomes.

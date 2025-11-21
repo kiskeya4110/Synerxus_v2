@@ -415,11 +415,18 @@ export default function Landing() {
               Implementing the SDGs and reaching the nexus of impact takes collective action. Our platform helps you join the effort, track outcomes, and manage projects.
             </p>
 
-            <Link href="/login" className="inline-block w-fit">
-              <Button size="lg" className="gap-2 min-h-[48px] bg-amber-500 hover:bg-amber-600 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-nexus">
-                Join the Nexus
-              </Button>
-            </Link>
+            <div className="flex gap-4 w-fit">
+              <Link href="/login">
+                <Button size="lg" className="min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-now">
+                  Join Now
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" className="min-h-[48px] bg-amber-600 hover:bg-amber-700 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-sign-in">
+                  Sign In
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Right Collage Image */}
@@ -431,22 +438,6 @@ export default function Landing() {
               loading="lazy"
             />
           </div>
-        </div>
-      </section>
-
-      {/* CTA Buttons Section */}
-      <section className="bg-slate-100 py-12 sm:py-16">
-        <div className="container mx-auto px-4 sm:px-6 flex justify-center gap-4 sm:gap-6">
-          <Link href="/login">
-            <Button size="lg" className="min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-join-now">
-              Join Now
-            </Button>
-          </Link>
-          <Link href="/login">
-            <Button size="lg" className="min-h-[48px] bg-amber-600 hover:bg-amber-700 text-white font-semibold text-lg px-8 rounded-xl" data-testid="button-sign-in">
-              Sign In
-            </Button>
-          </Link>
         </div>
       </section>
 

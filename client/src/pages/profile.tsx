@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
@@ -311,8 +312,8 @@ export default function Profile() {
           </div>
         )}
 
-        {/* Skills with Ratings - Enhanced Version */}
-        {isVolunteer && volunteerProfile?.skillRatings && Object.keys(volunteerProfile.skillRatings).length > 0 && (
+        {/* Skills & Proficiency - Route to Settings */}
+        {isVolunteer && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -320,47 +321,19 @@ export default function Profile() {
                 Skills & Proficiency
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Self-assessed skill proficiency levels
+                Manage your skills and proficiency levels
               </p>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {Object.entries(volunteerProfile.skillRatings as Record<string, number>).map(([skillName, rating], index: number) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-base">{skillName}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-primary">{rating}%</span>
-                      </div>
-                    </div>
-                    <Progress value={rating} className="h-2.5" />
-                  </div>
-                ))}
-              </div>
-              
-              {/* Skills Summary */}
-              <div className="mt-6 pt-4 border-t">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium">Skills Summary</p>
-                  <Badge variant="secondary">
-                    {Object.keys(volunteerProfile.skillRatings).length} skills
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Average proficiency: {Math.round(
-                    Object.values(volunteerProfile.skillRatings as Record<string, number>).reduce((a: number, b: number) => a + b, 0) / 
-                    Object.keys(volunteerProfile.skillRatings as Record<string, number>).length
-                  )}%
-                </p>
-              </div>
-              
-              <div className="mt-4 pt-4 border-t">
-                <Link href="/volunteer-intake">
-                  <span className="text-sm text-primary hover:underline cursor-pointer">
-                    Edit skills and ratings in Settings →
-                  </span>
-                </Link>
-              </div>
+              <p className="text-muted-foreground mb-4">
+                View and update your skills, proficiency ratings, and professional experience in your Settings.
+              </p>
+              <Link href="/volunteer-intake">
+                <Button className="w-full" data-testid="button-edit-skills">
+                  <Award className="mr-2 h-4 w-4" />
+                  Go to Settings
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         )}

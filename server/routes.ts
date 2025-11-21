@@ -3010,7 +3010,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           hoursByProject: dashboardData.hoursByProject,
           monthlyImpactTrend: dashboardData.monthlyImpactTrend,
           monthlyImpactData: dashboardData.monthlyImpactData,
-          impactBySDG: dashboardData.impactBySDG || [],
           impactGrowthSeries: dashboardData.impactGrowthSeries,
           projects: dashboardData.projects,
           tasks: dashboardData.tasks,

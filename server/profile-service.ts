@@ -15,6 +15,12 @@ interface ProfileUpdateData {
   interests?: string[];
   preferredSdgs?: number[];
   skillRatings?: Record<string, number>;
+  weeklyAvailability?: number;
+  availability?: any[];
+  preferredWorkStyle?: string;
+  volunteerName?: string;
+  professionalTitle?: string;
+  matchingPriorities?: Record<string, number>;
 }
 
 /**
@@ -74,6 +80,24 @@ export async function updateVolunteerProfileWithUser(
     if (profileData.skillRatings !== undefined) {
       profileUpdates.skillRatings = profileData.skillRatings;
     }
+    if (profileData.weeklyAvailability !== undefined) {
+      profileUpdates.weeklyAvailability = profileData.weeklyAvailability;
+    }
+    if (profileData.availability !== undefined) {
+      profileUpdates.availability = profileData.availability;
+    }
+    if (profileData.preferredWorkStyle !== undefined) {
+      profileUpdates.preferredWorkStyle = profileData.preferredWorkStyle;
+    }
+    if (profileData.volunteerName !== undefined) {
+      profileUpdates.volunteerName = profileData.volunteerName;
+    }
+    if (profileData.professionalTitle !== undefined) {
+      profileUpdates.professionalTitle = profileData.professionalTitle;
+    }
+    if (profileData.matchingPriorities !== undefined) {
+      profileUpdates.matchingPriorities = profileData.matchingPriorities;
+    }
     
     let updatedProfile: VolunteerProfile;
     
@@ -102,6 +126,12 @@ export async function updateVolunteerProfileWithUser(
         location: profileData.location || null,
         preferredSdgs: profileData.preferredSdgs || [],
         skillRatings: profileData.skillRatings || {},
+        weeklyAvailability: profileData.weeklyAvailability,
+        availability: profileData.availability,
+        preferredWorkStyle: profileData.preferredWorkStyle,
+        volunteerName: profileData.volunteerName,
+        professionalTitle: profileData.professionalTitle,
+        matchingPriorities: profileData.matchingPriorities,
         onboardingCompleted: false
       };
       

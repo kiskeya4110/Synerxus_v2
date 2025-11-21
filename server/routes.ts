@@ -3296,7 +3296,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(403).json({ message: "User is not a volunteer" });
       }
       
-      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName, skillRatings } = req.body;
+      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName, skillRatings, weeklyAvailability, availability, preferredWorkStyle, volunteerName, professionalTitle, matchingPriorities } = req.body;
       
       // Use profile service to atomically update both users and volunteer_profiles tables
       await updateVolunteerProfileWithUser(userId, {
@@ -3307,7 +3307,13 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         interests,
         location,
         preferredSdgs: sdgGoals,
-        skillRatings
+        skillRatings,
+        weeklyAvailability,
+        availability,
+        preferredWorkStyle,
+        volunteerName,
+        professionalTitle,
+        matchingPriorities
       });
       
       // Update legacy volunteer matching profile (best effort, outside transaction)

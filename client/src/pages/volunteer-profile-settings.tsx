@@ -761,6 +761,15 @@ export default function VolunteerProfileSettings() {
     }
   }, [currentUser, existingProfile, form]);
 
+  // Load existing photo URL
+  useEffect(() => {
+    if (existingProfile?.profilePhotoUrl) {
+      setProfilePhotoUrl(existingProfile.profilePhotoUrl);
+    } else if (currentUser?.avatar) {
+      setProfilePhotoUrl(currentUser.avatar);
+    }
+  }, [existingProfile, currentUser]);
+
   // Mutations
   const mutationConfig = {
     onSuccess: () => {
@@ -803,6 +812,7 @@ export default function VolunteerProfileSettings() {
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
         preferredWorkStyle: data.preferredWorkStyle,
+        profilePhotoUrl: profilePhotoUrl,
       };
       
       return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
@@ -852,7 +862,11 @@ export default function VolunteerProfileSettings() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <PersonalInfoSection />
+              <PersonalInfoSection 
+                onPhotoChange={setProfilePhotoUrl}
+                currentPhotoUrl={profilePhotoUrl}
+                userId={currentUser?.id || ''}
+              />
               <AvailabilitySection
                 form={form}
                 availabilityOps={availabilityOps}

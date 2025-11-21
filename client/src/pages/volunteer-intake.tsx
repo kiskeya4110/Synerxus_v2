@@ -1206,12 +1206,13 @@ export default function VolunteerProfileSettings() {
                 <Button
                   type="submit"
                   disabled={profileMutation.isPending}
+                  className="w-full"
                   data-testid="button-save-profile"
                 >
                   {profileMutation.isPending && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
-                  {existingProfile ? "Update Profile" : "Create Profile"}
+                  {existingProfile ? "Save Profile" : "Create Profile"}
                 </Button>
               </div>
             </form>

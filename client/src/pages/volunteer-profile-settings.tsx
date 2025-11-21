@@ -742,7 +742,7 @@ export default function VolunteerProfileSettings() {
   });
   const { data: existingProfile, isLoading: loadingProfile } = profileQuery;
 
-  // Form setup
+  // Form setup - use defaultValues only, let effects populate from profile
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -758,35 +758,34 @@ export default function VolunteerProfileSettings() {
       preferredCommitment: "flexible",
       preferredWorkStyle: "remote",
     },
-    values: existingProfile
-      ? {
-          email: currentUser?.email || "",
-          name: existingProfile.volunteerName || currentUser?.displayName || "",
-          skills: existingProfile.skills || [],
-          interests: existingProfile.interests || [],
-          location: existingProfile.location || "",
-          sdgGoals: existingProfile.preferredSdgs || [],
-          weeklyHours: existingProfile.weeklyAvailability || 1,
-          availability: existingProfile.availability || [],
-          timezone:
-            existingProfile.timezone ||
-            Intl.DateTimeFormat().resolvedOptions().timeZone,
-          preferredCommitment:
-            existingProfile.preferredCommitment || "flexible",
-          preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
-        }
-      : undefined,
   });
 
-  // Effects
+  // Load profile data into form only once when profile loads - don't use values prop
+  // This allows users to add/edit fields without them resetting during re-renders
   useEffect(() => {
-    if (currentUser?.email && !existingProfile) {
+    if (existingProfile) {
+      console.log(`[Profile Load Effect] Loading profile data for user ${currentUser?.id}`);
+      form.reset({
+        email: currentUser?.email || "",
+        name: existingProfile.volunteerName || currentUser?.displayName || "",
+        skills: existingProfile.skills || [],
+        interests: existingProfile.interests || [],
+        location: existingProfile.location || "",
+        sdgGoals: existingProfile.preferredSdgs || [],
+        weeklyHours: existingProfile.weeklyAvailability || 1,
+        availability: existingProfile.availability || [],
+        timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferredCommitment: existingProfile.preferredCommitment || "flexible",
+        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
+      });
+    } else if (currentUser?.email) {
+      // New profile - just set email
       form.setValue("email", currentUser.email);
       if (currentUser.displayName) {
         form.setValue("name", currentUser.displayName);
       }
     }
-  }, [currentUser, existingProfile, form]);
+  }, [existingProfile?.id, currentUser?.id]); // Only run when profile or user ID changes
 
   // Load existing photo URL
   useEffect(() => {

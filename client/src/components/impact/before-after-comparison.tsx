@@ -112,80 +112,80 @@ export default function BeforeAfterComparison({
 
         {/* Side by side view */}
         {view === "side-by-side" && (
-          <div className="grid grid-cols-2 gap-2 p-4">
-            <div>
-              <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mb-3">
-                {/* Display the 'before' image */}
-                <img
-                  src={activeData.beforeImage}
-                  alt={`Before: ${activeData.title}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="text-center font-medium mb-2">Before</div>
-              <div className="space-y-2">
-                {/* Display before metrics */}
-                {activeData.beforeMetrics.map((metric, idx) => (
-                  <div key={idx} className="flex justify-between text-sm">
-                    <span>{metric.label}:</span>
-                    <span className="font-medium">
-                      {metric.value} {metric.unit}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Spacer for visual separation */}
-            <div className="flex flex-col justify-center items-center">
-              <div className="h-16"></div> {/* Add a fixed height for space */}
-            </div>
-            <div>
-              <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mb-3">
-                {/* Display the 'after' image */}
-                <img
-                  src={activeData.afterImage}
-                  alt={`After: ${activeData.title}`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="text-center font-medium mb-2">After</div>
-              <div className="space-y-2">
-                {/* Display after metrics and changes compared to before metrics */}
-                {activeData.afterMetrics.map((metric, idx) => {
-                  const beforeMetric = activeData.beforeMetrics.find(
-                    (m) => m.label === metric.label,
-                  );
-                  const change = beforeMetric
-                    ? metric.value - beforeMetric.value
-                    : metric.value;
-                  const changePercent = beforeMetric
-                    ? Math.round((change / beforeMetric.value) * 100)
-                    : 100;
-
-                  return (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span>{metric.label}:</span>
-                      <div>
-                        <span className="font-medium mr-2">
-                          {metric.value} {metric.unit}
-                        </span>
-                        {change !== 0 && beforeMetric && (
-                          <span
-                            className={
-                              change > 0
-                                ? "text-green-500 dark:text-green-400 text-xs"
-                                : "text-red-500 dark:text-red-400 text-xs"
-                            }
-                          >
-                            {change > 0 ? "+" : ""}
-                            {change} ({change > 0 ? "+" : ""}
-                            {changePercent}%)
-                          </span>
-                        )}
-                      </div>
+          <div className="p-6 space-y-8">
+            {/* Images in 2 columns */}
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-4 shadow-md">
+                  <img
+                    src={activeData.beforeImage}
+                    alt={`Before: ${activeData.title}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h4 className="text-center font-bold text-lg mb-3">Before</h4>
+                <div className="space-y-3 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                  {activeData.beforeMetrics.map((metric, idx) => (
+                    <div key={idx} className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">{metric.label}:</span>
+                      <span className="font-semibold text-base">{metric.value} {metric.unit}</span>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-4 shadow-md">
+                  <img
+                    src={activeData.afterImage}
+                    alt={`After: ${activeData.title}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <h4 className="text-center font-bold text-lg mb-3">After</h4>
+                <div className="space-y-3 bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  {activeData.afterMetrics.map((metric, idx) => {
+                    const beforeMetric = activeData.beforeMetrics.find(
+                      (m) => m.label === metric.label,
+                    );
+                    const change = beforeMetric
+                      ? metric.value - beforeMetric.value
+                      : metric.value;
+                    const changePercent = beforeMetric
+                      ? Math.round((change / beforeMetric.value) * 100)
+                      : 100;
+
+                    return (
+                      <div key={idx} className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{metric.label}:</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-base">{metric.value} {metric.unit}</span>
+                          {change !== 0 && beforeMetric && (
+                            <span
+                              className={`text-xs font-semibold px-2 py-1 rounded ${
+                                change > 0
+                                  ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
+                                  : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
+                              }`}
+                            >
+                              {change > 0 ? "+" : ""}{change} ({change > 0 ? "+" : ""}{changePercent}%)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Description below images */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+              <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">Project Details</h4>
+              <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                <p><strong>Description:</strong> {activeData.description}</p>
+                <p><strong>Location:</strong> {activeData.location}</p>
+                <p><strong>Date:</strong> {activeData.date}</p>
               </div>
             </div>
           </div>

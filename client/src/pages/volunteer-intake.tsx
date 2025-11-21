@@ -194,22 +194,25 @@ export default function VolunteerProfileSettings() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      name: "",
-      professionalTitle: "",
-      yearsOfExperience: "",
-      linkedinProfile: "",
-      languages: [],
-      skills: [],
-      interests: [],
-      location: "",
-      sdgGoals: [],
-      weeklyHours: 1,
-      availability: [],
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      preferredCommitment: "flexible",
-      preferredWorkStyle: undefined,
-      matchingPriorities: {
+      email: currentUser?.email || "",
+      name: currentUser?.displayName || "",
+      professionalTitle: existingProfile?.professionalTitle || "",
+      yearsOfExperience: existingProfile?.yearsOfExperience || "",
+      linkedinProfile: existingProfile?.linkedinProfile || "",
+      languages: existingProfile?.languages || [],
+      skills: existingProfile?.skills || [],
+      interests: existingProfile?.interests || [],
+      location: existingProfile?.location || "",
+      sdgGoals: existingProfile?.sdgGoals || [],
+      weeklyHours: existingProfile?.weeklyHours || 1,
+      availability: existingProfile?.availability || [],
+      timezone:
+        existingProfile?.timezone ||
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+      preferredCommitment:
+        existingProfile?.preferredCommitment || "flexible",
+      preferredWorkStyle: existingProfile?.preferredWorkStyle || undefined,
+      matchingPriorities: existingProfile?.matchingPriorities || {
         skillsMatch: 3,
         causeAlignment: 3,
         timeFlexibility: 3,
@@ -217,46 +220,40 @@ export default function VolunteerProfileSettings() {
         impactPotential: 3,
       },
     },
-    values: existingProfile
-      ? {
-          email: existingProfile.email,
-          name: existingProfile.name,
-          professionalTitle: existingProfile.professionalTitle || "",
-          yearsOfExperience: existingProfile.yearsOfExperience || "",
-          linkedinProfile: existingProfile.linkedinProfile || "",
-          languages: existingProfile.languages || [],
-          skills: existingProfile.skills || [],
-          interests: existingProfile.interests || [],
-          location: existingProfile.location,
-          sdgGoals: existingProfile.sdgGoals,
-          weeklyHours: existingProfile.weeklyHours || 1,
-          availability: existingProfile.availability || [],
-          timezone:
-            existingProfile.timezone ||
-            Intl.DateTimeFormat().resolvedOptions().timeZone,
-          preferredCommitment:
-            existingProfile.preferredCommitment || "flexible",
-          preferredWorkStyle: existingProfile.preferredWorkStyle || undefined,
-          matchingPriorities: existingProfile.matchingPriorities || {
-            skillsMatch: 3,
-            causeAlignment: 3,
-            timeFlexibility: 3,
-            geographicPreference: 3,
-            impactPotential: 3,
-          },
-        }
-      : undefined,
   });
 
-  // Update form when currentUser loads (for new profile creation)
+  // Reset form when profile data loads
   useEffect(() => {
-    if (currentUser?.email && !existingProfile) {
-      form.setValue("email", currentUser.email);
-      if (currentUser.displayName) {
-        form.setValue("name", currentUser.displayName);
-      }
+    if (existingProfile || currentUser) {
+      form.reset({
+        email: currentUser?.email || "",
+        name: currentUser?.displayName || "",
+        professionalTitle: existingProfile?.professionalTitle || "",
+        yearsOfExperience: existingProfile?.yearsOfExperience || "",
+        linkedinProfile: existingProfile?.linkedinProfile || "",
+        languages: existingProfile?.languages || [],
+        skills: existingProfile?.skills || [],
+        interests: existingProfile?.interests || [],
+        location: existingProfile?.location || "",
+        sdgGoals: existingProfile?.sdgGoals || [],
+        weeklyHours: existingProfile?.weeklyHours || 1,
+        availability: existingProfile?.availability || [],
+        timezone:
+          existingProfile?.timezone ||
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferredCommitment:
+          existingProfile?.preferredCommitment || "flexible",
+        preferredWorkStyle: existingProfile?.preferredWorkStyle || undefined,
+        matchingPriorities: existingProfile?.matchingPriorities || {
+          skillsMatch: 3,
+          causeAlignment: 3,
+          timeFlexibility: 3,
+          geographicPreference: 3,
+          impactPotential: 3,
+        },
+      });
     }
-  }, [currentUser, existingProfile, form]);
+  }, [currentUser?.email, currentUser?.displayName, existingProfile, form]);
 
   // Profile mutation (create or update)
   const profileMutation = useMutation({

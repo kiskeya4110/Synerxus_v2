@@ -121,21 +121,16 @@ const skillProficiencySchema = z.object({
   proficiency: z.number().min(0).max(100, "Proficiency must be 0-100"),
 });
 
-// Form schema with new professional fields
+// Form schema
 const formSchema = insertVolunteerSchema.extend({
   email: z.string().email("Valid email is required"),
   name: z.string().min(1, "Name is required"),
-  // New professional fields
-  professionalTitle: z.string().optional(),
-  yearsOfExperience: z.string().optional(),
-  linkedinProfile: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  languages: z.array(z.string()).optional(),
-  // Existing fields
   skills: z.array(skillProficiencySchema).min(1, "At least one skill is required"),
-  interests: z.array(z.string()).optional(),
+  interests: z.array(z.string()).min(1, "At least one interest is required"),
   location: z.string().min(1, "Location is required"),
   sdgGoals: z.array(z.number()).min(1, "At least one SDG goal is required"),
   weeklyHours: z.number().min(1, "At least 1 hour is required"),
+  // Enhanced availability schema
   availability: z
     .array(availabilitySlotSchema)
     .min(1, "At least one availability slot is required"),
@@ -146,15 +141,6 @@ const formSchema = insertVolunteerSchema.extend({
     "long-term",
     "flexible",
   ]),
-  preferredWorkStyle: z.enum(["remote", "in-person", "hybrid"]).optional(),
-  // New matching priorities
-  matchingPriorities: z.object({
-    skillsMatch: z.number().min(1).max(5).default(3),
-    causeAlignment: z.number().min(1).max(5).default(3),
-    timeFlexibility: z.number().min(1).max(5).default(3),
-    geographicPreference: z.number().min(1).max(5).default(3),
-    impactPotential: z.number().min(1).max(5).default(3),
-  }).optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;

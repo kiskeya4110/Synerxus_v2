@@ -225,6 +225,10 @@ export const rejectedOpportunities = pgTable("rejected_opportunities", {
 export const volunteerProfiles = pgTable("volunteer_profiles", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull().unique(),
+  volunteerName: text("volunteer_name"), // Full name
+  professionalTitle: text("professional_title"), // e.g., Data Scientist, Marketing Manager
+  yearsOfExperience: text("years_of_experience"), // e.g., "1-2 years", "3-5 years"
+  linkedinProfile: text("linkedin_profile"), // LinkedIn URL
   location: text("location"),
   city: text("city"),
   country: text("country"),
@@ -236,13 +240,18 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   education: jsonb("education"), // Array of education objects
   preferredCauses: text("preferred_causes").array(),
   weeklyAvailability: integer("weekly_availability"), // hours per week
+  availability: jsonb("availability"), // Schedule: [{day, startTime, endTime}]
+  timezone: text("timezone"), // e.g., "America/New_York"
+  preferredCommitment: text("preferred_commitment"), // one-time, short-term, long-term, flexible
   preferredWorkStyle: text("preferred_work_style"), // remote, in-person, hybrid
   preferredSdgs: integer("preferred_sdgs").array(), // SDG goals the volunteer cares about
+  matchingPriorities: jsonb("matching_priorities"), // {skillsMatch: 5, causeAlignment: 5, timeFlexibility: 5, geographicPreference: 5, impactPotential: 5}
   motivations: text("motivations"), // Why they want to volunteer
   achievements: text("achievements").array(),
   phoneNumber: text("phone_number"),
   emergencyContact: jsonb("emergency_contact"), // {name, phone, relationship}
   resumeUrl: text("resume_url"), // URL or path to default resume
+  profilePhotoUrl: text("profile_photo_url"), // Profile picture URL
   overallRating: doublePrecision("overall_rating").default(0), // Overall volunteer rating (0-5 stars)
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),

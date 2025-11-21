@@ -1,0 +1,2249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synerxus Organization Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        'primary-dark': '#1d4ed8',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #2563eb 0%, #7C4DFF 100%);
+        }
+        .step-content {
+            display: none;
+        }
+        .step-content.active {
+            display: block;
+        }
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+        .step-indicator.completed {
+            background: #10B981;
+            color: white;
+        }
+        .step-indicator.active {
+            background: #2563eb;
+            color: white;
+        }
+        .file-upload-area {
+            border: 2px dashed #D1D5DB;
+            transition: all 0.3s ease;
+        }
+        .file-upload-area:hover {
+            border-color: #2563eb;
+            background: #F9FAFB;
+        }
+        .file-upload-area.dragover {
+            border-color: #2563eb;
+            background: #EEF2FF;
+        }
+        .sdg-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .sdg-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .sdg-card.selected {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen transition-colors">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold gradient-bg bg-clip-text text-transparent">Synerxus</h1>
+                    <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Organization Registration</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600 dark:text-gray-400">Need help?</span>
+                    <button onclick="showHelp()" class="text-primary hover:text-primary-dark transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold">Organization Registration</h2>
+                <button onclick="saveDraft()" class="text-sm text-primary hover:text-primary-dark transition-colors">
+                    Save Draft
+                </button>
+            </div>
+            
+            <!-- Step Indicators -->
+            <div class="flex items-center space-x-4 overflow-x-auto pb-2">
+                <div class="step-indicator active w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">1</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">2</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">3</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">4</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">5</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">6</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">7</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">8</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">9</div>
+                <div class="flex-1 h-1 bg-gray-200 rounded"></div>
+                <div class="step-indicator w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium bg-gray-200 text-gray-600">10</div>
+            </div>
+            
+            <!-- Step Labels -->
+            <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mt-2">
+                <span>Overview</span>
+                <span>SDG Alignment</span>
+                <span>Contact</span>
+                <span>Capacity</span>
+                <span>Volunteers</span>
+                <span>Legal</span>
+                <span>Platform</span>
+                <span>Branding</span>
+                <span>References</span>
+                <span>Agreement</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form id="organizationForm" class="space-y-8">
+            
+            <!-- Step 1: Organization Overview -->
+            <div id="step1" class="step-content active">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">1</span>
+                        Organization Overview & Basic Information
+                    </h3>
+                    
+                    <!-- Organization Identity -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Organization Identity</h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organization Legal Name *</label>
+                                <input type="text" id="legalName" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Enter full legal name">
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Enter your organization's full legal name as registered with government authorities</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Common Name/DBA</label>
+                                <input type="text" id="commonName" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Public-facing name (optional)">
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">If your organization operates under a different name publicly</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organization Type *</label>
+                                <select id="orgType" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    <option value="">Select organization type</option>
+                                    <option value="501c3">501(c)(3) Nonprofit Organization</option>
+                                    <option value="ngo">NGO (Non-Governmental Organization)</option>
+                                    <option value="social-enterprise">Social Enterprise</option>
+                                    <option value="educational">Educational Institution</option>
+                                    <option value="government">Government Agency</option>
+                                    <option value="international">International Organization</option>
+                                    <option value="foundation">Foundation/Grant-Making Organization</option>
+                                    <option value="religious">Religious Organization</option>
+                                    <option value="community">Community-Based Organization</option>
+                                    <option value="other">Other (specify)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Tax ID/Registration Number *</label>
+                                <input type="text" id="taxId" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="EIN, charity registration number, etc.">
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">Year Founded *</label>
+                                <input type="number" id="yearFounded" required min="1800" max="2024" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="YYYY">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mission & Focus Areas -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Mission & Focus Areas</h4>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organization Mission Statement *</label>
+                                <textarea id="missionStatement" required rows="4" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Describe your organization's core mission and primary objectives"></textarea>
+                                <div class="flex justify-between mt-1">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400">Minimum 500 characters</p>
+                                    <span id="missionCounter" class="text-xs text-gray-500">0/500</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Primary Focus Areas * (select up to 5)</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="education" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Education & Literacy</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="healthcare" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Healthcare & Medical</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="environment" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Environmental Conservation</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="poverty" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Poverty Alleviation</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="human-rights" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Human Rights & Justice</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="technology" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Technology & Digital</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="arts" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Arts & Culture</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="youth" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Youth Development</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="seniors" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Senior Services</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="disaster" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Disaster Relief</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="community" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Community Development</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="focusAreas" value="animal" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Animal Welfare</span>
+                                    </label>
+                                </div>
+                                <p id="focusAreasCounter" class="text-xs text-gray-600 dark:text-gray-400 mt-2">0/5 selected</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Geographic Scope *</label>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="geoScope" value="local" required class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Local (city/region)</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="geoScope" value="national" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">National</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="geoScope" value="international" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">International</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="radio" name="geoScope" value="global" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Global</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-4">Target Beneficiaries * (select all that apply)</label>
+                                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="children" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Children (0-12)</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="youth" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Youth (13-18)</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="young-adults" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Young Adults (19-25)</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="adults" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Adults (26-64)</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="seniors" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Seniors (65+)</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="women" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Women & Girls</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="lgbtq" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">LGBTQ+ Community</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="disabled" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Persons with Disabilities</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer">
+                                            <input type="checkbox" name="beneficiaries" value="refugees" class="text-primary focus:ring-primary">
+                                            <span class="text-sm">Refugees & Immigrants</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: SDG Alignment -->
+            <div id="step2" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">2</span>
+                        Sustainable Development Goals Alignment
+                    </h3>
+
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Select Your SDG Focus Areas</h4>
+                        <p class="text-gray-600 dark:text-gray-400 mb-6">Choose the Sustainable Development Goals that align with your organization's mission and work. Select up to 5 primary SDGs.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                            <!-- SDG 1 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="1">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">No Poverty</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">End poverty in all its forms everywhere</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 2 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="2">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Zero Hunger</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">End hunger, achieve food security and improved nutrition</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 3 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="3">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Good Health & Well-being</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Ensure healthy lives and promote well-being for all</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 4 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="4">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Quality Education</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Ensure inclusive and equitable quality education</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 5 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="5">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm">5</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Gender Equality</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Achieve gender equality and empower all women and girls</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 6 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="6">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">6</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Clean Water & Sanitation</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Ensure availability and sustainable management of water</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 7 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="7">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center text-white font-bold text-sm">7</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Affordable & Clean Energy</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Ensure access to affordable, reliable, sustainable energy</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 8 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="8">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-red-700 rounded-full flex items-center justify-center text-white font-bold text-sm">8</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Decent Work & Economic Growth</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Promote sustained, inclusive and sustainable economic growth</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 9 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="9">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">9</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Industry, Innovation & Infrastructure</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Build resilient infrastructure, promote sustainable industrialization</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 10 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="10">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">10</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Reduced Inequalities</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Reduce inequality within and among countries</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 11 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="11">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold text-sm">11</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Sustainable Cities & Communities</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Make cities and human settlements inclusive, safe, resilient</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 12 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="12">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-amber-700 rounded-full flex items-center justify-center text-white font-bold text-sm">12</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Responsible Consumption & Production</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Ensure sustainable consumption and production patterns</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 13 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="13">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-green-700 rounded-full flex items-center justify-center text-white font-bold text-sm">13</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Climate Action</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Take urgent action to combat climate change and its impacts</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 14 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="14">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">14</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Life Below Water</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Conserve and sustainably use the oceans, seas and marine resources</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 15 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="15">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm">15</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Life on Land</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Protect, restore and promote sustainable use of terrestrial ecosystems</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 16 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="16">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-blue-800 rounded-full flex items-center justify-center text-white font-bold text-sm">16</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Peace, Justice & Strong Institutions</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Promote peaceful and inclusive societies for sustainable development</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- SDG 17 -->
+                            <div class="sdg-card border-2 border-gray-200 dark:border-gray-600 rounded-lg p-4" data-sdg="17">
+                                <div class="flex items-start space-x-3">
+                                    <div class="flex-shrink-0 w-12 h-12 bg-blue-900 rounded-full flex items-center justify-center text-white font-bold text-sm">17</div>
+                                    <div>
+                                        <h5 class="font-semibold text-gray-900 dark:text-white">Partnerships for the Goals</h5>
+                                        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Strengthen the means of implementation and revitalize partnerships</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                            <div class="flex items-start space-x-3">
+                                <svg class="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <p class="text-sm text-blue-800 dark:text-blue-200">
+                                        <span class="font-semibold">Selected SDGs:</span> 
+                                        <span id="selectedSDGsCount">0</span> of 5 selected. These will help match your organization with volunteers passionate about these specific goals.
+                                    </p>
+                                    <div id="selectedSDGsList" class="flex flex-wrap gap-2 mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SDG Impact Description -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">SDG Impact Description</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">How does your organization contribute to these SDGs? *</label>
+                                <textarea id="sdgImpact" required rows="4" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Describe your specific programs, initiatives, or approaches that contribute to the selected SDGs..."></textarea>
+                                <div class="flex justify-between mt-1">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400">Minimum 300 characters</p>
+                                    <span id="sdgImpactCounter" class="text-xs text-gray-500">0/300</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">SDG Measurement & Tracking</label>
+                                <textarea id="sdgMeasurement" rows="3" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="How do you measure and track your impact on these SDGs? (optional)"></textarea>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Describe any metrics, KPIs, or reporting frameworks you use</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Contact Information -->
+            <div id="step3" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">3</span>
+                        Contact Information & Location
+                    </h3>
+
+                    <!-- Primary Contact -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Primary Contact Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">First Name *</label>
+                                <input type="text" id="contactFirstName" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Last Name *</label>
+                                <input type="text" id="contactLastName" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Job Title/Role *</label>
+                                <input type="text" id="contactTitle" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Executive Director, Program Manager, etc.">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email Address *</label>
+                                <input type="email" id="contactEmail" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">Phone Number *</label>
+                                <div class="flex space-x-2">
+                                    <select class="px-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                        <option value="+1">+1 (US)</option>
+                                        <option value="+44">+44 (UK)</option>
+                                        <option value="+33">+33 (FR)</option>
+                                        <option value="+49">+49 (DE)</option>
+                                        <option value="+61">+61 (AU)</option>
+                                    </select>
+                                    <input type="tel" id="contactPhone" required class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="(555) 123-4567">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organization Address -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Organization Address</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">Street Address *</label>
+                                <input type="text" id="streetAddress" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">City *</label>
+                                <input type="text" id="city" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">State/Province *</label>
+                                <input type="text" id="state" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Postal/ZIP Code *</label>
+                                <input type="text" id="postalCode" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Country *</label>
+                                <select id="country" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    <option value="">Select country</option>
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="UK">United Kingdom</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="DE">Germany</option>
+                                    <option value="FR">France</option>
+                                    <option value="IN">India</option>
+                                    <option value="BR">Brazil</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Digital Presence -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Digital Presence</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium mb-2">Organization Website *</label>
+                                <input type="url" id="website" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="https://www.example.org">
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Your main organizational website</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Facebook Page URL</label>
+                                <input type="url" id="facebook" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="https://facebook.com/yourorg">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Twitter/X Handle</label>
+                                <div class="flex">
+                                    <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">@</span>
+                                    <input type="text" id="twitter" class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="yourorganization">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">LinkedIn Page URL</label>
+                                <input type="url" id="linkedin" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="https://linkedin.com/company/yourorg">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Instagram Handle</label>
+                                <div class="flex">
+                                    <span class="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-lg dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">@</span>
+                                    <input type="text" id="instagram" class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="yourorganization">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Organization Size & Capacity -->
+            <div id="step4" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">4</span>
+                        Organization Size & Capacity
+                    </h3>
+
+                    <!-- Organizational Scale -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Organizational Scale</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Annual Operating Budget *</label>
+                                <select id="budget" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    <option value="">Select budget range</option>
+                                    <option value="under-50k">Under $50,000</option>
+                                    <option value="50k-250k">$50,000 - $250,000</option>
+                                    <option value="250k-1m">$250,000 - $1,000,000</option>
+                                    <option value="1m-5m">$1,000,000 - $5,000,000</option>
+                                    <option value="5m-25m">$5,000,000 - $25,000,000</option>
+                                    <option value="over-25m">Over $25,000,000</option>
+                                    <option value="prefer-not">Prefer not to disclose</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Number of Full-Time Staff *</label>
+                                <input type="number" id="fullTimeStaff" required min="0" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Include full-time equivalent positions">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Number of Part-Time Staff</label>
+                                <input type="number" id="partTimeStaff" min="0" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Current Volunteer Count</label>
+                                <input type="number" id="volunteerCount" min="0" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Approximate number of active volunteers">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Board of Directors Size</label>
+                                <input type="number" id="boardSize" min="0" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operational Details -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Operational Details</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Primary Operating Languages * (select up to 3)</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="languages" value="english" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">English</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="languages" value="spanish" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Spanish</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="languages" value="french" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">French</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="languages" value="german" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">German</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="languages" value="portuguese" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Portuguese</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="languages" value="mandarin" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Mandarin Chinese</span>
+                                    </label>
+                                </div>
+                                <p id="languagesCounter" class="text-xs text-gray-600 dark:text-gray-400 mt-2">0/3 selected</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organizational Structure *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="orgStructure" value="centralized" required class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Centralized (single location)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="orgStructure" value="multi-domestic" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Multi-location domestic</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="orgStructure" value="international" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">International presence</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="orgStructure" value="distributed" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Fully distributed/remote</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="orgStructure" value="network" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Network/federation model</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Volunteer Program Details -->
+            <div id="step5" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">5</span>
+                        Volunteer Program Details
+                    </h3>
+
+                    <!-- Current Volunteer Management -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Current Volunteer Management</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Existing Volunteer Program *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volunteerProgram" value="established" required class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Yes, well-established program</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volunteerProgram" value="developing" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Yes, developing program</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volunteerProgram" value="starting" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">No, looking to start program</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volunteerProgram" value="occasional" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">No, occasional volunteers only</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Volunteer Coordinator/Manager *</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <input type="text" id="coordinatorName" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Full name and title">
+                                    <input type="email" id="coordinatorEmail" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Email for volunteer communications">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Volunteer Opportunity Types -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Volunteer Opportunity Types</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Types of Opportunities You Plan to Post * (select all that apply)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="project-based" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Project-based assignments (3-6 months)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="short-term" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Short-term projects (under 3 months)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="long-term" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Long-term commitments (6+ months)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="ongoing" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Ongoing/regular volunteering</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="one-time" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">One-time events</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="skills-based" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Skills-based/pro bono work</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="board" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Board/governance positions</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="opportunityTypes" value="consulting" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Consulting engagements</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Professional Skills Frequently Needed * (select up to 10)</label>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="data-analysis" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Data Analysis</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="machine-learning" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Machine Learning</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="project-management" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Project Management</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="marketing" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Digital Marketing</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="graphic-design" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Graphic Design</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="web-development" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Web Development</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="financial-analysis" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Financial Analysis</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="grant-writing" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Grant Writing</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="legal-services" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Legal Services</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-2 rounded border hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <input type="checkbox" name="neededSkills" value="content-writing" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Content Writing</span>
+                                    </label>
+                                </div>
+                                <p id="skillsCounter" class="text-xs text-gray-600 dark:text-gray-400 mt-2">0/10 selected</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 6: Legal & Compliance -->
+            <div id="step6" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">6</span>
+                        Legal & Compliance Information
+                    </h3>
+
+                    <!-- Registration Status -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Registration and Legal Status</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Nonprofit/NGO Registration Status *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="registrationStatus" value="501c3" required class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Registered 501(c)(3) (US)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="registrationStatus" value="registered-other" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Registered charity (other country)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="registrationStatus" value="religious" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Religious organization exemption</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="registrationStatus" value="pending" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Pending registration application</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="registrationStatus" value="not-registered" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Not yet registered</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Registration Documents Upload *</label>
+                                <div class="file-upload-area p-6 rounded-lg text-center cursor-pointer" onclick="document.getElementById('registrationDocs').click()">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <div class="mt-4">
+                                        <p class="text-lg font-medium">Click to upload documents</p>
+                                        <p class="text-sm text-gray-500">or drag and drop</p>
+                                        <p class="text-xs text-gray-400 mt-2">PDF, DOC, JPG, PNG up to 10MB each</p>
+                                    </div>
+                                    <input type="file" id="registrationDocs" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="hidden">
+                                </div>
+                                <div id="uploadedFiles" class="mt-4 space-y-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Safety Policies -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Background Check and Safety Policies</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Background Check Requirements *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="backgroundChecks" value="all-required" required class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Required for all volunteers</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="backgroundChecks" value="vulnerable-populations" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Required for volunteers working with vulnerable populations</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="backgroundChecks" value="certain-positions" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Required for certain positions only</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="backgroundChecks" value="willing-implement" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Not currently required but willing to implement</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="backgroundChecks" value="cannot-require" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Cannot require due to legal/resource constraints</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Child Protection Policy *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="childProtection" value="comprehensive" required class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Comprehensive policy in place</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="childProtection" value="basic" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Basic policy in place</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="childProtection" value="developing" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Developing policy</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="childProtection" value="need-assistance" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Need assistance developing policy</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="childProtection" value="not-applicable" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Not applicable (don't serve minors)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Insurance Coverage * (select all that apply)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="insurance" value="general-liability" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">General liability insurance</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="insurance" value="professional-liability" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Professional liability insurance</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="insurance" value="volunteer-accident" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Volunteer accident insurance</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="insurance" value="directors-officers" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Directors & Officers insurance</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="insurance" value="international" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">International coverage</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="insurance" value="no-coverage" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">No current insurance coverage</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 7: Platform Configuration & Preferences -->
+            <div id="step7" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">7</span>
+                        Platform Configuration & Preferences
+                    </h3>
+
+                    <!-- Account Setup -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Account Setup Preferences</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Number of Administrator Users Needed *</label>
+                                <input type="number" id="adminUsers" required min="1" max="10" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="1-10 users">
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">How many staff members will need full platform access?</p>
+                            </div>
+
+                            <div id="additionalUsers" class="space-y-4">
+                                <!-- Additional users will be dynamically added here -->
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organization Profile Visibility *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="profileVisibility" value="public" required class="text-primary focus:ring-primary">
+                                        <div>
+                                            <span class="text-sm font-medium">Public</span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">Visible to all volunteers on the platform</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="profileVisibility" value="semi-private" class="text-primary focus:ring-primary">
+                                        <div>
+                                            <span class="text-sm font-medium">Semi-private</span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">Visible only to matched volunteers</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="profileVisibility" value="private" class="text-primary focus:ring-primary">
+                                        <div>
+                                            <span class="text-sm font-medium">Private</span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">By invitation only</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Communication Preferences -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Communication and Matching Preferences</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Preferred Communication Methods * (select all that apply)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="commMethods" value="email" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Email notifications</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="commMethods" value="platform-messaging" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Platform messaging system</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="commMethods" value="phone" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Phone calls</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="commMethods" value="video" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Video conferencing</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="commMethods" value="sms" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Text/SMS (where available)</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Volunteer Application Volume Preference *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volumePreference" value="high" required class="text-primary focus:ring-primary">
+                                        <div>
+                                            <span class="text-sm font-medium">High volume</span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">Maximum exposure to reach more volunteers</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volumePreference" value="moderate" class="text-primary focus:ring-primary">
+                                        <div>
+                                            <span class="text-sm font-medium">Moderate volume</span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">Balanced approach between reach and quality</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volumePreference" value="low" class="text-primary focus:ring-primary">
+                                        <div>
+                                            <span class="text-sm font-medium">Low volume</span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">Highly targeted matches only</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="volumePreference" value="custom" class="text-primary focus:ring-primary">
+                                        <div>
+                                            <span class="text-sm font-medium">Custom settings</span>
+                                            <p class="text-xs text-gray-600 dark:text-gray-400">Specify custom requirements</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Geographic Preference for Volunteers *</label>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="geoPreference" value="local" required class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Local/regional only</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="geoPreference" value="national" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">National</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="geoPreference" value="international" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">International welcome</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="radio" name="geoPreference" value="no-restriction" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">No geographic restrictions</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Volunteer Experience Level Preferences * (select all that apply)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="experiencePrefs" value="entry-level" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Entry level/new volunteers</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="experiencePrefs" value="some-experience" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Some relevant experience</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="experiencePrefs" value="highly-experienced" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Highly experienced professionals</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="experiencePrefs" value="subject-experts" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Subject matter experts</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="experiencePrefs" value="no-preference" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">No preference</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Integration Requirements -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Integration and Technical Requirements</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Existing Systems Integration Needs (optional)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="integrationNeeds" value="crm" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">CRM system integration</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="integrationNeeds" value="email-marketing" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Email marketing platform</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="integrationNeeds" value="accounting" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Accounting/financial software</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="integrationNeeds" value="project-management" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Project management tools</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="integrationNeeds" value="communication" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Communication platforms</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Reporting and Analytics Needs * (select all that apply)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="reportingNeeds" value="engagement-metrics" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Volunteer engagement metrics</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="reportingNeeds" value="project-tracking" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Project completion tracking</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="reportingNeeds" value="skills-analysis" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Skills gap analysis</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="reportingNeeds" value="geographic-distribution" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Geographic volunteer distribution</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="reportingNeeds" value="time-analytics" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Time commitment analytics</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Custom Reporting Requirements</label>
+                                <textarea id="customReporting" rows="3" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Describe any specific reporting needs..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 8: Marketing and Branding -->
+            <div id="step8" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">8</span>
+                        Marketing and Branding
+                    </h3>
+
+                    <!-- Organization Branding -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Organization Branding</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Logo Upload *</label>
+                                <div class="file-upload-area p-6 rounded-lg text-center cursor-pointer" onclick="document.getElementById('logoUpload').click()">
+                                    <div id="logoPreview" class="hidden">
+                                        <img id="logoImage" class="mx-auto max-h-24 mb-4">
+                                    </div>
+                                    <div id="logoPlaceholder">
+                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                        <div class="mt-4">
+                                            <p class="text-lg font-medium">Upload your organization logo</p>
+                                            <p class="text-sm text-gray-500">PNG, JPG, SVG up to 5MB</p>
+                                            <p class="text-xs text-gray-400 mt-2">Recommended: 300x300px minimum</p>
+                                        </div>
+                                    </div>
+                                    <input type="file" id="logoUpload" required accept=".png,.jpg,.jpeg,.svg" class="hidden">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Primary Brand Color</label>
+                                    <div class="flex space-x-2">
+                                        <input type="color" id="primaryColor" class="w-12 h-12 rounded border border-gray-300 dark:border-gray-600">
+                                        <input type="text" id="primaryColorHex" class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="#2563eb">
+                                    </div>
+                                    <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">For customizing your profile appearance</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Secondary Brand Color</label>
+                                    <div class="flex space-x-2">
+                                        <input type="color" id="secondaryColor" class="w-12 h-12 rounded border border-gray-300 dark:border-gray-600">
+                                        <input type="text" id="secondaryColorHex" class="flex-1 px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="#7C4DFF">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organization Tagline/Slogan</label>
+                                <input type="text" id="tagline" maxlength="100" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Brief, compelling statement about your mission">
+                                <div class="flex justify-between mt-1">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400">Brief, compelling statement about your mission</p>
+                                    <span id="taglineCounter" class="text-xs text-gray-500">0/100</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content and Messaging -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Content and Messaging</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organization Description for Volunteers *</label>
+                                <textarea id="volunteerDescription" required rows="4" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Compelling description that will attract volunteers to your opportunities..."></textarea>
+                                <div class="flex justify-between mt-1">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400">Compelling description that will attract volunteers</p>
+                                    <span id="volunteerDescCounter" class="text-xs text-gray-500">0/200 minimum</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">What Makes Your Organization Special *</label>
+                                <textarea id="uniqueValue" required rows="3" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Why should volunteers choose your organization over others?"></textarea>
+                                <div class="flex justify-between mt-1">
+                                    <p class="text-xs text-gray-600 dark:text-gray-400">Unique value proposition for volunteers</p>
+                                    <span id="uniqueValueCounter" class="text-xs text-gray-500">0/150 minimum</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Volunteer Success Stories (optional)</label>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Success Story 1</label>
+                                        <textarea id="successStory1" rows="3" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Brief story showcasing volunteer impact and experience..."></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Success Story 2</label>
+                                        <textarea id="successStory2" rows="3" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Another success story (optional)..."></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-400">Success Story 3</label>
+                                        <textarea id="successStory3" rows="3" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Third success story (optional)..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Organization Photos</label>
+                                <div class="file-upload-area p-6 rounded-lg text-center cursor-pointer" onclick="document.getElementById('orgPhotos').click()">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <div class="mt-4">
+                                        <p class="text-lg font-medium">Upload organization photos</p>
+                                        <p class="text-sm text-gray-500">Photos of your work, facilities, team, or volunteers</p>
+                                        <p class="text-xs text-gray-400 mt-2">JPG, PNG up to 5MB each (multiple files allowed)</p>
+                                    </div>
+                                    <input type="file" id="orgPhotos" multiple accept=".jpg,.jpeg,.png" class="hidden">
+                                </div>
+                                <div id="photoPreview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 9: References and Verification -->
+            <div id="step9" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">9</span>
+                        References and Verification
+                    </h3>
+
+                    <!-- Professional References -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Professional References</h4>
+                        <div class="space-y-8">
+                            <!-- Reference 1 -->
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                                <h5 class="font-medium mb-4 text-gray-900 dark:text-white">Reference 1 *</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Organization/Individual Name *</label>
+                                        <input type="text" id="ref1Name" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Contact Person Name *</label>
+                                        <input type="text" id="ref1Contact" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Relationship to Your Organization *</label>
+                                        <input type="text" id="ref1Relationship" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Partner, funder, board member, etc.">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Email Address *</label>
+                                        <input type="email" id="ref1Email" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Phone Number *</label>
+                                        <input type="tel" id="ref1Phone" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">How Long They've Known Your Organization *</label>
+                                        <select id="ref1Duration" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                            <option value="">Select duration</option>
+                                            <option value="less-than-1">Less than 1 year</option>
+                                            <option value="1-2">1-2 years</option>
+                                            <option value="3-5">3-5 years</option>
+                                            <option value="5-10">5-10 years</option>
+                                            <option value="more-than-10">More than 10 years</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reference 2 -->
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                                <h5 class="font-medium mb-4 text-gray-900 dark:text-white">Reference 2 *</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Organization/Individual Name *</label>
+                                        <input type="text" id="ref2Name" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Contact Person Name *</label>
+                                        <input type="text" id="ref2Contact" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Relationship to Your Organization *</label>
+                                        <input type="text" id="ref2Relationship" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Partner, funder, board member, etc.">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Email Address *</label>
+                                        <input type="email" id="ref2Email" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Phone Number *</label>
+                                        <input type="tel" id="ref2Phone" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">How Long They've Known Your Organization *</label>
+                                        <select id="ref2Duration" required class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                            <option value="">Select duration</option>
+                                            <option value="less-than-1">Less than 1 year</option>
+                                            <option value="1-2">1-2 years</option>
+                                            <option value="3-5">3-5 years</option>
+                                            <option value="5-10">5-10 years</option>
+                                            <option value="more-than-10">More than 10 years</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reference 3 (Optional) -->
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                                <h5 class="font-medium mb-4 text-gray-900 dark:text-white">Reference 3 (Optional)</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Organization/Individual Name</label>
+                                        <input type="text" id="ref3Name" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Contact Person Name</label>
+                                        <input type="text" id="ref3Contact" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Relationship to Your Organization</label>
+                                        <input type="text" id="ref3Relationship" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Partner, funder, board member, etc.">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Email Address</label>
+                                        <input type="email" id="ref3Email" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">Phone Number</label>
+                                        <input type="tel" id="ref3Phone" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2">How Long They've Known Your Organization</label>
+                                        <select id="ref3Duration" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                            <option value="">Select duration</option>
+                                            <option value="less-than-1">Less than 1 year</option>
+                                            <option value="1-2">1-2 years</option>
+                                            <option value="3-5">3-5 years</option>
+                                            <option value="5-10">5-10 years</option>
+                                            <option value="more-than-10">More than 10 years</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Partner Organizations -->
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Partner Organizations</h4>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Current Organizational Partners</label>
+                                <div class="space-y-3" id="partnersContainer">
+                                    <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Partner organization name">
+                                    <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Another partner organization">
+                                    <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Third partner organization">
+                                </div>
+                                <button type="button" onclick="addPartnerField()" class="mt-2 text-primary hover:text-primary-dark text-sm transition-colors">+ Add another partner</button>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Other organizations you currently work with or collaborate with</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Grant Funders/Major Donors</label>
+                                <div class="space-y-3" id="fundersContainer">
+                                    <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Funder/donor name (no amounts needed)">
+                                    <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Another funder/donor">
+                                    <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="Third funder/donor">
+                                </div>
+                                <button type="button" onclick="addFunderField()" class="mt-2 text-primary hover:text-primary-dark text-sm transition-colors">+ Add another funder</button>
+                                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Major institutional funders (helps verify legitimacy)</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-4">Professional Associations/Networks * (select all that apply)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="united-way" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">United Way member</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="guidestar" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">GuideStar/Candid profile</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="network-for-good" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Network for Good member</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="justgive" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">JustGive member</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="volunteermatch" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">VolunteerMatch member</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="points-of-light" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Points of Light member</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="independent-sector" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Independent Sector member</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <input type="checkbox" name="associations" value="afp" class="text-primary focus:ring-primary">
+                                        <span class="text-sm">Association of Fundraising Professionals</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Other Professional Associations</label>
+                                <textarea rows="2" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700" placeholder="List any other relevant professional associations or networks..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 10: Agreement -->
+            <div id="step10" class="step-content">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center">
+                        <span class="gradient-bg w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">10</span>
+                        Agreement and Verification
+                    </h3>
+
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4 text-blue-800 dark:text-blue-200">Platform Terms and Policies</h4>
+                            
+                            <div class="space-y-4">
+                                <label class="flex items-start space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="termsAgreement" required class="mt-1 text-primary focus:ring-primary">
+                                    <span class="text-sm">
+                                        I have read and agree to the <a href="#" class="text-primary hover:underline">Synerxus Terms of Service</a>
+                                    </span>
+                                </label>
+                                
+                                <label class="flex items-start space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="privacyAgreement" required class="mt-1 text-primary focus:ring-primary">
+                                    <span class="text-sm">
+                                        I acknowledge that I have read the <a href="#" class="text-primary hover:underline">Privacy Policy</a> and understand how volunteer and organizational data will be handled
+                                    </span>
+                                </label>
+                                
+                                <label class="flex items-start space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="antiDiscrimination" required class="mt-1 text-primary focus:ring-primary">
+                                    <span class="text-sm">
+                                        I confirm that our organization complies with anti-discrimination laws and will not discriminate against volunteers based on protected characteristics
+                                    </span>
+                                </label>
+                                
+                                <label class="flex items-start space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="safetyCommitment" required class="mt-1 text-primary focus:ring-primary">
+                                    <span class="text-sm">
+                                        I commit to providing a safe, respectful environment for all volunteers
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
+                            <h4 class="text-lg font-semibold mb-4 text-green-800 dark:text-green-200">Application Submission</h4>
+                            
+                            <div class="space-y-4">
+                                <label class="flex items-start space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="completenessReview" required class="mt-1 text-primary focus:ring-primary">
+                                    <span class="text-sm">
+                                        I have reviewed all information provided and confirm its accuracy
+                                    </span>
+                                </label>
+                                
+                                <label class="flex items-start space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="verificationAuth" required class="mt-1 text-primary focus:ring-primary">
+                                    <span class="text-sm">
+                                        I authorize Synerxus to verify the information provided and contact references
+                                    </span>
+                                </label>
+                                
+                                <label class="flex items-start space-x-3 cursor-pointer">
+                                    <input type="checkbox" id="marketingConsent" class="mt-1 text-primary focus:ring-primary">
+                                    <span class="text-sm">
+                                        I would like to receive updates about new Synerxus features and volunteer management best practices
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
+                            <h4 class="font-semibold mb-2">Estimated Approval Timeline</h4>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Applications are typically reviewed within 5-7 business days. You will receive email updates on your application status.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="flex justify-between items-center pt-8 border-t border-gray-200 dark:border-gray-700">
+                <button type="button" id="prevBtn" onclick="previousStep()" class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" style="display: none;">
+                    Previous
+                </button>
+                
+                <div class="flex space-x-4">
+                    <button type="button" onclick="saveDraft()" class="px-6 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Save Draft
+                    </button>
+                    
+                    <button type="button" id="nextBtn" onclick="nextStep()" class="px-6 py-3 bg-gradient-to-r from-primary to-purple-600 hover:from-primary-dark hover:to-purple-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105">
+                        Next Step
+                    </button>
+                    
+                    <button type="submit" id="submitBtn" onclick="submitForm()" class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all duration-300 transform hover:scale-105 font-semibold" style="display: none;">
+                        Submit Application
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification" class="fixed top-4 right-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 transform translate-x-full transition-transform duration-300 z-50">
+        <div class="flex items-center space-x-3">
+            <div id="notificationIcon" class="flex-shrink-0"></div>
+            <div>
+                <p id="notificationTitle" class="font-medium text-gray-900 dark:text-white"></p>
+                <p id="notificationMessage" class="text-sm text-gray-600 dark:text-gray-400"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+
+        // Form state management
+        let currentStep = 1;
+        const totalSteps = 10;
+        let selectedSDGs = new Set();
+        
+        // Character counters
+        document.getElementById('missionStatement').addEventListener('input', function() {
+            const counter = document.getElementById('missionCounter');
+            const count = this.value.length;
+            counter.textContent = `${count}/500`;
+            if (count < 500) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-green-500');
+            } else {
+                counter.classList.add('text-green-500');
+                counter.classList.remove('text-red-500');
+            }
+        });
+
+        // SDG Impact counter
+        document.getElementById('sdgImpact').addEventListener('input', function() {
+            const counter = document.getElementById('sdgImpactCounter');
+            const count = this.value.length;
+            counter.textContent = `${count}/300`;
+            if (count < 300) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-green-500');
+            } else {
+                counter.classList.add('text-green-500');
+                counter.classList.remove('text-red-500');
+            }
+        });
+
+        // Focus area counter
+        function updateFocusAreasCounter() {
+            const checked = document.querySelectorAll('input[name="focusAreas"]:checked').length;
+            const counter = document.getElementById('focusAreasCounter');
+            counter.textContent = `${checked}/5 selected`;
+            if (checked > 5) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-gray-600', 'dark:text-gray-400');
+            } else {
+                counter.classList.remove('text-red-500');
+                counter.classList.add('text-gray-600', 'dark:text-gray-400');
+            }
+        }
+
+        // Language counter
+        function updateLanguagesCounter() {
+            const checked = document.querySelectorAll('input[name="languages"]:checked').length;
+            const counter = document.getElementById('languagesCounter');
+            counter.textContent = `${checked}/3 selected`;
+            if (checked > 3) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-gray-600', 'dark:text-gray-400');
+            } else {
+                counter.classList.remove('text-red-500');
+                counter.classList.add('text-gray-600', 'dark:text-gray-400');
+            }
+        }
+
+        // Skills counter
+        function updateSkillsCounter() {
+            const checked = document.querySelectorAll('input[name="neededSkills"]:checked').length;
+            const counter = document.getElementById('skillsCounter');
+            counter.textContent = `${checked}/10 selected`;
+            if (checked > 10) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-gray-600', 'dark:text-gray-400');
+            } else {
+                counter.classList.remove('text-red-500');
+                counter.classList.add('text-gray-600', 'dark:text-gray-400');
+            }
+        }
+
+        // SDG Selection Logic
+        document.querySelectorAll('.sdg-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const sdgNumber = this.getAttribute('data-sdg');
+                
+                if (selectedSDGs.has(sdgNumber)) {
+                    // Deselect
+                    selectedSDGs.delete(sdgNumber);
+                    this.classList.remove('selected');
+                } else {
+                    // Select if under limit
+                    if (selectedSDGs.size < 5) {
+                        selectedSDGs.add(sdgNumber);
+                        this.classList.add('selected');
+                    } else {
+                        showNotification('Maximum 5 SDGs can be selected', 'error');
+                    }
+                }
+                
+                updateSDGSelectionDisplay();
+            });
+        });
+
+        function updateSDGSelectionDisplay() {
+            const countElement = document.getElementById('selectedSDGsCount');
+            const listElement = document.getElementById('selectedSDGsList');
+            
+            countElement.textContent = selectedSDGs.size;
+            
+            // Update the list of selected SDGs
+            listElement.innerHTML = '';
+            selectedSDGs.forEach(sdg => {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary text-white';
+                badge.textContent = `SDG ${sdg}`;
+                listElement.appendChild(badge);
+            });
+        }
+
+        // Admin users management
+        document.getElementById('adminUsers').addEventListener('input', function() {
+            const count = parseInt(this.value) || 0;
+            const container = document.getElementById('additionalUsers');
+            container.innerHTML = '';
+            
+            if (count > 1) {
+                for (let i = 2; i <= count; i++) {
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4';
+                    userDiv.innerHTML = `
+                        <h5 class="font-medium mb-3 text-gray-900 dark:text-white">Administrator ${i}</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Name</label>
+                                <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Email</label>
+                                <input type="email" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Role/Title</label>
+                                <input type="text" class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Access Level</label>
+                                <select class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700">
+                                    <option value="full-admin">Full Admin</option>
+                                    <option value="opportunity-manager">Opportunity Manager</option>
+                                    <option value="read-only">Read-Only</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(userDiv);
+                }
+            }
+        });
+
+        // Tagline counter
+        document.getElementById('tagline').addEventListener('input', function() {
+            const counter = document.getElementById('taglineCounter');
+            const count = this.value.length;
+            counter.textContent = `${count}/100`;
+            if (count > 100) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-gray-500');
+            } else {
+                counter.classList.remove('text-red-500');
+                counter.classList.add('text-gray-500');
+            }
+        });
+
+        // Volunteer description counter
+        document.getElementById('volunteerDescription').addEventListener('input', function() {
+            const counter = document.getElementById('volunteerDescCounter');
+            const count = this.value.length;
+            counter.textContent = `${count}/200 minimum`;
+            if (count < 200) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-green-500');
+            } else {
+                counter.classList.add('text-green-500');
+                counter.classList.remove('text-red-500');
+            }
+        });
+
+        // Unique value counter
+        document.getElementById('uniqueValue').addEventListener('input', function() {
+            const counter = document.getElementById('uniqueValueCounter');
+            const count = this.value.length;
+            counter.textContent = `${count}/150 minimum`;
+            if (count < 150) {
+                counter.classList.add('text-red-500');
+                counter.classList.remove('text-green-500');
+            } else {
+                counter.classList.add('text-green-500');
+                counter.classList.remove('text-red-500');
+            }
+        });
+
+        // Logo upload handling
+        document.getElementById('logoUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('logoImage').src = e.target.result;
+                    document.getElementById('logoPreview').classList.remove('hidden');
+                    document.getElementById('logoPlaceholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Organization photos handling
+        document.getElementById('orgPhotos').addEventListener('change', function(e) {
+            const container = document.getElementById('photoPreview');
+            container.innerHTML = '';
+            
+            Array.from(e.target.files).forEach((file, index) => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const photoDiv = document.createElement('div');
+                        photoDiv.className = 'relative group';
+                        photoDiv.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-24 object-cover rounded-lg">
+                            <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        `;
+                        container.appendChild(photoDiv);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Dynamic field addition functions
+        function addPartnerField() {
+            const container = document.getElementById('partnersContainer');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700';
+            input.placeholder = 'Partner organization name';
+            container.appendChild(input);
+        }
+
+        function addFunderField() {
+            const container = document.getElementById('fundersContainer');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary dark:bg-gray-700';
+            input.placeholder = 'Funder/donor name';
+            container.appendChild(input);
+        }
+
+        // File upload handling
+        document.getElementById('registrationDocs').addEventListener('change', function(e) {
+            const fileList = document.getElementById('uploadedFiles');
+            fileList.innerHTML = '';
+            
+            Array.from(e.target.files).forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg';
+                fileItem.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="text-sm">${file.name}</span>
+                        <span class="text-xs text-gray-500">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </div>
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="this.parentElement.remove()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                `;
+                fileList.appendChild(fileItem);
+            });
+        });
+
+        // Step navigation functions
+        function showStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show current step
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            // Update step indicators
+            document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+                indicator.classList.remove('active', 'completed');
+                if (index + 1 < step) {
+                    indicator.classList.add('completed');
+                } else if (index + 1 === step) {
+                    indicator.classList.add('active');
+                }
+            });
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').style.display = step === 1 ? 'none' : 'block';
+            document.getElementById('nextBtn').style.display = step === totalSteps ? 'none' : 'block';
+            document.getElementById('submitBtn').style.display = step === totalSteps ? 'block' : 'none';
+        }
+
+        function nextStep() {
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showStep(currentStep);
+                }
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        function validateCurrentStep() {
+            const currentStepElement = document.getElementById(`step${currentStep}`);
+            const requiredFields = currentStepElement.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.checkValidity()) {
+                    field.classList.add('border-red-500');
+                    isValid = false;
+                } else {
+                    field.classList.remove('border-red-500');
+                }
+            });
+
+            // Custom validations for specific steps
+            if (currentStep === 1) {
+                const focusAreas = document.querySelectorAll('input[name="focusAreas"]:checked');
+                if (focusAreas.length === 0 || focusAreas.length > 5) {
+                    showNotification('Please select 1-5 focus areas', 'error');
+                    isValid = false;
+                }
+            }
+
+            if (currentStep === 2) {
+                if (selectedSDGs.size === 0) {
+                    showNotification('Please select at least one SDG', 'error');
+                    isValid = false;
+                }
+                
+                const sdgImpact = document.getElementById('sdgImpact');
+                if (sdgImpact.value.length < 300) {
+                    showNotification('SDG impact description must be at least 300 characters', 'error');
+                    isValid = false;
+                }
+            }
+
+            if (currentStep === 4) {
+                const languages = document.querySelectorAll('input[name="languages"]:checked');
+                if (languages.length === 0 || languages.length > 3) {
+                    showNotification('Please select 1-3 operating languages', 'error');
+                    isValid = false;
+                }
+            }
+
+            if (currentStep === 5) {
+                const skills = document.querySelectorAll('input[name="neededSkills"]:checked');
+                if (skills.length === 0 || skills.length > 10) {
+                    showNotification('Please select 1-10 needed skills', 'error');
+                    isValid = false;
+                }
+            }
+
+            if (currentStep === 7) {
+                const commMethods = document.querySelectorAll('input[name="commMethods"]:checked');
+                if (commMethods.length === 0) {
+                    showNotification('Please select at least one communication method', 'error');
+                    isValid = false;
+                }
+
+                const experiencePrefs = document.querySelectorAll('input[name="experiencePrefs"]:checked');
+                if (experiencePrefs.length === 0) {
+                    showNotification('Please select at least one experience level preference', 'error');
+                    isValid = false;
+                }
+            }
+
+            if (currentStep === 8) {
+                const volunteerDesc = document.getElementById('volunteerDescription');
+                const uniqueValue = document.getElementById('uniqueValue');
+                
+                if (volunteerDesc.value.length < 200) {
+                    showNotification('Volunteer description must be at least 200 characters', 'error');
+                    isValid = false;
+                }
+                
+                if (uniqueValue.value.length < 150) {
+                    showNotification('Unique value proposition must be at least 150 characters', 'error');
+                    isValid = false;
+                }
+            }
+
+            if (currentStep === 9) {
+                const associations = document.querySelectorAll('input[name="associations"]:checked');
+                if (associations.length === 0) {
+                    showNotification('Please select at least one professional association or network', 'error');
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                showNotification('Please fill in all required fields correctly', 'error');
+            }
+
+            return isValid;
+        }
+
+        function saveDraft() {
+            showNotification('Draft saved successfully', 'success');
+            // In a real application, this would save to localStorage or server
+        }
+
+        function submitForm() {
+            if (validateCurrentStep()) {
+                showNotification('Application submitted successfully!', 'success');
+                // In a real application, this would submit to server
+                setTimeout(() => {
+                    showNotification('Redirecting to confirmation page...', 'info');
+                }, 2000);
+            }
+        }
+
+        function showHelp() {
+            showNotification('Help center would open here', 'info');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const title = document.getElementById('notificationTitle');
+            const msg = document.getElementById('notificationMessage');
+            const icon = document.getElementById('notificationIcon');
+            
+            const icons = {
+                success: '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>',
+                error: '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
+                info: '<svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>'
+            };
+            
+            const titles = {
+                success: 'Success',
+                error: 'Error',
+                info: 'Information'
+            };
+            
+            icon.innerHTML = icons[type];
+            title.textContent = titles[type];
+            msg.textContent = message;
+            
+            notification.classList.remove('translate-x-full');
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+            }, 3000);
+        }
+
+        // Add event listeners for counters
+        document.querySelectorAll('input[name="focusAreas"]').forEach(input => {
+            input.addEventListener('change', updateFocusAreasCounter);
+        });
+        
+        document.querySelectorAll('input[name="languages"]').forEach(input => {
+            input.addEventListener('change', updateLanguagesCounter);
+        });
+        
+        document.querySelectorAll('input[name="neededSkills"]').forEach(input => {
+            input.addEventListener('change', updateSkillsCounter);
+        });
+
+        // Initialize form
+        showStep(1);
+    </script>
+</body>
+</html>

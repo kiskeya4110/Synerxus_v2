@@ -394,18 +394,23 @@ export default function Landing() {
     <div className="min-h-screen bg-slate-50">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-4">
+        <div className="container mx-auto px-3 sm:px-6 py-2 sm:py-4 flex justify-between items-center gap-2 sm:gap-4">
           <Link href="/">
-            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0">
-              <Logo size="md" />
+            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
+              <Logo size="xs" className="sm:hidden" />
+              <Logo size="sm" className="hidden sm:block md:hidden" />
+              <Logo size="md" className="hidden md:block" />
             </div>
           </Link>
-          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap text-slate-800 hover:bg-slate-200" data-testid="button-login">Log In</Button>
+          <div className="flex gap-1.5 sm:gap-3 flex-shrink-0">
+            <Link href="/login" className="hidden sm:block">
+              <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200" data-testid="button-login">Log In</Button>
             </Link>
             <Link href="/login">
-              <Button size="sm" className="min-h-[44px] sm:min-h-auto whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white" data-testid="button-get-started">Get Started</Button>
+              <Button size="xs" className="sm:size-sm min-h-[40px] sm:min-h-auto whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm px-3 sm:px-4" data-testid="button-get-started">
+                <span className="sm:hidden">Start</span>
+                <span className="hidden sm:inline">Get Started</span>
+              </Button>
             </Link>
           </div>
         </div>

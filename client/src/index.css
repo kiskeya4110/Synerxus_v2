@@ -8,6 +8,17 @@
   font-family: inherit;
 }
 
+/* Animated flight paths */
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+.leaflet-svg-layer path {
+  will-change: stroke-dashoffset;
+}
+
 :root {
   /* Lighter, fresher color scheme */
   --background: 210 20% 98%; /* #F7F9FC - Very light blue-gray */

@@ -122,7 +122,36 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
       zambia: [-13.1339, 27.8493],
     };
 
-    // Add polylines connecting countries
+    // Helper function to create curved path with bezier interpolation
+    const createCurvedPath = (start: [number, number], end: [number, number], segments: number = 50): [number, number][] => {
+      const path: [number, number][] = [];
+      const midLat = (start[0] + end[0]) / 2;
+      const midLon = (start[1] + end[1]) / 2;
+      
+      // Create a control point that curves the path upward
+      const latDiff = end[0] - start[0];
+      const lonDiff = end[1] - start[1];
+      const distance = Math.sqrt(latDiff * latDiff + lonDiff * lonDiff);
+      
+      // Control point is perpendicular to the line, at distance/3
+      const perpLat = -lonDiff / distance * (distance / 3);
+      const perpLon = latDiff / distance * (distance / 3);
+      
+      const controlLat = midLat + perpLat;
+      const controlLon = midLon + perpLon;
+      
+      // Quadratic bezier interpolation
+      for (let i = 0; i <= segments; i++) {
+        const t = i / segments;
+        const lat = (1 - t) * (1 - t) * start[0] + 2 * (1 - t) * t * controlLat + t * t * end[0];
+        const lon = (1 - t) * (1 - t) * start[1] + 2 * (1 - t) * t * controlLon + t * t * end[1];
+        path.push([lat, lon]);
+      }
+      
+      return path;
+    };
+
+    // Add animated polylines connecting countries
     const connections = [
       ['usa', 'mexico'],
       ['usa', 'haiti'],
@@ -136,16 +165,27 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
       ['philippines', 'zambia'],
     ];
 
-    connections.forEach(([from, to]) => {
+    connections.forEach(([from, to], index) => {
       const fromCoord = countryCoords[from];
       const toCoord = countryCoords[to];
       if (fromCoord && toCoord) {
-        L.polyline([fromCoord, toCoord], {
+        const curvedPath = createCurvedPath(fromCoord, toCoord);
+        const polyline = L.polyline(curvedPath, {
           color: '#f97316',
           weight: 2,
           opacity: 0.6,
-          dashArray: '5, 5',
+          dashArray: '8, 4',
+          lineCap: 'round',
+          lineJoin: 'round',
+          className: `flight-path-${index}`,
         }).addTo(map.current!);
+        
+        // Add animation delay to each polyline
+        const pathElement = polyline.getElement() as SVGPathElement;
+        if (pathElement) {
+          pathElement.style.animation = `dashFlow 20s linear infinite`;
+          pathElement.style.animationDelay = `${index * 1.5}s`;
+        }
       }
     });
 

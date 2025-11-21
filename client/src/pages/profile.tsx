@@ -188,7 +188,7 @@ export default function Profile() {
         {isVolunteer && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link href="/volunteer-intake">
-              <div className="cursor-pointer">
+              <div className="cursor-pointer hover:opacity-80 transition-opacity">
                 <Card className="hover:border-primary/50 transition-colors" data-testid="card-overall-rating">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Overall Rating</CardTitle>
@@ -215,7 +215,7 @@ export default function Profile() {
             </Link>
 
             <Link href="/volunteer-intake">
-              <div className="cursor-pointer">
+              <div className="cursor-pointer hover:opacity-80 transition-opacity">
                 <Card className="hover:border-primary/50 transition-colors" data-testid="card-availability">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Availability</CardTitle>

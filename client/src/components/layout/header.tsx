@@ -92,12 +92,42 @@ export default function Header() {
     setLocation('/profile');
   };
 
-  const handleNotificationClick = (notificationId: number) => {
-    // In a real app, this would mark as read and navigate to details
-    toast({
-      title: "Notification",
-      description: `Opening notification ${notificationId}`,
-    });
+  const handleNotificationClick = async (notification: any) => {
+    try {
+      // Mark notification as read on backend
+      await fetch(`/api/notifications/${notification.id}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      // Invalidate cache to refresh notification list
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+      
+      // Navigate based on notification type
+      const notificationType = notification.type || '';
+      
+      if (notificationType.includes('application')) {
+        setLocation('/my-applications');
+      } else if (notificationType.includes('assignment')) {
+        setLocation('/assignments');
+      } else if (notificationType.includes('project')) {
+        setLocation('/projects');
+      } else if (notificationType.includes('volunteer')) {
+        setLocation('/volunteers');
+      } else if (notificationType.includes('opportunity')) {
+        setLocation('/discover-opportunities');
+      } else {
+        // Default to dashboard for general notifications
+        setLocation('/dashboard');
+      }
+    } catch (error) {
+      console.error("Error handling notification click:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open notification",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -184,7 +214,7 @@ export default function Header() {
                       <DropdownMenuItem 
                         key={notification.id} 
                         className="cursor-pointer p-4 flex flex-col items-start gap-1"
-                        onClick={() => handleNotificationClick(notification.id)}
+                        onClick={() => handleNotificationClick(notification)}
                         data-testid={`notification-${notification.id}`}
                       >
                         <div className="flex items-center justify-between w-full">

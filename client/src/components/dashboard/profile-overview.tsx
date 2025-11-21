@@ -30,13 +30,15 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     enabled: !!userId
   });
 
-  // Fetch volunteer profile data from Settings
+  // Fetch volunteer profile data from intake endpoint
   const { data: volunteerData, isLoading: isLoadingProfile } = useQuery({
-    queryKey: ["/api/profile/volunteer", userId],
+    queryKey: ["/api/intake/volunteer-profile", userId],
     enabled: !!userId && userType === 'volunteer',
+    staleTime: 0,
+    refetchOnMount: true,
     queryFn: async () => {
       if (!userId) return null;
-      const url = `/api/profile/volunteer?userId=${userId}`;
+      const url = `/api/intake/volunteer-profile?userId=${userId}`;
       const response = await fetch(url);
       if (!response.ok) return null;
       return response.json();
@@ -56,7 +58,7 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     }
   });
 
-  const volunteerProfile = volunteerData?.volunteerProfile;
+  const volunteerProfile = volunteerData;
   const orgProfile = orgData?.organization;
 
   const isLoading = isLoadingUser || isLoadingProfile || isLoadingOrgProfile;

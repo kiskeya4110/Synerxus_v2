@@ -216,7 +216,13 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
         offset: [0, -15],
         className: 'country-label-tooltip'
       });
-      marker.on('click', () => setSelectedCountry(key));
+      marker.on('click', () => {
+        setSelectedCountry(key);
+        // Navigate to country page after a short delay to allow dialog to close
+        setTimeout(() => {
+          window.location.href = `/country/${key}`;
+        }, 300);
+      });
       marker.addTo(map.current!);
     });
   }, [setSelectedCountry]);

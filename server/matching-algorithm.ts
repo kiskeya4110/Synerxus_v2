@@ -8,6 +8,7 @@ interface MatchResult {
     sdgMatch: number;
     interestMatch: number;
     availabilityMatch: number;
+    experienceMatch: number;
   };
   reasons: string[];
   matchCategory?: "nexus" | "strong" | "gap" | "no-match";
@@ -22,6 +23,21 @@ function normalizeSkills(skills: string[] | null | undefined): string[] {
     .filter((s) => s && typeof s === "string")
     .map((s) => s.toLowerCase().trim())
     .filter((s) => s.length > 0);
+}
+
+/**
+ * Convert experience range string to numeric score (0-100)
+ */
+function getExperienceScore(yearsOfExperience: string | null | undefined): number {
+  if (!yearsOfExperience || typeof yearsOfExperience !== "string") return 50;
+  
+  const exp = yearsOfExperience.toLowerCase().trim();
+  if (exp.includes("0-1")) return 20;
+  if (exp.includes("1-2")) return 40;
+  if (exp.includes("3-5")) return 60;
+  if (exp.includes("5-10")) return 80;
+  if (exp.includes("10+")) return 100;
+  return 50;
 }
 
 /**
@@ -65,6 +81,7 @@ export function calculateMatchScore(
     sdgMatch: 0,
     interestMatch: 0,
     availabilityMatch: 0,
+    experienceMatch: 0,
   };
   const reasons: string[] = [];
 
@@ -327,18 +344,30 @@ export function calculateMatchScore(
     }
   }
 
+  // 6. Experience Level Matching (10% weight - bonus factor)
+  const volExperience = volunteer.profile?.yearsOfExperience;
+  const expScore = getExperienceScore(volExperience);
+  breakdown.experienceMatch = expScore;
+  
+  if (volExperience) {
+    const expLabel = volExperience.toLowerCase().replace(/\+/, "plus");
+    reasons.push(`🎓 ${expLabel} years of experience`);
+  }
+
   // Calculate weighted final score
   // MVP Rule-Based Matching Weights:
   // - Skill Match: 40% (non-negotiable for project success)
-  // - Availability/Time Match: 30% (non-negotiable for retention & completion)
+  // - Availability/Time Match: 25% (non-negotiable for retention & completion)
   // - SDG/Mission Overlap: 20% (essential for alignment & satisfaction)
-  // - Language/Location: 10% (necessary filter but lower weight)
+  // - Experience Level: 10% (valuable bonus factor for seniority/skill level)
+  // - Language/Location: 5% (necessary filter but lower weight)
   const weights = {
     skillMatch: 0.40,
-    locationMatch: 0.10,
+    locationMatch: 0.05,
     sdgMatch: 0.20,
     interestMatch: 0.00, // Absorbed into SDG matching
-    availabilityMatch: 0.30,
+    availabilityMatch: 0.25,
+    experienceMatch: 0.10,
   };
 
   const finalScore = Math.round(
@@ -346,7 +375,8 @@ export function calculateMatchScore(
       breakdown.locationMatch * weights.locationMatch +
       breakdown.sdgMatch * weights.sdgMatch +
       breakdown.interestMatch * weights.interestMatch +
-      breakdown.availabilityMatch * weights.availabilityMatch,
+      breakdown.availabilityMatch * weights.availabilityMatch +
+      breakdown.experienceMatch * weights.experienceMatch,
   );
 
   // Add overall assessment reason

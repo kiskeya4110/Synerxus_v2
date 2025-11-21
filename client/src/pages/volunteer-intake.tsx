@@ -133,7 +133,7 @@ const formSchema = insertVolunteerSchema.extend({
   name: z.string().min(1, "Name is required"),
   // New professional fields
   professionalTitle: z.string().optional(),
-  yearsOfExperience: z.string().optional(),
+  yearsOfExperience: z.string().min(1, "Years of experience is required"),
   linkedinProfile: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
   languages: z.array(z.string()).optional(),
   // Existing fields
@@ -537,7 +537,7 @@ export default function VolunteerProfileSettings() {
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
                       <Award className="h-4 w-4" />
-                      Years of Experience (Optional)
+                      Years of Experience *
                     </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>

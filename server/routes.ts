@@ -1682,7 +1682,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             role: "Volunteer",
             status: "active",
             assignedAt: new Date(),
-            respondedAt: new Date() // Mark as responded since they applied and were accepted
+            respondedAt: new Date(), // Mark as responded since they applied and were accepted
+            hoursCommitted: opportunity.ongoingHoursPerWeek || 0
           });
           
           // Notify volunteer of new assignment

@@ -8,10 +8,11 @@ import { Progress } from "@/components/ui/progress";
 import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Building2, DollarSign, Zap } from "lucide-react";
+import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Building2, DollarSign, Zap, Crown, Clock, Award } from "lucide-react";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 declare const html2pdf: any;
 import {
   Chart as ChartJS,
@@ -185,6 +186,29 @@ export default function OrganizationImpactReport(props: any) {
   const beneficiariesServed = Math.floor(Math.random() * 5000) + 2000;
   const fundingSecured = Math.floor(Math.random() * 500000) + 100000;
   const totalHours = timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+
+  // Calculate Impact Leader (most impactful volunteer for selected time period)
+  const volunteerHoursMap = new Map<number, { hours: number; name: string; activities: number }>();
+  timeFilteredActivities.forEach(activity => {
+    if (activity.userId) {
+      const user = users.find(u => u.id === activity.userId);
+      const current = volunteerHoursMap.get(activity.userId) || { hours: 0, name: user?.displayName || 'Unknown', activities: 0 };
+      current.hours += activity.hours || 0;
+      current.activities += 1;
+      volunteerHoursMap.set(activity.userId, current);
+    }
+  });
+
+  const impactLeader = Array.from(volunteerHoursMap.entries())
+    .sort((a, b) => b[1].hours - a[1].hours)[0];
+  
+  const leaderData = impactLeader ? {
+    userId: impactLeader[0],
+    name: impactLeader[1].name,
+    hours: impactLeader[1].hours,
+    activities: impactLeader[1].activities,
+    avatar: users.find(u => u.id === impactLeader[0])?.avatar || undefined
+  } : null;
 
   // Financial metrics (sample data)
   const totalRevenue = fundingSecured;
@@ -489,6 +513,43 @@ export default function OrganizationImpactReport(props: any) {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
                   </div>
                 </div>
+
+                {/* Impact Leader Section */}
+                {leaderData && (
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => setLocation(`/volunteers#user-${leaderData.userId}`)}
+                    data-testid="impact-leader-card"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <Crown className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+                        <div>
+                          <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">Impact Leader</p>
+                          <h3 className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{leaderData.name}</h3>
+                        </div>
+                      </div>
+                      <Badge className="bg-yellow-600 text-white text-lg px-4 py-2">⭐ Top Volunteer</Badge>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Hours Contributed</p>
+                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{Math.round(leaderData.hours)}h</p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Activities</p>
+                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{leaderData.activities}</p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Avg per Activity</p>
+                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{(leaderData.hours / leaderData.activities).toFixed(1)}h</p>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-4 text-center">
+                      This volunteer has made the most significant impact during the selected period. Click to view their profile.
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Quarterly Growth */}

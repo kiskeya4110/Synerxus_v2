@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
@@ -171,6 +171,7 @@ export default function Dashboard() {
         activeProjects: dashboardData?.activeProjects || 0,
         sdgs: dashboardData?.sdgsAddressed || 0,
         impactScore: dashboardData?.impactScore || 0,
+        skills: dashboardData?.volunteerProfile?.skills?.length || 0,
       };
     }
     
@@ -198,6 +199,7 @@ export default function Dashboard() {
       activeProjects: filteredActiveProjects,
       sdgs: uniqueSDGs.size,
       impactScore: dashboardData?.impactScore || 0,
+      skills: dashboardData?.volunteerProfile?.skills?.length || 0,
     };
   }, [dashboardData, filteredData, selectedProject]);
 
@@ -484,6 +486,16 @@ export default function Dashboard() {
           })),
         };
         break;
+      case "Skills":
+        detailData = {
+          title: "Your Skills",
+          items: (dashboardData?.volunteerProfile?.skills || []).map((skill: string) => ({
+            label: skill,
+            value: "Proficiency: Advanced",
+            icon: "⭐",
+          })),
+        };
+        break;
       case "Impact Score":
         // Calculate component scores for the breakdown
         const totalHours = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
@@ -595,37 +607,37 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - 2x2 Grid on Mobile, 4 columns on Desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard
-              title="Hours Contributed"
+              title="Hours Logged"
               value={kpis.hours}
               icon={<Clock className="h-6 w-6" />}
               onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
               data-testid="kpi-hours"
             />
             <StatsCard
-              title="Tasks Completed"
+              title="Tasks"
               value={kpis.tasks}
               icon={<CheckSquare className="h-6 w-6" />}
               onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}
               data-testid="kpi-tasks"
             />
             <StatsCard
-              title="Active Projects"
+              title="Projects"
               value={kpis.activeProjects}
               icon={<Target className="h-6 w-6" />}
               onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
               data-testid="kpi-projects"
             />
             <StatsCard
-              title="Impact Score"
-              value={kpis.impactScore}
-              icon={<Award className="h-6 w-6" />}
-              onClick={() => handleKPIClick("Impact Score", kpis.impactScore)}
-              data-testid="kpi-impact"
+              title="Skills"
+              value={kpis.skills}
+              icon={<Briefcase className="h-6 w-6" />}
+              onClick={() => handleKPIClick("Skills", kpis.skills)}
+              data-testid="kpi-skills"
             />
           </>
         ) : (

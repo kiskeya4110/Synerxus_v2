@@ -53,6 +53,7 @@ export default function OrganizationImpactReport(props: any) {
   const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
   const chartRefs = useRef<Record<string, any>>({});
 
+  // Call ALL hooks unconditionally at the top - this is required by React
   const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/users/me"],
     queryFn: async () => {
@@ -62,31 +63,6 @@ export default function OrganizationImpactReport(props: any) {
       return response.ok ? response.json() : null;
     },
   });
-
-  // Access control: Only organization managers can view this report
-  const isOrganizationManager = currentUser && currentUser.organizationId && currentUser.userType === 'organization';
-  
-  if (!currentUser || !isOrganizationManager) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
-        <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
-          <CardContent className="p-8 text-center">
-            <div className="mb-4 text-4xl">🔒</div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h1>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Organization Impact Reports can only be accessed by organization managers.
-            </p>
-            <Button
-              onClick={() => setLocation("/dashboard")}
-              className="w-full"
-            >
-              Return to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const { data: organization } = useQuery<any>({
     queryKey: ["/api/organizations", currentUser?.organizationId],
@@ -131,6 +107,9 @@ export default function OrganizationImpactReport(props: any) {
       return response.ok ? response.json() : [];
     },
   });
+
+  // Access control: Only organization managers can view this report
+  const isOrganizationManager = currentUser && currentUser.organizationId && currentUser.userType === 'organization';
 
   // Filter activities by organization's projects
   const orgProjectIds = new Set(projects.map(p => p.id));
@@ -333,6 +312,29 @@ export default function OrganizationImpactReport(props: any) {
     { month: 'May', volunteers: 68, hours: 1600 },
     { month: 'Jun', volunteers: 72, hours: 1800 },
   ];
+
+  // Render access denied UI if not authorized
+  if (!currentUser || !isOrganizationManager) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
+        <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
+          <CardContent className="p-8 text-center">
+            <div className="mb-4 text-4xl">🔒</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Organization Impact Reports can only be accessed by organization managers.
+            </p>
+            <Button
+              onClick={() => setLocation("/dashboard")}
+              className="w-full"
+            >
+              Return to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">

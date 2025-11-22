@@ -770,7 +770,9 @@ export default function VolunteerProfileSettings() {
       if (!currentUser?.id) return null;
       const response = await fetch(`/api/intake/volunteer-profile?userId=${currentUser.id}`);
       if (!response.ok) throw new Error('Failed to fetch profile');
-      return response.json();
+      const data = await response.json();
+      // API returns { user, volunteerProfile }, extract the volunteerProfile
+      return data.volunteerProfile || data;
     },
     enabled: !!currentUser?.id,
   });
@@ -841,18 +843,20 @@ export default function VolunteerProfileSettings() {
 
   // Mutations
   const mutationConfig = {
-    onSuccess: () => {
+    onSuccess: async () => {
       const id = currentUser?.id;
       console.log(`[Settings Mutation] Success - refetching profile data for user ${id}`);
       
-      // Reset the initialization flag so the form will reload with fresh data
+      // First clear the cache to force a fresh fetch
+      await queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
+      
+      // Then reset the flag and refetch
       hasInitializedRef.current = false;
       
-      // Force immediate refetch of settings form data
-      profileQuery.refetch();
+      // Force immediate refetch of settings form data and wait for it
+      await profileQuery.refetch();
       
-      // Invalidate queries without waiting for all to complete
-      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
+      // Invalidate other related queries without waiting
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
       // These can happen in background without blocking the toast

@@ -451,6 +451,9 @@ export default function ImpactReport(props: any) {
                         src={primaryOrganization.logo}
                         alt={primaryOrganization.name}
                         className="h-12 w-auto object-contain print:h-8"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
                     </div>
                   </div>

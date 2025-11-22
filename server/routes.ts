@@ -27,6 +27,7 @@ import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProje
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import { updateVolunteerProfileWithUser } from "./profile-service";
 import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApplicationStatusChange } from "./notification-service";
+import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "./email-digest-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
@@ -4179,6 +4180,85 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     } catch (err) {
       console.error("Error generating impact report:", err);
       res.status(500).json({ message: "Failed to generate impact report" });
+    }
+  });
+
+  // Email Digest Routes
+  app.post("/api/email-digest/send", async (req, res) => {
+    try {
+      const userId = await extractUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const success = await sendWeeklyDigest(userId);
+      if (success) {
+        return res.json({ 
+          message: "Weekly digest sent successfully",
+          success: true 
+        });
+      } else {
+        return res.status(500).json({ 
+          message: "Failed to send email digest",
+          success: false 
+        });
+      }
+    } catch (err) {
+      console.error("Error sending email digest:", err);
+      res.status(500).json({ message: "Error sending email digest" });
+    }
+  });
+
+  app.post("/api/email-digest/send-all", async (req, res) => {
+    try {
+      const userId = await extractUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.userType !== 'organization') {
+        return res.status(403).json({ message: "Only organization managers can use this endpoint" });
+      }
+
+      const result = await sendWeeklyDigestsToAll();
+      return res.json({
+        message: "Weekly digests sent",
+        ...result
+      });
+    } catch (err) {
+      console.error("Error sending all digests:", err);
+      res.status(500).json({ message: "Error sending digests" });
+    }
+  });
+
+  app.post("/api/email-digest/organization/:organizationId", async (req, res) => {
+    try {
+      const userId = await extractUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.organizationId?.toString() !== req.params.organizationId) {
+        return res.status(403).json({ message: "You can only send digests for your own organization" });
+      }
+
+      const success = await sendOrganizationWeeklyDigest(parseInt(req.params.organizationId));
+      if (success) {
+        return res.json({ 
+          message: "Organization digest sent successfully",
+          success: true 
+        });
+      } else {
+        return res.status(500).json({ 
+          message: "Failed to send organization digest",
+          success: false 
+        });
+      }
+    } catch (err) {
+      console.error("Error sending org digest:", err);
+      res.status(500).json({ message: "Error sending digest" });
     }
   });
 

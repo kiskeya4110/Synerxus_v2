@@ -158,3 +158,287 @@
   position: relative;
   height: 250px;
 }
+
+/* ====== PRINT STYLES FOR PDF EXPORT ====== */
+/* Ensure desktop layout is maintained in PDF export */
+@media print {
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    background: white !important;
+    color: #1f2937 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Maintain card styling */
+  .bg-white,
+  .dark\:bg-slate-800 {
+    background-color: white !important;
+    color: #1f2937 !important;
+  }
+
+  /* Preserve background colors for KPIs and cards */
+  .bg-blue-50, .bg-blue-100, .bg-blue-900, .dark\:bg-blue-900 {
+    background-color: #eff6ff !important;
+    color: #1e40af !important;
+  }
+
+  .bg-green-50, .bg-green-100, .bg-green-900, .dark\:bg-green-900 {
+    background-color: #f0fdf4 !important;
+    color: #15803d !important;
+  }
+
+  .bg-purple-50, .bg-purple-100, .bg-purple-900, .dark\:bg-purple-900 {
+    background-color: #faf5ff !important;
+    color: #6b21a8 !important;
+  }
+
+  .bg-orange-50, .bg-orange-100, .bg-orange-900, .dark\:bg-orange-900 {
+    background-color: #fff7ed !important;
+    color: #92400e !important;
+  }
+
+  /* Text colors */
+  .text-blue-600, .text-blue-400, .dark\:text-blue-400 {
+    color: #2563eb !important;
+  }
+
+  .text-green-600, .text-green-400, .dark\:text-green-400 {
+    color: #16a34a !important;
+  }
+
+  .text-purple-600, .text-purple-400, .dark\:text-purple-400 {
+    color: #9333ea !important;
+  }
+
+  .text-orange-600, .text-orange-400, .dark\:text-orange-400 {
+    color: #ea580c !important;
+  }
+
+  .text-gray-900, .dark\:text-white {
+    color: #111827 !important;
+  }
+
+  .text-gray-700, .dark\:text-gray-300 {
+    color: #374151 !important;
+  }
+
+  .text-gray-600, .dark\:text-gray-400 {
+    color: #4b5563 !important;
+  }
+
+  .text-gray-500 {
+    color: #6b7280 !important;
+  }
+
+  /* Border colors */
+  .border-blue-200, .dark\:border-blue-700 {
+    border-color: #bfdbfe !important;
+  }
+
+  .border-green-200, .dark\:border-green-700 {
+    border-color: #bbf7d0 !important;
+  }
+
+  .border-purple-200, .dark\:border-purple-700 {
+    border-color: #e9d5ff !important;
+  }
+
+  .border-orange-200, .dark\:border-orange-700 {
+    border-color: #fed7aa !important;
+  }
+
+  .border-gray-200, .dark\:border-gray-700 {
+    border-color: #e5e7eb !important;
+  }
+
+  /* Maintain grid layouts */
+  .grid {
+    display: grid !important;
+  }
+
+  .grid-cols-1 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .lg\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .lg\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .lg\:col-span-2 {
+    grid-column: span 2 / span 2 !important;
+  }
+
+  /* Spacing - preserve padding and margins */
+  .p-4, .p-6, .p-8 {
+    padding: inherit !important;
+  }
+
+  .gap-2, .gap-3, .gap-4, .gap-6 {
+    gap: inherit !important;
+  }
+
+  .mb-4, .mb-6 {
+    margin-bottom: inherit !important;
+  }
+
+  /* Typography */
+  .text-xs {
+    font-size: 11px !important;
+  }
+
+  .text-sm {
+    font-size: 13px !important;
+  }
+
+  .text-base {
+    font-size: 14px !important;
+  }
+
+  .text-lg {
+    font-size: 16px !important;
+  }
+
+  .text-xl {
+    font-size: 18px !important;
+  }
+
+  .text-2xl {
+    font-size: 22px !important;
+  }
+
+  .text-3xl {
+    font-size: 26px !important;
+  }
+
+  /* Font weights */
+  .font-semibold {
+    font-weight: 600 !important;
+  }
+
+  .font-bold {
+    font-weight: 700 !important;
+  }
+
+  /* Remove shadows and unnecessary styling */
+  .shadow-lg, .shadow-md, .shadow {
+    box-shadow: none !important;
+  }
+
+  /* Maintain borders */
+  .border {
+    border: 1px solid !important;
+  }
+
+  .border-2 {
+    border: 2px solid !important;
+  }
+
+  /* Cards and containers */
+  .rounded-lg {
+    border-radius: 6px !important;
+  }
+
+  .rounded {
+    border-radius: 4px !important;
+  }
+
+  /* Charts - ensure proper sizing */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Tables */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    padding: 8px !important;
+    text-align: left !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  th {
+    background-color: #f3f4f6 !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+  }
+
+  /* Flex layouts */
+  .flex {
+    display: flex !important;
+  }
+
+  .flex-wrap {
+    flex-wrap: wrap !important;
+  }
+
+  /* Hide UI elements that shouldn't print */
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block !important;
+    padding: 4px 8px !important;
+    border-radius: 4px !important;
+    font-size: 12px !important;
+  }
+
+  /* Progress bars */
+  .h-1, .h-2 {
+    height: 4px !important;
+  }
+
+  /* Page breaks */
+  .page-break-before {
+    page-break-before: always !important;
+  }
+
+  .page-break-after {
+    page-break-after: always !important;
+  }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent orphaned content */
+  .grid, .card, section {
+    page-break-inside: avoid !important;
+  }
+
+  /* Optimize for PDF readability */
+  line-height: 1.6 !important;
+}

@@ -965,36 +965,45 @@ export default function OrganizationImpactReport(props: any) {
               {/* Programs Section */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 text-center">Programs</h2>
-                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {topPrograms.map((prog, idx) => (
-                        <div key={idx} className="border-b pb-4 last:border-0">
-                          <div className="flex justify-between mb-2">
-                            <h4 className="font-semibold text-gray-900 dark:text-white">{prog.name}</h4>
-                            <span className="text-sm text-gray-500">{prog.beneficiaries} beneficiaries</span>
-                          </div>
-                          <div className="space-y-2">
-                            <div>
-                              <div className="flex justify-between text-xs mb-1">
-                                <span>Completion</span>
-                                <span>{prog.completion}%</span>
-                              </div>
-                              <CompletionProgress value={prog.completion} className="h-2" />
-                            </div>
-                            <div>
-                              <div className="flex justify-between text-xs mb-1">
-                                <span>Impact Score</span>
-                                <span>{prog.impact}%</span>
-                              </div>
-                              <Progress value={prog.impact} className="h-2" />
-                            </div>
-                          </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  {topPrograms.map((prog, idx) => (
+                    <div key={idx} className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow">
+                      <div className="mb-3">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{prog.name}</h4>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs text-gray-600 dark:text-gray-300">{prog.beneficiaries} beneficiaries</span>
+                          <span className="inline-block px-2 py-0.5 bg-green-200 dark:bg-green-700 text-green-900 dark:text-green-100 text-xs font-semibold rounded">
+                            {prog.completion}%
+                          </span>
                         </div>
-                      ))}
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Progress</span>
+                            <span className="text-sm font-bold text-green-600 dark:text-green-400">{prog.completion}%</span>
+                          </div>
+                          <CompletionProgress value={prog.completion} className="h-2" />
+                        </div>
+                        
+                        <div>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Impact</span>
+                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{prog.impact}%</span>
+                          </div>
+                          <Progress value={prog.impact} className="h-2" />
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {prog.completion >= 80 ? '✅ On Track' : prog.completion >= 50 ? '⚠️ In Progress' : '🚀 Starting'}
+                        </p>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  ))}
+                </div>
               </div>
 
               {/* Financial Section */}

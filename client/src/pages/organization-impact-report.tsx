@@ -753,7 +753,7 @@ export default function OrganizationImpactReport(props: any) {
                 <Card className="border border-gray-200 dark:border-gray-700">
                   <CardContent className="p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Partnership Network</h3>
-                    <div className="grid grid-cols-4 gap-4 text-center">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                       <div className="p-3 bg-blue-50 dark:bg-blue-900 rounded">
                         <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">12</div>
                         <p className="text-xs text-gray-600 dark:text-gray-300">Corporate</p>
@@ -777,7 +777,7 @@ export default function OrganizationImpactReport(props: any) {
 
               {/* Financial Tab */}
               <TabsContent value="financial" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Revenue</p>
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${(totalRevenue / 1000).toFixed(0)}K</p>

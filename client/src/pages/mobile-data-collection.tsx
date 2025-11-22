@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, Clock, Send } from "lucide-react";
+import { Check, Clock, Send, Activity, TrendingUp, Zap, BarChart3 } from "lucide-react";
 
 // Form schemas
 const activityFormSchema = z.object({
@@ -243,6 +243,11 @@ export default function MobileDataCollection() {
     activityForm.setValue("taskId", "");
   }, [selectedProjectId, activityForm]);
 
+  // Calculate stats for overview
+  const totalActivities = recentActivities.length;
+  const totalHours = recentActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const activeProjects = new Set(recentActivities.map(a => a.projectId)).size;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -253,6 +258,73 @@ export default function MobileDataCollection() {
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
           Log volunteer activities and track impact metrics in the field
         </p>
+      </div>
+
+      {/* Overview Buttons - 2x2 Compact Grid */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => setActiveTab("activity")}
+          className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
+            activeTab === "activity"
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+              : "border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
+          }`}
+          data-testid="overview-log-activity"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Activity className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Log Activity</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalActivities}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">logged</p>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("impact")}
+          className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
+            activeTab === "impact"
+              ? "border-green-500 bg-green-50 dark:bg-green-950"
+              : "border-gray-200 dark:border-gray-700 hover:border-green-300 dark:hover:border-green-600"
+          }`}
+          data-testid="overview-record-impact"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="h-5 w-5 text-green-600 dark:text-green-400" />
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Record Impact</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{activeProjects}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">projects</p>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${
+            activeTab === "history"
+              ? "border-purple-500 bg-purple-50 dark:bg-purple-950"
+              : "border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-600"
+          }`}
+          data-testid="overview-recent-entries"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Recent Entries</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{(totalHours).toFixed(1)}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">total hours</p>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("activity")}
+          className="p-4 rounded-lg border-2 border-gray-200 dark:border-gray-700 transition-all cursor-pointer hover:border-orange-300 dark:hover:border-orange-600 hover:shadow-md"
+          data-testid="overview-add-entry"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <BarChart3 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Add Entry</span>
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">+</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">quick log</p>
+        </button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

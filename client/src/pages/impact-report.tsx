@@ -1,24 +1,70 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Share2, Copy, Printer, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3 } from "lucide-react";
 import type { User, Task, ProjectAssignment } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from "chart.js";
+import { Line, Bar, Pie, Radar } from "react-chartjs-2";
 
-interface ImpactReportProps {
-  volunteerId?: string;
-}
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+const SDG_LOGOS = {
+  1: "🚫",
+  2: "🍽️",
+  3: "❤️",
+  4: "📚",
+  5: "👩",
+  6: "💧",
+  7: "⚡",
+  8: "💼",
+  9: "🏭",
+  10: "⚖️",
+  11: "🏘️",
+  12: "♻️",
+  13: "🌍",
+  14: "🐟",
+  15: "🌳",
+  16: "⚖️",
+  17: "🤝",
+} as Record<number, string>;
 
 export default function ImpactReport(props: any) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isPrinting, setIsPrinting] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const chartRefs = useRef<Record<string, any>>({});
 
   // Get volunteer ID from URL params or current user
   const paramVolunteerId = props.volunteerId;
@@ -81,7 +127,7 @@ export default function ImpactReport(props: any) {
     enabled: !!volunteerId
   });
 
-  // Fetch organizations from projects
+  // Fetch organizations
   const { data: organizations = [] } = useQuery<any[]>({
     queryKey: ["/api/organizations"],
     queryFn: async () => {
@@ -90,7 +136,6 @@ export default function ImpactReport(props: any) {
     }
   });
 
-  // Get primary organization from first project
   const primaryOrganization = organizations.length > 0 
     ? organizations.find((org: any) => projectAssignments.some((pa: any) => pa.project?.organizationId === org.id))
     : null;
@@ -98,9 +143,19 @@ export default function ImpactReport(props: any) {
   // Calculate impact metrics
   const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const completedTasks = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
+  const totalTasks = tasks.length;
   const activeProjects = projectAssignments.filter(a => a.status === 'active').length;
   const allSkills = volunteerProfile?.skills || [];
   const sdgs = volunteerProfile?.preferredSdgs || [];
+  const assignmentsCount = projectAssignments.length;
+
+  // Calculate Total Impact Score (composite metric)
+  const hoursScore = Math.min((totalHours / 100) * 100, 100);
+  const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+  const projectsScore = Math.min((activeProjects / 5) * 100, 100);
+  const skillsScore = Math.min((allSkills.length / 10) * 100, 100);
+  const sdgScore = Math.min((sdgs.length / 5) * 100, 100);
+  const totalImpactScore = Math.round((hoursScore + tasksScore + projectsScore + skillsScore + sdgScore) / 5);
 
   const shareUrl = `${window.location.origin}/impact-report/${volunteerId}`;
 
@@ -120,18 +175,25 @@ export default function ImpactReport(props: any) {
     }, 100);
   };
 
-  const handleDownload = async () => {
-    // This would integrate with a screenshot library in production
-    toast({
-      title: "Feature Coming Soon",
-      description: "Download as image will be available soon. Use print to save as PDF!",
-    });
-  };
+  // Mock data for charts
+  const monthlyHours = [8, 12, 15, 10, 18, 20, 16].map((h, i) => ({
+    month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'][i],
+    hours: h
+  }));
 
+  const skillsData = allSkills.slice(0, 5).map((skill: any) => ({
+    name: skill,
+    projects: Math.floor(Math.random() * 4) + 1
+  }));
+
+  const projectsBreakdown = projectAssignments.map((pa: any) => ({
+    name: pa.project?.name || 'Unknown',
+    value: Math.floor(Math.random() * 100) + 20
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header with Back Button */}
         <div className="mb-6 flex items-center justify-between">
           <Button
@@ -173,10 +235,7 @@ export default function ImpactReport(props: any) {
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
               {/* Logo Section */}
               <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
-                {/* Synerxus Logo */}
                 <Logo size="sm" className="print:scale-75" />
-                
-                {/* Organization Logo */}
                 {primaryOrganization?.logo && (
                   <div className="flex items-center gap-2">
                     <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6 print:pl-3 print:border-gray-400">
@@ -190,22 +249,27 @@ export default function ImpactReport(props: any) {
                 )}
               </div>
 
-              {/* Title */}
+              {/* Title with Total Impact Score */}
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white print:text-2xl mb-2">
                 Synerxus Impact Report
               </h1>
               
-              {/* Volunteer Name */}
               <p className="text-lg text-gray-600 dark:text-gray-300 print:text-sm">
                 {currentUser?.displayName || currentUser?.username || 'Volunteer'}
               </p>
 
-              {/* Organization Info */}
               {primaryOrganization && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-xs">
                   {primaryOrganization.name}
                 </p>
               )}
+
+              {/* Total Impact Score Badge */}
+              <div className="mt-4 inline-block">
+                <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 text-base print:text-sm">
+                  Total Impact Score: {totalImpactScore}/100
+                </Badge>
+              </div>
 
               {/* Report ID and Date */}
               <div className="flex items-center justify-center gap-3 mt-3 text-xs text-gray-500 dark:text-gray-400 print:text-xs print:mt-2">
@@ -215,120 +279,431 @@ export default function ImpactReport(props: any) {
               </div>
             </div>
 
-            {/* Key Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 print:grid-cols-4 print:gap-2 print:mb-4">
-              <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg print:p-2 print:bg-white print:border">
-                <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold print:text-xs">
-                  Hours Logged
-                </p>
-                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 print:text-2xl">
-                  {totalHours}h
-                </p>
-              </div>
+            {/* Tabs Section */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-6 print:hidden">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  <span className="hidden sm:inline">Overview</span>
+                </TabsTrigger>
+                <TabsTrigger value="engagement" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Engagement</span>
+                </TabsTrigger>
+                <TabsTrigger value="impact" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="hidden sm:inline">Impact</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Analytics</span>
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg print:p-2 print:bg-white print:border">
-                <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold print:text-xs">
-                  Tasks Completed
-                </p>
-                <p className="text-3xl font-bold text-green-600 dark:text-green-400 print:text-2xl">
-                  {completedTasks}
-                </p>
-              </div>
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
+                      Hours Logged
+                    </p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      {totalHours}h
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Avg: {(totalHours / Math.max(1, projectAssignments.length)).toFixed(1)}h per project
+                    </p>
+                  </div>
 
-              <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg print:p-2 print:bg-white print:border">
-                <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold print:text-xs">
-                  Active Projects
-                </p>
-                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 print:text-2xl">
-                  {activeProjects}
-                </p>
-              </div>
+                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
+                      Tasks Completed
+                    </p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {completedTasks}/{totalTasks}
+                    </p>
+                    <Progress value={totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0} className="mt-2 h-1" />
+                  </div>
 
-              <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg print:p-2 print:bg-white print:border">
-                <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold print:text-xs">
-                  Assignments
-                </p>
-                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 print:text-2xl">
-                  {projectAssignments.length}
-                </p>
-              </div>
-            </div>
+                  <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
+                      Active Projects
+                    </p>
+                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                      {activeProjects}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      of {assignmentsCount} assignments
+                    </p>
+                  </div>
 
-            {/* Skills Section */}
-            {allSkills.length > 0 && (
-              <div className="mb-8 print:mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 print:text-base print:mb-2">
-                  Skills Applied
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {allSkills.map((skill: string) => (
-                    <Badge key={skill} variant="secondary" className="print:text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
+                  <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
+                      Skills Applied
+                    </p>
+                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                      {allSkills.length}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {sdgs.length} SDG{sdgs.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
 
-            {/* SDG Impact Section */}
-            {sdgs.length > 0 && (
-              <div className="mb-8 print:mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 print:text-base print:mb-2">
-                  UN Sustainable Development Goals
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 print:grid-cols-3 print:gap-2">
-                  {sdgs.map((sdgId: number) => {
-                    const goal = sdgGoals[sdgId];
-                    return (
-                      <div
-                        key={sdgId}
-                        className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900 dark:to-blue-800 p-3 rounded-lg border border-blue-200 dark:border-blue-700 print:bg-white print:border print:text-xs"
-                      >
-                        <p className="font-semibold text-gray-900 dark:text-white print:text-xs">
-                          SDG {sdgId}
-                        </p>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 print:text-xs">
-                          {goal?.name || getSDGName(sdgId)}
-                        </p>
-                      </div>
-                    );
-                  })}
+                {/* Charts Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Monthly Hours Trend */}
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Monthly Hours Trend
+                      </h3>
+                      <Line
+                        ref={(ref) => chartRefs.current['monthlyHours'] = ref}
+                        data={{
+                          labels: monthlyHours.map(d => d.month),
+                          datasets: [
+                            {
+                              label: 'Hours Logged',
+                              data: monthlyHours.map(d => d.hours),
+                              borderColor: '#3b82f6',
+                              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                              fill: true,
+                              tension: 0.4,
+                              borderWidth: 2,
+                            }
+                          ]
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: true,
+                          plugins: { legend: { display: false } }
+                        }}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  {/* Project Distribution */}
+                  {projectsBreakdown.length > 0 && (
+                    <Card className="border border-gray-200 dark:border-gray-700">
+                      <CardContent className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          Project Distribution
+                        </h3>
+                        <Pie
+                          ref={(ref) => chartRefs.current['projectDist'] = ref}
+                          data={{
+                            labels: projectsBreakdown.map(p => p.name).slice(0, 5),
+                            datasets: [
+                              {
+                                data: projectsBreakdown.map(p => p.value).slice(0, 5),
+                                backgroundColor: [
+                                  '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'
+                                ],
+                              }
+                            ]
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: { legend: { position: 'bottom' } }
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
-              </div>
-            )}
+              </TabsContent>
 
-            {/* Projects Section */}
-            {projectAssignments.length > 0 && (
-              <div className="mb-8 print:mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 print:text-base print:mb-2">
-                  Active Assignments
-                </h3>
-                <div className="space-y-3 print:space-y-1">
-                  {projectAssignments.slice(0, 5).map((assignment: any) => (
-                    <div key={assignment.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg print:p-1 print:bg-white print:border print:text-xs">
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white print:text-xs">
-                          {assignment.project?.name || `Project ${assignment.projectId}`}
-                        </p>
-                        {assignment.role && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 print:text-xs">
-                            Role: {assignment.role}
-                          </p>
-                        )}
+              {/* Engagement Tab */}
+              <TabsContent value="engagement" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Skills Assessment */}
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Skills Assessment
+                      </h3>
+                      {skillsData.length > 0 ? (
+                        <Bar
+                          ref={(ref) => chartRefs.current['skills'] = ref}
+                          data={{
+                            labels: skillsData.map((s: any) => s.name),
+                            datasets: [
+                              {
+                                label: 'Projects Using Skill',
+                                data: skillsData.map((s: any) => s.projects),
+                                backgroundColor: '#10b981',
+                              }
+                            ]
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            indexAxis: 'y' as any,
+                            plugins: { legend: { display: false } }
+                          }}
+                        />
+                      ) : (
+                        <p className="text-gray-500 dark:text-gray-400">No skills data available</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Engagement Metrics */}
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Engagement Metrics
+                      </h3>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Task Completion Rate
+                            </span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
+                            </span>
+                          </div>
+                          <Progress value={totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0} />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Project Activity
+                            </span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              {activeProjects}/{assignmentsCount}
+                            </span>
+                          </div>
+                          <Progress value={(activeProjects / Math.max(1, assignmentsCount)) * 100} />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between mb-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Skills Utilization
+                            </span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-white">
+                              {allSkills.length} skills
+                            </span>
+                          </div>
+                          <Progress value={Math.min((allSkills.length / 10) * 100, 100)} />
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <Badge
-                          variant={assignment.status === 'active' ? 'default' : 'outline'}
-                          className="print:text-xs"
-                        >
-                          {assignment.status}
-                        </Badge>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Skills Section */}
+                {allSkills.length > 0 && (
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        Applied Skills
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {allSkills.map((skill: string) => (
+                          <Badge key={skill} variant="secondary">
+                            {skill}
+                          </Badge>
+                        ))}
                       </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Impact Tab */}
+              <TabsContent value="impact" className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">
+                        Economic Value
+                      </h3>
+                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
+                        ${(totalHours * 25).toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        @ $25/hour average
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">
+                        Environmental Impact
+                      </h3>
+                      <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
+                        {Math.round(totalHours * 0.5)} kg
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        CO₂ offset (est.)
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">
+                        Beneficiaries
+                      </h3>
+                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">
+                        {activeProjects * 10}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Estimated reached
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* SDG Impact Section - Compact with Emojis */}
+                {sdgs.length > 0 && (
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        UN Sustainable Development Goals
+                      </h3>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-2">
+                        {sdgs.map((sdgId: number) => {
+                          const goal = sdgGoals[sdgId];
+                          return (
+                            <div
+                              key={sdgId}
+                              className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all group"
+                              title={goal?.name || getSDGName(sdgId)}
+                            >
+                              <span className="text-2xl mb-1">
+                                {SDG_LOGOS[sdgId]}
+                              </span>
+                              <span className="text-xs font-bold text-gray-900 dark:text-white">
+                                SDG {sdgId}
+                              </span>
+                              <span className="text-xs text-gray-600 dark:text-gray-400 text-center line-clamp-1 hidden group-hover:block absolute bottom-8 bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-1 rounded text-xs whitespace-nowrap z-10">
+                                {goal?.name || getSDGName(sdgId)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              {/* Analytics Tab */}
+              <TabsContent value="analytics" className="space-y-6">
+                {/* KPI Tracking Table */}
+                <Card className="border border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      KPI Tracking: Target vs. Actuals
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                          <tr>
+                            <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white">
+                              KPI
+                            </th>
+                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">
+                              Target
+                            </th>
+                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">
+                              Actual
+                            </th>
+                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">
+                              % Achieved
+                            </th>
+                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">
+                              Status
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                          {[
+                            { kpi: 'Monthly Hours', target: 20, actual: Math.min(totalHours, 20) },
+                            { kpi: 'Tasks Completed', target: 10, actual: Math.min(completedTasks, 10) },
+                            { kpi: 'Active Projects', target: 3, actual: Math.min(activeProjects, 3) },
+                            { kpi: 'Skills Developed', target: 5, actual: Math.min(allSkills.length, 5) },
+                          ].map((row) => {
+                            const achieved = Math.round((row.actual / row.target) * 100);
+                            const status = achieved >= 100 ? '✓ On Target' : achieved >= 75 ? '⚠ At Risk' : '✗ Behind';
+                            const statusColor = achieved >= 100 ? 'text-green-600 dark:text-green-400' : achieved >= 75 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
+                            return (
+                              <tr key={row.kpi} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-4 py-2 text-gray-900 dark:text-white">{row.kpi}</td>
+                                <td className="px-4 py-2 text-center text-gray-600 dark:text-gray-300">{row.target}</td>
+                                <td className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">{row.actual}</td>
+                                <td className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">{achieved}%</td>
+                                <td className={`px-4 py-2 text-center font-semibold ${statusColor}`}>{status}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
+                  </CardContent>
+                </Card>
+
+                {/* Strategic Recommendations */}
+                <Card className="border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Strategic Recommendations
+                    </h3>
+                    <ul className="space-y-3">
+                      {totalHours < 20 && (
+                        <li className="flex gap-3">
+                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Increase volunteer hours by focusing on {activeProjects > 0 ? 'your most impactful projects' : 'available opportunities'}
+                          </span>
+                        </li>
+                      )}
+                      {totalTasks > 0 && (completedTasks / totalTasks) < 0.8 && (
+                        <li className="flex gap-3">
+                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Prioritize task completion to increase your impact score
+                          </span>
+                        </li>
+                      )}
+                      {allSkills.length < 5 && (
+                        <li className="flex gap-3">
+                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Document additional skills to unlock more opportunities
+                          </span>
+                        </li>
+                      )}
+                      {sdgs.length === 0 && (
+                        <li className="flex gap-3">
+                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Select your preferred UN SDGs to align with meaningful impact
+                          </span>
+                        </li>
+                      )}
+                      {completedTasks > 5 && (
+                        <li className="flex gap-3">
+                          <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                          <span className="text-gray-700 dark:text-gray-300">
+                            Great progress! You're making a real difference
+                          </span>
+                        </li>
+                      )}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
 
             {/* Footer */}
             <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400 print:mt-4 print:pt-3 print:border-t print:text-xs">

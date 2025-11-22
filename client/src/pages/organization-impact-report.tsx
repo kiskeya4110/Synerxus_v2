@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Building2, DollarSign, Zap } from "lucide-react";
 import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +49,7 @@ export default function OrganizationImpactReport(props: any) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
+  const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
   const chartRefs = useRef<Record<string, any>>({});
 
   const { data: currentUser } = useQuery<User>({
@@ -103,12 +105,22 @@ export default function OrganizationImpactReport(props: any) {
     },
   });
 
-  const { data: projects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects"],
+  const { data: users = [] } = useQuery<any[]>({
+    queryKey: ["/api/users"],
     queryFn: async () => {
-      const response = await fetch("/api/projects");
+      const response = await fetch("/api/users");
       return response.ok ? response.json() : [];
     },
+  });
+
+  const { data: projects = [] } = useQuery<any[]>({
+    queryKey: ["/api/projects", currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
+      return response.ok ? response.json() : [];
+    },
+    enabled: !!currentUser?.organizationId,
   });
 
   const { data: volunteerActivities = [] } = useQuery<any[]>({
@@ -119,12 +131,60 @@ export default function OrganizationImpactReport(props: any) {
     },
   });
 
+  // Filter activities by organization's projects
+  const orgProjectIds = new Set(projects.map(p => p.id));
+  const filteredActivities = volunteerActivities.filter(a => orgProjectIds.has(a.projectId));
+
+  // Filter by time period
+  const getFilteredActivitiesByTime = () => {
+    const now = new Date();
+    let startDate = new Date(0);
+    
+    switch(timeFilter) {
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+    
+    return filteredActivities.filter(a => {
+      if (!a.date) return true;
+      const activityDate = new Date(a.date);
+      return activityDate >= startDate;
+    });
+  };
+
+  const timeFilteredActivities = getFilteredActivitiesByTime();
+
   // Calculate organizational metrics
-  const activeVolunteers = volunteers.filter(v => v.status === 'active').length;
+  // Count volunteers with assignments/activities in this organization
+  const activeVolunteerIds = new Set<number>();
+  projects.forEach(project => {
+    if (project.volunteers) {
+      const vols = Array.isArray(project.volunteers) ? project.volunteers : [];
+      vols.forEach((v: any) => activeVolunteerIds.add(typeof v === 'number' ? v : v.id));
+    }
+  });
+  filteredActivities.forEach(activity => {
+    if (activity.userId) activeVolunteerIds.add(activity.userId);
+  });
+
+  // Count project managers (users with userType === 'organization' in this org)
+  const projectManagers = users.filter(u => 
+    u.organizationId === currentUser?.organizationId && u.userType === 'organization'
+  ).length;
+
+  const activeVolunteers = activeVolunteerIds.size > 0 ? activeVolunteerIds.size : volunteers.filter(v => v.organizationId === currentUser?.organizationId).length;
+  const totalTeam = activeVolunteers + projectManagers;
   const totalProjects = projects.length;
   const beneficiariesServed = Math.floor(Math.random() * 5000) + 2000;
   const fundingSecured = Math.floor(Math.random() * 500000) + 100000;
-  const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const totalHours = timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
 
   // Financial metrics (sample data)
   const totalRevenue = fundingSecured;
@@ -265,7 +325,20 @@ export default function OrganizationImpactReport(props: any) {
             Back to Dashboard
           </Button>
           
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
+            {/* Time Filter */}
+            <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
+              <SelectTrigger className="w-32 print:hidden">
+                <SelectValue placeholder="Select period" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="year">This Year</SelectItem>
+                <SelectItem value="quarter">This Quarter</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+              </SelectContent>
+            </Select>
+
             <div className="flex gap-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-1 print:hidden">
               <Button
                 variant={viewMode === "tabs" ? "default" : "ghost"}
@@ -393,27 +466,27 @@ export default function OrganizationImpactReport(props: any) {
               <TabsContent value="overview" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Active Volunteers</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{activeVolunteers}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Capacity utilization: 85%</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalTeam}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activeVolunteers} volunteers + {projectManagers} managers</p>
                   </div>
 
                   <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Projects Managed</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalProjects}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{Math.round(activeVolunteers / Math.max(1, totalProjects))} per project avg</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Hours Logged</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalHours}h</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Real data from {filteredActivities.length} activities</p>
                   </div>
 
                   <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Beneficiaries Served</p>
-                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{beneficiariesServed.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cost per: ${costPerBeneficiary}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Projects Managed</p>
+                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalProjects}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Active projects</p>
                   </div>
 
                   <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Funding Secured</p>
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">${(fundingSecured / 1000).toFixed(0)}K</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">YoY growth: +24%</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Avg Hours per Vol</p>
+                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{activeVolunteers > 0 ? (totalHours / activeVolunteers).toFixed(1) : 0}h</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
                   </div>
                 </div>
 
@@ -798,21 +871,24 @@ export default function OrganizationImpactReport(props: any) {
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700">Overview</h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Active Volunteers</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{activeVolunteers}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Capacity utilization: 85%</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalTeam}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activeVolunteers} volunteers + {projectManagers} managers</p>
                   </div>
                   <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Projects Managed</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalProjects}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Hours Logged</p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalHours}h</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Real data from {filteredActivities.length} activities</p>
                   </div>
                   <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Beneficiaries Served</p>
-                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{beneficiariesServed.toLocaleString()}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Projects Managed</p>
+                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalProjects}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Active projects</p>
                   </div>
                   <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Funding Secured</p>
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">${(fundingSecured / 1000).toFixed(0)}K</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Avg Hours per Vol</p>
+                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{activeVolunteers > 0 ? (totalHours / activeVolunteers).toFixed(1) : 0}h</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
                   </div>
                 </div>
               </div>

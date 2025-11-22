@@ -313,7 +313,7 @@ export default function OrganizationImpactReport(props: any) {
   ];
 
   const organizationalPerformance = {
-    labels: ['Volunteer Engagement', 'Financial Health', 'Program Quality', 'Community Impact'],
+    labels: ['Volunteer\nEngagement', 'Financial\nHealth', 'Program\nQuality', 'Community\nImpact'],
     datasets: [{
       label: 'Performance Score',
       data: [85, 78, 88, 91],
@@ -597,8 +597,8 @@ export default function OrganizationImpactReport(props: any) {
                               max: 100,
                               ticks: { font: { size: 12, weight: 'bold' } },
                               pointLabels: {
-                                font: { size: 11, weight: 'bold' },
-                                padding: 8
+                                font: { size: 10, weight: 'bold' },
+                                padding: 12
                               }
                             } 
                           }

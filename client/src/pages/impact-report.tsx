@@ -211,23 +211,7 @@ export default function ImpactReport(props: any) {
   // Calculate filtered KPIs
   const filteredCompletedTasks = tasks.filter(t => {
     if (t.status?.toLowerCase() !== "completed") return false;
-    if (!t.completedAt) return true;
-    const completedDate = new Date(t.completedAt);
-    const now = new Date();
-    let startDate = new Date(0);
-    
-    switch(timeFilter) {
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'quarter':
-        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-    }
-    return completedDate >= startDate;
+    return true;
   }).length;
 
   // Generate monthly hours from real activity data
@@ -235,27 +219,52 @@ export default function ImpactReport(props: any) {
     const monthlyData: Record<string, number> = {};
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
+    const dates: Date[] = [];
+    
     filteredActivities.forEach(activity => {
       if (activity.dateLogged) {
         const date = new Date(activity.dateLogged);
         const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
         monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (activity.hours || 0);
+        dates.push(date);
       }
     });
 
-    // Get last 7 months
-    const now = new Date();
-    const last7Months = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
-      last7Months.push({
-        month: monthNames[date.getMonth()],
+    // If no activities, show last 7 months with zero data
+    if (dates.length === 0) {
+      const now = new Date();
+      const last7Months = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
+        last7Months.push({
+          month: monthNames[date.getMonth()],
+          monthKey: monthKey,
+          hours: monthlyData[monthKey] || 0
+        });
+      }
+      return last7Months;
+    }
+
+    // Find min and max dates
+    const minDate = new Date(Math.min(...dates.map(d => d.getTime())));
+    const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+
+    // Generate all months between min and max date
+    const months = [];
+    const currentDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    
+    while (currentDate <= maxDate) {
+      const monthKey = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear().toString().slice(-2)}`;
+      months.push({
+        month: monthNames[currentDate.getMonth()],
         monthKey: monthKey,
         hours: monthlyData[monthKey] || 0
       });
+      currentDate.setMonth(currentDate.getMonth() + 1);
     }
-    return last7Months;
+    
+    return months;
   };
 
   const monthlyHours = generateMonthlyHours();

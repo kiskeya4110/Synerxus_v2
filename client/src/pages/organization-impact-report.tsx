@@ -488,7 +488,7 @@ export default function OrganizationImpactReport(props: any) {
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalTeam}</p>
@@ -938,7 +938,7 @@ export default function OrganizationImpactReport(props: any) {
               {/* Overview Section */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700 text-center">Overview</h2>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalTeam}</p>
@@ -1000,7 +1000,7 @@ export default function OrganizationImpactReport(props: any) {
               {/* Financial Section */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 text-center">Financial</h2>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Revenue</p>
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">${(totalRevenue / 1000).toFixed(0)}K</p>

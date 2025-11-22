@@ -124,6 +124,7 @@ export default function Sidebar() {
   // Organization-specific navigation
   const organizationNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/profile", label: "Profile", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/organization-profile", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },

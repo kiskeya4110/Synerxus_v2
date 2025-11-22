@@ -241,7 +241,21 @@ export default function MyWork() {
 
   // Calculate organization KPIs for org managers
   const isOrganizationManager = currentUser?.userType === 'organization';
-  const orgActiveVolunteers = orgVolunteers.filter(v => v.status === 'active').length;
+  
+  // Count active volunteers (those with assignments or recent activities)
+  const activeVolunteerIds = new Set<number>();
+  orgProjects.forEach(project => {
+    if (project.volunteers) {
+      const vols = Array.isArray(project.volunteers) ? project.volunteers : [];
+      vols.forEach((v: any) => activeVolunteerIds.add(typeof v === 'number' ? v : v.id));
+    }
+  });
+  // Also count volunteers with recent activities
+  orgActivities.forEach(activity => {
+    if (activity.userId) activeVolunteerIds.add(activity.userId);
+  });
+  const orgActiveVolunteers = activeVolunteerIds.size > 0 ? activeVolunteerIds.size : orgVolunteers.length;
+  
   const orgTotalProjects = orgProjects.length;
   const orgTotalHours = orgActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const orgCompletedProjects = orgProjects.filter(p => p.status?.toLowerCase() === 'completed').length;

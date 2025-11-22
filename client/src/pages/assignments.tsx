@@ -53,18 +53,16 @@ export default function Assignments() {
     enabled: !!currentUser?.id
   });
 
-  // Fetch projects to get details
+  // Fetch ALL projects (not filtered by userId) to ensure we can match assignments
   const { data: projects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects", currentUser?.id],
+    queryKey: ["/api/projects"],
     queryFn: async () => {
-      if (!currentUser?.id) return [];
-      const response = await fetch(`/api/projects?userId=${currentUser.id}`, {
+      const response = await fetch(`/api/projects`, {
         credentials: "include"
       });
       if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!currentUser?.id
   });
 
   // Fetch organizations to get details

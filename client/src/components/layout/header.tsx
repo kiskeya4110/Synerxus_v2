@@ -190,8 +190,8 @@ export default function Header() {
               <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative" data-testid="button-notifications">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-[10px] font-bold leading-none">
-                    {unreadCount}
+                  <Badge variant="destructive" className="absolute -top-3 -right-3 min-h-6 min-w-6 h-6 w-6 flex items-center justify-center p-0 text-[11px] font-bold leading-tight rounded-full">
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </Badge>
                 )}
               </Button>

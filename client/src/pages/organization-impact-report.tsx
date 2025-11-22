@@ -601,8 +601,8 @@ export default function OrganizationImpactReport(props: any) {
                               max: 100,
                               ticks: { font: { size: 12, weight: 'bold' } },
                               pointLabels: {
-                                font: { size: 11, weight: 'bold', lineHeight: 1.3 },
-                                padding: 15
+                                font: { size: 12, weight: 'bold', lineHeight: 1.4 },
+                                padding: 35
                               }
                             } 
                           }

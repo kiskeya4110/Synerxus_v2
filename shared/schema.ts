@@ -103,6 +103,13 @@ export const volunteerActivities = pgTable("volunteer_activities", {
   description: text("description"),
   skillsApplied: text("skills_applied").array(),
   outcomes: text("outcomes"),
+  // Deduplication fields
+  outcomeType: text("outcome_type").default("individual"), // individual, shared, system
+  role: text("role").default("support"), // lead, support, observer
+  verificationStatus: text("verification_status").default("pending"), // pending, approved, rejected
+  evidenceUrls: text("evidence_urls").array(), // URLs for photo/geo evidence
+  dedupGroupId: integer("dedup_group_id"), // Groups duplicated impacts together
+  isDuplicated: boolean("is_duplicated").default(false), // Flag if this is a duplicate
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -124,10 +131,17 @@ export const projectImpacts = pgTable("project_impacts", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").references(() => projects.id),
   metricId: integer("metric_id").references(() => impactMetrics.id),
+  userId: integer("user_id").references(() => users.id), // Track who logged it
   value: integer("value").notNull(),
   date: timestamp("date").notNull(),
   notes: text("notes"),
   evidenceUrls: text("evidence_urls").array(),
+  // Deduplication fields
+  outcomeType: text("outcome_type").default("individual"), // individual, shared, system
+  role: text("role").default("support"), // lead, support, observer
+  verificationStatus: text("verification_status").default("pending"), // pending, approved, rejected
+  dedupGroupId: integer("dedup_group_id"), // Groups duplicated impacts together
+  isDuplicated: boolean("is_duplicated").default(false), // Flag if this is a duplicate
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

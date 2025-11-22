@@ -31,6 +31,69 @@ import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest 
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
+// ===== DEDUPLICATION HELPER FUNCTIONS =====
+/**
+ * Detects duplicate impacts within a time window (±6 hours)
+ * Returns a dedup group ID if duplicates are found, null otherwise
+ */
+async function detectDuplicateImpact(
+  projectId: number,
+  userId: number,
+  metricId: number,
+  outcomeType: string,
+  loggedDate: Date,
+  storage: any
+): Promise<{ isDuplicate: boolean; dedupGroupId?: number; matchingImpacts?: any[] }> {
+  try {
+    const allImpacts = await storage.listProjectImpacts();
+    const projectImpacts = allImpacts.filter((i: any) => i.projectId === projectId && i.metricId === metricId);
+    
+    // For shared outcomes, check for duplicates within same day and project
+    if (outcomeType === 'shared') {
+      const timeWindowMs = 6 * 60 * 60 * 1000; // ±6 hours
+      const loggedTime = loggedDate.getTime();
+      
+      const duplicates = projectImpacts.filter((impact: any) => {
+        const impactTime = new Date(impact.date).getTime();
+        const timeDiff = Math.abs(loggedTime - impactTime);
+        return timeDiff <= timeWindowMs && impact.outcomeType === 'shared';
+      });
+      
+      if (duplicates.length > 0) {
+        return {
+          isDuplicate: true,
+          dedupGroupId: duplicates[0].dedupGroupId || duplicates[0].id,
+          matchingImpacts: duplicates
+        };
+      }
+    }
+    
+    return { isDuplicate: false };
+  } catch (err) {
+    console.error("Error detecting duplicate impacts:", err);
+    return { isDuplicate: false };
+  }
+}
+
+/**
+ * Applies role-based attribution weighting
+ * Lead Role: 100% attribution
+ * Support Role: 50% attribution  
+ * Observer Role: 0% (logged for participation only)
+ */
+function applyRoleBasedAttribution(value: number, role: string): number {
+  switch (role) {
+    case 'lead':
+      return value;
+    case 'support':
+      return Math.round(value * 0.5);
+    case 'observer':
+      return 0;
+    default:
+      return value;
+  }
+}
+
 // Helper function to calculate volunteer profile completion percentage
 function calculateProfileCompletion(profile: Record<string, any>): number {
   let completedFields = 0;
@@ -1226,7 +1289,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/project-impacts", async (req, res) => {
     try {
       const impactData = insertProjectImpactSchema.parse(req.body);
-      const impact = await storage.createProjectImpact(impactData);
+      
+      // **DEDUPLICATION**: Detect duplicate impacts
+      const dedup = await detectDuplicateImpact(
+        impactData.projectId!,
+        impactData.userId || 0,
+        impactData.metricId!,
+        impactData.outcomeType || 'individual',
+        new Date(impactData.date),
+        storage
+      );
+      
+      // Apply role-based attribution weighting
+      const attributedValue = applyRoleBasedAttribution(
+        impactData.value,
+        impactData.role || 'support'
+      );
+      
+      // Create impact with deduplication metadata
+      const impact = await storage.createProjectImpact({
+        ...impactData,
+        value: attributedValue,
+        isDuplicated: dedup.isDuplicate,
+        dedupGroupId: dedup.dedupGroupId,
+        verificationStatus: impactData.verificationStatus || 'pending'
+      });
       
       // **AI Algorithm**: Auto-calculate and update project completion percentage when impact is logged
       if (impact.projectId) {
@@ -1241,7 +1328,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      broadcastUpdate("project_impact_created", impact);
+      broadcastUpdate("project_impact_created", {
+        ...impact,
+        deduplicationAlert: dedup.isDuplicate ? {
+          message: "Potential duplicate detected",
+          matchingCount: (dedup.matchingImpacts?.length || 0)
+        } : null
+      });
       res.status(201).json(impact);
     } catch (err) {
       const error = handleValidationError(err);

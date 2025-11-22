@@ -33,6 +33,9 @@ const impactFormSchema = z.object({
   value: z.string().min(1, "Please enter a value").transform(Number),
   date: z.string().min(1, "Please enter a date"),
   notes: z.string().min(5, "Please enter notes"),
+  outcomeType: z.string().default("individual"), // individual, shared, system
+  role: z.string().default("support"), // lead, support, observer
+  evidenceUrls: z.string().optional(), // Comma-separated URLs
 });
 
 type ActivityFormData = z.infer<typeof activityFormSchema>;
@@ -143,6 +146,9 @@ export default function MobileDataCollection() {
       value: "0",
       date: new Date().toISOString().split('T')[0],
       notes: "",
+      outcomeType: "individual",
+      role: "support",
+      evidenceUrls: "",
     },
   });
 
@@ -185,11 +191,16 @@ export default function MobileDataCollection() {
   const impactMutation = useMutation({
     mutationFn: async (data: ImpactFormData) => {
       const payload = {
+        userId: currentUser?.id,
         projectId: parseInt(data.projectId),
         metricId: parseInt(data.metricId),
         value: data.value,
         date: new Date(data.date).toISOString(),
         notes: data.notes,
+        outcomeType: data.outcomeType || "individual",
+        role: data.role || "support",
+        evidenceUrls: data.evidenceUrls ? data.evidenceUrls.split(',').map(url => url.trim()).filter(url => url) : [],
+        verificationStatus: "pending",
       };
       return apiRequest("POST", "/api/project-impacts", payload);
     },
@@ -536,6 +547,73 @@ export default function MobileDataCollection() {
                       )}
                     />
                   </div>
+
+                  <FormField
+                    control={impactForm.control}
+                    name="outcomeType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Outcome Type</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-outcome-type">
+                              <SelectValue placeholder="Select outcome type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="individual">Individual (Personal achievement)</SelectItem>
+                            <SelectItem value="shared">Shared (Team outcome)</SelectItem>
+                            <SelectItem value="system">System (Org-level metric)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>How is this impact classified?</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={impactForm.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Your Role</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-role">
+                              <SelectValue placeholder="Select your role" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="lead">Lead (100% credit)</SelectItem>
+                            <SelectItem value="support">Support (50% credit)</SelectItem>
+                            <SelectItem value="observer">Observer (Participation only)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>How much did you contribute?</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={impactForm.control}
+                    name="evidenceUrls"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Evidence URLs (Optional)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field}
+                            placeholder="https://example.com/photo1, https://example.com/photo2" 
+                            data-testid="input-evidence-urls"
+                          />
+                        </FormControl>
+                        <FormDescription>Comma-separated URLs for photo/geo evidence</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   <FormField
                     control={impactForm.control}

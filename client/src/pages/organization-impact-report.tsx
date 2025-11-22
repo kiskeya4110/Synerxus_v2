@@ -313,7 +313,7 @@ export default function OrganizationImpactReport(props: any) {
   ];
 
   const organizationalPerformance = {
-    labels: ['Volunteer Capacity', 'Financial Health', 'Program Quality', 'Partnership Network', 'Community Impact', 'Operational Efficiency'],
+    labels: ['Volunteer\nCapacity', 'Financial\nHealth', 'Program\nQuality', 'Partnership\nNetwork', 'Community\nImpact', 'Operational\nEfficiency'],
     datasets: [{
       label: 'Performance Score',
       data: [85, 78, 88, 72, 91, 80],
@@ -545,7 +545,7 @@ export default function OrganizationImpactReport(props: any) {
                       </div>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-300 mt-4 text-center">
-                      This volunteer has made the most significant impact during the selected period. Click to view their profile.
+                      This volunteer has made the most significant impact during the selected period.
                     </p>
                   </div>
                 )}
@@ -587,8 +587,17 @@ export default function OrganizationImpactReport(props: any) {
                         options={{
                           responsive: true,
                           maintainAspectRatio: true,
-                          plugins: { legend: { position: 'bottom' } },
-                          scales: { r: { beginAtZero: true, max: 100 } }
+                          plugins: { 
+                            legend: { position: 'bottom' },
+                            tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+                          },
+                          scales: { 
+                            r: { 
+                              beginAtZero: true, 
+                              max: 100,
+                              ticks: { font: { size: 11 } }
+                            } 
+                          }
                         }}
                       />
                     </CardContent>

@@ -303,6 +303,27 @@ export default function OrganizationImpactReport(props: any) {
       borderWidth: 2,
     }]
   };
+  
+  // Configure point labels with proper multi-line support
+  const radarChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { 
+      legend: { position: 'bottom' as const, labels: { font: { size: 10 } } },
+      tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+    },
+    scales: { 
+      r: { 
+        beginAtZero: true, 
+        max: 100,
+        ticks: { font: { size: 9 }, stepSize: 25 },
+        pointLabels: {
+          font: { size: 8, weight: 'bold' as const, lineHeight: 1.3 },
+          padding: 20
+        }
+      } 
+    }
+  };
 
   const monthlyEngagement = [
     { month: 'Jan', volunteers: 45, hours: 980 },
@@ -590,25 +611,7 @@ export default function OrganizationImpactReport(props: any) {
                         <div style={{ width: '100%', height: '100%' }}>
                           <Radar
                             data={organizationalPerformance}
-                            options={{
-                              responsive: true,
-                              maintainAspectRatio: false,
-                              plugins: { 
-                                legend: { position: 'bottom', labels: { font: { size: 10 } } },
-                                tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
-                              },
-                              scales: { 
-                                r: { 
-                                  beginAtZero: true, 
-                                  max: 100,
-                                  ticks: { font: { size: 9 }, stepSize: 25 },
-                                  pointLabels: {
-                                    font: { size: 8, weight: 'bold' },
-                                    padding: 12
-                                  }
-                                } 
-                              }
-                            }}
+                            options={radarChartOptions}
                           />
                         </div>
                       </div>

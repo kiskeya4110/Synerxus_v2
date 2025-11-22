@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3 } from "lucide-react";
+import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook } from "lucide-react";
 import type { User, Task, ProjectAssignment } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
+declare const html2pdf: any;
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -259,6 +260,47 @@ export default function ImpactReport(props: any) {
     }, 100);
   };
 
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('impact-report-content');
+    if (!element) return;
+    
+    const opt = {
+      margin: 10,
+      filename: `Impact_Report_${currentUser?.displayName || 'Volunteer'}_${new Date().getTime()}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+    toast({
+      title: "Downloaded!",
+      description: "Your impact report has been saved as PDF",
+    });
+  };
+
+  const handleShareSocial = (platform: 'twitter' | 'linkedin' | 'facebook') => {
+    const text = `Check out my Global Impact Report! I've contributed ${filteredTotalHours} hours and helped advance sustainable development goals.`;
+    const url = shareUrl;
+    const encodedUrl = encodeURIComponent(url);
+    const encodedText = encodeURIComponent(text);
+    
+    let shareLink = '';
+    switch(platform) {
+      case 'twitter':
+        shareLink = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+        break;
+      case 'linkedin':
+        shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case 'facebook':
+        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        break;
+    }
+    
+    window.open(shareLink, '_blank', 'width=600,height=400');
+  };
+
   const skillsData = allSkills.slice(0, 5).map((skill: any) => ({
     name: skill,
     projects: Math.floor(Math.random() * 4) + 1
@@ -312,12 +354,12 @@ export default function ImpactReport(props: any) {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleCopyLink}
+              onClick={handleDownloadPDF}
               className="print:hidden"
-              data-testid="button-copy-link"
+              data-testid="button-download-pdf"
             >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Link
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
             </Button>
             <Button
               variant="outline"
@@ -327,13 +369,45 @@ export default function ImpactReport(props: any) {
               data-testid="button-print"
             >
               <Printer className="h-4 w-4 mr-2" />
-              Print/PDF
+              Print
             </Button>
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 print:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleShareSocial('twitter')}
+                className="h-8 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
+                data-testid="button-share-twitter"
+                title="Share on Twitter"
+              >
+                <Twitter className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleShareSocial('linkedin')}
+                className="h-8 px-2 hover:bg-blue-200 dark:hover:bg-blue-800"
+                data-testid="button-share-linkedin"
+                title="Share on LinkedIn"
+              >
+                <Linkedin className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleShareSocial('facebook')}
+                className="h-8 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
+                data-testid="button-share-facebook"
+                title="Share on Facebook"
+              >
+                <Facebook className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Main Impact Report Card */}
-        <Card className="bg-white dark:bg-slate-800 shadow-lg border-2 border-blue-200 dark:border-blue-900 print:shadow-none print:border-black">
+        <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-blue-200 dark:border-blue-900 print:shadow-none print:border-black">
           <CardContent className="p-8 print:p-4">
             {/* Header Section with Logos */}
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
@@ -514,7 +588,32 @@ export default function ImpactReport(props: any) {
                         options={{
                           responsive: true,
                           maintainAspectRatio: true,
-                          plugins: { legend: { display: false } }
+                          interaction: { mode: 'index' as any, intersect: false },
+                          plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                              enabled: true,
+                              backgroundColor: 'rgba(0,0,0,0.8)',
+                              titleColor: '#fff',
+                              bodyColor: '#fff',
+                              borderColor: '#3b82f6',
+                              borderWidth: 1,
+                              padding: 12,
+                              displayColors: false,
+                              callbacks: {
+                                label: (context: any) => `${context.parsed.y} hours`
+                              }
+                            }
+                          },
+                          scales: {
+                            y: {
+                              beginAtZero: true,
+                              ticks: { color: '#666' }
+                            },
+                            x: {
+                              ticks: { color: '#666' }
+                            }
+                          }
                         }}
                       />
                       <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
@@ -547,7 +646,19 @@ export default function ImpactReport(props: any) {
                           options={{
                             responsive: true,
                             maintainAspectRatio: true,
-                            plugins: { legend: { position: 'bottom' } }
+                            plugins: { 
+                              legend: { position: 'bottom' },
+                              tooltip: {
+                                enabled: true,
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleColor: '#fff',
+                                bodyColor: '#fff',
+                                padding: 12,
+                                callbacks: {
+                                  label: (context: any) => `${context.label}: ${context.parsed}%`
+                                }
+                              }
+                            }
                           }}
                         />
                       </CardContent>
@@ -895,7 +1006,7 @@ export default function ImpactReport(props: any) {
                           </p>
                         </div>
                       )}
-                      <Line ref={(ref) => chartRefs.current['monthlyHours'] = ref} data={{ labels: monthlyHours.map(d => d.month), datasets: [{ label: 'Hours Logged', data: monthlyHours.map(d => d.hours), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }} />
+                      <Line ref={(ref) => chartRefs.current['monthlyHours'] = ref} data={{ labels: monthlyHours.map(d => d.month), datasets: [{ label: 'Hours Logged', data: monthlyHours.map(d => d.hours), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, interaction: { mode: 'index' as any, intersect: false }, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#3b82f6', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: (context: any) => `${context.parsed.y} hours` } } }, scales: { y: { beginAtZero: true }, x: {} } }} />
                       <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
                         <p>📊 <strong>Summary:</strong> {monthlyHours.reduce((sum, m) => sum + m.hours, 0)}h total • {avgMonthlyHours}h/month avg</p>
                         <p>✅ <strong>What Went Well:</strong> Consistent engagement across {monthlyHours.filter(m => m.hours > 0).length} active months</p>
@@ -907,7 +1018,7 @@ export default function ImpactReport(props: any) {
                     <Card className="border border-gray-200 dark:border-gray-700">
                       <CardContent className="p-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Project Distribution</h3>
-                        <Pie ref={(ref) => chartRefs.current['projectDist'] = ref} data={{ labels: projectsBreakdown.map(p => p.name).slice(0, 5), datasets: [{ data: projectsBreakdown.map(p => p.value).slice(0, 5), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }} />
+                        <Pie ref={(ref) => chartRefs.current['projectDist'] = ref} data={{ labels: projectsBreakdown.map(p => p.name).slice(0, 5), datasets: [{ data: projectsBreakdown.map(p => p.value).slice(0, 5), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', padding: 12, callbacks: { label: (context: any) => `${context.label}: ${context.parsed}%` } } } }} />
                       </CardContent>
                     </Card>
                   )}
@@ -926,7 +1037,7 @@ export default function ImpactReport(props: any) {
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Skills Assessment</h3>
                       {skillsData.length > 0 ? (
-                        <Bar ref={(ref) => chartRefs.current['skills'] = ref} data={{ labels: skillsData.map((s: any) => s.name), datasets: [{ label: 'Projects Using Skill', data: skillsData.map((s: any) => s.projects), backgroundColor: '#10b981' }] }} options={{ responsive: true, maintainAspectRatio: true, indexAxis: 'y' as any, plugins: { legend: { display: false } } }} />
+                        <Bar ref={(ref) => chartRefs.current['skills'] = ref} data={{ labels: skillsData.map((s: any) => s.name), datasets: [{ label: 'Projects Using Skill', data: skillsData.map((s: any) => s.projects), backgroundColor: '#10b981' }] }} options={{ responsive: true, maintainAspectRatio: true, indexAxis: 'y' as any, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', padding: 12, callbacks: { label: (context: any) => `${context.parsed.x} projects` } } }, scales: { x: { beginAtZero: true } } }} />
                       ) : (
                         <p className="text-gray-500 dark:text-gray-400">No skills data available</p>
                       )}

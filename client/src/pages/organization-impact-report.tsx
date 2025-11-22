@@ -937,11 +937,13 @@ export default function OrganizationImpactReport(props: any) {
               </TabsContent>
             </Tabs>
             ) : (
-            // Single Page View
+            // Single Page View - Comprehensive Report with ALL Tabs Content
             <div className="space-y-8">
-              {/* Overview Section */}
+              {/* OVERVIEW SECTION */}
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700 text-center">Overview</h2>
+                
+                {/* KPIs */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
@@ -964,55 +966,171 @@ export default function OrganizationImpactReport(props: any) {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Programs Section */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 text-center">Programs</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  {topPrograms.map((prog, idx) => (
-                    <div key={idx} className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow">
-                      <div className="mb-3">
-                        <h4 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">{prog.name}</h4>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs text-gray-600 dark:text-gray-300">{prog.beneficiaries} beneficiaries</span>
-                          <span className="inline-block px-2 py-0.5 bg-green-200 dark:bg-green-700 text-green-900 dark:text-green-100 text-xs font-semibold rounded">
-                            {prog.completion}%
-                          </span>
+                {/* Impact Leader */}
+                {leaderData && (
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 mb-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <Crown className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+                        <div>
+                          <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">Impact Leader</p>
+                          <h3 className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{leaderData.name}</h3>
                         </div>
                       </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Progress</span>
-                            <span className="text-sm font-bold text-green-600 dark:text-green-400">{prog.completion}%</span>
-                          </div>
-                          <CompletionProgress value={prog.completion} className="h-2" />
-                        </div>
-                        
-                        <div>
-                          <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">Impact</span>
-                            <span className="text-sm font-bold text-blue-600 dark:text-blue-400">{prog.impact}%</span>
-                          </div>
-                          <Progress value={prog.impact} className="h-2" />
-                        </div>
+                      <Badge className="bg-yellow-600 text-white text-lg px-4 py-2">⭐ Top Volunteer</Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Hours Contributed</p>
+                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{Math.round(leaderData.hours)}h</p>
                       </div>
-                      
-                      <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {prog.completion >= 80 ? '✅ On Track' : prog.completion >= 50 ? '⚠️ In Progress' : '🚀 Starting'}
-                        </p>
+                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Activities</p>
+                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{leaderData.activities}</p>
+                      </div>
+                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Avg per Activity</p>
+                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{(leaderData.hours / leaderData.activities).toFixed(1)}h</p>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                )}
+
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quarterly Growth</h3>
+                      <Line data={{ labels: quarterlyGrowth.map(q => q.quarter), datasets: [{ label: 'Beneficiaries', data: quarterlyGrowth.map(q => q.beneficiaries), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { y: { beginAtZero: true } } }} />
+                    </CardContent>
+                  </Card>
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Radar</h3>
+                      <Radar data={{ labels: ['Volunteer\nEngagement', 'Quality\nMetrics', 'Community\nReach', 'Resource\nEfficiency', 'Impact\nDelivery'], datasets: [{ label: 'Performance Score', data: [85, 92, 78, 88, 90], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', fill: true, tension: 0.4, pointRadius: 5, pointHoverRadius: 7 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } } }} />
+                    </CardContent>
+                  </Card>
                 </div>
+
+                {/* Monthly Engagement */}
+                <Card className="border border-gray-200 dark:border-gray-700 mt-6">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Volunteer Engagement</h3>
+                    <Line data={{ labels: monthlyEngagement.map(m => m.month), datasets: [{ label: 'Volunteer Hours', data: monthlyEngagement.map(m => m.hours), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { y: { beginAtZero: true } } }} />
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Financial Section */}
+              {/* PROGRAMS SECTION */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 text-center">Financial</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 dark:border-green-700 text-center">Programs</h2>
+                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Top Programs Performance</h3>
+                    <div className="space-y-4">
+                      {topPrograms.map((prog, idx) => (
+                        <div key={idx} className="border-b pb-4 last:border-0">
+                          <div className="flex justify-between mb-2">
+                            <h4 className="font-semibold text-gray-900 dark:text-white">{prog.name}</h4>
+                            <span className="text-sm text-gray-500">{prog.beneficiaries} beneficiaries</span>
+                          </div>
+                          <div className="space-y-2">
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Completion Rate</span>
+                                <span>{prog.completion}%</span>
+                              </div>
+                              <CompletionProgress value={prog.completion} className="h-2" />
+                            </div>
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Impact Score</span>
+                                <span>{prog.impact}%</span>
+                              </div>
+                              <Progress value={prog.impact} className="h-2" />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* OPERATIONS SECTION */}
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200 dark:border-orange-700 text-center">Operations</h2>
+                
+                {/* Resource & Metrics Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Resource Allocation</h3>
+                      <Bar data={{ labels: ['Staff', 'Volunteers', 'Equipment', 'Facilities'], datasets: [{ label: 'Resource Units', data: [25, 72, 40, 15], backgroundColor: '#f59e0b' }] }} options={{ responsive: true, maintainAspectRatio: true, indexAxis: 'y' as any, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { x: { beginAtZero: true } } }} />
+                    </CardContent>
+                  </Card>
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Operational Metrics</h3>
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Volunteer Capacity</span>
+                            <span className="text-sm font-bold">85%</span>
+                          </div>
+                          <Progress value={85} />
+                        </div>
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Resource Efficiency</span>
+                            <span className="text-sm font-bold">78%</span>
+                          </div>
+                          <Progress value={78} />
+                        </div>
+                        <div>
+                          <div className="flex justify-between mb-1">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Quality Scores</span>
+                            <span className="text-sm font-bold">92%</span>
+                          </div>
+                          <Progress value={92} />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Partnership Network */}
+                <Card className="border border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Partnership Network</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900 rounded">
+                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">12</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Corporate</p>
+                      </div>
+                      <div className="p-3 bg-green-50 dark:bg-green-900 rounded">
+                        <div className="text-2xl font-bold text-green-600 dark:text-green-400">8</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Government</p>
+                      </div>
+                      <div className="p-3 bg-purple-50 dark:bg-purple-900 rounded">
+                        <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">15</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Educational</p>
+                      </div>
+                      <div className="p-3 bg-orange-50 dark:bg-orange-900 rounded">
+                        <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">10</div>
+                        <p className="text-xs text-gray-600 dark:text-gray-300">Non-Profit</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* FINANCIAL SECTION */}
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-700 text-center">Financial</h2>
+                
+                {/* KPIs */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Revenue</p>
@@ -1031,11 +1149,90 @@ export default function OrganizationImpactReport(props: any) {
                     <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{programEfficiencyRate}%</p>
                   </div>
                 </div>
+
+                {/* Financial Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue Sources</h3>
+                      <Pie data={{ labels: revenueSource.map(r => r.source), datasets: [{ data: revenueSource.map(r => r.value), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } } }} />
+                    </CardContent>
+                  </Card>
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Budget Allocation</h3>
+                      <Pie data={{ labels: budgetAllocation.map(b => b.category), datasets: [{ data: budgetAllocation.map(b => b.value), backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } } }} />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Financial Health */}
+                <Card className="border border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Financial Health Indicators</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                        <span className="text-sm">Liquidity Ratio</span>
+                        <Badge className="bg-green-100 text-green-800">2.5x Healthy</Badge>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                        <span className="text-sm">Reserve Fund</span>
+                        <Badge className="bg-blue-100 text-blue-800">6 months</Badge>
+                      </div>
+                      <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
+                        <span className="text-sm">Growth Rate</span>
+                        <Badge className="bg-green-100 text-green-800">+18% YoY</Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Impact Section */}
+              {/* IMPACT SECTION */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200">Impact</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-red-200 dark:border-red-700 text-center">Impact</h2>
+                
+                {/* Community Impact Categories */}
+                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Community Impact By Category</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {programDistribution.map((prog, idx) => (
+                        <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: prog.color }}></div>
+                            <h4 className="font-semibold text-gray-900 dark:text-white">{prog.name}</h4>
+                          </div>
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white">{prog.value}%</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">Community impact reach</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Success Stories */}
+                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Success Stories & Testimonials</h3>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-500">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"This program changed the lives of 500+ children, providing access to quality education they never had before."</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- Community Leader</p>
+                      </div>
+                      <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border-l-4 border-green-500">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"The health camps reached 320 families and provided preventive care that saved lives."</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- Health Volunteer</p>
+                      </div>
+                      <div className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border-l-4 border-purple-500">
+                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"The environmental initiatives created sustainable livelihoods for 150+ families."</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- Project Coordinator</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Long-term Impact Indicators */}
                 <Card className="border border-gray-200 dark:border-gray-700">
                   <CardContent className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Long-term Impact Indicators</h3>
@@ -1049,10 +1246,24 @@ export default function OrganizationImpactReport(props: any) {
                       </div>
                       <div>
                         <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium">Sustainability Index</span>
+                          <span className="text-sm font-bold">8.2/10</span>
+                        </div>
+                        <Progress value={82} />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-2">
                           <span className="text-sm font-medium">Community Satisfaction</span>
                           <span className="text-sm font-bold">94%</span>
                         </div>
                         <Progress value={94} />
+                      </div>
+                      <div>
+                        <div className="flex justify-between mb-2">
+                          <span className="text-sm font-medium">SDG Alignment</span>
+                          <span className="text-sm font-bold">6/17 Goals</span>
+                        </div>
+                        <Progress value={35} />
                       </div>
                     </div>
                   </CardContent>

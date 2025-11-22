@@ -57,14 +57,31 @@ export default function MobileDataCollection() {
     enabled: !!userId
   });
 
-  // Fetch ALL projects (no userId filter) to ensure complete matching
+  // Fetch projects volunteer is assigned to or user's organization projects
   const { data: projects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects"],
+    queryKey: ["/api/projects", currentUser?.id, currentUser?.organizationId],
     queryFn: async () => {
+      if (!currentUser?.id) return [];
+      
+      // Fetch all projects
       const response = await fetch(`/api/projects`);
       if (!response.ok) return [];
-      return response.json();
+      const allProjects = await response.json();
+      
+      // Filter based on user type
+      if (currentUser?.userType === 'organization' && currentUser?.organizationId) {
+        // Organization managers see all their organization's projects
+        return allProjects.filter((p: any) => p.organizationId === currentUser.organizationId);
+      } else {
+        // Volunteers see only projects they're assigned to
+        const assignmentsRes = await fetch(`/api/project-assignments?volunteerId=${currentUser.id}`);
+        if (!assignmentsRes.ok) return [];
+        const assignments = await assignmentsRes.json();
+        const assignedProjectIds = new Set(assignments.map((a: any) => a.projectId));
+        return allProjects.filter((p: any) => assignedProjectIds.has(p.id));
+      }
     },
+    enabled: !!currentUser?.id
   });
 
   // Fetch organization-scoped tasks from API
@@ -254,11 +271,17 @@ export default function MobileDataCollection() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {projects.map((project: any) => (
-                              <SelectItem key={project.id} value={project.id.toString()}>
-                                {project.name}
+                            {projects.length > 0 ? (
+                              projects.map((project: any) => (
+                                <SelectItem key={project.id} value={project.id.toString()}>
+                                  {project.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>
+                                No projects available
                               </SelectItem>
-                            ))}
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -436,11 +459,17 @@ export default function MobileDataCollection() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {projects.map((project: any) => (
-                              <SelectItem key={project.id} value={project.id.toString()}>
-                                {project.name}
+                            {projects.length > 0 ? (
+                              projects.map((project: any) => (
+                                <SelectItem key={project.id} value={project.id.toString()}>
+                                  {project.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>
+                                No projects available
                               </SelectItem>
-                            ))}
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />

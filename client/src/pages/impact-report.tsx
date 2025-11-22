@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook } from "lucide-react";
 import type { User, Task, ProjectAssignment } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
@@ -88,6 +90,14 @@ export default function ImpactReport(props: any) {
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
   const [logoError, setLogoError] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [printPageMode, setPrintPageMode] = useState<"all" | "selected">("all");
+  const [selectedPrintPages, setSelectedPrintPages] = useState({
+    overview: true,
+    engagement: true,
+    impact: true,
+    analytics: true
+  });
   const chartRefs = useRef<Record<string, any>>({});
 
   // Get volunteer ID from URL params or current user
@@ -297,12 +307,48 @@ export default function ImpactReport(props: any) {
     });
   };
 
-  const handlePrint = () => {
+  const handlePrintClick = () => {
+    setShowPrintDialog(true);
+  };
+
+  const handlePrintConfirm = () => {
+    setShowPrintDialog(false);
+    
+    // Set CSS classes based on selection mode
+    const reportContent = document.getElementById('impact-report-content');
+    if (reportContent) {
+      if (printPageMode === "all") {
+        reportContent.classList.remove('print-selected-pages');
+      } else {
+        reportContent.classList.add('print-selected-pages');
+        // Store selected pages in data attributes for CSS use
+        Object.entries(selectedPrintPages).forEach(([page, selected]) => {
+          if (selected) {
+            reportContent.setAttribute(`data-print-${page}`, 'true');
+          } else {
+            reportContent.removeAttribute(`data-print-${page}`);
+          }
+        });
+      }
+    }
+
     setIsPrinting(true);
     setTimeout(() => {
       window.print();
       setIsPrinting(false);
+      
+      // Clean up CSS classes
+      if (reportContent) {
+        reportContent.classList.remove('print-selected-pages');
+      }
     }, 100);
+  };
+
+  const togglePageSelection = (page: keyof typeof selectedPrintPages) => {
+    setSelectedPrintPages(prev => ({
+      ...prev,
+      [page]: !prev[page]
+    }));
   };
 
   const handleDownloadPDF = () => {
@@ -433,7 +479,7 @@ export default function ImpactReport(props: any) {
             <Button
               variant="outline"
               size="sm"
-              onClick={handlePrint}
+              onClick={handlePrintClick}
               className="print:hidden"
               data-testid="button-print"
             >
@@ -576,7 +622,7 @@ export default function ImpactReport(props: any) {
               </TabsList>
 
               {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-6">
+              <TabsContent value="overview" className="space-y-6" data-print-overview="true">
                 {/* Key Metrics Grid - Compact 2x2 on Mobile */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-2 sm:p-3 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -740,7 +786,7 @@ export default function ImpactReport(props: any) {
               </TabsContent>
 
               {/* Engagement Tab */}
-              <TabsContent value="engagement" className="space-y-6">
+              <TabsContent value="engagement" className="space-y-6" data-print-engagement="true">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Skills Assessment */}
                   <Card className="border border-gray-200 dark:border-gray-700">
@@ -841,7 +887,7 @@ export default function ImpactReport(props: any) {
               </TabsContent>
 
               {/* Impact Tab */}
-              <TabsContent value="impact" className="space-y-6">
+              <TabsContent value="impact" className="space-y-6" data-print-impact="true">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
@@ -923,7 +969,7 @@ export default function ImpactReport(props: any) {
               </TabsContent>
 
               {/* Analytics Tab */}
-              <TabsContent value="analytics" className="space-y-6">
+              <TabsContent value="analytics" className="space-y-6" data-print-analytics="true">
                 {/* KPI Tracking Table */}
                 <Card className="border border-gray-200 dark:border-gray-700">
                   <CardContent className="p-4">
@@ -1320,6 +1366,89 @@ export default function ImpactReport(props: any) {
         </Card>
       </div>
 
+      {/* Print Page Selection Dialog */}
+      <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Print Options</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">Select Pages to Print</h3>
+              
+              {/* All Pages Option */}
+              <div className="mb-4 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="radio"
+                    id="all-pages"
+                    name="print-mode"
+                    value="all"
+                    checked={printPageMode === "all"}
+                    onChange={(e) => setPrintPageMode("all")}
+                    className="cursor-pointer"
+                  />
+                  <label htmlFor="all-pages" className="cursor-pointer text-sm font-medium">
+                    Print All Pages
+                  </label>
+                </div>
+              </div>
+
+              {/* Individual Pages Option */}
+              <div className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center gap-3 mb-3">
+                  <input
+                    type="radio"
+                    id="selected-pages"
+                    name="print-mode"
+                    value="selected"
+                    checked={printPageMode === "selected"}
+                    onChange={(e) => setPrintPageMode("selected")}
+                    className="cursor-pointer"
+                  />
+                  <label htmlFor="selected-pages" className="cursor-pointer text-sm font-medium">
+                    Select Pages to Print
+                  </label>
+                </div>
+
+                {printPageMode === "selected" && (
+                  <div className="space-y-2 ml-7">
+                    {[
+                      { id: 'overview', label: 'Overview' },
+                      { id: 'engagement', label: 'Engagement' },
+                      { id: 'impact', label: 'Impact' },
+                      { id: 'analytics', label: 'Analytics' }
+                    ].map(page => (
+                      <div key={page.id} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`page-${page.id}`}
+                          checked={selectedPrintPages[page.id as keyof typeof selectedPrintPages]}
+                          onCheckedChange={() => togglePageSelection(page.id as keyof typeof selectedPrintPages)}
+                          data-testid={`checkbox-print-${page.id}`}
+                        />
+                        <label htmlFor={`page-${page.id}`} className="cursor-pointer text-sm">
+                          {page.label}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPrintDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handlePrintConfirm} data-testid="button-confirm-print">
+              Print
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Print Styles */}
       <style>{`
         @media print {
@@ -1352,6 +1481,28 @@ export default function ImpactReport(props: any) {
           }
           canvas {
             page-break-inside: avoid;
+          }
+          
+          /* Hide pages when print-selected-pages is active */
+          #impact-report-content.print-selected-pages [role="tablist"] {
+            display: none !important;
+          }
+          
+          #impact-report-content.print-selected-pages [role="tabpanel"] {
+            display: none !important;
+          }
+          
+          #impact-report-content.print-selected-pages [data-print-overview="true"] {
+            display: block !important;
+          }
+          #impact-report-content.print-selected-pages [data-print-engagement="true"] {
+            display: block !important;
+          }
+          #impact-report-content.print-selected-pages [data-print-impact="true"] {
+            display: block !important;
+          }
+          #impact-report-content.print-selected-pages [data-print-analytics="true"] {
+            display: block !important;
           }
         }
       `}</style>

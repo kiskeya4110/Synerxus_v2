@@ -797,60 +797,27 @@ export default function VolunteerProfileSettings() {
     },
   });
 
-  // Load profile data into form when profile loads or user changes
-  // Reset the ref when user ID changes to allow new user's data to load
+  // Load profile data into form ONLY on initial load (not on refetch)
+  // This prevents the effect from interfering with the onSuccess callback
   useEffect(() => {
-    // Reset the ref when user ID changes
-    hasInitializedRef.current = false;
-  }, [currentUser?.id]);
-
-  // Load profile data into form when profile changes
-  // Reset flag on user change, but reload data when profile content changes
-  useEffect(() => {
-    if (existingProfile && hasInitializedRef.current) {
-      // Profile was refetched with new data - reload it into the form
-      console.log(`[Profile Load Effect] Reloading profile data for user ${currentUser?.id} after refetch`);
-      form.reset({
-        email: currentUser?.email || "",
-        name: existingProfile.volunteerName || currentUser?.displayName || "",
-        skills: existingProfile.skills || [],
-        interests: existingProfile.interests || [],
-        location: existingProfile.location || "",
-        yearsOfExperience: existingProfile.yearsOfExperience || "",
-        sdgGoals: existingProfile.preferredSdgs || [],
-        weeklyHours: existingProfile.weeklyAvailability || 1,
-        availability: existingProfile.availability || [],
-        timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        preferredCommitment: existingProfile.preferredCommitment || "flexible",
-        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
-      });
-    } else if (!hasInitializedRef.current && existingProfile) {
-      // Initial load of profile
+    if (!hasInitializedRef.current && existingProfile && currentUser?.id) {
       console.log(`[Profile Load Effect] Initial loading of profile data for user ${currentUser?.id}`);
       hasInitializedRef.current = true;
-      form.reset({
-        email: currentUser?.email || "",
-        name: existingProfile.volunteerName || currentUser?.displayName || "",
-        skills: existingProfile.skills || [],
-        interests: existingProfile.interests || [],
-        location: existingProfile.location || "",
-        yearsOfExperience: existingProfile.yearsOfExperience || "",
-        sdgGoals: existingProfile.preferredSdgs || [],
-        weeklyHours: existingProfile.weeklyAvailability || 1,
-        availability: existingProfile.availability || [],
-        timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        preferredCommitment: existingProfile.preferredCommitment || "flexible",
-        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
-      });
-    } else if (!hasInitializedRef.current && !existingProfile && currentUser?.email) {
-      // New profile - initialize once
+      populateFormFromProfile(existingProfile, currentUser);
+    }
+  }, [currentUser?.id]); // Only run when user ID changes
+
+  // Initialize email/name for new profiles
+  useEffect(() => {
+    if (!hasInitializedRef.current && !existingProfile && currentUser?.email) {
+      console.log(`[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`);
       hasInitializedRef.current = true;
       form.setValue("email", currentUser.email);
       if (currentUser.displayName) {
         form.setValue("name", currentUser.displayName);
       }
     }
-  }, [existingProfile, currentUser?.id]); // Run when profile content changes OR user ID changes
+  }, [currentUser?.id]);
 
   // Load existing photo URL
   useEffect(() => {

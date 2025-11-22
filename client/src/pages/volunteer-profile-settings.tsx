@@ -763,8 +763,15 @@ export default function VolunteerProfileSettings() {
     },
   });
 
-  // Load profile data into form ONLY ONCE when profile first loads
-  // Use useRef to ensure this only runs one time, so users can edit availability without reset
+  // Load profile data into form when profile loads or user changes
+  // Reset the ref when user ID changes to allow new user's data to load
+  useEffect(() => {
+    // Reset the ref when user ID changes
+    hasInitializedRef.current = false;
+  }, [currentUser?.id]);
+
+  // Load profile data into form ONLY ONCE per user
+  // Use useRef to ensure this only runs one time per user, so users can edit availability without reset
   useEffect(() => {
     if (!hasInitializedRef.current && existingProfile) {
       console.log(`[Profile Load Effect] Loading profile data for user ${currentUser?.id} - ONCE ONLY`);
@@ -790,7 +797,7 @@ export default function VolunteerProfileSettings() {
         form.setValue("name", currentUser.displayName);
       }
     }
-  }, []); // Empty dependency array - only run on mount
+  }, [existingProfile?.id, currentUser?.id]); // Run when profile or user ID changes
 
   // Load existing photo URL
   useEffect(() => {

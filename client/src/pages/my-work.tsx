@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock } from "lucide-react";
+import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2 } from "lucide-react";
+import { Link } from "wouter";
+import { Button } from "@/components/ui/button";
 import type { User, Task, ProjectAssignment } from "@shared/schema";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
@@ -116,11 +118,20 @@ export default function MyWork() {
 
   return (
     <div className="min-h-screen">
-      <div className="p-6 pb-4">
-        <h1 className="text-3xl font-bold">My Work</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Manage your applications, assignments, and tasks in one place
-        </p>
+      <div className="p-6 pb-4 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">My Work</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Manage your applications, assignments, and tasks in one place
+          </p>
+        </div>
+        <Link href="/impact-report">
+          <Button variant="outline" size="sm" className="gap-2">
+            <Share2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Share Impact Report</span>
+            <span className="sm:hidden">Impact</span>
+          </Button>
+        </Link>
       </div>
 
       {/* KPI Summary Row */}

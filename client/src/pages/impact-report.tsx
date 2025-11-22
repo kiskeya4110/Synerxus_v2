@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Share2, Download, Copy, Printer, ArrowLeft } from "lucide-react";
+import { Share2, Copy, Printer, ArrowLeft } from "lucide-react";
 import type { User, Task, ProjectAssignment } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
+import Logo from "@/components/ui/logo";
 
 interface ImpactReportProps {
   volunteerId?: string;
@@ -79,6 +80,20 @@ export default function ImpactReport(props: any) {
     },
     enabled: !!volunteerId
   });
+
+  // Fetch organizations from projects
+  const { data: organizations = [] } = useQuery<any[]>({
+    queryKey: ["/api/organizations"],
+    queryFn: async () => {
+      const response = await fetch("/api/organizations");
+      return response.ok ? response.json() : [];
+    }
+  });
+
+  // Get primary organization from first project
+  const primaryOrganization = organizations.length > 0 
+    ? organizations.find((org: any) => projectAssignments.some((pa: any) => pa.project?.organizationId === org.id))
+    : null;
 
   // Calculate impact metrics
   const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
@@ -154,20 +169,50 @@ export default function ImpactReport(props: any) {
         {/* Main Impact Report Card */}
         <Card className="bg-white dark:bg-slate-800 shadow-lg border-2 border-blue-200 dark:border-blue-900 print:shadow-none print:border-black">
           <CardContent className="p-8 print:p-4">
-            {/* Header Section */}
+            {/* Header Section with Logos */}
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <Share2 className="h-8 w-8 text-blue-600" />
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white print:text-2xl">
-                  Impact Report
-                </h1>
+              {/* Logo Section */}
+              <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
+                {/* Synerxus Logo */}
+                <Logo size="sm" className="print:scale-75" />
+                
+                {/* Organization Logo */}
+                {primaryOrganization?.logo && (
+                  <div className="flex items-center gap-2">
+                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6 print:pl-3 print:border-gray-400">
+                      <img
+                        src={primaryOrganization.logo}
+                        alt={primaryOrganization.name}
+                        className="h-12 w-auto object-contain print:h-8"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {/* Title */}
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white print:text-2xl mb-2">
+                Synerxus Impact Report
+              </h1>
+              
+              {/* Volunteer Name */}
               <p className="text-lg text-gray-600 dark:text-gray-300 print:text-sm">
                 {currentUser?.displayName || currentUser?.username || 'Volunteer'}
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 print:text-xs">
-                {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
+
+              {/* Organization Info */}
+              {primaryOrganization && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-xs">
+                  {primaryOrganization.name}
+                </p>
+              )}
+
+              {/* Report ID and Date */}
+              <div className="flex items-center justify-center gap-3 mt-3 text-xs text-gray-500 dark:text-gray-400 print:text-xs print:mt-2">
+                <span>Report ID: {volunteerId || 'N/A'}</span>
+                <span>•</span>
+                <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
             </div>
 
             {/* Key Metrics Grid */}

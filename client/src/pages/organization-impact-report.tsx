@@ -50,9 +50,11 @@ export default function OrganizationImpactReport(props: any) {
   const chartRefs = useRef<Record<string, any>>({});
 
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/user"],
+    queryKey: ["/api/users/me"],
     queryFn: async () => {
-      const response = await fetch("/api/user");
+      const id = localStorage.getItem('currentUserId');
+      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const response = await fetch(url);
       return response.ok ? response.json() : null;
     },
   });

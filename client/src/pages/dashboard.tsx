@@ -608,7 +608,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards - 2x2 Grid on Mobile, 4 columns on Desktop */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard
@@ -616,6 +616,7 @@ export default function Dashboard() {
               value={kpis.hours}
               icon={<Clock className="h-6 w-6" />}
               onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
+              compact={true}
               data-testid="kpi-hours"
             />
             <StatsCard
@@ -623,6 +624,7 @@ export default function Dashboard() {
               value={kpis.tasks}
               icon={<CheckSquare className="h-6 w-6" />}
               onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}
+              compact={true}
               data-testid="kpi-tasks"
             />
             <StatsCard
@@ -630,6 +632,7 @@ export default function Dashboard() {
               value={kpis.activeProjects}
               icon={<Target className="h-6 w-6" />}
               onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
+              compact={true}
               data-testid="kpi-projects"
             />
             <StatsCard
@@ -637,6 +640,7 @@ export default function Dashboard() {
               value={kpis.skills}
               icon={<Briefcase className="h-6 w-6" />}
               onClick={() => handleKPIClick("Skills", kpis.skills)}
+              compact={true}
               data-testid="kpi-skills"
             />
           </>

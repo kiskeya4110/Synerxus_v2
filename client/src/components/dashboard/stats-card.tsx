@@ -9,6 +9,7 @@ interface StatsCardProps {
   iconColor?: string;
   trend?: string;
   onClick?: () => void;
+  compact?: boolean;
   change?: {
     value: string;
     isPositive?: boolean;
@@ -24,18 +25,19 @@ export default function StatsCard({
   iconColor = "text-primary-600 dark:text-primary-400",
   trend,
   onClick,
+  compact = false,
   change
 }: StatsCardProps) {
   const cardClass = onClick 
-    ? "bg-white dark:bg-gray-800 rounded-lg shadow p-4 cursor-pointer hover:shadow-lg transition-shadow duration-200"
-    : "bg-white dark:bg-gray-800 rounded-lg shadow p-4";
+    ? `bg-white dark:bg-gray-800 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200 ${compact ? "p-2 sm:p-3 md:p-4" : "p-4"}`
+    : `bg-white dark:bg-gray-800 rounded-lg shadow ${compact ? "p-2 sm:p-3 md:p-4" : "p-4"}`;
     
   return (
     <div className={cardClass} onClick={onClick}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-          <p className="text-2xl font-bold mt-1">{value}</p>
+          <p className={`font-medium text-gray-500 dark:text-gray-400 ${compact ? "text-xs sm:text-sm" : "text-sm"}`}>{title}</p>
+          <p className={`font-bold ${compact ? "text-lg sm:text-xl md:text-2xl mt-0.5" : "text-2xl mt-1"}`}>{value}</p>
           {trend && (
             <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center">
               <ArrowUp className="h-3 w-3 mr-1" />
@@ -43,8 +45,8 @@ export default function StatsCard({
             </p>
           )}
         </div>
-        <div className={`flex-shrink-0 p-3 rounded-lg ${iconBgClass} ${iconColor}`}>
-          {icon}
+        <div className={`flex-shrink-0 rounded-lg ${compact ? "p-2 sm:p-2.5 md:p-3" : "p-3"} ${iconBgClass} ${iconColor}`}>
+          <div className={compact ? "w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" : ""}>{icon}</div>
         </div>
       </div>
       {change && (

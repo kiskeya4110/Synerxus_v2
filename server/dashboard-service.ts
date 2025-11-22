@@ -978,9 +978,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         return appMonthKey === monthKey;
       });
 
-      // Filter impacts from this month
+      // Filter impacts from this month (use i.date like buildMonthlyImpactSeries does)
       const monthImpacts = volunteerImpacts.filter(i => {
-        const impactDate = new Date(i.createdAt);
+        const impactDate = new Date(i.date || i.createdAt);
         const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
         return impactMonthKey === monthKey;
       });
@@ -999,6 +999,19 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const monthMatchScore = monthApplications.length > 0
         ? (monthAcceptedApps / monthApplications.length) * 100
         : 0;
+      
+      // Debug monthly impact scores
+      if (monthPeopleImpacted > 0) {
+        console.log(`[Dashboard] Monthly impact for ${monthKey}:`, {
+          monthKey,
+          monthHours,
+          monthPeopleImpacted,
+          monthCompletedTasks,
+          monthHoursScore: Math.round(monthHoursScore),
+          monthPeopleScore: Math.round(monthPeopleScore),
+          monthTasksScore: Math.round(monthTasksScore),
+        });
+      }
 
       // Monthly impact score using NEW FORMULA with people impacted as major driver
       // Hours: 35%, People: 30%, Tasks: 20%, SDG: 10%, Match: 5%
@@ -1018,6 +1031,15 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Now calculate people impacted and recalculate impact score with people as a major driver
     const totalPeopleImpacted = calculatePeopleImpacted(volunteerImpacts, peopleMetricIds);
+    
+    // Debug logging for people impacted calculation
+    console.log(`[Dashboard Impact Score] Volunteer ${userId}:`, {
+      peopleMetricIds: Array.from(peopleMetricIds),
+      totalPeopleImpacted,
+      impactCount: volunteerImpacts.length,
+      allMetricsCount: allImpactMetrics.length,
+    });
+    
     const peopleScore = Math.min((totalPeopleImpacted / 100) * 100, 100);
     
     // Recalculate impact score with updated weights: Hours 35%, People 30%, Tasks 20%, SDG 10%, Match 5%

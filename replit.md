@@ -30,6 +30,16 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 22, 2025)
 
+### Impact Score Calculation Bug Fixes
+- **Fixed monthly impact trend calculation**: Changed from using `i.createdAt` to `i.date` for filtering impacts by month (line 986 in dashboard-service.ts) - this aligned monthly score calculations with the monthlyImpactData calculations
+- **Result**: September's monthly impact score now correctly shows 51 (previously 21), properly reflecting 580 people impacted across the month
+- **Added debug logging**: Console logging for people impacted calculations to track metric identification and monthly score breakdowns
+
+### Volunteer Profile Settings Form Fix
+- **Fixed form becoming blank after save**: Issue was incomplete form.reset() calls missing required schema fields (professionalTitle, linkedinProfile, languages, matchingPriorities)
+- **Applied fix to three locations**: Form defaultValues, initial load effect, and mutation onSuccess handler in volunteer-profile-settings.tsx
+- **Result**: Form now persists all fields correctly after save and across sessions
+
 ### Impact Deduplication System
 - Added deduplication fields to projectImpacts table: `outcomeType` (individual/shared/system), `role` (lead/support/observer), `verificationStatus` (pending/approved/rejected), `evidenceUrls` (array), `dedupGroupId`, `isDuplicated`
 - Implemented backend deduplication logic: `detectDuplicateImpact()` checks for duplicates within ±6 hour window for same project and outcome type

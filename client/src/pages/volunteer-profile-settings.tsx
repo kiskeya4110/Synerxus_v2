@@ -815,16 +815,26 @@ export default function VolunteerProfileSettings() {
     defaultValues: {
       email: "",
       name: "",
+      professionalTitle: "",
+      yearsOfExperience: "",
+      linkedinProfile: "",
+      languages: [],
       skills: [],
       interests: [],
       location: "",
-      yearsOfExperience: "",
       sdgGoals: [],
       weeklyHours: 1,
       availability: [],
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       preferredCommitment: "flexible",
       preferredWorkStyle: "remote",
+      matchingPriorities: {
+        skillsMatch: 3,
+        causeAlignment: 3,
+        timeFlexibility: 3,
+        geographicPreference: 3,
+        impactPotential: 3,
+      },
     },
   });
 
@@ -844,10 +854,13 @@ export default function VolunteerProfileSettings() {
         form.reset({
           email: currentUser?.email || "",
           name: existingProfile.volunteerName || currentUser?.displayName || "",
+          professionalTitle: existingProfile.professionalTitle || "",
+          yearsOfExperience: existingProfile.yearsOfExperience || "",
+          linkedinProfile: existingProfile.linkedinProfile || "",
+          languages: existingProfile.languages || [],
           skills: existingProfile.skills || [],
           interests: existingProfile.interests || [],
           location: existingProfile.location || "",
-          yearsOfExperience: existingProfile.yearsOfExperience || "",
           sdgGoals: existingProfile.preferredSdgs || [],
           weeklyHours: existingProfile.weeklyAvailability || 1,
           availability: existingProfile.availability || [],
@@ -857,6 +870,13 @@ export default function VolunteerProfileSettings() {
           preferredCommitment:
             existingProfile.preferredCommitment || "flexible",
           preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
+          matchingPriorities: existingProfile.matchingPriorities || {
+            skillsMatch: 3,
+            causeAlignment: 3,
+            timeFlexibility: 3,
+            geographicPreference: 3,
+            impactPotential: 3,
+          },
         });
       } else {
         // New profile
@@ -892,13 +912,17 @@ export default function VolunteerProfileSettings() {
       );
 
       // Directly set form values with saved data - this prevents the form from going blank
+      // Make sure to include ALL fields from the schema
       form.reset({
         email: currentUser?.email || "",
         name: profileData.volunteerName || currentUser?.displayName || "",
+        professionalTitle: profileData.professionalTitle || "",
+        yearsOfExperience: profileData.yearsOfExperience || "",
+        linkedinProfile: profileData.linkedinProfile || "",
+        languages: profileData.languages || [],
         skills: profileData.skills || [],
         interests: profileData.interests || [],
         location: profileData.location || "",
-        yearsOfExperience: profileData.yearsOfExperience || "",
         sdgGoals: profileData.preferredSdgs || [],
         weeklyHours: profileData.weeklyAvailability || 1,
         availability: profileData.availability || [],
@@ -907,6 +931,13 @@ export default function VolunteerProfileSettings() {
           Intl.DateTimeFormat().resolvedOptions().timeZone,
         preferredCommitment: profileData.preferredCommitment || "flexible",
         preferredWorkStyle: profileData.preferredWorkStyle || "remote",
+        matchingPriorities: profileData.matchingPriorities || {
+          skillsMatch: 3,
+          causeAlignment: 3,
+          timeFlexibility: 3,
+          geographicPreference: 3,
+          impactPotential: 3,
+        },
       });
 
       // Invalidate related queries in background (non-blocking)

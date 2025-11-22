@@ -281,6 +281,31 @@ export default function MyWork() {
   const orgTotalHours = orgActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const orgCompletedProjects = orgProjects.filter(p => p.status?.toLowerCase() === 'completed').length;
 
+  // Calculate Impact Leader (volunteer with most hours)
+  const volunteerHoursMap = new Map<number, { hours: number; name: string }>();
+  orgActivities.forEach(activity => {
+    if (activity.userId) {
+      const volunteer = orgVolunteers.find((v: any) => v.id === activity.userId);
+      const key = activity.userId;
+      if (volunteerHoursMap.has(key)) {
+        const current = volunteerHoursMap.get(key)!;
+        volunteerHoursMap.set(key, { 
+          hours: current.hours + (activity.hours || 0),
+          name: current.name 
+        });
+      } else {
+        volunteerHoursMap.set(key, { 
+          hours: activity.hours || 0,
+          name: volunteer?.displayName || volunteer?.username || 'Unknown'
+        });
+      }
+    }
+  });
+  
+  const impactLeaderEntry = Array.from(volunteerHoursMap.entries())
+    .sort((a, b) => b[1].hours - a[1].hours)[0];
+  const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
+
   return (
     <div className="min-h-screen">
       <div className="p-6 pb-4 flex items-start justify-between">
@@ -356,15 +381,20 @@ export default function MyWork() {
 
           <Card>
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Organization</p>
-                  <p className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                    {organization?.name ? organization.name.substring(0, 15) : 'N/A'}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">impact leader</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Organization</p>
+                    <p className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                      {organization?.name ? organization.name.substring(0, 12) : 'N/A'}
+                    </p>
+                  </div>
+                  <BarChart3 className="h-8 w-8 text-orange-500" />
                 </div>
-                <BarChart3 className="h-8 w-8 text-orange-500" />
+                <Button variant="outline" size="sm" className="w-full justify-center gap-2 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/20" data-testid="button-impact-leader">
+                  <Star className="h-4 w-4" />
+                  <span className="text-xs font-semibold">Impact Leader: {impactLeaderName.substring(0, 12)}</span>
+                </Button>
               </div>
             </CardContent>
           </Card>

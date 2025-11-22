@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import type { User, Task, ProjectAssignment } from "@shared/schema";
@@ -116,6 +117,80 @@ export default function MyWork() {
     window.history.replaceState(null, '', `#${value}`);
   };
 
+  // Generate personalized recommendations based on past engagement
+  const generateRecommendations = () => {
+    const recommendations = [];
+    
+    // Check if volunteer has capacity
+    if (hoursRemaining > 5) {
+      // Skill-based recommendation
+      const topSkill = volunteerProfile?.skills?.[0];
+      if (topSkill) {
+        recommendations.push({
+          id: 1,
+          title: `Expand Your ${topSkill} Impact`,
+          description: `Projects seeking your ${topSkill} expertise - perfect for your current availability`,
+          matchScore: 95,
+          reason: "Based on your proven skills",
+          skills: [topSkill],
+          icon: "⭐"
+        });
+      }
+
+      // High-engagement recommendation
+      if (completedTaskCount > 3) {
+        recommendations.push({
+          id: 2,
+          title: "High-Impact Leadership Role",
+          description: "Based on your 100% task completion rate, consider mentoring or leading a team",
+          matchScore: 88,
+          reason: "Your strong track record",
+          skills: ["Leadership", "Mentoring"],
+          icon: "🚀"
+        });
+      }
+
+      // SDG alignment recommendation
+      const preferredSdgs = volunteerProfile?.preferredSdgs?.slice(0, 2) || [];
+      if (preferredSdgs.length > 0) {
+        const sdgNames = {
+          1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
+          5: "Gender Equality", 6: "Clean Water", 7: "Clean Energy", 8: "Decent Work",
+          9: "Industry & Innovation", 10: "Reduced Inequalities", 11: "Sustainable Cities",
+          12: "Responsible Consumption", 13: "Climate Action", 14: "Life Below Water",
+          15: "Life on Land", 16: "Peace & Justice", 17: "Partnerships"
+        } as Record<number, string>;
+
+        recommendations.push({
+          id: 3,
+          title: `Drive ${sdgNames[preferredSdgs[0]] || "SDG Impact"}`,
+          description: `Opportunities aligned with SDG ${preferredSdgs[0]} that match your passion`,
+          matchScore: 92,
+          reason: "Aligns with your values",
+          skills: ["Social Impact", "Sustainability"],
+          icon: "🌍"
+        });
+      }
+
+      // Availability-based recommendation
+      if (hoursRemaining > 10) {
+        recommendations.push({
+          id: 4,
+          title: "Intensive Project Opportunity",
+          description: `You have ${hoursRemaining.toFixed(0)}+ hours available - ready for a larger commitment`,
+          matchScore: 85,
+          reason: `${hoursRemaining.toFixed(0)} hours capacity`,
+          skills: ["Project Management"],
+          icon: "💡"
+        });
+      }
+    }
+
+    return recommendations;
+  };
+
+  const personalizedRecommendations = generateRecommendations();
+
   return (
     <div className="min-h-screen">
       <div className="p-6 pb-4 flex items-start justify-between">
@@ -191,6 +266,52 @@ export default function MyWork() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Personalized Recommendations Section */}
+      {personalizedRecommendations.length > 0 && (
+        <div className="px-6 pb-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Lightbulb className="h-5 w-5 text-yellow-500" />
+            <h2 className="text-lg font-semibold">Personalized Opportunities for You</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {personalizedRecommendations.map((rec: any) => (
+              <Card key={rec.id} className="border-blue-200 dark:border-blue-800 hover:shadow-lg transition-shadow cursor-pointer group" data-testid={`recommendation-${rec.id}`}>
+                <CardContent className="pt-6">
+                  <div className="flex items-start justify-between mb-3">
+                    <span className="text-3xl">{rec.icon}</span>
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                      <Star className="h-3 w-3 mr-1" />
+                      {rec.matchScore}%
+                    </Badge>
+                  </div>
+                  <h3 className="font-semibold text-sm mb-2 group-hover:text-blue-600 transition-colors">
+                    {rec.title}
+                  </h3>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                    {rec.description}
+                  </p>
+                  <div className="space-y-2 mb-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 italic">
+                      {rec.reason}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {rec.skills.map((skill: string) => (
+                        <Badge key={skill} variant="outline" className="text-xs py-0">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" className="w-full text-blue-600 dark:text-blue-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-950">
+                    Explore <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Tabs defaultValue={getInitialTab()} onValueChange={handleTabChange} className="w-full px-6">
         <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">

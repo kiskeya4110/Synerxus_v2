@@ -59,6 +59,26 @@ const SDG_LOGOS = {
   17: "🤝",
 } as Record<number, string>;
 
+const SDG_TITLES = {
+  1: "No Poverty",
+  2: "Zero Hunger",
+  3: "Good Health & Well-being",
+  4: "Quality Education",
+  5: "Gender Equality",
+  6: "Clean Water & Sanitation",
+  7: "Affordable & Clean Energy",
+  8: "Decent Work & Economic Growth",
+  9: "Industry, Innovation & Infrastructure",
+  10: "Reduced Inequalities",
+  11: "Sustainable Cities & Communities",
+  12: "Responsible Consumption",
+  13: "Climate Action",
+  14: "Life Below Water",
+  15: "Life on Land",
+  16: "Peace, Justice & Strong Institutions",
+  17: "Partnerships for the Goals",
+} as Record<number, string>;
+
 export default function ImpactReport(props: any) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -623,24 +643,26 @@ export default function ImpactReport(props: any) {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         UN Sustainable Development Goals
                       </h3>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {sdgs.map((sdgId: number) => {
                           const goal = sdgGoals[sdgId];
+                          const title = SDG_TITLES[sdgId];
                           return (
                             <div
                               key={sdgId}
-                              className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all group"
-                              title={goal?.name || getSDGName(sdgId)}
+                              className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 hover:shadow-md transition-all"
                             >
-                              <span className="text-2xl mb-1">
+                              <span className="text-4xl flex-shrink-0">
                                 {SDG_LOGOS[sdgId]}
                               </span>
-                              <span className="text-xs font-bold text-gray-900 dark:text-white">
-                                SDG {sdgId}
-                              </span>
-                              <span className="text-xs text-gray-600 dark:text-gray-400 text-center line-clamp-1 hidden group-hover:block absolute bottom-8 bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-1 rounded text-xs whitespace-nowrap z-10">
-                                {goal?.name || getSDGName(sdgId)}
-                              </span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-gray-900 dark:text-white text-sm">
+                                  SDG {sdgId}
+                                </p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-semibold leading-tight">
+                                  {title}
+                                </p>
+                              </div>
                             </div>
                           );
                         })}
@@ -914,14 +936,17 @@ export default function ImpactReport(props: any) {
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">UN Sustainable Development Goals</h3>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                         {sdgs.map((sdgId: number) => {
                           const goal = sdgGoals[sdgId];
+                          const title = SDG_TITLES[sdgId];
                           return (
-                            <div key={sdgId} className="flex flex-col items-center justify-center p-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all group" title={goal?.name || getSDGName(sdgId)}>
-                              <span className="text-2xl mb-1">{SDG_LOGOS[sdgId]}</span>
-                              <span className="text-xs font-bold text-gray-900 dark:text-white">SDG {sdgId}</span>
-                              <span className="text-xs text-gray-600 dark:text-gray-400 text-center line-clamp-1 hidden group-hover:block absolute bottom-8 bg-gray-900 dark:bg-white text-white dark:text-gray-900 p-1 rounded text-xs whitespace-nowrap z-10">{goal?.name || getSDGName(sdgId)}</span>
+                            <div key={sdgId} className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 hover:shadow-md transition-all">
+                              <span className="text-4xl flex-shrink-0">{SDG_LOGOS[sdgId]}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-bold text-gray-900 dark:text-white text-sm">SDG {sdgId}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-200 font-semibold leading-tight">{title}</p>
+                              </div>
                             </div>
                           );
                         })}

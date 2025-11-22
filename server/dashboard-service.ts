@@ -920,6 +920,34 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const completedFields = Object.values(profileFields).filter(v => v > 0).length;
     const profileCompleteness = Math.round((completedFields / Object.keys(profileFields).length) * 100);
 
+    // Derive people metric IDs BEFORE monthly impact trend (needed for monthly calculations)
+    const peopleMetricIds = new Set<number>();
+    allImpactMetrics.forEach(metric => {
+      const unit = (metric.unit || '').toLowerCase();
+      const category = (metric.category || '').toLowerCase();
+      const name = (metric.name || '').toLowerCase();
+      
+      // Expanded keywords to capture more human-impact metrics
+      const peopleKeywords = [
+        'people', 'person', 'beneficiar', 'student', 'child', 'children',
+        'adult', 'family', 'families', 'participant', 'recipient',
+        'attendee', 'individual', 'community member'
+      ];
+      const serviceKeywords = [
+        'meal', 'service', 'healthcare', 'education', 'training'
+      ];
+      
+      const isPeopleMetric = peopleKeywords.some(keyword => 
+        unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
+      ) || serviceKeywords.some(keyword => 
+        unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
+      );
+      
+      if (isPeopleMetric) {
+        peopleMetricIds.add(metric.id);
+      }
+    });
+
     // Calculate monthly impact scores (algorithm-evaluated data)
     const now = new Date();
     const months: string[] = [];
@@ -950,59 +978,42 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         return appMonthKey === monthKey;
       });
 
+      // Filter impacts from this month
+      const monthImpacts = volunteerImpacts.filter(i => {
+        const impactDate = new Date(i.createdAt);
+        const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
+        return impactMonthKey === monthKey;
+      });
+
       // Calculate monthly metrics
       const monthHours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
       const monthCompletedTasks = monthTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
       const monthTotalTasks = monthTasks.length;
       const monthAcceptedApps = monthApplications.filter(app => app.status?.toLowerCase() === 'accepted').length;
 
-      // Calculate scores (same formula as overall impact score)
+      // Calculate scores using updated formula with people impacted
       const monthHoursScore = Math.min((monthHours / 20) * 100, 100); // Normalized to 20 hours/month
+      const monthPeopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
+      const monthPeopleScore = Math.min((monthPeopleImpacted / 100) * 100, 100);
       const monthTasksScore = monthTotalTasks > 0 ? (monthCompletedTasks / monthTotalTasks) * 100 : 0;
       const monthMatchScore = monthApplications.length > 0
         ? (monthAcceptedApps / monthApplications.length) * 100
         : 0;
 
-      // Monthly impact score (weighted average)
+      // Monthly impact score using NEW FORMULA with people impacted as major driver
+      // Hours: 35%, People: 30%, Tasks: 20%, SDG: 10%, Match: 5%
       const monthImpactScore = Math.round(
-        monthHoursScore * 0.50 +     // Higher weight for hours in monthly view
-        monthTasksScore * 0.30 +      // Task completion
-        sdgScore * 0.10 +              // Overall SDG coverage (constant per user)
-        monthMatchScore * 0.10         // Application success rate
+        monthHoursScore * 0.35 +       // Hours contributed
+        monthPeopleScore * 0.30 +       // People impacted (NEW - major driver)
+        monthTasksScore * 0.20 +        // Task completion
+        sdgScore * 0.10 +               // Overall SDG coverage (constant per user)
+        monthMatchScore * 0.05          // Application success rate
       );
 
       return {
         month: monthKey,
         score: monthImpactScore,
       };
-    });
-
-    // Derive people metric IDs (same logic as organization dashboard)
-    const peopleMetricIds = new Set<number>();
-    allImpactMetrics.forEach(metric => {
-      const unit = (metric.unit || '').toLowerCase();
-      const category = (metric.category || '').toLowerCase();
-      const name = (metric.name || '').toLowerCase();
-      
-      // Expanded keywords to capture more human-impact metrics
-      const peopleKeywords = [
-        'people', 'person', 'beneficiar', 'student', 'child', 'children',
-        'adult', 'family', 'families', 'participant', 'recipient',
-        'attendee', 'individual', 'community member'
-      ];
-      const serviceKeywords = [
-        'meal', 'service', 'healthcare', 'education', 'training'
-      ];
-      
-      const isPeopleMetric = peopleKeywords.some(keyword => 
-        unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
-      ) || serviceKeywords.some(keyword => 
-        unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
-      );
-      
-      if (isPeopleMetric) {
-        peopleMetricIds.add(metric.id);
-      }
     });
 
     // Now calculate people impacted and recalculate impact score with people as a major driver
@@ -1037,6 +1048,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         totalTasks,
         sdgsAddressed: uniqueSDGs.size,
         impactScore,
+        totalPeopleImpacted, // Add people impacted to summary so frontend can display it
         recentActivities: volunteerActivities
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5),

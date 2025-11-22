@@ -273,6 +273,20 @@ export default function ImpactReport(props: any) {
 
   // Update filtered KPIs
   const filteredTotalHours = filteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  
+  // Calculate filtered active projects (only projects with activities in selected time period)
+  const projectsWithFilteredActivities = new Set(filteredActivities.map(a => a.projectId));
+  const filteredActiveProjects = projectAssignments.filter(pa => 
+    pa.status === 'active' && projectsWithFilteredActivities.has(pa.projectId)
+  ).length;
+  
+  // Calculate filtered impact score
+  const filteredHoursScore = Math.min((filteredTotalHours / 100) * 100, 100);
+  const filteredTasksScore = totalTasks > 0 ? (filteredCompletedTasks / totalTasks) * 100 : 0;
+  const filteredProjectsScore = Math.min((filteredActiveProjects / 5) * 100, 100);
+  const filteredSkillsScore = Math.min((allSkills.length / 10) * 100, 100);
+  const filteredSdgScore = Math.min((sdgs.length / 5) * 100, 100);
+  const filteredImpactScore = Math.round((filteredHoursScore + filteredTasksScore + filteredProjectsScore + filteredSkillsScore + filteredSdgScore) / 5);
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -478,7 +492,7 @@ export default function ImpactReport(props: any) {
               {/* Total Impact Score Badge */}
               <div className="mt-4 inline-block">
                 <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 text-base print:text-sm">
-                  Total Impact Score: {totalImpactScore}/100
+                  Impact Score: {filteredImpactScore}/100 {timeFilter !== 'all' && `(${timeFilter === 'month' ? 'This Month' : timeFilter === 'quarter' ? 'This Quarter' : 'This Year'})`}
                 </Badge>
               </div>
 
@@ -567,7 +581,7 @@ export default function ImpactReport(props: any) {
                       Active Projects
                     </p>
                     <p className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400">
-                      {activeProjects}
+                      {filteredActiveProjects}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 truncate">
                       of {assignmentsCount} assign.

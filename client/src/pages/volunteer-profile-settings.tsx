@@ -845,6 +845,9 @@ export default function VolunteerProfileSettings() {
       const id = currentUser?.id;
       console.log(`[Settings Mutation] Success - refetching profile data for user ${id}`);
       
+      // Reset the initialization flag so the form will reload with fresh data
+      hasInitializedRef.current = false;
+      
       // Force immediate refetch of settings form data
       profileQuery.refetch();
       

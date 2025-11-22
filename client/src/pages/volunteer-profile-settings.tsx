@@ -797,27 +797,34 @@ export default function VolunteerProfileSettings() {
     },
   });
 
-  // Load profile data into form ONLY on initial load (not on refetch)
-  // This prevents the effect from interfering with the onSuccess callback
+  // Load profile data into form when profile loads or changes
   useEffect(() => {
-    if (!hasInitializedRef.current && existingProfile && currentUser?.id) {
-      console.log(`[Profile Load Effect] Initial loading of profile data for user ${currentUser?.id}`);
-      hasInitializedRef.current = true;
-      populateFormFromProfile(existingProfile, currentUser);
-    }
-  }, [currentUser?.id]); // Only run when user ID changes
-
-  // Initialize email/name for new profiles
-  useEffect(() => {
-    if (!hasInitializedRef.current && !existingProfile && currentUser?.email) {
+    if (existingProfile && currentUser?.id) {
+      console.log(`[Profile Load Effect] Loading profile data for user ${currentUser?.id}:`, existingProfile);
+      // Reset form with profile data
+      form.reset({
+        email: currentUser?.email || "",
+        name: existingProfile.volunteerName || currentUser?.displayName || "",
+        skills: existingProfile.skills || [],
+        interests: existingProfile.interests || [],
+        location: existingProfile.location || "",
+        yearsOfExperience: existingProfile.yearsOfExperience || "",
+        sdgGoals: existingProfile.preferredSdgs || [],
+        weeklyHours: existingProfile.weeklyAvailability || 1,
+        availability: existingProfile.availability || [],
+        timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferredCommitment: existingProfile.preferredCommitment || "flexible",
+        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
+      });
+    } else if (!existingProfile && currentUser?.email) {
+      // New profile - just set email/name
       console.log(`[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`);
-      hasInitializedRef.current = true;
       form.setValue("email", currentUser.email);
       if (currentUser.displayName) {
         form.setValue("name", currentUser.displayName);
       }
     }
-  }, [currentUser?.id]);
+  }, [existingProfile, currentUser?.id, currentUser?.email, currentUser?.displayName, form]);
 
   // Load existing photo URL
   useEffect(() => {
@@ -826,42 +833,26 @@ export default function VolunteerProfileSettings() {
     }
   }, [existingProfile]);
 
-  // Helper function to populate form from profile data
-  const populateFormFromProfile = (profile: any, user: any) => {
-    console.log(`[populateFormFromProfile] Loading data for user ${user?.id}:`, profile);
-    // Use form.reset() instead of setValue() to properly update all fields at once
-    form.reset({
-      email: user?.email || "",
-      name: profile.volunteerName || user?.displayName || "",
-      skills: profile.skills || [],
-      interests: profile.interests || [],
-      location: profile.location || "",
-      yearsOfExperience: profile.yearsOfExperience || "",
-      sdgGoals: profile.preferredSdgs || [],
-      weeklyHours: profile.weeklyAvailability || 1,
-      availability: profile.availability || [],
-      timezone: profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-      preferredCommitment: profile.preferredCommitment || "flexible",
-      preferredWorkStyle: profile.preferredWorkStyle || "remote",
-    }, {
-      keepDirty: false,
-      keepTouched: false,
-    });
-  };
-
   // Mutations
   const mutationConfig = {
     onSuccess: async (result: any) => {
       const id = currentUser?.id;
       console.log(`[Settings Mutation] Success - mutation returned:`, result);
       
-      // Extract volunteerProfile from response (API now returns { user, volunteerProfile })
+      // DON'T populate form directly - let the refetch update it through existingProfile
+      // Extract and store the result for immediate display if needed
       const profileData = result.volunteerProfile || result;
-      console.log(`[Settings Mutation] Populating form with profile data for user ${id}:`, profileData);
-      populateFormFromProfile(profileData, currentUser);
+      console.log(`[Settings Mutation] Got saved profile data for user ${id}:`, profileData);
       
-      // Invalidate cache for all queries (non-blocking)
-      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
+      // Invalidate profile cache to force refetch with fresh data
+      // Use a small delay to ensure backend has persisted everything
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
+      
+      // Let the profile query refetch automatically, which will trigger the effect to reload the form
+      // The existing profile query has staleTime: undefined, so invalidation will trigger refetch
+      
+      // Invalidate related queries (non-blocking)
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });

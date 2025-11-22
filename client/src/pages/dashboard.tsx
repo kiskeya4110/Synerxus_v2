@@ -65,15 +65,10 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType && !!userId
   });
 
-  // Fetch ALL projects (no userId filter) to ensure complete matching
-  const { data: projects = [], isLoading: loadingProjects } = useQuery<any[]>({
-    queryKey: ["/api/projects"],
-    queryFn: async () => {
-      const response = await fetch(`/api/projects`);
-      if (!response.ok) return [];
-      return response.json();
-    },
-  });
+  // Use projects from dashboardData which are already properly scoped to the user
+  // (volunteers see only assigned projects, organizations see only their projects)
+  const projects = dashboardData?.projects || [];
+  const loadingProjects = loadingDashboard;
 
   // Log volunteer profile data for debugging
   if (currentUser?.userType === 'volunteer' && dashboardData?.volunteerProfile) {

@@ -1124,7 +1124,7 @@ export default function VolunteerProfileSettings() {
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-8">
+      <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
         <p className="text-muted-foreground">
           Create or update your volunteer profile to get matched with
@@ -1133,8 +1133,8 @@ export default function VolunteerProfileSettings() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center gap-2 justify-center">
             <User className="h-5 w-5" />
             {existingProfile ? "Update Your Profile" : "Create Your Profile"}
           </CardTitle>

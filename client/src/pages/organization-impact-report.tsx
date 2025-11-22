@@ -868,7 +868,7 @@ export default function OrganizationImpactReport(props: any) {
             <div className="space-y-8">
               {/* Overview Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700">Overview</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700 text-center">Overview</h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
@@ -895,7 +895,7 @@ export default function OrganizationImpactReport(props: any) {
 
               {/* Programs Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200">Programs</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 text-center">Programs</h2>
                 <Card className="border border-gray-200 dark:border-gray-700 mb-6">
                   <CardContent className="p-6">
                     <div className="space-y-4">
@@ -930,7 +930,7 @@ export default function OrganizationImpactReport(props: any) {
 
               {/* Financial Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200">Financial</h2>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 text-center">Financial</h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Revenue</p>

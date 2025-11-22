@@ -992,7 +992,7 @@ export default function ImpactReport(props: any) {
             <div className="space-y-6">
               {/* Overview Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700 flex items-center gap-2 justify-center">
                   <Target className="h-6 w-6" />
                   Overview
                 </h2>
@@ -1057,7 +1057,7 @@ export default function ImpactReport(props: any) {
 
               {/* Engagement Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 dark:border-green-700 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 dark:border-green-700 flex items-center gap-2 justify-center">
                   <Users className="h-6 w-6" />
                   Engagement
                 </h2>
@@ -1120,7 +1120,7 @@ export default function ImpactReport(props: any) {
 
               {/* Impact Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-700 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-700 flex items-center gap-2 justify-center">
                   <TrendingUp className="h-6 w-6" />
                   Impact
                 </h2>
@@ -1177,7 +1177,7 @@ export default function ImpactReport(props: any) {
 
               {/* Analytics Section */}
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200 dark:border-orange-700 flex items-center gap-2">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200 dark:border-orange-700 flex items-center gap-2 justify-center">
                   <BarChart3 className="h-6 w-6" />
                   Analytics
                 </h2>

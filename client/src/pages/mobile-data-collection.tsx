@@ -235,7 +235,7 @@ export default function MobileDataCollection() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      <div className="text-center">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           Mobile Data Collection
         </h1>
@@ -254,8 +254,8 @@ export default function MobileDataCollection() {
         {/* Activity Log Tab */}
         <TabsContent value="activity" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Log Volunteer Activity</CardTitle>
+            <CardHeader className="text-center">
+              <CardTitle className="text-center">Log Volunteer Activity</CardTitle>
               <CardDescription>
                 Record your volunteer hours and activities in the field
               </CardDescription>
@@ -442,8 +442,8 @@ export default function MobileDataCollection() {
         {/* Impact Recording Tab */}
         <TabsContent value="impact" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Record Impact Data</CardTitle>
+            <CardHeader className="text-center">
+              <CardTitle className="text-center">Record Impact Data</CardTitle>
               <CardDescription>
                 Track measurable outcomes and impact metrics from your projects
               </CardDescription>
@@ -583,8 +583,8 @@ export default function MobileDataCollection() {
         {/* Recent Entries Tab */}
         <TabsContent value="history" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity Logs</CardTitle>
+            <CardHeader className="text-center">
+              <CardTitle className="text-center">Recent Activity Logs</CardTitle>
               <CardDescription>
                 Your most recent volunteer activities
               </CardDescription>

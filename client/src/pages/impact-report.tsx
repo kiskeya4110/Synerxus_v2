@@ -87,6 +87,7 @@ export default function ImpactReport(props: any) {
   const [activeTab, setActiveTab] = useState("overview");
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
+  const [logoError, setLogoError] = useState(false);
   const chartRefs = useRef<Record<string, any>>({});
 
   // Get volunteer ID from URL params or current user
@@ -458,15 +459,15 @@ export default function ImpactReport(props: any) {
               {/* Logo Section */}
               <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
                 <Logo size="sm" className="print:scale-75" />
-                {primaryOrganization?.logo && (
+                {primaryOrganization?.logo && !logoError && (
                   <div className="flex items-center gap-2">
                     <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6 print:pl-3 print:border-gray-400">
                       <img
                         src={primaryOrganization.logo}
                         alt={primaryOrganization.name}
                         className="h-12 w-auto object-contain print:h-8"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
+                        onError={() => {
+                          setLogoError(true);
                         }}
                       />
                     </div>
@@ -1285,7 +1286,7 @@ export default function ImpactReport(props: any) {
               <p>
                 Generated on {new Date().toLocaleDateString()} • Global Impact Report {timeFilter !== 'all' && `(${['All Time', 'This Month', 'This Quarter', 'This Year'][['all', 'month', 'quarter', 'year'].indexOf(timeFilter)]})`}
               </p>
-              {!isPrinting && (
+              {!isPrinting && volunteerId && (
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                   Share this link: {shareUrl}
                 </p>

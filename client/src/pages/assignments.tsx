@@ -35,6 +35,7 @@ export default function Assignments() {
   });
 
   // Fetch volunteer's enriched project assignments with team members and activities
+  // API now returns enriched data with project and organization details
   const { data: assignments = [], isLoading: assignmentsLoading } = useQuery<any[]>({
     queryKey: ["/api/project-assignments", currentUser?.id],
     queryFn: async () => {
@@ -51,23 +52,6 @@ export default function Assignments() {
       return data;
     },
     enabled: !!currentUser?.id
-  });
-
-  // Fetch ALL projects (not filtered by userId) to ensure we can match assignments
-  const { data: projects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects"],
-    queryFn: async () => {
-      const response = await fetch(`/api/projects`, {
-        credentials: "include"
-      });
-      if (!response.ok) return [];
-      return response.json();
-    },
-  });
-
-  // Fetch organizations to get details
-  const { data: organizations = [] } = useQuery<any[]>({
-    queryKey: ["/api/organizations"],
   });
 
   // Filter assignments by status (default to empty array to prevent crashes during loading)
@@ -98,6 +82,11 @@ export default function Assignments() {
     },
     enabled: projectIds.length > 0
   });
+
+  // Enriched assignments now come directly from the API (no need to manually enrich)
+  // Just use them as-is since they already include project and organization data
+  const enrichedPendingAssignments = pendingAssignments;
+  const enrichedActiveAssignments = activeAssignments;
 
   const toggleProject = (projectId: number) => {
     setExpandedProjects(prev => {
@@ -147,18 +136,6 @@ export default function Assignments() {
     }
   });
 
-  // Enrich assignments with project and organization details
-  const enrichedPendingAssignments = pendingAssignments.map((assignment: any) => {
-    const project = projects.find((p: any) => p.id === assignment.projectId);
-    const organization = project ? organizations.find((o: any) => o.id === project.organizationId) : null;
-    return { ...assignment, project, organization };
-  });
-
-  const enrichedActiveAssignments = activeAssignments.map((assignment: any) => {
-    const project = projects.find((p: any) => p.id === assignment.projectId);
-    const organization = project ? organizations.find((o: any) => o.id === project.organizationId) : null;
-    return { ...assignment, project, organization };
-  });
 
   const isLoading = userLoading || assignmentsLoading;
 

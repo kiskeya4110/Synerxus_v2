@@ -2112,7 +2112,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assignments = await storage.listProjectAssignments();
       }
       
-      res.json(assignments);
+      // Enrich assignments with project and organization data
+      const enrichedAssignments = await Promise.all(
+        assignments.map(async (assignment: any) => {
+          if (!assignment.projectId) {
+            return { ...assignment, project: null, organization: null };
+          }
+          const project = await storage.getProject(assignment.projectId);
+          const organization = project?.organizationId ? await storage.getOrganization(project.organizationId) : null;
+          return {
+            ...assignment,
+            project,
+            organization
+          };
+        })
+      );
+      
+      res.json(enrichedAssignments);
     } catch (err) {
       console.error("Error fetching project assignments:", err);
       res.status(500).json({ message: "Failed to fetch project assignments" });

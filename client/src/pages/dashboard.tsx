@@ -65,16 +65,14 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType && !!userId
   });
 
+  // Fetch ALL projects (no userId filter) to ensure complete matching
   const { data: projects = [], isLoading: loadingProjects } = useQuery<any[]>({
-    queryKey: ["/api/projects", userId],
+    queryKey: ["/api/projects"],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) return [];
-      const response = await fetch(`/api/projects?userId=${id}`);
-      if (!response.ok) throw new Error("Failed to fetch projects");
+      const response = await fetch(`/api/projects`);
+      if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!currentUser && !!currentUser.userType && !!userId
   });
 
   // Log volunteer profile data for debugging

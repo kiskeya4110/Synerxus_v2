@@ -57,17 +57,14 @@ export default function MobileDataCollection() {
     enabled: !!userId
   });
 
-  // Fetch organization-scoped projects from API
+  // Fetch ALL projects (no userId filter) to ensure complete matching
   const { data: projects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects", userId],
+    queryKey: ["/api/projects"],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) return [];
-      const response = await fetch(`/api/projects?userId=${id}`);
-      if (!response.ok) throw new Error("Failed to fetch projects");
+      const response = await fetch(`/api/projects`);
+      if (!response.ok) return [];
       return response.json();
     },
-    enabled: !!currentUser && !!userId
   });
 
   // Fetch organization-scoped tasks from API
@@ -107,7 +104,7 @@ export default function MobileDataCollection() {
     defaultValues: {
       projectId: "",
       taskId: "",
-      hours: "",
+      hours: "0",
       date: new Date().toISOString().split('T')[0],
       description: "",
       skillsApplied: "",
@@ -121,7 +118,7 @@ export default function MobileDataCollection() {
     defaultValues: {
       projectId: "",
       metricId: "",
-      value: "",
+      value: "0",
       date: new Date().toISOString().split('T')[0],
       notes: "",
     },

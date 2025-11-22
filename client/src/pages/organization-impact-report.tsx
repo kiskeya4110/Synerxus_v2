@@ -586,28 +586,30 @@ export default function OrganizationImpactReport(props: any) {
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Radar</h3>
-                      <Radar
-                        data={organizationalPerformance}
-                        options={{
-                          responsive: true,
-                          maintainAspectRatio: true,
-                          plugins: { 
-                            legend: { position: 'bottom', labels: { font: { size: 12 } } },
-                            tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
-                          },
-                          scales: { 
-                            r: { 
-                              beginAtZero: true, 
-                              max: 100,
-                              ticks: { font: { size: 12, weight: 'bold' } },
-                              pointLabels: {
-                                font: { size: 12, weight: 'bold', lineHeight: 1.4 },
-                                padding: 35
-                              }
-                            } 
-                          }
-                        }}
-                      />
+                      <div style={{ height: '320px' }}>
+                        <Radar
+                          data={organizationalPerformance}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                              legend: { position: 'bottom', labels: { font: { size: 11 } } },
+                              tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+                            },
+                            scales: { 
+                              r: { 
+                                beginAtZero: true, 
+                                max: 100,
+                                ticks: { font: { size: 10, weight: 'bold' } },
+                                pointLabels: {
+                                  font: { size: 10, weight: 'bold', lineHeight: 1.5 },
+                                  padding: 50
+                                }
+                              } 
+                            }
+                          }}
+                        />
+                      </div>
                     </CardContent>
                   </Card>
 

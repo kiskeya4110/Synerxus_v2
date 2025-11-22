@@ -139,52 +139,62 @@ const skillProficiencySchema = z.object({
   proficiency: z.number().min(0).max(100, "Proficiency must be 0-100"),
 });
 
-const formSchema = insertVolunteerSchema.extend({
-  email: z.string().email("Valid email is required"),
-  name: z.string().min(1, "Name is required"),
-  // New professional fields
-  professionalTitle: z.string().optional(),
-  yearsOfExperience: z.string().optional(),
-  linkedinProfile: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-  languages: z.array(z.string()).optional(),
-  // Existing fields
-  skills: z.array(skillProficiencySchema).min(1, "At least one skill is required"),
-  interests: z.array(z.string()).optional(),
-  location: z.string().optional(),
-  sdgGoals: z.array(z.number()).optional(),
-  weeklyHours: z.number().min(1, "At least 1 hour is required"),
-  availability: z
-    .array(availabilitySlotSchema)
-    .min(1, "At least one availability slot is required"),
-  timezone: z.string().min(1, "Timezone is required"),
-  preferredCommitment: z.enum([
-    "one-time",
-    "short-term",
-    "long-term",
-    "flexible",
-  ]),
-  preferredWorkStyle: z.enum(["remote", "in-person", "hybrid"]).optional(),
-  // New matching priorities
-  matchingPriorities: z.object({
-    skillsMatch: z.number().min(1).max(5).default(3),
-    causeAlignment: z.number().min(1).max(5).default(3),
-    timeFlexibility: z.number().min(1).max(5).default(3),
-    geographicPreference: z.number().min(1).max(5).default(3),
-    impactPotential: z.number().min(1).max(5).default(3),
-  }).optional(),
-}).refine((data) => {
-  // Calculate total hours from availability slots
-  const totalHours = data.availability.reduce((sum, slot) => {
-    const start = parseInt(slot.startTime.split(':')[0]);
-    const end = parseInt(slot.endTime.split(':')[0]);
-    return sum + (end - start);
-  }, 0);
-  
-  // Availability should be the LESSER of weekly hours or total slot hours
-  data.weeklyHours = Math.min(data.weeklyHours, totalHours);
-  
-  return true;
-});
+const formSchema = insertVolunteerSchema
+  .extend({
+    email: z.string().email("Valid email is required"),
+    name: z.string().min(1, "Name is required"),
+    // New professional fields
+    professionalTitle: z.string().optional(),
+    yearsOfExperience: z.string().optional(),
+    linkedinProfile: z
+      .string()
+      .url("Please enter a valid URL")
+      .optional()
+      .or(z.literal("")),
+    languages: z.array(z.string()).optional(),
+    // Existing fields
+    skills: z
+      .array(skillProficiencySchema)
+      .min(1, "At least one skill is required"),
+    interests: z.array(z.string()).optional(),
+    location: z.string().optional(),
+    sdgGoals: z.array(z.number()).optional(),
+    weeklyHours: z.number().min(1, "At least 1 hour is required"),
+    availability: z
+      .array(availabilitySlotSchema)
+      .min(1, "At least one availability slot is required"),
+    timezone: z.string().min(1, "Timezone is required"),
+    preferredCommitment: z.enum([
+      "one-time",
+      "short-term",
+      "long-term",
+      "flexible",
+    ]),
+    preferredWorkStyle: z.enum(["remote", "in-person", "hybrid"]).optional(),
+    // New matching priorities
+    matchingPriorities: z
+      .object({
+        skillsMatch: z.number().min(1).max(5).default(3),
+        causeAlignment: z.number().min(1).max(5).default(3),
+        timeFlexibility: z.number().min(1).max(5).default(3),
+        geographicPreference: z.number().min(1).max(5).default(3),
+        impactPotential: z.number().min(1).max(5).default(3),
+      })
+      .optional(),
+  })
+  .refine((data) => {
+    // Calculate total hours from availability slots
+    const totalHours = data.availability.reduce((sum, slot) => {
+      const start = parseInt(slot.startTime.split(":")[0]);
+      const end = parseInt(slot.endTime.split(":")[0]);
+      return sum + (end - start);
+    }, 0);
+
+    // Availability should be the LESSER of weekly hours or total slot hours
+    data.weeklyHours = Math.min(data.weeklyHours, totalHours);
+
+    return true;
+  });
 
 type FormData = z.infer<typeof formSchema>;
 type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
@@ -219,22 +229,27 @@ const useFormOperations = (form: any) => {
 };
 
 const useAvailabilityManagement = (form: any) => {
-  const updateWeeklyHoursBasedOnSlots = useCallback((availability: any[]) => {
-    // Calculate total hours from slots
-    const totalSlotHours = availability.reduce((sum, slot) => {
-      const start = parseInt(slot.startTime?.split(':')[0] || 0);
-      const end = parseInt(slot.endTime?.split(':')[0] || 0);
-      return sum + (end - start);
-    }, 0);
-    
-    // Get current weekly hours input
-    const currentWeeklyHours = form.getValues("weeklyHours");
-    
-    // Set to lesser of the two values
-    const availabilityHours = Math.min(currentWeeklyHours, totalSlotHours);
-    form.setValue("weeklyHours", availabilityHours);
-    console.log(`[Availability Management] Updated weekly hours to min(${currentWeeklyHours}, ${totalSlotHours}) = ${availabilityHours}`);
-  }, [form]);
+  const updateWeeklyHoursBasedOnSlots = useCallback(
+    (availability: any[]) => {
+      // Calculate total hours from slots
+      const totalSlotHours = availability.reduce((sum, slot) => {
+        const start = parseInt(slot.startTime?.split(":")[0] || 0);
+        const end = parseInt(slot.endTime?.split(":")[0] || 0);
+        return sum + (end - start);
+      }, 0);
+
+      // Get current weekly hours input
+      const currentWeeklyHours = form.getValues("weeklyHours");
+
+      // Set to lesser of the two values
+      const availabilityHours = Math.min(currentWeeklyHours, totalSlotHours);
+      form.setValue("weeklyHours", availabilityHours);
+      console.log(
+        `[Availability Management] Updated weekly hours to min(${currentWeeklyHours}, ${totalSlotHours}) = ${availabilityHours}`,
+      );
+    },
+    [form],
+  );
 
   const addAvailabilitySlot = useCallback(() => {
     const currentAvailability = form.getValues("availability");
@@ -255,7 +270,7 @@ const useAvailabilityManagement = (form: any) => {
         [field]: value,
       };
       form.setValue("availability", updatedAvailability);
-      
+
       // Real-time update: set weekly hours to lesser of input vs slot hours
       updateWeeklyHoursBasedOnSlots(updatedAvailability);
     },
@@ -265,9 +280,11 @@ const useAvailabilityManagement = (form: any) => {
   const removeAvailabilitySlot = useCallback(
     (index: number) => {
       const currentAvailability = form.getValues("availability");
-      const updatedAvailability = currentAvailability.filter((_: any, i: number) => i !== index);
+      const updatedAvailability = currentAvailability.filter(
+        (_: any, i: number) => i !== index,
+      );
       form.setValue("availability", updatedAvailability);
-      
+
       // Real-time update: recalculate weekly hours after removing slot
       updateWeeklyHoursBasedOnSlots(updatedAvailability);
     },
@@ -282,7 +299,12 @@ const useAvailabilityManagement = (form: any) => {
 };
 
 // Reusable form sections
-const PersonalInfoSection = ({ form, onPhotoChange, currentPhotoUrl, userId }: any) => (
+const PersonalInfoSection = ({
+  form,
+  onPhotoChange,
+  currentPhotoUrl,
+  userId,
+}: any) => (
   <>
     <div className="mb-6">
       <ProfilePictureUpload
@@ -367,7 +389,10 @@ const PersonalInfoSection = ({ form, onPhotoChange, currentPhotoUrl, userId }: a
             <Briefcase className="h-4 w-4" />
             Years of Experience
           </FormLabel>
-          <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+          <Select
+            onValueChange={field.onChange}
+            defaultValue={field.value || ""}
+          >
             <FormControl>
               <SelectTrigger data-testid="select-years-of-experience">
                 <SelectValue placeholder="Select your experience level" />
@@ -758,18 +783,24 @@ export default function VolunteerProfileSettings() {
 
   // Data fetching - ALWAYS use fresh user data, no caching
   const userId = localStorage.getItem("currentUserId");
-  const { data: currentUser, isLoading: userLoading } = useQuery<{ id: number; email: string; displayName?: string }>({ 
+  const { data: currentUser, isLoading: userLoading } = useQuery<{
+    id: number;
+    email: string;
+    displayName?: string;
+  }>({
     queryKey: ["/api/users/me"],
     staleTime: 0, // Always fetch fresh - never cache user data
   });
-  
+
   // Fetch volunteer profile using intake API which includes all availability fields
   const profileQuery = useQuery<any>({
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return null;
-      const response = await fetch(`/api/intake/volunteer-profile?userId=${currentUser.id}`);
-      if (!response.ok) throw new Error('Failed to fetch profile');
+      const response = await fetch(
+        `/api/intake/volunteer-profile?userId=${currentUser.id}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch profile");
       const data = await response.json();
       // API returns { user, volunteerProfile }, extract the volunteerProfile
       return data.volunteerProfile || data;
@@ -799,14 +830,17 @@ export default function VolunteerProfileSettings() {
 
   // Load profile data into form ONLY on initial mount (use ref to track this)
   const initialLoadDoneRef = useRef(false);
-  
+
   useEffect(() => {
     if (!initialLoadDoneRef.current && currentUser?.id) {
       // First time loading for this user
       initialLoadDoneRef.current = true;
-      
+
       if (existingProfile) {
-        console.log(`[Profile Load Effect] Initial loading of profile for user ${currentUser?.id}:`, existingProfile);
+        console.log(
+          `[Profile Load Effect] Initial loading of profile for user ${currentUser?.id}:`,
+          existingProfile,
+        );
         form.reset({
           email: currentUser?.email || "",
           name: existingProfile.volunteerName || currentUser?.displayName || "",
@@ -817,13 +851,18 @@ export default function VolunteerProfileSettings() {
           sdgGoals: existingProfile.preferredSdgs || [],
           weeklyHours: existingProfile.weeklyAvailability || 1,
           availability: existingProfile.availability || [],
-          timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-          preferredCommitment: existingProfile.preferredCommitment || "flexible",
+          timezone:
+            existingProfile.timezone ||
+            Intl.DateTimeFormat().resolvedOptions().timeZone,
+          preferredCommitment:
+            existingProfile.preferredCommitment || "flexible",
           preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
         });
       } else {
         // New profile
-        console.log(`[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`);
+        console.log(
+          `[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`,
+        );
         form.setValue("email", currentUser.email);
         if (currentUser.displayName) {
           form.setValue("name", currentUser.displayName);
@@ -844,11 +883,14 @@ export default function VolunteerProfileSettings() {
     onSuccess: async (result: any) => {
       const id = currentUser?.id;
       console.log(`[Settings Mutation] Success - mutation returned:`, result);
-      
+
       // IMMEDIATELY populate form with saved data to prevent blank form
       const profileData = result.volunteerProfile || result;
-      console.log(`[Settings Mutation] Immediately updating form with saved profile data:`, profileData);
-      
+      console.log(
+        `[Settings Mutation] Immediately updating form with saved profile data:`,
+        profileData,
+      );
+
       // Directly set form values with saved data - this prevents the form from going blank
       form.reset({
         email: currentUser?.email || "",
@@ -860,19 +902,31 @@ export default function VolunteerProfileSettings() {
         sdgGoals: profileData.preferredSdgs || [],
         weeklyHours: profileData.weeklyAvailability || 1,
         availability: profileData.availability || [],
-        timezone: profileData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezone:
+          profileData.timezone ||
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
         preferredCommitment: profileData.preferredCommitment || "flexible",
         preferredWorkStyle: profileData.preferredWorkStyle || "remote",
       });
-      
+
       // Invalidate related queries in background (non-blocking)
       // These will update the server state but won't interfere with the form
-      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] }).catch(() => {});
-      
+      queryClient
+        .invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] })
+        .catch(() => {});
+      queryClient
+        .invalidateQueries({ queryKey: ["/api/volunteers"] })
+        .catch(() => {});
+      queryClient
+        .invalidateQueries({ queryKey: ["/api/users/me"] })
+        .catch(() => {});
+      queryClient
+        .invalidateQueries({ queryKey: ["/api/dashboard/summary"] })
+        .catch(() => {});
+      queryClient
+        .invalidateQueries({ queryKey: ["/api/opportunities/matches"] })
+        .catch(() => {});
+
       toast({
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
@@ -882,7 +936,8 @@ export default function VolunteerProfileSettings() {
       console.error("Profile save error:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to save profile. Please try again.",
+        description:
+          error.message || "Failed to save profile. Please try again.",
         variant: "destructive",
       });
     },
@@ -891,10 +946,12 @@ export default function VolunteerProfileSettings() {
   const profileMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (!currentUser?.id) throw new Error("User not authenticated");
-      
+
       const targetUserId = currentUser.id;
-      console.log(`[Settings Mutation CRITICAL] SAVING FOR USER ID: ${targetUserId}, EMAIL: ${currentUser.email}`);
-      
+      console.log(
+        `[Settings Mutation CRITICAL] SAVING FOR USER ID: ${targetUserId}, EMAIL: ${currentUser.email}`,
+      );
+
       // Transform form data to match volunteer profile API
       const profileData = {
         volunteerName: data.name,
@@ -910,24 +967,32 @@ export default function VolunteerProfileSettings() {
         preferredWorkStyle: data.preferredWorkStyle,
         profilePhotoUrl: profilePhotoUrl,
       };
-      
-      console.log(`[Settings Mutation] Submitting weeklyAvailability: ${profileData.weeklyAvailability} for user ${targetUserId}`);
-      
+
+      console.log(
+        `[Settings Mutation] Submitting weeklyAvailability: ${profileData.weeklyAvailability} for user ${targetUserId}`,
+      );
+
       // Add timeout protection - 15 seconds max
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Profile save timeout. Please try again.")), 15000)
+        setTimeout(
+          () => reject(new Error("Profile save timeout. Please try again.")),
+          15000,
+        ),
       );
-      
+
       try {
         const url = `/api/intake/volunteer-profile?userId=${targetUserId}`;
         console.log(`[Settings Mutation CRITICAL] API URL: ${url}`);
-        
-        const result = await Promise.race([
+
+        const result = (await Promise.race([
           apiRequest("POST", url, profileData),
-          timeoutPromise
-        ]) as any;
-        
-        console.log(`[Settings Mutation CRITICAL] Backend response received for user ${targetUserId}`, result);
+          timeoutPromise,
+        ])) as any;
+
+        console.log(
+          `[Settings Mutation CRITICAL] Backend response received for user ${targetUserId}`,
+          result,
+        );
         return result;
       } catch (error) {
         console.error("Profile mutation error:", error);
@@ -944,7 +1009,7 @@ export default function VolunteerProfileSettings() {
       if (!currentSkills.find((s: any) => s.name === skillInput.trim())) {
         form.setValue("skills", [
           ...currentSkills,
-          { name: skillInput.trim(), proficiency: skillProficiency }
+          { name: skillInput.trim(), proficiency: skillProficiency },
         ]);
         setSkillInput("");
         setSkillProficiency(50);
@@ -952,20 +1017,29 @@ export default function VolunteerProfileSettings() {
     }
   }, [skillInput, skillProficiency, form]);
 
-  const removeSkill = useCallback((skillName: string) => {
-    const currentSkills = form.getValues("skills");
-    form.setValue("skills", currentSkills.filter((s: any) => s.name !== skillName));
-  }, [form]);
+  const removeSkill = useCallback(
+    (skillName: string) => {
+      const currentSkills = form.getValues("skills");
+      form.setValue(
+        "skills",
+        currentSkills.filter((s: any) => s.name !== skillName),
+      );
+    },
+    [form],
+  );
 
-  const updateSkillProficiency = useCallback((skillName: string, proficiency: number) => {
-    const currentSkills = form.getValues("skills");
-    form.setValue(
-      "skills",
-      currentSkills.map((s: any) =>
-        s.name === skillName ? { ...s, proficiency } : s
-      )
-    );
-  }, [form]);
+  const updateSkillProficiency = useCallback(
+    (skillName: string, proficiency: number) => {
+      const currentSkills = form.getValues("skills");
+      form.setValue(
+        "skills",
+        currentSkills.map((s: any) =>
+          s.name === skillName ? { ...s, proficiency } : s,
+        ),
+      );
+    },
+    [form],
+  );
 
   // Interest operations
   const addInterest = useCallback(() => {
@@ -978,27 +1052,41 @@ export default function VolunteerProfileSettings() {
     }
   }, [interestInput, form]);
 
-  const removeInterest = useCallback((interest: string) => {
-    const currentInterests = form.getValues("interests") || [];
-    form.setValue(
-      "interests",
-      currentInterests.filter((i: string) => i !== interest)
-    );
-  }, [form]);
+  const removeInterest = useCallback(
+    (interest: string) => {
+      const currentInterests = form.getValues("interests") || [];
+      form.setValue(
+        "interests",
+        currentInterests.filter((i: string) => i !== interest),
+      );
+    },
+    [form],
+  );
 
   // Operations
   const availabilityOps = useAvailabilityManagement(form);
 
   const onSubmit = async (data: FormData) => {
-    console.log(`[Settings Form Submit CRITICAL] currentUser?.id = ${currentUser?.id}`);
-    console.log(`[Settings Form Submit CRITICAL] currentUser?.email = ${currentUser?.email}`);
-    console.log(`[Settings Form Submit CRITICAL] currentUser object:`, currentUser);
-    console.log(`[Settings Form Submit] User clicked save - weeklyHours value: ${data.weeklyHours}`);
+    console.log(
+      `[Settings Form Submit CRITICAL] currentUser?.id = ${currentUser?.id}`,
+    );
+    console.log(
+      `[Settings Form Submit CRITICAL] currentUser?.email = ${currentUser?.email}`,
+    );
+    console.log(
+      `[Settings Form Submit CRITICAL] currentUser object:`,
+      currentUser,
+    );
+    console.log(
+      `[Settings Form Submit] User clicked save - weeklyHours value: ${data.weeklyHours}`,
+    );
     console.log(`[Settings Form Submit] Full form data:`, data);
-    
+
     // Validate weeklyHours is set
     if (!data.weeklyHours || data.weeklyHours <= 0) {
-      console.error(`[Settings Form Submit] Invalid weeklyHours: ${data.weeklyHours}`);
+      console.error(
+        `[Settings Form Submit] Invalid weeklyHours: ${data.weeklyHours}`,
+      );
       toast({
         title: "Invalid Weekly Hours",
         description: "Weekly Hours Available must be greater than 0",
@@ -1006,8 +1094,10 @@ export default function VolunteerProfileSettings() {
       });
       return;
     }
-    
-    console.log(`[Settings Form Submit] Submitting mutation with weeklyHours: ${data.weeklyHours}`);
+
+    console.log(
+      `[Settings Form Submit] Submitting mutation with weeklyHours: ${data.weeklyHours}`,
+    );
     profileMutation.mutate(data);
   };
 
@@ -1018,12 +1108,14 @@ export default function VolunteerProfileSettings() {
       </div>
     );
   }
-  
+
   // Safety check: ensure currentUser is available before rendering form
   if (!currentUser?.id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-500">Error: User not authenticated. Please log in again.</p>
+        <p className="text-red-500">
+          Error: User not authenticated. Please log in again.
+        </p>
       </div>
     );
   }
@@ -1054,11 +1146,11 @@ export default function VolunteerProfileSettings() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <PersonalInfoSection 
+              <PersonalInfoSection
                 form={form}
                 onPhotoChange={setProfilePhotoUrl}
                 currentPhotoUrl={profilePhotoUrl}
-                userId={currentUser?.id || ''}
+                userId={currentUser?.id || ""}
               />
               <AvailabilitySection
                 form={form}

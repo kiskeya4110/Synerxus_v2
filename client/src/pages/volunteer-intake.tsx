@@ -147,7 +147,7 @@ type FormData = z.infer<typeof formSchema>;
 type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
 type SkillProficiency = z.infer<typeof skillProficiencySchema>;
 
-export default function VolunteerIntake() {
+export default function VolunteerProfileSettings() {
   const { toast } = useToast();
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50); // Default 50%
@@ -181,13 +181,13 @@ export default function VolunteerIntake() {
     },
     values: existingProfile
       ? {
-          email: existingProfile.user?.email || "",
-          name: existingProfile.volunteerName || existingProfile.user?.displayName || "",
+          email: existingProfile.email,
+          name: existingProfile.name,
           skills: existingProfile.skills || [],
-          interests: existingProfile.interests || [],
-          location: existingProfile.location || "",
-          sdgGoals: existingProfile.preferredSdgs || [],
-          weeklyHours: existingProfile.weeklyAvailability || 1,
+          interests: existingProfile.interests,
+          location: existingProfile.location,
+          sdgGoals: existingProfile.sdgGoals,
+          weeklyHours: existingProfile.weeklyHours || 1,
           availability: existingProfile.availability || [],
           timezone:
             existingProfile.timezone ||
@@ -216,59 +216,41 @@ export default function VolunteerIntake() {
       // Transform form data to match volunteer profile API
       const profileData = {
         volunteerName: data.name,
-        skills: data.skills.map((s) => s.name),
-        skillRatings: Object.fromEntries(data.skills.map((s) => [s.name, s.proficiency])),
+        skills: data.skills.map((s) => `${s.name} (${s.proficiency}%)`), // Convert to display format for storage
         interests: data.interests,
         location: data.location,
-        yearsOfExperience: "",
-        weeklyAvailability: data.weeklyHours,
+        sdgGoals: data.sdgGoals,
+        weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
         availability: data.availability,
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
-        preferredWorkStyle: "remote",
-        preferredSdgs: data.sdgGoals,
+        preferredWorkStyle: "", // Will be set through settings page
+        skillProficiency: data.skills, // Send full proficiency objects for matching algorithm
+        onboardingCompleted: !existingProfile, // Mark as completed on first submission only
       };
       
       return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
     },
-    onSuccess: async (result: any) => {
+    onSuccess: () => {
       const id = currentUser?.id;
-      console.log(`[Intake Mutation] Success - result:`, result);
-      
-      // IMMEDIATELY update form with the saved data
-      const profileData = result.volunteerProfile || result;
-      console.log(`[Intake Mutation] Updating form with saved data:`, profileData);
-      
-      // Update form fields directly with saved values
-      if (profileData) {
-        form.reset({
-          email: currentUser?.email || profileData.user?.email || "",
-          name: profileData.volunteerName || currentUser?.displayName || "",
-          skills: profileData.skills?.map((name: string, idx: number) => ({
-            name,
-            proficiency: profileData.skillRatings?.[name] || 50
-          })) || [],
-          interests: profileData.interests || [],
-          location: profileData.location || "",
-          sdgGoals: profileData.preferredSdgs || [],
-          weeklyHours: profileData.weeklyAvailability || 1,
-          availability: profileData.availability || [],
-          timezone: profileData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-          preferredCommitment: profileData.preferredCommitment || "flexible",
-        });
-      }
-
-      // Invalidate queries in background (non-blocking)
-      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] }).catch(() => {});
-
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer", id] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profile/volunteer"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] });
       toast({
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
+      // Redirect to dashboard if first time completing onboarding
+      if (!existingProfile) {
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -381,10 +363,33 @@ export default function VolunteerIntake() {
     );
   }
 
+  // If profile is already completed, show message and redirect option
+  if (existingProfile?.onboardingCompleted) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-700">Profile Already Completed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 mb-4">
+              Your volunteer profile has already been set up. You can now access all features or return to the dashboard.
+            </p>
+            <Link href="/dashboard">
+              <Button className="bg-primary">
+                Go to Dashboard
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Volunteer Profile</h1>
+        <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
         <p className="text-muted-foreground">
           Create or update your volunteer profile to get matched with
           organizations that align with your skills, interests, and goals.
@@ -644,7 +649,7 @@ export default function VolunteerIntake() {
                           updateAvailabilitySlot(index, "startTime", value)
                         }
                       >
-                        <SelectTrigger className="w-[100px]">
+                        <SelectTrigger className="w-[120px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -656,7 +661,7 @@ export default function VolunteerIntake() {
                         </SelectContent>
                       </Select>
 
-                      <span>to</span>
+                      <span className="text-muted-foreground">to</span>
 
                       <Select
                         value={slot.endTime}
@@ -664,7 +669,7 @@ export default function VolunteerIntake() {
                           updateAvailabilitySlot(index, "endTime", value)
                         }
                       >
-                        <SelectTrigger className="w-[100px]">
+                        <SelectTrigger className="w-[120px]">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -681,40 +686,51 @@ export default function VolunteerIntake() {
                         variant="ghost"
                         size="sm"
                         onClick={() => removeAvailabilitySlot(index)}
-                        data-testid={`button-remove-availability-${index}`}
+                        className="text-destructive hover:text-destructive"
                       >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
                 </div>
+
+                {form.watch("availability").length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed rounded-lg">
+                    <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No availability slots added yet. Click "Add Time Slot" to
+                      specify when you're available.
+                    </p>
+                  </div>
+                )}
+
+                {form.formState.errors.availability && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.availability.message}
+                  </p>
+                )}
               </div>
 
-              {/* Skills Section */}
+              {/* Skills with Proficiency */}
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Skills (with proficiency level)
-                  </Label>
-                </div>
-
+                <Label className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  Skills & Proficiency
+                </Label>
                 <div className="space-y-2">
-                  <div className="flex items-end gap-2">
+                  <div className="flex gap-2">
                     <Input
-                      placeholder="Add a skill"
+                      placeholder="Add a skill (e.g., Python, Teaching, Marketing)"
                       value={skillInput}
                       onChange={(e) => setSkillInput(e.target.value)}
-                      onKeyPress={(e) => {
+                      onKeyDown={(e) => {
                         if (e.key === "Enter") {
+                          e.preventDefault();
                           addSkill();
                         }
                       }}
                       data-testid="input-add-skill"
                     />
-                    <span className="text-sm text-muted-foreground">
-                      Proficiency: {skillProficiency}%
-                    </span>
                     <input
                       type="range"
                       min="0"
@@ -724,10 +740,11 @@ export default function VolunteerIntake() {
                       className="w-24"
                       data-testid="slider-skill-proficiency"
                     />
+                    <span className="text-sm font-semibold min-w-[40px]">{skillProficiency}%</span>
                     <Button
                       type="button"
                       onClick={addSkill}
-                      size="sm"
+                      variant="secondary"
                       data-testid="button-add-skill"
                     >
                       <Plus className="h-4 w-4" />
@@ -735,57 +752,77 @@ export default function VolunteerIntake() {
                   </div>
                 </div>
 
-                {form.watch("skills").length > 0 && (
-                  <div className="space-y-2">
-                    {form.watch("skills").map((skill, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-2 p-2 bg-blue-50 rounded"
-                      >
-                        <Badge variant="secondary">{skill.name}</Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {skill.proficiency}%
-                        </span>
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={skill.proficiency}
-                          onChange={(e) =>
-                            updateSkillProficiency(skill.name, parseInt(e.target.value))
-                          }
-                          className="flex-1"
-                          data-testid={`slider-skill-${skill.name}`}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSkill(skill.name)}
-                          data-testid={`button-remove-skill-${skill.name}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                <div className="space-y-2">
+                  {form.watch("skills").map((skill) => (
+                    <div
+                      key={skill.name}
+                      className="flex items-center gap-3 p-3 border rounded-lg bg-muted/50"
+                      data-testid={`skill-item-${skill.name}`}
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{skill.name}</p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={skill.proficiency}
+                            onChange={(e) =>
+                              updateSkillProficiency(skill.name, parseInt(e.target.value))
+                            }
+                            className="flex-1"
+                            data-testid={`slider-proficiency-${skill.name}`}
+                          />
+                          <span className="text-sm font-semibold min-w-[40px]">
+                            {skill.proficiency}%
+                          </span>
+                        </div>
                       </div>
-                    ))}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSkill(skill.name)}
+                        className="text-destructive hover:text-destructive"
+                        data-testid={`button-remove-skill-${skill.name}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                {form.watch("skills").length === 0 && (
+                  <div className="text-center py-6 border-2 border-dashed rounded-lg">
+                    <Target className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      No skills added yet. Add your skills and rate your proficiency level to help
+                      organizations find the right match.
+                    </p>
                   </div>
+                )}
+
+                {form.formState.errors.skills && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.skills.message}
+                  </p>
                 )}
               </div>
 
-              {/* Interests Section */}
-              <div className="space-y-4">
+              {/* Interests */}
+              <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Heart className="h-4 w-4" />
-                  Interests
+                  Interests & Causes
                 </Label>
-
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Add an interest"
+                    placeholder="Add an interest (e.g., Education, Healthcare, Environment)"
                     value={interestInput}
                     onChange={(e) => setInterestInput(e.target.value)}
-                    onKeyPress={(e) => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") {
+                        e.preventDefault();
                         addInterest();
                       }
                     }}
@@ -794,76 +831,82 @@ export default function VolunteerIntake() {
                   <Button
                     type="button"
                     onClick={addInterest}
-                    size="sm"
+                    variant="secondary"
                     data-testid="button-add-interest"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-
-                {form.watch("interests").length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {form.watch("interests").map((interest, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="flex items-center gap-1"
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.watch("interests").map((interest) => (
+                    <Badge
+                      key={interest}
+                      variant="secondary"
+                      className="gap-1"
+                      data-testid={`badge-interest-${interest}`}
+                    >
+                      {interest}
+                      <button
+                        type="button"
+                        onClick={() => removeInterest(interest)}
+                        className="ml-1 hover:bg-secondary-foreground/10 rounded-full"
+                        data-testid={`button-remove-interest-${interest}`}
                       >
-                        {interest}
-                        <button
-                          onClick={() => removeInterest(interest)}
-                          className="ml-1"
-                          data-testid={`button-remove-interest-${interest}`}
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* SDG Goals Section */}
-              <div className="space-y-4">
-                <Label className="block">
-                  Sustainable Development Goals (SDGs)
-                </Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {SDG_OPTIONS.map((sdg) => (
-                    <div key={sdg.value} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`sdg-${sdg.value}`}
-                        checked={form.watch("sdgGoals").includes(sdg.value)}
-                        onCheckedChange={() => toggleSDG(sdg.value)}
-                        data-testid={`checkbox-sdg-${sdg.value}`}
-                      />
-                      <Label
-                        htmlFor={`sdg-${sdg.value}`}
-                        className="text-sm cursor-pointer"
-                      >
-                        {sdg.label}
-                      </Label>
-                    </div>
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
                   ))}
                 </div>
+                {form.formState.errors.interests && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.interests.message}
+                  </p>
+                )}
               </div>
 
-              {/* Submit Button */}
-              <Button
-                type="submit"
-                disabled={profileMutation.isPending}
-                className="w-full"
-                data-testid="button-submit-profile"
-              >
-                {profileMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Profile"
+              {/* SDG Goals */}
+              <div className="space-y-2">
+                <Label>Sustainable Development Goals (SDGs)</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Select the UN SDGs you're passionate about
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {SDG_OPTIONS.map((sdg) => (
+                    <Button
+                      key={sdg.value}
+                      type="button"
+                      variant={
+                        form.watch("sdgGoals").includes(sdg.value)
+                          ? "default"
+                          : "outline"
+                      }
+                      className="justify-start text-left h-auto py-2"
+                      onClick={() => toggleSDG(sdg.value)}
+                      data-testid={`button-sdg-${sdg.value}`}
+                    >
+                      {sdg.label}
+                    </Button>
+                  ))}
+                </div>
+                {form.formState.errors.sdgGoals && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.sdgGoals.message}
+                  </p>
                 )}
-              </Button>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="submit"
+                  disabled={profileMutation.isPending}
+                  data-testid="button-save-profile"
+                >
+                  {profileMutation.isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {existingProfile ? "Update Profile" : "Create Profile"}
+                </Button>
+              </div>
             </form>
           </Form>
         </CardContent>

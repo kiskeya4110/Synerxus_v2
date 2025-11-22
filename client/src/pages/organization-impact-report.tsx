@@ -516,8 +516,7 @@ export default function OrganizationImpactReport(props: any) {
 
                 {/* Impact Leader Section */}
                 {leaderData && (
-                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => setLocation(`/volunteers#user-${leaderData.userId}`)}
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 hover:shadow-lg transition-shadow"
                     data-testid="impact-leader-card"
                   >
                     <div className="flex items-start justify-between mb-4">

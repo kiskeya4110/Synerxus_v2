@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart } from "lucide-react";
+import { BarChart, Share2, Download, Twitter, Linkedin, Facebook, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import BeforeAfterComparison from "@/components/impact/before-after-comparison";
 import { Link } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
+import { useToast } from "@/hooks/use-toast";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -23,6 +24,7 @@ import {
   Filler,
 } from "chart.js";
 import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
+declare const html2pdf: any;
 
 // Register Chart.js components
 ChartJS.register(
@@ -40,9 +42,11 @@ ChartJS.register(
 
 
 export default function ImpactVisualization() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("before-after");
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const [selectedProjectIdForStories, setSelectedProjectIdForStories] = useState<string>("all");
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // Get current user to filter their projects
   const userId = localStorage.getItem('currentUserId');
@@ -363,6 +367,64 @@ export default function ImpactVisualization() {
     };
   }, [projects, projectImpacts, dashboardData, currentUser]);
 
+  // PDF Export Function
+  const handleExportPDF = () => {
+    const element = contentRef.current;
+    if (!element) return;
+
+    const opt = {
+      margin: 10,
+      filename: `impact-visualization-${new Date().toISOString().split('T')[0]}.pdf`,
+      image: { type: 'png', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    html2pdf().set(opt).from(element).save();
+    toast({
+      title: "PDF Export",
+      description: "Your impact visualization has been downloaded!"
+    });
+  };
+
+  // Social Media Sharing
+  const handleShareSocial = (platform: 'twitter' | 'linkedin' | 'facebook') => {
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/impact-visualization';
+    const shareUrl = `${baseUrl}${currentPath}`;
+    
+    const text = `Check out my Impact Visualization! I've made a difference in ${aggregatedMetrics?.totalPeople || 0} people's lives and contributed ${aggregatedMetrics?.totalHours || 0} volunteer hours.`;
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedText = encodeURIComponent(text);
+    
+    let shareLink = '';
+    switch(platform) {
+      case 'twitter':
+        shareLink = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+        break;
+      case 'linkedin':
+        shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case 'facebook':
+        shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        break;
+    }
+    
+    if (shareLink) {
+      window.open(shareLink, '_blank', 'width=600,height=400');
+    }
+  };
+
+  // Copy Share Link
+  const handleCopyLink = () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: "Link Copied",
+      description: "Share link copied to clipboard!"
+    });
+  };
+
   const handleMetricClick = (metricName: string, value: number) => {
     let details: any = { title: metricName, items: [] };
 
@@ -439,12 +501,69 @@ export default function ImpactVisualization() {
 
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">Impact Visualization</h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          Visualize the concrete results and impacts of volunteer efforts
-        </p>
+      {/* Page Header with Action Buttons */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold">Impact Visualization</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Visualize the concrete results and impacts of volunteer efforts
+            </p>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleExportPDF}
+              data-testid="button-export-pdf"
+              className="flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Export PDF</span>
+            </Button>
+            
+            <div className="flex gap-1 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleShareSocial('twitter')}
+                data-testid="button-share-twitter"
+                title="Share on Twitter"
+              >
+                <Twitter className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleShareSocial('linkedin')}
+                data-testid="button-share-linkedin"
+                title="Share on LinkedIn"
+              >
+                <Linkedin className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleShareSocial('facebook')}
+                data-testid="button-share-facebook"
+                title="Share on Facebook"
+              >
+                <Facebook className="w-4 h-4" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleCopyLink}
+                data-testid="button-copy-link"
+                title="Copy link"
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Empty State */}
@@ -473,6 +592,7 @@ export default function ImpactVisualization() {
 
       {/* Main Content */}
       {hasData && (
+      <div ref={contentRef}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 h-auto min-h-[44px]">
           <TabsTrigger value="before-after" className="text-xs sm:text-sm min-h-[44px]">Before & After</TabsTrigger>
@@ -730,8 +850,26 @@ export default function ImpactVisualization() {
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                      mode: 'index',
+                      intersect: false,
+                    },
                     plugins: {
                       legend: { display: true, position: 'top' },
+                      tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        displayColors: true,
+                        callbacks: {
+                          label: function(context: any) {
+                            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} people`;
+                          }
+                        }
+                      }
                     },
                     scales: {
                       y: { beginAtZero: true },
@@ -756,8 +894,25 @@ export default function ImpactVisualization() {
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
+                      interaction: {
+                        mode: 'index',
+                        intersect: false,
+                      },
                       plugins: {
                         legend: { display: false },
+                        tooltip: {
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          padding: 12,
+                          titleColor: '#fff',
+                          bodyColor: '#fff',
+                          borderColor: 'rgba(255, 255, 255, 0.2)',
+                          borderWidth: 1,
+                          callbacks: {
+                            label: function(context: any) {
+                              return `Hours: ${context.parsed.y.toLocaleString()}`;
+                            }
+                          }
+                        }
                       },
                       scales: {
                         y: { beginAtZero: true },
@@ -781,8 +936,25 @@ export default function ImpactVisualization() {
                     options={{
                       responsive: true,
                       maintainAspectRatio: false,
+                      interaction: {
+                        mode: 'index',
+                        intersect: false,
+                      },
                       plugins: {
                         legend: { display: false },
+                        tooltip: {
+                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                          padding: 12,
+                          titleColor: '#fff',
+                          bodyColor: '#fff',
+                          borderColor: 'rgba(255, 255, 255, 0.2)',
+                          borderWidth: 1,
+                          callbacks: {
+                            label: function(context: any) {
+                              return `Impact Score: ${context.parsed.r.toLocaleString()}`;
+                            }
+                          }
+                        }
                       },
                       scales: {
                         r: { beginAtZero: true },
@@ -795,6 +967,7 @@ export default function ImpactVisualization() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
       )}
 
       {/* Metric Detail Dialog */}

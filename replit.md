@@ -9,16 +9,49 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### UI/UX Decisions
-The platform features a mobile-optimized, role-based dashboard with UN SDG-themed color schemes, `shadcn/ui` components built on `Radix UI`, and a light theme with vibrant accents. It includes consistent typography, an infinity loop logo, and interactive elements like clickable profile sections and hover states. Dashboards dynamically differentiate volunteer-specific from organization-wide views. Opportunity displays consistently use a 2-column layout for AI analysis and SDG alignment.
+The platform features a mobile-optimized, role-based dashboard with UN SDG-themed color schemes, `shadcn/ui` components built on `Radix UI`, and a light theme with vibrant accents. It includes consistent typography, an infinity loop logo, and interactive elements like clickable profile sections and hover states. Dashboards dynamically differentiate volunteer-specific from organization-wide views. Opportunity displays consistently use a 2-column layout for AI analysis and SDG alignment. All section titles are center-justified throughout the application.
 
 ### Technical Implementations
 The frontend uses React 18, TypeScript, Vite, Wouter, TanStack Query, Tailwind CSS, Chart.js, React Hook Form, and date-fns. The backend is Node.js with TypeScript, Express.js for REST APIs, WebSockets, and Drizzle ORM with Neon serverless PostgreSQL. The database schema includes AI tracking fields and skill proficiency. An AI matching algorithm provides weighted scoring for volunteer-opportunity and volunteer-organization matches based on Skills (with proficiency weighting), Location, SDG, Interests, and Availability. Multi-tenant security enforces data scoping by `organizationId` or `userId`. Key features include email-based profile linking, a full messaging system, automatic project completion tracking, real-time volunteer list updates, and a comprehensive notification system. An AI tips service generates personalized recommendations.
 
 ### Feature Specifications
-The platform includes a rebranded landing page with an interactive SDG wheel, a role-based dashboard with real-time KPIs and AI-matched opportunities, and a "Volunteer Insights" section. Features also encompass mobile data collection, a calendar, interactive impact visualization, AI-powered impact storytelling, and CRUD capabilities for Projects, Tasks, Volunteers, Organizations, Calendar, Opportunities, and Applications. It supports dual user types (Volunteer/Organization) with distinct flows, project-task hierarchy with AI-powered volunteer recommendations, comprehensive profile settings, multi-step intake forms, and assignment tracking. A unified "My Work" page consolidates Applications, Assignments, and Tasks.
+The platform includes a rebranded landing page with an interactive SDG wheel, a role-based dashboard with real-time KPIs and AI-matched opportunities, and a "Volunteer Insights" section. Features also encompass mobile data collection with impact deduplication, a calendar, interactive impact visualization, AI-powered impact storytelling, and CRUD capabilities for Projects, Tasks, Volunteers, Organizations, Calendar, Opportunities, and Applications. It supports dual user types (Volunteer/Organization) with distinct flows, project-task hierarchy with AI-powered volunteer recommendations, comprehensive profile settings, multi-step intake forms, and assignment tracking. A unified "My Work" page consolidates Applications, Assignments, and Tasks.
+
+**NEW - Personalized Email Digests**: Weekly impact summaries sent to volunteers and organizations with:
+- Volunteer digests: Hours contributed, tasks completed, measured impacts, impact score, weekly streak tracking, SDG alignment
+- Organization digests: Active volunteers, total hours, verified impacts, AI-generated insights
+- Role-based attribution: Lead (100%), Support (50%), Observer (0%)
+- Deduplication awareness: Only counts verified, non-duplicated impacts
+- Manual preview: "Send Now" buttons to test digests anytime
+- Scheduled delivery: Automatic weekly sends (Sundays at 9 AM)
 
 ### System Design Choices
 Authentication is managed via Firebase Auth with Google OAuth. Client-server communication uses RESTful APIs, WebSockets, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon.
+
+## Recent Changes (Nov 22, 2025)
+
+### Impact Deduplication System
+- Added deduplication fields to projectImpacts table: `outcomeType` (individual/shared/system), `role` (lead/support/observer), `verificationStatus` (pending/approved/rejected), `evidenceUrls` (array), `dedupGroupId`, `isDuplicated`
+- Implemented backend deduplication logic: `detectDuplicateImpact()` checks for duplicates within ±6 hour window for same project and outcome type
+- Applied role-based attribution weighting: 100% for Lead, 50% for Support, 0% for Observer
+- Updated Mobile Data Collection form to capture outcome type, role, and evidence URLs
+
+### Center-Justified Section Titles
+- All section titles across Mobile Data Collection, Impact Reports, Organization Reports, and Profile Settings are now center-justified using `text-center` and `justify-center` classes
+
+### Personalized Email Digests Feature
+- Enhanced email-digest-service.ts with comprehensive impact summary generation
+- Added `getWeeklyDigestData()` function to calculate personalized metrics including weekly streak tracking
+- Extended email templates with:
+  - Individual volunteer digest showing hours, tasks, impact metrics with role-based attribution, impact score, SDG alignment, weekly streak badge
+  - Organization digest showing active volunteers, total hours, impacts recorded, AI-generated weekly insights
+- Implemented new frontend page `/email-digests` with tabbed interface for volunteers and organization managers
+- Added sidebar navigation link "Email Digests" with Mail icon for both volunteer and organization roles
+- Backend endpoints: 
+  - `POST /api/email-digest/send` - Send test digest to current user
+  - `POST /api/email-digest/send-all` - Admin action to send all volunteer digests
+  - `POST /api/email-digest/organization/:organizationId` - Send organization summary
+- Frontend features: Manual "Send Now" buttons, feature descriptions, digest timing info, test IDs for all interactive elements
 
 ## External Dependencies
 
@@ -27,3 +60,4 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 -   **UI & Visualization**: Radix UI, Chart.js, Tailwind CSS
 -   **Development & Build Tools**: TypeScript, Vite, ESBuild
 -   **Matching Algorithm**: Python and TypeScript implementation
+-   **Email Service**: Mock transporter (configurable for SendGrid, Mailgun, nodemailer in production)

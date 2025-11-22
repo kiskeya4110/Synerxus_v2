@@ -18,7 +18,8 @@ import {
   FolderKanban,
   UserCircle,
   Settings,
-  FileText
+  FileText,
+  Mail
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
@@ -118,7 +119,8 @@ export default function Sidebar() {
     { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
+    { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];
 
   // Organization-specific navigation
@@ -133,7 +135,8 @@ export default function Sidebar() {
     { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/sdg-mapping", label: "SDG Tracking", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/field-specific-metrics", label: "Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
+    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];
 
   const navItems = userType === 'organization' ? organizationNavItems : volunteerNavItems;

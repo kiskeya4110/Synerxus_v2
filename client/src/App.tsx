@@ -40,6 +40,7 @@ import MyWork from "@/pages/my-work";
 import ImpactReport from "@/pages/impact-report";
 import OrganizationImpactReport from "@/pages/organization-impact-report";
 import MatchedVolunteers from "@/pages/matched-volunteers";
+import EmailDigests from "@/pages/email-digests";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
@@ -95,6 +96,7 @@ function Router() {
       <Route path="/organization-intake" component={OrganizationIntake} />
       <Route path="/volunteer-profile-settings" component={VolunteerIntake} />
       <Route path="/organization-profile-settings" component={OrganizationIntake} />
+      <Route path="/email-digests" component={EmailDigests} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -63,22 +63,27 @@ export default function MobileDataCollection() {
     queryFn: async () => {
       if (!currentUser?.id) return [];
       
-      // Fetch all projects
-      const response = await fetch(`/api/projects`);
-      if (!response.ok) return [];
-      const allProjects = await response.json();
-      
-      // Filter based on user type
-      if (currentUser?.userType === 'organization' && currentUser?.organizationId) {
-        // Organization managers see all their organization's projects
-        return allProjects.filter((p: any) => p.organizationId === currentUser.organizationId);
-      } else {
-        // Volunteers see only projects they're assigned to
-        const assignmentsRes = await fetch(`/api/project-assignments?volunteerId=${currentUser.id}`);
-        if (!assignmentsRes.ok) return [];
-        const assignments = await assignmentsRes.json();
-        const assignedProjectIds = new Set(assignments.map((a: any) => a.projectId));
-        return allProjects.filter((p: any) => assignedProjectIds.has(p.id));
+      try {
+        // Fetch all projects with userId for authentication
+        const response = await fetch(`/api/projects?userId=${currentUser.id}`);
+        if (!response.ok) return [];
+        const allProjects = await response.json();
+        
+        // Filter based on user type
+        if (currentUser?.userType === 'organization' && currentUser?.organizationId) {
+          // Organization managers see all their organization's projects
+          return allProjects.filter((p: any) => p.organizationId === currentUser.organizationId);
+        } else {
+          // Volunteers see only projects they're assigned to
+          const assignmentsRes = await fetch(`/api/project-assignments?volunteerId=${currentUser.id}`);
+          if (!assignmentsRes.ok) return [];
+          const assignments = await assignmentsRes.json();
+          const assignedProjectIds = new Set(assignments.map((a: any) => a.projectId));
+          return allProjects.filter((p: any) => assignedProjectIds.has(p.id));
+        }
+      } catch (error) {
+        console.error("Error fetching projects:", error);
+        return [];
       }
     },
     enabled: !!currentUser?.id

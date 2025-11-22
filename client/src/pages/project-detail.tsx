@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Progress } from "@/components/ui/progress";
+import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -250,9 +251,9 @@ export default function ProjectDetail() {
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Completion</span>
-                  <span className="text-2xl font-bold text-primary">{completionPercentage}%</span>
+                  <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{completionPercentage}%</span>
                 </div>
-                <Progress value={completionPercentage} className="h-3" />
+                <CompletionProgress value={completionPercentage} className="h-3" />
               </div>
               <div className="grid grid-cols-2 gap-3 text-center pt-3 border-t">
                 <div>

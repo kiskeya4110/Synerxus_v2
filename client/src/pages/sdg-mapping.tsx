@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -756,7 +756,7 @@ export default function SDGMapping() {
                             <span>Completion</span>
                             <span className="font-semibold">{project.completionPercentage || 0}%</span>
                           </div>
-                          <Progress value={project.completionPercentage || 0} className="h-2" />
+                          <CompletionProgress value={project.completionPercentage || 0} className="h-2" />
                         </div>
                         
                         {project.sdgGoals && project.sdgGoals.length > 1 && (

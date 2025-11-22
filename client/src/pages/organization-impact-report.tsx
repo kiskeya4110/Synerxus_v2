@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Building2, DollarSign, Zap } from "lucide-react";
 import type { User } from "@shared/schema";
@@ -530,7 +531,7 @@ export default function OrganizationImpactReport(props: any) {
                                 <span>Completion Rate</span>
                                 <span>{prog.completion}%</span>
                               </div>
-                              <Progress value={prog.completion} className="h-2" />
+                              <CompletionProgress value={prog.completion} className="h-2" />
                             </div>
                             <div>
                               <div className="flex justify-between text-xs mb-1">
@@ -834,7 +835,7 @@ export default function OrganizationImpactReport(props: any) {
                                 <span>Completion</span>
                                 <span>{prog.completion}%</span>
                               </div>
-                              <Progress value={prog.completion} className="h-2" />
+                              <CompletionProgress value={prog.completion} className="h-2" />
                             </div>
                             <div>
                               <div className="flex justify-between text-xs mb-1">

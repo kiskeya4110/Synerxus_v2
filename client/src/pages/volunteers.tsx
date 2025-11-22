@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban } from "lucide-react";
+import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban, Users, CheckSquare } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,29 +190,43 @@ export default function Volunteers() {
         </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card>
+      {/* Stats Cards - 3 Column Layout */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Total Volunteers */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
           <CardContent className="pt-6">
-            <div className="text-center">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 mb-4">
+                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
               <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.length}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Volunteers</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Total Volunteers</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        {/* Total Hours */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
           <CardContent className="pt-6">
-            <div className="text-center">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/30 mb-4">
+                <Clock className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
               <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0)}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Total Hours</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Total Hours</p>
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        {/* Tasks Completed */}
+        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
           <CardContent className="pt-6">
-            <div className="text-center">
+            <div className="flex flex-col items-center text-center">
+              <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30 mb-4">
+                <CheckSquare className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              </div>
               <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0)}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Tasks Completed</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Tasks Completed</p>
             </div>
           </CardContent>
         </Card>

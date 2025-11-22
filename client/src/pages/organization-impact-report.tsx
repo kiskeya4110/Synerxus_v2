@@ -57,6 +57,31 @@ export default function OrganizationImpactReport(props: any) {
     },
   });
 
+  // Access control: Only organization managers can view this report
+  const isOrganizationManager = currentUser && currentUser.organizationId && currentUser.userType === 'organization';
+  
+  if (!currentUser || !isOrganizationManager) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
+        <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
+          <CardContent className="p-8 text-center">
+            <div className="mb-4 text-4xl">🔒</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Access Denied</h1>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Organization Impact Reports can only be accessed by organization managers.
+            </p>
+            <Button
+              onClick={() => setLocation("/dashboard")}
+              className="w-full"
+            >
+              Return to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const { data: organization } = useQuery<any>({
     queryKey: ["/api/organizations", currentUser?.organizationId],
     queryFn: async () => {

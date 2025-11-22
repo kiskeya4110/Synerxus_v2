@@ -3766,7 +3766,13 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       }
       
       broadcastUpdate("volunteer_profile_updated", profile);
-      res.json(profile);
+      
+      // Return same structure as GET endpoint so frontend receives consistent data
+      const updatedUser = await storage.getUser(userId);
+      res.json({
+        user: updatedUser,
+        volunteerProfile: profile
+      });
     } catch (err) {
       console.error("Error saving volunteer profile:", err);
       res.status(500).json({ message: "Failed to save volunteer profile" });

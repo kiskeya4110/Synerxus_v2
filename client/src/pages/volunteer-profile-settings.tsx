@@ -853,12 +853,12 @@ export default function VolunteerProfileSettings() {
   const mutationConfig = {
     onSuccess: async (result: any) => {
       const id = currentUser?.id;
-      console.log(`[Settings Mutation] Success - mutation returned saved profile`, result);
+      console.log(`[Settings Mutation] Success - mutation returned:`, result);
       
-      // Use the mutation result directly - it's the fresh saved profile
-      // Don't refetch, just populate the form with what we got back
-      console.log(`[Settings Mutation] Populating form with mutation result for user ${id}`);
-      populateFormFromProfile(result, currentUser);
+      // Extract volunteerProfile from response (API now returns { user, volunteerProfile })
+      const profileData = result.volunteerProfile || result;
+      console.log(`[Settings Mutation] Populating form with profile data for user ${id}:`, profileData);
+      populateFormFromProfile(profileData, currentUser);
       
       // Invalidate cache for all queries (non-blocking)
       queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});

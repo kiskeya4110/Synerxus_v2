@@ -149,6 +149,27 @@ export default function MyWork() {
     ? Math.round((hoursCommitted / weeklyCapacity) * 100)
     : 0;
   const hoursRemaining = Math.max(0, weeklyCapacity - hoursCommitted);
+
+  // Calculate weekly hours to date (THIS WEEK only)
+  const getWeekStart = () => {
+    const now = new Date();
+    const day = now.getDay();
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    const weekStart = new Date(now.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
+  };
+
+  const weekStart = getWeekStart();
+  const weeklyHoursLogged = volunteerActivities.reduce((sum, a) => {
+    const activityDate = new Date(a.date);
+    return activityDate >= weekStart ? sum + (a.hours || 0) : sum;
+  }, 0);
+
+  const weeklyCapacityUsedPercentage = weeklyCapacity > 0 
+    ? Math.round((weeklyHoursLogged / weeklyCapacity) * 100)
+    : 0;
+  const weeklyHoursRemaining = Math.max(0, weeklyCapacity - weeklyHoursLogged);
   
   // Get initial tab from URL hash or default to applications
   const getInitialTab = () => {
@@ -169,8 +190,8 @@ export default function MyWork() {
   const generateRecommendations = () => {
     const recommendations = [];
     
-    // Check if volunteer has capacity
-    if (hoursRemaining > 5) {
+    // Check if volunteer has capacity this week
+    if (weeklyHoursRemaining > 5) {
       // Skill-based recommendation
       const topSkill = volunteerProfile?.skills?.[0];
       if (topSkill) {
@@ -221,13 +242,13 @@ export default function MyWork() {
       }
 
       // Availability-based recommendation
-      if (hoursRemaining > 10) {
+      if (weeklyHoursRemaining > 10) {
         recommendations.push({
           id: 4,
           title: "Intensive Project Opportunity",
-          description: `You have ${hoursRemaining.toFixed(0)}+ hours available - ready for a larger commitment`,
+          description: `You have ${weeklyHoursRemaining.toFixed(0)}+ hours available this week - ready for a larger commitment`,
           matchScore: 85,
-          reason: `${hoursRemaining.toFixed(0)} hours capacity`,
+          reason: `${weeklyHoursRemaining.toFixed(0)} hours available this week`,
           skills: ["Project Management"],
           icon: "💡"
         });
@@ -369,12 +390,12 @@ export default function MyWork() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Weekly Capacity</p>
-                  <p className="text-2xl font-bold">{hoursRemaining.toFixed(1)}h free</p>
-                  <p className="text-xs text-gray-500 mt-1">{hoursCommitted}/{weeklyCapacity} hours used</p>
+                  <p className="text-2xl font-bold">{weeklyHoursLogged.toFixed(1)}/{weeklyCapacity}h</p>
+                  <p className="text-xs text-gray-500 mt-1">this week • {weeklyHoursRemaining.toFixed(1)}h remaining</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-blue-500" />
               </div>
-              <Progress value={capacityUsedPercentage} className="mt-3 h-1" />
+              <Progress value={weeklyCapacityUsedPercentage} className="mt-3 h-1" />
             </CardContent>
           </Card>
 

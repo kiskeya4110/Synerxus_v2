@@ -804,11 +804,29 @@ export default function VolunteerProfileSettings() {
     hasInitializedRef.current = false;
   }, [currentUser?.id]);
 
-  // Load profile data into form ONLY ONCE per user
-  // Use useRef to ensure this only runs one time per user, so users can edit availability without reset
+  // Load profile data into form when profile changes
+  // Reset flag on user change, but reload data when profile content changes
   useEffect(() => {
-    if (!hasInitializedRef.current && existingProfile) {
-      console.log(`[Profile Load Effect] Loading profile data for user ${currentUser?.id} - ONCE ONLY`);
+    if (existingProfile && hasInitializedRef.current) {
+      // Profile was refetched with new data - reload it into the form
+      console.log(`[Profile Load Effect] Reloading profile data for user ${currentUser?.id} after refetch`);
+      form.reset({
+        email: currentUser?.email || "",
+        name: existingProfile.volunteerName || currentUser?.displayName || "",
+        skills: existingProfile.skills || [],
+        interests: existingProfile.interests || [],
+        location: existingProfile.location || "",
+        yearsOfExperience: existingProfile.yearsOfExperience || "",
+        sdgGoals: existingProfile.preferredSdgs || [],
+        weeklyHours: existingProfile.weeklyAvailability || 1,
+        availability: existingProfile.availability || [],
+        timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferredCommitment: existingProfile.preferredCommitment || "flexible",
+        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
+      });
+    } else if (!hasInitializedRef.current && existingProfile) {
+      // Initial load of profile
+      console.log(`[Profile Load Effect] Initial loading of profile data for user ${currentUser?.id}`);
       hasInitializedRef.current = true;
       form.reset({
         email: currentUser?.email || "",
@@ -832,7 +850,7 @@ export default function VolunteerProfileSettings() {
         form.setValue("name", currentUser.displayName);
       }
     }
-  }, [existingProfile?.id, currentUser?.id]); // Run when profile or user ID changes
+  }, [existingProfile, currentUser?.id]); // Run when profile content changes OR user ID changes
 
   // Load existing photo URL
   useEffect(() => {
@@ -841,20 +859,40 @@ export default function VolunteerProfileSettings() {
     }
   }, [existingProfile]);
 
+  // Helper function to populate form from profile data
+  const populateFormFromProfile = (profile: any, user: any) => {
+    console.log(`[populateFormFromProfile] Loading data for user ${user?.id}:`, profile);
+    form.setValue("email", user?.email || "");
+    form.setValue("name", profile.volunteerName || user?.displayName || "");
+    form.setValue("skills", profile.skills || []);
+    form.setValue("interests", profile.interests || []);
+    form.setValue("location", profile.location || "");
+    form.setValue("yearsOfExperience", profile.yearsOfExperience || "");
+    form.setValue("sdgGoals", profile.preferredSdgs || []);
+    form.setValue("weeklyHours", profile.weeklyAvailability || 1);
+    form.setValue("availability", profile.availability || []);
+    form.setValue("timezone", profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
+    form.setValue("preferredCommitment", profile.preferredCommitment || "flexible");
+    form.setValue("preferredWorkStyle", profile.preferredWorkStyle || "remote");
+  };
+
   // Mutations
   const mutationConfig = {
-    onSuccess: async () => {
+    onSuccess: async (result: any) => {
       const id = currentUser?.id;
-      console.log(`[Settings Mutation] Success - refetching profile data for user ${id}`);
+      console.log(`[Settings Mutation] Success - refetching profile data for user ${id}`, result);
       
       // First clear the cache to force a fresh fetch
       await queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
       
-      // Then reset the flag and refetch
-      hasInitializedRef.current = false;
-      
       // Force immediate refetch of settings form data and wait for it
-      await profileQuery.refetch();
+      const refetchResult = await profileQuery.refetch();
+      console.log(`[Settings Mutation] Refetch completed for user ${id}:`, refetchResult.data);
+      
+      // Directly populate the form with the fresh data
+      if (refetchResult.data) {
+        populateFormFromProfile(refetchResult.data, currentUser);
+      }
       
       // Invalidate other related queries without waiting
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});

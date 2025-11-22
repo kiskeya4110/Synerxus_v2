@@ -3622,8 +3622,18 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(400).json({ message: "userId must be a valid number" });
       }
       
-      const profile = await storage.getVolunteerProfileByUserId(userId);
-      res.json(profile);
+      const user = await storage.getUser(userId);
+      const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Return both user and volunteerProfile so frontend can access all data
+      res.json({
+        user,
+        volunteerProfile
+      });
     } catch (err) {
       console.error("Error fetching volunteer profile:", err);
       res.status(500).json({ message: "Failed to fetch volunteer profile" });

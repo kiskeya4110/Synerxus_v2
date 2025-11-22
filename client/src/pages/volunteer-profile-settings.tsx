@@ -357,6 +357,37 @@ const PersonalInfoSection = ({ form, onPhotoChange, currentPhotoUrl, userId }: a
         </FormItem>
       )}
     />
+
+    <FormField
+      control={form.control}
+      name="yearsOfExperience"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4" />
+            Years of Experience
+          </FormLabel>
+          <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
+            <FormControl>
+              <SelectTrigger data-testid="select-years-of-experience">
+                <SelectValue placeholder="Select your experience level" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value="0-1">0-1 years</SelectItem>
+              <SelectItem value="1-2">1-2 years</SelectItem>
+              <SelectItem value="3-5">3-5 years</SelectItem>
+              <SelectItem value="5-10">5-10 years</SelectItem>
+              <SelectItem value="10+">10+ years</SelectItem>
+            </SelectContent>
+          </Select>
+          <FormDescription>
+            Select your total years of professional experience
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
   </>
 );
 
@@ -754,6 +785,7 @@ export default function VolunteerProfileSettings() {
       skills: [],
       interests: [],
       location: "",
+      yearsOfExperience: "",
       sdgGoals: [],
       weeklyHours: 1,
       availability: [],
@@ -782,6 +814,7 @@ export default function VolunteerProfileSettings() {
         skills: existingProfile.skills || [],
         interests: existingProfile.interests || [],
         location: existingProfile.location || "",
+        yearsOfExperience: existingProfile.yearsOfExperience || "",
         sdgGoals: existingProfile.preferredSdgs || [],
         weeklyHours: existingProfile.weeklyAvailability || 1,
         availability: existingProfile.availability || [],
@@ -851,6 +884,7 @@ export default function VolunteerProfileSettings() {
         skills: data.skills,
         interests: data.interests,
         location: data.location,
+        yearsOfExperience: data.yearsOfExperience,
         sdgGoals: data.sdgGoals,
         weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
         availability: data.availability,

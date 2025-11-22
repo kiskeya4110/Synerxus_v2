@@ -121,15 +121,15 @@ export default function Dashboard() {
   });
 
   // Filter data based on selected project
-  // For volunteers, use dashboard data; for organizations, use separate queries
+  // Use dashboardData for both volunteers and organizations (it contains everything scoped to user)
   const filteredData = useMemo(() => {
     const projectId = selectedProject === "all" ? null : parseInt(selectedProject);
 
-    // Use dashboardData for volunteers (it contains everything), separate queries for organizations
-    const sourceProjects = dashboardType === 'volunteer' ? (dashboardData?.projects || []) : projects;
-    const sourceTasks = dashboardType === 'volunteer' ? (dashboardData?.tasks || []) : tasks;
-    const sourceActivities = dashboardType === 'volunteer' ? (dashboardData?.activities || []) : volunteerActivities;
-    const sourceImpacts = dashboardType === 'volunteer' ? (dashboardData?.impacts || []) : projectImpacts;
+    // Use dashboardData for all users - it contains properly scoped data from backend
+    const sourceProjects = dashboardData?.projects || [];
+    const sourceTasks = dashboardData?.tasks || [];
+    const sourceActivities = dashboardData?.activities || [];
+    const sourceImpacts = dashboardData?.impacts || [];
 
     const filteredProjects = projectId 
       ? sourceProjects.filter((p: any) => p.id === projectId)
@@ -157,7 +157,7 @@ export default function Dashboard() {
       impacts: filteredImpacts,
       applications: dashboardData?.applications || [], // Add applications to filteredData
     };
-  }, [selectedProject, dashboardType, dashboardData, projects, tasks, volunteerActivities, projectImpacts]);
+  }, [selectedProject, dashboardData]);
 
   // Use KPIs from backend - API returns summary data at top level
   const kpis = useMemo(() => {

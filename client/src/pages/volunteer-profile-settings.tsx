@@ -797,34 +797,40 @@ export default function VolunteerProfileSettings() {
     },
   });
 
-  // Load profile data into form when profile loads or changes
+  // Load profile data into form ONLY on initial mount (use ref to track this)
+  const initialLoadDoneRef = useRef(false);
+  
   useEffect(() => {
-    if (existingProfile && currentUser?.id) {
-      console.log(`[Profile Load Effect] Loading profile data for user ${currentUser?.id}:`, existingProfile);
-      // Reset form with profile data
-      form.reset({
-        email: currentUser?.email || "",
-        name: existingProfile.volunteerName || currentUser?.displayName || "",
-        skills: existingProfile.skills || [],
-        interests: existingProfile.interests || [],
-        location: existingProfile.location || "",
-        yearsOfExperience: existingProfile.yearsOfExperience || "",
-        sdgGoals: existingProfile.preferredSdgs || [],
-        weeklyHours: existingProfile.weeklyAvailability || 1,
-        availability: existingProfile.availability || [],
-        timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        preferredCommitment: existingProfile.preferredCommitment || "flexible",
-        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
-      });
-    } else if (!existingProfile && currentUser?.email) {
-      // New profile - just set email/name
-      console.log(`[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`);
-      form.setValue("email", currentUser.email);
-      if (currentUser.displayName) {
-        form.setValue("name", currentUser.displayName);
+    if (!initialLoadDoneRef.current && currentUser?.id) {
+      // First time loading for this user
+      initialLoadDoneRef.current = true;
+      
+      if (existingProfile) {
+        console.log(`[Profile Load Effect] Initial loading of profile for user ${currentUser?.id}:`, existingProfile);
+        form.reset({
+          email: currentUser?.email || "",
+          name: existingProfile.volunteerName || currentUser?.displayName || "",
+          skills: existingProfile.skills || [],
+          interests: existingProfile.interests || [],
+          location: existingProfile.location || "",
+          yearsOfExperience: existingProfile.yearsOfExperience || "",
+          sdgGoals: existingProfile.preferredSdgs || [],
+          weeklyHours: existingProfile.weeklyAvailability || 1,
+          availability: existingProfile.availability || [],
+          timezone: existingProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          preferredCommitment: existingProfile.preferredCommitment || "flexible",
+          preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
+        });
+      } else {
+        // New profile
+        console.log(`[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`);
+        form.setValue("email", currentUser.email);
+        if (currentUser.displayName) {
+          form.setValue("name", currentUser.displayName);
+        }
       }
     }
-  }, [existingProfile, currentUser?.id, currentUser?.email, currentUser?.displayName, form]);
+  }, [currentUser?.id]);
 
   // Load existing photo URL
   useEffect(() => {
@@ -839,24 +845,33 @@ export default function VolunteerProfileSettings() {
       const id = currentUser?.id;
       console.log(`[Settings Mutation] Success - mutation returned:`, result);
       
-      // DON'T populate form directly - let the refetch update it through existingProfile
-      // Extract and store the result for immediate display if needed
+      // IMMEDIATELY populate form with saved data to prevent blank form
       const profileData = result.volunteerProfile || result;
-      console.log(`[Settings Mutation] Got saved profile data for user ${id}:`, profileData);
+      console.log(`[Settings Mutation] Immediately updating form with saved profile data:`, profileData);
       
-      // Invalidate profile cache to force refetch with fresh data
-      // Use a small delay to ensure backend has persisted everything
-      await new Promise(resolve => setTimeout(resolve, 100));
-      await queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
+      // Directly set form values with saved data - this prevents the form from going blank
+      form.reset({
+        email: currentUser?.email || "",
+        name: profileData.volunteerName || currentUser?.displayName || "",
+        skills: profileData.skills || [],
+        interests: profileData.interests || [],
+        location: profileData.location || "",
+        yearsOfExperience: profileData.yearsOfExperience || "",
+        sdgGoals: profileData.preferredSdgs || [],
+        weeklyHours: profileData.weeklyAvailability || 1,
+        availability: profileData.availability || [],
+        timezone: profileData.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferredCommitment: profileData.preferredCommitment || "flexible",
+        preferredWorkStyle: profileData.preferredWorkStyle || "remote",
+      });
       
-      // Let the profile query refetch automatically, which will trigger the effect to reload the form
-      // The existing profile query has staleTime: undefined, so invalidation will trigger refetch
-      
-      // Invalidate related queries (non-blocking)
+      // Invalidate related queries in background (non-blocking)
+      // These will update the server state but won't interfere with the form
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] }).catch(() => {});
       
       toast({
         title: `Profile ${existingProfile ? "updated" : "created"}!`,

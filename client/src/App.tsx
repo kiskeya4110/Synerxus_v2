@@ -38,6 +38,7 @@ import MyApplications from "@/pages/my-applications";
 import Assignments from "@/pages/assignments";
 import MyWork from "@/pages/my-work";
 import ImpactReport from "@/pages/impact-report";
+import OrganizationImpactReport from "@/pages/organization-impact-report";
 import MatchedVolunteers from "@/pages/matched-volunteers";
 import Layout from "@/components/layout/layout";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -85,6 +86,8 @@ function Router() {
       <Route path="/my-work" component={MyWork} />
       <Route path="/impact-report/:volunteerId" component={ImpactReport} />
       <Route path="/impact-report" component={ImpactReport} />
+      <Route path="/organization-impact-report/:organizationId" component={OrganizationImpactReport} />
+      <Route path="/organization-impact-report" component={OrganizationImpactReport} />
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile" component={VolunteerProfile} />
       <Route path="/organization-profile" component={OrganizationProfile} />

@@ -208,6 +208,28 @@ export default function ImpactReport(props: any) {
 
   const filteredActivities = getFilteredActivities();
 
+  // Calculate filtered KPIs
+  const filteredCompletedTasks = tasks.filter(t => {
+    if (t.status?.toLowerCase() !== "completed") return false;
+    if (!t.completedAt) return true;
+    const completedDate = new Date(t.completedAt);
+    const now = new Date();
+    let startDate = new Date(0);
+    
+    switch(timeFilter) {
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+    return completedDate >= startDate;
+  }).length;
+
   // Generate monthly hours from real activity data
   const generateMonthlyHours = () => {
     const monthlyData: Record<string, number> = {};
@@ -242,7 +264,6 @@ export default function ImpactReport(props: any) {
 
   // Update filtered KPIs
   const filteredTotalHours = filteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-  const filteredCompletedTasks = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -524,9 +545,9 @@ export default function ImpactReport(props: any) {
                       Tasks Completed
                     </p>
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                      {completedTasks}/{totalTasks}
+                      {filteredCompletedTasks}/{tasks.length}
                     </p>
-                    <Progress value={totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0} className="mt-2 h-1" />
+                    <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} className="mt-2 h-1" />
                   </div>
 
                   <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
@@ -715,10 +736,10 @@ export default function ImpactReport(props: any) {
                               Task Completion Rate
                             </span>
                             <span className="text-sm font-bold text-gray-900 dark:text-white">
-                              {totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%
+                              {tasks.length > 0 ? Math.round((filteredCompletedTasks / tasks.length) * 100) : 0}%
                             </span>
                           </div>
-                          <Progress value={totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0} />
+                          <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} />
                         </div>
 
                         <div>
@@ -971,14 +992,14 @@ export default function ImpactReport(props: any) {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Hours Logged</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{filteredTotalHours}h</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-total-hours">{filteredTotalHours}h</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg: {avgMonthlyHours}/month</p>
                   </div>
 
                   <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Tasks Completed</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{completedTasks}/{totalTasks}</p>
-                    <Progress value={totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0} className="mt-2 h-1" />
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400" data-testid="text-completed-tasks">{filteredCompletedTasks}/{tasks.length}</p>
+                    <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} className="mt-2 h-1" />
                   </div>
 
                   <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
@@ -1053,7 +1074,7 @@ export default function ImpactReport(props: any) {
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Task Completion Rate</span>
                             <span className="text-sm font-bold text-gray-900 dark:text-white">{totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%</span>
                           </div>
-                          <Progress value={totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0} />
+                          <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} />
                         </div>
                         <div>
                           <div className="flex justify-between mb-2">

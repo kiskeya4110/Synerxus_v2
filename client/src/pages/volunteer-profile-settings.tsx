@@ -829,42 +829,41 @@ export default function VolunteerProfileSettings() {
   // Helper function to populate form from profile data
   const populateFormFromProfile = (profile: any, user: any) => {
     console.log(`[populateFormFromProfile] Loading data for user ${user?.id}:`, profile);
-    form.setValue("email", user?.email || "");
-    form.setValue("name", profile.volunteerName || user?.displayName || "");
-    form.setValue("skills", profile.skills || []);
-    form.setValue("interests", profile.interests || []);
-    form.setValue("location", profile.location || "");
-    form.setValue("yearsOfExperience", profile.yearsOfExperience || "");
-    form.setValue("sdgGoals", profile.preferredSdgs || []);
-    form.setValue("weeklyHours", profile.weeklyAvailability || 1);
-    form.setValue("availability", profile.availability || []);
-    form.setValue("timezone", profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
-    form.setValue("preferredCommitment", profile.preferredCommitment || "flexible");
-    form.setValue("preferredWorkStyle", profile.preferredWorkStyle || "remote");
+    // Use form.reset() instead of setValue() to properly update all fields at once
+    form.reset({
+      email: user?.email || "",
+      name: profile.volunteerName || user?.displayName || "",
+      skills: profile.skills || [],
+      interests: profile.interests || [],
+      location: profile.location || "",
+      yearsOfExperience: profile.yearsOfExperience || "",
+      sdgGoals: profile.preferredSdgs || [],
+      weeklyHours: profile.weeklyAvailability || 1,
+      availability: profile.availability || [],
+      timezone: profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+      preferredCommitment: profile.preferredCommitment || "flexible",
+      preferredWorkStyle: profile.preferredWorkStyle || "remote",
+    }, {
+      keepDirty: false,
+      keepTouched: false,
+    });
   };
 
   // Mutations
   const mutationConfig = {
     onSuccess: async (result: any) => {
       const id = currentUser?.id;
-      console.log(`[Settings Mutation] Success - refetching profile data for user ${id}`, result);
+      console.log(`[Settings Mutation] Success - mutation returned saved profile`, result);
       
-      // First clear the cache to force a fresh fetch
-      await queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
+      // Use the mutation result directly - it's the fresh saved profile
+      // Don't refetch, just populate the form with what we got back
+      console.log(`[Settings Mutation] Populating form with mutation result for user ${id}`);
+      populateFormFromProfile(result, currentUser);
       
-      // Force immediate refetch of settings form data and wait for it
-      const refetchResult = await profileQuery.refetch();
-      console.log(`[Settings Mutation] Refetch completed for user ${id}:`, refetchResult.data);
-      
-      // Directly populate the form with the fresh data
-      if (refetchResult.data) {
-        populateFormFromProfile(refetchResult.data, currentUser);
-      }
-      
-      // Invalidate other related queries without waiting
+      // Invalidate cache for all queries (non-blocking)
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] }).catch(() => {});
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
-      // These can happen in background without blocking the toast
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/opportunities/matches"] });
       

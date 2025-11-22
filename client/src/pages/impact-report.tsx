@@ -479,7 +479,7 @@ export default function ImpactReport(props: any) {
         <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-blue-200 dark:border-blue-900 print:shadow-none print:border-black">
           <CardContent className="p-8 print:p-4">
             {/* Header Section with Logos */}
-            <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
+            <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:border-none print:mb-2 print:pb-2">
               {/* Logo Section */}
               <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
                 <Logo size="sm" className="print:scale-75" />
@@ -1325,9 +1325,33 @@ export default function ImpactReport(props: any) {
         @media print {
           body {
             background: white;
+            margin: 0;
+            padding: 0;
           }
           .print\\:hidden {
             display: none !important;
+          }
+          #impact-report-content {
+            page-break-after: avoid;
+          }
+          .grid {
+            page-break-inside: avoid;
+          }
+          .space-y-6 > div {
+            page-break-inside: avoid;
+          }
+          .space-y-4 > div {
+            page-break-inside: avoid;
+          }
+          h2, h3 {
+            page-break-after: avoid;
+          }
+          .bg-blue-50, .bg-green-50, .bg-purple-50, .bg-orange-50,
+          .bg-blue-900, .bg-green-900, .bg-purple-900, .bg-orange-900 {
+            page-break-inside: avoid;
+          }
+          canvas {
+            page-break-inside: avoid;
           }
         }
       `}</style>

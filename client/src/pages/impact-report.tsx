@@ -65,6 +65,7 @@ export default function ImpactReport(props: any) {
   const [isPrinting, setIsPrinting] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
+  const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
   const chartRefs = useRef<Record<string, any>>({});
 
   // Get volunteer ID from URL params or current user
@@ -277,11 +278,11 @@ export default function ImpactReport(props: any) {
               </div>
 
               {/* Title with Total Impact Score */}
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white print:text-2xl mb-2">
-                Synerxus Impact Report
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white print:text-2xl mb-3">
+                Global Impact Report
               </h1>
               
-              <p className="text-lg text-gray-600 dark:text-gray-300 print:text-sm">
+              <p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3 print:text-2xl">
                 {currentUser?.displayName || currentUser?.username || 'Volunteer'}
               </p>
 
@@ -296,6 +297,30 @@ export default function ImpactReport(props: any) {
                 <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 text-base print:text-sm">
                   Total Impact Score: {totalImpactScore}/100
                 </Badge>
+              </div>
+
+              {/* Time Filter */}
+              <div className="mt-4 mb-3 flex items-center justify-center gap-2 flex-wrap print:hidden">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Time Period:</span>
+                <div className="flex gap-2">
+                  {[
+                    { value: "all", label: "All Time" },
+                    { value: "month", label: "This Month" },
+                    { value: "quarter", label: "This Quarter" },
+                    { value: "year", label: "This Year" }
+                  ].map((option) => (
+                    <Button
+                      key={option.value}
+                      variant={timeFilter === option.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setTimeFilter(option.value as any)}
+                      className="text-xs"
+                      data-testid={`time-filter-${option.value}`}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
 
               {/* Report ID and Date */}
@@ -997,7 +1022,7 @@ export default function ImpactReport(props: any) {
             {/* Footer */}
             <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400 print:mt-4 print:pt-3 print:border-t print:text-xs">
               <p>
-                Generated on {new Date().toLocaleDateString()} • Synerxus Impact Report
+                Generated on {new Date().toLocaleDateString()} • Global Impact Report {timeFilter !== 'all' && `(${['All Time', 'This Month', 'This Quarter', 'This Year'][['all', 'month', 'quarter', 'year'].indexOf(timeFilter)]})`}
               </p>
               {!isPrinting && (
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">

@@ -313,10 +313,10 @@ export default function OrganizationImpactReport(props: any) {
   ];
 
   const organizationalPerformance = {
-    labels: ['Volunteer', 'Capacity', 'Financial', 'Health', 'Program', 'Quality', 'Partnership', 'Network', 'Community', 'Impact', 'Operational', 'Efficiency'],
+    labels: ['Volunteer Engagement', 'Financial Health', 'Program Quality', 'Community Impact'],
     datasets: [{
       label: 'Performance Score',
-      data: [85, 85, 78, 78, 88, 88, 72, 72, 91, 91, 80, 80],
+      data: [85, 78, 88, 91],
       borderColor: '#3b82f6',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
       fill: true,

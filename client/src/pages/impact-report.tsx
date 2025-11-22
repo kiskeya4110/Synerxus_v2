@@ -181,6 +181,68 @@ export default function ImpactReport(props: any) {
 
   const shareUrl = `${window.location.origin}/impact-report/${volunteerId}`;
 
+  // Filter activities by time period
+  const getFilteredActivities = () => {
+    const now = new Date();
+    let startDate = new Date(0); // All time
+    
+    switch(timeFilter) {
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+    
+    return volunteerActivities.filter(a => {
+      if (!a.dateLogged) return true;
+      const activityDate = new Date(a.dateLogged);
+      return activityDate >= startDate;
+    });
+  };
+
+  const filteredActivities = getFilteredActivities();
+
+  // Generate monthly hours from real activity data
+  const generateMonthlyHours = () => {
+    const monthlyData: Record<string, number> = {};
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    filteredActivities.forEach(activity => {
+      if (activity.dateLogged) {
+        const date = new Date(activity.dateLogged);
+        const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (activity.hours || 0);
+      }
+    });
+
+    // Get last 7 months
+    const now = new Date();
+    const last7Months = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
+      last7Months.push({
+        month: monthNames[date.getMonth()],
+        monthKey: monthKey,
+        hours: monthlyData[monthKey] || 0
+      });
+    }
+    return last7Months;
+  };
+
+  const monthlyHours = generateMonthlyHours();
+  const bestMonth = monthlyHours.reduce((max, curr) => curr.hours > max.hours ? curr : max, monthlyHours[0]);
+  const avgMonthlyHours = monthlyHours.length > 0 ? (monthlyHours.reduce((sum, m) => sum + m.hours, 0) / monthlyHours.length).toFixed(1) : 0;
+
+  // Update filtered KPIs
+  const filteredTotalHours = filteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const filteredCompletedTasks = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
+
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
     toast({
@@ -196,12 +258,6 @@ export default function ImpactReport(props: any) {
       setIsPrinting(false);
     }, 100);
   };
-
-  // Mock data for charts
-  const monthlyHours = [8, 12, 15, 10, 18, 20, 16].map((h, i) => ({
-    month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'][i],
-    hours: h
-  }));
 
   const skillsData = allSkills.slice(0, 5).map((skill: any) => ({
     name: skill,
@@ -382,10 +438,10 @@ export default function ImpactReport(props: any) {
                       Hours Logged
                     </p>
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                      {totalHours}h
+                      {filteredTotalHours}h
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Avg: {(totalHours / Math.max(1, projectAssignments.length)).toFixed(1)}h per project
+                      Avg: {avgMonthlyHours}/month
                     </p>
                   </div>
 
@@ -429,9 +485,16 @@ export default function ImpactReport(props: any) {
                   {/* Monthly Hours Trend */}
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                         Monthly Hours Trend
                       </h3>
+                      {bestMonth && (
+                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-2 mb-3 text-xs">
+                          <p className="text-gray-700 dark:text-gray-300">
+                            <strong>Peak Performance:</strong> {bestMonth.month} with {bestMonth.hours}h logged
+                          </p>
+                        </div>
+                      )}
                       <Line
                         ref={(ref) => chartRefs.current['monthlyHours'] = ref}
                         data={{
@@ -454,6 +517,10 @@ export default function ImpactReport(props: any) {
                           plugins: { legend: { display: false } }
                         }}
                       />
+                      <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                        <p>📊 <strong>Summary:</strong> {monthlyHours.reduce((sum, m) => sum + m.hours, 0)}h total • {avgMonthlyHours}h/month avg</p>
+                        <p>✅ <strong>What Went Well:</strong> Consistent engagement across {monthlyHours.filter(m => m.hours > 0).length} active months</p>
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -793,8 +860,8 @@ export default function ImpactReport(props: any) {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Hours Logged</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalHours}h</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg: {(totalHours / Math.max(1, projectAssignments.length)).toFixed(1)}h per project</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{filteredTotalHours}h</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg: {avgMonthlyHours}/month</p>
                   </div>
 
                   <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
@@ -820,8 +887,19 @@ export default function ImpactReport(props: any) {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Hours Trend</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Monthly Hours Trend</h3>
+                      {bestMonth && (
+                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-2 mb-3 text-xs">
+                          <p className="text-gray-700 dark:text-gray-300">
+                            <strong>Peak Performance:</strong> {bestMonth.month} with {bestMonth.hours}h logged
+                          </p>
+                        </div>
+                      )}
                       <Line ref={(ref) => chartRefs.current['monthlyHours'] = ref} data={{ labels: monthlyHours.map(d => d.month), datasets: [{ label: 'Hours Logged', data: monthlyHours.map(d => d.hours), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }} />
+                      <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                        <p>📊 <strong>Summary:</strong> {monthlyHours.reduce((sum, m) => sum + m.hours, 0)}h total • {avgMonthlyHours}h/month avg</p>
+                        <p>✅ <strong>What Went Well:</strong> Consistent engagement across {monthlyHours.filter(m => m.hours > 0).length} active months</p>
+                      </div>
                     </CardContent>
                   </Card>
 

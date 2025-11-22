@@ -4355,5 +4355,194 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // Leaderboard Stats Routes
+  app.get("/api/leaderboard-stats", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (!userId) {
+        return res.status(400).json({ message: "userId required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const activities = await storage.listVolunteerActivitiesByUser(userId);
+      const assignments = await storage.listProjectAssignmentsByVolunteer(userId);
+      const impacts = await storage.listProjectImpacts();
+
+      const userImpacts = impacts.filter((i: any) => i.volunteerId === userId);
+      const completedAssignments = assignments.filter((a: any) => a.status === 'completed');
+      const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
+
+      const totalHours = activities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
+      const weeklyActivities = activities.filter((a: any) => {
+        const actDate = new Date(a.date);
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        return actDate >= weekAgo;
+      });
+
+      return res.json({
+        userId,
+        totalHours: Math.round(totalHours),
+        tasksCompleted: assignments.length,
+        projectsCompleted: uniqueProjects.size,
+        impactsLogged: userImpacts.length,
+        weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
+        maxStreak: 52,
+        totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50)),
+        badgesEarned: 0,
+        lastActivityDate: activities.length > 0 ? activities[activities.length - 1].date : null,
+      });
+    } catch (err) {
+      console.error("Error fetching leaderboard stats:", err);
+      res.status(500).json({ message: "Error fetching leaderboard stats" });
+    }
+  });
+
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      const type = (req.query.type as string) || "points";
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      const allUsers = await storage.listUsers();
+      const allActivities = await storage.listVolunteerActivities();
+      const allAssignments = await storage.listProjectAssignments();
+      const allImpacts = await storage.listProjectImpacts();
+
+      const leaderboardData = await Promise.all(
+        allUsers
+          .filter((u: any) => u.userType === 'volunteer')
+          .map(async (user: any) => {
+            const userActivities = allActivities.filter((a: any) => a.userId === user.id);
+            const userAssignments = allAssignments.filter((a: any) => a.volunteerId === user.id);
+            const userImpacts = allImpacts.filter((i: any) => i.volunteerId === user.id);
+            const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
+            const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
+
+            const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
+            const weeklyActivities = userActivities.filter((a: any) => {
+              const actDate = new Date(a.date);
+              const weekAgo = new Date();
+              weekAgo.setDate(weekAgo.getDate() - 7);
+              return actDate >= weekAgo;
+            });
+
+            return {
+              userId: user.id,
+              displayName: user.displayName || user.email,
+              totalHours: Math.round(totalHours),
+              tasksCompleted: userAssignments.length,
+              projectsCompleted: uniqueProjects.size,
+              impactsLogged: userImpacts.length,
+              weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
+              maxStreak: 52,
+              totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50)),
+              badgesEarned: 0,
+            };
+          })
+      );
+
+      const sorted = leaderboardData.sort((a: any, b: any) => {
+        if (type === "hours") return b.totalHours - a.totalHours;
+        if (type === "impacts") return b.impactsLogged - a.impactsLogged;
+        if (type === "tasks") return b.tasksCompleted - a.tasksCompleted;
+        if (type === "streak") return b.weeklyStreak - a.weeklyStreak;
+        return b.totalPoints - a.totalPoints;
+      });
+
+      return res.json(sorted.slice(0, limit));
+    } catch (err) {
+      console.error("Error fetching leaderboard:", err);
+      res.status(500).json({ message: "Error fetching leaderboard" });
+    }
+  });
+
+  app.get("/api/organization-leaderboard", async (req, res) => {
+    try {
+      const organizationId = req.query.organizationId ? parseInt(req.query.organizationId as string) : null;
+      const type = (req.query.type as string) || "hours";
+      const limit = parseInt(req.query.limit as string) || 20;
+
+      if (!organizationId) {
+        return res.status(400).json({ message: "organizationId required" });
+      }
+
+      const org = await storage.getOrganization(organizationId);
+      if (!org) {
+        return res.status(404).json({ message: "Organization not found" });
+      }
+
+      const allUsers = await storage.listUsers();
+      const orgVolunteers = allUsers.filter((u: any) => u.organizationId === organizationId && u.userType === 'volunteer');
+      const allActivities = await storage.listVolunteerActivities();
+      const allAssignments = await storage.listProjectAssignments();
+      const allImpacts = await storage.listProjectImpacts();
+
+      const leaderboardData = orgVolunteers.map((user: any) => {
+        const userActivities = allActivities.filter((a: any) => a.userId === user.id);
+        const userAssignments = allAssignments.filter((a: any) => a.volunteerId === user.id);
+        const userImpacts = allImpacts.filter((i: any) => i.volunteerId === user.id);
+        const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
+        const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
+
+        const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
+        const weeklyActivities = userActivities.filter((a: any) => {
+          const actDate = new Date(a.date);
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          return actDate >= weekAgo;
+        });
+
+        return {
+          userId: user.id,
+          displayName: user.displayName || user.email,
+          totalHours: Math.round(totalHours),
+          tasksCompleted: userAssignments.length,
+          projectsCompleted: uniqueProjects.size,
+          impactsLogged: userImpacts.length,
+          weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
+          maxStreak: 52,
+          totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50)),
+          badgesEarned: 0,
+        };
+      });
+
+      const sorted = leaderboardData.sort((a: any, b: any) => {
+        if (type === "hours") return b.totalHours - a.totalHours;
+        if (type === "impacts") return b.impactsLogged - a.impactsLogged;
+        if (type === "tasks") return b.tasksCompleted - a.tasksCompleted;
+        if (type === "points") return b.totalPoints - a.totalPoints;
+        return b.weeklyStreak - a.weeklyStreak;
+      });
+
+      return res.json(sorted.slice(0, limit));
+    } catch (err) {
+      console.error("Error fetching org leaderboard:", err);
+      res.status(500).json({ message: "Error fetching organization leaderboard" });
+    }
+  });
+
+  app.get("/api/user-badges", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (!userId) {
+        return res.status(400).json({ message: "userId required" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      return res.json([]);
+    } catch (err) {
+      console.error("Error fetching user badges:", err);
+      res.status(500).json({ message: "Error fetching badges" });
+    }
+  });
+
   return httpServer;
 }

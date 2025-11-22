@@ -251,6 +251,55 @@ export const feedback = pgTable("feedback", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Badges - Gamification achievements for volunteers and organizations
+export const badges = pgTable("badges", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // e.g., "First Step", "Century Club", "Impact Champion"
+  description: text("description").notNull(),
+  icon: text("icon"), // Emoji or icon identifier
+  category: text("category").notNull(), // volunteer, organization, team
+  tier: text("tier").default("bronze"), // bronze, silver, gold, platinum
+  condition: text("condition").notNull(), // Description of how to earn
+  thresholdType: text("threshold_type"), // hours, tasks, impacts, streak, projects
+  thresholdValue: integer("threshold_value"), // Numeric value to reach
+  displayOrder: integer("display_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User Badges - Track which badges a volunteer or organization has earned
+export const userBadges = pgTable("user_badges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  badgeId: integer("badge_id").references(() => badges.id).notNull(),
+  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+  progressPercentage: integer("progress_percentage").default(0), // For in-progress badges
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserBadge: uniqueIndex("unique_user_badge").on(table.userId, table.badgeId),
+}));
+
+// Leaderboard - Aggregate volunteer/organization stats for ranking
+export const leaderboardStats = pgTable("leaderboard_stats", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
+  userType: text("user_type").notNull(), // volunteer, organization
+  organizationId: integer("organization_id").references(() => organizations.id),
+  totalHours: integer("total_hours").default(0),
+  tasksCompleted: integer("tasks_completed").default(0),
+  projectsCompleted: integer("projects_completed").default(0),
+  impactsLogged: integer("impacts_logged").default(0),
+  weeklyStreak: integer("weekly_streak").default(0),
+  maxStreak: integer("max_streak").default(0),
+  totalPoints: integer("total_points").default(0), // Gamification points
+  badgesEarned: integer("badges_earned").default(0),
+  lastActivityDate: timestamp("last_activity_date"),
+  rank: integer("rank"), // Leaderboard rank (1st, 2nd, etc.)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Matching Weights - Admin panel for simple weight adjustments (Optimization Layer)
 export const matchingWeights = pgTable("matching_weights", {
   id: serial("id").primaryKey(),
@@ -594,6 +643,23 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   updatedAt: true
 });
 
+export const insertBadgeSchema = createInsertSchema(badges).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLeaderboardStatsSchema = createInsertSchema(leaderboardStats).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -654,3 +720,12 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+
+export type Badge = typeof badges.$inferSelect;
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
+
+export type UserBadge = typeof userBadges.$inferSelect;
+export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
+
+export type LeaderboardStats = typeof leaderboardStats.$inferSelect;
+export type InsertLeaderboardStats = z.infer<typeof insertLeaderboardStatsSchema>;

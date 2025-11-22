@@ -200,8 +200,8 @@ export default function ImpactReport(props: any) {
     }
     
     return volunteerActivities.filter(a => {
-      if (!a.dateLogged) return true;
-      const activityDate = new Date(a.dateLogged);
+      if (!a.date) return true;
+      const activityDate = new Date(a.date);
       return activityDate >= startDate;
     });
   };
@@ -222,8 +222,8 @@ export default function ImpactReport(props: any) {
     const dates: Date[] = [];
     
     filteredActivities.forEach(activity => {
-      if (activity.dateLogged) {
-        const date = new Date(activity.dateLogged);
+      if (activity.date) {
+        const date = new Date(activity.date);
         const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
         monthlyData[monthKey] = (monthlyData[monthKey] || 0) + (activity.hours || 0);
         dates.push(date);

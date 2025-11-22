@@ -77,6 +77,18 @@ export default function MyWork() {
     : 0;
 
   const activeProjectCount = projectAssignments.filter(a => a.status === 'active').length;
+
+  // Calculate hours logged for in-progress tasks (real active work)
+  const inProgressTaskIds = new Set(tasksByStatus.inProgress.map(t => t.id));
+  const activeWorkHours = volunteerActivities
+    .filter(a => inProgressTaskIds.has(a.taskId))
+    .reduce((sum, a) => sum + (a.hours || 0), 0);
+  
+  // Calculate today's hours logged
+  const today = new Date().toDateString();
+  const todaysHours = volunteerActivities
+    .filter(a => new Date(a.date).toDateString() === today)
+    .reduce((sum, a) => sum + (a.hours || 0), 0);
   
   // Get initial tab from URL hash or default to applications
   const getInitialTab = () => {
@@ -122,12 +134,17 @@ export default function MyWork() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Active Work</p>
-                <p className="text-2xl font-bold">{tasksByStatus.inProgress.length}</p>
-                <p className="text-xs text-gray-500 mt-1">in progress now</p>
+                <p className="text-sm text-gray-600">Active Work Hours</p>
+                <p className="text-2xl font-bold">{activeWorkHours.toFixed(1)}h</p>
+                <p className="text-xs text-gray-500 mt-1">{todaysHours.toFixed(1)}h logged today</p>
               </div>
               <TrendingUp className="h-8 w-8 text-blue-500" />
             </div>
+            {tasksByStatus.inProgress.length > 0 && (
+              <div className="mt-3 pt-3 border-t text-xs text-gray-500">
+                {tasksByStatus.inProgress.length} task{tasksByStatus.inProgress.length !== 1 ? 's' : ''} in progress
+              </div>
+            )}
           </CardContent>
         </Card>
 

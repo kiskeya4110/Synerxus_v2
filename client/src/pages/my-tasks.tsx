@@ -46,8 +46,8 @@ export default function MyTasks() {
     enabled: !!volunteerId
   });
 
-  // Fetch volunteer's project assignments
-  const { data: projectAssignments = [], isLoading: assignmentsLoading } = useQuery<ProjectAssignment[]>({
+  // Fetch volunteer's project assignments (now includes project data)
+  const { data: projectAssignments = [], isLoading: assignmentsLoading } = useQuery<any[]>({
     queryKey: ["/api/project-assignments", { volunteerId }],
     queryFn: async () => {
       const response = await fetch(`/api/project-assignments?volunteerId=${volunteerId}`);
@@ -56,9 +56,25 @@ export default function MyTasks() {
     enabled: !!volunteerId
   });
 
-  // Fetch all projects to get details
+  // Fetch volunteer's activities for real-time hours tracking
+  const { data: volunteerActivities = [] } = useQuery<any[]>({
+    queryKey: ["/api/volunteer-activities", { userId: volunteerId }],
+    queryFn: async () => {
+      if (!volunteerId) return [];
+      const response = await fetch(`/api/volunteer-activities?userId=${volunteerId}`);
+      return response.json();
+    },
+    enabled: !!volunteerId
+  });
+
+  // Fetch all projects to get details (fallback for enrichment)
   const { data: allProjects = [] } = useQuery<Project[]>({
-    queryKey: ["/api/projects"]
+    queryKey: ["/api/projects"],
+    queryFn: async () => {
+      // Projects endpoint requires filters, but we'll try without to get what we can
+      const response = await fetch("/api/projects");
+      return response.ok ? response.json() : [];
+    }
   });
 
   // Fetch all organizations to enrich project data
@@ -146,10 +162,18 @@ export default function MyTasks() {
     completed: tasks.filter(t => t.status?.toLowerCase() === "completed")
   };
 
+  // Calculate real hours from volunteer activities
+  const totalHoursLogged = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const totalHoursCommitted = projectAssignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
-  const totalHoursCompleted = projectAssignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
   const progressPercentage = totalHoursCommitted > 0 
-    ? Math.round((totalHoursCompleted / totalHoursCommitted) * 100)
+    ? Math.round((totalHoursLogged / totalHoursCommitted) * 100)
+    : 0;
+
+  // Calculate task completion percentage
+  const completedTaskCount = tasksByStatus.completed.length;
+  const totalTaskCount = tasks.length;
+  const taskCompletionPercentage = totalTaskCount > 0 
+    ? Math.round((completedTaskCount / totalTaskCount) * 100)
     : 0;
 
   if (tasksLoading || assignmentsLoading) {
@@ -167,7 +191,7 @@ export default function MyTasks() {
         <p className="text-gray-600">Track your volunteer assignments and progress</p>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards with Live KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
@@ -175,9 +199,11 @@ export default function MyTasks() {
               <div>
                 <p className="text-sm text-gray-600">Total Tasks</p>
                 <p className="text-2xl font-bold">{tasks.length}</p>
+                <p className="text-xs text-gray-500 mt-1">{taskCompletionPercentage}% completed</p>
               </div>
               <CheckSquare className="h-8 w-8 text-gray-400" />
             </div>
+            <Progress value={taskCompletionPercentage} className="mt-3 h-1" />
           </CardContent>
         </Card>
 
@@ -187,6 +213,7 @@ export default function MyTasks() {
               <div>
                 <p className="text-sm text-gray-600">In Progress</p>
                 <p className="text-2xl font-bold">{tasksByStatus.inProgress.length}</p>
+                <p className="text-xs text-gray-500 mt-1">{tasksByStatus.todo.length} pending</p>
               </div>
               <TrendingUp className="h-8 w-8 text-blue-500" />
             </div>
@@ -199,6 +226,7 @@ export default function MyTasks() {
               <div>
                 <p className="text-sm text-gray-600">Active Projects</p>
                 <p className="text-2xl font-bold">{projectAssignments.filter(a => a.status === 'active').length}</p>
+                <p className="text-xs text-gray-500 mt-1">{projectAssignments.length} total assigned</p>
               </div>
               <FolderKanban className="h-8 w-8 text-green-500" />
             </div>
@@ -209,11 +237,13 @@ export default function MyTasks() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Hours Progress</p>
-                <p className="text-2xl font-bold">{totalHoursCompleted}/{totalHoursCommitted}</p>
+                <p className="text-sm text-gray-600">Hours Logged</p>
+                <p className="text-2xl font-bold">{totalHoursLogged.toFixed(1)}/{totalHoursCommitted}</p>
+                <p className="text-xs text-gray-500 mt-1">{progressPercentage}% of target</p>
               </div>
               <Clock className="h-8 w-8 text-purple-500" />
             </div>
+            <Progress value={Math.min(progressPercentage, 100)} className="mt-3 h-1" />
           </CardContent>
         </Card>
       </div>

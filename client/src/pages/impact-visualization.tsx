@@ -710,51 +710,61 @@ export default function ImpactVisualization() {
                 </p>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">Volunteer Hours</span>
-                      <span className="text-xs font-bold text-purple-700 dark:text-purple-300">40%</span>
+                      <span className="text-xs font-bold text-purple-700 dark:text-purple-300">35%</span>
                     </div>
                     <div className="text-xl font-bold text-purple-600 dark:text-purple-400">
                       {dashboardData.totalHours || 0} hrs
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total volunteer time contributed</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Total volunteer time</p>
+                  </div>
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-red-700 dark:text-red-300">People Impacted</span>
+                      <span className="text-xs font-bold text-red-700 dark:text-red-300">30%</span>
+                    </div>
+                    <div className="text-xl font-bold text-red-600 dark:text-red-400">
+                      {aggregatedMetrics?.totalPeople || 0}
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Lives directly impacted</p>
                   </div>
                   <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-green-700 dark:text-green-300">Task Completion</span>
-                      <span className="text-xs font-bold text-green-700 dark:text-green-300">30%</span>
+                      <span className="text-xs font-bold text-green-700 dark:text-green-300">20%</span>
                     </div>
                     <div className="text-xl font-bold text-green-600 dark:text-green-400">
                       {Math.round(((dashboardData.completedTasks || 0) / (dashboardData.totalTasks || 1)) * 100)}%
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{dashboardData.completedTasks || 0} of {dashboardData.totalTasks || 0} tasks done</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks completed</p>
                   </div>
                   <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-amber-700 dark:text-amber-300">SDG Coverage</span>
-                      <span className="text-xs font-bold text-amber-700 dark:text-amber-300">20%</span>
+                      <span className="text-xs font-bold text-amber-700 dark:text-amber-300">10%</span>
                     </div>
                     <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
                       {dashboardData.sdgsAddressed || 0}/17
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">UN SDG goals addressed</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">UN SDG goals</p>
                   </div>
                   <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-blue-700 dark:text-blue-300">Match Acceptance</span>
-                      <span className="text-xs font-bold text-blue-700 dark:text-blue-300">10%</span>
+                      <span className="text-xs font-bold text-blue-700 dark:text-blue-300">5%</span>
                     </div>
                     <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
                       {dashboardData.acceptedApplications || 0}
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Successful volunteer matches</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Matches accepted</p>
                   </div>
                 </div>
                 <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    <strong>Formula:</strong> Impact Score = (Hours Score × 0.40) + (Task Completion × 0.30) + (SDG Coverage × 0.20) + (Match Rate × 0.10)
+                    <strong>Formula:</strong> Impact Score = (Hours × 0.35) + (People Impacted × 0.30) + (Task Completion × 0.20) + (SDG Coverage × 0.10) + (Match Rate × 0.05)
                   </p>
                 </div>
               </CardContent>

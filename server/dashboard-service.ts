@@ -823,7 +823,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       }
     });
 
-    // Calculate Impact Score
+    // Calculate Impact Score - Updated weights with people impacted as major driver
+    // Hours: 35%, People Impacted: 30%, Tasks: 20%, SDG: 10%, Match: 5%
     const hoursScore = Math.min((totalHours / 100) * 100, 100);
     const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     const sdgScore = (uniqueSDGs.size / 17) * 100;
@@ -832,12 +833,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       ? (acceptedApplications / volunteerApplications.length) * 100
       : 0;
 
-    const impactScore = Math.round(
-      hoursScore * 0.40 +
-      tasksScore * 0.30 +
-      sdgScore * 0.20 +
-      matchScore * 0.10
-    );
+    // Placeholder for impact score - will be calculated after peopleMetricIds are available
+    let impactScore = 0;
 
     // Create organization map for enrichment
     const organizationMap = new Map(
@@ -1007,6 +1004,19 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         peopleMetricIds.add(metric.id);
       }
     });
+
+    // Now calculate people impacted and recalculate impact score with people as a major driver
+    const totalPeopleImpacted = calculatePeopleImpacted(volunteerImpacts, peopleMetricIds);
+    const peopleScore = Math.min((totalPeopleImpacted / 100) * 100, 100);
+    
+    // Recalculate impact score with updated weights: Hours 35%, People 30%, Tasks 20%, SDG 10%, Match 5%
+    impactScore = Math.round(
+      hoursScore * 0.35 +
+      peopleScore * 0.30 +
+      tasksScore * 0.20 +
+      sdgScore * 0.10 +
+      matchScore * 0.05
+    );
 
     // Compute real monthly hours and people impacted using shared utility
     const monthlyImpactSeries = buildMonthlyImpactSeries(

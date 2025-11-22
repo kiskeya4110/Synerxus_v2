@@ -314,7 +314,7 @@ export default function MyWork() {
 
       {/* KPI Summary Row */}
       {isOrganizationManager ? (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 pb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 pb-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -370,7 +370,7 @@ export default function MyWork() {
           </Card>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 px-6 pb-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 pb-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">

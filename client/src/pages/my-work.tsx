@@ -384,16 +384,15 @@ export default function MyWork() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">Organization</p>
-                    <p className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                      {organization?.name ? organization.name.substring(0, 12) : 'N/A'}
-                    </p>
+                    <p className="text-sm text-gray-600">Total Volunteers</p>
+                    <p className="text-2xl font-bold">{orgVolunteers.length}</p>
+                    <p className="text-xs text-gray-500 mt-1">{orgActiveVolunteers} active</p>
                   </div>
-                  <BarChart3 className="h-8 w-8 text-orange-500" />
+                  <UsersIcon className="h-8 w-8 text-blue-500" />
                 </div>
                 <Button variant="outline" size="sm" className="w-full justify-center gap-2 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/20" data-testid="button-impact-leader">
                   <Star className="h-4 w-4" />
-                  <span className="text-xs font-semibold">Impact Leader: {impactLeaderName.substring(0, 12)}</span>
+                  <span className="text-xs font-semibold">Leader: {impactLeaderName.substring(0, 10)}</span>
                 </Button>
               </div>
             </CardContent>

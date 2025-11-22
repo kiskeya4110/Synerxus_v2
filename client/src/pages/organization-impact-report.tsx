@@ -313,10 +313,10 @@ export default function OrganizationImpactReport(props: any) {
   ];
 
   const organizationalPerformance = {
-    labels: ['Volunteer\nCapacity', 'Financial\nHealth', 'Program\nQuality', 'Partnership\nNetwork', 'Community\nImpact', 'Operational\nEfficiency'],
+    labels: ['Volunteer', 'Capacity', 'Financial', 'Health', 'Program', 'Quality', 'Partnership', 'Network', 'Community', 'Impact', 'Operational', 'Efficiency'],
     datasets: [{
       label: 'Performance Score',
-      data: [85, 78, 88, 72, 91, 80],
+      data: [85, 85, 78, 78, 88, 88, 72, 72, 91, 91, 80, 80],
       borderColor: '#3b82f6',
       backgroundColor: 'rgba(59, 130, 246, 0.1)',
       fill: true,
@@ -588,14 +588,18 @@ export default function OrganizationImpactReport(props: any) {
                           responsive: true,
                           maintainAspectRatio: true,
                           plugins: { 
-                            legend: { position: 'bottom' },
+                            legend: { position: 'bottom', labels: { font: { size: 12 } } },
                             tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
                           },
                           scales: { 
                             r: { 
                               beginAtZero: true, 
                               max: 100,
-                              ticks: { font: { size: 11 } }
+                              ticks: { font: { size: 12, weight: 'bold' } },
+                              pointLabels: {
+                                font: { size: 11, weight: 'bold' },
+                                padding: 8
+                              }
                             } 
                           }
                         }}

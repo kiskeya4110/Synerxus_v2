@@ -439,6 +439,38 @@
     page-break-inside: avoid !important;
   }
 
+  /* Prevent page breaks within KPI and chart sections */
+  .grid-cols-5,
+  .grid-cols-1,
+  .md\:grid-cols-3,
+  .md\:grid-cols-4 {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Prevent breaks within individual KPI cards and chart cards */
+  [class*="bg-blue-"],
+  [class*="bg-green-"],
+  [class*="bg-purple-"],
+  [class*="bg-orange-"],
+  [class*="bg-gradient-"],
+  .rounded-lg {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Chart containers should never break */
+  .chart-container,
+  canvas {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ensure TabsContent doesn't break unnecessarily */
+  [role="tabpanel"] {
+    page-break-inside: avoid !important;
+  }
+
   /* Optimize for PDF readability */
   line-height: 1.6 !important;
 }

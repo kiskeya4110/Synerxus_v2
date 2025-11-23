@@ -622,50 +622,82 @@ export default function ImpactReport(props: any) {
               <TabsContent value="overview" className="space-y-6">
                 {/* Enhanced KPI Buttons in 1 row x 4 columns */}
                 <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
-                      Hours Logged
-                    </p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      {filteredTotalHours}h
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                      Avg: {avgMonthlyHours}/mo
-                    </p>
+                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Hours Logged</p>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{Math.round(filteredTotalHours)}h</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Activities:</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{filteredActivities.length}</span>
+                      </div>
+                      {filteredActivities.length > 0 && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Avg/Activity:</span>
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{(filteredTotalHours / filteredActivities.length).toFixed(1)}h</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Monthly Avg:</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{avgMonthlyHours}h</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
-                      Tasks Completed
-                    </p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {filteredTasksCompleted}/{tasks.length}
-                    </p>
-                    <Progress value={tasks.length > 0 ? (filteredTasksCompleted / tasks.length) * 100 : 0} className="mt-2 h-1" />
+                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                    <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">Tasks Completed</p>
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">{filteredTasksCompleted}/{tasks.length}</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Completion:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{tasks.length > 0 ? Math.round((filteredTasksCompleted / tasks.length) * 100) : 0}%</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Total Tasks:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{tasks.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Pending:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{tasks.length - filteredTasksCompleted}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
-                      Active Projects
-                    </p>
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      {filteredActiveProjects}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                      of {assignmentsCount} assign.
-                    </p>
+                  <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                    <p className="text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-2">Active Projects</p>
+                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">{filteredActiveProjects}</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Total:</span>
+                        <span className="font-bold text-purple-600 dark:text-purple-400">{assignmentsCount}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Completion Avg:</span>
+                        <span className="font-bold text-purple-600 dark:text-purple-400">{assignmentsCount > 0 ? Math.round((filteredActiveProjects / assignmentsCount) * 100) : 0}%</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Assignments:</span>
+                        <span className="font-bold text-purple-600 dark:text-purple-400">{assignmentsCount}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="bg-orange-50 dark:bg-orange-900 p-3 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
-                      Skills Applied
-                    </p>
-                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                      {allSkills.length}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                      {sdgs.length} SDG{sdgs.length !== 1 ? 's' : ''}
-                    </p>
+                  <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                    <p className="text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-2">Skills & SDGs</p>
+                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">{allSkills.length}</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Skills:</span>
+                        <span className="font-bold text-orange-600 dark:text-orange-400">{allSkills.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">SDG Goals:</span>
+                        <span className="font-bold text-orange-600 dark:text-orange-400">{sdgs.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Impact Score:</span>
+                        <span className="font-bold text-orange-600 dark:text-orange-400">{filteredImpactScore}/100</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -780,10 +812,11 @@ export default function ImpactReport(props: any) {
                     </Card>
                   )}
                 </div>
-              </div>
+              </TabsContent>
 
-              {/* Column 2: Engagement Section */}
-              <div className="space-y-6" data-print-engagement="true">
+              {/* Engagement Tab */}
+              <TabsContent value="engagement" className="space-y-6">
+                <div className="space-y-6" data-print-engagement="true">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Skills Assessment */}
                   <Card className="border border-gray-200 dark:border-gray-700">
@@ -881,10 +914,12 @@ export default function ImpactReport(props: any) {
                     </CardContent>
                   </Card>
                 )}
-              </div>
+                </div>
+              </TabsContent>
 
-              {/* Column 3: Impact Section */}
-              <div className="space-y-6" data-print-impact="true">
+              {/* Impact Tab */}
+              <TabsContent value="impact" className="space-y-6">
+                <div className="space-y-6" data-print-impact="true">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
@@ -963,10 +998,12 @@ export default function ImpactReport(props: any) {
                     </CardContent>
                   </Card>
                 )}
-              </div>
+                </div>
+              </TabsContent>
 
-              {/* Column 4: Analytics Section */}
-              <div className="space-y-6" data-print-analytics="true">
+              {/* Analytics Tab */}
+              <TabsContent value="analytics" className="space-y-6">
+                <div className="space-y-6" data-print-analytics="true">
                 {/* KPI Tracking Table */}
                 <Card className="border border-gray-200 dark:border-gray-700">
                   <CardContent className="p-4">
@@ -1070,9 +1107,9 @@ export default function ImpactReport(props: any) {
                     </ul>
                   </CardContent>
                 </Card>
-              </div>
-              </div>
-            </div>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             {/* Footer */}
             <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400 print:mt-4 print:pt-3 print:border-t print:text-xs">

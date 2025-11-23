@@ -617,49 +617,73 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         {/* Main Report Card */}
         <Card id="org-impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black">
           <CardContent className="p-8 print:p-4">
-            {/* Header Section - Simplified, no green bar */}
-            <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
-              <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
-                <Logo size="sm" className="print:scale-75" />
-                {organization?.logo && (
-                  <div className="flex items-center">
-                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6">
-                      <img
-                        src={organization.logo}
-                        alt={organization.name}
-                        className="h-12 w-auto object-contain print:h-8"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
+            {/* Header Section - Split Layout */}
+            <div className="grid grid-cols-3 gap-8 mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:gap-4 print:mb-4 print:pb-3">
+              {/* Left Side: Logo, Organization Name, Title, Impact Score, Date */}
+              <div className="col-span-2">
+                <div className="flex items-start gap-4 mb-4 print:gap-2">
+                  <Logo size="sm" className="print:scale-75" />
+                  {organization?.logo && (
+                    <div className="flex items-center">
+                      <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-4">
+                        <img
+                          src={organization.logo}
+                          alt={organization.name}
+                          className="h-12 w-auto object-contain print:h-8"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
 
-              <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 print:text-2xl">
-                {organization?.name || 'Your Organization'}
-              </p>
-              
-              <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
-                Global Impact Report
-              </h1>
-
-              {organization?.description && (
-                <p className="text-sm text-gray-700 dark:text-gray-400 mb-4 max-w-3xl mx-auto line-clamp-2">
-                  {summarizeMission(organization.description)}
+                <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1 print:text-2xl">
+                  {organization?.name || 'Your Organization'}
                 </p>
-              )}
+                
+                <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
+                  Global Impact Report
+                </h1>
 
-              <div className="inline-block">
-                <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
-                  Impact Score: {Math.round((activeVolunteers / 100) * 85 + operatingMargin / 2)}/100
-                </Badge>
+                <div className="space-y-2">
+                  <div>
+                    <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
+                      Impact Score: {Math.round((activeVolunteers / 100) * 85 + operatingMargin / 2)}/100
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    <span>Generated on </span>
+                    <span className="font-semibold">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                <span>•</span>
-                <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              {/* Right Side: General Organization Information */}
+              <div className="col-span-1">
+                <div className="space-y-3 print:space-y-2">
+                  {/* Team Members */}
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded border border-blue-200 dark:border-blue-700 print:p-2 print:text-xs">
+                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase mb-1">Team Members</p>
+                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100">{totalTeam}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Active Volunteers: {activeVolunteers}</p>
+                  </div>
+
+                  {/* Total Hours */}
+                  <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded border border-green-200 dark:border-green-700 print:p-2 print:text-xs">
+                    <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase mb-1">Total Hours</p>
+                    <p className="text-lg font-bold text-green-900 dark:text-green-100">{Math.round(totalHours)}h</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{filteredActivities.length} Activities</p>
+                  </div>
+
+                  {/* Projects */}
+                  <div className="bg-purple-50 dark:bg-purple-900/30 p-3 rounded border border-purple-200 dark:border-purple-700 print:p-2 print:text-xs">
+                    <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase mb-1">Projects</p>
+                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100">{totalProjects}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{projects.filter(p => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress').length} Active</p>
+                  </div>
+                </div>
               </div>
             </div>
 

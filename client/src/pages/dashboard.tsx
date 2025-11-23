@@ -175,9 +175,35 @@ export default function Dashboard() {
     };
   }, [selectedProject, dashboardData]);
 
-  // Filter monthly impact data by time period
+  // Filter monthly impact data by time period AND project
   const filteredMonthlyImpactData = useMemo(() => {
-    const monthlyData = dashboardData?.monthlyImpactData || [];
+    let monthlyData = dashboardData?.monthlyImpactData || [];
+    
+    // Filter by project if specific project is selected
+    if (selectedProject !== 'all' && filteredData.activities.length > 0) {
+      // Calculate monthly data from filtered activities for this project
+      const projectMonthlyMap = new Map<string, { hours: number; peopleImpacted: number }>();
+      
+      filteredData.activities.forEach((activity: any) => {
+        const date = new Date(activity.date || activity.createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!projectMonthlyMap.has(monthKey)) {
+          projectMonthlyMap.set(monthKey, { hours: 0, peopleImpacted: 0 });
+        }
+        
+        const month = projectMonthlyMap.get(monthKey)!;
+        month.hours += activity.hours || 0;
+        month.peopleImpacted += activity.peopleImpacted || 0;
+      });
+      
+      monthlyData = Array.from(projectMonthlyMap.entries()).map(([month, data]) => ({
+        month,
+        hours: data.hours,
+        peopleImpacted: data.peopleImpacted
+      }));
+    }
+    
     if (timeFilter === 'all') return monthlyData;
     
     const now = new Date();
@@ -201,11 +227,39 @@ export default function Dashboard() {
       const dataDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       return dataDate >= startDate;
     });
-  }, [dashboardData?.monthlyImpactData, timeFilter]);
+  }, [dashboardData?.monthlyImpactData, timeFilter, selectedProject, filteredData.activities]);
 
-  // Filter monthly impact trend by time period to match the impact data
+  // Filter monthly impact trend by time period AND project to match the impact data
   const filteredMonthlyImpactTrend = useMemo(() => {
-    const trendData = dashboardData?.monthlyImpactTrend || [];
+    let trendData = dashboardData?.monthlyImpactTrend || [];
+    
+    // Filter by project if specific project is selected
+    if (selectedProject !== 'all' && filteredData.activities.length > 0) {
+      // Calculate trend data from filtered activities for this project
+      const projectTrendMap = new Map<string, number>();
+      
+      filteredData.impacts.forEach((impact: any) => {
+        const date = new Date(impact.date || impact.createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!projectTrendMap.has(monthKey)) {
+          projectTrendMap.set(monthKey, 0);
+        }
+        
+        const current = projectTrendMap.get(monthKey) || 0;
+        projectTrendMap.set(monthKey, current + (impact.algorithmScore || 0));
+      });
+      
+      trendData = Array.from(projectTrendMap.entries()).map(([month, score]) => ({
+        month,
+        score: Math.round(score / (filteredData.impacts.filter((i: any) => {
+          const date = new Date(i.date || i.createdAt);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          return monthKey === month;
+        }).length || 1))
+      }));
+    }
+    
     if (timeFilter === 'all') return trendData;
     
     const now = new Date();
@@ -229,7 +283,7 @@ export default function Dashboard() {
       const dataDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       return dataDate >= startDate;
     });
-  }, [dashboardData?.monthlyImpactTrend, timeFilter]);
+  }, [dashboardData?.monthlyImpactTrend, timeFilter, selectedProject, filteredData.impacts, filteredData.activities]);
 
   // Generate narrative for impact chart - LIVE and INTERACTIVE with time filter AND project filter
   const impactNarrative = useMemo(() => {

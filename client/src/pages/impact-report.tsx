@@ -622,51 +622,51 @@ export default function ImpactReport(props: any) {
               </TabsList>
 
               {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-6" data-print-overview="true">
-                {/* Key Metrics Grid - Compact 2x2 on Mobile */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-2 sm:p-3 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-0.5 sm:mb-1">
+              <TabsContent value="overview" className="space-y-4" data-print-overview="true">
+                {/* Key Metrics Grid - Compact 2x2 */}
+                <div className="grid grid-cols-2 gap-2 md:gap-3">
+                  <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                       Hours Logged
                     </p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                       {filteredTotalHours}h
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 truncate">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                       Avg: {avgMonthlyHours}/mo
                     </p>
                   </div>
 
-                  <div className="bg-green-50 dark:bg-green-900 p-2 sm:p-3 md:p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-0.5 sm:mb-1">
+                  <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                       Tasks Completed
                     </p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {filteredCompletedTasks}/{tasks.length}
                     </p>
-                    <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} className="mt-1 sm:mt-2 h-1" />
+                    <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} className="mt-2 h-1" />
                   </div>
 
-                  <div className="bg-purple-50 dark:bg-purple-900 p-2 sm:p-3 md:p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-0.5 sm:mb-1">
+                  <div className="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                       Active Projects
                     </p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-purple-600 dark:text-purple-400">
+                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                       {filteredActiveProjects}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 truncate">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                       of {assignmentsCount} assign.
                     </p>
                   </div>
 
-                  <div className="bg-orange-50 dark:bg-orange-900 p-2 sm:p-3 md:p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-0.5 sm:mb-1">
+                  <div className="bg-orange-50 dark:bg-orange-900 p-3 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                       Skills Applied
                     </p>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-orange-600 dark:text-orange-400">
+                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                       {allSkills.length}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 truncate">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
                       {sdgs.length} SDG{sdgs.length !== 1 ? 's' : ''}
                     </p>
                   </div>

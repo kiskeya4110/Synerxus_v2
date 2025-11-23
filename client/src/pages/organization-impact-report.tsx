@@ -146,6 +146,13 @@ export default function OrganizationImpactReport(props: any) {
   // Access control: Only organization managers can view this report
   const isOrganizationManager = currentUser && currentUser.organizationId && currentUser.userType === 'organization';
 
+  // Redirect volunteers away from organization pages
+  useEffect(() => {
+    if (currentUser && !isOrganizationManager) {
+      setLocation('/dashboard');
+    }
+  }, [currentUser, isOrganizationManager, setLocation]);
+
   // Filter activities by organization's projects
   const orgProjectIds = new Set(projects.map(p => p.id));
   const filteredActivities = volunteerActivities.filter(a => orgProjectIds.has(a.projectId));

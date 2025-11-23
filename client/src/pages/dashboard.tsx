@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, Download } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, Download, FileText } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
@@ -32,6 +32,7 @@ declare const html2pdf: any;
 export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
   const [selectedKPI, setSelectedKPI] = useState<{ title: string; items: any[]; totalScore?: number } | null>(null);
@@ -752,10 +753,26 @@ export default function Dashboard() {
             <span className="sm:hidden">PDF</span>
           </Button>
           
-          {/* Row 2, Col 2: Empty or can be used for future actions */}
-          <div className="flex items-center justify-center">
-            {/* Placeholder for future action button or left empty */}
-          </div>
+          {/* Row 2, Col 2: Global Impact Report for Organizations */}
+          {dashboardType === "organization" ? (
+            <Button
+              onClick={() => navigate("/organization-impact-report")}
+              variant="outline"
+              size="sm"
+              className="w-full flex items-center justify-center gap-2"
+              data-testid="button-view-global-report"
+              title="View organization's Global Impact Report"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="hidden sm:inline">Global Report</span>
+              <span className="sm:hidden">Report</span>
+            </Button>
+          ) : (
+            <div className="flex items-center justify-center">
+              {/* Empty for volunteers */}
+            </div>
+          )}
+
         </div>
       </div>
 

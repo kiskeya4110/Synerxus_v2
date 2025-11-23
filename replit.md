@@ -28,3 +28,24 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 -   **Development & Build Tools**: TypeScript, Vite, ESBuild
 -   **Matching Algorithm**: Python and TypeScript implementation
 -   **Email Service**: Mock transporter (configurable for SendGrid, Mailgun, nodemailer in production)
+
+## Recent Changes (Nov 23, 2025)
+
+### Organization Dashboard Global Impact Report Navigation (Priority Fix)
+- **New "Global Report" Button**: Added dedicated button in Row 2, Col 2 of dashboard controls for organization users
+  - **Critical Requirement Met**: Organization dashboards MUST now navigate to the Global Impact Report for the organization, NOT individual volunteer reports
+  - Button only appears for organization managers, not volunteers
+  - Clicking navigates directly to `/organization-impact-report` page
+  - Uses FileText icon with responsive text ("Global Report" desktop, "Report" mobile)
+  - Data-testid: `button-view-global-report`
+  - Implementation: Wouter's `useLocation` hook for smooth client-side navigation
+
+### Dashboard Impact Narrative Live & Interactive Update
+- **Live Time-Filter Responsive**: The "Your Impact Over Time" narrative updates instantly when time filter changes (This Month, This Quarter, This Year, All Time)
+- **Accurate Data Counting**: Fixed narrative calculation to properly aggregate hours and people impacted from filtered monthly data
+- **Role-Based Narratives**: 
+  - Volunteers: Focuses on personal engagement, commitment level, and individual impact metrics
+  - Organizations: Focuses on volunteer base momentum, recruitment insights, and collective impact
+- **Better Trend Detection**: Uses midpoint split for more accurate increasing/decreasing/stable patterns
+- **Enhanced Messaging**: Emoji indicators and contextual insights (e.g., "📈 Your engagement is accelerating!")
+- **Dependency Fix**: Added `timeFilter` and `dashboardType` to useMemo dependencies for reactivity

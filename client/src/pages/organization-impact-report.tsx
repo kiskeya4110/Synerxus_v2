@@ -1129,7 +1129,7 @@ export default function OrganizationImpactReport(props: any) {
                 )}
 
                 {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quarterly Growth</h3>
@@ -1163,7 +1163,7 @@ export default function OrganizationImpactReport(props: any) {
                 </div>
 
                 {/* Monthly Engagement */}
-                <Card className="border border-gray-200 dark:border-gray-700 mt-6">
+                <Card className="border border-gray-200 dark:border-gray-700 mt-6 print:page-break-inside-avoid">
                   <CardContent className="p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Volunteer Engagement</h3>
                     <Line data={{ labels: monthlyEngagement.map(m => m.month), datasets: [{ label: 'Volunteer Hours', data: monthlyEngagement.map(m => m.hours), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { y: { beginAtZero: true } } }} />

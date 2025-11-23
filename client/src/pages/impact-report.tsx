@@ -730,7 +730,7 @@ export default function ImpactReport(props: any) {
                 </div>
 
                 {/* Charts Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   {/* Monthly Hours Trend */}
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
@@ -845,7 +845,7 @@ export default function ImpactReport(props: any) {
               {/* Engagement Tab */}
               <TabsContent value="engagement" className="space-y-6">
                 <div data-print-engagement="true" className="space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                     {/* Skills Assessment */}
                     <Card className="border border-gray-200 dark:border-gray-700">
                       <CardContent className="p-4">
@@ -1228,7 +1228,7 @@ export default function ImpactReport(props: any) {
                 </div>
 
                 {/* Charts Grid - from Overview Tab */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   {/* Monthly Hours Trend */}
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
@@ -1310,7 +1310,7 @@ export default function ImpactReport(props: any) {
                   <Users className="h-6 w-6 text-green-600" />
                   Engagement
                 </h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   {/* Skills Assessment */}
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">

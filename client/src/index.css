@@ -443,7 +443,10 @@
   .grid-cols-5,
   .grid-cols-1,
   .md\:grid-cols-3,
-  .md\:grid-cols-4 {
+  .md\:grid-cols-4,
+  .md\:grid-cols-2,
+  .lg\:grid-cols-2,
+  .lg\:grid-cols-3 {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
@@ -478,6 +481,14 @@
     max-height: 500px !important;
   }
 
+  /* Card elements with charts - comprehensive coverage */
+  .bg-white,
+  .border.border-gray-200,
+  div[class*="border-gray-200"] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
   /* Ensure TabsContent doesn't break unnecessarily */
   [role="tabpanel"] {
     page-break-inside: avoid !important;
@@ -488,6 +499,12 @@
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     margin-bottom: 0.5rem !important;
+  }
+
+  /* Sections containing charts or content groups */
+  .space-y-4,
+  .space-y-6 {
+    page-break-inside: avoid !important;
   }
 
   /* KPI Cards - prevent breaks within */
@@ -507,6 +524,12 @@
     widows: 3 !important;
   }
 
+  /* Prevent tabs from breaking */
+  div[role="tabpanel"],
+  .tab-content {
+    page-break-inside: avoid !important;
+  }
+
   /* Table rows should not break */
   tr {
     page-break-inside: avoid !important;
@@ -519,6 +542,18 @@
 
   li {
     page-break-inside: avoid !important;
+  }
+
+  /* Prevent breaks within flex and grid containers that hold charts */
+  .gap-6 {
+    page-break-inside: avoid !important;
+  }
+
+  /* Specific handling for impact report and org report main containers */
+  [id*="impact-report-content"],
+  [id*="org-impact-report-content"] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   /* Optimize for PDF readability */

@@ -30,6 +30,19 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 23, 2025)
 
+### Enhanced Print CSS for Page Break Prevention
+- **Comprehensive page break handling**: Added CSS rules to prevent charts, cards, and sections from breaking across pages
+  - Added `page-break-inside: avoid` and `break-inside: avoid` to all grid layouts (grid-cols-1, md:grid-cols-2, lg:grid-cols-2, lg:grid-cols-3, etc.)
+  - Applied page break prevention to card containers with charts (border-gray-200 elements)
+  - Enhanced gap and spacing classes to maintain layout integrity in PDFs
+  - Added specific handling for impact report and org report containers ([id*="impact-report-content"])
+- **Chart and section stability**: 
+  - Chart containers now have max-height: 500px in print mode to fit better on pages
+  - Tab panels won't break unnecessarily
+  - Headers (h2, h3, h4, h5) stay with their content (page-break-after: avoid)
+- **Applied to organization report**: Added print:page-break-inside-avoid to chart grid and monthly engagement card
+- **Result**: Professional PDFs with charts intact on single pages, no orphaned content
+
 ### Radar Chart Label Duplication Fix
 - **Removed custom multiline label plugin**: Was causing duplicate labels by rendering custom labels on top of Chart.js default labels
 - **Optimized label configuration**: Replaced with native Chart.js pointLabels configuration

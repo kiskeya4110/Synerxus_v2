@@ -432,6 +432,21 @@ export default function OrganizationImpactReport(props: any) {
   
   const monthlyEngagement = getMonthlyEngagement();
 
+  // Summarize mission statement to first sentence or truncate to 150 chars
+  const summarizeMission = (description: string) => {
+    if (!description) return '';
+    // Try to get first sentence
+    const firstSentence = description.split(/[.!?]+/)[0]?.trim();
+    if (firstSentence && firstSentence.length <= 150) {
+      return firstSentence + '.';
+    }
+    // Otherwise truncate to 150 chars
+    if (description.length > 150) {
+      return description.substring(0, 147) + '...';
+    }
+    return description;
+  };
+
   // Render access denied UI if not authorized
   if (!currentUser || !isOrganizationManager) {
     return (
@@ -458,96 +473,112 @@ export default function OrganizationImpactReport(props: any) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header with Actions */}
-        <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
+        {/* Header with Actions - Reorganized for Better UX */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          {/* Left: Back Button */}
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setLocation("/dashboard")}
-            className="mb-4"
+            className="w-full md:w-auto md:justify-start"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            <span className="hidden md:inline">Back to Dashboard</span>
+            <span className="md:hidden">Back</span>
           </Button>
           
-          <div className="flex gap-2 flex-wrap items-center">
-            {/* Time Filter */}
-            <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
-              <SelectTrigger className="w-32 print:hidden">
-                <SelectValue placeholder="Select period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Time</SelectItem>
-                <SelectItem value="year">This Year</SelectItem>
-                <SelectItem value="quarter">This Quarter</SelectItem>
-                <SelectItem value="month">This Month</SelectItem>
-              </SelectContent>
-            </Select>
+          {/* Right: All Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto print:hidden">
+            {/* Row 1: Time Filter & View Mode */}
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
+                <SelectTrigger className="w-full sm:w-32 text-sm">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
+                  <SelectItem value="quarter">This Quarter</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
 
-            <div className="flex gap-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-1 print:hidden">
-              <Button
-                variant={viewMode === "tabs" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("tabs")}
-                className="h-8 px-3"
-              >
-                <Layout className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Tabs</span>
-              </Button>
-              <Button
-                variant={viewMode === "single" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("single")}
-                className="h-8 px-3"
-              >
-                <Rows3 className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Single</span>
-              </Button>
+              <div className="flex gap-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
+                <Button
+                  variant={viewMode === "tabs" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("tabs")}
+                  className="h-9 px-2 text-xs md:text-sm"
+                  title="Tabbed View"
+                >
+                  <Layout className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1">Tabs</span>
+                </Button>
+                <Button
+                  variant={viewMode === "single" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode("single")}
+                  className="h-9 px-2 text-xs md:text-sm"
+                  title="Single View"
+                >
+                  <Rows3 className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1">Single</span>
+                </Button>
+              </div>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadPDF}
-              className="print:hidden"
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              className="print:hidden"
-            >
-              <Printer className="h-4 w-4 mr-2" />
-              Print
-            </Button>
-            <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 print:hidden">
+            {/* Row 2: Export & Share Buttons */}
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => handleShareSocial('twitter')}
-                className="h-8 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
+                onClick={handleDownloadPDF}
+                className="flex-1 sm:flex-none text-xs md:text-sm"
+                title="Download as PDF"
               >
-                <Twitter className="h-4 w-4" />
+                <Download className="h-4 w-4 mr-1" />
+                <span className="hidden md:inline">PDF</span>
               </Button>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                onClick={() => handleShareSocial('linkedin')}
-                className="h-8 px-2 hover:bg-blue-200 dark:hover:bg-blue-800"
+                onClick={handlePrint}
+                className="flex-1 sm:flex-none text-xs md:text-sm"
+                title="Print"
               >
-                <Linkedin className="h-4 w-4" />
+                <Printer className="h-4 w-4 mr-1" />
+                <span className="hidden md:inline">Print</span>
               </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleShareSocial('facebook')}
-                className="h-8 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
-              >
-                <Facebook className="h-4 w-4" />
-              </Button>
+              
+              <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 ml-auto sm:ml-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShareSocial('twitter')}
+                  className="h-9 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
+                  title="Share on Twitter"
+                >
+                  <Twitter className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShareSocial('linkedin')}
+                  className="h-9 px-2 hover:bg-blue-200 dark:hover:bg-blue-800"
+                  title="Share on LinkedIn"
+                >
+                  <Linkedin className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleShareSocial('facebook')}
+                  className="h-9 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
+                  title="Share on Facebook"
+                >
+                  <Facebook className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -584,8 +615,8 @@ export default function OrganizationImpactReport(props: any) {
               </h1>
 
               {organization?.description && (
-                <p className="text-sm text-gray-700 dark:text-gray-400 mb-4 italic max-w-2xl mx-auto">
-                  {organization.description}
+                <p className="text-sm text-gray-700 dark:text-gray-400 mb-4 max-w-3xl mx-auto line-clamp-2">
+                  {summarizeMission(organization.description)}
                 </p>
               )}
 

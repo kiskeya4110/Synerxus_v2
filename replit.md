@@ -30,6 +30,22 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 23, 2025)
 
+### Mission Statement Summarization & Header Button Reorganization
+- **Mission Statement Optimization**: Implemented intelligent summarization on Organization Impact Report header
+  - Extracts first sentence if <= 150 characters
+  - Otherwise truncates to 150 characters with ellipsis
+  - Applied `line-clamp-2` to limit visual display to 2 lines maximum
+  - Results in cleaner, more compact organization header
+- **Header Button UI Improvements**: Reorganized action buttons for better UX and mobile responsiveness
+  - Back button isolated on left side (full text on desktop, abbreviated on mobile)
+  - Action buttons grouped into organized sections on right side
+  - Row 1: Time filter + View mode toggle (Tabs/Single)
+  - Row 2: Export buttons (PDF, Print) + Social share buttons (Twitter, LinkedIn, Facebook)
+  - Responsive design: Full width on mobile, flexible columns on tablet/desktop
+  - Added title attributes to buttons for better accessibility
+  - Responsive text sizing: hides labels on mobile, shows icons + labels on desktop
+  - Better spacing and visual grouping with consistent gap sizing
+
 ### Enhanced Print CSS for Page Break Prevention
 - **Comprehensive page break handling**: Added CSS rules to prevent charts, cards, and sections from breaking across pages
   - Added `page-break-inside: avoid` and `break-inside: avoid` to all grid layouts (grid-cols-1, md:grid-cols-2, lg:grid-cols-2, lg:grid-cols-3, etc.)

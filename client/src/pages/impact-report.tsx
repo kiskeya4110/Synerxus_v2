@@ -453,28 +453,29 @@ export default function ImpactReport(props: any) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-3 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header with Back Button */}
-        <div className="mb-6 flex items-center justify-between flex-wrap gap-2">
+        <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setLocation("/my-work")}
-            className="mb-4"
+            className="w-full md:w-auto justify-start md:justify-center"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to My Work
+            <span className="hidden md:inline">Back to My Work</span>
+            <span className="md:hidden">Back</span>
           </Button>
           
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap justify-between md:justify-end w-full md:w-auto">
             {/* View Mode Toggle */}
             <div className="flex gap-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-1 print:hidden">
               <Button
                 variant={viewMode === "tabs" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("tabs")}
-                className="h-8 px-3"
+                className="h-8 px-2 md:px-3 text-xs md:text-sm"
                 data-testid="view-mode-tabs"
               >
                 <Layout className="h-4 w-4 mr-1" />
@@ -484,7 +485,7 @@ export default function ImpactReport(props: any) {
                 variant={viewMode === "single" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("single")}
-                className="h-8 px-3"
+                className="h-8 px-2 md:px-3 text-xs md:text-sm"
                 data-testid="view-mode-single"
               >
                 <Rows3 className="h-4 w-4 mr-1" />
@@ -496,21 +497,23 @@ export default function ImpactReport(props: any) {
               variant="outline"
               size="sm"
               onClick={handleDownloadPDF}
-              className="print:hidden"
+              className="print:hidden text-xs md:text-sm whitespace-nowrap"
               data-testid="button-download-pdf"
             >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
+              <Download className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline">Download PDF</span>
+              <span className="md:hidden">PDF</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handlePrintClick}
-              className="print:hidden"
+              className="print:hidden text-xs md:text-sm"
               data-testid="button-print"
             >
-              <Printer className="h-4 w-4 mr-2" />
-              Print
+              <Printer className="h-4 w-4 mr-1" />
+              <span className="hidden md:inline">Print</span>
+              <span className="md:hidden">Print</span>
             </Button>
             <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 print:hidden">
               <Button
@@ -549,14 +552,14 @@ export default function ImpactReport(props: any) {
 
         {/* Main Impact Report Card */}
         <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black">
-          <CardContent className="p-8 print:p-4">
+          <CardContent className="p-4 md:p-6 lg:p-8 print:p-4">
             {/* Header Section - Professional Layout */}
-            <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
-              <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
+            <div className="text-center mb-6 md:mb-8 pb-4 md:pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6 mb-3 md:mb-4 print:gap-4 print:mb-3">
                 <Logo size="sm" className="print:scale-75" />
                 {primaryOrganization?.logo && !logoError && (
                   <div className="flex items-center">
-                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6">
+                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">
                       <img
                         src={primaryOrganization.logo}
                         alt={primaryOrganization.name}
@@ -570,11 +573,11 @@ export default function ImpactReport(props: any) {
                 )}
               </div>
 
-              <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 print:text-2xl">
+              <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 print:text-2xl">
                 {currentUser?.displayName || currentUser?.username || 'Volunteer'}
               </p>
               
-              <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
+              <h1 className="text-lg md:text-xl lg:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-3 md:mb-4">
                 Global Impact Report
               </h1>
 
@@ -612,29 +615,29 @@ export default function ImpactReport(props: any) {
             {/* View Mode Conditional: Tabs vs Single Page */}
             {viewMode === "tabs" ? (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6 print:hidden">
-                <TabsTrigger value="overview" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 mb-4 md:mb-6 print:hidden">
+                <TabsTrigger value="overview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
                   <Target className="h-4 w-4" />
                   <span className="hidden sm:inline">Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="engagement" className="flex items-center gap-2">
+                <TabsTrigger value="engagement" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Engagement</span>
                 </TabsTrigger>
-                <TabsTrigger value="impact" className="flex items-center gap-2">
+                <TabsTrigger value="impact" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
                   <TrendingUp className="h-4 w-4" />
                   <span className="hidden sm:inline">Impact</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <TabsTrigger value="analytics" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Analytics</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-6">
-                {/* Enhanced KPI Buttons in 1 row x 4 columns */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4 print:gap-2">
+              <TabsContent value="overview" className="space-y-4 md:space-y-6">
+                {/* Enhanced KPI Buttons in responsive grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 print:gap-2">
                   <div className="impact-report-section bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
                     <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Hours Logged</p>
                     <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{Math.round(filteredTotalHours)}h</p>

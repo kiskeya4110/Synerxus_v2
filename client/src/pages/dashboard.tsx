@@ -31,6 +31,7 @@ declare const html2pdf: any;
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
   const [selectedKPI, setSelectedKPI] = useState<{ title: string; items: any[]; totalScore?: number } | null>(null);
@@ -620,8 +621,6 @@ export default function Dashboard() {
     
     setSelectedKPI(detailData);
   };
-
-  const { toast } = useToast();
 
   const handleDownloadPDF = () => {
     const element = document.getElementById('dashboard-content');

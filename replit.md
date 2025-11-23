@@ -30,6 +30,20 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 23, 2025)
 
+### Dashboard PDF Export & Mobile Optimization
+- **Fixed React Hooks Order Error**: Moved `useToast()` call to top-level hooks section to comply with React Hooks rules (eliminated "Rendered more hooks than during previous render" error)
+- **Added Dashboard PDF Download**: Implemented PDF export functionality on Dashboard with responsive button:
+  - Full text "Download PDF" on desktop
+  - Abbreviated "PDF" on mobile
+  - Uses html2pdf library for clean PDF generation with proper margins and scaling
+- **Optimized Impact Report Layout for Mobile/Desktop**:
+  - Header section: Changed to flex-col on mobile, flex-row on desktop for better space utilization
+  - Tab navigation: Changed to 2-column grid on mobile, 4-column on desktop
+  - Card padding: Responsive p-4 md:p-6 lg:p-8 for better mobile readability
+  - Button labels: Responsive text that shows full labels on desktop, abbreviated on mobile
+  - Typography: Responsive text sizing (text-2xl md:text-3xl lg:text-4xl) for proper scaling
+  - Spacing: Adjusted gaps and margins to be tighter on mobile (gap-2 md:gap-3 lg:gap-4)
+
 ### PDF Export & Organization Impact Report Enhancements
 - **Enhanced KPI Buttons**: Added detailed sub-metrics to Team Members, Total Hours Logged, Projects Managed, and Avg Hours per Volunteer buttons matching Impact Leader format
   - Team Members: Shows volunteer/manager breakdown, avg hours per volunteer

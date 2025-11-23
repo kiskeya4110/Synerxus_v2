@@ -40,7 +40,7 @@ const multilineLabelPlugin = {
     
     const centerX = scale.xCenter;
     const centerY = scale.yCenter;
-    const radius = scale.getDistanceFromCenterPoint({ x: 0, y: 0 }, 0);
+    const radius = scale.drawingArea || 0;
     
     chart.data.labels.forEach((label: string, index: number) => {
       const angle = Math.PI * 2 * index / chart.data.labels.length - Math.PI / 2;

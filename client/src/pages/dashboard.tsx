@@ -197,6 +197,11 @@ export default function Dashboard() {
     const peakMonth = data.reduce((max: any, d: any) => (d.hours > max.hours ? d : max), data[0]);
     const lowestMonth = data.reduce((min: any, d: any) => (d.hours < min.hours ? d : min), data[0]);
     
+    // Calculate consistency (standard deviation concept)
+    const variance = data.reduce((sum: number, d: any) => sum + Math.pow((d.hours || 0) - avgHours, 2), 0) / data.length;
+    const stdDev = Math.round(Math.sqrt(variance));
+    const consistency = stdDev <= avgHours * 0.3 ? "highly consistent" : stdDev <= avgHours * 0.6 ? "moderately consistent" : "variable";
+    
     // Determine trend
     const firstThird = data.slice(0, Math.ceil(data.length / 3));
     const lastThird = data.slice(Math.floor(data.length * 2 / 3));
@@ -204,10 +209,13 @@ export default function Dashboard() {
     const avgLastThird = Math.round(lastThird.reduce((sum: number, d: any) => sum + (d.hours || 0), 0) / lastThird.length);
     const trend = avgLastThird > avgFirstThird ? "increasing" : avgLastThird < avgFirstThird ? "decreasing" : "stable";
     
-    let narrative = `You've logged ${totalHours} total hours and impacted ${totalPeopleImpacted} people. `;
-    narrative += `Your average is ${avgHours} hours per month with an average of ${avgPeople} people impacted. `;
-    narrative += `Your ${trend} trend shows ${trend === 'increasing' ? 'growing momentum' : trend === 'decreasing' ? 'an opportunity to increase engagement' : 'consistent engagement'}. `;
-    narrative += `Peak activity was in the month with ${peakMonth.hours} hours logged.`;
+    // Calculate efficiency (people per hour impact)
+    const avgPeoplePerHour = totalHours > 0 ? Math.round((totalPeopleImpacted / totalHours) * 10) / 10 : 0;
+    
+    let narrative = `Monthly hours trend analysis: You've logged ${totalHours} total hours across ${data.length} months with an average of ${avgHours} hours per month. `;
+    narrative += `Your hours contribution is ${consistency}, ranging from ${lowestMonth.hours}h to ${peakMonth.hours}h. `;
+    narrative += `The ${trend} trend demonstrates ${trend === 'increasing' ? 'accelerating engagement and growing commitment' : trend === 'decreasing' ? 'declining participation that could benefit from renewed focus' : 'reliable and stable participation'}. `;
+    narrative += `Efficiency: You're impacting an average of ${avgPeoplePerHour} people per hour, demonstrating strong impact effectiveness.`;
     
     return narrative;
   }, [filteredMonthlyImpactData]);

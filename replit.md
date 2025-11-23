@@ -31,9 +31,17 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 23, 2025)
 
-### Organization Dashboard Global Impact Report Navigation (Priority Fix)
+### Organization Impact Score Calculation Fix (Critical)
+- **65% Weighting Applied**: Fixed organization impact score to correctly weight hours and people impacted as primary drivers (65% combined)
+  - **Previous formula**: Hours 40%, Tasks 30%, SDG 20%, Match 10% (missing people impacted entirely!)
+  - **New formula**: Hours 35% + People 30% + Tasks 20% + SDG 10% + Match 5% = 100%
+  - **People Impacted NOW Included**: Organizations now calculate `totalPeopleImpacted` using `calculatePeopleImpacted()` helper from impacts table
+  - **Both Summary & Monthly Calculations**: Updated both the main impact score calculation and `calculateOrganizationImpactScore()` function for monthly trends
+  - **Consistent Across All Metrics**: Both volunteers and organizations now use the same 65% hours+people weighting formula
+  - **Impact**: Organization dashboards will now show accurate impact scores that reflect people impacted as a major component
+
+### Organization Dashboard Global Impact Report Navigation
 - **New "Global Report" Button**: Added dedicated button in Row 2, Col 2 of dashboard controls for organization users
-  - **Critical Requirement Met**: Organization dashboards MUST now navigate to the Global Impact Report for the organization, NOT individual volunteer reports
   - Button only appears for organization managers, not volunteers
   - Clicking navigates directly to `/organization-impact-report` page
   - Uses FileText icon with responsive text ("Global Report" desktop, "Report" mobile)

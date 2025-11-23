@@ -137,6 +137,7 @@ function buildMonthlyImpactSeries(
 
 /**
  * Calculate organization impact score with normalized weighted metrics
+ * Aligned with volunteer formula: Hours 35%, People 30%, Tasks 20%, SDG 10%, Engagement 5%
  * @param params - Monthly metrics and normalization baselines
  * @returns Impact score (0-100)
  */
@@ -164,13 +165,13 @@ function calculateOrganizationImpactScore(params: {
   const engagementScore = maxVolunteers > 0 ? (volunteers / maxVolunteers) * 100 : 0;
   const sdgScore = maxSDGs > 0 ? (sdgCount / maxSDGs) * 100 : 0;
 
-  // Weighted average (hours: 35%, beneficiaries: 25%, completions: 15%, engagement: 15%, SDG: 10%)
+  // Updated weights (65% for hours + people as primary drivers): Hours 35%, Beneficiaries 30%, Tasks 20%, SDG 10%, Engagement 5%
   return Math.round(
-    hoursScore * 0.35 +
-    beneficiariesScore * 0.25 +
-    completionsScore * 0.15 +
-    engagementScore * 0.15 +
-    sdgScore * 0.10
+    hoursScore * 0.35 +         // Hours contributed (35%)
+    beneficiariesScore * 0.30 + // People/beneficiaries impacted - MAJOR DRIVER (30%)
+    completionsScore * 0.20 +   // Task completion (20%)
+    sdgScore * 0.10 +           // SDG coverage (10%)
+    engagementScore * 0.05      // Volunteer engagement (5%)
   );
 }
 
@@ -335,8 +336,12 @@ export async function getDashboardDataForOrganization(userId: number) {
       }
     });
 
-    // Calculate Impact Score
+    // Calculate total people impacted for organizations (using same logic as monthly calculation)
+    const totalPeopleImpacted = calculatePeopleImpacted(organizationImpacts, peopleMetricIds);
+
+    // Calculate Impact Score - ALIGNED with volunteer formula: Hours 35%, People 30%, Tasks 20%, SDG 10%, Match 5%
     const hoursScore = Math.min((totalHours / 100) * 100, 100);
+    const peopleScore = Math.min((totalPeopleImpacted / 100) * 100, 100); // People impacted as major driver (30%)
     const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
     const sdgScore = (uniqueSDGs.size / 17) * 100;
     const acceptedApplications = organizationApplications.filter(app => app.status?.toLowerCase() === 'accepted').length;
@@ -344,11 +349,13 @@ export async function getDashboardDataForOrganization(userId: number) {
       ? (acceptedApplications / organizationApplications.length) * 100
       : 0;
 
+    // Updated weights to match volunteer calculation (65% for hours + people)
     const impactScore = Math.round(
-      hoursScore * 0.40 +
-      tasksScore * 0.30 +
-      sdgScore * 0.20 +
-      matchScore * 0.10
+      hoursScore * 0.35 +       // Hours contributed (35%)
+      peopleScore * 0.30 +      // People impacted - MAJOR DRIVER (30%)
+      tasksScore * 0.20 +       // Task completion (20%)
+      sdgScore * 0.10 +         // SDG coverage (10%)
+      matchScore * 0.05         // Application success rate (5%)
     );
 
     // Enrich projects with assigned volunteers and compute progress fallback
@@ -631,9 +638,6 @@ export async function getDashboardDataForOrganization(userId: number) {
         peopleImpacted,
       };
     });
-
-    // Calculate total people impacted using helper
-    const totalPeopleImpacted = calculatePeopleImpacted(organizationImpacts, peopleMetricIds);
 
     // Build cumulative impact growth series for Impact Visualization
     let cumulativeHours = 0;

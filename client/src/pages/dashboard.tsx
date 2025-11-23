@@ -658,7 +658,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {dashboardType === "organization" 
@@ -675,12 +675,13 @@ export default function Dashboard() {
           </p>
         </div>
         
-        {/* Filters - 2 columns on mobile, side-by-side on desktop */}
-        <div className="grid grid-cols-2 gap-3 md:flex md:flex-row md:items-center md:gap-2 w-full md:w-auto">
+        {/* Controls Grid - 2 rows x 2 columns */}
+        <div className="grid grid-cols-2 gap-3 md:gap-4 w-full">
+          {/* Row 1, Col 1: Project Filter */}
           <div className="flex flex-col gap-1">
-            <Label htmlFor="project-filter" className="text-sm whitespace-nowrap">Project:</Label>
+            <Label htmlFor="project-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">Project</Label>
             <Select value={selectedProject} onValueChange={setSelectedProject}>
-              <SelectTrigger id="project-filter" className="w-full md:w-[180px]">
+              <SelectTrigger id="project-filter" className="w-full">
                 <SelectValue placeholder="All Projects" />
               </SelectTrigger>
               <SelectContent>
@@ -694,10 +695,11 @@ export default function Dashboard() {
             </Select>
           </div>
           
+          {/* Row 1, Col 2: Time Filter */}
           <div className="flex flex-col gap-1">
-            <Label htmlFor="time-filter" className="text-sm whitespace-nowrap">Time:</Label>
+            <Label htmlFor="time-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period</Label>
             <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
-              <SelectTrigger id="time-filter" className="w-full md:w-[140px]">
+              <SelectTrigger id="time-filter" className="w-full">
                 <SelectValue placeholder="All Time" />
               </SelectTrigger>
               <SelectContent>
@@ -708,20 +710,26 @@ export default function Dashboard() {
               </SelectContent>
             </Select>
           </div>
-        </div>
 
-        {/* Download PDF Button */}
-        <Button
-          onClick={handleDownloadPDF}
-          variant="outline"
-          size="sm"
-          className="w-full md:w-auto flex items-center gap-2"
-          data-testid="button-download-pdf"
-        >
-          <Download className="h-4 w-4" />
-          <span className="hidden md:inline">Download PDF</span>
-          <span className="md:hidden">PDF</span>
-        </Button>
+          {/* Row 2, Col 1: Download PDF Button */}
+          <Button
+            onClick={handleDownloadPDF}
+            variant="outline"
+            size="sm"
+            className="w-full flex items-center justify-center gap-2"
+            data-testid="button-download-pdf"
+            title="Download dashboard as PDF"
+          >
+            <Download className="h-4 w-4" />
+            <span className="hidden sm:inline">Download PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
+          
+          {/* Row 2, Col 2: Empty or can be used for future actions */}
+          <div className="flex items-center justify-center">
+            {/* Placeholder for future action button or left empty */}
+          </div>
+        </div>
       </div>
 
       {/* Dashboard Content Wrapper for PDF Export */}

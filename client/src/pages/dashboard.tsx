@@ -1081,6 +1081,10 @@ export default function Dashboard() {
         </Tabs>
       </div>
 
+      {/* Personalized Recommendations - Only for volunteers */}
+      {dashboardType === 'volunteer' && userId && (
+      )}
+
       {/* Bottom Section - Profile, Events, and Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ProfileOverview userId={userId} userType={dashboardType} />

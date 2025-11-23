@@ -666,8 +666,11 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                 {organization?.description && (
                   <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg border border-amber-200 dark:border-amber-700 mb-3 print:mb-2 print:p-2 print:text-xs">
                     <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase mb-1">Our Mission</p>
-                    <p className="text-sm text-amber-900 dark:text-amber-200 line-clamp-3 font-medium">
-                      {organization.description}
+                    <p className="text-xs text-amber-900 dark:text-amber-200 line-clamp-2 font-medium">
+                      {organization.description.length > 150 
+                        ? organization.description.substring(0, 150) + '...'
+                        : organization.description
+                      }
                     </p>
                   </div>
                 )}

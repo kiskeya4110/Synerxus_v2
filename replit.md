@@ -29,6 +29,40 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 -   **Matching Algorithm**: Python and TypeScript implementation
 -   **Email Service**: Mock transporter (configurable for SendGrid, Mailgun, nodemailer in production)
 
+## Recent Changes (Nov 23-24, 2025)
+
+### KPI Tracking Fixes for Volunteer Impact Report (Critical)
+- **Problem**: KPI calculations used arbitrary targets (10 tasks, 3 projects, 5 skills) that didn't align with individual volunteer situations
+  - Example: 80% skills development showed "At Risk" even though 80% is excellent performance
+  - Tasks showing 10% achieved = "Behind" when volunteer may have only 1 assigned task
+- **Solution**: Redesigned KPI metrics to be relative to each volunteer's actual situation
+  - **Task Completion**: Calculated as (completed/total) percentage, not vs arbitrary target
+    - Status: 80%+ = Excellent, 60%+ = Good, 40%+ = Fair, <40% = Low
+  - **Project Engagement**: Calculated as (active/total) percentage, same thresholds
+  - **Skills & Expertise**: Actual count with reasonable expectations (5+ = Excellent, 3+ = Good, 2+ = Fair, <2 = Low)
+  - **Hours Commitment**: Monthly average vs 20h/month target (20+ = Exceeding, 15+ = On Track, 10+ = Moderate, <10 = Low)
+- **Table Redesign**: Changed from "Target vs Actuals" to "Performance Metrics" with clearer details column
+- **Impact**: KPI statuses now accurately reflect volunteer performance and provide meaningful feedback
+
+### Removed KPI Tracking from Organization Impact Report
+- **Issue**: Organization report was incorrectly using volunteer-specific KPI metrics with inconsistent weights
+- **Solution**: Removed entire KPI Tracking section from organization impact report (Operations tab)
+- **Rationale**: Organizations have different metrics (team size, hours, projects, beneficiaries) - volunteer KPIs don't apply
+- **Impact**: Organization reports now focus on appropriate organizational metrics only
+
+### Single-Page Global Impact Report Optimization (Layout)
+- **Split Header Layout**: Organization name and mission on left (2/3 width), key info box on right (1/3 width)
+  - Compact header reduces vertical space while maintaining professionalism
+  - Key metrics box shows: Active Members, Total Hours, Impact Score
+- **Optimized Page Layout**: Overview and Programs sections combined to fit on single page (Page 1)
+  - Overview: Compact 2x2 KPI grid + Streamlined impact leader card + Single quarterly growth chart
+  - Programs: Top 3 programs with completion/impact progress bars
+- **Smart Page Breaks**: Operations (Page 2), Financial (Page 3), Impact (Page 4)
+  - Uses `print:page-break-before` to force breaks at section boundaries
+  - `print:page-break-inside-avoid` prevents charts/cards from splitting across pages
+- **Typography Optimization**: Reduced font sizes and padding for PDF/print output efficiency
+- **Impact**: Reports now fit on standard page widths and maintain good readability when printed/exported to PDF
+
 ## Recent Changes (Nov 23, 2025)
 
 ### Volunteers Tab 404 Error - FIXED

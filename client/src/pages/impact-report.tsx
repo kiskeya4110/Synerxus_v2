@@ -1444,38 +1444,63 @@ export default function ImpactReport(props: any) {
                 </h2>
                 <Card className="border border-gray-200 dark:border-gray-700">
                   <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">KPI Tracking: Target vs. Actuals</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">KPI Tracking: Performance Metrics</h3>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                           <tr>
-                            <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white">KPI</th>
-                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Target</th>
-                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Actual</th>
-                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">% Achieved</th>
+                            <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white">Metric</th>
+                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Performance</th>
+                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Details</th>
                             <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {[
-                            { kpi: 'Monthly Hours', target: 20, actual: Math.min(filteredTotalHours, 20) },
-                            { kpi: 'Tasks Completed', target: 10, actual: Math.min(filteredTasksCompleted, 10) },
-                            { kpi: 'Active Projects', target: 3, actual: Math.min(filteredActiveProjects, 3) },
-                            { kpi: 'Skills Developed', target: 5, actual: Math.min(allSkills.length, 5) },
-                          ].map((row) => {
-                            const achieved = Math.round((row.actual / row.target) * 100);
-                            const status = achieved >= 100 ? '✓ On Target' : achieved >= 75 ? '⚠ At Risk' : '✗ Behind';
-                            const statusColor = achieved >= 100 ? 'text-green-600 dark:text-green-400' : achieved >= 75 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
-                            return (
-                              <tr key={row.kpi} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td className="px-4 py-2 text-gray-900 dark:text-white">{row.kpi}</td>
-                                <td className="px-4 py-2 text-center text-gray-600 dark:text-gray-300">{row.target}</td>
-                                <td className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">{row.actual}</td>
-                                <td className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">{achieved}%</td>
-                                <td className={`px-4 py-2 text-center font-semibold ${statusColor}`}>{status}</td>
+                          {(() => {
+                            // Task Completion Rate: completed / total tasks
+                            const taskCompletionRate = tasks.length > 0 ? Math.round((filteredTasksCompleted / tasks.length) * 100) : 0;
+                            const taskStatus = taskCompletionRate >= 80 ? '✓ Excellent' : taskCompletionRate >= 60 ? '⚠ Good' : taskCompletionRate >= 40 ? '→ Fair' : '✗ Low';
+                            const taskStatusColor = taskCompletionRate >= 80 ? 'text-green-600 dark:text-green-400' : taskCompletionRate >= 60 ? 'text-blue-600 dark:text-blue-400' : taskCompletionRate >= 40 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
+                            
+                            // Project Engagement Rate: active / total projects
+                            const projectEngagementRate = assignmentsCount > 0 ? Math.round((filteredActiveProjects / assignmentsCount) * 100) : 0;
+                            const projectStatus = projectEngagementRate >= 80 ? '✓ Excellent' : projectEngagementRate >= 60 ? '⚠ Good' : projectEngagementRate >= 40 ? '→ Fair' : '✗ Low';
+                            const projectStatusColor = projectEngagementRate >= 80 ? 'text-green-600 dark:text-green-400' : projectEngagementRate >= 60 ? 'text-blue-600 dark:text-blue-400' : projectEngagementRate >= 40 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
+                            
+                            // Skills & Expertise: actual count with reasonable expectation
+                            const skillsCount = allSkills.length;
+                            const skillsStatus = skillsCount >= 5 ? '✓ Excellent' : skillsCount >= 3 ? '⚠ Good' : skillsCount >= 2 ? '→ Fair' : '✗ Low';
+                            const skillsStatusColor = skillsCount >= 5 ? 'text-green-600 dark:text-green-400' : skillsCount >= 3 ? 'text-blue-600 dark:text-blue-400' : skillsCount >= 2 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
+                            
+                            // Hours Commitment: monthly average
+                            const monthlyTarget = 20; // 20 hours per month target
+                            const avgMonthlyHoursNum = parseFloat(String(avgMonthlyHours)) || 0;
+                            const hoursStatus = avgMonthlyHoursNum >= 20 ? '✓ Exceeding' : avgMonthlyHoursNum >= 15 ? '⚠ On Track' : avgMonthlyHoursNum >= 10 ? '→ Moderate' : '✗ Low';
+                            const hoursStatusColor = avgMonthlyHoursNum >= 20 ? 'text-green-600 dark:text-green-400' : avgMonthlyHoursNum >= 15 ? 'text-blue-600 dark:text-blue-400' : avgMonthlyHoursNum >= 10 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
+                            
+                            const kpiData = [
+                              { metric: 'Task Completion', performance: taskCompletionRate, details: `${filteredTasksCompleted} of ${tasks.length} tasks`, status: taskStatus, statusColor: taskStatusColor },
+                              { metric: 'Project Engagement', performance: projectEngagementRate, details: `${filteredActiveProjects} of ${assignmentsCount} active`, status: projectStatus, statusColor: projectStatusColor },
+                              { metric: 'Skills & Expertise', performance: skillsCount, details: `${skillsCount} skill${skillsCount !== 1 ? 's' : ''} + ${sdgs.length} SDG${sdgs.length !== 1 ? 's' : ''}`, status: skillsStatus, statusColor: skillsStatusColor },
+                              { metric: 'Hours Commitment', performance: Math.round(avgMonthlyHoursNum), details: `${avgMonthlyHours}h avg/month (target: ${monthlyTarget}h)`, status: hoursStatus, statusColor: hoursStatusColor },
+                            ];
+                            
+                            return kpiData.map((row) => (
+                              <tr key={row.metric} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <td className="px-4 py-2 text-gray-900 dark:text-white font-medium">{row.metric}</td>
+                                <td className="px-4 py-2 text-center">
+                                  <div className="flex items-center justify-center">
+                                    <div className="text-center">
+                                      <div className="text-2xl font-bold text-gray-900 dark:text-white">{row.performance}</div>
+                                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{row.metric === 'Skills & Expertise' ? '' : '%'}</div>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-4 py-2 text-center text-xs text-gray-600 dark:text-gray-300">{row.details}</td>
+                                <td className={`px-4 py-2 text-center font-semibold ${row.statusColor}`}>{row.status}</td>
                               </tr>
-                            );
-                          })}
+                            ));
+                          })()}
                         </tbody>
                       </table>
                     </div>

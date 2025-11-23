@@ -161,6 +161,18 @@ export default function ImpactReport(props: any) {
     enabled: !!volunteerId
   });
 
+  // Fetch dashboard data for consistent metrics
+  const { data: dashboardData } = useQuery<any>({
+    queryKey: ["/api/dashboard/summary", volunteerId],
+    queryFn: async () => {
+      if (!volunteerId) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${volunteerId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!volunteerId
+  });
+
   // Fetch organizations
   const { data: organizations = [] } = useQuery<any[]>({
     queryKey: ["/api/organizations"],
@@ -186,11 +198,15 @@ export default function ImpactReport(props: any) {
     ? volunteerOrganizations[0]
     : null;
 
-  // Calculate impact metrics
-  const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  // Calculate impact metrics - use backend dashboardData for totalHours to ensure consistency with dashboard
+  const totalHours = dashboardData?.totalHours !== undefined 
+    ? dashboardData.totalHours 
+    : volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const completedTasks = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
   const totalTasks = tasks.length;
-  const activeProjects = projectAssignments.filter(a => a.status === 'active').length;
+  const activeProjects = dashboardData?.activeProjects !== undefined 
+    ? dashboardData.activeProjects 
+    : projectAssignments.filter(a => a.status === 'active').length;
   const allSkills = volunteerProfile?.skills || [];
   const sdgs = volunteerProfile?.preferredSdgs || [];
   const assignmentsCount = projectAssignments.length;

@@ -143,6 +143,17 @@ export default function OrganizationImpactReport(props: any) {
     },
   });
 
+  // Fetch dashboard data for organization-level metrics consistency
+  const { data: dashboardData } = useQuery<any>({
+    queryKey: ["/api/dashboard/summary", currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${currentUser.id}`);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!currentUser?.id && currentUser?.userType === 'organization',
+  });
+
   // Access control: Only organization managers can view this report
   const isOrganizationManager = currentUser && currentUser.organizationId && currentUser.userType === 'organization';
 
@@ -203,8 +214,13 @@ export default function OrganizationImpactReport(props: any) {
 
   const activeVolunteers = activeVolunteerIds.size > 0 ? activeVolunteerIds.size : volunteers.filter(v => v.organizationId === currentUser?.organizationId).length;
   const totalTeam = activeVolunteers + projectManagers;
-  const totalProjects = projects.length;
-  const totalHours = timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const totalProjects = dashboardData?.activeProjects !== undefined 
+    ? dashboardData.activeProjects 
+    : projects.length;
+  // Use backend-calculated totalHours for consistency when available
+  const totalHours = timeFilter === 'all' && dashboardData?.totalHours !== undefined
+    ? dashboardData.totalHours
+    : timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   
   // Calculate real beneficiaries from activities (each activity impacts multiple beneficiaries)
   const beneficiariesServed = Math.max(

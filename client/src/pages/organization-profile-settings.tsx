@@ -54,7 +54,6 @@ export default function OrganizationProfileSettings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [needInput, setNeedInput] = useState("");
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   
   // Fetch current user to get organization info
   const { data: currentUser, isLoading: userLoading } = useQuery<any>({
@@ -77,13 +76,6 @@ export default function OrganizationProfileSettings() {
 
   // Find the organization profile for current user (match by email)
   const existingProfile = organizations?.find(o => o.email === currentUser?.email);
-
-  // Update profile photo when existing profile loads
-  useEffect(() => {
-    if (existingProfile?.profilePhotoUrl) {
-      setProfilePhotoUrl(existingProfile.profilePhotoUrl);
-    }
-  }, [existingProfile]);
 
   // Update logo when existing profile loads
   useEffect(() => {
@@ -134,7 +126,6 @@ export default function OrganizationProfileSettings() {
         const result = await Promise.race([
           apiRequest("POST", "/api/matchable-organizations", {
             ...data,
-            profilePhotoUrl,
             logo: logoUrl,
           }),
           timeoutPromise
@@ -176,7 +167,6 @@ export default function OrganizationProfileSettings() {
         const result = await Promise.race([
           apiRequest("PATCH", `/api/matchable-organizations/${existingProfile.id}`, {
             ...data,
-            profilePhotoUrl,
             logo: logoUrl,
           }),
           timeoutPromise
@@ -275,18 +265,6 @@ export default function OrganizationProfileSettings() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Profile Photo */}
-              {currentUser?.id && (
-                <div className="mb-6">
-                  <ProfilePictureUpload
-                    currentPhotoUrl={profilePhotoUrl}
-                    onPhotoChange={setProfilePhotoUrl}
-                    userId={currentUser.id.toString()}
-                    userType="organization"
-                  />
-                </div>
-              )}
-
               {/* Email - Read-only, linked to user account */}
               <FormField
                 control={form.control}

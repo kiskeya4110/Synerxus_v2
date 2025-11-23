@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, Download, FileText } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
@@ -804,24 +804,6 @@ export default function Dashboard() {
     setSelectedKPI(detailData);
   };
 
-  const handleDownloadPDF = () => {
-    const element = document.getElementById('dashboard-content');
-    if (!element) return;
-    
-    const opt = {
-      margin: 10,
-      filename: `Dashboard_${currentUser?.displayName || 'Dashboard'}_${new Date().getTime()}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-    };
-    
-    html2pdf().set(opt).from(element).save();
-    toast({
-      title: "Downloaded!",
-      description: "Your dashboard has been saved as PDF",
-    });
-  };
 
   if (loadingDashboard || loadingProjects) {
     return (
@@ -857,9 +839,9 @@ export default function Dashboard() {
           </p>
         </div>
         
-        {/* Controls Grid - 2 rows x 2 columns */}
-        <div className="grid grid-cols-2 gap-3 md:gap-4 w-full">
-          {/* Row 1, Col 1: Project Filter */}
+        {/* Controls Grid - 1 row with filters + optional org button */}
+        <div className={`grid gap-3 md:gap-4 w-full ${dashboardType === "organization" ? "grid-cols-3" : "grid-cols-2"}`}>
+          {/* Project Filter */}
           <div className="flex flex-col gap-1">
             <Label htmlFor="project-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">Project</Label>
             <Select value={selectedProject} onValueChange={setSelectedProject}>
@@ -877,7 +859,7 @@ export default function Dashboard() {
             </Select>
           </div>
           
-          {/* Row 1, Col 2: Time Filter */}
+          {/* Time Filter */}
           <div className="flex flex-col gap-1">
             <Label htmlFor="time-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Period</Label>
             <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
@@ -893,21 +875,7 @@ export default function Dashboard() {
             </Select>
           </div>
 
-          {/* Row 2, Col 1: Download PDF Button */}
-          <Button
-            onClick={handleDownloadPDF}
-            variant="outline"
-            size="sm"
-            className="w-full flex items-center justify-center gap-2"
-            data-testid="button-download-pdf"
-            title="Download dashboard as PDF"
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Download PDF</span>
-            <span className="sm:hidden">PDF</span>
-          </Button>
-          
-          {/* Row 2, Col 2: Global Impact Report for Organizations */}
+          {/* Global Impact Report for Organizations Only */}
           {dashboardType === "organization" ? (
             <Button
               onClick={() => navigate("/organization-impact-report")}

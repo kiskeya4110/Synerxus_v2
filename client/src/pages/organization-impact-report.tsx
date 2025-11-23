@@ -1425,37 +1425,37 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                 </Card>
 
                 {/* Long-term Impact Indicators */}
-                <Card className="border border-gray-200 dark:border-gray-700">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Long-term Impact Indicators</h3>
-                    <div className="space-y-4">
+                <Card className="border border-gray-200 dark:border-gray-700 print:page-break-inside-avoid">
+                  <CardContent className="p-4 print:p-3">
+                    <h3 className="text-base print:text-sm font-semibold text-gray-900 dark:text-white mb-4 print:mb-3">Long-term Impact Indicators</h3>
+                    <div className="space-y-2 print:space-y-1.5">
                       <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium">Lives Transformed</span>
-                          <span className="text-sm font-bold">{(beneficiariesServed * 1.2).toLocaleString()}</span>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-xs print:text-xs font-medium">Lives Transformed</span>
+                          <span className="text-xs print:text-xs font-bold">{(beneficiariesServed * 1.2).toLocaleString()}</span>
                         </div>
-                        <Progress value={85} />
+                        <Progress value={85} className="h-1.5 print:h-1" />
                       </div>
                       <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium">Sustainability Index</span>
-                          <span className="text-sm font-bold">8.2/10</span>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-xs print:text-xs font-medium">Sustainability Index</span>
+                          <span className="text-xs print:text-xs font-bold">8.2/10</span>
                         </div>
-                        <Progress value={82} />
+                        <Progress value={82} className="h-1.5 print:h-1" />
                       </div>
                       <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium">Community Satisfaction</span>
-                          <span className="text-sm font-bold">94%</span>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-xs print:text-xs font-medium">Community Satisfaction</span>
+                          <span className="text-xs print:text-xs font-bold">94%</span>
                         </div>
-                        <Progress value={94} />
+                        <Progress value={94} className="h-1.5 print:h-1" />
                       </div>
                       <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="text-sm font-medium">SDG Alignment</span>
-                          <span className="text-sm font-bold">6/17 Goals</span>
+                        <div className="flex justify-between mb-1">
+                          <span className="text-xs print:text-xs font-medium">SDG Alignment</span>
+                          <span className="text-xs print:text-xs font-bold">6/17 Goals</span>
                         </div>
-                        <Progress value={35} />
+                        <Progress value={35} className="h-1.5 print:h-1" />
                       </div>
                     </div>
                   </CardContent>

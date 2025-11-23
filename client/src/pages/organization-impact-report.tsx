@@ -578,48 +578,31 @@ export default function OrganizationImpactReport(props: any) {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
                   </div>
 
-                  <div className="flex-1 min-w-[calc(20%-4px)] max-w-xs bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-700">
-                    <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold mb-1">Impact Leader</p>
-                    <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{leaderData ? leaderData.name : 'N/A'}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{leaderData ? Math.round(leaderData.hours) + 'h' : 'No data'}</p>
-                  </div>
-                </div>
-
-                {/* Impact Leader Section - with time period label */}
-                {leaderData && (
-                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 hover:shadow-lg transition-shadow"
-                    data-testid="impact-leader-card"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-4">
-                        <Crown className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
-                        <div>
-                          <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">Impact Leader ({timeFilter === 'all' ? 'All Time' : timeFilter === 'month' ? 'This Month' : timeFilter === 'quarter' ? 'This Quarter' : 'This Year'})</p>
-                          <h3 className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{leaderData.name}</h3>
+                  {leaderData && (
+                    <div className="flex-1 min-w-[calc(20%-4px)] max-w-xs bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-700">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">⭐ Impact Leader</p>
+                        <Badge className="bg-yellow-600 text-white text-xs px-2 py-1">Top Volunteer</Badge>
+                      </div>
+                      <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 mb-2">{leaderData.name}</p>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Hours:</span>
+                          <span className="font-bold text-yellow-600 dark:text-yellow-400">{Math.round(leaderData.hours)}h</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Activities:</span>
+                          <span className="font-bold text-yellow-600 dark:text-yellow-400">{leaderData.activities}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Avg/Activity:</span>
+                          <span className="font-bold text-yellow-600 dark:text-yellow-400">{(leaderData.hours / leaderData.activities).toFixed(1)}h</span>
                         </div>
                       </div>
-                      <Badge className="bg-yellow-600 text-white text-lg px-4 py-2">⭐ Top Volunteer</Badge>
                     </div>
+                  )}
+                </div>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Hours Contributed</p>
-                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{Math.round(leaderData.hours)}h</p>
-                      </div>
-                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Activities</p>
-                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{leaderData.activities}</p>
-                      </div>
-                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Avg per Activity</p>
-                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{(leaderData.hours / leaderData.activities).toFixed(1)}h</p>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-4 text-center">
-                      This volunteer has made the most significant impact during the selected period.
-                    </p>
-                  </div>
-                )}
 
                 {/* KPIs in 1 row: Quarterly Growth, Performance Radar, Monthly Engagement */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

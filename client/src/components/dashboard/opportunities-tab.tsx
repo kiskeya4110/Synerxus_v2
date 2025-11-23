@@ -40,10 +40,26 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
   const [showApplicationDialog, setShowApplicationDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
+  // Handle missing userId
+  if (!userId) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400 mb-2">Unable to load opportunities</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Your profile is being set up. Please refresh the page or contact support if this issue persists.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const { data: opportunities = [], isLoading, error } = useQuery<OpportunityMatch[]>({
     queryKey: ["/api/opportunities/matches", userId],
     queryFn: async () => {
-      if (!userId) throw new Error("User ID required");
       const response = await fetch(`/api/opportunities/matches?userId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch matched opportunities");
       return response.json();
@@ -54,7 +70,6 @@ export default function OpportunitiesTab({ userId }: OpportunitiesTabProps) {
   const { data: opportunityStatus } = useQuery<OpportunityStatus>({
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
-      if (!userId) throw new Error("User ID required");
       const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch opportunity status");
       return response.json();

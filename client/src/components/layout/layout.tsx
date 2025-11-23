@@ -2,6 +2,7 @@ import { ReactNode, useEffect } from "react";
 import { useLocation } from "wouter";
 import Header from "./header";
 import Sidebar from "./sidebar";
+import Footer from "./footer";
 import { useAuth } from "@/hooks/use-auth";
 
 interface LayoutProps {
@@ -49,12 +50,13 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex pt-16 h-screen">
+      <div className="flex pt-16 flex-1">
         <Sidebar />
         <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6">
           {children}
         </main>
       </div>
+      <Footer />
     </div>
   );
 }

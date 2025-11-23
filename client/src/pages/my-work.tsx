@@ -26,7 +26,21 @@ export default function MyWork() {
     }
   });
 
+  const userId = localStorage.getItem('currentUserId');
   const volunteerId = currentUser?.id;
+
+  // Fetch dashboard data for consistent metrics
+  const { data: dashboardData } = useQuery<any>({
+    queryKey: ["/api/dashboard/summary", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
+      if (!response.ok) throw new Error("Failed to fetch dashboard data");
+      return response.json();
+    },
+    enabled: !!currentUser && !!currentUser.userType && !!userId
+  });
 
   // Fetch volunteer's tasks
   const { data: tasks = [] } = useQuery<Task[]>({
@@ -128,7 +142,10 @@ export default function MyWork() {
     completed: tasks.filter(t => t.status?.toLowerCase() === "completed")
   };
 
-  const totalHoursLogged = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  // Use backend-calculated hours for consistency with dashboard
+  const totalHoursLogged = currentUser?.userType === 'volunteer' && dashboardData?.totalHours !== undefined 
+    ? dashboardData.totalHours 
+    : volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const totalHoursCommitted = projectAssignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
   const hoursProgressPercentage = totalHoursCommitted > 0 
     ? Math.round((totalHoursLogged / totalHoursCommitted) * 100)
@@ -140,7 +157,10 @@ export default function MyWork() {
     ? Math.round((completedTaskCount / totalTaskCount) * 100)
     : 0;
 
-  const activeProjectCount = projectAssignments.filter(a => a.status === 'active').length;
+  // Use backend-calculated project count for consistency with dashboard
+  const activeProjectCount = currentUser?.userType === 'volunteer' && dashboardData?.activeProjects !== undefined
+    ? dashboardData.activeProjects
+    : projectAssignments.filter(a => a.status === 'active').length;
 
   // Calculate weekly capacity usage
   const weeklyCapacity = volunteerProfile?.weeklyAvailability || 0;

@@ -183,6 +183,35 @@ export default function Dashboard() {
     });
   }, [dashboardData?.monthlyImpactData, timeFilter]);
 
+  // Generate narrative for impact chart
+  const impactNarrative = useMemo(() => {
+    if (filteredMonthlyImpactData.length === 0) return "";
+    
+    const data = filteredMonthlyImpactData;
+    const totalHours = data.reduce((sum: number, d: any) => sum + (d.hours || 0), 0);
+    const totalPeopleImpacted = data.reduce((sum: number, d: any) => sum + (d.peopleImpacted || 0), 0);
+    const avgHours = Math.round(totalHours / data.length);
+    const avgPeople = Math.round(totalPeopleImpacted / data.length);
+    
+    // Find peak and lowest months
+    const peakMonth = data.reduce((max: any, d: any) => (d.hours > max.hours ? d : max), data[0]);
+    const lowestMonth = data.reduce((min: any, d: any) => (d.hours < min.hours ? d : min), data[0]);
+    
+    // Determine trend
+    const firstThird = data.slice(0, Math.ceil(data.length / 3));
+    const lastThird = data.slice(Math.floor(data.length * 2 / 3));
+    const avgFirstThird = Math.round(firstThird.reduce((sum: number, d: any) => sum + (d.hours || 0), 0) / firstThird.length);
+    const avgLastThird = Math.round(lastThird.reduce((sum: number, d: any) => sum + (d.hours || 0), 0) / lastThird.length);
+    const trend = avgLastThird > avgFirstThird ? "increasing" : avgLastThird < avgFirstThird ? "decreasing" : "stable";
+    
+    let narrative = `You've logged ${totalHours} total hours and impacted ${totalPeopleImpacted} people. `;
+    narrative += `Your average is ${avgHours} hours per month with an average of ${avgPeople} people impacted. `;
+    narrative += `Your ${trend} trend shows ${trend === 'increasing' ? 'growing momentum' : trend === 'decreasing' ? 'an opportunity to increase engagement' : 'consistent engagement'}. `;
+    narrative += `Peak activity was in the month with ${peakMonth.hours} hours logged.`;
+    
+    return narrative;
+  }, [filteredMonthlyImpactData]);
+
   // Use KPIs from backend - API returns summary data at top level
   const kpis = useMemo(() => {
     // When "all" is selected or no filter, use backend KPIs directly
@@ -728,6 +757,7 @@ export default function Dashboard() {
           monthlyImpactData={filteredMonthlyImpactData}
           monthlyImpactTrend={dashboardData?.monthlyImpactTrend}
           userType={currentUser?.userType}
+          narrative={impactNarrative}
         />
         <SDGChart 
           projects={filteredData.projects}

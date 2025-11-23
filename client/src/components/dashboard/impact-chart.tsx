@@ -11,12 +11,14 @@ export interface ImpactChartProps {
   }>;
   monthlyImpactTrend?: Array<{ month: string; score: number }>;
   userType?: "volunteer" | "organization";
+  narrative?: string;
 }
 
 export default function ImpactChart({
   monthlyImpactData = [],
   monthlyImpactTrend = [],
   userType = "organization",
+  narrative = "",
 }: ImpactChartProps) {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
@@ -215,10 +217,17 @@ export default function ImpactChart({
       <CardHeader className="border-b border-gray-200 dark:border-gray-700">
         <CardTitle className="text-lg font-semibold">{cardTitle}</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-4 space-y-4">
         <div className="h-[300px]">
           <canvas ref={chartRef}></canvas>
         </div>
+        {narrative && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+              {narrative}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

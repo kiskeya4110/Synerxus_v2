@@ -343,7 +343,7 @@ export default function MyWork() {
           </p>
         </div>
         {isOrganizationManager ? (
-          <Link href="/organization-impact-report">
+          <Link href={`/organization-impact-report/${currentUser?.organizationId}`}>
             <Button variant="outline" size="sm" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Create Impact Report</span>
@@ -351,7 +351,7 @@ export default function MyWork() {
             </Button>
           </Link>
         ) : (
-          <Link href="/impact-report">
+          <Link href={`/impact-report/${volunteerId}`}>
             <Button variant="outline" size="sm" className="gap-2">
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">Share Impact Report</span>
@@ -545,7 +545,7 @@ export default function MyWork() {
             <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
               Create comprehensive impact reports with organization-wide KPIs, volunteer statistics, and project achievements
             </p>
-            <Link href="/organization-impact-report">
+            <Link href={`/organization-impact-report/${currentUser?.organizationId}`}>
               <Button className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 View Full Impact Report

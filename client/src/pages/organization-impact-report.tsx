@@ -226,52 +226,6 @@ export default function OrganizationImpactReport(props: any) {
   const costPerBeneficiary = Math.round(totalExpenses / Math.max(1, beneficiariesServed));
   const programEfficiencyRate = 81.7;
 
-  // Calculate KPI Metrics with proper weighting and status
-  const calculateKPIStatus = (percentage: number) => {
-    if (percentage >= 80) return { status: 'On Track', color: 'green', badge: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' };
-    if (percentage >= 50) return { status: 'At Risk', color: 'yellow', badge: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100' };
-    return { status: 'Behind', color: 'red', badge: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100' };
-  };
-
-  // Tasks Completed: ratio of completed activities to potential (weighted by volunteer count)
-  const completedTasks = timeFilteredActivities.length;
-  const potentialTasks = Math.max(activeVolunteers * 5, 10); // Each volunteer should complete ~5 tasks
-  const tasksCompletedPercentage = Math.min(100, Math.round((completedTasks / potentialTasks) * 100));
-  const tasksCompletedStatus = calculateKPIStatus(tasksCompletedPercentage);
-
-  // Active Projects: ratio of active projects to target
-  const activeProjectsCount = projects.filter(p => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress').length;
-  const targetProjects = Math.max(activeVolunteers / 3, 2); // 1 project per 3 volunteers
-  const activeProjectsPercentage = Math.min(100, Math.round((activeProjectsCount / targetProjects) * 100));
-  const activeProjectsStatus = calculateKPIStatus(activeProjectsPercentage);
-
-  // Skills Developed: ratio of unique skills to target skill growth
-  const allSkills = new Set<string>();
-  filteredActivities.forEach(a => {
-    // In a real scenario, activities would have associated skills
-    // For now, we'll use volunteer skills
-  });
-  volunteers.forEach(v => {
-    if (Array.isArray(v.skills)) {
-      v.skills.forEach((s: string) => allSkills.add(s));
-    }
-  });
-  const uniqueSkillsCount = allSkills.size;
-  const targetSkills = Math.max(activeVolunteers / 2, 5); // Expected skill diversity
-  const skillsDevelopedPercentage = Math.min(100, Math.round((uniqueSkillsCount / targetSkills) * 100));
-  const skillsDevelopedStatus = calculateKPIStatus(skillsDevelopedPercentage);
-
-  // Volunteer Participation: engagement rate (volunteers with activities)
-  const volunteersWithActivities = new Set(timeFilteredActivities.map(a => a.userId)).size;
-  const targetEngagement = Math.max(Math.round(activeVolunteers * 0.8), 2); // Target 80% engagement
-  const participationPercentage = Math.min(100, Math.round((volunteersWithActivities / targetEngagement) * 100));
-  const participationStatus = calculateKPIStatus(participationPercentage);
-
-  // Hours Commitment: average hours per volunteer vs target (40 hours per quarter per volunteer)
-  const targetHours = activeVolunteers * 10; // 10 hours per volunteer per period
-  const hoursPercentage = Math.min(100, Math.round((totalHours / Math.max(targetHours, 1)) * 100));
-  const hoursStatus = calculateKPIStatus(hoursPercentage);
-
   const shareUrl = `${window.location.origin}/organization-impact-report/${organization?.id || ''}`;
 
   const handleCopyLink = () => {
@@ -835,60 +789,6 @@ export default function OrganizationImpactReport(props: any) {
                   )}
                 </div>
 
-
-                {/* KPI Tracking Dashboard */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/50 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Tasks Completed</p>
-                      <Badge className={tasksCompletedStatus.badge}>{tasksCompletedStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-1">{tasksCompletedPercentage}%</p>
-                    <Progress value={tasksCompletedPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{completedTasks} of {potentialTasks} tasks</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-900/50 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Active Projects</p>
-                      <Badge className={activeProjectsStatus.badge}>{activeProjectsStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-1">{activeProjectsPercentage}%</p>
-                    <Progress value={activeProjectsPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{activeProjectsCount} / {Math.round(targetProjects)} projects</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-900/50 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Skills Developed</p>
-                      <Badge className={skillsDevelopedStatus.badge}>{skillsDevelopedStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1">{skillsDevelopedPercentage}%</p>
-                    <Progress value={skillsDevelopedPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{uniqueSkillsCount} unique skills</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/50 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Participation Rate</p>
-                      <Badge className={participationStatus.badge}>{participationStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-1">{participationPercentage}%</p>
-                    <Progress value={participationPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{volunteersWithActivities} / {targetEngagement} volunteers</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-900/50 p-4 rounded-lg border border-red-200 dark:border-red-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Hours Commitment</p>
-                      <Badge className={hoursStatus.badge}>{hoursStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-red-900 dark:text-red-100 mb-1">{hoursPercentage}%</p>
-                    <Progress value={hoursPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{Math.round(totalHours)} / {targetHours} hours</p>
-                  </div>
-                </div>
-
                 {/* KPIs in 1 row: Quarterly Growth, Performance Radar, Monthly Engagement */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {/* Quarterly Growth */}
@@ -1364,59 +1264,6 @@ export default function OrganizationImpactReport(props: any) {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200 dark:border-orange-700 text-center">Operations</h2>
                 
-                {/* KPI Tracking Dashboard */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6 print:page-break-inside-avoid">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/50 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Tasks Completed</p>
-                      <Badge className={tasksCompletedStatus.badge}>{tasksCompletedStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-1">{tasksCompletedPercentage}%</p>
-                    <Progress value={tasksCompletedPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{completedTasks} of {potentialTasks} tasks</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-900/50 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Active Projects</p>
-                      <Badge className={activeProjectsStatus.badge}>{activeProjectsStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-1">{activeProjectsPercentage}%</p>
-                    <Progress value={activeProjectsPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{activeProjectsCount} / {Math.round(targetProjects)} projects</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-900/50 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Skills Developed</p>
-                      <Badge className={skillsDevelopedStatus.badge}>{skillsDevelopedStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1">{skillsDevelopedPercentage}%</p>
-                    <Progress value={skillsDevelopedPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{uniqueSkillsCount} unique skills</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-900/50 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Participation Rate</p>
-                      <Badge className={participationStatus.badge}>{participationStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-1">{participationPercentage}%</p>
-                    <Progress value={participationPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{volunteersWithActivities} / {targetEngagement} volunteers</p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-900/50 p-4 rounded-lg border border-red-200 dark:border-red-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold">Hours Commitment</p>
-                      <Badge className={hoursStatus.badge}>{hoursStatus.status}</Badge>
-                    </div>
-                    <p className="text-2xl font-bold text-red-900 dark:text-red-100 mb-1">{hoursPercentage}%</p>
-                    <Progress value={hoursPercentage} className="h-1.5 mb-2" />
-                    <p className="text-xs text-gray-600 dark:text-gray-400">{Math.round(totalHours)} / {targetHours} hours</p>
-                  </div>
-                </div>
-
                 {/* Resource & Metrics Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                   <Card className="border border-gray-200 dark:border-gray-700">

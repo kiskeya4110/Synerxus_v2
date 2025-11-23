@@ -219,12 +219,6 @@ export default function ImpactReport(props: any) {
 
   const filteredActivities = getFilteredActivities();
 
-  // Calculate filtered KPIs
-  const filteredCompletedTasks = tasks.filter(t => {
-    if (t.status?.toLowerCase() !== "completed") return false;
-    return true;
-  }).length;
-
   // Generate monthly hours from real activity data
   const generateMonthlyHours = () => {
     const monthlyData: Record<string, number> = {};
@@ -285,15 +279,19 @@ export default function ImpactReport(props: any) {
   // Update filtered KPIs
   const filteredTotalHours = filteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   
-  // Calculate filtered active projects (only projects with activities in selected time period)
-  const projectsWithFilteredActivities = new Set(filteredActivities.map(a => a.projectId));
+  // Show ALL assigned projects in the KPI (not just those with filtered activities)
+  // The time filter should affect hours, not the project count
   const filteredActiveProjects = projectAssignments.filter(pa => 
-    pa.status === 'active' && projectsWithFilteredActivities.has(pa.projectId)
+    pa.status === 'active' || pa.status === 'Active' || pa.status === 'In Progress'
   ).length;
+  
+  // Calculate filtered tasks score (count completed tasks only, not filtered by time since completion is a point-in-time event)
+  // But for consistency, we calculate tasks separately
+  const filteredTasksCompleted = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
   
   // Calculate filtered impact score
   const filteredHoursScore = Math.min((filteredTotalHours / 100) * 100, 100);
-  const filteredTasksScore = totalTasks > 0 ? (filteredCompletedTasks / totalTasks) * 100 : 0;
+  const filteredTasksScore = totalTasks > 0 ? (filteredTasksCompleted / totalTasks) * 100 : 0;
   const filteredProjectsScore = Math.min((filteredActiveProjects / 5) * 100, 100);
   const filteredSkillsScore = Math.min((allSkills.length / 10) * 100, 100);
   const filteredSdgScore = Math.min((sdgs.length / 5) * 100, 100);
@@ -646,9 +644,9 @@ export default function ImpactReport(props: any) {
                       Tasks Completed
                     </p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      {filteredCompletedTasks}/{tasks.length}
+                      {filteredTasksCompleted}/{tasks.length}
                     </p>
-                    <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} className="mt-2 h-1" />
+                    <Progress value={tasks.length > 0 ? (filteredTasksCompleted / tasks.length) * 100 : 0} className="mt-2 h-1" />
                   </div>
 
                   <div className="bg-purple-50 dark:bg-purple-900 p-3 rounded-lg border border-purple-200 dark:border-purple-700">
@@ -837,10 +835,10 @@ export default function ImpactReport(props: any) {
                               Task Completion Rate
                             </span>
                             <span className="text-sm font-bold text-gray-900 dark:text-white">
-                              {tasks.length > 0 ? Math.round((filteredCompletedTasks / tasks.length) * 100) : 0}%
+                              {tasks.length > 0 ? Math.round((filteredTasksCompleted / tasks.length) * 100) : 0}%
                             </span>
                           </div>
-                          <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} />
+                          <Progress value={tasks.length > 0 ? (filteredTasksCompleted / tasks.length) * 100 : 0} />
                         </div>
 
                         <div>
@@ -1004,7 +1002,7 @@ export default function ImpactReport(props: any) {
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                           {[
                             { kpi: 'Monthly Hours', target: 20, actual: Math.min(filteredTotalHours, 20) },
-                            { kpi: 'Tasks Completed', target: 10, actual: Math.min(filteredCompletedTasks, 10) },
+                            { kpi: 'Tasks Completed', target: 10, actual: Math.min(filteredTasksCompleted, 10) },
                             { kpi: 'Active Projects', target: 3, actual: Math.min(filteredActiveProjects, 3) },
                             { kpi: 'Skills Developed', target: 5, actual: Math.min(allSkills.length, 5) },
                           ].map((row) => {
@@ -1042,7 +1040,7 @@ export default function ImpactReport(props: any) {
                           </span>
                         </li>
                       )}
-                      {totalTasks > 0 && (filteredCompletedTasks / totalTasks) < 0.8 && (
+                      {totalTasks > 0 && (filteredTasksCompleted / totalTasks) < 0.8 && (
                         <li className="flex gap-3">
                           <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
                           <span className="text-gray-700 dark:text-gray-300">
@@ -1066,7 +1064,7 @@ export default function ImpactReport(props: any) {
                           </span>
                         </li>
                       )}
-                      {filteredCompletedTasks > 5 && (
+                      {filteredTasksCompleted > 5 && (
                         <li className="flex gap-3">
                           <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
                           <span className="text-gray-700 dark:text-gray-300">

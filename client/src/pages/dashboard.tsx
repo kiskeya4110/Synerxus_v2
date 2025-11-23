@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, Download } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
@@ -25,6 +25,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+declare const html2pdf: any;
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -618,6 +621,27 @@ export default function Dashboard() {
     setSelectedKPI(detailData);
   };
 
+  const { toast } = useToast();
+
+  const handleDownloadPDF = () => {
+    const element = document.getElementById('dashboard-content');
+    if (!element) return;
+    
+    const opt = {
+      margin: 10,
+      filename: `Dashboard_${currentUser?.displayName || 'Dashboard'}_${new Date().getTime()}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+    
+    html2pdf().set(opt).from(element).save();
+    toast({
+      title: "Downloaded!",
+      description: "Your dashboard has been saved as PDF",
+    });
+  };
+
   if (loadingDashboard || loadingProjects) {
     return (
       <div className="space-y-6">
@@ -686,7 +710,23 @@ export default function Dashboard() {
             </Select>
           </div>
         </div>
+
+        {/* Download PDF Button */}
+        <Button
+          onClick={handleDownloadPDF}
+          variant="outline"
+          size="sm"
+          className="w-full md:w-auto flex items-center gap-2"
+          data-testid="button-download-pdf"
+        >
+          <Download className="h-4 w-4" />
+          <span className="hidden md:inline">Download PDF</span>
+          <span className="md:hidden">PDF</span>
+        </Button>
       </div>
+
+      {/* Dashboard Content Wrapper for PDF Export */}
+      <div id="dashboard-content" className="space-y-6">
 
       {/* KPI Cards - 1x4 Mobile Grid */}
       <div className="grid grid-cols-4 gap-2 md:gap-4">
@@ -1149,6 +1189,7 @@ export default function Dashboard() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

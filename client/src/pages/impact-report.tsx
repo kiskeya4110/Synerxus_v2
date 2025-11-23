@@ -599,30 +599,34 @@ export default function ImpactReport(props: any) {
               </div>
             </div>
 
-            {/* View Mode: Tabs or Single Page */}
-            {viewMode === "tabs" ? (
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-6 print:hidden">
-                <TabsTrigger value="overview" className="flex items-center gap-2">
-                  <Target className="h-4 w-4" />
-                  <span className="hidden sm:inline">Overview</span>
-                </TabsTrigger>
-                <TabsTrigger value="engagement" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">Engagement</span>
-                </TabsTrigger>
-                <TabsTrigger value="impact" className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="hidden sm:inline">Impact</span>
-                </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Analytics</span>
-                </TabsTrigger>
-              </TabsList>
+            {/* Single Page View - All Content Horizontally */}
+            <div className="space-y-6">
+              {/* Navigation Tabs (Hidden on Print) */}
+              <div className="flex gap-2 mb-6 print:hidden overflow-x-auto">
+                {[
+                  { value: "overview", label: "Overview", icon: <Target className="h-4 w-4" /> },
+                  { value: "engagement", label: "Engagement", icon: <Users className="h-4 w-4" /> },
+                  { value: "impact", label: "Impact", icon: <TrendingUp className="h-4 w-4" /> },
+                  { value: "analytics", label: "Analytics", icon: <BarChart3 className="h-4 w-4" /> }
+                ].map((tab) => (
+                  <Button
+                    key={tab.value}
+                    variant={activeTab === tab.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setActiveTab(tab.value)}
+                    className="flex items-center gap-2 whitespace-nowrap"
+                  >
+                    {tab.icon}
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </Button>
+                ))}
+              </div>
 
-              {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-4" data-print-overview="true">
+              {/* 4-Column Horizontal Layout - All Content Visible */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4">
+              
+              {/* Column 1: Overview Section */}
+              <div className="space-y-4" data-print-overview="true">
                 {/* Key Metrics Grid - Compact 2x2 */}
                 <div className="grid grid-cols-2 gap-2 md:gap-3">
                   <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -783,10 +787,10 @@ export default function ImpactReport(props: any) {
                     </Card>
                   )}
                 </div>
-              </TabsContent>
+              </div>
 
-              {/* Engagement Tab */}
-              <TabsContent value="engagement" className="space-y-6" data-print-engagement="true">
+              {/* Column 2: Engagement Section */}
+              <div className="space-y-6" data-print-engagement="true">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Skills Assessment */}
                   <Card className="border border-gray-200 dark:border-gray-700">
@@ -884,10 +888,10 @@ export default function ImpactReport(props: any) {
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
+              </div>
 
-              {/* Impact Tab */}
-              <TabsContent value="impact" className="space-y-6" data-print-impact="true">
+              {/* Column 3: Impact Section */}
+              <div className="space-y-6" data-print-impact="true">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
@@ -966,10 +970,10 @@ export default function ImpactReport(props: any) {
                     </CardContent>
                   </Card>
                 )}
-              </TabsContent>
+              </div>
 
-              {/* Analytics Tab */}
-              <TabsContent value="analytics" className="space-y-6" data-print-analytics="true">
+              {/* Column 4: Analytics Section */}
+              <div className="space-y-6" data-print-analytics="true">
                 {/* KPI Tracking Table */}
                 <Card className="border border-gray-200 dark:border-gray-700">
                   <CardContent className="p-4">
@@ -1073,283 +1077,9 @@ export default function ImpactReport(props: any) {
                     </ul>
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
-            ) : (
-            // Single Page View - All content in sequence
-            <div className="space-y-6">
-              {/* Overview Section */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700 flex items-center gap-2 justify-center">
-                  <Target className="h-6 w-6" />
-                  Overview
-                </h2>
-                
-                {/* Key Metrics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Hours Logged</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400" data-testid="text-total-hours">{filteredTotalHours}h</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Avg: {avgMonthlyHours}/month</p>
-                  </div>
-
-                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Tasks Completed</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400" data-testid="text-completed-tasks">{filteredCompletedTasks}/{tasks.length}</p>
-                    <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} className="mt-2 h-1" />
-                  </div>
-
-                  <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Active Projects</p>
-                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{activeProjects}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">of {assignmentsCount} assignments</p>
-                  </div>
-
-                  <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Skills Applied</p>
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{allSkills.length}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{sdgs.length} SDG{sdgs.length !== 1 ? 's' : ''}</p>
-                  </div>
-                </div>
-
-                {/* Charts Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Monthly Hours Trend</h3>
-                      {bestMonth && (
-                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-2 mb-3 text-xs">
-                          <p className="text-gray-700 dark:text-gray-300">
-                            <strong>Peak Performance:</strong> {bestMonth.month} with {bestMonth.hours}h logged
-                          </p>
-                        </div>
-                      )}
-                      <Line ref={(ref) => chartRefs.current['monthlyHours'] = ref} data={{ labels: monthlyHours.map(d => d.month), datasets: [{ label: 'Hours Logged', data: monthlyHours.map(d => d.hours), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, interaction: { mode: 'index' as any, intersect: false }, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', borderColor: '#3b82f6', borderWidth: 1, padding: 12, displayColors: false, callbacks: { label: (context: any) => `${context.parsed.y} hours` } } }, scales: { y: { beginAtZero: true }, x: {} } }} />
-                      <div className="mt-3 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                        <p>📊 <strong>Summary:</strong> {monthlyHours.reduce((sum, m) => sum + m.hours, 0)}h total • {avgMonthlyHours}h/month avg</p>
-                        <p>✅ <strong>What Went Well:</strong> Consistent engagement across {monthlyHours.filter(m => m.hours > 0).length} active months</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {projectsBreakdown.length > 0 && (
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Project Distribution</h3>
-                        <Pie ref={(ref) => chartRefs.current['projectDist'] = ref} data={{ labels: projectsBreakdown.map(p => p.name).slice(0, 5), datasets: [{ data: projectsBreakdown.map(p => p.value).slice(0, 5), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'] }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', padding: 12, callbacks: { label: (context: any) => `${context.label}: ${context.parsed}%` } } } }} />
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
               </div>
-
-              {/* Engagement Section */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 dark:border-green-700 flex items-center gap-2 justify-center">
-                  <Users className="h-6 w-6" />
-                  Engagement
-                </h2>
-                
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Skills Assessment</h3>
-                      {skillsData.length > 0 ? (
-                        <Bar ref={(ref) => chartRefs.current['skills'] = ref} data={{ labels: skillsData.map((s: any) => s.name), datasets: [{ label: 'Projects Using Skill', data: skillsData.map((s: any) => s.projects), backgroundColor: '#10b981' }] }} options={{ responsive: true, maintainAspectRatio: true, indexAxis: 'y' as any, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', titleColor: '#fff', bodyColor: '#fff', padding: 12, callbacks: { label: (context: any) => `${context.parsed.x} projects` } } }, scales: { x: { beginAtZero: true } } }} />
-                      ) : (
-                        <p className="text-gray-500 dark:text-gray-400">No skills data available</p>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Engagement Metrics</h3>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Task Completion Rate</span>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white">{totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0}%</span>
-                          </div>
-                          <Progress value={tasks.length > 0 ? (filteredCompletedTasks / tasks.length) * 100 : 0} />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Project Activity</span>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white">{activeProjects}/{assignmentsCount}</span>
-                          </div>
-                          <Progress value={(activeProjects / Math.max(1, assignmentsCount)) * 100} />
-                        </div>
-                        <div>
-                          <div className="flex justify-between mb-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Skills Utilization</span>
-                            <span className="text-sm font-bold text-gray-900 dark:text-white">{allSkills.length} skills</span>
-                          </div>
-                          <Progress value={Math.min((allSkills.length / 10) * 100, 100)} />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {allSkills.length > 0 && (
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Applied Skills</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {allSkills.map((skill: string) => (
-                          <Badge key={skill} variant="secondary">{skill}</Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {/* Impact Section */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-700 flex items-center gap-2 justify-center">
-                  <TrendingUp className="h-6 w-6" />
-                  Impact
-                </h2>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">Economic Value</h3>
-                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">${(totalHours * 25).toLocaleString()}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">@ $25/hour average</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">Environmental Impact</h3>
-                      <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{Math.round(totalHours * 0.5)} kg</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">CO₂ offset (est.)</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">Beneficiaries</h3>
-                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">{activeProjects * 10}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Estimated reached</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {sdgs.length > 0 && (
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">UN Sustainable Development Goals</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {sdgs.map((sdgId: number) => {
-                          const goal = sdgGoals[sdgId];
-                          const title = SDG_TITLES[sdgId];
-                          return (
-                            <div key={sdgId} className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 hover:shadow-md transition-all">
-                              <span className="text-4xl flex-shrink-0">{SDG_LOGOS[sdgId]}</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-bold text-gray-900 dark:text-white text-sm">SDG {sdgId}</p>
-                                <p className="text-sm text-gray-700 dark:text-gray-200 font-semibold leading-tight">{title}</p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-
-              {/* Analytics Section */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200 dark:border-orange-700 flex items-center gap-2 justify-center">
-                  <BarChart3 className="h-6 w-6" />
-                  Analytics
-                </h2>
-
-                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">KPI Tracking: Target vs. Actuals</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
-                          <tr>
-                            <th className="px-4 py-2 text-left font-semibold text-gray-900 dark:text-white">KPI</th>
-                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Target</th>
-                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Actual</th>
-                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">% Achieved</th>
-                            <th className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                          {[
-                            { kpi: 'Monthly Hours', target: 20, actual: Math.min(totalHours, 20) },
-                            { kpi: 'Tasks Completed', target: 10, actual: Math.min(completedTasks, 10) },
-                            { kpi: 'Active Projects', target: 3, actual: Math.min(activeProjects, 3) },
-                            { kpi: 'Skills Developed', target: 5, actual: Math.min(allSkills.length, 5) },
-                          ].map((row) => {
-                            const achieved = Math.round((row.actual / row.target) * 100);
-                            const status = achieved >= 100 ? '✓ On Target' : achieved >= 75 ? '⚠ At Risk' : '✗ Behind';
-                            const statusColor = achieved >= 100 ? 'text-green-600 dark:text-green-400' : achieved >= 75 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400';
-                            return (
-                              <tr key={row.kpi} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td className="px-4 py-2 text-gray-900 dark:text-white">{row.kpi}</td>
-                                <td className="px-4 py-2 text-center text-gray-600 dark:text-gray-300">{row.target}</td>
-                                <td className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">{row.actual}</td>
-                                <td className="px-4 py-2 text-center font-semibold text-gray-900 dark:text-white">{achieved}%</td>
-                                <td className={`px-4 py-2 text-center font-semibold ${statusColor}`}>{status}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20">
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Strategic Recommendations</h3>
-                    <ul className="space-y-3">
-                      {totalHours < 20 && (
-                        <li className="flex gap-3">
-                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
-                          <span className="text-gray-700 dark:text-gray-300">Increase volunteer hours by focusing on {activeProjects > 0 ? 'your most impactful projects' : 'available opportunities'}</span>
-                        </li>
-                      )}
-                      {totalTasks > 0 && (completedTasks / totalTasks) < 0.8 && (
-                        <li className="flex gap-3">
-                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
-                          <span className="text-gray-700 dark:text-gray-300">Prioritize task completion to increase your impact score</span>
-                        </li>
-                      )}
-                      {allSkills.length < 5 && (
-                        <li className="flex gap-3">
-                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
-                          <span className="text-gray-700 dark:text-gray-300">Document additional skills to unlock more opportunities</span>
-                        </li>
-                      )}
-                      {sdgs.length === 0 && (
-                        <li className="flex gap-3">
-                          <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
-                          <span className="text-gray-700 dark:text-gray-300">Select your preferred UN SDGs to align with meaningful impact</span>
-                        </li>
-                      )}
-                      {completedTasks > 5 && (
-                        <li className="flex gap-3">
-                          <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
-                          <span className="text-gray-700 dark:text-gray-300">Great progress! You're making a real difference</span>
-                        </li>
-                      )}
-                    </ul>
-                  </CardContent>
-                </Card>
               </div>
             </div>
-            )}
 
             {/* Footer */}
             <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400 print:mt-4 print:pt-3 print:border-t print:text-xs">

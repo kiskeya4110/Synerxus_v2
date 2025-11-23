@@ -348,12 +348,28 @@ export default function OrganizationImpactReport(props: any) {
     { source: 'Other', value: 5 }
   ];
 
-  const topPrograms = [
-    { name: 'Youth Education', completion: 92, impact: 95, beneficiaries: 450 },
-    { name: 'Health Camps', completion: 88, impact: 90, beneficiaries: 320 },
-    { name: 'Clean Water', completion: 85, impact: 88, beneficiaries: 280 },
-    { name: 'Community Garden', completion: 78, impact: 82, beneficiaries: 150 }
-  ];
+  // Use actual projects from organization - tied to real completion percentages
+  const topPrograms = projects
+    .filter(p => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress' || p.status?.toLowerCase() === 'completed')
+    .slice(0, 4)
+    .map(project => {
+      // Get activities for this project to calculate beneficiaries
+      const projectActivities = filteredActivities.filter(a => a.projectId === project.id);
+      const beneficiaries = projectActivities.reduce((sum, a) => sum + (a.peopleImpacted || 0), 0) || Math.round(projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0) * 1.5);
+      
+      // Calculate impact score based on completion and engagement
+      const completionPercentage = project.completionPercentage || 0;
+      const engagement = projectActivities.length > 0 ? Math.min(100, projectActivities.length * 10) : 0;
+      const impactScore = Math.round((completionPercentage * 0.6) + (engagement * 0.4));
+      
+      return {
+        name: project.name || 'Unnamed Project',
+        status: project.status || 'In Progress',
+        completion: completionPercentage,
+        impact: impactScore,
+        beneficiaries: Math.round(beneficiaries)
+      };
+    });
 
   // Calculate real performance scores
   const volunteerEngagementScore = activeVolunteers > 0 ? Math.min(Math.round((activeVolunteers / 100) * 100), 100) : 0;
@@ -850,30 +866,37 @@ export default function OrganizationImpactReport(props: any) {
               {/* Programs Tab - KPIs in 1 row and 4 columns */}
               <TabsContent value="programs" className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  {topPrograms.map((prog, idx) => (
+                  {topPrograms.length > 0 ? topPrograms.map((prog, idx) => (
                     <div key={idx} className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm">{prog.name}</h4>
-                      <div className="space-y-2">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-sm flex-1 leading-tight">{prog.name}</h4>
+                        <Badge variant="outline" className="ml-2 text-xs whitespace-nowrap">{prog.status}</Badge>
+                      </div>
+                      <div className="space-y-2 mt-3">
                         <div>
                           <div className="flex justify-between text-xs mb-1">
                             <span>Completion</span>
-                            <span className="font-bold">{prog.completion}%</span>
+                            <span className="font-bold">{Math.round(prog.completion)}%</span>
                           </div>
                           <CompletionProgress value={prog.completion} className="h-2" />
                         </div>
                         <div>
                           <div className="flex justify-between text-xs mb-1">
-                            <span>Impact</span>
-                            <span className="font-bold">{prog.impact}%</span>
+                            <span>Impact Score</span>
+                            <span className="font-bold">{Math.round(prog.impact)}%</span>
                           </div>
                           <Progress value={prog.impact} className="h-2" />
                         </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400 pt-1 border-t">
-                          {prog.beneficiaries} beneficiaries
+                        <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t">
+                          {prog.beneficiaries.toLocaleString()} beneficiaries
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+                      No active projects found
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 

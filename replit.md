@@ -31,6 +31,17 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 23, 2025)
 
+### Programs Tab: Real Projects with Actual Status & Completion (Critical)
+- **Replaced Hardcoded Data with Live Projects**: The Programs tab now displays actual organization projects instead of mock data
+  - Shows real project names, statuses (Active, In Progress, Completed), and completion percentages
+  - Completion percentages tied directly to project `completionPercentage` field - consistent with dashboard display
+  - Each project card displays: Project Name, Status badge, Completion %, Impact Score, and Beneficiaries
+  - If no projects exist, shows friendly "No active projects found" message
+  - Programs filtered to show only active/in-progress/completed projects (max 4 displayed)
+- **Impact Score Calculation**: Combines project completion (60%) + volunteer engagement (40%)
+  - Beneficiaries calculated from actual impact metrics or extrapolated from volunteer hours
+  - All metrics now pull from real organization data, eliminating inconsistency with dashboard metrics
+
 ### Organization Impact Score Calculation Fix (Critical)
 - **65% Weighting Applied**: Fixed organization impact score to correctly weight hours and people impacted as primary drivers (65% combined)
   - **Previous formula**: Hours 40%, Tasks 30%, SDG 20%, Match 10% (missing people impacted entirely!)
@@ -38,7 +49,7 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
   - **People Impacted NOW Included**: Organizations now calculate `totalPeopleImpacted` using `calculatePeopleImpacted()` helper from impacts table
   - **Both Summary & Monthly Calculations**: Updated both the main impact score calculation and `calculateOrganizationImpactScore()` function for monthly trends
   - **Consistent Across All Metrics**: Both volunteers and organizations now use the same 65% hours+people weighting formula
-  - **Impact**: Organization dashboards will now show accurate impact scores that reflect people impacted as a major component
+  - **Impact**: Organization dashboards show accurate impact scores reflecting people impacted as a major component
 
 ### Organization Dashboard Global Impact Report Navigation
 - **New "Global Report" Button**: Added dedicated button in Row 2, Col 2 of dashboard controls for organization users

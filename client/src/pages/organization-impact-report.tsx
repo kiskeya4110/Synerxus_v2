@@ -508,8 +508,8 @@ export default function OrganizationImpactReport(props: any) {
                 {organization?.name || 'Your Organization'}
               </p>
               
-              <h1 className="text-xl md:text-2xl font-semibold text-gray-700 dark:text-gray-300 print:text-lg mb-4">
-                Organization Impact Report
+              <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
+                Global Impact Report
               </h1>
 
               <div className="inline-block">
@@ -552,30 +552,36 @@ export default function OrganizationImpactReport(props: any) {
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
-                {/* Overview buttons in 2 rows x 4 columns */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                {/* Overview buttons in 1 row x 5 columns - centered */}
+                <div className="flex flex-wrap justify-center gap-4">
+                  <div className="flex-1 min-w-[calc(20%-4px)] max-w-xs bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalTeam}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activeVolunteers} volunteers + {projectManagers} managers</p>
                   </div>
 
-                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                  <div className="flex-1 min-w-[calc(20%-4px)] max-w-xs bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Hours Logged</p>
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalHours}h</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Real data from {filteredActivities.length} activities</p>
                   </div>
 
-                  <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                  <div className="flex-1 min-w-[calc(20%-4px)] max-w-xs bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Projects Managed</p>
                     <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalProjects}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Active projects</p>
                   </div>
 
-                  <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                  <div className="flex-1 min-w-[calc(20%-4px)] max-w-xs bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Avg Hours per Vol</p>
                     <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{activeVolunteers > 0 ? (totalHours / activeVolunteers).toFixed(1) : 0}h</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
+                  </div>
+
+                  <div className="flex-1 min-w-[calc(20%-4px)] max-w-xs bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-700">
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold mb-1">Impact Leader</p>
+                    <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{leaderData ? leaderData.name : 'N/A'}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{leaderData ? Math.round(leaderData.hours) + 'h' : 'No data'}</p>
                   </div>
                 </div>
 

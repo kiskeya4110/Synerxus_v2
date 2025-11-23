@@ -196,6 +196,14 @@ export default function OrganizationImpactReport(props: any) {
   // Calculate realistic funding based on hours and projects
   const fundingSecured = totalProjects > 0 ? totalProjects * 25000 + Math.round(totalHours * 50) : 0;
 
+  // Calculate Organization Impact Score
+  // Formula: Hours 35% + People 30% + Projects 20% + Base 15%
+  const hoursScore = Math.min((totalHours / 100) * 35, 35);
+  const peopleScore = Math.min((beneficiariesServed / 100) * 30, 30);
+  const projectsScore = Math.min((totalProjects / 5) * 20, 20);
+  const baseScore = 15; // Base participation and match score
+  const organizationImpactScore = Math.round(hoursScore + peopleScore + projectsScore + baseScore);
+
   // Calculate Impact Leader (most impactful volunteer for selected time period)
   const volunteerHoursMap = new Map<number, { hours: number; name: string; activities: number }>();
   timeFilteredActivities.forEach(activity => {

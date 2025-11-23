@@ -47,7 +47,19 @@ export const getQueryFn: <T>(options: {
       headers["x-user-id"] = userId;
     }
     
-    const res = await fetch(queryKey[0] as string, {
+    // Build URL with query parameters from queryKey
+    let url = queryKey[0] as string;
+    
+    // Handle special cases for intake endpoints with IDs
+    if (queryKey.length > 1) {
+      if (url.includes('/intake/volunteer-profile') && queryKey[1]) {
+        url = `${url}?userId=${queryKey[1]}`;
+      } else if (url.includes('/intake/organization-profile') && queryKey[1]) {
+        url = `${url}?organizationId=${queryKey[1]}`;
+      }
+    }
+    
+    const res = await fetch(url, {
       credentials: "include",
       headers,
     });

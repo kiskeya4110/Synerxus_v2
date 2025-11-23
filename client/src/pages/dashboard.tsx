@@ -652,35 +652,39 @@ export default function Dashboard() {
           </p>
         </div>
         
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row items-center gap-2">
-          <Label htmlFor="project-filter" className="text-sm whitespace-nowrap">Project:</Label>
-          <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger id="project-filter" className="w-[180px]">
-              <SelectValue placeholder="All Projects" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              {projects.map((project: any) => (
-                <SelectItem key={project.id} value={project.id.toString()}>
-                  {project.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Filters - 2 columns on mobile, side-by-side on desktop */}
+        <div className="grid grid-cols-2 gap-3 md:flex md:flex-row md:items-center md:gap-2 w-full md:w-auto">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="project-filter" className="text-sm whitespace-nowrap">Project:</Label>
+            <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <SelectTrigger id="project-filter" className="w-full md:w-[180px]">
+                <SelectValue placeholder="All Projects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+                {projects.map((project: any) => (
+                  <SelectItem key={project.id} value={project.id.toString()}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Label htmlFor="time-filter" className="text-sm whitespace-nowrap sm:ml-4">Time:</Label>
-          <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
-            <SelectTrigger id="time-filter" className="w-[140px]">
-              <SelectValue placeholder="All Time" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="year">This Year</SelectItem>
-              <SelectItem value="quarter">This Quarter</SelectItem>
-              <SelectItem value="month">This Month</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="time-filter" className="text-sm whitespace-nowrap">Time:</Label>
+            <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
+              <SelectTrigger id="time-filter" className="w-full md:w-[140px]">
+                <SelectValue placeholder="All Time" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="year">This Year</SelectItem>
+                <SelectItem value="quarter">This Quarter</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

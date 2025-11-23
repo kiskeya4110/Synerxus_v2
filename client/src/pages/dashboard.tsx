@@ -203,6 +203,34 @@ export default function Dashboard() {
     });
   }, [dashboardData?.monthlyImpactData, timeFilter]);
 
+  // Filter monthly impact trend by time period to match the impact data
+  const filteredMonthlyImpactTrend = useMemo(() => {
+    const trendData = dashboardData?.monthlyImpactTrend || [];
+    if (timeFilter === 'all') return trendData;
+    
+    const now = new Date();
+    let startDate = new Date(0);
+    
+    switch(timeFilter) {
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+    
+    return trendData.filter((data: any) => {
+      if (!data.month) return true;
+      const [year, month] = data.month.split('-');
+      const dataDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      return dataDate >= startDate;
+    });
+  }, [dashboardData?.monthlyImpactTrend, timeFilter]);
+
   // Generate narrative for impact chart - LIVE and INTERACTIVE with time filter
   const impactNarrative = useMemo(() => {
     if (!filteredMonthlyImpactData || filteredMonthlyImpactData.length === 0) return "";
@@ -873,7 +901,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ImpactChart 
           monthlyImpactData={filteredMonthlyImpactData}
-          monthlyImpactTrend={dashboardData?.monthlyImpactTrend}
+          monthlyImpactTrend={filteredMonthlyImpactTrend}
           userType={currentUser?.userType}
           narrative={impactNarrative}
         />

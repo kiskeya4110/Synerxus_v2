@@ -353,6 +353,71 @@ export default function ImpactReport(props: ImpactReportProps) {
   const bestMonth = monthlyHours.reduce((max, curr) => curr.hours > max.hours ? curr : max, monthlyHours[0]);
   const avgMonthlyHours = monthlyHours.length > 0 ? (monthlyHours.reduce((sum, m) => sum + m.hours, 0) / monthlyHours.length).toFixed(1) : 0;
 
+  // Generate insights based on time filter and trends
+  const generateTrendInsight = () => {
+    if (monthlyHours.length === 0) return "No hours data available for the selected period.";
+    
+    const totalHoursInPeriod = monthlyHours.reduce((sum, m) => sum + m.hours, 0);
+    const avgHours = parseFloat(avgMonthlyHours as string);
+    
+    // Calculate trend
+    const firstHalf = monthlyHours.slice(0, Math.floor(monthlyHours.length / 2));
+    const secondHalf = monthlyHours.slice(Math.floor(monthlyHours.length / 2));
+    const avgFirstHalf = firstHalf.length > 0 ? firstHalf.reduce((sum, m) => sum + m.hours, 0) / firstHalf.length : 0;
+    const avgSecondHalf = secondHalf.length > 0 ? secondHalf.reduce((sum, m) => sum + m.hours, 0) / secondHalf.length : 0;
+    
+    let trendInsight = "";
+    
+    switch(timeFilter) {
+      case 'month':
+        if (totalHoursInPeriod === 0) {
+          trendInsight = "💡 This month has no logged hours yet. Start tracking your contributions!";
+        } else if (totalHoursInPeriod < 10) {
+          trendInsight = `💡 You've logged ${totalHoursInPeriod}h this month. Consider increasing your weekly commitment to reach your goals.`;
+        } else if (totalHoursInPeriod < 20) {
+          trendInsight = `💡 Great effort! You've logged ${totalHoursInPeriod}h this month. Keep up the momentum!`;
+        } else {
+          trendInsight = `💡 Excellent! You've exceeded expectations with ${totalHoursInPeriod}h logged this month. Outstanding commitment!`;
+        }
+        break;
+        
+      case 'quarter':
+        if (avgSecondHalf > avgFirstHalf * 1.1) {
+          trendInsight = `📈 Your engagement is accelerating this quarter! Average hours increased from ${avgFirstHalf.toFixed(1)}h to ${avgSecondHalf.toFixed(1)}h per month.`;
+        } else if (avgSecondHalf < avgFirstHalf * 0.9) {
+          trendInsight = `📉 Your engagement is declining this quarter. Consider planning ahead to maintain consistent contribution levels.`;
+        } else {
+          trendInsight = `➡️ Your engagement remains steady this quarter with ${avgHours}h average per month.`;
+        }
+        break;
+        
+      case 'year':
+        if (totalHoursInPeriod < 50) {
+          trendInsight = `💡 You've contributed ${totalHoursInPeriod}h this year. Aim for more active participation to expand your impact.`;
+        } else if (totalHoursInPeriod < 100) {
+          trendInsight = `👍 Good year so far! You've logged ${totalHoursInPeriod}h in 2025. Keep building on this progress.`;
+        } else if (totalHoursInPeriod < 200) {
+          trendInsight = `⭐ Impressive! You've contributed ${totalHoursInPeriod}h this year. Your consistent effort is making a real difference.`;
+        } else {
+          trendInsight = `🌟 Outstanding contribution! You've logged ${totalHoursInPeriod}h in 2025. You're a key pillar of impact!`;
+        }
+        break;
+        
+      case 'all':
+      default:
+        const totalAllTime = monthlyHours.reduce((sum, m) => sum + m.hours, 0);
+        const monthsActive = monthlyHours.filter(m => m.hours > 0).length;
+        if (monthsActive > 0) {
+          trendInsight = `✨ Your impact journey: ${totalAllTime}h across ${monthsActive} active months. Average ${(totalAllTime / monthsActive).toFixed(1)}h per active month.`;
+        } else {
+          trendInsight = "Start your volunteer journey by logging your first hours!";
+        }
+        break;
+    }
+    
+    return trendInsight;
+  };
+
   // Update filtered KPIs
   const filteredTotalHours = filteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   
@@ -783,13 +848,16 @@ export default function ImpactReport(props: ImpactReportProps) {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                         Monthly Hours Trend
                       </h3>
-                      {bestMonth && (
-                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-2 mb-3 text-xs">
+                      <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-2 mb-3 text-xs space-y-1.5">
+                        {bestMonth && (
                           <p className="text-gray-700 dark:text-gray-300">
                             <strong>Peak Performance:</strong> {bestMonth.month} with {bestMonth.hours}h logged
                           </p>
-                        </div>
-                      )}
+                        )}
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {generateTrendInsight()}
+                        </p>
+                      </div>
                       <Line
                         ref={(ref) => chartRefs.current['monthlyHours'] = ref}
                         data={{
@@ -1281,13 +1349,16 @@ export default function ImpactReport(props: ImpactReportProps) {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                         Monthly Hours Trend
                       </h3>
-                      {bestMonth && (
-                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-2 mb-3 text-xs">
+                      <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded p-2 mb-3 text-xs space-y-1.5">
+                        {bestMonth && (
                           <p className="text-gray-700 dark:text-gray-300">
                             <strong>Peak Performance:</strong> {bestMonth.month} with {bestMonth.hours}h logged
                           </p>
-                        </div>
-                      )}
+                        )}
+                        <p className="text-gray-700 dark:text-gray-300">
+                          {generateTrendInsight()}
+                        </p>
+                      </div>
                       <Line
                         data={{
                           labels: monthlyHours.map(d => d.month),

@@ -73,14 +73,7 @@ export default function OrganizationProfileSettings() {
     queryKey: ["/api/matchable-organizations"],
   });
 
-  // Show loading while user data is loading
-  if (userLoading || loadingProfile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const [logoUrl, setLogoUrl] = useState("");
 
   // Find the organization profile for current user (match by email)
   const existingProfile = organizations?.find(o => o.email === currentUser?.email);
@@ -92,14 +85,21 @@ export default function OrganizationProfileSettings() {
     }
   }, [existingProfile]);
 
-  const [logoUrl, setLogoUrl] = useState("");
-
   // Update logo when existing profile loads
   useEffect(() => {
     if (existingProfile?.logo) {
       setLogoUrl(existingProfile.logo);
     }
   }, [existingProfile]);
+
+  // Show loading while user data is loading
+  if (userLoading || loadingProfile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),

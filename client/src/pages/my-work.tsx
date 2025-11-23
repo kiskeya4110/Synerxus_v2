@@ -135,6 +135,25 @@ export default function MyWork() {
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
   });
 
+  // Fetch AI-matched opportunities for personalized recommendations
+  const { data: matchedOpportunities = [] } = useQuery<any[]>({
+    queryKey: ["/api/opportunities/matches", volunteerId],
+    queryFn: async () => {
+      if (!volunteerId || currentUser?.userType !== 'volunteer') return [];
+      try {
+        const response = await fetch(`/api/opportunities/matches?userId=${volunteerId}&threshold=50`);
+        if (!response.ok) return [];
+        const opportunities = await response.json();
+        // Return top 4 matched opportunities for display
+        return Array.isArray(opportunities) ? opportunities.slice(0, 4) : [];
+      } catch (error) {
+        console.error("Failed to fetch matched opportunities:", error);
+        return [];
+      }
+    },
+    enabled: !!volunteerId && currentUser?.userType === 'volunteer'
+  });
+
   // Calculate KPIs
   const tasksByStatus = {
     todo: tasks.filter(t => t.status?.toLowerCase() === "todo" || t.status?.toLowerCase() === "pending"),
@@ -206,76 +225,61 @@ export default function MyWork() {
     window.history.replaceState(null, '', `#${value}`);
   };
 
-  // Generate personalized recommendations based on past engagement
+  // Generate personalized recommendations from AI-matched opportunities
   const generateRecommendations = () => {
-    const recommendations = [];
-    
-    // Check if volunteer has capacity this week
-    if (weeklyHoursRemaining > 5) {
-      // Skill-based recommendation
-      const topSkill = volunteerProfile?.skills?.[0];
-      if (topSkill) {
-        recommendations.push({
-          id: 1,
-          title: `Expand Your ${topSkill} Impact`,
-          description: `Projects seeking your ${topSkill} expertise - perfect for your current availability`,
-          matchScore: 95,
-          reason: "Based on your proven skills",
-          skills: [topSkill],
-          icon: "⭐"
-        });
-      }
-
-      // High-engagement recommendation
-      if (completedTaskCount > 3) {
-        recommendations.push({
-          id: 2,
-          title: "High-Impact Leadership Role",
-          description: "Based on your 100% task completion rate, consider mentoring or leading a team",
-          matchScore: 88,
-          reason: "Your strong track record",
-          skills: ["Leadership", "Mentoring"],
-          icon: "🚀"
-        });
-      }
-
-      // SDG alignment recommendation
-      const preferredSdgs = volunteerProfile?.preferredSdgs?.slice(0, 2) || [];
-      if (preferredSdgs.length > 0) {
-        const sdgNames = {
-          1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
-          5: "Gender Equality", 6: "Clean Water", 7: "Clean Energy", 8: "Decent Work",
-          9: "Industry & Innovation", 10: "Reduced Inequalities", 11: "Sustainable Cities",
-          12: "Responsible Consumption", 13: "Climate Action", 14: "Life Below Water",
-          15: "Life on Land", 16: "Peace & Justice", 17: "Partnerships"
-        } as Record<number, string>;
-
-        recommendations.push({
-          id: 3,
-          title: `Drive ${sdgNames[preferredSdgs[0]] || "SDG Impact"}`,
-          description: `Opportunities aligned with SDG ${preferredSdgs[0]} that match your passion`,
-          matchScore: 92,
-          reason: "Aligns with your values",
-          skills: ["Social Impact", "Sustainability"],
-          icon: "🌍"
-        });
-      }
-
-      // Availability-based recommendation
-      if (weeklyHoursRemaining > 10) {
-        recommendations.push({
-          id: 4,
-          title: "Intensive Project Opportunity",
-          description: `You have ${weeklyHoursRemaining.toFixed(0)}+ hours available this week - ready for a larger commitment`,
-          matchScore: 85,
-          reason: `${weeklyHoursRemaining.toFixed(0)} hours available this week`,
-          skills: ["Project Management"],
-          icon: "💡"
-        });
-      }
+    // Use real matched opportunities from AI algorithm
+    if (!matchedOpportunities || matchedOpportunities.length === 0) {
+      return [];
     }
 
-    return recommendations;
+    return matchedOpportunities.map((opportunity: any, index: number) => {
+      // Extract match score (handle different API response formats)
+      const matchScore = Math.round(opportunity.matchScore || opportunity.match_score || 0);
+      
+      // Extract key details about why this is a good match
+      const reasons = opportunity.reasons || opportunity.matchReasons || [];
+      const primaryReason = typeof reasons === 'string' 
+        ? reasons 
+        : Array.isArray(reasons) && reasons.length > 0
+        ? reasons[0]
+        : "AI matched for your profile";
+
+      // Extract skills from the opportunity
+      const skills = opportunity.requiredSkills 
+        ? opportunity.requiredSkills.split(',').slice(0, 2).map((s: string) => s.trim())
+        : opportunity.skills
+        ? opportunity.skills.slice(0, 2)
+        : [];
+
+      // Select icon based on match score
+      let icon = "⭐";
+      if (matchScore >= 90) {
+        icon = "🌟";
+      } else if (matchScore >= 75) {
+        icon = "⭐";
+      } else if (matchScore >= 60) {
+        icon = "✨";
+      } else {
+        icon = "👍";
+      }
+
+      // Generate description that emphasizes why this is a good fit
+      const description = opportunity.description 
+        ? opportunity.description.substring(0, 100) + (opportunity.description.length > 100 ? "..." : "")
+        : `This opportunity aligns well with your profile and current availability`;
+
+      return {
+        id: opportunity.id || index,
+        title: opportunity.title || opportunity.name || "New Opportunity",
+        description: description,
+        matchScore: matchScore,
+        reason: primaryReason,
+        skills: skills,
+        icon: icon,
+        opportunityId: opportunity.id,
+        organizationName: opportunity.organizationName || opportunity.organization?.name || "Organization"
+      };
+    });
   };
 
   const personalizedRecommendations = generateRecommendations();
@@ -483,6 +487,7 @@ export default function MyWork() {
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb className="h-5 w-5 text-yellow-500" />
             <h2 className="text-lg font-semibold">Personalized Opportunities for You</h2>
+            <p className="text-xs text-gray-500 ml-auto">AI-matched based on your profile</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {personalizedRecommendations.map((rec: any) => (
@@ -495,9 +500,12 @@ export default function MyWork() {
                       {rec.matchScore}%
                     </Badge>
                   </div>
-                  <h3 className="font-semibold text-sm mb-2 group-hover:text-blue-600 transition-colors">
+                  <h3 className="font-semibold text-sm mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
                     {rec.title}
                   </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 font-medium">
+                    {rec.organizationName}
+                  </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
                     {rec.description}
                   </p>
@@ -505,17 +513,21 @@ export default function MyWork() {
                     <p className="text-xs text-gray-500 dark:text-gray-400 italic">
                       {rec.reason}
                     </p>
-                    <div className="flex flex-wrap gap-1">
-                      {rec.skills.map((skill: string) => (
-                        <Badge key={skill} variant="outline" className="text-xs py-0">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
+                    {rec.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {rec.skills.map((skill: string) => (
+                          <Badge key={skill} variant="outline" className="text-xs py-0">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <Button variant="ghost" size="sm" className="w-full text-blue-600 dark:text-blue-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-950">
-                    Explore <ArrowRight className="h-3 w-3 ml-1" />
-                  </Button>
+                  <Link href={`/discover-opportunities?opportunity=${rec.opportunityId}`}>
+                    <Button variant="ghost" size="sm" className="w-full text-blue-600 dark:text-blue-400 group-hover:bg-blue-50 dark:group-hover:bg-blue-950">
+                      Explore <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}

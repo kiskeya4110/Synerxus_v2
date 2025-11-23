@@ -502,6 +502,20 @@ export default function OrganizationImpactReport(props: any) {
             <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
               <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
                 <Logo size="sm" className="print:scale-75" />
+                {organization?.logo && (
+                  <div className="flex items-center">
+                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6">
+                      <img
+                        src={organization.logo}
+                        alt={organization.name}
+                        className="h-12 w-auto object-contain print:h-8"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 print:text-2xl">
@@ -511,6 +525,12 @@ export default function OrganizationImpactReport(props: any) {
               <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
                 Global Impact Report
               </h1>
+
+              {organization?.description && (
+                <p className="text-sm text-gray-700 dark:text-gray-400 mb-4 italic max-w-2xl mx-auto">
+                  {organization.description}
+                </p>
+              )}
 
               <div className="inline-block">
                 <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
@@ -555,27 +575,89 @@ export default function OrganizationImpactReport(props: any) {
                 {/* Overview buttons in 1 row x 5 columns of equal size */}
                 <div className="grid grid-cols-5 gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalTeam}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activeVolunteers} volunteers + {projectManagers} managers</p>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Team Members</p>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{totalTeam}</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Volunteers:</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{activeVolunteers}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Managers:</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{projectManagers}</span>
+                      </div>
+                      {activeVolunteers > 0 && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Avg/Vol:</span>
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{(totalHours / activeVolunteers).toFixed(1)}h</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Hours Logged</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalHours}h</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Real data from {filteredActivities.length} activities</p>
+                    <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">Total Hours Logged</p>
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">{Math.round(totalHours)}h</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Activities:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{filteredActivities.length}</span>
+                      </div>
+                      {filteredActivities.length > 0 && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Avg/Activity:</span>
+                          <span className="font-bold text-green-600 dark:text-green-400">{(totalHours / filteredActivities.length).toFixed(1)}h</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Peak:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{timeFilter === 'all' ? 'All Time' : timeFilter === 'month' ? 'This Mo.' : 'Period'}</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Projects Managed</p>
-                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalProjects}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Active projects</p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-2">Projects Managed</p>
+                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">{totalProjects}</p>
+                    <div className="space-y-1.5">
+                      {projects.length > 0 && (
+                        <>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Active:</span>
+                            <span className="font-bold text-purple-600 dark:text-purple-400">{projects.filter(p => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress').length}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Completed:</span>
+                            <span className="font-bold text-purple-600 dark:text-purple-400">{projects.filter(p => p.status?.toLowerCase() === 'completed').length}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Avg %:</span>
+                            <span className="font-bold text-purple-600 dark:text-purple-400">{projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.completionPercentage || 0), 0) / projects.length) : 0}%</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Avg Hours per Vol</p>
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{activeVolunteers > 0 ? (totalHours / activeVolunteers).toFixed(1) : 0}h</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
+                    <p className="text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-2">Avg Hours per Vol</p>
+                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">{activeVolunteers > 0 ? (totalHours / activeVolunteers).toFixed(1) : 0}h</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Total Vol:</span>
+                        <span className="font-bold text-orange-600 dark:text-orange-400">{activeVolunteers}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Total Hours:</span>
+                        <span className="font-bold text-orange-600 dark:text-orange-400">{Math.round(totalHours)}</span>
+                      </div>
+                      {activeVolunteers > 0 && leaderData && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Top Vol:</span>
+                          <span className="font-bold text-orange-600 dark:text-orange-400">{Math.round(leaderData.hours)}h</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {leaderData && (

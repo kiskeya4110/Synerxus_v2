@@ -816,11 +816,11 @@ export default function ImpactReport(props: any) {
 
               {/* Engagement Tab */}
               <TabsContent value="engagement" className="space-y-6">
-                <div className="space-y-6" data-print-engagement="true">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Skills Assessment */}
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
+                <div data-print-engagement="true" className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Skills Assessment */}
+                    <Card className="border border-gray-200 dark:border-gray-700">
+                      <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         Skills Assessment
                       </h3>
@@ -847,16 +847,16 @@ export default function ImpactReport(props: any) {
                       ) : (
                         <p className="text-gray-500 dark:text-gray-400">No skills data available</p>
                       )}
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
 
-                  {/* Engagement Metrics */}
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        Engagement Metrics
-                      </h3>
-                      <div className="space-y-4">
+                    {/* Engagement Metrics */}
+                    <Card className="border border-gray-200 dark:border-gray-700">
+                      <CardContent className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          Engagement Metrics
+                        </h3>
+                        <div className="space-y-4">
                         <div>
                           <div className="flex justify-between mb-2">
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -893,47 +893,47 @@ export default function ImpactReport(props: any) {
                           <Progress value={Math.min((allSkills.length / 10) * 100, 100)} />
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      </CardContent>
+                    </Card>
+                  </div>
 
-                {/* Skills Section */}
-                {allSkills.length > 0 && (
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        Applied Skills
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {allSkills.map((skill: string) => (
-                          <Badge key={skill} variant="secondary">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                  {/* Skills Section */}
+                  {allSkills.length > 0 && (
+                    <Card className="border border-gray-200 dark:border-gray-700">
+                      <CardContent className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          Applied Skills
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {allSkills.map((skill: string) => (
+                            <Badge key={skill} variant="secondary">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               </TabsContent>
 
               {/* Impact Tab */}
               <TabsContent value="impact" className="space-y-6">
-                <div className="space-y-6" data-print-impact="true">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">
-                        Economic Value
-                      </h3>
-                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
-                        ${(filteredTotalHours * 25).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        @ $25/hour average
-                      </p>
-                    </CardContent>
-                  </Card>
+                <div data-print-impact="true" className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="border border-gray-200 dark:border-gray-700">
+                      <CardContent className="p-4">
+                        <h3 className="text-sm font-semibold text-gray-600 dark:text-gray-400 uppercase">
+                          Economic Value
+                        </h3>
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
+                          ${(filteredTotalHours * 25).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          @ $25/hour average
+                        </p>
+                      </CardContent>
+                    </Card>
 
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
@@ -1003,8 +1003,8 @@ export default function ImpactReport(props: any) {
 
               {/* Analytics Tab */}
               <TabsContent value="analytics" className="space-y-6">
-                <div className="space-y-6" data-print-analytics="true">
-                {/* KPI Tracking Table */}
+                <div data-print-analytics="true" className="space-y-6">
+                  {/* KPI Tracking Table */}
                 <Card className="border border-gray-200 dark:border-gray-700">
                   <CardContent className="p-4">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">

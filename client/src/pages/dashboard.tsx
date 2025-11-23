@@ -187,42 +187,69 @@ export default function Dashboard() {
     });
   }, [dashboardData?.monthlyImpactData, timeFilter]);
 
-  // Generate narrative for impact chart
+  // Generate narrative for impact chart - LIVE and INTERACTIVE with time filter
   const impactNarrative = useMemo(() => {
-    if (filteredMonthlyImpactData.length === 0) return "";
+    if (!filteredMonthlyImpactData || filteredMonthlyImpactData.length === 0) return "";
     
     const data = filteredMonthlyImpactData;
     const totalHours = data.reduce((sum: number, d: any) => sum + (d.hours || 0), 0);
     const totalPeopleImpacted = data.reduce((sum: number, d: any) => sum + (d.peopleImpacted || 0), 0);
+    
+    if (totalHours === 0 && totalPeopleImpacted === 0) return "";
+    
     const avgHours = Math.round(totalHours / data.length);
     const avgPeople = Math.round(totalPeopleImpacted / data.length);
     
     // Find peak and lowest months
-    const peakMonth = data.reduce((max: any, d: any) => (d.hours > max.hours ? d : max), data[0]);
-    const lowestMonth = data.reduce((min: any, d: any) => (d.hours < min.hours ? d : min), data[0]);
+    let peakMonth = data[0];
+    let lowestMonth = data[0];
+    for (const d of data) {
+      if ((d.hours || 0) > (peakMonth.hours || 0)) peakMonth = d;
+      if ((d.hours || 0) < (lowestMonth.hours || 0)) lowestMonth = d;
+    }
     
     // Calculate consistency (standard deviation concept)
     const variance = data.reduce((sum: number, d: any) => sum + Math.pow((d.hours || 0) - avgHours, 2), 0) / data.length;
     const stdDev = Math.round(Math.sqrt(variance));
     const consistency = stdDev <= avgHours * 0.3 ? "highly consistent" : stdDev <= avgHours * 0.6 ? "moderately consistent" : "variable";
     
-    // Determine trend
-    const firstThird = data.slice(0, Math.ceil(data.length / 3));
-    const lastThird = data.slice(Math.floor(data.length * 2 / 3));
-    const avgFirstThird = Math.round(firstThird.reduce((sum: number, d: any) => sum + (d.hours || 0), 0) / firstThird.length);
-    const avgLastThird = Math.round(lastThird.reduce((sum: number, d: any) => sum + (d.hours || 0), 0) / lastThird.length);
-    const trend = avgLastThird > avgFirstThird ? "increasing" : avgLastThird < avgFirstThird ? "decreasing" : "stable";
+    // Determine trend - only if enough data points
+    let trend = "stable";
+    if (data.length >= 2) {
+      const midPoint = Math.floor(data.length / 2);
+      const firstHalf = data.slice(0, midPoint);
+      const secondHalf = data.slice(midPoint);
+      const avgFirstHalf = firstHalf.reduce((sum: number, d: any) => sum + (d.hours || 0), 0) / firstHalf.length;
+      const avgSecondHalf = secondHalf.reduce((sum: number, d: any) => sum + (d.hours || 0), 0) / secondHalf.length;
+      trend = avgSecondHalf > avgFirstHalf * 1.1 ? "increasing" : avgSecondHalf < avgFirstHalf * 0.9 ? "decreasing" : "stable";
+    }
     
     // Calculate efficiency (people per hour impact)
     const avgPeoplePerHour = totalHours > 0 ? Math.round((totalPeopleImpacted / totalHours) * 10) / 10 : 0;
     
-    let narrative = `Monthly hours trend analysis: You've logged ${totalHours} total hours across ${data.length} months with an average of ${avgHours} hours per month. `;
-    narrative += `Your hours contribution is ${consistency}, ranging from ${lowestMonth.hours}h to ${peakMonth.hours}h. `;
-    narrative += `The ${trend} trend demonstrates ${trend === 'increasing' ? 'accelerating engagement and growing commitment' : trend === 'decreasing' ? 'declining participation that could benefit from renewed focus' : 'reliable and stable participation'}. `;
-    narrative += `Efficiency: You're impacting an average of ${avgPeoplePerHour} people per hour, demonstrating strong impact effectiveness.`;
+    // Generate time period label
+    let timePeriod = "the selected period";
+    if (timeFilter === "month") timePeriod = "this month";
+    else if (timeFilter === "quarter") timePeriod = "this quarter";
+    else if (timeFilter === "year") timePeriod = "this year";
+    else if (timeFilter === "all") timePeriod = "all time";
+    
+    // Generate narrative based on user type
+    let narrative = "";
+    if (dashboardType === "volunteer") {
+      narrative = `Impact Summary for ${timePeriod}: You've logged ${totalHours} total hours across ${data.length} month${data.length !== 1 ? 's' : ''} with an average of ${avgHours} hours per month. `;
+      narrative += `Your contribution is ${consistency}, ranging from ${lowestMonth.hours}h to ${peakMonth.hours}h. `;
+      narrative += `You've impacted ${totalPeopleImpacted} people total (avg ${avgPeoplePerHour} people/hour). `;
+      narrative += `${trend === 'increasing' ? '📈 Your engagement is accelerating!' : trend === 'decreasing' ? '📉 Consider renewing your commitment' : '➡️ Your participation is steady and reliable'}.`;
+    } else {
+      narrative = `Impact Summary for ${timePeriod}: Your organization has logged ${totalHours} volunteer hours across ${data.length} month${data.length !== 1 ? 's' : ''} with an average of ${avgHours} hours per month. `;
+      narrative += `Peak activity reached ${peakMonth.hours}h, demonstrating ${consistency} volunteer engagement. `;
+      narrative += `Total people impacted: ${totalPeopleImpacted} (avg ${avgPeoplePerHour} per hour). `;
+      narrative += `${trend === 'increasing' ? '📈 Momentum is strong - volunteer base growing!' : trend === 'decreasing' ? '📉 Consider recruitment initiatives' : '➡️ Steady and stable impact generation'}.`;
+    }
     
     return narrative;
-  }, [filteredMonthlyImpactData]);
+  }, [filteredMonthlyImpactData, timeFilter, dashboardType]);
 
   // Use KPIs from backend - API returns summary data at top level
   const kpis = useMemo(() => {

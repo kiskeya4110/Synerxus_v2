@@ -170,8 +170,20 @@ export default function ImpactReport(props: any) {
     }
   });
 
-  const primaryOrganization = organizations.length > 0 
-    ? organizations.find((org: any) => projectAssignments.some((pa: any) => pa.project?.organizationId === org.id))
+  // Get all unique organizations the volunteer has worked with
+  const volunteerOrganizations = Array.from(
+    new Set(
+      projectAssignments
+        .map((pa: any) => pa.project?.organizationId)
+        .filter((id: any) => id != null)
+    )
+  ).map((orgId: number) => 
+    organizations.find((org: any) => org.id === orgId)
+  ).filter((org: any) => org != null);
+  
+  // Use primary organization (first one) for logo display
+  const primaryOrganization = volunteerOrganizations.length > 0 
+    ? volunteerOrganizations[0]
     : null;
 
   // Calculate impact metrics
@@ -550,10 +562,23 @@ export default function ImpactReport(props: any) {
                 Global Impact Report
               </h1>
 
-              {primaryOrganization && (
-                <p className="text-sm text-gray-700 dark:text-gray-400 mb-4 italic">
-                  {primaryOrganization.name}
-                </p>
+              {volunteerOrganizations.length > 0 && (
+                <div className="text-sm text-gray-700 dark:text-gray-400 mb-4 italic">
+                  {volunteerOrganizations.length === 1 ? (
+                    <p>{volunteerOrganizations[0].name}</p>
+                  ) : (
+                    <div>
+                      <p className="mb-2">Organizations:</p>
+                      <div className="flex flex-wrap gap-2 justify-center">
+                        {volunteerOrganizations.map((org: any) => (
+                          <Badge key={org.id} variant="secondary" className="text-xs">
+                            {org.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
 
               <div className="inline-block">

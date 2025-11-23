@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -775,6 +776,7 @@ const SDGGoalsSection = ({ form }: { form: any }) => {
 
 export default function VolunteerProfileSettings() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50);
   const [interestInput, setInterestInput] = useState("");
@@ -787,10 +789,18 @@ export default function VolunteerProfileSettings() {
     id: number;
     email: string;
     displayName?: string;
+    userType?: string;
   }>({
     queryKey: ["/api/users/me"],
     staleTime: 0, // Always fetch fresh - never cache user data
   });
+
+  // Redirect organization managers to organization profile settings
+  useEffect(() => {
+    if (currentUser?.userType === "organization") {
+      setLocation("/organization-profile-settings");
+    }
+  }, [currentUser?.userType, setLocation]);
 
   // Fetch volunteer profile using intake API which includes all availability fields
   const profileQuery = useQuery<any>({

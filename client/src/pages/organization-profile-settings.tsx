@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -51,6 +52,7 @@ type FormData = z.infer<typeof formSchema>;
 
 export default function OrganizationProfileSettings() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [needInput, setNeedInput] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   
@@ -58,6 +60,13 @@ export default function OrganizationProfileSettings() {
   const { data: currentUser } = useQuery<any>({
     queryKey: ["/api/users/me"],
   });
+
+  // Redirect volunteers to volunteer profile settings
+  useEffect(() => {
+    if (currentUser?.userType === "volunteer") {
+      setLocation("/volunteer-profile-settings");
+    }
+  }, [currentUser?.userType, setLocation]);
 
   // Fetch existing organization profile by filtering all organizations
   const { data: organizations, isLoading: loadingProfile } = useQuery<MatchableOrganization[]>({

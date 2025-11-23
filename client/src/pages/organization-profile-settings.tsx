@@ -92,15 +92,6 @@ export default function OrganizationProfileSettings() {
     }
   }, [existingProfile]);
 
-  // Show loading while user data is loading
-  if (userLoading || loadingProfile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -212,6 +203,15 @@ export default function OrganizationProfileSettings() {
       });
     },
   });
+
+  // Show loading while user data is loading
+  if (userLoading || loadingProfile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   const onSubmit = (data: FormData) => {
     if (!currentUser?.id) {

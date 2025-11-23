@@ -899,7 +899,7 @@ export default function ImpactReport(props: any) {
                         Economic Value
                       </h3>
                       <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">
-                        ${(totalHours * 25).toLocaleString()}
+                        ${(filteredTotalHours * 25).toLocaleString()}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         @ $25/hour average
@@ -913,7 +913,7 @@ export default function ImpactReport(props: any) {
                         Environmental Impact
                       </h3>
                       <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">
-                        {Math.round(totalHours * 0.5)} kg
+                        {Math.round(filteredTotalHours * 0.5)} kg
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         CO₂ offset (est.)
@@ -1003,9 +1003,9 @@ export default function ImpactReport(props: any) {
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                           {[
-                            { kpi: 'Monthly Hours', target: 20, actual: Math.min(totalHours, 20) },
-                            { kpi: 'Tasks Completed', target: 10, actual: Math.min(completedTasks, 10) },
-                            { kpi: 'Active Projects', target: 3, actual: Math.min(activeProjects, 3) },
+                            { kpi: 'Monthly Hours', target: 20, actual: Math.min(filteredTotalHours, 20) },
+                            { kpi: 'Tasks Completed', target: 10, actual: Math.min(filteredCompletedTasks, 10) },
+                            { kpi: 'Active Projects', target: 3, actual: Math.min(filteredActiveProjects, 3) },
                             { kpi: 'Skills Developed', target: 5, actual: Math.min(allSkills.length, 5) },
                           ].map((row) => {
                             const achieved = Math.round((row.actual / row.target) * 100);
@@ -1034,15 +1034,15 @@ export default function ImpactReport(props: any) {
                       Strategic Recommendations
                     </h3>
                     <ul className="space-y-3">
-                      {totalHours < 20 && (
+                      {filteredTotalHours < 20 && (
                         <li className="flex gap-3">
                           <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
                           <span className="text-gray-700 dark:text-gray-300">
-                            Increase volunteer hours by focusing on {activeProjects > 0 ? 'your most impactful projects' : 'available opportunities'}
+                            Increase volunteer hours by focusing on {filteredActiveProjects > 0 ? 'your most impactful projects' : 'available opportunities'}
                           </span>
                         </li>
                       )}
-                      {totalTasks > 0 && (completedTasks / totalTasks) < 0.8 && (
+                      {totalTasks > 0 && (filteredCompletedTasks / totalTasks) < 0.8 && (
                         <li className="flex gap-3">
                           <span className="text-blue-600 dark:text-blue-400 font-bold">→</span>
                           <span className="text-gray-700 dark:text-gray-300">
@@ -1066,7 +1066,7 @@ export default function ImpactReport(props: any) {
                           </span>
                         </li>
                       )}
-                      {completedTasks > 5 && (
+                      {filteredCompletedTasks > 5 && (
                         <li className="flex gap-3">
                           <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
                           <span className="text-gray-700 dark:text-gray-300">

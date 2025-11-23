@@ -622,7 +622,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-64" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -684,8 +684,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* KPI Cards - 1x4 Grid Layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      {/* KPI Cards - 2x2 Mobile Grid, 1x4 Desktop Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard

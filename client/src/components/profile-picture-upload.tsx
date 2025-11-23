@@ -10,13 +10,17 @@ interface ProfilePictureUploadProps {
   onPhotoChange: (url: string) => void;
   userId: string;
   userType: 'volunteer' | 'organization';
+  type?: 'avatar' | 'logo';
+  label?: string;
 }
 
 export function ProfilePictureUpload({
   currentPhotoUrl,
   onPhotoChange,
   userId,
-  userType
+  userType,
+  type = 'avatar',
+  label
 }: ProfilePictureUploadProps) {
   const [photoUrl, setPhotoUrl] = useState<string>(currentPhotoUrl || "");
   const [isUploading, setIsUploading] = useState(false);
@@ -109,12 +113,24 @@ export function ProfilePictureUpload({
 
   return (
     <div className="flex flex-col items-center space-y-4">
-      <Avatar className="h-32 w-32">
-        <AvatarImage src={photoUrl} alt="Profile picture" />
-        <AvatarFallback className="text-2xl">
-          <User className="h-12 w-12" />
-        </AvatarFallback>
-      </Avatar>
+      {type === 'avatar' ? (
+        <Avatar className="h-32 w-32">
+          <AvatarImage src={photoUrl} alt={label || "Profile picture"} />
+          <AvatarFallback className="text-2xl">
+            <User className="h-12 w-12" />
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <div className="flex items-center justify-center h-32 w-32 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900">
+          {photoUrl ? (
+            <img src={photoUrl} alt={label || "Logo"} className="h-32 w-32 object-contain p-2" />
+          ) : (
+            <div className="text-center text-gray-400 dark:text-gray-500">
+              <p className="text-xs font-medium">Logo Preview</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-2">
         <input

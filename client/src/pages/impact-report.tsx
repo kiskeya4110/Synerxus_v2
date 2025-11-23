@@ -127,6 +127,7 @@ export default function ImpactReport(props: ImpactReportProps) {
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
   const [logoError, setLogoError] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [printPageMode, setPrintPageMode] = useState<"all" | "selected">("all");
   const [selectedPrintPages, setSelectedPrintPages] = useState({
@@ -673,6 +674,20 @@ export default function ImpactReport(props: ImpactReportProps) {
               <div className="md:col-span-2">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-6 mb-4 md:mb-0 print:gap-4 print:mb-3">
                   <Logo size="sm" className="print:scale-75" />
+                  {currentUser?.avatar && !avatarError && (
+                    <div className="flex items-center">
+                      <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">
+                        <img
+                          src={currentUser.avatar}
+                          alt={currentUser.displayName}
+                          className="h-12 w-12 rounded-full object-cover print:h-8 print:w-8"
+                          onError={() => {
+                            setAvatarError(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                   {primaryOrganization?.logo && !logoError && (
                     <div className="flex items-center">
                       <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">

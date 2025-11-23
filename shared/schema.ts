@@ -429,6 +429,7 @@ export const matchableOrganizations = pgTable("matchable_organizations", {
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   profilePhotoUrl: text("profile_photo_url"),
+  logo: text("logo"),
   mission: text("mission").notNull(),
   needs: text("needs").array().notNull(),
   sdgFocus: integer("sdg_focus").array().notNull(),

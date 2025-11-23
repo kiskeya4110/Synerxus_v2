@@ -83,6 +83,15 @@ export default function OrganizationProfileSettings() {
     }
   }, [existingProfile]);
 
+  const [logoUrl, setLogoUrl] = useState("");
+
+  // Update logo when existing profile loads
+  useEffect(() => {
+    if (existingProfile?.logo) {
+      setLogoUrl(existingProfile.logo);
+    }
+  }, [existingProfile]);
+
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -126,6 +135,7 @@ export default function OrganizationProfileSettings() {
           apiRequest("POST", "/api/matchable-organizations", {
             ...data,
             profilePhotoUrl,
+            logo: logoUrl,
           }),
           timeoutPromise
         ]) as any;
@@ -167,6 +177,7 @@ export default function OrganizationProfileSettings() {
           apiRequest("PATCH", `/api/matchable-organizations/${existingProfile.id}`, {
             ...data,
             profilePhotoUrl,
+            logo: logoUrl,
           }),
           timeoutPromise
         ]) as any;
@@ -290,6 +301,19 @@ export default function OrganizationProfileSettings() {
                   </FormItem>
                 )}
               />
+
+              {/* Organization Logo */}
+              <div className="mb-6">
+                <Label className="mb-3 block">Organization Logo</Label>
+                <ProfilePictureUpload
+                  currentPhotoUrl={logoUrl}
+                  onPhotoChange={setLogoUrl}
+                  userId={currentUser?.id || ''}
+                  userType="organization"
+                  type="logo"
+                  label="Organization Logo"
+                />
+              </div>
 
               {/* Organization Name */}
               <FormField

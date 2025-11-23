@@ -175,7 +175,7 @@ export default function OrganizationIntake() {
         `/api/intake/organization-profile?organizationId=${userId}`,
         {
           ...data,
-          profilePhotoUrl,
+          logo: profilePhotoUrl,
           onboardingCompleted: !existingProfile, // Mark as completed on first submission only
         }
       );

@@ -46,6 +46,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -147,11 +148,12 @@ type FormData = z.infer<typeof formSchema>;
 type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
 type SkillProficiency = z.infer<typeof skillProficiencySchema>;
 
-export default function VolunteerProfileSettings() {
+export default function VolunteerIntake() {
   const { toast } = useToast();
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50); // Default 50%
   const [interestInput, setInterestInput] = useState("");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
 
   // Fetch current user to get email
   const userId = localStorage.getItem("currentUserId");
@@ -208,6 +210,13 @@ export default function VolunteerProfileSettings() {
     }
   }, [currentUser, existingProfile, form]);
 
+  // Load existing photo URL
+  useEffect(() => {
+    if (existingProfile?.profilePhotoUrl) {
+      setProfilePhotoUrl(existingProfile.profilePhotoUrl);
+    }
+  }, [existingProfile]);
+
   // Profile mutation (create or update)
   const profileMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -226,6 +235,7 @@ export default function VolunteerProfileSettings() {
         preferredCommitment: data.preferredCommitment,
         preferredWorkStyle: "", // Will be set through settings page
         skillProficiency: data.skills, // Send full proficiency objects for matching algorithm
+        profilePhotoUrl, // Include profile photo URL
         onboardingCompleted: !existingProfile, // Mark as completed on first submission only
       };
       
@@ -410,6 +420,18 @@ export default function VolunteerProfileSettings() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Profile Photo */}
+              {currentUser?.id && (
+                <div className="mb-6">
+                  <ProfilePictureUpload
+                    currentPhotoUrl={profilePhotoUrl}
+                    onPhotoChange={setProfilePhotoUrl}
+                    userId={currentUser.id.toString()}
+                    userType="volunteer"
+                  />
+                </div>
+              )}
+
               {/* Email - Read-only, linked to user account */}
               <FormField
                 control={form.control}

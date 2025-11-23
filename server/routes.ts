@@ -3790,14 +3790,15 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       
       const existingProfile = await storage.getVolunteerProfileByUserId(userId);
       
-      // Ensure skillRatings, availability, and yearsOfExperience are preserved in the update
+      // Ensure skillRatings, availability, yearsOfExperience, and profilePhotoUrl are preserved in the update
       const profileData = {
         ...req.body,
         userId,
         onboardingCompleted: true,
         skillRatings: req.body.skillRatings || {}, // Explicitly preserve skillRatings
         availability: req.body.availability || [], // Explicitly preserve availability
-        yearsOfExperience: req.body.yearsOfExperience || null // Explicitly preserve yearsOfExperience
+        yearsOfExperience: req.body.yearsOfExperience || null, // Explicitly preserve yearsOfExperience
+        profilePhotoUrl: req.body.profilePhotoUrl || null // Explicitly preserve profile photo
       };
       
       console.log(`[Intake POST] Saving profile data with skillRatings:`, JSON.stringify(profileData.skillRatings));
@@ -3820,16 +3821,13 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       console.log(`[Intake POST] Verified saved availability:`, JSON.stringify(savedProfile?.availability));
       console.log(`[Intake POST] Verified saved yearsOfExperience:`, JSON.stringify(savedProfile?.yearsOfExperience));
       
-      // Update user's displayName, userType, skills, and profile photo if needed
+      // Update user's displayName, userType, and skills if needed (profile photo saved to volunteerProfiles)
       const updates: any = {};
       if (!user.userType) {
         updates.userType = 'volunteer';
       }
       if (req.body.volunteerName && req.body.volunteerName !== user.displayName) {
         updates.displayName = req.body.volunteerName;
-      }
-      if (req.body.profilePhotoUrl) {
-        updates.avatar = req.body.profilePhotoUrl;
       }
       // Update skills in users table to match volunteer_profiles (for matching algorithm)
       if (req.body.skills) {
@@ -3851,7 +3849,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         const matchableVolData = {
           email: user.email || '',
           name: volunteerName,
-          profilePhotoUrl: user.avatar || null,
+          profilePhotoUrl: profile.profilePhotoUrl || user.avatar || null,
           skills: profile.skills || [],
           interests: profile.interests || [],
           location: profile.location || profile.city || '',
@@ -3974,16 +3972,18 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         });
       }
       
-      // Update user with userType and profile photo if provided
+      // Update user with userType if needed (logo saved to organization and organizationProfile)
       const userUpdates: any = {};
       if (!user.userType) {
         userUpdates.userType = 'organization';
       }
-      if (req.body.profilePhotoUrl) {
-        userUpdates.avatar = req.body.profilePhotoUrl;
-      }
       if (Object.keys(userUpdates).length > 0) {
         await storage.updateUser(user.id, userUpdates);
+      }
+      
+      // Update organization with logo if provided
+      if (req.body.logo) {
+        await storage.updateOrganization(organizationId, { logo: req.body.logo });
       }
       
       // Create or update matchable organization for algorithm
@@ -3994,7 +3994,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         const matchableOrgData = {
           email: organization.contactEmail || '',
           name: organization.name || 'Organization',
-          profilePhotoUrl: organization.logo || null,
+          logo: req.body.logo || organization.logo || null,
           mission: profile.missionStatement || '',
           needs: profile.volunteerNeeds || [],
           sdgFocus: profile.primarySdgs || [],

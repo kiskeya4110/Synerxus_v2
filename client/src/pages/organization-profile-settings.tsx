@@ -57,7 +57,7 @@ export default function OrganizationProfileSettings() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   
   // Fetch current user to get organization info
-  const { data: currentUser } = useQuery<any>({
+  const { data: currentUser, isLoading: userLoading } = useQuery<any>({
     queryKey: ["/api/users/me"],
   });
 
@@ -72,6 +72,15 @@ export default function OrganizationProfileSettings() {
   const { data: organizations, isLoading: loadingProfile } = useQuery<MatchableOrganization[]>({
     queryKey: ["/api/matchable-organizations"],
   });
+
+  // Show loading while user data is loading
+  if (userLoading || loadingProfile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   // Find the organization profile for current user (match by email)
   const existingProfile = organizations?.find(o => o.email === currentUser?.email);
@@ -205,6 +214,14 @@ export default function OrganizationProfileSettings() {
   });
 
   const onSubmit = (data: FormData) => {
+    if (!currentUser?.id) {
+      toast({
+        title: "Error",
+        description: "User information not loaded. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (existingProfile) {
       updateMutation.mutate(data);
     } else {
@@ -235,14 +252,6 @@ export default function OrganizationProfileSettings() {
       form.setValue("sdgFocus", [...currentSDGs, sdgValue]);
     }
   };
-
-  if (loadingProfile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
@@ -303,17 +312,19 @@ export default function OrganizationProfileSettings() {
               />
 
               {/* Organization Logo */}
-              <div className="mb-6">
-                <Label className="mb-3 block">Organization Logo</Label>
-                <ProfilePictureUpload
-                  currentPhotoUrl={logoUrl}
-                  onPhotoChange={setLogoUrl}
-                  userId={currentUser?.id || ''}
-                  userType="organization"
-                  type="logo"
-                  label="Organization Logo"
-                />
-              </div>
+              {currentUser?.id && (
+                <div className="mb-6">
+                  <Label className="mb-3 block">Organization Logo</Label>
+                  <ProfilePictureUpload
+                    currentPhotoUrl={logoUrl}
+                    onPhotoChange={setLogoUrl}
+                    userId={currentUser.id.toString()}
+                    userType="organization"
+                    type="logo"
+                    label="Organization Logo"
+                  />
+                </div>
+              )}
 
               {/* Organization Name */}
               <FormField

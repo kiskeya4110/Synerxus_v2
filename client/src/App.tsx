@@ -4,7 +4,6 @@ import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import Profile from "@/pages/profile";
-import VolunteerProfileSettings from "@/pages/volunteer-profile-settings";
 import MyWork from "@/pages/my-work";
 import Tasks from "@/pages/tasks";
 import Projects from "@/pages/projects";
@@ -12,6 +11,8 @@ import ProjectDetail from "@/pages/project-detail";
 import ProjectEdit from "@/pages/project-edit";
 import VolunteerIntake from "@/pages/volunteer-intake";
 import OrganizationIntake from "@/pages/organization-intake";
+import OrganizationProfileSettings from "@/pages/organization-profile-settings";
+import VolunteerProfileSettings from "@/pages/volunteer-profile-settings";
 import Opportunities from "@/pages/opportunities";
 import OpportunityDetail from "@/pages/opportunity-detail";
 import Applications from "@/pages/applications";
@@ -51,7 +52,7 @@ function LayoutRoute() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
-      <Route path="/organization-profile-settings" component={OrganizationIntake} />
+      <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
       <Route path="/my-work" component={MyWork} />
       <Route path="/tasks" component={Tasks} />
       <Route path="/projects" component={Projects} />

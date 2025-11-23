@@ -1179,36 +1179,8 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
               </TabsContent>
             </Tabs>
             ) : (
-            // Single Page View - Comprehensive Report with ALL Tabs Content
+            // Single Page View - Stack all tab reports sequentially
             <div className="space-y-8">
-              {/* SPLIT HEADER: Title + Org Info */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:page-break-inside-avoid">
-                {/* Left: Organization Name & Mission */}
-                <div className="md:col-span-2">
-                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{organization?.name}</h1>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">{organization?.missionStatement || 'Building a sustainable future through community-driven initiatives and volunteer empowerment.'}</p>
-                </div>
-                
-                {/* Right: Organization Key Info */}
-                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/50 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700">
-                  <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-3">Organization Info</p>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Active Members</p>
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{activeVolunteers}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Total Hours</p>
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalHours}h</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">Impact Score</p>
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{organizationImpactScore}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* OVERVIEW SECTION */}
               <div className="print:page-break-inside-avoid">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 pb-2 border-b-2 border-blue-200 dark:border-blue-700">Overview</h2>

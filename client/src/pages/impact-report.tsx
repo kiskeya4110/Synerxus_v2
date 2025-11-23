@@ -597,37 +597,32 @@ export default function ImpactReport(props: any) {
               </div>
             </div>
 
-            {/* Single Page View - All Content Horizontally */}
-            <div className="space-y-6">
-              {/* Navigation Tabs (Hidden on Print) */}
-              <div className="flex gap-2 mb-6 print:hidden overflow-x-auto">
-                {[
-                  { value: "overview", label: "Overview", icon: <Target className="h-4 w-4" /> },
-                  { value: "engagement", label: "Engagement", icon: <Users className="h-4 w-4" /> },
-                  { value: "impact", label: "Impact", icon: <TrendingUp className="h-4 w-4" /> },
-                  { value: "analytics", label: "Analytics", icon: <BarChart3 className="h-4 w-4" /> }
-                ].map((tab) => (
-                  <Button
-                    key={tab.value}
-                    variant={activeTab === tab.value ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setActiveTab(tab.value)}
-                    className="flex items-center gap-2 whitespace-nowrap"
-                  >
-                    {tab.icon}
-                    <span className="hidden sm:inline">{tab.label}</span>
-                  </Button>
-                ))}
-              </div>
+            {/* Tabbed Interface */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-6 print:hidden">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <Target className="h-4 w-4" />
+                  <span className="hidden sm:inline">Overview</span>
+                </TabsTrigger>
+                <TabsTrigger value="engagement" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  <span className="hidden sm:inline">Engagement</span>
+                </TabsTrigger>
+                <TabsTrigger value="impact" className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4" />
+                  <span className="hidden sm:inline">Impact</span>
+                </TabsTrigger>
+                <TabsTrigger value="analytics" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Analytics</span>
+                </TabsTrigger>
+              </TabsList>
 
-              {/* 4-Column Horizontal Layout - All Content Visible */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 print:grid-cols-4">
-              
-              {/* Column 1: Overview Section */}
-              <div className="space-y-4" data-print-overview="true">
-                {/* Key Metrics Grid - Compact 2x2 */}
-                <div className="grid grid-cols-2 gap-2 md:gap-3">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+              {/* Overview Tab */}
+              <TabsContent value="overview" className="space-y-6">
+                {/* Enhanced KPI Buttons in 1 row x 4 columns */}
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                       Hours Logged
                     </p>

@@ -565,62 +565,71 @@ export default function ImpactReport(props: any) {
         {/* Main Impact Report Card */}
         <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black">
           <CardContent className="p-4 md:p-6 lg:p-8 print:p-4">
-            {/* Header Section - Professional Layout */}
-            <div className="text-center mb-6 md:mb-8 pb-4 md:pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
-              <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-6 mb-3 md:mb-4 print:gap-4 print:mb-3">
-                <Logo size="sm" className="print:scale-75" />
-                {primaryOrganization?.logo && !logoError && (
-                  <div className="flex items-center">
-                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">
-                      <img
-                        src={primaryOrganization.logo}
-                        alt={primaryOrganization.name}
-                        className="h-12 w-auto object-contain print:h-8"
-                        onError={() => {
-                          setLogoError(true);
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 print:text-2xl">
-                {currentUser?.displayName || currentUser?.username || 'Volunteer'}
-              </p>
-              
-              <h1 className="text-lg md:text-xl lg:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-3 md:mb-4">
-                Global Impact Report
-              </h1>
-
-              {volunteerOrganizations.length > 0 && (
-                <div className="text-sm text-gray-700 dark:text-gray-400 mb-4 italic">
-                  {volunteerOrganizations.length === 1 ? (
-                    <p>{volunteerOrganizations[0].name}</p>
-                  ) : (
-                    <div>
-                      <p className="mb-2">Organizations:</p>
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {volunteerOrganizations.map((org: any) => (
-                          <Badge key={org.id} variant="secondary" className="text-xs">
-                            {org.name}
-                          </Badge>
-                        ))}
+            {/* Header Section - Split Layout */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 md:mb-8 pb-4 md:pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3 print:gap-4">
+              {/* Left: Volunteer Info & Logo */}
+              <div className="md:col-span-2">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-6 mb-4 md:mb-0 print:gap-4 print:mb-3">
+                  <Logo size="sm" className="print:scale-75" />
+                  {primaryOrganization?.logo && !logoError && (
+                    <div className="flex items-center">
+                      <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">
+                        <img
+                          src={primaryOrganization.logo}
+                          alt={primaryOrganization.name}
+                          className="h-12 w-auto object-contain print:h-8"
+                          onError={() => {
+                            setLogoError(true);
+                          }}
+                        />
                       </div>
                     </div>
                   )}
                 </div>
-              )}
 
-              <div className="inline-block">
-                <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
-                  Impact Score: {filteredImpactScore}/100
-                </Badge>
+                <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1 print:text-2xl">
+                  {currentUser?.displayName || currentUser?.username || 'Volunteer'}
+                </p>
+                
+                <h1 className="text-lg md:text-xl lg:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg">
+                  Global Impact Report
+                </h1>
+
+                <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                  <span>•</span>
+                  <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
               </div>
 
-              <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                <span>•</span>
-                <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              {/* Right: Organizations & Impact Score Box */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/50 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+                <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-3">Your Information</p>
+                
+                <div className="space-y-3">
+                  {volunteerOrganizations.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">Organizations</p>
+                      <div className="space-y-1">
+                        {volunteerOrganizations.slice(0, 3).map((org: any) => (
+                          <div key={org.id} className="text-sm text-gray-900 dark:text-gray-100 font-medium truncate">
+                            {org.name}
+                          </div>
+                        ))}
+                        {volunteerOrganizations.length > 3 && (
+                          <div className="text-xs text-gray-600 dark:text-gray-400 italic">
+                            +{volunteerOrganizations.length - 3} more
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-2 border-t border-blue-200 dark:border-blue-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">Overall Impact Score</p>
+                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{filteredImpactScore}</div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">out of 100</p>
+                  </div>
+                </div>
               </div>
             </div>
 

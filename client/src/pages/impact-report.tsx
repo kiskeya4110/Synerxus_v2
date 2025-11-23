@@ -82,6 +82,39 @@ const SDG_TITLES = {
   17: "Partnerships for the Goals",
 } as Record<number, string>;
 
+const SKILL_COLORS = [
+  '#3b82f6', // blue
+  '#10b981', // green
+  '#f59e0b', // amber
+  '#ef4444', // red
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#14b8a6', // teal
+  '#f97316', // orange
+  '#6366f1', // indigo
+];
+
+const getSkillColor = (index: number): string => {
+  return SKILL_COLORS[index % SKILL_COLORS.length];
+};
+
+const getSkillBadgeClass = (index: number): string => {
+  const colorClasses = [
+    'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+    'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200',
+    'bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200',
+    'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200',
+    'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
+    'bg-pink-100 dark:bg-pink-900 text-pink-800 dark:text-pink-200',
+    'bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-200',
+    'bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200',
+    'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200',
+    'bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200',
+  ];
+  return colorClasses[index % colorClasses.length];
+};
+
 interface ImpactReportProps {
   volunteerId?: number;
 }
@@ -946,10 +979,10 @@ export default function ImpactReport(props: ImpactReportProps) {
                           Applied Skills
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                          {allSkills.map((skill: string) => (
-                            <Badge key={skill} variant="secondary">
+                          {allSkills.map((skill: string, index: number) => (
+                            <div key={skill} className={`px-3 py-1 rounded-full text-sm font-medium ${getSkillBadgeClass(index)}`}>
                               {skill}
-                            </Badge>
+                            </div>
                           ))}
                         </div>
                       </CardContent>
@@ -1336,7 +1369,7 @@ export default function ImpactReport(props: ImpactReportProps) {
                               {
                                 label: 'Projects Using Skill',
                                 data: skillsData.map((s: any) => s.projects),
-                                backgroundColor: '#10b981',
+                                backgroundColor: skillsData.map((_: any, index: number) => getSkillColor(index)),
                               }
                             ]
                           }}
@@ -1388,8 +1421,10 @@ export default function ImpactReport(props: ImpactReportProps) {
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Applied Skills</h3>
                       <div className="flex flex-wrap gap-2">
-                        {allSkills.map((skill: string) => (
-                          <Badge key={skill} variant="secondary">{skill}</Badge>
+                        {allSkills.map((skill: string, index: number) => (
+                          <div key={skill} className={`px-3 py-1 rounded-full text-sm font-medium ${getSkillBadgeClass(index)}`}>
+                            {skill}
+                          </div>
                         ))}
                       </div>
                     </CardContent>

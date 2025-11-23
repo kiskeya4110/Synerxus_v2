@@ -231,8 +231,65 @@ export default function Dashboard() {
     });
   }, [dashboardData?.monthlyImpactTrend, timeFilter]);
 
-  // Generate narrative for impact chart - LIVE and INTERACTIVE with time filter
+  // Generate narrative for impact chart - LIVE and INTERACTIVE with time filter AND project filter
   const impactNarrative = useMemo(() => {
+    // When a specific project is selected, calculate narrative from filtered activities instead of monthly data
+    if (selectedProject !== "all" && filteredData.activities.length > 0) {
+      // Calculate monthly data from filtered activities
+      const projectMonthlyMap = new Map<string, { hours: number; peopleImpacted: number }>();
+      
+      filteredData.activities.forEach((activity: any) => {
+        const date = new Date(activity.date || activity.createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        
+        if (!projectMonthlyMap.has(monthKey)) {
+          projectMonthlyMap.set(monthKey, { hours: 0, peopleImpacted: 0 });
+        }
+        
+        const month = projectMonthlyMap.get(monthKey)!;
+        month.hours += activity.hours || 0;
+        month.peopleImpacted += activity.peopleImpacted || 0;
+      });
+      
+      const projectData = Array.from(projectMonthlyMap.values());
+      if (projectData.length === 0) return "";
+      
+      const totalHours = projectData.reduce((sum: number, d: any) => sum + (d.hours || 0), 0);
+      const totalPeopleImpacted = projectData.reduce((sum: number, d: any) => sum + (d.peopleImpacted || 0), 0);
+      
+      if (totalHours === 0 && totalPeopleImpacted === 0) return "";
+      
+      const avgHours = Math.round(totalHours / projectData.length);
+      let peakMonth = projectData[0];
+      let lowestMonth = projectData[0];
+      
+      for (const d of projectData) {
+        if ((d.hours || 0) > (peakMonth.hours || 0)) peakMonth = d;
+        if ((d.hours || 0) < (lowestMonth.hours || 0)) lowestMonth = d;
+      }
+      
+      const variance = projectData.reduce((sum: number, d: any) => sum + Math.pow((d.hours || 0) - avgHours, 2), 0) / projectData.length;
+      const stdDev = Math.round(Math.sqrt(variance));
+      const consistency = stdDev <= avgHours * 0.3 ? "highly consistent" : stdDev <= avgHours * 0.6 ? "moderately consistent" : "variable";
+      
+      const avgPeoplePerHour = totalHours > 0 ? Math.round((totalPeopleImpacted / totalHours) * 10) / 10 : 0;
+      
+      const selectedProjectName = projects.find((p: any) => p.id.toString() === selectedProject)?.name || "this project";
+      
+      let narrative = "";
+      if (dashboardType === "volunteer") {
+        narrative = `Project Impact for ${selectedProjectName}: You've logged ${totalHours} total hours with an average of ${avgHours} hours per month. `;
+        narrative += `Your contribution is ${consistency}, ranging from ${lowestMonth.hours}h to ${peakMonth.hours}h. `;
+        narrative += `You've impacted ${totalPeopleImpacted} people total (avg ${avgPeoplePerHour} people/hour).`;
+      } else {
+        narrative = `Project Impact for ${selectedProjectName}: Your team has logged ${totalHours} hours with an average of ${avgHours} hours per month. `;
+        narrative += `Peak activity was ${peakMonth.hours}h, showing ${consistency} engagement. `;
+        narrative += `Total people impacted: ${totalPeopleImpacted} (avg ${avgPeoplePerHour} per hour).`;
+      }
+      return narrative;
+    }
+    
+    // Default: use time-filtered data for "all projects"
     if (!filteredMonthlyImpactData || filteredMonthlyImpactData.length === 0) return "";
     
     const data = filteredMonthlyImpactData;
@@ -293,7 +350,7 @@ export default function Dashboard() {
     }
     
     return narrative;
-  }, [filteredMonthlyImpactData, timeFilter, dashboardType]);
+  }, [filteredMonthlyImpactData, timeFilter, dashboardType, selectedProject, filteredData, projects]);
 
   // Use KPIs from backend - API returns summary data at top level
   const kpis = useMemo(() => {

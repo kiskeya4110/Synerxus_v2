@@ -30,6 +30,7 @@ import EmailDigests from "@/pages/email-digests";
 import Achievements from "@/pages/achievements";
 import Leaderboard from "@/pages/leaderboard";
 import OrganizationLeaderboard from "@/pages/organization-leaderboard";
+import DiscoverOpportunities from "@/pages/discover-opportunities";
 import NotFound from "@/pages/not-found";
 
 export default function App() {
@@ -58,6 +59,7 @@ function LayoutRoute() {
       <Route path="/volunteer-intake" component={VolunteerIntake} />
       <Route path="/organization-intake" component={OrganizationIntake} />
       <Route path="/opportunities" component={Opportunities} />
+      <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route path="/opportunities/:id" component={OpportunityDetail} />
       <Route path="/applications" component={Applications} />
       <Route path="/my-applications" component={MyApplications} />

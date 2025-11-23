@@ -520,16 +520,15 @@ export default function ImpactReport(props: any) {
         </div>
 
         {/* Main Impact Report Card */}
-        <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-blue-200 dark:border-blue-900 print:shadow-none print:border-black">
+        <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black">
           <CardContent className="p-8 print:p-4">
-            {/* Header Section with Logos */}
-            <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:border-none print:mb-2 print:pb-2">
-              {/* Logo Section */}
+            {/* Header Section - Professional Layout */}
+            <div className="text-center mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3">
               <div className="flex items-center justify-center gap-6 mb-4 print:gap-4 print:mb-3">
                 <Logo size="sm" className="print:scale-75" />
                 {primaryOrganization?.logo && !logoError && (
-                  <div className="flex items-center gap-2">
-                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6 print:pl-3 print:border-gray-400">
+                  <div className="flex items-center">
+                    <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-6">
                       <img
                         src={primaryOrganization.logo}
                         alt={primaryOrganization.name}
@@ -543,55 +542,27 @@ export default function ImpactReport(props: any) {
                 )}
               </div>
 
-              {/* Title with Total Impact Score */}
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white print:text-2xl mb-3">
-                Global Impact Report
-              </h1>
-              
-              <p className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3 print:text-2xl">
+              <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2 print:text-2xl">
                 {currentUser?.displayName || currentUser?.username || 'Volunteer'}
               </p>
+              
+              <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
+                Global Impact Report
+              </h1>
 
               {primaryOrganization && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 print:text-xs">
+                <p className="text-sm text-gray-700 dark:text-gray-400 mb-4 italic">
                   {primaryOrganization.name}
                 </p>
               )}
 
-              {/* Total Impact Score Badge */}
-              <div className="mt-4 inline-block">
-                <Badge className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 text-base print:text-sm">
-                  Impact Score: {filteredImpactScore}/100 {timeFilter !== 'all' && `(${timeFilter === 'month' ? 'This Month' : timeFilter === 'quarter' ? 'This Quarter' : 'This Year'})`}
+              <div className="inline-block">
+                <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
+                  Impact Score: {filteredImpactScore}/100
                 </Badge>
               </div>
 
-              {/* Time Filter */}
-              <div className="mt-4 mb-3 flex items-center justify-center gap-2 flex-wrap print:hidden">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Time Period:</span>
-                <div className="flex gap-2">
-                  {[
-                    { value: "all", label: "All Time" },
-                    { value: "month", label: "This Month" },
-                    { value: "quarter", label: "This Quarter" },
-                    { value: "year", label: "This Year" }
-                  ].map((option) => (
-                    <Button
-                      key={option.value}
-                      variant={timeFilter === option.value ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setTimeFilter(option.value as any)}
-                      className="text-xs"
-                      data-testid={`time-filter-${option.value}`}
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Report ID and Date */}
-              <div className="flex items-center justify-center gap-3 mt-3 text-xs text-gray-500 dark:text-gray-400 print:text-xs print:mt-2">
-                <span>Report ID: {volunteerId || 'N/A'}</span>
+              <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
                 <span>•</span>
                 <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
               </div>

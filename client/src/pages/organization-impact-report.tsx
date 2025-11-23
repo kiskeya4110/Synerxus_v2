@@ -30,6 +30,40 @@ import {
 } from "chart.js";
 import { Line, Bar, Pie, Radar } from "react-chartjs-2";
 
+// Custom plugin for multi-line labels
+const multilineLabelPlugin = {
+  id: 'multilineLabels',
+  afterDatasetsDraw(chart: any) {
+    const ctx = chart.ctx;
+    const scale = chart.scales.r;
+    if (!scale) return;
+    
+    const centerX = scale.xCenter;
+    const centerY = scale.yCenter;
+    const radius = scale.getDistanceFromCenterPoint({ x: 0, y: 0 }, 0);
+    
+    chart.data.labels.forEach((label: string, index: number) => {
+      const angle = Math.PI * 2 * index / chart.data.labels.length - Math.PI / 2;
+      const x = centerX + (radius + 35) * Math.cos(angle);
+      const y = centerY + (radius + 35) * Math.sin(angle);
+      
+      // Split label into parts
+      const parts = label.split(' ');
+      ctx.fillStyle = '#1f2937';
+      ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      if (parts.length === 2) {
+        ctx.fillText(parts[0], x, y - 5);
+        ctx.fillText(parts[1], x, y + 5);
+      } else {
+        ctx.fillText(label, x, y);
+      }
+    });
+  }
+};
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -41,7 +75,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  multilineLabelPlugin as any
 );
 
 export default function OrganizationImpactReport(props: any) {
@@ -292,7 +327,7 @@ export default function OrganizationImpactReport(props: any) {
   ];
 
   const organizationalPerformance = {
-    labels: ['Volunteer\nEngagement', 'Financial\nHealth', 'Program\nQuality', 'Community\nImpact'],
+    labels: ['Volunteer Engagement', 'Financial Health', 'Program Quality', 'Community Impact'],
     datasets: [{
       label: 'Performance Score',
       data: [85, 78, 88, 91],
@@ -318,8 +353,7 @@ export default function OrganizationImpactReport(props: any) {
         max: 100,
         ticks: { font: { size: 9 }, stepSize: 25 },
         pointLabels: {
-          font: { size: 8, weight: 'bold' as const, lineHeight: 1.3 },
-          padding: 20
+          display: false
         }
       } 
     }

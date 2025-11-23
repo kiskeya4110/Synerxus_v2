@@ -660,28 +660,47 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                 </div>
               </div>
 
-              {/* Right Side: General Organization Information */}
-              <div className="col-span-1">
-                <div className="space-y-3 print:space-y-2">
-                  {/* Team Members */}
-                  <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded border border-blue-200 dark:border-blue-700 print:p-2 print:text-xs">
-                    <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase mb-1">Team Members</p>
-                    <p className="text-lg font-bold text-blue-900 dark:text-blue-100">{totalTeam}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Active Volunteers: {activeVolunteers}</p>
+              {/* Right Side: Mission Facts & Insights */}
+              <div className="col-span-1 flex flex-col justify-between">
+                {/* Mission Statement */}
+                {organization?.description && (
+                  <div className="bg-amber-50 dark:bg-amber-900/30 p-3 rounded-lg border border-amber-200 dark:border-amber-700 mb-3 print:mb-2 print:p-2 print:text-xs">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase mb-1">Our Mission</p>
+                    <p className="text-sm text-amber-900 dark:text-amber-200 line-clamp-3 font-medium">
+                      {organization.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Mission Impact Facts */}
+                <div className="space-y-2">
+                  {/* Beneficiaries Fact */}
+                  <div className="bg-green-50 dark:bg-green-900/30 p-2.5 rounded border border-green-200 dark:border-green-700 print:p-1.5 print:text-xs">
+                    <p className="text-xs font-bold text-green-700 dark:text-green-400">
+                      💚 {beneficiariesServed.toLocaleString()} {beneficiariesServed === 1 ? 'beneficiary' : 'beneficiaries'} served
+                    </p>
+                    <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">Through our mission-driven work</p>
                   </div>
 
-                  {/* Total Hours */}
-                  <div className="bg-green-50 dark:bg-green-900/30 p-3 rounded border border-green-200 dark:border-green-700 print:p-2 print:text-xs">
-                    <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase mb-1">Total Hours</p>
-                    <p className="text-lg font-bold text-green-900 dark:text-green-100">{Math.round(totalHours)}h</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{filteredActivities.length} Activities</p>
+                  {/* Volunteer Commitment Fact */}
+                  <div className="bg-blue-50 dark:bg-blue-900/30 p-2.5 rounded border border-blue-200 dark:border-blue-700 print:p-1.5 print:text-xs">
+                    <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
+                      🤝 {activeVolunteers} volunteers united
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">Working toward our mission</p>
                   </div>
 
-                  {/* Projects */}
-                  <div className="bg-purple-50 dark:bg-purple-900/30 p-3 rounded border border-purple-200 dark:border-purple-700 print:p-2 print:text-xs">
-                    <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase mb-1">Projects</p>
-                    <p className="text-lg font-bold text-purple-900 dark:text-purple-100">{totalProjects}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{projects.filter(p => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress').length} Active</p>
+                  {/* Mission Insight */}
+                  <div className="bg-purple-50 dark:bg-purple-900/30 p-2.5 rounded border border-purple-200 dark:border-purple-700 print:p-1.5 print:text-xs">
+                    <p className="text-xs font-bold text-purple-700 dark:text-purple-400">
+                      ✨ Mission Progress
+                    </p>
+                    <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
+                      {totalHours > 0 
+                        ? `${totalHours.toLocaleString()} hours invested in ${totalProjects} mission-aligned ${totalProjects === 1 ? 'project' : 'projects'}`
+                        : 'Ready to mobilize impact'
+                      }
+                    </p>
                   </div>
                 </div>
               </div>

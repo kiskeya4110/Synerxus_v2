@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
@@ -12,6 +13,8 @@ export default function Logo({
   showIcon = true,
   size = "md",
 }: LogoProps) {
+  const [imageError, setImageError] = useState(false);
+
   const sizes = {
     sm: {
       logo: "h-8",
@@ -34,7 +37,7 @@ export default function Logo({
 
   return (
     <div className={cn("inline-flex items-center gap-2", className)}>
-      {showIcon && (
+      {showIcon && !imageError && (
         <img
           src={logoImage}
           alt="Synerxus Logo"
@@ -43,6 +46,7 @@ export default function Logo({
             "w-auto object-contain flex-shrink-0",
           )}
           loading="eager"
+          onError={() => setImageError(true)}
         />
       )}
       <span

@@ -29,6 +29,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 export default function Dashboard() {
   const { user } = useAuth();
   const [selectedProject, setSelectedProject] = useState<string>("all");
+  const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
   const [selectedKPI, setSelectedKPI] = useState<{ title: string; items: any[]; totalScore?: number } | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
 
@@ -153,6 +154,34 @@ export default function Dashboard() {
       applications: dashboardData?.applications || [], // Add applications to filteredData
     };
   }, [selectedProject, dashboardData]);
+
+  // Filter monthly impact data by time period
+  const filteredMonthlyImpactData = useMemo(() => {
+    const monthlyData = dashboardData?.monthlyImpactData || [];
+    if (timeFilter === 'all') return monthlyData;
+    
+    const now = new Date();
+    let startDate = new Date(0);
+    
+    switch(timeFilter) {
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+    
+    return monthlyData.filter((data: any) => {
+      if (!data.month) return true;
+      const [year, month] = data.month.split('-');
+      const dataDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      return dataDate >= startDate;
+    });
+  }, [dashboardData?.monthlyImpactData, timeFilter]);
 
   // Use KPIs from backend - API returns summary data at top level
   const kpis = useMemo(() => {
@@ -583,11 +612,11 @@ export default function Dashboard() {
           </p>
         </div>
         
-        {/* Project Filter */}
-        <div className="flex items-center gap-2">
-          <Label htmlFor="project-filter" className="text-sm whitespace-nowrap">Filter by Project:</Label>
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <Label htmlFor="project-filter" className="text-sm whitespace-nowrap">Project:</Label>
           <Select value={selectedProject} onValueChange={setSelectedProject}>
-            <SelectTrigger id="project-filter" className="w-[200px]">
+            <SelectTrigger id="project-filter" className="w-[180px]">
               <SelectValue placeholder="All Projects" />
             </SelectTrigger>
             <SelectContent>
@@ -597,6 +626,19 @@ export default function Dashboard() {
                   {project.name}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          
+          <Label htmlFor="time-filter" className="text-sm whitespace-nowrap sm:ml-4">Time:</Label>
+          <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
+            <SelectTrigger id="time-filter" className="w-[140px]">
+              <SelectValue placeholder="All Time" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="year">This Year</SelectItem>
+              <SelectItem value="quarter">This Quarter</SelectItem>
+              <SelectItem value="month">This Month</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -680,7 +722,7 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ImpactChart 
-          monthlyImpactData={dashboardData?.monthlyImpactData || []}
+          monthlyImpactData={filteredMonthlyImpactData}
           monthlyImpactTrend={dashboardData?.monthlyImpactTrend}
           userType={currentUser?.userType}
         />

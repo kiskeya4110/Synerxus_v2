@@ -634,8 +634,8 @@ export default function ImpactReport(props: any) {
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
                 {/* Enhanced KPI Buttons in 1 row x 4 columns */}
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4 print:gap-2">
+                  <div className="impact-report-section bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
                     <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Hours Logged</p>
                     <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{Math.round(filteredTotalHours)}h</p>
                     <div className="space-y-1.5">
@@ -656,7 +656,7 @@ export default function ImpactReport(props: any) {
                     </div>
                   </div>
 
-                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                  <div className="impact-report-section bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
                     <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">Tasks Completed</p>
                     <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">{filteredTasksCompleted}/{tasks.length}</p>
                     <div className="space-y-1.5">
@@ -1132,8 +1132,8 @@ export default function ImpactReport(props: any) {
                   <Target className="h-6 w-6 text-blue-600" />
                   Overview
                 </h2>
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 lg:gap-4 print:gap-2">
+                  <div className="impact-report-section bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
                     <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Hours Logged</p>
                     <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{Math.round(filteredTotalHours)}h</p>
                     <div className="space-y-1.5">
@@ -1154,7 +1154,7 @@ export default function ImpactReport(props: any) {
                     </div>
                   </div>
 
-                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                  <div className="impact-report-section bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
                     <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">Tasks Completed</p>
                     <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">{filteredTasksCompleted}/{tasks.length}</p>
                     <div className="space-y-1.5">
@@ -1612,32 +1612,96 @@ export default function ImpactReport(props: any) {
           body {
             background: white;
             margin: 0;
-            padding: 0;
+            padding: 8mm;
+            color: #000;
           }
           .print\\:hidden {
             display: none !important;
           }
           #impact-report-content {
-            page-break-after: avoid;
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
           }
-          .grid {
-            page-break-inside: avoid;
+          
+          /* Optimize grid layouts for print */
+          .grid, [class*="grid-cols"] {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            orphans: 2 !important;
+            widows: 2 !important;
           }
-          .space-y-6 > div {
-            page-break-inside: avoid;
+          
+          /* Prevent breaks within sections */
+          .space-y-6 > div,
+          .space-y-4 > div,
+          .space-y-3 > div {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
-          .space-y-4 > div {
-            page-break-inside: avoid;
+          
+          /* Headers stay with content */
+          h1, h2, h3, h4, h5, h6 {
+            page-break-after: avoid !important;
+            page-break-inside: avoid !important;
+            orphans: 3 !important;
+            widows: 3 !important;
           }
-          h2, h3 {
-            page-break-after: avoid;
-          }
+          
+          /* KPI cards never break */
           .bg-blue-50, .bg-green-50, .bg-purple-50, .bg-orange-50,
-          .bg-blue-900, .bg-green-900, .bg-purple-900, .bg-orange-900 {
-            page-break-inside: avoid;
+          .bg-blue-900, .bg-green-900, .bg-purple-900, .bg-orange-900,
+          .bg-blue-100, .bg-green-100, .bg-purple-100, .bg-orange-100,
+          [class*="border-blue"], [class*="border-green"], [class*="border-purple"], [class*="border-orange"] {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
-          canvas {
-            page-break-inside: avoid;
+          
+          /* Charts stay intact */
+          canvas, .chart-container, [role="img"] {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            max-height: 500px !important;
+          }
+          
+          /* Card elements never break */
+          [class*="Card"], [role="article"], article {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          
+          /* Table and list optimization */
+          table, tr, thead, tbody {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          
+          ul, ol, li {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            orphans: 2 !important;
+            widows: 2 !important;
+          }
+          
+          /* Badge and pill elements */
+          [class*="Badge"], [class*="pill"], [class*="badge"] {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          
+          /* Improve contrast for printing */
+          .text-gray-600, .text-gray-700 {
+            color: #333 !important;
+          }
+          
+          /* Optimize colors for B&W printers */
+          .dark\\:text-gray-300 {
+            color: #666 !important;
+          }
+          
+          /* Section spacing for better readability */
+          section {
+            margin-bottom: 12mm !important;
+            page-break-inside: avoid !important;
           }
           
           /* Hide pages when print-selected-pages is active */
@@ -1651,15 +1715,27 @@ export default function ImpactReport(props: any) {
           
           #impact-report-content.print-selected-pages [data-print-overview="true"] {
             display: block !important;
+            page-break-inside: avoid !important;
           }
           #impact-report-content.print-selected-pages [data-print-engagement="true"] {
             display: block !important;
+            page-break-inside: avoid !important;
           }
           #impact-report-content.print-selected-pages [data-print-impact="true"] {
             display: block !important;
+            page-break-inside: avoid !important;
           }
           #impact-report-content.print-selected-pages [data-print-analytics="true"] {
             display: block !important;
+            page-break-inside: avoid !important;
+          }
+          
+          /* Print-specific sizing for better layout */
+          @page {
+            size: A4;
+            margin: 10mm;
+            orphans: 4;
+            widows: 4;
           }
         }
       `}</style>

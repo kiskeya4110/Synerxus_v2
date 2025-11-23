@@ -475,6 +475,7 @@
   canvas {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    max-height: 500px !important;
   }
 
   /* Ensure TabsContent doesn't break unnecessarily */
@@ -482,8 +483,51 @@
     page-break-inside: avoid !important;
   }
 
+  /* Industry best practices for single-view reports */
+  .impact-report-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  /* KPI Cards - prevent breaks within */
+  [class*="bg-blue"],
+  [class*="bg-green"],
+  [class*="bg-purple"],
+  [class*="bg-orange"],
+  [class*="bg-yellow"] {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Headers should stay with their content */
+  h2, h3, h4, h5 {
+    page-break-after: avoid !important;
+    orphans: 3 !important;
+    widows: 3 !important;
+  }
+
+  /* Table rows should not break */
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Lists should not have orphaned items */
+  ul, ol {
+    page-break-inside: avoid !important;
+  }
+
+  li {
+    page-break-inside: avoid !important;
+  }
+
   /* Optimize for PDF readability */
   body {
     line-height: 1.6 !important;
+  }
+
+  /* Ensure proper spacing in print */
+  * {
+    background-clip: padding-box !important;
   }
 }

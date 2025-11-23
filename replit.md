@@ -28,6 +28,22 @@ The platform includes a rebranded landing page with an interactive SDG wheel, a 
 ### System Design Choices
 Authentication is managed via Firebase Auth with Google OAuth. Client-server communication uses RESTful APIs, WebSockets, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon.
 
+## Recent Changes (Nov 23, 2025)
+
+### PDF Export & Organization Impact Report Enhancements
+- **Enhanced KPI Buttons**: Added detailed sub-metrics to Team Members, Total Hours Logged, Projects Managed, and Avg Hours per Volunteer buttons matching Impact Leader format
+  - Team Members: Shows volunteer/manager breakdown, avg hours per volunteer
+  - Total Hours: Shows activity count, avg hours per activity, peak period
+  - Projects: Shows active/completed breakdown, average completion percentage
+  - Avg Hours: Shows total volunteers, total hours, top volunteer hours
+- **Organization Logo & Mission Statement**: Added organization logo display and mission statement to impact report header for better identification
+- **Print-Friendly CSS**: Implemented comprehensive print styles preventing page breaks within KPI grids and chart sections for clean PDF export:
+  - Added `page-break-inside: avoid` to all KPI and chart containers
+  - Ensured grid layouts maintain their structure in PDFs
+  - Prevented orphaned charts from splitting across pages
+- **Fixed CSS Syntax Errors**: Corrected print media query CSS by properly encapsulating all properties within selector blocks
+- **Improved 404 Error Page**: Enhanced NotFound component with better responsive styling, dark mode support, and appropriate mobile/desktop sizing
+
 ## Recent Changes (Nov 22, 2025)
 
 ### Impact Score Calculation Bug Fixes

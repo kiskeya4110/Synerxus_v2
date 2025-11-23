@@ -449,11 +449,22 @@
   }
 
   /* Prevent breaks within individual KPI cards and chart cards */
-  [class*="bg-blue-"],
-  [class*="bg-green-"],
-  [class*="bg-purple-"],
-  [class*="bg-orange-"],
-  [class*="bg-gradient-"],
+  .bg-blue-50,
+  .bg-blue-100,
+  .bg-blue-900,
+  .bg-green-50,
+  .bg-green-100,
+  .bg-green-900,
+  .bg-purple-50,
+  .bg-purple-100,
+  .bg-purple-900,
+  .bg-orange-50,
+  .bg-orange-100,
+  .bg-orange-900,
+  .bg-yellow-50,
+  .bg-yellow-100,
+  .bg-yellow-900,
+  .bg-gradient-to-br,
   .rounded-lg {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
@@ -472,5 +483,7 @@
   }
 
   /* Optimize for PDF readability */
-  line-height: 1.6 !important;
+  body {
+    line-height: 1.6 !important;
+  }
 }

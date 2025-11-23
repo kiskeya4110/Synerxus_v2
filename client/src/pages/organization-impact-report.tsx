@@ -13,7 +13,10 @@ import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-declare const html2pdf: any;
+interface Html2PdfInstance {
+  set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
+}
+declare const html2pdf: { (): Html2PdfInstance };
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -44,14 +47,18 @@ ChartJS.register(
   Filler
 );
 
-export default function OrganizationImpactReport(props: any) {
+interface OrganizationImpactReportProps {
+  organizationId?: number;
+}
+
+export default function OrganizationImpactReport(props: OrganizationImpactReportProps) {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [isPrinting, setIsPrinting] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
   const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
-  const chartRefs = useRef<Record<string, any>>({});
+  const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
   // Call ALL hooks unconditionally at the top - this is required by React
   const { data: currentUser } = useQuery<User>({

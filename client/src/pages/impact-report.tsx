@@ -13,7 +13,7 @@ import type { User, Task, ProjectAssignment } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
-declare const html2pdf: any;
+declare const html2pdf: { (): { set(options: any): { from(element: HTMLElement): { save(): void } } } };
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -82,7 +82,11 @@ const SDG_TITLES = {
   17: "Partnerships for the Goals",
 } as Record<number, string>;
 
-export default function ImpactReport(props: any) {
+interface ImpactReportProps {
+  volunteerId?: number;
+}
+
+export default function ImpactReport(props: ImpactReportProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isPrinting, setIsPrinting] = useState(false);
@@ -98,7 +102,7 @@ export default function ImpactReport(props: any) {
     impact: true,
     analytics: true
   });
-  const chartRefs = useRef<Record<string, any>>({});
+  const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
   // Fetch the current logged-in user first
   const { data: loggedInUser } = useQuery<User>({
@@ -140,7 +144,7 @@ export default function ImpactReport(props: any) {
   });
 
   // Fetch volunteer's project assignments
-  const { data: projectAssignments = [] } = useQuery<any[]>({
+  const { data: projectAssignments = [] } = useQuery<ProjectAssignment[]>({
     queryKey: ["/api/project-assignments", { volunteerId }],
     queryFn: async () => {
       const response = await fetch(`/api/project-assignments?volunteerId=${volunteerId}`);
@@ -150,7 +154,7 @@ export default function ImpactReport(props: any) {
   });
 
   // Fetch volunteer's activities
-  const { data: volunteerActivities = [] } = useQuery<any[]>({
+  const { data: volunteerActivities = [] } = useQuery<any[]>({  // Keep any[] as type varies
     queryKey: ["/api/volunteer-activities", { volunteerId }],
     queryFn: async () => {
       if (!volunteerId) return [];
@@ -186,7 +190,7 @@ export default function ImpactReport(props: any) {
   });
 
   // Fetch organizations
-  const { data: organizations = [] } = useQuery<any[]>({
+  const { data: organizations = [] } = useQuery<User[]>({
     queryKey: ["/api/organizations"],
     queryFn: async () => {
       const response = await fetch("/api/organizations");

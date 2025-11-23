@@ -27,7 +27,10 @@ import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-declare const html2pdf: any;
+interface Html2PdfInstance {
+  set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
+}
+declare const html2pdf: { (): Html2PdfInstance };
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -35,7 +38,12 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
-  const [selectedKPI, setSelectedKPI] = useState<{ title: string; items: any[]; totalScore?: number } | null>(null);
+  interface KPIState {
+    title: string;
+    items: Record<string, any>[];
+    totalScore?: number;
+  }
+  const [selectedKPI, setSelectedKPI] = useState<KPIState | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
 
   // Fetch current user from database
@@ -59,7 +67,14 @@ export default function Dashboard() {
   });
 
   // Fetch real data from API - MUST be called before any early returns
-  const { data: dashboardData, isLoading: loadingDashboard } = useQuery<any>({
+  interface DashboardData {
+    activeVolunteers?: number;
+    totalHours?: number;
+    projects?: any[];
+    tasks?: Task[];
+    [key: string]: any;
+  }
+  const { data: dashboardData, isLoading: loadingDashboard } = useQuery<DashboardData>({
     queryKey: ["/api/dashboard/summary", userId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');

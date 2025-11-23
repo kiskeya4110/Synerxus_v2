@@ -30,40 +30,6 @@ import {
 } from "chart.js";
 import { Line, Bar, Pie, Radar } from "react-chartjs-2";
 
-// Custom plugin for multi-line labels
-const multilineLabelPlugin = {
-  id: 'multilineLabels',
-  afterDatasetsDraw(chart: any) {
-    const ctx = chart.ctx;
-    const scale = chart.scales.r;
-    if (!scale) return;
-    
-    const centerX = scale.xCenter;
-    const centerY = scale.yCenter;
-    const radius = scale.drawingArea || 0;
-    
-    chart.data.labels.forEach((label: string, index: number) => {
-      const angle = Math.PI * 2 * index / chart.data.labels.length - Math.PI / 2;
-      const x = centerX + (radius + 35) * Math.cos(angle);
-      const y = centerY + (radius + 35) * Math.sin(angle);
-      
-      // Split label into parts
-      const parts = label.split(' ');
-      ctx.fillStyle = '#1f2937';
-      ctx.font = 'bold 8px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      
-      if (parts.length === 2) {
-        ctx.fillText(parts[0], x, y - 5);
-        ctx.fillText(parts[1], x, y + 5);
-      } else {
-        ctx.fillText(label, x, y);
-      }
-    });
-  }
-};
-
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -75,8 +41,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler,
-  multilineLabelPlugin as any
+  Filler
 );
 
 export default function OrganizationImpactReport(props: any) {
@@ -423,7 +388,10 @@ export default function OrganizationImpactReport(props: any) {
         max: 100,
         ticks: { font: { size: 9 }, stepSize: 25 },
         pointLabels: {
-          display: false
+          display: true,
+          font: { size: 11, weight: 'bold' as any },
+          padding: 8,
+          color: '#1f2937'
         }
       } 
     }
@@ -1171,7 +1139,25 @@ export default function OrganizationImpactReport(props: any) {
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Radar</h3>
-                      <Radar data={{ labels: ['Volunteer\nEngagement', 'Quality\nMetrics', 'Community\nReach', 'Resource\nEfficiency', 'Impact\nDelivery'], datasets: [{ label: 'Performance Score', data: [85, 92, 78, 88, 90], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.15)', fill: true, tension: 0.4, pointRadius: 5, pointHoverRadius: 7 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } } }} />
+                      <div style={{ height: '380px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                        <div style={{ width: '100%', height: '100%' }}>
+                          <Radar
+                            data={{
+                              labels: ['Volunteer Engagement', 'Quality Metrics', 'Community Reach', 'Resource Efficiency', 'Impact Delivery'],
+                              datasets: [{
+                                label: 'Performance Score',
+                                data: [85, 92, 78, 88, 90],
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 2,
+                              }]
+                            }}
+                            options={radarChartOptions}
+                          />
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>

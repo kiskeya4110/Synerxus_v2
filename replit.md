@@ -30,6 +30,21 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 23, 2025)
 
+### Radar Chart Label Duplication Fix
+- **Removed custom multiline label plugin**: Was causing duplicate labels by rendering custom labels on top of Chart.js default labels
+- **Optimized label configuration**: Replaced with native Chart.js pointLabels configuration
+  - Font size: 11px, bold weight for better readability
+  - Padding: 8px for optimal spacing
+  - Color: #1f2937 for consistency
+  - Single-line labels for clarity (removed newline characters)
+- **Fixed both radar chart instances**: Updated single-view radar chart to use same optimized radarChartOptions
+- **Result**: Clean, non-duplicated labels with improved UX
+
+### Fixed Impact Report 404 Error on Load
+- **Root cause**: volunteerId was not being properly extracted from URL when navigating without a userId parameter
+- **Solution**: Enhanced impact report to fetch current logged-in user first, then use that as fallback if no volunteerId is provided
+- **Added proper user resolution**: loggedInUser query now provides fallback value for volunteerId when not specified in URL
+
 ### Dashboard PDF Export & Mobile Optimization
 - **Fixed React Hooks Order Error**: Moved `useToast()` call to top-level hooks section to comply with React Hooks rules (eliminated "Rendered more hooks than during previous render" error)
 - **Added Dashboard PDF Download**: Implemented PDF export functionality on Dashboard with responsive button:

@@ -1123,134 +1123,109 @@ export default function OrganizationImpactReport(props: any) {
             ) : (
             // Single Page View - Comprehensive Report with ALL Tabs Content
             <div className="space-y-8">
-              {/* OVERVIEW SECTION */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-blue-200 dark:border-blue-700 text-center">Overview</h2>
+              {/* SPLIT HEADER: Title + Org Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 print:page-break-inside-avoid">
+                {/* Left: Organization Name & Mission */}
+                <div className="md:col-span-2">
+                  <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">{organization?.name}</h1>
+                  <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">{organization?.missionStatement || 'Building a sustainable future through community-driven initiatives and volunteer empowerment.'}</p>
+                </div>
                 
-                {/* KPIs */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Team Members</p>
-                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalTeam}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activeVolunteers} volunteers + {projectManagers} managers</p>
+                {/* Right: Organization Key Info */}
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/50 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-3">Organization Info</p>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Active Members</p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{activeVolunteers}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Total Hours</p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalHours}h</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Impact Score</p>
+                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{organizationImpactScore}</p>
+                    </div>
                   </div>
-                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Hours Logged</p>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">{totalHours}h</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Real data from {filteredActivities.length} activities</p>
+                </div>
+              </div>
+
+              {/* OVERVIEW SECTION */}
+              <div className="print:page-break-inside-avoid">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 pb-2 border-b-2 border-blue-200 dark:border-blue-700">Overview</h2>
+                
+                {/* Compact KPIs - 2 rows x 2 cols */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Hours</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalHours}h</p>
                   </div>
-                  <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Projects Managed</p>
-                    <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalProjects}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Active projects</p>
-                  </div>
-                  <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Avg Hours per Vol</p>
-                    <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">{activeVolunteers > 0 ? (totalHours / activeVolunteers).toFixed(1) : 0}h</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Per volunteer average</p>
+                  <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Active Projects</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalProjects}</p>
                   </div>
                 </div>
 
-                {/* Impact Leader */}
+                {/* Impact Leader - Compact */}
                 {leaderData && (
-                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-6 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 mb-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-4">
-                        <Crown className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
-                        <div>
-                          <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">Impact Leader</p>
-                          <h3 className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{leaderData.name}</h3>
+                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-3 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 mb-3 print:page-break-inside-avoid">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Crown className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                        <div className="min-w-0">
+                          <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">Top Volunteer</p>
+                          <p className="font-bold text-yellow-900 dark:text-yellow-100 text-sm truncate">{leaderData.name}</p>
                         </div>
                       </div>
-                      <Badge className="bg-yellow-600 text-white text-lg px-4 py-2">⭐ Top Volunteer</Badge>
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Hours Contributed</p>
-                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{Math.round(leaderData.hours)}h</p>
-                      </div>
-                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Activities</p>
-                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{leaderData.activities}</p>
-                      </div>
-                      <div className="bg-white dark:bg-gray-800 p-3 rounded-lg">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold mb-1">Avg per Activity</p>
-                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{(leaderData.hours / leaderData.activities).toFixed(1)}h</p>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Hours</p>
+                        <p className="font-bold text-yellow-600 dark:text-yellow-400">{Math.round(leaderData.hours)}h</p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
+                {/* Charts - Single column for better fit */}
+                <div className="space-y-3 print:page-break-inside-avoid">
                   <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quarterly Growth</h3>
-                      <Line data={{ labels: quarterlyGrowth.map(q => q.quarter), datasets: [{ label: 'Beneficiaries', data: quarterlyGrowth.map(q => q.beneficiaries), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { y: { beginAtZero: true } } }} />
-                    </CardContent>
-                  </Card>
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Radar</h3>
-                      <div style={{ height: '380px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                        <div style={{ width: '100%', height: '100%' }}>
-                          <Radar
-                            data={{
-                              labels: ['Volunteer Engagement', 'Quality Metrics', 'Community Reach', 'Resource Efficiency', 'Impact Delivery'],
-                              datasets: [{
-                                label: 'Performance Score',
-                                data: [85, 92, 78, 88, 90],
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
-                              }]
-                            }}
-                            options={radarChartOptions}
-                          />
-                        </div>
+                    <CardContent className="p-3">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Quarterly Growth</h3>
+                      <div style={{ height: '200px' }}>
+                        <Line data={{ labels: quarterlyGrowth.map(q => q.quarter), datasets: [{ label: 'Beneficiaries', data: quarterlyGrowth.map(q => q.beneficiaries), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 8 } }, scales: { y: { beginAtZero: true } } }} />
                       </div>
                     </CardContent>
                   </Card>
                 </div>
-
-                {/* Monthly Engagement */}
-                <Card className="border border-gray-200 dark:border-gray-700 mt-6 print:page-break-inside-avoid">
-                  <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Volunteer Engagement</h3>
-                    <Line data={{ labels: monthlyEngagement.map(m => m.month), datasets: [{ label: 'Volunteer Hours', data: monthlyEngagement.map(m => m.hours), borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } }, scales: { y: { beginAtZero: true } } }} />
-                  </CardContent>
-                </Card>
               </div>
 
-              {/* PROGRAMS SECTION */}
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 dark:border-green-700 text-center">Programs</h2>
-                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Top Programs Performance</h3>
-                    <div className="space-y-4">
-                      {topPrograms.map((prog, idx) => (
-                        <div key={idx} className="border-b pb-4 last:border-0">
-                          <div className="flex justify-between mb-2">
-                            <h4 className="font-semibold text-gray-900 dark:text-white">{prog.name}</h4>
-                            <span className="text-sm text-gray-500">{prog.beneficiaries} beneficiaries</span>
+              {/* PROGRAMS SECTION - Same Page */}
+              <div className="print:page-break-inside-avoid">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 pb-2 border-b-2 border-green-200 dark:border-green-700">Programs</h2>
+                <Card className="border border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-3">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Programs Performance</h3>
+                    <div className="space-y-3">
+                      {topPrograms.slice(0, 3).map((prog, idx) => (
+                        <div key={idx} className={`pb-3 ${idx < 2 ? 'border-b' : ''}`}>
+                          <div className="flex justify-between mb-1">
+                            <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{prog.name}</h4>
+                            <span className="text-xs text-gray-500">{prog.beneficiaries} beneficiaries</span>
                           </div>
-                          <div className="space-y-2">
+                          <div className="space-y-1">
                             <div>
-                              <div className="flex justify-between text-xs mb-1">
-                                <span>Completion Rate</span>
+                              <div className="flex justify-between text-xs mb-0.5">
+                                <span>Completion</span>
                                 <span>{prog.completion}%</span>
                               </div>
-                              <CompletionProgress value={prog.completion} className="h-2" />
+                              <CompletionProgress value={prog.completion} className="h-1.5" />
                             </div>
                             <div>
-                              <div className="flex justify-between text-xs mb-1">
-                                <span>Impact Score</span>
+                              <div className="flex justify-between text-xs mb-0.5">
+                                <span>Impact</span>
                                 <span>{prog.impact}%</span>
                               </div>
-                              <Progress value={prog.impact} className="h-2" />
+                              <Progress value={prog.impact} className="h-1.5" />
                             </div>
                           </div>
                         </div>
@@ -1261,7 +1236,7 @@ export default function OrganizationImpactReport(props: any) {
               </div>
 
               {/* OPERATIONS SECTION */}
-              <div>
+              <div className="print:page-break-before">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200 dark:border-orange-700 text-center">Operations</h2>
                 
                 {/* Resource & Metrics Charts */}
@@ -1329,7 +1304,7 @@ export default function OrganizationImpactReport(props: any) {
               </div>
 
               {/* FINANCIAL SECTION */}
-              <div>
+              <div className="print:page-break-before">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-700 text-center">Financial</h2>
                 
                 {/* KPIs */}
@@ -1391,7 +1366,7 @@ export default function OrganizationImpactReport(props: any) {
               </div>
 
               {/* IMPACT SECTION */}
-              <div>
+              <div className="print:page-break-before">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-red-200 dark:border-red-700 text-center">Impact</h2>
                 
                 {/* Community Impact Categories */}

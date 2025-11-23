@@ -31,6 +31,12 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ## Recent Changes (Nov 23, 2025)
 
+### Volunteers Tab 404 Error - FIXED
+- **Issue**: Organization users clicking "Volunteers" tab received 404 error
+- **Root Cause**: Endpoint `/api/organizations/:id/volunteers` checked for `user.organizationId`, but organization users don't have this field since they ARE the organization
+- **Solution**: Updated endpoint to use authenticated user's own ID as organizationId when no organizationId field exists for organization users
+- **Impact**: Organization managers can now view their list of accepted volunteers with complete activity stats, project assignments, and skills
+
 ### Programs Tab: Real Projects with Actual Status & Completion (Critical)
 - **Replaced Hardcoded Data with Live Projects**: The Programs tab now displays actual organization projects instead of mock data
   - Shows real project names, statuses (Active, In Progress, Completed), and completion percentages

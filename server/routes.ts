@@ -2522,11 +2522,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only organizations can access this endpoint" });
       }
       
-      if (!user.organizationId) {
-        return res.status(400).json({ message: "User is not linked to an organization" });
-      }
-      
-      const organizationId = user.organizationId;
+      // For organization users, use their own ID as the organization identifier
+      // Organizations don't have an organizationId field - they ARE the organization
+      const organizationId = user.organizationId || authenticatedUserId;
       
       // Get all projects for this organization
       const allProjects = await storage.listProjects();

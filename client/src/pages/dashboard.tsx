@@ -603,9 +603,12 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             {dashboardType === "organization" 
               ? (orgProfile?.organization?.name || orgProfile?.user?.name || "Organization")
-              : (currentUser?.displayName || currentUser?.name || "Your")} Impact Overview
+              : (currentUser?.displayName || currentUser?.name || "Your")}
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mt-1">
+            Dashboard Overview
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
             {dashboardType === "volunteer" 
               ? "Track your impact and manage your volunteer activities" 
               : "Track your organization's projects, manage volunteers, and measure their collective impact"}
@@ -644,8 +647,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* KPI Cards - 2x2 Grid Layout */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4">
+      {/* KPI Cards - 1x4 Grid Layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard

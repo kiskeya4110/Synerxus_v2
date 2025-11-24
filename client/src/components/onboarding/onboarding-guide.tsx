@@ -48,15 +48,16 @@ export default function OnboardingGuide() {
   const totalSteps = steps.length;
   const progress = ((currentStepIndex + 1) / totalSteps) * 100;
 
-  // Calculate tooltip position based on target
-  const tooltipTop = position.top + position.height + 20;
-  const tooltipLeft = Math.max(10, position.left + position.width / 2 - 150);
+  // Calculate tooltip position based on target (or center if no target)
+  const hasTarget = currentStep.targetSelector && (position.width > 0 || position.height > 0);
+  const tooltipTop = hasTarget ? position.top + position.height + 20 : window.innerHeight / 2 - 150;
+  const tooltipLeft = hasTarget ? Math.max(10, position.left + position.width / 2 - 200) : window.innerWidth / 2 - 200;
 
   return (
     <>
       {/* Overlay highlighting the target element */}
       <AnimatePresence>
-        {currentStep.targetSelector && (
+        {hasTarget && (
           <>
             {/* Semi-transparent overlay */}
             <motion.div

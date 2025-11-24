@@ -13,6 +13,7 @@ import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import sdgWheelPath from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
 }
@@ -624,8 +625,16 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         </div>
 
         {/* Main Report Card */}
-        <Card id="org-impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black">
-          <CardContent className="p-8 print:p-4">
+        <Card id="org-impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black relative overflow-hidden">
+          {/* SDG Wheel Watermark */}
+          <div className="absolute bottom-0 right-0 pointer-events-none opacity-5 dark:opacity-10 print:opacity-3">
+            <img
+              src={sdgWheelPath}
+              alt="UN SDG Wheel"
+              className="w-96 h-96 object-contain"
+            />
+          </div>
+          <CardContent className="p-8 print:p-4 relative z-10">
             {/* Header Section - Split Layout */}
             <div className="grid grid-cols-3 gap-8 mb-8 pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:gap-4 print:mb-4 print:pb-3">
               {/* Left Side: Logo, Organization Name, Title, Impact Score, Date */}

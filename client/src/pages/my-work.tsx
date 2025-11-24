@@ -15,19 +15,6 @@ import MyTasksPage from "./my-tasks";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
-
-  // Scroll to top when page loads
-  useEffect(() => {
-    // Use setTimeout to ensure DOM is ready
-    const timer = setTimeout(() => {
-      const mainElement = document.querySelector('main');
-      if (mainElement) {
-        mainElement.scrollTop = 0;
-      }
-    }, 50);
-    
-    return () => clearTimeout(timer);
-  }, []);
   
   // Fetch current user
   const { data: currentUser } = useQuery<User>({

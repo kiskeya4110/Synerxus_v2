@@ -53,7 +53,7 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex flex-1">
         <Sidebar />
         <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6">
-          <div className="max-w-full pt-4">
+          <div className="max-w-full">
             {children}
             <Footer />
           </div>

@@ -20,17 +20,6 @@ export default function Assignments() {
   const { toast } = useToast();
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
-  // Scroll to top when page loads
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const mainElement = document.querySelector('main');
-      if (mainElement) {
-        mainElement.scrollTop = 0;
-      }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
-
   // Get current user from server session (no localStorage dependency)
   const { data: currentUser, isLoading: userLoading } = useQuery({
     queryKey: ["/api/users/me"],

@@ -91,17 +91,6 @@ export default function MyApplicationsPage() {
   const userId = localStorage.getItem('currentUserId');
   const [expandedApps, setExpandedApps] = useState<Set<number>>(new Set());
 
-  // Scroll to top when page loads
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const mainElement = document.querySelector('main');
-      if (mainElement) {
-        mainElement.scrollTop = 0;
-      }
-    }, 50);
-    return () => clearTimeout(timer);
-  }, []);
-
   const toggleExpanded = (appId: number) => {
     setExpandedApps(prev => {
       const newSet = new Set(prev);

@@ -226,7 +226,7 @@ export default function SDGMapping() {
   
   // Compute AI recommendations when project is selected
   useEffect(() => {
-    if (selectedProjectId) {
+    if (selectedProjectId && organizationProjects && organizationProjects.length > 0) {
       const project = organizationProjects.find((p: any) => p.id.toString() === selectedProjectId);
       if (project) {
         const projectText = `${project.name} ${project.description || ""}`;
@@ -240,7 +240,7 @@ export default function SDGMapping() {
       setRecommendedSDGs([]);
       setSelectedGoalForConnection([]);
     }
-  }, [selectedProjectId, organizationProjects]);
+  }, [selectedProjectId]);
   
   // Mutation to update project SDGs
   const updateProjectSDGs = useMutation({

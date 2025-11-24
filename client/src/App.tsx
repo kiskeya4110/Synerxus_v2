@@ -37,6 +37,7 @@ import Achievements from "@/pages/achievements";
 import Leaderboard from "@/pages/leaderboard";
 import OrganizationLeaderboard from "@/pages/organization-leaderboard";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
+import SDGMapping from "@/pages/sdg-mapping";
 import NotFound from "@/pages/not-found";
 
 function RootRedirectRoute() {
@@ -106,6 +107,7 @@ function LayoutRoute() {
       <Route path="/achievements" component={Achievements} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
+      <Route path="/sdg-mapping" component={SDGMapping} />
     </Layout>
   );
 }

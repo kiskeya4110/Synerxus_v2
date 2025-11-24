@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSidebarContext } from "@/contexts/sidebar-context";
 import Logo from "@/components/ui/logo";
 import { queryClient } from "@/lib/queryClient";
+import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
@@ -174,9 +175,22 @@ export default function Header() {
 
         {/* Logo - Synerxus on left side of search bar */}
         <Link href="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
-          <div className="flex flex-col items-start -space-y-1">
-            <Logo size="sm" />
-            <span className="text-[10px] font-semibold" style={{ color: "#b45309" }}>Connect. Manage. Impact Globally</span>
+          <div className="flex items-center gap-3">
+            <img
+              src={logoImage}
+              alt="Synerxus Logo"
+              className="h-16 w-auto object-contain"
+            />
+            <div className="flex flex-col">
+              <div className="text-2xl font-bold leading-tight">
+                <span style={{ color: "#1e3a8a" }}>SYNER</span>
+                <span style={{ color: "#b45309" }}>XUS</span>
+              </div>
+              <div className="text-[11px] font-bold leading-tight mt-0.5">
+                <span style={{ color: "#1e3a8a" }}>Connect and Manage</span>
+                <span style={{ color: "#b45309" }}> Impact Globally</span>
+              </div>
+            </div>
           </div>
         </Link>
         

@@ -667,7 +667,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                 <div className="space-y-2">
                   <div>
                     <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
-                      Impact Score: {Math.round((activeVolunteers / 100) * 85 + operatingMargin / 2)}/100
+                      Impact Score: {dashboardData?.impactScore || organizationImpactScore}/100
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">

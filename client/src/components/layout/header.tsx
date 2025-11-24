@@ -107,8 +107,15 @@ export default function Header() {
         title: "Signed out successfully",
         description: "You have been signed out of your account.",
       });
+      // Redirect to landing page after logout
+      setLocation('/landing');
     } catch (error) {
       console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

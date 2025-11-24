@@ -16,6 +16,7 @@ import { insertMatchableOrganizationSchema, type MatchableOrganization } from "@
 import { Loader2, Plus, X, Building2, MapPin, Target, Heart } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -461,6 +462,7 @@ export default function OrganizationProfileSettings() {
                   )}
                   {existingProfile ? "Update Profile" : "Create Profile"}
                 </Button>
+                <OnboardingTrigger variant="outline" showText={true} />
               </div>
             </form>
           </Form>

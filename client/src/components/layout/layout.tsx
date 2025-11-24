@@ -3,7 +3,9 @@ import { useLocation } from "wouter";
 import Header from "./header";
 import Sidebar from "./sidebar";
 import Footer from "./footer";
+import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,6 +14,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
+  const { startOnboarding, isCompleted } = useOnboarding();
   
   // Public routes that don't require authentication
   const publicRoutes = [
@@ -42,6 +45,20 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [user, loading, location, setLocation, isProtectedRoute]);
 
+  // Auto-start onboarding for new users on dashboard
+  useEffect(() => {
+    if (location === "/dashboard" && !loading && user && !isCompleted) {
+      const hasSeenOnboarding = localStorage.getItem('onboarding_completed');
+      if (!hasSeenOnboarding) {
+        // Delay slightly to allow page to render first
+        const timer = setTimeout(() => {
+          startOnboarding();
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [location, loading, user, isCompleted, startOnboarding]);
+
   // Pages without layout (landing and login)
   if (location === "/" || location === "/login") {
     return <>{children}</>;
@@ -59,6 +76,7 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         </main>
       </div>
+      <OnboardingGuide />
     </div>
   );
 }

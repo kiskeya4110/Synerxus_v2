@@ -87,6 +87,7 @@ export default function Login() {
         
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
+        localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
         
         // Determine redirect based on profile completion
         const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
@@ -143,6 +144,7 @@ export default function Login() {
         
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
+        localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
         
         // Determine redirect based on profile completion
         const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
@@ -209,6 +211,7 @@ export default function Login() {
         
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
+        localStorage.setItem('userType', userType || 'volunteer');
         
         // Redirect to appropriate intake form based on user type
         if (userType === 'volunteer') {

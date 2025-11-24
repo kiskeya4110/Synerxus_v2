@@ -1,4 +1,7 @@
 import { Route, Router } from "wouter";
+import { SidebarProvider } from "@/contexts/sidebar-context";
+import { OnboardingProvider } from "@/contexts/onboarding-context";
+import { volunteerOnboardingSteps, organizationOnboardingSteps } from "@shared/onboarding-steps";
 import Layout from "@/components/layout/layout";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
@@ -35,12 +38,20 @@ import DiscoverOpportunities from "@/pages/discover-opportunities";
 import NotFound from "@/pages/not-found";
 
 export default function App() {
+  // Determine user type from localStorage to select appropriate onboarding steps
+  const userType = localStorage.getItem('userType');
+  const steps = userType === 'organization' ? organizationOnboardingSteps : volunteerOnboardingSteps;
+
   return (
-    <Router>
-      <Route path="/login" component={Login} />
-      <Route path="/landing" component={Landing} />
-      <Route component={LayoutRoute} />
-    </Router>
+    <SidebarProvider>
+      <OnboardingProvider steps={steps}>
+        <Router>
+          <Route path="/login" component={Login} />
+          <Route path="/landing" component={Landing} />
+          <Route component={LayoutRoute} />
+        </Router>
+      </OnboardingProvider>
+    </SidebarProvider>
   );
 }
 

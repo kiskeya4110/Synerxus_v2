@@ -40,6 +40,7 @@ import {
   Award,
   Sliders,
 } from "lucide-react";
+import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 import {
   Form,
   FormControl,
@@ -1228,6 +1229,7 @@ export default function VolunteerProfileSettings() {
                     {existingProfile ? "Update" : "Create"}
                   </span>
                 </Button>
+                <OnboardingTrigger variant="outline" showText={true} />
               </div>
             </form>
           </Form>

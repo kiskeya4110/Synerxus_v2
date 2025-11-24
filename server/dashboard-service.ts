@@ -313,8 +313,8 @@ export async function getDashboardDataForOrganization(userId: number) {
     const organizationPrimarySdgs = organizationProfile?.primarySdgs || [];
 
     // Calculate summary metrics
-    const uniqueVolunteerIds = new Set(organizationActivities.map(activity => activity.userId).filter((id): id is number => id !== null));
-    const activeVolunteers = uniqueVolunteerIds.size;
+    // activeVolunteers = all volunteers assigned to organization's projects
+    const activeVolunteers = organizationVolunteers.length;
 
     const totalHours = organizationActivities.reduce((sum, activity) => sum + activity.hours, 0);
 

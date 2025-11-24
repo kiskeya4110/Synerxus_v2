@@ -271,7 +271,7 @@ export default function Header() {
                 <button className="flex items-center focus:outline-none">
                   <Avatar className="h-8 w-8">
                     <AvatarImage 
-                      src={currentUser?.userType === 'organization' ? organizationProfile?.logo : volunteerProfile?.profilePhotoUrl} 
+                      src={currentUser?.userType === 'organization' ? (organizationProfile?.organization?.logo || organizationProfile?.logo) : (volunteerProfile?.user?.avatar || volunteerProfile?.avatar)} 
                       alt="User avatar" 
                     />
                     <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>

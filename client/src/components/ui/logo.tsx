@@ -23,29 +23,32 @@ export default function Logo({
 
   const sizes = {
     sm: {
-      logo: "h-9",
-      text: "text-[1.5rem]",
+      logo: "h-10",
+      text: "text-[1.6rem]",
       letterSpacing: "0.02em",
-      motto: "text-[8px]",
+      motto: "text-[7px]",
+      mottoLineHeight: "leading-tight",
     },
     md: {
       logo: "h-14 sm:h-12",
       text: "text-[2.4rem] sm:text-[2.2rem]",
       letterSpacing: "0.03em",
       motto: "text-[10px]",
+      mottoLineHeight: "leading-tight",
     },
     lg: {
       logo: "h-16",
       text: "text-[2.85rem]",
       letterSpacing: "0.04em",
       motto: "text-[12px]",
+      mottoLineHeight: "leading-tight",
     },
   };
 
   const sizeClasses = sizes[size];
 
   const content = (
-    <div className="flex items-start gap-2">
+    <div className="flex items-start gap-2.5">
       {showIcon && !imageError && (
         <img
           src={logoImage}
@@ -58,10 +61,10 @@ export default function Logo({
           onError={() => setImageError(true)}
         />
       )}
-      <div className="flex flex-col items-start justify-start">
+      <div className="flex flex-col items-start justify-start pt-0.5">
         <span
           className={cn(
-            "font-bold whitespace-nowrap leading-none flex items-center",
+            "font-bold whitespace-nowrap leading-none",
             sizeClasses.text,
           )}
           style={{ letterSpacing: sizeClasses.letterSpacing }}
@@ -70,11 +73,7 @@ export default function Logo({
           <span style={{ color: "#b45309" }}>XUS</span>
         </span>
         {showMotto && (
-          <p className={cn("font-semibold whitespace-nowrap leading-none", sizeClasses.motto)}>
-            <span style={{ color: "#1e3a8a" }}>Connect</span>
-            <span className="text-slate-900">. </span>
-            <span className="text-slate-900">Manage</span>
-            <span className="text-slate-900">. </span>
+          <p className={cn("font-bold whitespace-nowrap", sizeClasses.motto, sizeClasses.mottoLineHeight)} style={{ marginTop: "-2px" }}>
             <span style={{ color: "#b45309" }}>Impact Globally</span>
           </p>
         )}

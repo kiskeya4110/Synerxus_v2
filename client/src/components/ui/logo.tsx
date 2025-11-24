@@ -45,20 +45,20 @@ export default function Logo({
   const sizeClasses = sizes[size];
 
   const content = (
-    <div className="flex flex-col items-start">
-      <div className="flex items-center gap-2">
-        {showIcon && !imageError && (
-          <img
-            src={logoImage}
-            alt="Synerxus Logo"
-            className={cn(
-              sizeClasses.logo,
-              "w-auto object-contain flex-shrink-0",
-            )}
-            loading="eager"
-            onError={() => setImageError(true)}
-          />
-        )}
+    <div className="flex items-start gap-2">
+      {showIcon && !imageError && (
+        <img
+          src={logoImage}
+          alt="Synerxus Logo"
+          className={cn(
+            sizeClasses.logo,
+            "w-auto object-contain flex-shrink-0",
+          )}
+          loading="eager"
+          onError={() => setImageError(true)}
+        />
+      )}
+      <div className="flex flex-col items-start justify-start">
         <span
           className={cn(
             "font-bold whitespace-nowrap leading-none flex items-center",
@@ -69,16 +69,16 @@ export default function Logo({
           <span style={{ color: "#1e3a8a" }}>SYNER</span>
           <span style={{ color: "#b45309" }}>XUS</span>
         </span>
+        {showMotto && (
+          <p className={cn("font-semibold whitespace-nowrap leading-none", sizeClasses.motto)}>
+            <span style={{ color: "#1e3a8a" }}>Connect</span>
+            <span className="text-slate-900">. </span>
+            <span className="text-slate-900">Manage</span>
+            <span className="text-slate-900">. </span>
+            <span style={{ color: "#b45309" }}>Impact Globally</span>
+          </p>
+        )}
       </div>
-      {showMotto && (
-        <p className={cn("font-semibold whitespace-nowrap leading-tight -ml-0.5", sizeClasses.motto)}>
-          <span style={{ color: "#1e3a8a" }}>Connect</span>
-          <span className="text-slate-900">. </span>
-          <span className="text-slate-900">Manage</span>
-          <span className="text-slate-900">. </span>
-          <span style={{ color: "#b45309" }}>Impact Globally</span>
-        </p>
-      )}
     </div>
   );
 

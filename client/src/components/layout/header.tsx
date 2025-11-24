@@ -28,7 +28,6 @@ import { useSidebarContext } from "@/contexts/sidebar-context";
 import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import Logo from "@/components/ui/logo";
 import { queryClient } from "@/lib/queryClient";
-import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
@@ -183,26 +182,19 @@ export default function Header() {
         {/* Logo - Synerxus on left side of search bar */}
         <button 
           onClick={() => setLocation('/')}
-          className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none"
+          className="hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none hidden sm:block"
           data-testid="button-logo-header"
         >
-          <div className="flex items-center gap-2 md:gap-3">
-            <img
-              src={logoImage}
-              alt="Synerxus Logo"
-              className="h-10 md:h-12 w-auto object-contain flex-shrink-0"
-            />
-            <div className="flex flex-col hidden sm:flex">
-              <div className="text-lg md:text-2xl font-bold leading-tight">
-                <span style={{ color: "#1e3a8a" }}>SYNER</span>
-                <span style={{ color: "#b45309" }}>XUS</span>
-              </div>
-              <div className="text-[9px] md:text-[11px] font-bold leading-tight mt-0.5">
-                <span style={{ color: "#1e3a8a" }}>Connect</span>
-                <span style={{ color: "#b45309" }}> Impact</span>
-              </div>
-            </div>
-          </div>
+          <Logo size="sm" showMotto={true} showIcon={true} />
+        </button>
+
+        {/* Logo mobile version - icon only */}
+        <button 
+          onClick={() => setLocation('/')}
+          className="hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none sm:hidden"
+          data-testid="button-logo-header-mobile"
+        >
+          <Logo size="sm" showMotto={false} showIcon={true} />
         </button>
         
         {/* Search Bar */}

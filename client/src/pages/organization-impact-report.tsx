@@ -117,10 +117,12 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
   });
 
   // Fetch dashboard data for organization-level metrics consistency
+  // Pass both userId (for validation) and organizationId (for explicit scoping)
   const { data: dashboardData } = useQuery<any>({
-    queryKey: ["/api/dashboard/summary", currentUser?.id],
+    queryKey: ["/api/dashboard/summary", currentUser?.id, currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.id) return null;
+      // Use userId for backend to identify the user and their organization
       const response = await fetch(`/api/dashboard/summary?userId=${currentUser.id}`);
       return response.ok ? response.json() : null;
     },

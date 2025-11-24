@@ -1014,8 +1014,8 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
 
               {/* Financial Tab - Aggregate 2x2 KPI layout */}
               <TabsContent value="financial" className="space-y-6">
-                {/* Financial KPIs - Aggregate 2x2 layout */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Financial KPIs - Responsive layout: 2x2 mobile, 1x4 web */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Revenue</p>
                     <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">${(totalRevenue / 1000).toFixed(0)}K</p>

@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="bg-gray-900 dark:bg-gray-950 text-gray-200 py-3 border-t border-gray-800 mt-6">
       <div className="max-w-full mx-auto px-4 lg:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           {/* Brand & Links Section */}
           <div className="space-y-2">
             <div>

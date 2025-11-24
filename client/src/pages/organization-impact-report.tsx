@@ -721,7 +721,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
             {/* View Mode Content */}
             {viewMode === "tabs" ? (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-6 print:hidden">
+              <TabsList className="grid w-full grid-cols-5 mb-6 print:hidden print:grid-cols-5">
                 <TabsTrigger value="overview" className="flex items-center gap-2">
                   <Target className="h-4 w-4" />
                   <span className="hidden sm:inline">Overview</span>
@@ -1191,11 +1191,10 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
               </TabsContent>
             </Tabs>
             ) : (
-            // Single Page View - Stack all tab reports sequentially
-            <div className="space-y-8">
-              {/* OVERVIEW SECTION */}
-              <div className="print:page-break-inside-avoid">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 pb-2 border-b-2 border-blue-200 dark:border-blue-700">Overview</h2>
+            // Single Page View - Render all tabs sequentially with identical styling
+            <>
+              {/* Overview Tab Content */}
+              <div className="space-y-6">
                 
                 {/* Compact KPIs - 2 rows x 2 cols */}
                 <div className="grid grid-cols-2 gap-3 mb-3">
@@ -1488,7 +1487,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                   </CardContent>
                 </Card>
               </div>
-            </div>
+            </>
             )}
           </CardContent>
         </Card>

@@ -252,10 +252,12 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
   };
 
   const handlePrint = () => {
+    setViewMode("single");
     setIsPrinting(true);
     setTimeout(() => {
       window.print();
       setIsPrinting(false);
+      setViewMode("tabs");
     }, 100);
   };
 
@@ -263,19 +265,26 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
     const element = document.getElementById('org-impact-report-content');
     if (!element) return;
     
-    const opt = {
-      margin: 10,
-      filename: `Organization_Impact_Report_${organization?.name || 'Report'}_${new Date().getTime()}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-    };
+    // Temporarily switch to single view for complete PDF
+    const originalViewMode = viewMode;
+    setViewMode("single");
     
-    html2pdf().set(opt).from(element).save();
-    toast({
-      title: "Downloaded!",
-      description: "Organization impact report has been saved as PDF",
-    });
+    setTimeout(() => {
+      const opt = {
+        margin: 10,
+        filename: `Organization_Impact_Report_${organization?.name || 'Report'}_${new Date().getTime()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
+      
+      html2pdf().set(opt).from(element).save();
+      setViewMode(originalViewMode);
+      toast({
+        title: "Downloaded!",
+        description: "Organization impact report has been saved as PDF",
+      });
+    }, 300);
   };
 
   const handleShareSocial = (platform: 'twitter' | 'linkedin' | 'facebook') => {
@@ -1485,22 +1494,61 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         </Card>
       </div>
 
-      {/* Print Styles */}
+      {/* Print Styles - Comprehensive for unified document */}
       <style>{`
         @media print {
           body { margin: 0; padding: 0; }
+          * { page-break-inside: avoid; }
+          
+          /* Hide UI elements */
           .print\\:hidden { display: none !important; }
+          
+          /* Report card styling */
           .print\\:shadow-none { box-shadow: none !important; }
           .print\\:border-black { border-color: black !important; }
+          
+          /* Spacing */
           .print\\:p-4 { padding: 1rem !important; }
           .print\\:mb-4 { margin-bottom: 1rem !important; }
           .print\\:pb-3 { padding-bottom: 0.75rem !important; }
           .print\\:gap-4 { gap: 1rem !important; }
           .print\\:mb-3 { margin-bottom: 0.75rem !important; }
+          .print\\:p-1.5 { padding: 0.375rem !important; }
+          .print\\:space-y-1.5 > * + * { margin-top: 0.375rem !important; }
+          
+          /* Typography */
           .print\\:text-2xl { font-size: 1.5rem !important; }
           .print\\:text-xs { font-size: 0.75rem !important; }
           .print\\:text-sm { font-size: 0.875rem !important; }
+          .print\\:text-lg { font-size: 1.125rem !important; }
+          
+          /* Transforms */
           .print\\:scale-75 { transform: scale(0.75) !important; }
+          
+          /* Page break rules for sections */
+          .print\\:page-break-before { page-break-before: always !important; }
+          .print\\:page-break-inside-avoid { page-break-inside: avoid !important; }
+          
+          /* Prevent orphans/widows for readability */
+          h1, h2, h3, h4, h5, h6 { page-break-after: avoid; page-break-inside: avoid; }
+          
+          /* Keep cards together */
+          [role="tabpanel"] { page-break-inside: avoid; }
+          
+          /* Grid adjustments for print */
+          .grid { page-break-inside: avoid; }
+          
+          /* Charts should stay together */
+          canvas { page-break-inside: avoid; }
+          
+          /* Proper line height for readability */
+          body { line-height: 1.5; }
+          
+          /* Margin management */
+          body { margin: 0.5in; }
+          
+          /* Prevent color loss in grayscale */
+          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
         }
       `}</style>
     </div>

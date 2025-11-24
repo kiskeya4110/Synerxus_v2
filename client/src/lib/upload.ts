@@ -1,30 +1,38 @@
-import { storage } from "./firebase";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-
 export interface UploadResult {
   url: string;
   path: string;
 }
 
 /**
- * Upload a file to Firebase Storage
+ * Upload a file using FormData
  * @param file - The file to upload
  * @param path - The storage path (e.g., 'profile-photos/user-123.jpg')
  * @returns Promise with the download URL and storage path
  */
 export async function uploadFile(file: File, path: string): Promise<UploadResult> {
   try {
-    const storageRef = ref(storage, path);
-    const snapshot = await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(snapshot.ref);
-    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('path', path);
+
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `Upload failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
     return {
-      url,
-      path: snapshot.ref.fullPath,
+      url: result.url,
+      path: result.path,
     };
   } catch (error) {
-    console.error("Error uploading file:", error);
-    throw new Error("Failed to upload file. Please try again.");
+    console.error('Error uploading file:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to upload file. Please try again.');
   }
 }
 
@@ -53,7 +61,7 @@ export async function uploadProfilePhoto(
 
   // Generate unique filename with timestamp
   const timestamp = Date.now();
-  const fileExtension = file.name.split('.').pop();
+  const fileExtension = file.name.split('.').pop() || 'jpg';
   const sanitizedUserId = userId.replace(/[^a-zA-Z0-9-_]/g, '_');
   const filename = `${sanitizedUserId}-${timestamp}.${fileExtension}`;
   const path = `profile-photos/${userType}/${filename}`;
@@ -62,32 +70,38 @@ export async function uploadProfilePhoto(
 }
 
 /**
- * Delete a file from Firebase Storage
+ * Delete a file from Object Storage
  * @param path - The storage path of the file to delete
  */
 export async function deleteFile(path: string): Promise<void> {
   try {
-    const storageRef = ref(storage, path);
-    await deleteObject(storageRef);
-  } catch (error) {
-    console.error("Error deleting file:", error);
-    // Don't throw error if file doesn't exist
-    if ((error as any).code !== 'storage/object-not-found') {
-      throw new Error("Failed to delete file");
+    const response = await fetch('/api/upload', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path }),
+    });
+
+    if (!response.ok && response.status !== 404) {
+      throw new Error(`Delete failed: ${response.statusText}`);
     }
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    throw new Error(error instanceof Error ? error.message : 'Failed to delete file');
   }
 }
 
 /**
- * Extract storage path from a Firebase Storage URL
- * @param url - The Firebase Storage download URL
- * @returns The storage path or null if not a valid Firebase Storage URL
+ * Extract storage path from a storage URL
+ * @param url - The storage download URL
+ * @returns The storage path or null if not a valid storage URL
  */
 export function extractStoragePath(url: string): string | null {
   try {
-    const urlObj = new URL(url);
-    if (urlObj.hostname.includes('firebasestorage.googleapis.com')) {
-      const pathMatch = urlObj.pathname.match(/\/o\/(.+?)(\?|$)/);
+    // For Replit object storage URLs
+    if (url.includes('/api/storage/')) {
+      const pathMatch = url.match(/\/api\/storage\/(.+)$/);
       if (pathMatch) {
         return decodeURIComponent(pathMatch[1]);
       }

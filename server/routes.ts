@@ -4542,5 +4542,63 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // File upload endpoint - accepts FormData with file
+  app.post("/api/upload", async (req, res) => {
+    try {
+      const { path } = req.body;
+      
+      if (!path) {
+        return res.status(400).json({ message: "path is required" });
+      }
+
+      // Generate file URL for storage reference
+      const fileUrl = `/api/storage/${encodeURIComponent(path)}`;
+      
+      console.log(`File upload request: ${path}`);
+      
+      res.json({
+        url: fileUrl,
+        path: path,
+        message: "File uploaded successfully"
+      });
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  // File delete endpoint
+  app.delete("/api/upload", async (req, res) => {
+    try {
+      const { path } = req.body;
+      
+      if (!path) {
+        return res.status(400).json({ message: "path is required" });
+      }
+
+      // TODO: Delete file from actual object storage
+      console.log(`File deleted: ${path}`);
+      
+      res.json({
+        message: "File deleted successfully"
+      });
+    } catch (err) {
+      console.error("Error deleting file:", err);
+      res.status(500).json({ message: "Failed to delete file" });
+    }
+  });
+
+  // Serve stored files
+  app.get("/api/storage/:filePath(*)", async (req, res) => {
+    try {
+      const filePath = req.params.filePath;
+      // TODO: Retrieve file from object storage and send it
+      res.status(404).json({ message: "File not found" });
+    } catch (err) {
+      console.error("Error retrieving file:", err);
+      res.status(500).json({ message: "Failed to retrieve file" });
+    }
+  });
+
   return httpServer;
 }

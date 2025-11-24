@@ -13,7 +13,7 @@ export default function Footer() {
             <div>
               <h3 className="text-sm font-bold text-white mb-0.5">Synerxus</h3>
               <p className="text-[11px] text-gray-400">
-                Connect. Collaborate. Impact Globally.
+                Connect. Manage. Impact Globally.
               </p>
             </div>
             <div>

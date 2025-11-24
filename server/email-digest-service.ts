@@ -276,7 +276,7 @@ function generateEmailTemplate(digest: WeeklyDigestData): string {
           </div>
 
           <div class="footer">
-            <p style="margin: 0 0 10px 0;">Synerxus - Connect. Collaborate. Impact Globally.</p>
+            <p style="margin: 0 0 10px 0;">Synerxus - Connect. Manage. Impact Globally.</p>
             <p style="margin: 0;">This email was sent because you have email digests enabled in your account settings.</p>
             <p style="margin: 10px 0 0 0;"><a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}/volunteer-profile-settings" style="color: #3b82f6; text-decoration: none;">Manage Notification Settings</a></p>
           </div>
@@ -402,7 +402,7 @@ function generateOrganizationEmailTemplate(digest: any): string {
           </div>
 
           <div class="footer">
-            <p style="margin: 0 0 10px 0;">Synerxus - Connect. Collaborate. Impact Globally.</p>
+            <p style="margin: 0 0 10px 0;">Synerxus - Connect. Manage. Impact Globally.</p>
             <p style="margin: 0;">This email was sent to ${digest.managerEmail}</p>
           </div>
         </div>

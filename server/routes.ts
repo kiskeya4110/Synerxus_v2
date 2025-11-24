@@ -255,7 +255,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === User Routes ===
   app.get("/api/users", async (req, res) => {
     try {
+      const { userType } = req.query;
       const users = await storage.listUsers();
+      
+      // Server-side filtering for userType
+      if (userType) {
+        const filtered = users.filter((u: any) => u.userType === userType);
+        return res.json(filtered);
+      }
+      
       res.json(users);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -1093,10 +1101,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // **KPI Tracking**: Update assignment's hoursCompleted when activity is logged
       if (activity.projectId && activity.userId) {
         try {
-          // Get all activities for this project-volunteer pair
-          const allActivities = await storage.listVolunteerActivities();
-          const projectActivities = allActivities.filter(
-            (a: any) => a.projectId === activity.projectId && a.userId === activity.userId
+          // Get activities for this project-volunteer pair using optimized query
+          const userActivities = await storage.listVolunteerActivitiesByUser(activity.userId);
+          const projectActivities = userActivities.filter(
+            (a: any) => a.projectId === activity.projectId
           );
           
           // Calculate total hours logged

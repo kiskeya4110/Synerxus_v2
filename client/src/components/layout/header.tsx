@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useSidebarContext } from "@/contexts/sidebar-context";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 import Logo from "@/components/ui/logo";
 import { queryClient } from "@/lib/queryClient";
 import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
@@ -48,14 +49,13 @@ export default function Header() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { toggleSidebar } = useSidebarContext();
+  const userId = useCurrentUserId();
 
   // Fetch current user to determine user type
-  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
       const response = await fetch(url);
       return response.json();
     },

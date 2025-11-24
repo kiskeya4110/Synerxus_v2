@@ -28,19 +28,19 @@ import { useQuery } from "@tanstack/react-query";
 import Logo from "@/components/ui/logo";
 import type { User } from "@shared/schema";
 import { useSidebarContext } from "@/contexts/sidebar-context";
+import { useCurrentUserId } from "@/hooks/use-current-user-id";
 
 export default function Sidebar() {
   const [location] = useLocation();
   const { sidebarOpen, setSidebarOpen } = useSidebarContext();
   const isMobile = useIsMobile();
+  const userId = useCurrentUserId();
 
   // Fetch current user to determine role
-  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
+      const url = userId ? `/api/users/me?userId=${userId}` : '/api/users/me';
       const response = await fetch(url);
       return response.json();
     },

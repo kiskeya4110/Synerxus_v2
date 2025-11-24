@@ -84,13 +84,9 @@ export default function ImpactVisualization() {
 
   // Calculate aggregated metrics from real data
   const aggregatedMetrics = useMemo(() => {
-    const totalPeople = projectImpacts.reduce((sum: number, impact: any) => {
-      const metric = impactMetrics.find((m: any) => m.id === impact.metricId);
-      if (metric && (metric.category === "Health" || metric.category === "Education" || metric.category === "Water & Sanitation")) {
-        return sum + (impact.value || 0);
-      }
-      return sum;
-    }, 0);
+    // Use backend-calculated totalPeopleImpacted (uses keyword-based filtering)
+    // instead of frontend recalculation with restrictive category filtering
+    const totalPeople = dashboardData?.totalPeopleImpacted || 0;
 
     const communitiesServed = new Set(projects.map((p: any) => p.location)).size;
     const totalHours = volunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
@@ -107,7 +103,7 @@ export default function ImpactVisualization() {
       totalHours,
       sdgsAddressed: uniqueSDGs.size,
     };
-  }, [projects, projectImpacts, volunteerActivities, impactMetrics]);
+  }, [projects, projectImpacts, volunteerActivities, impactMetrics, dashboardData?.totalPeopleImpacted]);
 
   // Process project outcomes from real data with metric combination
   const projectOutcomes = useMemo(() => {

@@ -1,7 +1,9 @@
-import { Route, Router } from "wouter";
+import { Route, Router, useLocation } from "wouter";
+import { useEffect } from "react";
 import { SidebarProvider } from "@/contexts/sidebar-context";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
 import { volunteerOnboardingSteps, organizationOnboardingSteps } from "@shared/onboarding-steps";
+import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/layout";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
@@ -37,6 +39,21 @@ import OrganizationLeaderboard from "@/pages/organization-leaderboard";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
 import NotFound from "@/pages/not-found";
 
+function RootRedirectRoute() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (user) {
+      setLocation('/dashboard');
+    } else {
+      setLocation('/landing');
+    }
+  }, [user, setLocation]);
+
+  return null;
+}
+
 export default function App() {
   // Determine user type from localStorage to select appropriate onboarding steps
   const userType = localStorage.getItem('userType');
@@ -46,6 +63,7 @@ export default function App() {
     <SidebarProvider>
       <OnboardingProvider steps={steps}>
         <Router>
+          <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
           <Route component={LayoutRoute} />
@@ -58,7 +76,6 @@ export default function App() {
 function LayoutRoute() {
   return (
     <Layout>
-      <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />

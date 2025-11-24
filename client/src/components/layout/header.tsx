@@ -61,6 +61,28 @@ export default function Header() {
     enabled: !!userId
   });
 
+  // Fetch organization profile if user is organization
+  const { data: organizationProfile } = useQuery({
+    queryKey: ["/api/profile/organization", currentUser?.id],
+    queryFn: async () => {
+      const response = await fetch('/api/profile/organization');
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: currentUser?.userType === 'organization'
+  });
+
+  // Fetch volunteer profile if user is volunteer
+  const { data: volunteerProfile } = useQuery({
+    queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
+    queryFn: async () => {
+      const response = await fetch('/api/intake/volunteer-profile');
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: currentUser?.userType === 'volunteer'
+  });
+
   // Fetch real notifications from API
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/notifications", userId],
@@ -248,7 +270,10 @@ export default function Header() {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center focus:outline-none">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150" alt="User avatar" />
+                    <AvatarImage 
+                      src={currentUser?.userType === 'organization' ? organizationProfile?.logo : volunteerProfile?.profilePhotoUrl} 
+                      alt="User avatar" 
+                    />
                     <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <span className="ml-2 text-sm font-medium hidden md:block">

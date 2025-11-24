@@ -159,8 +159,8 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-20">
-      <div className="flex items-center justify-between h-16 px-3 md:px-4 gap-3 md:gap-4">
+    <header className="bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-20 w-full">
+      <div className="flex items-center justify-between h-16 px-2 md:px-4 gap-2 md:gap-4 min-w-0">
         {/* Hamburger Menu - Toggle Sidebar */}
         <Button 
           variant="ghost" 
@@ -174,21 +174,21 @@ export default function Header() {
         </Button>
 
         {/* Logo - Synerxus on left side of search bar */}
-        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
-          <div className="flex items-center gap-3">
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
+          <div className="flex items-center gap-2 md:gap-3">
             <img
               src={logoImage}
               alt="Synerxus Logo"
-              className="h-16 w-auto object-contain"
+              className="h-10 md:h-12 w-auto object-contain flex-shrink-0"
             />
-            <div className="flex flex-col">
-              <div className="text-2xl font-bold leading-tight">
+            <div className="flex flex-col hidden sm:flex">
+              <div className="text-lg md:text-2xl font-bold leading-tight">
                 <span style={{ color: "#1e3a8a" }}>SYNER</span>
                 <span style={{ color: "#b45309" }}>XUS</span>
               </div>
-              <div className="text-[11px] font-bold leading-tight mt-0.5">
-                <span style={{ color: "#1e3a8a" }}>Connect and Manage</span>
-                <span style={{ color: "#b45309" }}> Impact Globally</span>
+              <div className="text-[9px] md:text-[11px] font-bold leading-tight mt-0.5">
+                <span style={{ color: "#1e3a8a" }}>Connect</span>
+                <span style={{ color: "#b45309" }}> Impact</span>
               </div>
             </div>
           </div>

@@ -810,7 +810,7 @@ export default function Dashboard() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-12 w-64" />
-        <div className="grid grid-cols-4 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -841,7 +841,7 @@ export default function Dashboard() {
         </div>
         
         {/* Controls Grid - 1 row with filters + optional org button */}
-        <div className={`grid gap-3 md:gap-4 w-full ${dashboardType === "organization" ? "grid-cols-3" : "grid-cols-2"}`}>
+        <div className={`grid gap-3 md:gap-4 w-full ${dashboardType === "organization" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 md:grid-cols-2"}`}>
           {/* Project Filter */}
           <div className="flex flex-col gap-1">
             <Label htmlFor="project-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">Project</Label>
@@ -1007,7 +1007,7 @@ export default function Dashboard() {
       {/* Tasks and Activity Section */}
       <div className="w-full">
         <Tabs defaultValue="tasks" className="w-full">
-          <TabsList className={`w-full grid ${dashboardType === 'volunteer' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <TabsList className={`w-full grid ${dashboardType === 'volunteer' ? 'grid-cols-3' : 'grid-cols-2'}`} style={{overflow: 'auto'}}>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="activity">Recent Activity</TabsTrigger>
             {dashboardType === 'volunteer' && (
@@ -1016,7 +1016,7 @@ export default function Dashboard() {
           </TabsList>
           <TabsContent value="tasks" className="mt-4">
             {/* Task KPIs */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <Card>
                 <CardContent className="p-3">
                   <div className="text-xs text-gray-600 dark:text-gray-400">Total Tasks</div>

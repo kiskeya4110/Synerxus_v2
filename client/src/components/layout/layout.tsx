@@ -67,9 +67,9 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="flex flex-1">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6" style={{ paddingTop: '100px' }}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background p-2 sm:p-3 md:p-4 lg:p-6 mt-16">
           <div className="max-w-full">
             {children}
             <Footer />

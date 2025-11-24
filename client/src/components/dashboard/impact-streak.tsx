@@ -18,13 +18,15 @@ export default function ImpactStreak({ activities }: ImpactStreakProps) {
       return { currentStreak: 0, bestStreak: 0, lastActivityDate: null };
     }
 
-    // Parse dates and sort in descending order
+    // Parse dates and sort in descending order, filtering out invalid dates
     const uniqueDates = Array.from(
       new Set(
-        activities.map((a) => {
-          const date = new Date(a.date);
-          return date.toISOString().split("T")[0];
-        })
+        activities
+          .filter((a) => a.date && !isNaN(new Date(a.date).getTime()))
+          .map((a) => {
+            const date = new Date(a.date);
+            return date.toISOString().split("T")[0];
+          })
       )
     )
       .map((dateStr) => new Date(dateStr))

@@ -310,7 +310,8 @@ export default function Dashboard() {
       if (projectData.length === 0) return "";
       
       const totalHours = projectData.reduce((sum: number, d: any) => sum + (d.hours || 0), 0);
-      const totalPeopleImpacted = projectData.reduce((sum: number, d: any) => sum + (d.peopleImpacted || 0), 0);
+      // Use backend-calculated totalPeopleImpacted for consistency
+      const totalPeopleImpacted = dashboardData?.totalPeopleImpacted || 0;
       
       if (totalHours === 0 && totalPeopleImpacted === 0) return "";
       
@@ -349,7 +350,8 @@ export default function Dashboard() {
     
     const data = filteredMonthlyImpactData;
     const totalHours = data.reduce((sum: number, d: any) => sum + (d.hours || 0), 0);
-    const totalPeopleImpacted = data.reduce((sum: number, d: any) => sum + (d.peopleImpacted || 0), 0);
+    // Use backend-calculated totalPeopleImpacted for consistency (single source of truth)
+    const totalPeopleImpacted = dashboardData?.totalPeopleImpacted || 0;
     
     if (totalHours === 0 && totalPeopleImpacted === 0) return "";
     

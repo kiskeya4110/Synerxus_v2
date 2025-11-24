@@ -92,18 +92,8 @@ export default function ImpactStorytellingPage() {
   const totalHoursContributed = sdgData?.totalEngagementHours || 0;
   const activeProjects = projects.filter((p: any) => p.status !== 'completed').length;
   const completedProjects = projects.filter((p: any) => p.status === 'completed').length;
-  // Aggregate beneficiaries - only count once per impact metric
-  const beneficiaryMap = new Map<string, number>();
-  projectImpacts.forEach((impact: any) => {
-    if (['people', 'beneficiar', 'students', 'individuals', 'participants', 'families', 'community', 'recipients', 'attendees', 'children', 'adults', 'households', 'members']
-        .some(keyword => impact.description?.toLowerCase().includes(keyword))) {
-      const normalizedDesc = impact.description?.toLowerCase().replace(/\s+/g, ' ').trim() || 'unknown';
-      if (!beneficiaryMap.has(normalizedDesc)) {
-        beneficiaryMap.set(normalizedDesc, impact.value || 0);
-      }
-    }
-  });
-  const totalBeneficiariesReached = Array.from(beneficiaryMap.values()).reduce((sum, val) => sum + val, 0);
+  // Use backend-calculated totalPeopleImpacted as single source of truth for consistency
+  const totalBeneficiariesReached = dashboardData?.totalPeopleImpacted || 0;
   const uniqueLocations = new Set(projects.map((p: any) => p.location).filter(Boolean)).size;
   const addressedSDGs = sdgData?.sdgContributions?.map((s: any) => s.sdgNumber) || [];
 

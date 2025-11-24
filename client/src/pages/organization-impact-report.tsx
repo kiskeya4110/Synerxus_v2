@@ -195,31 +195,8 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
     ? dashboardData.totalHours
     : timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   
-  // Calculate real beneficiaries from database only (no estimates)
-  const beneficiariesServed = timeFilter === 'all' && dashboardData?.totalPeopleImpacted !== undefined
-    ? dashboardData.totalPeopleImpacted
-    : (dashboardData?.impacts || [])
-      .filter((i: any) => {
-        // Only count impacts for the organization's projects in the time period
-        if (!orgProjectIds.has(i.projectId)) return false;
-        if (!i.date) return true;
-        
-        const now = new Date();
-        let startDate = new Date(0);
-        switch(timeFilter) {
-          case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          case 'quarter':
-            startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-            break;
-          case 'year':
-            startDate = new Date(now.getFullYear(), 0, 1);
-            break;
-        }
-        return new Date(i.date) >= startDate;
-      })
-      .reduce((sum: number, i: any) => sum + (i.value || 0), 0);
+  // Use backend-calculated totalPeopleImpacted as single source of truth for consistency
+  const beneficiariesServed = dashboardData?.totalPeopleImpacted || 0;
   
   // Calculate realistic funding based on hours and projects
   const fundingSecured = totalProjects > 0 ? totalProjects * 25000 + Math.round(totalHours * 50) : 0;

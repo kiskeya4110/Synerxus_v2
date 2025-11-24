@@ -737,8 +737,8 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
-                {/* Overview buttons in 1 row x 3 columns of equal size */}
-                <div className="grid grid-cols-3 gap-4">
+                {/* Overview buttons in 1 row x 5 columns - fixed layout for single report view */}
+                <div className="grid grid-cols-5 gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                     <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Team Members</p>
                     <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{totalTeam}</p>

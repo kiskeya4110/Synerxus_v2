@@ -78,7 +78,6 @@ function LayoutRoute() {
       <Route path="/achievements" component={Achievements} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
-      <Route component={NotFound} />
     </Layout>
   );
 }

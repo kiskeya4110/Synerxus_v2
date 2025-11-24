@@ -195,8 +195,10 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
     ? dashboardData.totalHours
     : timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   
-  // Use backend-calculated totalPeopleImpacted as single source of truth for consistency
-  const beneficiariesServed = dashboardData?.totalPeopleImpacted || 0;
+  // Use backend-calculated totalPeopleImpacted for consistency, respecting time filter
+  const beneficiariesServed = timeFilter === 'all' && dashboardData?.totalPeopleImpacted !== undefined
+    ? dashboardData.totalPeopleImpacted
+    : timeFilteredActivities.reduce((sum, a) => sum + (a.peopleImpacted || 0), 0);
   
   // Calculate realistic funding based on hours and projects
   const fundingSecured = totalProjects > 0 ? totalProjects * 25000 + Math.round(totalHours * 50) : 0;

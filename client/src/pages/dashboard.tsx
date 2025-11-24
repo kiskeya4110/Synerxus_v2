@@ -875,25 +875,6 @@ export default function Dashboard() {
             </Select>
           </div>
 
-          {/* Global Impact Report for Organizations Only */}
-          {dashboardType === "organization" ? (
-            <Button
-              onClick={() => navigate("/organization-impact-report")}
-              variant="outline"
-              size="sm"
-              className="w-full flex items-center justify-center gap-2"
-              data-testid="button-view-global-report"
-              title="View organization's Global Impact Report"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">Global Report</span>
-              <span className="sm:hidden">Report</span>
-            </Button>
-          ) : (
-            <div className="flex items-center justify-center">
-              {/* Empty for volunteers */}
-            </div>
-          )}
 
         </div>
       </div>

@@ -782,8 +782,8 @@ export default function ImpactVisualization() {
             <CardContent className="p-4 sm:p-6 pt-0">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <Button
-                  variant="ghost"
-                  className="bg-primary/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-primary/20 transition-colors"
+                  variant="outline"
+                  className="bg-primary/10 border-primary/30 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-primary/20 hover:border-primary/60 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 transition-all duration-200 cursor-pointer"
                   onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
                   data-testid="metric-people-impacted"
                 >
@@ -793,11 +793,13 @@ export default function ImpactVisualization() {
                   <div className="text-2xl sm:text-3xl font-bold text-primary mt-1">
                     {aggregatedMetrics.totalPeople.toLocaleString()}
                   </div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                  <div className="text-xs sm:text-sm text-primary/70 dark:text-primary-400/70 mt-2 flex items-center gap-1">
+                    Click for details →
+                  </div>
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="bg-green-500/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-green-500/20 transition-colors"
+                  variant="outline"
+                  className="bg-green-500/10 border-green-500/30 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-green-500/20 hover:border-green-500/60 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 transition-all duration-200 cursor-pointer"
                   onClick={() => handleMetricClick("Communities Served", aggregatedMetrics.communitiesServed)}
                   data-testid="metric-communities"
                 >
@@ -805,11 +807,13 @@ export default function ImpactVisualization() {
                     {currentUser?.userType === 'volunteer' ? 'Communities You Served' : 'Communities Served'}
                   </div>
                   <div className="text-2xl sm:text-3xl font-bold text-green-500 mt-1">{aggregatedMetrics.communitiesServed}</div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                  <div className="text-xs sm:text-sm text-green-600/70 dark:text-green-400/70 mt-2 flex items-center gap-1">
+                    Click for details →
+                  </div>
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="bg-purple-500/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-purple-500/20 transition-colors"
+                  variant="outline"
+                  className="bg-purple-500/10 border-purple-500/30 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-purple-500/20 hover:border-purple-500/60 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 transition-all duration-200 cursor-pointer"
                   onClick={() => handleMetricClick("Volunteer Hours", aggregatedMetrics.totalHours)}
                   data-testid="metric-hours"
                 >
@@ -819,17 +823,21 @@ export default function ImpactVisualization() {
                   <div className="text-2xl sm:text-3xl font-bold text-purple-500 mt-1">
                     {aggregatedMetrics.totalHours.toLocaleString()}
                   </div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                  <div className="text-xs sm:text-sm text-purple-600/70 dark:text-purple-400/70 mt-2 flex items-center gap-1">
+                    Click for details →
+                  </div>
                 </Button>
                 <Button
-                  variant="ghost"
-                  className="bg-amber-500/10 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-amber-500/20 transition-colors"
+                  variant="outline"
+                  className="bg-amber-500/10 border-amber-500/30 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-amber-500/20 hover:border-amber-500/60 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 transition-all duration-200 cursor-pointer"
                   onClick={() => handleMetricClick("SDGs Addressed", aggregatedMetrics.sdgsAddressed)}
                   data-testid="metric-sdgs"
                 >
                   <div className="text-xs sm:text-sm font-semibold text-amber-600 dark:text-amber-400 mb-1">SDGs Addressed</div>
                   <div className="text-2xl sm:text-3xl font-bold text-amber-500 mt-1">{aggregatedMetrics.sdgsAddressed}</div>
-                  <div className="text-xs sm:text-sm text-green-500 dark:text-green-400 mt-1">Click for details</div>
+                  <div className="text-xs sm:text-sm text-amber-600/70 dark:text-amber-400/70 mt-2 flex items-center gap-1">
+                    Click for details →
+                  </div>
                 </Button>
               </div>
             </CardContent>

@@ -4361,6 +4361,63 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // Toggle email digest preference for volunteers
+  app.patch("/api/email-digest/preferences/volunteer", async (req, res) => {
+    try {
+      const userId = await extractUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { enabled } = req.body;
+      const profile = await storage.updateVolunteerProfile(userId, { emailDigestEnabled: enabled });
+      
+      if (!profile) {
+        return res.status(404).json({ message: "Volunteer profile not found" });
+      }
+
+      res.json({
+        message: `Email digests ${enabled ? "enabled" : "disabled"}`,
+        emailDigestEnabled: profile.emailDigestEnabled,
+        success: true
+      });
+    } catch (err) {
+      console.error("Error toggling volunteer digest preference:", err);
+      res.status(500).json({ message: "Error updating digest preference" });
+    }
+  });
+
+  // Toggle email digest preference for organizations
+  app.patch("/api/email-digest/preferences/organization", async (req, res) => {
+    try {
+      const userId = await extractUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const user = await storage.getUser(userId);
+      if (!user || user.userType !== 'organization' || !user.organizationId) {
+        return res.status(403).json({ message: "Only organization managers can use this endpoint" });
+      }
+
+      const { enabled } = req.body;
+      const profile = await storage.updateOrganizationProfile(user.organizationId, { emailDigestEnabled: enabled });
+      
+      if (!profile) {
+        return res.status(404).json({ message: "Organization profile not found" });
+      }
+
+      res.json({
+        message: `Email digests ${enabled ? "enabled" : "disabled"}`,
+        emailDigestEnabled: profile.emailDigestEnabled,
+        success: true
+      });
+    } catch (err) {
+      console.error("Error toggling organization digest preference:", err);
+      res.status(500).json({ message: "Error updating digest preference" });
+    }
+  });
+
   // Leaderboard Stats Routes
   app.get("/api/leaderboard-stats", async (req, res) => {
     try {

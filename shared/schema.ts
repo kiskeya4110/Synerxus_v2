@@ -344,6 +344,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   resumeUrl: text("resume_url"), // URL or path to default resume
   profilePhotoUrl: text("profile_photo_url"), // Profile picture URL
   overallRating: doublePrecision("overall_rating").default(0), // Overall volunteer rating (0-5 stars)
+  emailDigestEnabled: boolean("email_digest_enabled").default(true), // Weekly email digests
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -387,6 +388,7 @@ export const organizationProfiles = pgTable("organization_profiles", {
   socialMedia: jsonb("social_media"), // {facebook, twitter, instagram, linkedIn, website}
   websiteUrl: text("website_url"),
   verificationStatus: text("verification_status").default("pending"), // pending, verified, rejected
+  emailDigestEnabled: boolean("email_digest_enabled").default(true), // Weekly email digests
   onboardingCompleted: boolean("onboarding_completed").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

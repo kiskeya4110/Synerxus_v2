@@ -52,7 +52,7 @@ export default function Layout({ children }: LayoutProps) {
       <Header />
       <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6 pt-8">
+        <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6" style={{ paddingTop: '100px' }}>
           <div className="max-w-full">
             {children}
             <Footer />

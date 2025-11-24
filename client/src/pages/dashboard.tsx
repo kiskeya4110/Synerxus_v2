@@ -883,8 +883,8 @@ export default function Dashboard() {
       {/* Dashboard Content Wrapper for PDF Export */}
       <div id="dashboard-content" className="space-y-6">
 
-      {/* KPI Cards - 2 Column Mobile Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+      {/* KPI Cards + Impact Streak - 5 Column Layout */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-4">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard
@@ -919,6 +919,9 @@ export default function Dashboard() {
               compact={true}
               data-testid="kpi-skills"
             />
+            <div className="hidden md:block md:col-span-1">
+              <ImpactStreak activities={volunteerActivities} />
+            </div>
           </>
         ) : (
           <>
@@ -954,14 +957,11 @@ export default function Dashboard() {
               compact={true}
               data-testid="kpi-sdgs"
             />
+            <div className="col-span-2 md:col-span-1">
+              <ImpactStreak activities={volunteerActivities} />
+            </div>
           </>
         )}
-      </div>
-
-      {/* Impact Streak Card */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ImpactStreak activities={volunteerActivities} />
-        <div className="hidden md:block"></div>
       </div>
 
       {/* Charts */}

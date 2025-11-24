@@ -301,23 +301,27 @@ export default function MyWork() {
   // Calculate organization KPIs for org managers
   const isOrganizationManager = currentUser?.userType === 'organization';
   
-  // Count active volunteers (those with project assignments)
-  const activeVolunteerIds = new Set<number>();
-  // Count volunteers with any project assignment
-  projectAssignments.forEach((assignment: any) => {
-    if (assignment.volunteerId) {
-      activeVolunteerIds.add(assignment.volunteerId);
-    }
-  });
-  // Also add volunteers with activities from org projects
-  orgActivities.forEach(activity => {
-    if (activity.userId) activeVolunteerIds.add(activity.userId);
-  });
-  const orgActiveVolunteers = Math.max(activeVolunteerIds.size, 0);
+  // Use dashboard-calculated metrics for consistency and automatic updates
+  const orgActiveVolunteers = isOrganizationManager && dashboardData?.activeVolunteers !== undefined 
+    ? dashboardData.activeVolunteers 
+    : 0;
   
-  const orgTotalProjects = orgProjects.length;
-  const orgTotalHours = orgActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-  const orgCompletedProjects = orgProjects.filter(p => p.status?.toLowerCase() === 'completed').length;
+  const orgTotalProjects = isOrganizationManager && dashboardData?.activeProjects !== undefined 
+    ? dashboardData.activeProjects 
+    : 0;
+  
+  const orgTotalHours = isOrganizationManager && dashboardData?.totalHours !== undefined 
+    ? dashboardData.totalHours 
+    : 0;
+  
+  const orgCompletedProjects = isOrganizationManager && orgProjects 
+    ? orgProjects.filter(p => p.status?.toLowerCase() === 'completed').length 
+    : 0;
+  
+  // Total volunteers count (not just active)
+  const orgTotalVolunteers = isOrganizationManager && dashboardData?.volunteers 
+    ? dashboardData.volunteers.length 
+    : 0;
 
   // Calculate Impact Leader (volunteer with most hours)
   const volunteerHoursMap = new Map<number, { hours: number; name: string }>();
@@ -423,7 +427,7 @@ export default function MyWork() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Total Volunteers</p>
-                    <p className="text-2xl font-bold">{orgVolunteers.length}</p>
+                    <p className="text-2xl font-bold">{orgTotalVolunteers || orgVolunteers.length}</p>
                     <p className="text-xs text-gray-500 mt-1">{orgActiveVolunteers} active</p>
                   </div>
                   <UsersIcon className="h-8 w-8 text-blue-500" />

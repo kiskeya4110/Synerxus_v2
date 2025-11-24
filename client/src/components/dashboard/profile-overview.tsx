@@ -262,14 +262,17 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
         )}
 
         {/* Empty State */}
-        {!profile && (
-          <div className="text-center py-4">
+        {(!profile || 
+          (isVolunteer && !(profile?.preferredSdgs?.length > 0 || profile?.sdgGoals?.length > 0)) ||
+          (!isVolunteer && (!profile?.primarySdgs || profile.primarySdgs.length === 0))) && (
+          <div className="text-center py-8">
+            <Globe className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
             <p className="text-sm text-muted-foreground mb-3" data-testid="text-empty-profile">
-              Add your SDG focus areas to see them here
+              No SDG focus areas yet
             </p>
             <Link href={isVolunteer ? "/volunteer-intake" : "/organization-intake"}>
               <Button variant="outline" size="sm" data-testid="button-update-profile">
-                Update Profile
+                Add SDG Focus Areas
               </Button>
             </Link>
           </div>

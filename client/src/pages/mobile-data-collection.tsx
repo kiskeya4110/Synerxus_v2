@@ -260,8 +260,8 @@ export default function MobileDataCollection() {
         </p>
       </div>
 
-      {/* Overview Buttons - 2x2 Compact Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Overview Buttons - Responsive Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <button
           onClick={() => setActiveTab("activity")}
           className={`p-4 rounded-lg border-2 transition-all cursor-pointer hover:shadow-md ${

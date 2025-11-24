@@ -1,4 +1,5 @@
-import { Github, Linkedin, Twitter } from "lucide-react";
+import { Linkedin, Facebook } from "lucide-react";
+import { SiX } from "react-icons/si";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -16,7 +17,9 @@ export default function Footer() {
               </p>
             </div>
             <div>
-              <h4 className="text-[11px] font-semibold text-white mb-1">Platform & Resources</h4>
+              <h4 className="text-[11px] font-semibold text-white mb-1">
+                Platform & Resources
+              </h4>
               <ul className="space-y-0.5 text-[11px] text-gray-400">
                 <li>
                   <a href="/dashboard" className="hover:text-white transition">
@@ -24,12 +27,18 @@ export default function Footer() {
                   </a>
                 </li>
                 <li>
-                  <a href="/discover-opportunities" className="hover:text-white transition">
+                  <a
+                    href="/discover-opportunities"
+                    className="hover:text-white transition"
+                  >
                     Opportunities
                   </a>
                 </li>
                 <li>
-                  <a href="/organizations" className="hover:text-white transition">
+                  <a
+                    href="/organizations"
+                    className="hover:text-white transition"
+                  >
                     Organizations
                   </a>
                 </li>
@@ -40,7 +49,9 @@ export default function Footer() {
           {/* Resources & Social Links Section */}
           <div className="space-y-2">
             <div>
-              <h4 className="text-[11px] font-semibold text-white mb-1">Help</h4>
+              <h4 className="text-[11px] font-semibold text-white mb-1">
+                Help
+              </h4>
               <ul className="space-y-0.5 text-[11px] text-gray-400">
                 <li>
                   <a href="#" className="hover:text-white transition">
@@ -60,16 +71,27 @@ export default function Footer() {
               </ul>
             </div>
             <div>
-              <h4 className="text-[11px] font-semibold text-white mb-1">Follow Us</h4>
+              <h4 className="text-[11px] font-semibold text-white mb-1">
+                Follow Us
+              </h4>
               <div className="flex gap-2">
-                <a href="#" className="text-gray-400 hover:text-white transition">
-                  <Twitter className="h-4 w-4" />
+                <a
+                  href="https://x.com"
+                  className="text-gray-400 hover:text-white transition"
+                >
+                  <SiX className="h-4 w-4" />
                 </a>
-                <a href="#" className="text-gray-400 hover:text-white transition">
+                <a
+                  href="https://www.linkedin.com/company/synerxus"
+                  className="text-gray-400 hover:text-white transition"
+                >
                   <Linkedin className="h-4 w-4" />
                 </a>
-                <a href="#" className="text-gray-400 hover:text-white transition">
-                  <Github className="h-4 w-4" />
+                <a
+                  href="https://www.facebook.com/861509087040686"
+                  className="text-gray-400 hover:text-white transition"
+                >
+                  <Facebook className="h-4 w-4" />
                 </a>
               </div>
             </div>

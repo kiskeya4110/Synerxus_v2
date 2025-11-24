@@ -300,6 +300,19 @@ export const leaderboardStats = pgTable("leaderboard_stats", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Volunteer Spotlights - Feature showcasing a volunteer story each week
+export const volunteerSpotlights = pgTable("volunteer_spotlights", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  weekStartDate: timestamp("week_start_date").notNull(), // Start of the week
+  story: text("story").notNull(), // Their volunteer story/impact
+  impact: text("impact"), // Key impact they created
+  photoUrl: text("photo_url"), // Spotlight photo
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Matching Weights - Admin panel for simple weight adjustments (Optimization Layer)
 export const matchingWeights = pgTable("matching_weights", {
   id: serial("id").primaryKey(),
@@ -663,6 +676,14 @@ export const insertLeaderboardStatsSchema = createInsertSchema(leaderboardStats)
   updatedAt: true
 });
 
+export const insertVolunteerSpotlightSchema = createInsertSchema(volunteerSpotlights).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+}).extend({
+  weekStartDate: z.coerce.date(),
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -732,3 +753,6 @@ export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
 
 export type LeaderboardStats = typeof leaderboardStats.$inferSelect;
 export type InsertLeaderboardStats = z.infer<typeof insertLeaderboardStatsSchema>;
+
+export type VolunteerSpotlight = typeof volunteerSpotlights.$inferSelect;
+export type InsertVolunteerSpotlight = z.infer<typeof insertVolunteerSpotlightSchema>;

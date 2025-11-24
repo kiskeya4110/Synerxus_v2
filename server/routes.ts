@@ -4665,5 +4665,62 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // Get current week's volunteer spotlight
+  app.get("/api/volunteer-spotlight", async (req, res) => {
+    try {
+      const allUsers = await storage.listUsers();
+      const allVolunteerProfiles = await storage.listVolunteerProfiles();
+      const allActivities = await storage.listVolunteerActivities();
+
+      // Get users who have activity this week
+      const today = new Date();
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      weekStart.setHours(0, 0, 0, 0);
+
+      const thisWeekActivities = allActivities.filter((a: any) => {
+        const actDate = new Date(a.date);
+        return actDate >= weekStart && actDate < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+      });
+
+      // Get unique volunteers with activities this week
+      const volunteerIds = Array.from(new Set(thisWeekActivities.map((a: any) => a.userId)));
+      
+      if (volunteerIds.length === 0) {
+        return res.json({ spotlight: null });
+      }
+
+      // Select a pseudo-random volunteer based on day of week for consistent weekly selection
+      const selectedVolunteerId = volunteerIds[today.getDate() % volunteerIds.length];
+      const volunteer = allUsers.find((u: any) => u.id === selectedVolunteerId);
+      const profile = allVolunteerProfiles.find((p: any) => p.userId === selectedVolunteerId);
+
+      if (!volunteer) {
+        return res.json({ spotlight: null });
+      }
+
+      // Calculate stats for this volunteer this week
+      const weekActivities = thisWeekActivities.filter((a: any) => a.userId === selectedVolunteerId);
+      const totalHours = weekActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+      const impactCount = weekActivities.length;
+
+      res.json({ 
+        spotlight: {
+          user: {
+            id: volunteer.id,
+            displayName: volunteer.displayName,
+            avatar: volunteer.avatar,
+          },
+          story: profile?.motivations || `${volunteer.displayName} is making a difference through dedicated volunteer work.`,
+          impact: `${totalHours} hours contributed • ${impactCount} activities`,
+          photoUrl: volunteer.avatar || null,
+        }
+      });
+    } catch (err) {
+      console.error("Error fetching volunteer spotlight:", err);
+      res.json({ spotlight: null });
+    }
+  });
+
   return httpServer;
 }

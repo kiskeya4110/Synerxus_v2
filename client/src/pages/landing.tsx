@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import { SDGCircularWheel } from "@/components/sdg/sdg-circular-wheel";
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -398,6 +400,110 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
   );
 };
 
+const VolunteerSpotlightSection = () => {
+  const { data, isLoading } = useQuery({
+    queryKey: ['/api/volunteer-spotlight'],
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+  });
+
+  const spotlight = data?.spotlight;
+
+  return (
+    <section className="bg-gradient-to-br from-blue-50 via-slate-50 to-amber-50 py-12 sm:py-16 md:py-20 border-y border-slate-200">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Section Title */}
+          <div className="text-center mb-10 sm:mb-14">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-3 sm:mb-4">
+              ⭐ Volunteer Spotlight
+            </h2>
+            <p className="text-sm sm:text-base text-slate-600 font-medium">
+              Celebrating the impact of volunteers like you
+            </p>
+          </div>
+
+          {/* Spotlight Card */}
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-shadow duration-300">
+            {isLoading ? (
+              <div className="p-6 sm:p-8 space-y-4">
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : spotlight ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+                {/* Spotlight Photo */}
+                <div className="md:col-span-1 bg-gradient-to-br from-blue-900/10 to-amber-600/10 flex items-center justify-center min-h-64 md:min-h-auto relative overflow-hidden">
+                  {spotlight.photoUrl ? (
+                    <img
+                      src={spotlight.photoUrl}
+                      alt={spotlight.user.displayName}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center space-y-3">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-900 to-amber-600 flex items-center justify-center">
+                        <span className="text-white text-3xl font-bold">
+                          {spotlight.user.displayName?.charAt(0).toUpperCase() || '✨'}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 font-semibold text-center px-4">
+                        {spotlight.user.displayName || 'Volunteer Hero'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Spotlight Story */}
+                <div className="md:col-span-2 p-6 sm:p-8 flex flex-col justify-between">
+                  <div className="space-y-4 sm:space-y-6">
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">
+                        {spotlight.user.displayName || 'Featured Volunteer'}
+                      </h3>
+                      <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
+                        {spotlight.story}
+                      </p>
+                    </div>
+
+                    {/* Impact Stats */}
+                    <div className="bg-gradient-to-r from-blue-50 to-amber-50 rounded-lg p-4 border border-blue-200">
+                      <p className="text-sm font-semibold text-blue-900 mb-1">This Week's Impact</p>
+                      <p className="text-base sm:text-lg font-bold text-blue-900">
+                        {spotlight.impact}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <div className="mt-6 pt-4 border-t border-slate-200">
+                    <Link href="/login" className="block">
+                      <Button className="w-full bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-base rounded-lg" data-testid="button-volunteer-spotlight-cta">
+                        Start Your Volunteer Journey
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-slate-600 text-base">
+                  Be the next volunteer spotlight! Join our community and make an impact.
+                </p>
+                <Link href="/login" className="block mt-6">
+                  <Button className="mx-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold">
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 export default function Landing() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [volunteerFact, setVolunteerFact] = useState(() => getRandomFact('volunteers'));
@@ -492,6 +598,9 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Volunteer Spotlight Section */}
+      <VolunteerSpotlightSection />
 
       {/* Profile Cards Section */}
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">

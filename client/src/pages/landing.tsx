@@ -411,16 +411,7 @@ export default function Landing() {
         <div className="container mx-auto px-3 sm:px-6 py-2 sm:py-4 flex justify-between items-center gap-2 sm:gap-4">
           <Link href="/">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
-              <div className="flex flex-col items-start">
-                <Logo size="sm" />
-                <p className="text-[10px] sm:text-xs font-semibold text-slate-600 mt-0.5 tracking-wide">
-                  <span className="text-blue-900">Connect</span>
-                  <span className="text-slate-900">. </span>
-                  <span className="text-slate-900">Manage</span>
-                  <span className="text-slate-900">. </span>
-                  <span className="text-amber-600">Impact Globally</span>
-                </p>
-              </div>
+              <Logo size="sm" showMotto={true} />
             </div>
           </Link>
           <div className="flex gap-1.5 sm:gap-3 flex-shrink-0">

@@ -197,7 +197,7 @@ export default function Header() {
             variant="ghost" 
             size="icon" 
             onClick={toggleSidebar}
-            className="text-gray-500 dark:text-gray-400 focus:outline-none md:hidden"
+            className="text-gray-500 dark:text-gray-400 focus:outline-none"
             data-testid="button-hamburger-menu"
             title="Toggle menu"
           >

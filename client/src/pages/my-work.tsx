@@ -1,6 +1,6 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -15,6 +15,17 @@ import MyTasksPage from "./my-tasks";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
+  const [activeTab, setActiveTab] = useState<string>('applications');
+  
+  // Initialize tab from URL hash on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'applications' || hash === 'assignments' || hash === 'tasks') {
+        setActiveTab(hash);
+      }
+    }
+  }, []);
   
   // Fetch current user
   const { data: currentUser } = useQuery<User>({
@@ -222,6 +233,7 @@ export default function MyWork() {
   };
 
   const handleTabChange = (value: string) => {
+    setActiveTab(value);
     window.history.replaceState(null, '', `#${value}`);
   };
 
@@ -593,7 +605,7 @@ export default function MyWork() {
           </div>
         </div>
       ) : (
-        <Tabs defaultValue={getInitialTab()} onValueChange={handleTabChange} className="w-full px-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-6">
           <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">
             <TabsTrigger value="applications" className="flex items-center gap-2" data-testid="tab-applications">
               <Briefcase className="h-4 w-4" />

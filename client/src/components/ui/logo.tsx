@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
@@ -8,6 +7,7 @@ interface LogoProps {
   showIcon?: boolean;
   size?: "sm" | "md" | "lg";
   onClick?: () => void;
+  isButton?: boolean;
 }
 
 export default function Logo({
@@ -15,17 +15,9 @@ export default function Logo({
   showIcon = true,
   size = "md",
   onClick,
+  isButton = false,
 }: LogoProps) {
-  const [, setLocation] = useLocation();
   const [imageError, setImageError] = useState(false);
-
-  const handleLogoClick = () => {
-    if (onClick) {
-      onClick();
-    } else {
-      setLocation('/landing');
-    }
-  };
 
   const sizes = {
     sm: {
@@ -47,12 +39,8 @@ export default function Logo({
 
   const sizeClasses = sizes[size];
 
-  return (
-    <button 
-      onClick={handleLogoClick}
-      className={cn("inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity", className)}
-      data-testid="button-logo"
-    >
+  const content = (
+    <>
       {showIcon && !imageError && (
         <img
           src={logoImage}
@@ -75,6 +63,24 @@ export default function Logo({
         <span style={{ color: "#1e3a8a" }}>SYNER</span>
         <span style={{ color: "#b45309" }}>XUS</span>
       </span>
-    </button>
+    </>
+  );
+
+  if (isButton && onClick) {
+    return (
+      <button 
+        onClick={onClick}
+        className={cn("inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity", className)}
+        data-testid="button-logo"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={cn("inline-flex items-center gap-2", className)}>
+      {content}
+    </div>
   );
 }

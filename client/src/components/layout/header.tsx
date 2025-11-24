@@ -181,7 +181,11 @@ export default function Header() {
         </Button>
 
         {/* Logo - Synerxus on left side of search bar */}
-        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
+        <button 
+          onClick={() => setLocation('/')}
+          className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none"
+          data-testid="button-logo-header"
+        >
           <div className="flex items-center gap-2 md:gap-3">
             <img
               src={logoImage}
@@ -199,7 +203,7 @@ export default function Header() {
               </div>
             </div>
           </div>
-        </Link>
+        </button>
         
         {/* Search Bar */}
         <div className="hidden sm:flex flex-grow max-w-2xl mx-2">

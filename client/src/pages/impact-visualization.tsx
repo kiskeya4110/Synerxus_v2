@@ -737,7 +737,7 @@ export default function ImpactVisualization() {
                       <span className="text-xs font-bold text-green-700 dark:text-green-300">20%</span>
                     </div>
                     <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                      {Math.round(((dashboardData.completedTasks || 0) / (dashboardData.totalTasks || 1)) * 100)}%
+                      {Math.round(((dashboardData?.completedTasks || 0) / (dashboardData?.totalTasks || 1)) * 100)}%
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tasks completed</p>
                   </div>
@@ -747,7 +747,7 @@ export default function ImpactVisualization() {
                       <span className="text-xs font-bold text-amber-700 dark:text-amber-300">10%</span>
                     </div>
                     <div className="text-xl font-bold text-amber-600 dark:text-amber-400">
-                      {dashboardData.sdgsAddressed || 0}/17
+                      {dashboardData?.sdgsAddressed || 0}/17
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">UN SDG goals</p>
                   </div>
@@ -757,7 +757,7 @@ export default function ImpactVisualization() {
                       <span className="text-xs font-bold text-blue-700 dark:text-blue-300">5%</span>
                     </div>
                     <div className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                      {dashboardData.acceptedApplications || 0}
+                      {(dashboardData?.acceptedApplications || dashboardData?.applicationStats?.accepted || 0)}
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Matches accepted</p>
                   </div>

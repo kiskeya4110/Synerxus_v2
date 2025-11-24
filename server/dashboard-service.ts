@@ -716,6 +716,7 @@ export async function getDashboardDataForOrganization(userId: number) {
         totalTasks,
         sdgsAddressed: uniqueSDGs.size,
         impactScore,
+        acceptedApplications,
         recentActivities: enrichedRecentActivities, // Last 10 activities with project/org names
         organizationPrimarySdgs, // Organization's selected SDGs from profile settings
       },

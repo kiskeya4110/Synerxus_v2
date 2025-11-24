@@ -483,7 +483,7 @@ export default function Landing() {
           </h3>
           <div className="relative overflow-hidden">
             <div className="animate-scroll flex whitespace-nowrap gap-8">
-              {[...GLOBAL_FACTS, ...GLOBAL_FACTS].map((fact, index) => (
+              {[...GLOBAL_FACTS, ...GLOBAL_FACTS, ...GLOBAL_FACTS].map((fact, index) => (
                 <div key={index} className="px-4 py-2 flex-shrink-0">
                   <p className="text-sm text-slate-700 font-medium">{fact}</p>
                 </div>

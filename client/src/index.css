@@ -53,7 +53,8 @@
 }
 
 .animate-scroll {
-  animation: scroll 5s linear infinite;
+  animation: scroll 30s linear infinite;
+  will-change: transform;
 }
 
 .animate-scroll:hover {

@@ -150,14 +150,7 @@ export default function Sidebar() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="px-4 py-6">
-          <Link href="/">
-            <div className="flex items-center justify-center mb-8 cursor-pointer hover:opacity-80 transition-opacity" data-testid="logo-synerxus">
-              <Logo size="sm" />
-            </div>
-          </Link>
-          
-          <nav>
+        <nav className="px-4 py-6">
             <div className="space-y-1">
               {navItems.map((item) => (
                 <Link 
@@ -177,8 +170,7 @@ export default function Sidebar() {
                 </Link>
               ))}
             </div>
-          </nav>
-        </div>
+        </nav>
       </aside>
 
       {/* Mobile menu button */}

@@ -4545,7 +4545,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   // File upload endpoint - accepts FormData with file
   app.post("/api/upload", async (req, res) => {
     try {
-      const { path } = req.body;
+      const path = req.query.path as string;
       
       if (!path) {
         return res.status(400).json({ message: "path is required" });

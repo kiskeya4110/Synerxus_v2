@@ -74,6 +74,7 @@ export default function Logo({
         </span>
         {showMotto && (
           <p className={cn("font-bold whitespace-nowrap", sizeClasses.motto, sizeClasses.mottoLineHeight)} style={{ marginTop: "-2px" }}>
+            <span style={{ color: "#1e3a8a" }}>Connect. Manage. </span>
             <span style={{ color: "#b45309" }}>Impact Globally</span>
           </p>
         )}

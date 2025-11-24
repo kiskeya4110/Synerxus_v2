@@ -4,24 +4,21 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-200 py-12 border-t border-gray-800 flex-shrink-0 overflow-hidden">
+    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-200 py-4 border-t border-gray-800 mt-8">
       <div className="max-w-full mx-auto px-4 lg:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
           {/* Brand Section */}
           <div>
-            <h3 className="text-xl font-bold text-white mb-2">Synerxus</h3>
-            <p className="text-sm text-gray-400">
+            <h3 className="text-lg font-bold text-white mb-1">Synerxus</h3>
+            <p className="text-xs text-gray-400">
               Connect. Collaborate. Impact Globally.
-            </p>
-            <p className="text-xs text-gray-500 mt-3">
-              Empowering global volunteers to create lasting humanitarian impact.
             </p>
           </div>
 
           {/* Platform Links */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Platform</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
+            <h4 className="text-xs font-semibold text-white mb-2">Platform</h4>
+            <ul className="space-y-1 text-xs text-gray-400">
               <li>
                 <a href="/dashboard" className="hover:text-white transition">
                   Dashboard
@@ -42,8 +39,8 @@ export default function Footer() {
 
           {/* Resources */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Resources</h4>
-            <ul className="space-y-2 text-sm text-gray-400">
+            <h4 className="text-xs font-semibold text-white mb-2">Resources</h4>
+            <ul className="space-y-1 text-xs text-gray-400">
               <li>
                 <a href="#" className="hover:text-white transition">
                   Documentation
@@ -64,8 +61,8 @@ export default function Footer() {
 
           {/* Social Links */}
           <div>
-            <h4 className="text-sm font-semibold text-white mb-4">Follow Us</h4>
-            <div className="flex gap-4">
+            <h4 className="text-xs font-semibold text-white mb-2">Follow Us</h4>
+            <div className="flex gap-3">
               <a href="#" className="text-gray-400 hover:text-white transition">
                 <Twitter className="h-5 w-5" />
               </a>
@@ -80,7 +77,7 @@ export default function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-800 pt-8">
+        <div className="border-t border-gray-800 pt-4">
           <div className="flex flex-col md:flex-row justify-between items-center text-xs text-gray-500">
             <p>© {currentYear} Synerxus. All rights reserved.</p>
             <div className="flex gap-6 mt-4 md:mt-0">

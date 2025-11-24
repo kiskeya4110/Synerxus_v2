@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp, Building2, Plus } from "lucide-react";
+import { CheckSquare, Clock, FolderKanban, Calendar, TrendingUp, Building2, Plus, Edit2, Trash2, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Task, Project, ProjectAssignment, User, Organization } from "@shared/schema";
@@ -19,6 +20,16 @@ interface TaskWithProject extends Task {
 export default function MyTasks() {
   const [activeTab, setActiveTab] = useState("tasks");
   const [taskHours, setTaskHours] = useState<{ [key: number]: string }>({});
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: "",
+    description: "",
+    priority: "medium",
+    dueDate: "",
+    estimatedHours: "",
+    assigneeId: ""
+  });
   const { toast } = useToast();
 
   // Fetch current user to get their ID
@@ -82,6 +93,26 @@ export default function MyTasks() {
     queryKey: ["/api/organizations"]
   });
 
+  // Fetch all users for task assignment (for org managers)
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/users");
+      return response.ok ? response.json() : [];
+    }
+  });
+
+  // Fetch organization volunteers if user is org manager
+  const { data: orgVolunteers = [] } = useQuery<User[]>({
+    queryKey: ["/api/organizations", currentUser?.organizationId, "volunteers"],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch(`/api/organizations/${currentUser.organizationId}/volunteers`);
+      return response.ok ? response.json() : [];
+    },
+    enabled: !!currentUser?.organizationId && currentUser?.userType === "organization"
+  });
+
   const getProject = (projectId: number) => {
     return allProjects.find(p => p.id === projectId);
   };
@@ -141,7 +172,6 @@ export default function MyTasks() {
         title: "Hours logged",
         description: `Successfully logged ${variables.hours} hour(s)`,
       });
-      // Reset input and invalidate queries for real-time updates
       setTaskHours(prev => ({ ...prev, [variables.taskId]: "" }));
       queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
@@ -155,6 +185,86 @@ export default function MyTasks() {
       });
     },
   });
+
+  // Mutation to update task details
+  const updateTaskDetailsMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const userId = localStorage.getItem('currentUserId');
+      const url = userId ? `/api/tasks/${editingTask?.id}?userId=${userId}` : `/api/tasks/${editingTask?.id}`;
+      return await apiRequest("PATCH", url, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({
+        title: "Task updated",
+        description: "Task details have been updated successfully.",
+      });
+      setEditingTask(null);
+      setEditDialogOpen(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to delete task
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      const userId = localStorage.getItem('currentUserId');
+      const url = userId ? `/api/tasks/${taskId}?userId=${userId}` : `/api/tasks/${taskId}`;
+      return await apiRequest("DELETE", url, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({
+        title: "Task deleted",
+        description: "Task has been deleted successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setEditFormData({
+      title: task.title || "",
+      description: task.description || "",
+      priority: task.priority || "medium",
+      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : "",
+      estimatedHours: task.estimatedHours?.toString() || "",
+      assigneeId: task.assigneeId?.toString() || ""
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveTask = () => {
+    const updateData: any = {
+      title: editFormData.title,
+      description: editFormData.description,
+      priority: editFormData.priority,
+      estimatedHours: editFormData.estimatedHours ? parseInt(editFormData.estimatedHours) : null,
+    };
+    
+    if (editFormData.dueDate) {
+      updateData.dueDate = new Date(editFormData.dueDate);
+    }
+    
+    if (currentUser?.userType === "organization" && editFormData.assigneeId) {
+      updateData.assigneeId = parseInt(editFormData.assigneeId);
+    }
+
+    updateTaskDetailsMutation.mutate(updateData);
+  };
 
   const tasksByStatus = {
     todo: tasks.filter(t => t.status?.toLowerCase() === "todo" || t.status?.toLowerCase() === "pending"),
@@ -288,7 +398,28 @@ export default function MyTasks() {
                               )}
                             </div>
                           )}
+                          {task.priority && (
+                            <Badge variant="outline" className="text-xs">
+                              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                            </Badge>
+                          )}
+                          {task.dueDate && (
+                            <Badge variant="outline" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {new Date(task.dueDate).toLocaleDateString()}
+                            </Badge>
+                          )}
                         </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleEditTask(task)}
+                          data-testid={`button-edit-task-${task.id}`}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
                         <Button 
                           size="sm" 
                           variant="outline" 
@@ -375,7 +506,28 @@ export default function MyTasks() {
                               <Plus className="h-3 w-3" />
                             </Button>
                           </div>
+                          {task.priority && (
+                            <Badge variant="outline" className="text-xs">
+                              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                            </Badge>
+                          )}
+                          {task.dueDate && (
+                            <Badge variant="outline" className="text-xs">
+                              <Calendar className="h-3 w-3 mr-1" />
+                              {new Date(task.dueDate).toLocaleDateString()}
+                            </Badge>
+                          )}
                         </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleEditTask(task)}
+                          data-testid={`button-edit-task-${task.id}`}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
                         <Button 
                           size="sm" 
                           onClick={() => handleCompleteTask(task.id)}
@@ -507,6 +659,117 @@ export default function MyTasks() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Title *</label>
+              <Input
+                value={editFormData.title}
+                onChange={(e) => setEditFormData({...editFormData, title: e.target.value})}
+                placeholder="Task title"
+                data-testid="input-task-title"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                placeholder="Task description"
+                data-testid="input-task-description"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium">Priority</label>
+                <select
+                  value={editFormData.priority}
+                  onChange={(e) => setEditFormData({...editFormData, priority: e.target.value})}
+                  className="w-full px-2 py-1 border rounded text-sm"
+                  data-testid="select-priority"
+                >
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Estimated Hours</label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={editFormData.estimatedHours}
+                  onChange={(e) => setEditFormData({...editFormData, estimatedHours: e.target.value})}
+                  placeholder="Hours"
+                  data-testid="input-estimated-hours"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Due Date</label>
+              <Input
+                type="date"
+                value={editFormData.dueDate}
+                onChange={(e) => setEditFormData({...editFormData, dueDate: e.target.value})}
+                data-testid="input-due-date"
+              />
+            </div>
+            {currentUser?.userType === "organization" && (
+              <div>
+                <label className="text-sm font-medium">Assign to Volunteer</label>
+                <select
+                  value={editFormData.assigneeId}
+                  onChange={(e) => setEditFormData({...editFormData, assigneeId: e.target.value})}
+                  className="w-full px-2 py-1 border rounded text-sm"
+                  data-testid="select-assignee"
+                >
+                  <option value="">Unassigned</option>
+                  {orgVolunteers.map((vol) => (
+                    <option key={vol.id} value={vol.id}>
+                      {vol.displayName || vol.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex gap-2 justify-end pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setEditDialogOpen(false)}
+                data-testid="button-cancel-edit"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  deleteTaskMutation.mutate(editingTask!.id);
+                  setEditDialogOpen(false);
+                }}
+                disabled={deleteTaskMutation.isPending}
+                data-testid="button-delete-task"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Delete
+              </Button>
+              <Button
+                onClick={handleSaveTask}
+                disabled={updateTaskDetailsMutation.isPending}
+                data-testid="button-save-task"
+              >
+                {updateTaskDetailsMutation.isPending ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

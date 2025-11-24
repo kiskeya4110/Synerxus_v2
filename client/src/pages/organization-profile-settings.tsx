@@ -71,6 +71,8 @@ export default function OrganizationProfileSettings() {
   // Fetch existing organization profile by filtering all organizations
   const { data: organizations, isLoading: loadingProfile } = useQuery<MatchableOrganization[]>({
     queryKey: ["/api/matchable-organizations"],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache the data
   });
 
   const [logoUrl, setLogoUrl] = useState("");

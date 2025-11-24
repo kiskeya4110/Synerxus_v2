@@ -817,6 +817,8 @@ export default function VolunteerProfileSettings() {
       return data.volunteerProfile || data;
     },
     enabled: !!currentUser?.id,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache the data
   });
   const { data: existingProfile, isLoading: loadingProfile } = profileQuery;
 
@@ -849,58 +851,73 @@ export default function VolunteerProfileSettings() {
     },
   });
 
-  // Load profile data into form ONLY on initial mount (use ref to track this)
-  const initialLoadDoneRef = useRef(false);
-
+  // Load profile data into form whenever profile data changes or user ID changes
   useEffect(() => {
-    if (!initialLoadDoneRef.current && currentUser?.id) {
-      // First time loading for this user
-      initialLoadDoneRef.current = true;
+    if (!currentUser?.id) return;
 
-      if (existingProfile) {
-        console.log(
-          `[Profile Load Effect] Initial loading of profile for user ${currentUser?.id}:`,
-          existingProfile,
-        );
-        form.reset({
-          email: currentUser?.email || "",
-          name: existingProfile.volunteerName || currentUser?.displayName || "",
-          professionalTitle: existingProfile.professionalTitle || "",
-          yearsOfExperience: existingProfile.yearsOfExperience || "",
-          linkedinProfile: existingProfile.linkedinProfile || "",
-          languages: existingProfile.languages || [],
-          skills: existingProfile.skills || [],
-          interests: existingProfile.interests || [],
-          location: existingProfile.location || "",
-          sdgGoals: existingProfile.preferredSdgs || [],
-          weeklyHours: existingProfile.weeklyAvailability || 1,
-          availability: existingProfile.availability || [],
-          timezone:
-            existingProfile.timezone ||
-            Intl.DateTimeFormat().resolvedOptions().timeZone,
-          preferredCommitment:
-            existingProfile.preferredCommitment || "flexible",
-          preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
-          matchingPriorities: existingProfile.matchingPriorities || {
-            skillsMatch: 3,
-            causeAlignment: 3,
-            timeFlexibility: 3,
-            geographicPreference: 3,
-            impactPotential: 3,
-          },
-        });
-      } else {
-        // New profile
-        console.log(
-          `[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`,
-        );
-        form.setValue("email", currentUser.email);
-        if (currentUser.displayName) {
-          form.setValue("name", currentUser.displayName);
-        }
-      }
+    if (existingProfile) {
+      console.log(
+        `[Profile Load Effect] Loading profile for user ${currentUser?.id}:`,
+        existingProfile,
+      );
+      form.reset({
+        email: currentUser?.email || "",
+        name: existingProfile.volunteerName || currentUser?.displayName || "",
+        professionalTitle: existingProfile.professionalTitle || "",
+        yearsOfExperience: existingProfile.yearsOfExperience || "",
+        linkedinProfile: existingProfile.linkedinProfile || "",
+        languages: existingProfile.languages || [],
+        skills: existingProfile.skills || [],
+        interests: existingProfile.interests || [],
+        location: existingProfile.location || "",
+        sdgGoals: existingProfile.preferredSdgs || [],
+        weeklyHours: existingProfile.weeklyAvailability || 1,
+        availability: existingProfile.availability || [],
+        timezone:
+          existingProfile.timezone ||
+          Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferredCommitment:
+          existingProfile.preferredCommitment || "flexible",
+        preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
+        matchingPriorities: existingProfile.matchingPriorities || {
+          skillsMatch: 3,
+          causeAlignment: 3,
+          timeFlexibility: 3,
+          geographicPreference: 3,
+          impactPotential: 3,
+        },
+      });
+    } else if (!loadingProfile && currentUser?.email) {
+      // New profile - initialize with user data
+      console.log(
+        `[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`,
+      );
+      form.reset({
+        email: currentUser?.email || "",
+        name: currentUser?.displayName || "",
+        professionalTitle: "",
+        yearsOfExperience: "",
+        linkedinProfile: "",
+        languages: [],
+        skills: [],
+        interests: [],
+        location: "",
+        sdgGoals: [],
+        weeklyHours: 1,
+        availability: [],
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        preferredCommitment: "flexible",
+        preferredWorkStyle: "remote",
+        matchingPriorities: {
+          skillsMatch: 3,
+          causeAlignment: 3,
+          timeFlexibility: 3,
+          geographicPreference: 3,
+          impactPotential: 3,
+        },
+      });
     }
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.email, existingProfile, loadingProfile, form]);
 
   // Load existing photo URL
   useEffect(() => {

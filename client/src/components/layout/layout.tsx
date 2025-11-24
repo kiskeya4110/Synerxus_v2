@@ -48,12 +48,14 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Header />
-      <div className="flex pt-16 flex-1">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-y-auto bg-background p-4 lg:p-6">
-          {children}
+          <div className="max-w-full">
+            {children}
+          </div>
         </main>
       </div>
       <Footer />

@@ -5,6 +5,7 @@ import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target,
 import StatsCard from "@/components/dashboard/stats-card";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
+import ImpactStreak from "@/components/dashboard/impact-streak";
 import ProjectCard from "@/components/dashboard/project-card";
 import TaskTable, { Task } from "@/components/dashboard/task-table";
 import ActivityFeed, { Activity } from "@/components/dashboard/activity-feed";
@@ -955,6 +956,12 @@ export default function Dashboard() {
             />
           </>
         )}
+      </div>
+
+      {/* Impact Streak Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <ImpactStreak activities={volunteerActivities} />
+        <div className="hidden md:block"></div>
       </div>
 
       {/* Charts */}

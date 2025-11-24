@@ -860,7 +860,7 @@ export default function VolunteerIntake() {
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {form.watch("interests").map((interest) => (
+                  {(form.watch("interests") || []).map((interest) => (
                     <Badge
                       key={interest}
                       variant="secondary"
@@ -898,7 +898,7 @@ export default function VolunteerIntake() {
                       key={sdg.value}
                       type="button"
                       variant={
-                        form.watch("sdgGoals").includes(sdg.value)
+                        (form.watch("sdgGoals") || []).includes(sdg.value)
                           ? "default"
                           : "outline"
                       }

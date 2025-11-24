@@ -882,8 +882,8 @@ export default function Dashboard() {
       {/* Dashboard Content Wrapper for PDF Export */}
       <div id="dashboard-content" className="space-y-6">
 
-      {/* KPI Cards - 1x4 Mobile Grid */}
-      <div className="grid grid-cols-4 gap-2 md:gap-4">
+      {/* KPI Cards - 2 Column Mobile Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard

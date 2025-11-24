@@ -159,50 +159,40 @@ export default function Header() {
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-20">
-      <div className="flex items-center justify-between h-16 px-4">
-        {/* Mobile Menu Button */}
-        <button 
-          onClick={toggleSidebar} 
-          className="text-gray-500 dark:text-gray-400 focus:outline-none lg:hidden"
+      <div className="flex items-center justify-between h-16 px-3 md:px-4 gap-3 md:gap-4">
+        {/* Hamburger Menu - Toggle Sidebar */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleSidebar}
+          className="text-gray-500 dark:text-gray-400 focus:outline-none flex-shrink-0"
           data-testid="button-hamburger-menu"
+          title="Toggle menu"
         >
           <Menu className="h-5 w-5" />
-        </button>
-        
-        {/* Logo for mobile view - always link to landing page */}
-        <div className="flex items-center lg:hidden">
-          <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <Logo size="sm" />
-          </Link>
-        </div>
+        </Button>
+
+        {/* Logo - Synerxus on left side of search bar */}
+        <Link href="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
+          <Logo size="sm" />
+        </Link>
         
         {/* Search Bar */}
-        <div className="hidden md:flex flex-grow max-w-2xl mx-4">
+        <div className="hidden sm:flex flex-grow max-w-2xl mx-2">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             </div>
             <Input 
               type="text" 
-              className="pl-10 pr-3 py-2 w-full" 
+              className="pl-10 pr-3 py-2 w-full text-sm" 
               placeholder="Search projects, tasks or volunteers..." 
             />
           </div>
         </div>
         
         {/* Right Nav Items */}
-        <div className="flex items-center space-x-4">
-          {/* Hamburger Menu - Toggle Sidebar */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={toggleSidebar}
-            className="text-gray-500 dark:text-gray-400 focus:outline-none"
-            data-testid="button-hamburger-menu"
-            title="Toggle menu"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
           
           {/* Dark Mode Toggle */}
           <Button 

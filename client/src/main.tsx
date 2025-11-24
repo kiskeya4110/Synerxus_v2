@@ -6,6 +6,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { SidebarProvider } from "@/contexts/sidebar-context";
 import "./index.css";
+import "./service-worker-register";
 
 createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>

@@ -118,7 +118,7 @@ export default function ImpactReportGenerator() {
             <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">LOGO HERE</div>
             <div className="text-right">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">Synerxus</h1>
-              <p className="text-xs text-orange-500">Connect. Collaborate. Impact.</p>
+              <p className="text-xs text-orange-500">Connect. Manage. Impact Globally.</p>
             </div>
           </div>
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Impact Report Generator</h2>

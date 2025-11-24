@@ -367,7 +367,7 @@ export default function ImpactStorytellingPage() {
                 <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">ORGANIZATION LOGO</div>
                 <div className="text-right">
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">Synerxus</h2>
-                  <p className="text-xs text-orange-500">Connect. Collaborate. Impact.</p>
+                  <p className="text-xs text-orange-500">Connect. Manage. Impact Globally.</p>
                 </div>
               </div>
 

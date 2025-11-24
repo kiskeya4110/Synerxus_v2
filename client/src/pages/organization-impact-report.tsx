@@ -116,28 +116,32 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
     },
   });
 
+  // Access control: Both org managers and volunteers can view organization reports
+  const isOrganizationManager = currentUser && currentUser.organizationId && currentUser.userType === 'organization';
+  const isVolunteerViewingOrg = currentUser && currentUser.organizationId && currentUser.userType === 'volunteer';
+  const canViewReport = isOrganizationManager || isVolunteerViewingOrg;
+
   // Fetch dashboard data for organization-level metrics consistency
-  // Pass both userId (for validation) and organizationId (for explicit scoping)
+  // For org managers: fetch org-wide data using their manager ID
+  // For volunteers: fetch org-wide data aggregated by organizationId
   const { data: dashboardData } = useQuery<any>({
-    queryKey: ["/api/dashboard/summary", currentUser?.id, currentUser?.organizationId],
+    queryKey: ["/api/dashboard/summary", "organization", currentUser?.organizationId],
     queryFn: async () => {
-      if (!currentUser?.id) return null;
-      // Use userId for backend to identify the user and their organization
-      const response = await fetch(`/api/dashboard/summary?userId=${currentUser.id}`);
+      if (!currentUser?.organizationId) return null;
+      // Use userId (org manager) to fetch org data, backend will route based on userType
+      const userId = isOrganizationManager ? currentUser.id : currentUser.id;
+      const response = await fetch(`/api/dashboard/summary?userId=${userId}`);
       return response.ok ? response.json() : null;
     },
-    enabled: !!currentUser?.id && currentUser?.userType === 'organization',
+    enabled: !!currentUser?.id && !!currentUser?.organizationId,
   });
 
-  // Access control: Only organization managers can view this report
-  const isOrganizationManager = currentUser && currentUser.organizationId && currentUser.userType === 'organization';
-
-  // Redirect volunteers away from organization pages
+  // Redirect users without organization context away from organization pages
   useEffect(() => {
-    if (currentUser && !isOrganizationManager) {
+    if (currentUser && !canViewReport) {
       setLocation('/dashboard');
     }
-  }, [currentUser, isOrganizationManager, setLocation]);
+  }, [currentUser, canViewReport, setLocation]);
 
   // Filter activities by organization's projects
   const orgProjectIds = new Set(projects.map(p => p.id));
@@ -669,7 +673,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                 <div className="space-y-2">
                   <div>
                     <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
-                      Impact Score: {dashboardData?.impactScore || organizationImpactScore}/100
+                      Impact Score: {isOrganizationManager ? (dashboardData?.impactScore || organizationImpactScore) : organizationImpactScore}/100
                     </Badge>
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">

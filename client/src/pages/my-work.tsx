@@ -1,5 +1,6 @@
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -14,6 +15,14 @@ import MyTasksPage from "./my-tasks";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
+
+  // Scroll to top when page loads
+  useEffect(() => {
+    const mainElement = document.querySelector('main');
+    if (mainElement) {
+      mainElement.scrollTop = 0;
+    }
+  }, []);
   
   // Fetch current user
   const { data: currentUser } = useQuery<User>({

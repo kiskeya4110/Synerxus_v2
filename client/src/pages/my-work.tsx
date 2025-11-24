@@ -239,6 +239,18 @@ export default function MyWork() {
     window.history.replaceState(null, '', `#${value}`);
   };
 
+  // Make buttons interactive
+  const handleImpactLeaderClick = () => {
+    if (impactLeaderEntry) {
+      // Navigate to volunteers page or show volunteer profile
+      setLocation('/volunteers');
+    }
+  };
+
+  const handleExploreRecommendation = (opportunityId: number) => {
+    setLocation(`/discover-opportunities?opportunity=${opportunityId}`);
+  };
+
   // Generate personalized recommendations from AI-matched opportunities
   const generateRecommendations = () => {
     // Use real matched opportunities from AI algorithm
@@ -380,7 +392,7 @@ export default function MyWork() {
       {/* KPI Summary Row */}
       {isOrganizationManager ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 pb-4">
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/volunteers')} data-testid="card-active-volunteers">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -393,7 +405,7 @@ export default function MyWork() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/projects')} data-testid="card-projects">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -406,7 +418,7 @@ export default function MyWork() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/assignments')} data-testid="card-hours">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -430,7 +442,13 @@ export default function MyWork() {
                   </div>
                   <UsersIcon className="h-8 w-8 text-blue-500" />
                 </div>
-                <Button variant="outline" size="sm" className="w-full justify-center gap-2 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/20" data-testid="button-impact-leader">
+                <Button 
+                  onClick={handleImpactLeaderClick}
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-center gap-2 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer" 
+                  data-testid="button-impact-leader"
+                >
                   <Star className="h-4 w-4" />
                   <span className="text-xs font-semibold">Leader: {impactLeaderName.substring(0, 10)}</span>
                 </Button>
@@ -440,7 +458,7 @@ export default function MyWork() {
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 pb-4">
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('tasks')} data-testid="card-tasks">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -454,7 +472,7 @@ export default function MyWork() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('assignments')} data-testid="card-capacity">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -468,7 +486,7 @@ export default function MyWork() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('assignments')} data-testid="card-projects">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -481,7 +499,7 @@ export default function MyWork() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleTabChange('assignments')} data-testid="card-hours">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>

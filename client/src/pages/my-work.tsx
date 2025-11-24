@@ -246,7 +246,9 @@ export default function MyWork() {
 
       // Extract skills from the opportunity
       const skills = opportunity.requiredSkills 
-        ? opportunity.requiredSkills.split(',').slice(0, 2).map((s: string) => s.trim())
+        ? Array.isArray(opportunity.requiredSkills)
+          ? opportunity.requiredSkills.slice(0, 2)
+          : opportunity.requiredSkills.split(',').slice(0, 2).map((s: string) => s.trim())
         : opportunity.skills
         ? opportunity.skills.slice(0, 2)
         : [];

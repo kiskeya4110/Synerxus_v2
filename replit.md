@@ -3,6 +3,11 @@
 ## Overview
 Synerxus is an AI-powered platform that connects global volunteers with opportunities and helps organizations track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhancing global collaboration. Its core purpose is "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes (November 24, 2025)
+- **Volunteer Spotlight Feature**: Added new section on landing page showcasing a featured volunteer each week with their story and impact metrics. Algorithm rotates featured volunteers based on weekly activity. Fetches from `/api/volunteer-spotlight` endpoint.
+- **SDG Toggle Fix**: Fixed undefined error in volunteer-intake.tsx when toggling SDG commitments. Added default empty array fallback for sdgGoals field.
+- **Banner Animation Refinement**: Fixed scrolling facts banner to use exactly 2 copies of GLOBAL_FACTS array and adjusted animation to 20s duration.
+
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 

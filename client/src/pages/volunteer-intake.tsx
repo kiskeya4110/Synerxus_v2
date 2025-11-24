@@ -323,7 +323,7 @@ export default function VolunteerIntake() {
   };
 
   const toggleSDG = (sdgValue: number) => {
-    const currentSDGs = form.getValues("sdgGoals");
+    const currentSDGs = form.getValues("sdgGoals") || [];
     if (currentSDGs.includes(sdgValue)) {
       form.setValue(
         "sdgGoals",

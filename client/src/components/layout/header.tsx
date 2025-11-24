@@ -174,7 +174,10 @@ export default function Header() {
 
         {/* Logo - Synerxus on left side of search bar */}
         <Link href="/" className="flex items-center hover:opacity-80 transition-opacity flex-shrink-0">
-          <Logo size="sm" />
+          <div className="flex flex-col items-start -space-y-1">
+            <Logo size="sm" />
+            <span className="text-[10px] font-semibold" style={{ color: "#b45309" }}>Connect. Manage. Impact Globally</span>
+          </div>
         </Link>
         
         {/* Search Bar */}

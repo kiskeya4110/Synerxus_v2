@@ -379,70 +379,63 @@ export default function MyWork() {
         )}
       </div>
 
-      {/* KPI Summary Row */}
+      {/* Organization Impact KPIs */}
       {isOrganizationManager ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 pb-4">
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/volunteers')} data-testid="card-active-volunteers">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 px-6 pb-4">
+          {/* Impact Score - Primary Metric */}
+          <Card className="lg:col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20" data-testid="card-impact-score">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Active Volunteers</p>
-                  <p className="text-2xl font-bold">{orgActiveVolunteers}</p>
-                  <p className="text-xs text-gray-500 mt-1">of {orgVolunteers.length} total</p>
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-primary/70 uppercase tracking-wide">Impact Score</p>
+                <div className="flex items-baseline gap-1">
+                  <p className="text-4xl font-bold text-primary">{dashboardData?.impactScore || 0}</p>
+                  <p className="text-sm text-primary/60">/100</p>
                 </div>
-                <UsersIcon className="h-8 w-8 text-blue-500" />
+                <p className="text-xs text-gray-600 dark:text-gray-400">Overall organizational impact</p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/projects')} data-testid="card-projects">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Projects</p>
-                  <p className="text-2xl font-bold">{orgTotalProjects}</p>
-                  <p className="text-xs text-gray-500 mt-1">{orgCompletedProjects} completed</p>
-                </div>
-                <FolderKanban className="h-8 w-8 text-green-500" />
-              </div>
+          {/* People Impacted */}
+          <Card className="bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20" data-testid="card-people-impacted">
+            <CardContent className="pt-4">
+              <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">Lives Impacted</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{(dashboardData?.totalPeopleImpacted || 0).toLocaleString()}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">30% impact weight</p>
             </CardContent>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation('/assignments')} data-testid="card-hours">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Hours Logged</p>
-                  <p className="text-2xl font-bold">{orgTotalHours.toFixed(0)}h</p>
-                  <p className="text-xs text-gray-500 mt-1">volunteer hours</p>
-                </div>
-                <Clock className="h-8 w-8 text-purple-500" />
-              </div>
+          {/* Volunteer Hours */}
+          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20" data-testid="card-hours">
+            <CardContent className="pt-4">
+              <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Total Hours</p>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{Math.round(dashboardData?.totalHours || 0)}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">35% impact weight</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Total Volunteers</p>
-                    <p className="text-2xl font-bold">{orgTotalVolunteers || orgVolunteers.length}</p>
-                    <p className="text-xs text-gray-500 mt-1">{orgActiveVolunteers} active</p>
-                  </div>
-                  <UsersIcon className="h-8 w-8 text-blue-500" />
+          {/* Task Completion */}
+          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20" data-testid="card-task-completion">
+            <CardContent className="pt-4">
+              <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">Tasks Done</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
+                {Math.round(((dashboardData?.completedTasks || 0) / (dashboardData?.totalTasks || 1)) * 100)}%
+              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">20% impact weight</p>
+            </CardContent>
+          </Card>
+
+          {/* Active Volunteers & Projects */}
+          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20" data-testid="card-engagement">
+            <CardContent className="pt-4">
+              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Engagement</p>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600 dark:text-gray-400">{orgActiveVolunteers} volunteers</span>
+                  <span className="text-xs text-gray-500">{orgTotalProjects} projects</span>
                 </div>
-                <Button 
-                  onClick={handleImpactLeaderClick}
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-center gap-2 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 cursor-pointer" 
-                  data-testid="button-impact-leader"
-                >
-                  <Star className="h-4 w-4" />
-                  <span className="text-xs font-semibold">Leader: {impactLeaderName.substring(0, 10)}</span>
-                </Button>
               </div>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Active contributors</p>
             </CardContent>
           </Card>
         </div>

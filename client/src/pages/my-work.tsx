@@ -18,10 +18,15 @@ export default function MyWork() {
 
   // Scroll to top when page loads
   useEffect(() => {
-    const mainElement = document.querySelector('main');
-    if (mainElement) {
-      mainElement.scrollTop = 0;
-    }
+    // Use setTimeout to ensure DOM is ready
+    const timer = setTimeout(() => {
+      const mainElement = document.querySelector('main');
+      if (mainElement) {
+        mainElement.scrollTop = 0;
+      }
+    }, 50);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   // Fetch current user

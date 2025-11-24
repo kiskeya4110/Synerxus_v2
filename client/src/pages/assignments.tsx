@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Check, X, Building2, Calendar, Clock, AlertCircle, Users, Activity, ChevronDown, ChevronUp, CheckCircle, ListTodo, Target } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +19,17 @@ import { Progress } from "@/components/ui/progress";
 export default function Assignments() {
   const { toast } = useToast();
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
+
+  // Scroll to top when page loads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const mainElement = document.querySelector('main');
+      if (mainElement) {
+        mainElement.scrollTop = 0;
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Get current user from server session (no localStorage dependency)
   const { data: currentUser, isLoading: userLoading } = useQuery({

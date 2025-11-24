@@ -123,15 +123,14 @@ export default function MyWork() {
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
   });
 
-  // Fetch all volunteers for organization
+  // Fetch all volunteers for organization (use org-specific endpoint)
   const { data: orgVolunteers = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteers", currentUser?.organizationId],
+    queryKey: ["/api/organizations/:id/volunteers", currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
-      const response = await fetch("/api/volunteers");
+      const response = await fetch(`/api/organizations/${currentUser.organizationId}/volunteers`);
       if (!response.ok) return [];
-      const allVolunteers = await response.json();
-      return allVolunteers.filter((v: any) => v.organizationId === currentUser.organizationId);
+      return response.json();
     },
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
   });

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,17 @@ function OpportunityMetrics({ opportunity }: { opportunity: any }) {
 export default function MyApplicationsPage() {
   const userId = localStorage.getItem('currentUserId');
   const [expandedApps, setExpandedApps] = useState<Set<number>>(new Set());
+
+  // Scroll to top when page loads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const mainElement = document.querySelector('main');
+      if (mainElement) {
+        mainElement.scrollTop = 0;
+      }
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleExpanded = (appId: number) => {
     setExpandedApps(prev => {

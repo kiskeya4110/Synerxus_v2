@@ -192,6 +192,18 @@ export default function Header() {
         
         {/* Right Nav Items */}
         <div className="flex items-center space-x-4">
+          {/* Hamburger Menu - Toggle Sidebar */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar}
+            className="text-gray-500 dark:text-gray-400 focus:outline-none md:hidden"
+            data-testid="button-hamburger-menu"
+            title="Toggle menu"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          
           {/* Dark Mode Toggle */}
           <Button 
             variant="ghost" 

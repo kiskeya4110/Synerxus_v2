@@ -9,6 +9,7 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
+  // Always start closed (autohide mode) - users can toggle it open
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {

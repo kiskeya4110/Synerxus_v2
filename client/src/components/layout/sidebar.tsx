@@ -47,17 +47,13 @@ export default function Sidebar() {
     enabled: !!userId
   });
 
-  // Set initial state based on screen size
-  useEffect(() => {
-    setSidebarOpen(!isMobile);
-  }, [isMobile]);
-
-  // Close sidebar when clicking outside on mobile
+  // Close sidebar when clicking outside (on all screen sizes now)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isMobile && sidebarOpen) {
+      if (sidebarOpen) {
         const sidebar = document.getElementById("sidebar");
-        if (sidebar && !sidebar.contains(event.target as Node)) {
+        const hamburger = document.querySelector('[data-testid="button-hamburger-menu"]');
+        if (sidebar && hamburger && !sidebar.contains(event.target as Node) && !hamburger.contains(event.target as Node)) {
           setSidebarOpen(false);
         }
       }
@@ -65,16 +61,7 @@ export default function Sidebar() {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isMobile, sidebarOpen]);
-
-  // Update sidebarOpen state when mobile state changes
-  useEffect(() => {
-    if (!isMobile) {
-      setSidebarOpen(true);
-    } else {
-      setSidebarOpen(false);
-    }
-  }, [isMobile]);
+  }, [sidebarOpen, setSidebarOpen]);
 
   // Show minimal shell if userType is not set
   if (!currentUser?.userType) {
@@ -82,7 +69,7 @@ export default function Sidebar() {
       <aside 
         id="sidebar"
         className={cn(
-          "fixed lg:static inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform lg:translate-x-0 z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
+          "fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -148,10 +135,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Overlay when sidebar is open on mobile */}
-      {isMobile && sidebarOpen && (
+      {/* Overlay when sidebar is open - now on all screen sizes since autohide is default */}
+      {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-30 bg-black bg-opacity-50"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -159,7 +146,7 @@ export default function Sidebar() {
       <aside 
         id="sidebar"
         className={cn(
-          "fixed lg:static inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform lg:translate-x-0 z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
+          "fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out transform z-40 bg-white dark:bg-gray-800 shadow-md pt-16 overflow-y-auto",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

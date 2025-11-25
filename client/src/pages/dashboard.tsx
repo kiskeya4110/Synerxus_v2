@@ -825,25 +825,22 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-            {dashboardType === "organization" 
-              ? (orgProfile?.organization?.name || orgProfile?.user?.name || "Organization")
-              : (currentUser?.displayName || currentUser?.name || "Your")}
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+            Welcome back, {dashboardType === "volunteer" 
+              ? (currentUser?.displayName || currentUser?.name || "Volunteer")
+              : (orgProfile?.organization?.name || orgProfile?.user?.name || "Manager")}!
           </h1>
-          <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mt-1">
-            Dashboard Overview
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 md:mt-2 hidden md:block">
             {dashboardType === "volunteer" 
-              ? "Track your impact and manage your volunteer activities" 
-              : "Track your organization's projects, manage volunteers, and measure their collective impact"}
+              ? "Let's maximize your ripple effect today" 
+              : "Manage your impact and volunteers"}
           </p>
         </div>
         
-        {/* Controls Grid - 1 row with filters + optional org button */}
-        <div className={`grid gap-3 md:gap-4 w-full ${dashboardType === "organization" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-1 md:grid-cols-2"}`}>
+        {/* Controls Grid - hidden on mobile for cleaner look */}
+        <div className={`hidden md:grid gap-3 md:gap-4 w-full ${dashboardType === "organization" ? "md:grid-cols-2 lg:grid-cols-3" : "md:grid-cols-2"}`}>
           {/* Project Filter */}
           <div className="flex flex-col gap-1">
             <Label htmlFor="project-filter" className="text-sm font-medium text-gray-700 dark:text-gray-300">Project</Label>
@@ -885,8 +882,8 @@ export default function Dashboard() {
       {/* Dashboard Content Wrapper for PDF Export */}
       <div id="dashboard-content" className="space-y-6">
 
-      {/* KPI Cards - 2 Column Mobile Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+      {/* KPI Cards - 2 Column Mobile Grid, Full Width on Mobile */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 md:mt-6">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard

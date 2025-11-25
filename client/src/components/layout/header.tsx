@@ -167,12 +167,12 @@ export default function Header() {
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm fixed top-0 left-0 right-0 z-20 w-full">
       <div className="flex items-center justify-between h-16 px-2 md:px-4 gap-2 md:gap-4 min-w-0">
-        {/* Hamburger Menu - Toggle Sidebar */}
+        {/* Hamburger Menu - Toggle Sidebar (hidden on mobile) */}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className="text-gray-500 dark:text-gray-400 focus:outline-none flex-shrink-0"
+          className="text-gray-500 dark:text-gray-400 focus:outline-none flex-shrink-0 hidden md:flex"
           data-testid="button-hamburger-menu"
           title="Toggle menu"
         >
@@ -214,12 +214,12 @@ export default function Header() {
         {/* Right Nav Items */}
         <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
           
-          {/* Dark Mode Toggle */}
+          {/* Dark Mode Toggle - hidden on mobile */}
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="text-gray-500 dark:text-gray-400 focus:outline-none"
+            className="text-gray-500 dark:text-gray-400 focus:outline-none hidden md:flex"
           >
             {theme === 'dark' ? (
               <Sun className="h-5 w-5" />
@@ -228,10 +228,10 @@ export default function Header() {
             )}
           </Button>
           
-          {/* Notifications */}
+          {/* Notifications - hidden on mobile */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative" data-testid="button-notifications">
+              <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative hidden md:flex" data-testid="button-notifications">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge variant="destructive" className="absolute -top-3 -right-3 min-h-6 min-w-6 h-6 w-6 flex items-center justify-center p-0 text-[11px] font-bold leading-tight rounded-full">

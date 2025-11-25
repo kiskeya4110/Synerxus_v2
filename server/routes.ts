@@ -4740,5 +4740,43 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // Get real statistics for banner display
+  app.get("/api/banner-stats", async (req, res) => {
+    try {
+      const allUsers = await storage.listUsers();
+      const allVolunteerProfiles = await storage.listVolunteerProfiles();
+      const allOrganizations = await storage.listOrganizations();
+      const allActivities = await storage.listVolunteerActivities();
+
+      // Calculate real stats
+      const volunteerCount = allUsers.filter((u: any) => u.userType === 'volunteer').length;
+      const organizationCount = allOrganizations.length;
+      const totalHours = allActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+      const totalActivities = allActivities.length;
+      const activeVolunteers = allVolunteerProfiles.filter((p: any) => p.onboardingCompleted).length;
+      const averageHours = activeVolunteers > 0 ? Math.round(totalHours / activeVolunteers) : 0;
+
+      const stats = [
+        `📊 ${volunteerCount} active volunteers joined Synerxus`,
+        `🏢 ${organizationCount} organizations partnering with us`,
+        `⏱️ ${totalHours.toLocaleString()} total hours contributed by volunteers`,
+        `🎯 ${totalActivities} volunteer activities logged`,
+        `✅ ${activeVolunteers} volunteers with completed profiles`,
+        `📈 Average ${averageHours} hours per active volunteer`,
+      ];
+
+      res.json({ stats });
+    } catch (err) {
+      console.error("Error fetching banner stats:", err);
+      res.json({ 
+        stats: [
+          "📊 Real-time volunteer impact metrics loading...",
+          "🌍 Join thousands of volunteers making a global difference",
+          "🎯 Connect. Manage. Impact Globally.",
+        ]
+      });
+    }
+  });
+
   return httpServer;
 }

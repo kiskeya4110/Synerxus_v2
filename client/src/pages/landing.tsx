@@ -109,13 +109,11 @@ const IMPACT_FACTS = {
   ],
 };
 
-const GLOBAL_FACTS = [
-  "💸 Estimated global value of volunteer time: $390 billion USD annually.",
-  "💸 Annual spending on volunteer infrastructure and coordination exceeds $20 billion globally.",
-  "⚠️ Up to 85% of volunteer efforts are not formally measured or reported, especially in informal settings.",
-  "⚠️ Only 15% of working-age people globally engage in formal volunteering monthly.",
-  "👩 Women dominate informal volunteering, while formal roles skew male—highlighting a gendered data gap.",
-  "🎯 NGOs struggle with retention, matching, and reporting, leading to wasted hours and underutilized talent.",
+// Banner stats fetched from API (real data from your platform)
+const DEFAULT_STATS = [
+  "📊 Real-time volunteer impact metrics loading...",
+  "🌍 Join thousands of volunteers making a global difference",
+  "🎯 Connect. Manage. Impact Globally.",
 ];
 
 function getRandomFact(category: 'volunteers' | 'ngos' | 'csr'): string {
@@ -400,6 +398,44 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
   );
 };
 
+const RealTimeStatsBanner = () => {
+  const { data, isLoading } = useQuery<{ stats: string[] }>({
+    queryKey: ['/api/banner-stats'],
+    staleTime: 1000 * 60 * 5, // Refresh every 5 minutes
+  });
+
+  const stats = data?.stats || DEFAULT_STATS;
+
+  return (
+    <section className="bg-gradient-to-r from-blue-900/5 to-amber-600/5 py-4 sm:py-6 md:py-8 overflow-hidden border-y border-slate-200">
+      <div className="space-y-2">
+        <h3 className="text-center text-xs sm:text-sm font-semibold text-slate-700 mb-3 sm:mb-4 px-2">
+          Real-Time Impact Metrics
+        </h3>
+        <div className="relative overflow-hidden">
+          <div className="animate-scroll flex whitespace-nowrap gap-8">
+            {isLoading ? (
+              // Show placeholder while loading
+              [...DEFAULT_STATS, ...DEFAULT_STATS].map((stat, index) => (
+                <div key={index} className="px-4 py-2 flex-shrink-0">
+                  <p className="text-base sm:text-lg text-slate-700 font-medium">{stat}</p>
+                </div>
+              ))
+            ) : (
+              // Show real stats
+              [...stats, ...stats].map((stat, index) => (
+                <div key={index} className="px-4 py-2 flex-shrink-0">
+                  <p className="text-base sm:text-lg text-slate-700 font-medium">{stat}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const VolunteerSpotlightSection = () => {
   const { data, isLoading } = useQuery<{ spotlight: any }>({
     queryKey: ['/api/volunteer-spotlight'],
@@ -581,23 +617,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Global Volunteerism Facts Banner */}
-      <section className="bg-gradient-to-r from-blue-900/5 to-amber-600/5 py-4 sm:py-6 md:py-8 overflow-hidden border-y border-slate-200">
-        <div className="space-y-2">
-          <h3 className="text-center text-xs sm:text-sm font-semibold text-slate-700 mb-3 sm:mb-4 px-2">
-            Global Volunteerism: The Scale and the Gap
-          </h3>
-          <div className="relative overflow-hidden">
-            <div className="animate-scroll flex whitespace-nowrap gap-8">
-              {[...GLOBAL_FACTS, ...GLOBAL_FACTS].map((fact, index) => (
-                <div key={index} className="px-4 py-2 flex-shrink-0">
-                  <p className="text-base sm:text-lg text-slate-700 font-medium">{fact}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Real-Time Impact Metrics Banner */}
+      <RealTimeStatsBanner />
 
       {/* Volunteer Spotlight Section */}
       <VolunteerSpotlightSection />

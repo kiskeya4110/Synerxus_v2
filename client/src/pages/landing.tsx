@@ -681,22 +681,22 @@ export default function Landing() {
           </div>
 
           {/* SDG Wheel and Compact Info Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-center lg:items-start">
-            {/* SDG Wheel - Larger */}
-            <div className="relative flex justify-center items-center order-2 lg:order-1">
-              {/* Background glow effect - reduced size */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start">
+            {/* SDG Wheel - Responsive */}
+            <div className="relative flex justify-center items-center w-full overflow-hidden">
+              {/* Background glow effect - reduced size on mobile */}
               <div className="absolute inset-center flex justify-center items-center pointer-events-none">
-                <div className="w-56 sm:w-64 md:w-72 h-56 sm:h-64 md:h-72 bg-gradient-to-r from-blue-900/3 to-amber-600/3 rounded-full blur-2xl"></div>
+                <div className="w-48 sm:w-56 md:w-64 lg:w-72 h-48 sm:h-56 md:h-64 lg:h-72 bg-gradient-to-r from-blue-900/3 to-amber-600/3 rounded-full blur-2xl"></div>
               </div>
               
               {/* SDG Wheel */}
-              <div className="relative z-10 w-full max-w-sm h-64 sm:h-72 md:h-80 flex items-center justify-center">
+              <div className="relative z-10 w-full max-w-xs sm:max-w-sm h-48 sm:h-56 md:h-64 lg:h-72 flex items-center justify-center px-2">
                 <SDGCircularWheel />
               </div>
             </div>
 
             {/* Compact Info Cards */}
-            <div className="space-y-3 sm:space-y-4 order-1 lg:order-2">
+            <div className="space-y-3 sm:space-y-4 w-full">
               {/* About Card */}
               <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-lg border border-slate-200 dark:border-slate-700">
                 <h3 className="text-base sm:text-lg font-bold text-blue-900 dark:text-blue-400 mb-2">About the SDGs</h3>

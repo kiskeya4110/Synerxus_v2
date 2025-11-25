@@ -162,10 +162,26 @@ export default function VolunteerIntake() {
   });
 
   // Fetch existing volunteer profile using intake API which includes all availability fields
-  const { data: existingProfile, isLoading: loadingProfile } = useQuery<any>({
+  const { data: profileResponse, isLoading: loadingProfile } = useQuery<{ user: any; volunteerProfile: any }>({
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
     enabled: !!currentUser?.id,
   });
+  
+  // Extract the volunteer profile from the response (API returns { user, volunteerProfile })
+  const existingProfile = profileResponse?.volunteerProfile;
+  const profileUser = profileResponse?.user;
+
+  // Helper to parse skills from database format ("Skill Name (75%)") to form format ({ name, proficiency })
+  const parseSkillsFromDb = (skills: any): SkillProficiency[] => {
+    if (!skills || !Array.isArray(skills)) return [];
+    return skills.map((skill: string) => {
+      const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
+      if (match) {
+        return { name: match[1].trim(), proficiency: parseInt(match[2], 10) };
+      }
+      return { name: skill, proficiency: 50 }; // Default proficiency for legacy data
+    });
+  };
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -183,13 +199,13 @@ export default function VolunteerIntake() {
     },
     values: existingProfile
       ? {
-          email: existingProfile.email,
-          name: existingProfile.name,
-          skills: existingProfile.skills || [],
-          interests: existingProfile.interests,
-          location: existingProfile.location,
-          sdgGoals: existingProfile.sdgGoals,
-          weeklyHours: existingProfile.weeklyHours || 1,
+          email: profileUser?.email || currentUser?.email || "",
+          name: existingProfile.volunteerName || profileUser?.displayName || "",
+          skills: parseSkillsFromDb(existingProfile.skills),
+          interests: existingProfile.interests || [],
+          location: existingProfile.location || "",
+          sdgGoals: existingProfile.preferredSdgs || [],
+          weeklyHours: existingProfile.weeklyAvailability || 1,
           availability: existingProfile.availability || [],
           timezone:
             existingProfile.timezone ||
@@ -200,22 +216,41 @@ export default function VolunteerIntake() {
       : undefined,
   });
 
-  // Update form when currentUser loads (for new profile creation)
+  // Reset form when profile data loads (critical: useForm 'values' only reads once at init)
   useEffect(() => {
-    if (currentUser?.email && !existingProfile) {
-      form.setValue("email", currentUser.email);
-      if (currentUser.displayName) {
-        form.setValue("name", currentUser.displayName);
+    if (!loadingProfile && profileResponse) {
+      const profile = profileResponse.volunteerProfile;
+      const user = profileResponse.user;
+      
+      if (profile) {
+        console.log("[Intake] Resetting form with profile data:", {
+          weeklyAvailability: profile.weeklyAvailability,
+          availability: profile.availability?.length,
+        });
+        form.reset({
+          email: user?.email || currentUser?.email || "",
+          name: profile.volunteerName || user?.displayName || "",
+          skills: parseSkillsFromDb(profile.skills),
+          interests: profile.interests || [],
+          location: profile.location || "",
+          sdgGoals: profile.preferredSdgs || [],
+          weeklyHours: profile.weeklyAvailability || 1,
+          availability: profile.availability || [],
+          timezone: profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          preferredCommitment: profile.preferredCommitment || "flexible",
+        });
+        if (profile.profilePhotoUrl) {
+          setProfilePhotoUrl(profile.profilePhotoUrl);
+        }
+      } else if (currentUser?.email) {
+        // New profile - initialize with user data
+        form.setValue("email", currentUser.email);
+        if (currentUser.displayName) {
+          form.setValue("name", currentUser.displayName);
+        }
       }
     }
-  }, [currentUser, existingProfile, form]);
-
-  // Load existing photo URL
-  useEffect(() => {
-    if (existingProfile?.profilePhotoUrl) {
-      setProfilePhotoUrl(existingProfile.profilePhotoUrl);
-    }
-  }, [existingProfile]);
+  }, [loadingProfile, profileResponse, currentUser, form]);
 
   // Profile mutation (create or update)
   const profileMutation = useMutation({

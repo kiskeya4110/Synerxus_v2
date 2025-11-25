@@ -511,22 +511,22 @@ export default function Landing() {
   const [csrFact, setCsrFact] = useState(() => getRandomFact('csr'));
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200 bg-slate-50/95 backdrop-blur">
-        <div className="container mx-auto px-3 sm:px-6 py-2 sm:py-4 flex justify-between items-center gap-2 sm:gap-4">
+    <div className="min-h-screen bg-slate-50 scroll-container">
+      {/* Navigation - PWA optimized with glass effect */}
+      <nav className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl safe-area-top shadow-sm">
+        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
           <Link href="/">
-            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0">
+            <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 touch-feedback">
               <Logo size="sm" showMotto={true} />
             </div>
           </Link>
-          <div className="flex gap-1.5 sm:gap-3 flex-shrink-0">
+          <div className="flex gap-2 sm:gap-3 flex-shrink-0">
             <Link href="/login" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200" data-testid="button-login">Log In</Button>
+              <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-login">Log In</Button>
             </Link>
             <Link href="/login">
-              <Button size="sm" className="min-h-[40px] sm:min-h-auto whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs sm:text-sm px-3 sm:px-4" data-testid="button-get-started">
-                <span className="sm:hidden">Start</span>
+              <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-get-started">
+                <span className="sm:hidden">Get Started</span>
                 <span className="hidden sm:inline">Get Started</span>
               </Button>
             </Link>
@@ -549,12 +549,12 @@ export default function Landing() {
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-fit">
               <Link href="/volunteer-intake" className="w-full sm:w-auto">
-                <Button size="lg" className="min-h-[48px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl" data-testid="button-join-now">
+                <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-now">
                   Join Now
                 </Button>
               </Link>
               <Link href="/login" className="w-full sm:w-auto">
-                <Button size="lg" className="min-h-[48px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl" data-testid="button-sign-in">
+                <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-600/25" data-testid="button-sign-in">
                   Sign In
                 </Button>
               </Link>

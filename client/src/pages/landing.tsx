@@ -407,25 +407,25 @@ const RealTimeStatsBanner = () => {
   const stats = data?.stats || DEFAULT_STATS;
 
   return (
-    <section className="bg-gradient-to-r from-blue-900/5 to-amber-600/5 py-4 sm:py-6 md:py-8 overflow-hidden border-y border-slate-200">
-      <div className="space-y-2">
-        <h3 className="text-center text-xs sm:text-sm font-semibold text-slate-700 mb-3 sm:mb-4 px-2">
+    <section className="bg-gradient-to-r from-blue-900/5 to-amber-600/5 py-2 sm:py-4 md:py-6 border-y border-slate-200 w-full">
+      <div className="w-full">
+        <h3 className="text-center text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3 px-2 line-clamp-1">
           Real-Time Impact Metrics
         </h3>
-        <div className="relative overflow-hidden">
-          <div className="animate-scroll flex whitespace-nowrap gap-8">
+        <div className="relative overflow-hidden w-full h-auto">
+          <div className="animate-scroll flex whitespace-nowrap gap-6 sm:gap-8">
             {isLoading ? (
               // Show placeholder while loading
               [...DEFAULT_STATS, ...DEFAULT_STATS].map((stat, index) => (
-                <div key={index} className="px-4 py-2 flex-shrink-0">
-                  <p className="text-base sm:text-lg text-slate-700 font-medium">{stat}</p>
+                <div key={index} className="px-2 sm:px-4 py-1 sm:py-2 flex-shrink-0 h-auto">
+                  <p className="text-xs sm:text-base text-slate-700 font-medium line-clamp-1">{stat}</p>
                 </div>
               ))
             ) : (
               // Show real stats
               [...stats, ...stats].map((stat, index) => (
-                <div key={index} className="px-4 py-2 flex-shrink-0">
-                  <p className="text-base sm:text-lg text-slate-700 font-medium">{stat}</p>
+                <div key={index} className="px-2 sm:px-4 py-1 sm:py-2 flex-shrink-0 h-auto">
+                  <p className="text-xs sm:text-base text-slate-700 font-medium line-clamp-1">{stat}</p>
                 </div>
               ))
             )}

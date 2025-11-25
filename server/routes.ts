@@ -3779,17 +3779,27 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       
       console.log(`[Intake POST CRITICAL] User email: ${user.email}, DisplayName: ${user.displayName}`);
       
-      // Set weekly availability to the LESSER of weekly hours or total slot hours
-      if (req.body.availability && req.body.weeklyAvailability) {
+      // Always calculate total hours from availability slots
+      if (req.body.availability && Array.isArray(req.body.availability) && req.body.availability.length > 0) {
         const totalAvailabilityHours = (req.body.availability as any[]).reduce((sum, slot) => {
           const start = parseInt(slot.startTime?.split(':')[0] || 0);
           const end = parseInt(slot.endTime?.split(':')[0] || 0);
-          return sum + (end - start);
+          return sum + Math.max(0, end - start);
         }, 0);
         
-        const availabilityHours = Math.min(req.body.weeklyAvailability, totalAvailabilityHours);
-        console.log(`[Intake POST CRITICAL] User ${userId} - Setting availability to lesser of ${req.body.weeklyAvailability} and ${totalAvailabilityHours} = ${availabilityHours}`);
-        req.body.weeklyAvailability = availabilityHours;
+        // If weeklyAvailability is provided, use the lesser of input vs calculated hours
+        // If not provided, use the calculated hours from slots
+        if (req.body.weeklyAvailability) {
+          const availabilityHours = Math.min(req.body.weeklyAvailability, totalAvailabilityHours);
+          console.log(`[Intake POST CRITICAL] User ${userId} - Setting weeklyAvailability to min(${req.body.weeklyAvailability}, ${totalAvailabilityHours}) = ${availabilityHours}`);
+          req.body.weeklyAvailability = availabilityHours;
+        } else {
+          console.log(`[Intake POST CRITICAL] User ${userId} - Auto-calculating weeklyAvailability from slots = ${totalAvailabilityHours}`);
+          req.body.weeklyAvailability = totalAvailabilityHours;
+        }
+      } else if (!req.body.weeklyAvailability) {
+        // No slots and no hours provided - default to 0
+        req.body.weeklyAvailability = 0;
       }
       
       console.log(`[Intake POST] Received skillRatings for user ${userId}:`, JSON.stringify(req.body.skillRatings));

@@ -696,7 +696,7 @@ export default function Landing() {
             </div>
 
             {/* Compact Info Cards */}
-            <div className="space-y-3 sm:space-y-4 w-full">
+            <div className="space-y-3 sm:space-y-4 w-full relative z-20">
               {/* About Card */}
               <div className="bg-white dark:bg-slate-800 rounded-lg p-3 sm:p-4 shadow-lg border border-slate-200 dark:border-slate-700">
                 <h3 className="text-base sm:text-lg font-bold text-blue-900 dark:text-blue-400 mb-2">About the SDGs</h3>
@@ -729,7 +729,7 @@ export default function Landing() {
           </div>
 
           {/* CTA Text */}
-          <div className="text-center mt-12 sm:mt-16 md:mt-20 pt-8 sm:pt-12 border-t border-slate-200 px-4">
+          <div className="text-center mt-12 sm:mt-16 md:mt-20 pt-8 sm:pt-12 border-t border-slate-200 px-4 relative z-20">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3 sm:mb-4">
               <span className="text-blue-900">From Local Service</span><br />
               <span className="text-amber-600">to Global Legacy</span>
@@ -738,7 +738,7 @@ export default function Landing() {
               Join thousands making measurable impact across all 17 SDGs worldwide.
             </p>
             <Link href="/login">
-              <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl">
+              <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
                 Start Your Legacy Today
               </Button>
             </Link>

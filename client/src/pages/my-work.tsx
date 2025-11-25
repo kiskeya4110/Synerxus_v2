@@ -605,32 +605,38 @@ export default function MyWork() {
           </div>
         </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3 mb-6">
-            <TabsTrigger value="applications" className="flex items-center gap-2" data-testid="tab-applications">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-20 md:pb-4">
+          <TabsList className="grid w-full max-w-md grid-cols-3 mb-4 sm:mb-6">
+            <TabsTrigger value="applications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-applications">
               <Briefcase className="h-4 w-4" />
-              <span className="hidden sm:inline">Applications</span>
+              <span>Apps</span>
             </TabsTrigger>
-            <TabsTrigger value="assignments" className="flex items-center gap-2" data-testid="tab-assignments">
+            <TabsTrigger value="assignments" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-assignments">
               <FolderKanban className="h-4 w-4" />
-              <span className="hidden sm:inline">Assignments</span>
+              <span>Assign</span>
             </TabsTrigger>
-            <TabsTrigger value="tasks" className="flex items-center gap-2" data-testid="tab-tasks">
+            <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
               <ListTodo className="h-4 w-4" />
-              <span className="hidden sm:inline">Tasks</span>
+              <span>Tasks</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="applications" className="-mx-6">
-            <MyApplicationsPage />
+          <TabsContent value="applications" className="mt-2">
+            <div className="w-full overflow-x-hidden">
+              <MyApplicationsPage />
+            </div>
           </TabsContent>
 
-          <TabsContent value="assignments" className="-mx-6">
-            <AssignmentsPage />
+          <TabsContent value="assignments" className="mt-2">
+            <div className="w-full overflow-x-hidden">
+              <AssignmentsPage />
+            </div>
           </TabsContent>
 
-          <TabsContent value="tasks" className="-mx-6">
-            <MyTasksPage />
+          <TabsContent value="tasks" className="mt-2">
+            <div className="w-full overflow-x-hidden">
+              <MyTasksPage />
+            </div>
           </TabsContent>
         </Tabs>
       )}

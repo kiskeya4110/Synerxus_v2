@@ -174,16 +174,16 @@ export function SDGCircularWheel() {
 
         </div>
 
-        {/* Mobile: Grid layout */}
-        <div className="md:hidden max-w-2xl mx-auto w-full">
-          <div className="grid grid-cols-3 gap-3 px-2">
+        {/* Mobile: Grid layout - no height constraints to show all 17 SDGs */}
+        <div className="md:hidden w-full">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 px-2 auto-rows-fr">
             {sortedSDGData.map((sdg) => {
               const sdgIcon = UN_SDG_ICONS[sdg.id];
               return (
                 <button
                   key={sdg.id}
                   onClick={() => setSelectedSDG(sdg.id)}
-                  className="group relative rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:ring-offset-2"
+                  className="group relative rounded-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:z-10 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:ring-offset-2 w-full"
                   style={{ aspectRatio: '1/1' }}
                   data-testid={`sdg-button-mobile-${sdg.id}`}
                   title={`SDG ${sdg.id}: ${sdg.name}`}

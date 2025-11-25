@@ -401,7 +401,7 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
 };
 
 const VolunteerSpotlightSection = () => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<{ spotlight: any }>({
     queryKey: ['/api/volunteer-spotlight'],
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });

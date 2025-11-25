@@ -4682,37 +4682,43 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const allVolunteerProfiles = await storage.listVolunteerProfiles();
       const allActivities = await storage.listVolunteerActivities();
 
-      // Get users who have activity this week
-      const today = new Date();
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - today.getDay());
-      weekStart.setHours(0, 0, 0, 0);
-
-      const thisWeekActivities = allActivities.filter((a: any) => {
-        const actDate = new Date(a.date);
-        return actDate >= weekStart && actDate < new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
-      });
-
-      // Get unique volunteers with activities this week
-      const volunteerIds = Array.from(new Set(thisWeekActivities.map((a: any) => a.userId)));
+      // Filter for volunteers who have completed onboarding
+      const activeVolunteers = allVolunteerProfiles.filter((p: any) => p.onboardingCompleted);
       
-      if (volunteerIds.length === 0) {
+      if (activeVolunteers.length === 0) {
         return res.json({ spotlight: null });
       }
 
-      // Select a pseudo-random volunteer based on day of week for consistent weekly selection
-      const selectedVolunteerId = volunteerIds[today.getDate() % volunteerIds.length];
-      const volunteer = allUsers.find((u: any) => u.id === selectedVolunteerId);
-      const profile = allVolunteerProfiles.find((p: any) => p.userId === selectedVolunteerId);
+      // Get week info for rotation
+      const today = new Date();
+      const weekNumber = Math.floor(today.getTime() / (7 * 24 * 60 * 60 * 1000));
+      
+      // Select volunteer based on week number (rotates through available volunteers)
+      const selectedProfile = activeVolunteers[weekNumber % activeVolunteers.length];
+      const volunteer = allUsers.find((u: any) => u.id === selectedProfile.userId);
 
       if (!volunteer) {
         return res.json({ spotlight: null });
       }
 
-      // Calculate stats for this volunteer this week
-      const weekActivities = thisWeekActivities.filter((a: any) => a.userId === selectedVolunteerId);
+      // Calculate this week's stats for this volunteer
+      const thisWeekStart = new Date(today);
+      thisWeekStart.setDate(today.getDate() - today.getDay());
+      thisWeekStart.setHours(0, 0, 0, 0);
+      const thisWeekEnd = new Date(thisWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      const weekActivities = allActivities.filter((a: any) => {
+        if (a.userId !== selectedProfile.userId) return false;
+        const actDate = new Date(a.date || a.createdAt);
+        return actDate >= thisWeekStart && actDate < thisWeekEnd;
+      });
+
       const totalHours = weekActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
       const impactCount = weekActivities.length;
+
+      // Build story from profile data
+      const story = selectedProfile.motivations || 
+                   `${volunteer.displayName} is dedicated to making an impact through volunteering. They're passionate about creating positive change in their community.`;
 
       res.json({ 
         spotlight: {
@@ -4721,9 +4727,11 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
             displayName: volunteer.displayName,
             avatar: volunteer.avatar,
           },
-          story: profile?.motivations || `${volunteer.displayName} is making a difference through dedicated volunteer work.`,
-          impact: `${totalHours} hours contributed • ${impactCount} activities`,
-          photoUrl: volunteer.avatar || null,
+          story: story,
+          impact: impactCount > 0 
+            ? `${totalHours} hours contributed • ${impactCount} activities this week`
+            : `${selectedProfile.weeklyAvailability || 0} hours available • Ready to make an impact`,
+          photoUrl: selectedProfile.profilePhotoUrl || volunteer.avatar || null,
         }
       });
     } catch (err) {

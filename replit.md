@@ -10,6 +10,11 @@ Synerxus is an AI-powered platform that connects global volunteers with opportun
   - Organization Settings: Fixed `values` option issue by using `form.reset()` instead
 - **Auto-calculate Weekly Availability**: Backend automatically calculates `weeklyAvailability` from availability time slots when not explicitly provided, preventing NULL values. Existing profiles with NULL values were retroactively fixed.
 - **Skill Parsing Helper**: Added `parseSkillsFromDb()` function to convert database format ("Skill Name (75%)") to form format `{ name, proficiency }`.
+- **Volunteer Spotlight Feature**: Implemented `/api/volunteer-spotlight` endpoint that rotates featured volunteers on the landing page. Algorithm:
+  - Selects from volunteers with completed onboarding profiles
+  - Uses week-based rotation algorithm for consistent weekly selection
+  - Shows volunteer story from profile motivations, weekly impact metrics (hours contributed + activities), or availability if new
+  - Falls back to volunteer profile photo, then user avatar if available
 
 ## Recent Changes (November 24, 2025)
 - **Volunteer Spotlight Feature**: Added new section on landing page showcasing a featured volunteer each week with their story and impact metrics. Algorithm rotates featured volunteers based on weekly activity. Fetches from `/api/volunteer-spotlight` endpoint.

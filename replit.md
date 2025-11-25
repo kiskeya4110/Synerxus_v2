@@ -3,6 +3,11 @@
 ## Overview
 Synerxus is an AI-powered platform that connects global volunteers with opportunities and helps organizations track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhancing global collaboration. Its core purpose is "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes (November 25, 2025)
+- **Data Persistence Fix**: Fixed volunteer intake form to properly hydrate persisted data. The form now correctly accesses the `{ user, volunteerProfile }` API response structure and uses `form.reset()` in a useEffect to populate fields when async data loads. This fixes the issue where availability slots and weekly hours were not displaying despite existing in the database.
+- **Auto-calculate Weekly Availability**: Backend now automatically calculates `weeklyAvailability` from availability time slots when not explicitly provided, preventing NULL values. Existing profiles with NULL values were retroactively fixed.
+- **Skill Parsing Helper**: Added `parseSkillsFromDb()` function to convert database format ("Skill Name (75%)") to form format `{ name, proficiency }`.
+
 ## Recent Changes (November 24, 2025)
 - **Volunteer Spotlight Feature**: Added new section on landing page showcasing a featured volunteer each week with their story and impact metrics. Algorithm rotates featured volunteers based on weekly activity. Fetches from `/api/volunteer-spotlight` endpoint.
 - **SDG Toggle Fix**: Fixed undefined error in volunteer-intake.tsx when toggling SDG commitments. Added default empty array fallback for sdgGoals field.

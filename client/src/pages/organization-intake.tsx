@@ -134,32 +134,49 @@ export default function OrganizationIntake() {
     }
   }, [currentUser]);
 
-  // Sync selectedSdgs with form value when existingProfile loads
-  useEffect(() => {
-    if (existingProfile?.primarySdgs) {
-      setSelectedSdgs(existingProfile.primarySdgs);
-    }
-  }, [existingProfile]);
-
   const form = useForm<OrganizationProfileForm>({
     resolver: zodResolver(organizationProfileSchema),
     defaultValues: {
       organizationName: "",
       organizationLocation: "",
-      missionStatement: existingProfile?.missionStatement || "",
-      focusAreas: existingProfile?.focusAreas || [],
-      organizationType: existingProfile?.organizationType || "",
-      size: existingProfile?.size || "small",
-      yearFounded: existingProfile?.yearFounded || new Date().getFullYear(),
-      taxId: existingProfile?.taxId || "",
-      registrationNumber: existingProfile?.registrationNumber || "",
-      primarySdgs: existingProfile?.primarySdgs || [],
-      geographicScope: existingProfile?.geographicScope || "local",
-      targetBeneficiaries: existingProfile?.targetBeneficiaries || "",
-      volunteerNeeds: existingProfile?.volunteerNeeds || [],
+      missionStatement: "",
+      focusAreas: [],
+      organizationType: "",
+      size: "small",
+      yearFounded: new Date().getFullYear(),
+      taxId: "",
+      registrationNumber: "",
+      primarySdgs: [],
+      geographicScope: "local",
+      targetBeneficiaries: "",
+      volunteerNeeds: [],
       onboardingCompleted: true
     }
   });
+
+  // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
+  useEffect(() => {
+    if (existingProfile) {
+      console.log("[Organization Intake] Resetting form with profile data");
+      form.reset({
+        organizationName: existingProfile.organizationName || "",
+        organizationLocation: existingProfile.organizationLocation || "",
+        missionStatement: existingProfile.missionStatement || "",
+        focusAreas: existingProfile.focusAreas || [],
+        organizationType: existingProfile.organizationType || "",
+        size: existingProfile.size || "small",
+        yearFounded: existingProfile.yearFounded || new Date().getFullYear(),
+        taxId: existingProfile.taxId || "",
+        registrationNumber: existingProfile.registrationNumber || "",
+        primarySdgs: existingProfile.primarySdgs || [],
+        geographicScope: existingProfile.geographicScope || "local",
+        targetBeneficiaries: existingProfile.targetBeneficiaries || "",
+        volunteerNeeds: existingProfile.volunteerNeeds || [],
+        onboardingCompleted: true
+      });
+      setSelectedSdgs(existingProfile.primarySdgs || []);
+    }
+  }, [existingProfile, form]);
 
   const submitMutation = useMutation({
     mutationFn: async (data: OrganizationProfileForm) => {

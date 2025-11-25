@@ -80,13 +80,6 @@ export default function OrganizationProfileSettings() {
   // Find the organization profile for current user (match by email)
   const existingProfile = organizations?.find(o => o.email === currentUser?.email);
 
-  // Update logo when existing profile loads
-  useEffect(() => {
-    if (existingProfile?.logo) {
-      setLogoUrl(existingProfile.logo);
-    }
-  }, [existingProfile]);
-
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -97,25 +90,35 @@ export default function OrganizationProfileSettings() {
       needs: [],
       sdgFocus: [],
     },
-    values: existingProfile ? {
-      email: existingProfile.email,
-      name: existingProfile.name,
-      mission: existingProfile.mission,
-      location: existingProfile.location,
-      needs: existingProfile.needs,
-      sdgFocus: existingProfile.sdgFocus,
-    } : undefined,
   });
 
-  // Update form when currentUser loads (for new profile creation)
+  // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
   useEffect(() => {
-    if (currentUser?.email && !existingProfile) {
-      form.setValue("email", currentUser.email);
-      if (currentUser.displayName) {
-        form.setValue("name", currentUser.displayName);
+    if (existingProfile) {
+      console.log("[Organization Settings] Resetting form with profile data");
+      form.reset({
+        email: existingProfile.email || currentUser?.email || "",
+        name: existingProfile.name || "",
+        mission: existingProfile.mission || "",
+        location: existingProfile.location || "",
+        needs: existingProfile.needs || [],
+        sdgFocus: existingProfile.sdgFocus || [],
+      });
+      if (existingProfile.logo) {
+        setLogoUrl(existingProfile.logo);
       }
+    } else if (!loadingProfile && currentUser?.email) {
+      // New profile - initialize with user data
+      form.reset({
+        email: currentUser.email,
+        name: currentUser.displayName || "",
+        mission: "",
+        location: "",
+        needs: [],
+        sdgFocus: [],
+      });
     }
-  }, [currentUser, existingProfile, form]);
+  }, [existingProfile, loadingProfile, currentUser, form]);
 
   // Create mutation
   const createMutation = useMutation({

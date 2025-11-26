@@ -2337,7 +2337,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/project-assignments/:id", async (req, res) => {
     try {
       const assignmentId = parseInt(req.params.id);
-      const updatedAssignment = await storage.updateProjectAssignment(assignmentId, req.body);
+      const updateData = { ...req.body };
+      
+      // If status is being changed to active or declined, set respondedAt
+      if ((updateData.status === "active" || updateData.status === "declined") && !updateData.respondedAt) {
+        updateData.respondedAt = new Date();
+      }
+      
+      const updatedAssignment = await storage.updateProjectAssignment(assignmentId, updateData);
       
       if (!updatedAssignment) {
         return res.status(404).json({ message: "Project assignment not found" });

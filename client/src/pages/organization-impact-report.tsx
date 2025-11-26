@@ -1206,55 +1206,154 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
             </Tabs>
             ) : (
             // Single Page View - Render all tabs sequentially with identical styling
-            <>
-              {/* Overview Tab Content */}
+            <div className="space-y-8">
+              {/* OVERVIEW SECTION */}
               <div className="space-y-6">
                 
-                {/* Compact KPIs - 2 rows x 2 cols */}
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="bg-green-50 dark:bg-green-900 p-3 rounded-lg border border-green-200 dark:border-green-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Total Hours</p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{totalHours}h</p>
-                  </div>
-                  <div className="bg-blue-50 dark:bg-blue-900 p-3 rounded-lg border border-blue-200 dark:border-blue-700">
-                    <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">Active Projects</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalProjects}</p>
-                  </div>
-                </div>
-
-                {/* Impact Leader - Compact */}
-                {leaderData && (
-                  <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 p-3 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 mb-3 print:page-break-inside-avoid">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Crown className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                        <div className="min-w-0">
-                          <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">Top Volunteer</p>
-                          <p className="font-bold text-yellow-900 dark:text-yellow-100 text-sm truncate">{leaderData.name}</p>
-                        </div>
+                {/* Full-width KPIs matching tab view - 5 columns */}
+                <div className="grid grid-cols-5 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Team Members</p>
+                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{totalTeam}</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Volunteers:</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{activeVolunteers}</span>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Hours</p>
-                        <p className="font-bold text-yellow-600 dark:text-yellow-400">{Math.round(leaderData.hours)}h</p>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Managers:</span>
+                        <span className="font-bold text-blue-600 dark:text-blue-400">{projectManagers}</span>
+                      </div>
+                      {activeVolunteers > 0 && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Avg/Vol:</span>
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{(totalHours / activeVolunteers).toFixed(1)}h</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
+                    <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">Total Hours Logged</p>
+                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">{Math.round(totalHours)}h</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Activities:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{filteredActivities.length}</span>
+                      </div>
+                      {filteredActivities.length > 0 && (
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Avg/Activity:</span>
+                          <span className="font-bold text-green-600 dark:text-green-400">{(totalHours / filteredActivities.length).toFixed(1)}h</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Filter:</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">{timeFilter === 'all' ? 'All Time' : timeFilter === 'month' ? 'This Mo.' : timeFilter === 'quarter' ? 'This Q' : 'This Yr'}</span>
                       </div>
                     </div>
                   </div>
-                )}
 
-                {/* Charts - Single column for better fit */}
-                <div className="space-y-3 print:page-break-inside-avoid">
+                  <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                    <p className="text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-2">Projects Managed</p>
+                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">{totalProjects}</p>
+                    <div className="space-y-1.5">
+                      {projects.length > 0 && (
+                        <>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Active:</span>
+                            <span className="font-bold text-purple-600 dark:text-purple-400">{projects.filter(p => p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress').length}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Completed:</span>
+                            <span className="font-bold text-purple-600 dark:text-purple-400">{projects.filter(p => p.status?.toLowerCase() === 'completed').length}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Avg %:</span>
+                            <span className="font-bold text-purple-600 dark:text-purple-400">{projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.completionPercentage || 0), 0) / projects.length) : 0}%</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <p className="text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-2">Beneficiaries Served</p>
+                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">{beneficiariesServed.toLocaleString()}</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Est. Lives:</span>
+                        <span className="font-bold text-orange-600 dark:text-orange-400">{(beneficiariesServed * 1.2).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Reach Rate:</span>
+                        <span className="font-bold text-orange-600 dark:text-orange-400">{beneficiariesServed > 0 ? '95%' : '0%'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-red-50 dark:bg-red-900 p-4 rounded-lg border border-red-200 dark:border-red-700">
+                    <p className="text-xs text-red-600 dark:text-red-400 uppercase font-semibold mb-2">Impact Score</p>
+                    <p className="text-2xl font-bold text-red-900 dark:text-red-100 mb-2">{isOrganizationManager ? (dashboardData?.impactScore || organizationImpactScore) : organizationImpactScore}/100</p>
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Rating:</span>
+                        <span className="font-bold text-red-600 dark:text-red-400">{isOrganizationManager ? (dashboardData?.impactScore || organizationImpactScore) : organizationImpactScore >= 75 ? 'A+' : organizationImpactScore >= 60 ? 'A' : 'B+'}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                        <span className="font-bold text-red-600 dark:text-red-400">Active</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Charts Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-3">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Quarterly Growth</h3>
-                      <div style={{ height: '200px' }}>
-                        <Line data={{ labels: quarterlyGrowth.map(q => q.quarter), datasets: [{ label: 'Beneficiaries', data: quarterlyGrowth.map(q => q.beneficiaries), borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, borderWidth: 2 }] }} options={{ responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 8 } }, scales: { y: { beginAtZero: true } } }} />
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Monthly Engagement</h3>
+                      <div style={{ height: '250px' }}>
+                        <Line
+                          data={{
+                            labels: monthlyEngagement.map(m => m.month),
+                            datasets: [{
+                              label: 'Hours Logged',
+                              data: monthlyEngagement.map(m => m.hours),
+                              borderColor: '#3b82f6',
+                              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                              fill: true,
+                              tension: 0.4,
+                              borderWidth: 2,
+                            }]
+                          }}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: { legend: { display: false }, tooltip: { enabled: true, backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 } },
+                            scales: { y: { beginAtZero: true } }
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border border-gray-200 dark:border-gray-700">
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Organizational Performance</h3>
+                      <div style={{ height: '250px' }}>
+                        <Radar
+                          ref={(ref) => chartRefs.current['performance'] = ref}
+                          data={organizationalPerformance}
+                          options={radarChartOptions}
+                        />
                       </div>
                     </CardContent>
                   </Card>
                 </div>
               </div>
 
-              {/* PROGRAMS SECTION - Same Page */}
+              {/* PROGRAMS SECTION */}
               <div className="print:page-break-inside-avoid">
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 pb-2 border-b-2 border-green-200 dark:border-green-700">Programs</h2>
                 <Card className="border border-gray-200 dark:border-gray-700">

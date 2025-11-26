@@ -313,6 +313,24 @@ export const volunteerSpotlights = pgTable("volunteer_spotlights", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// User Data Audit Logs - Track all changes to user data for integrity monitoring
+export const userDataAuditLogs = pgTable("user_data_audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  action: text("action").notNull(), // create, update, delete, name_mismatch, data_sync
+  tableName: text("table_name").notNull(), // Which table was affected
+  recordId: integer("record_id"), // ID of the affected record
+  previousData: jsonb("previous_data"), // Snapshot before change
+  newData: jsonb("new_data"), // Snapshot after change
+  discrepancyType: text("discrepancy_type"), // name_mismatch, id_mismatch, data_conflict
+  discrepancyDetails: text("discrepancy_details"), // Description of the issue
+  resolvedAt: timestamp("resolved_at"), // When the discrepancy was resolved
+  resolvedBy: integer("resolved_by").references(() => users.id), // Who resolved it
+  ipAddress: text("ip_address"), // Client IP for security tracking
+  userAgent: text("user_agent"), // Browser/client info
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Matching Weights - Admin panel for simple weight adjustments (Optimization Layer)
 export const matchingWeights = pgTable("matching_weights", {
   id: serial("id").primaryKey(),
@@ -684,6 +702,11 @@ export const insertVolunteerSpotlightSchema = createInsertSchema(volunteerSpotli
   weekStartDate: z.coerce.date(),
 });
 
+export const insertUserDataAuditLogSchema = createInsertSchema(userDataAuditLogs).omit({
+  id: true,
+  createdAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -756,3 +779,6 @@ export type InsertLeaderboardStats = z.infer<typeof insertLeaderboardStatsSchema
 
 export type VolunteerSpotlight = typeof volunteerSpotlights.$inferSelect;
 export type InsertVolunteerSpotlight = z.infer<typeof insertVolunteerSpotlightSchema>;
+
+export type UserDataAuditLog = typeof userDataAuditLogs.$inferSelect;
+export type InsertUserDataAuditLog = z.infer<typeof insertUserDataAuditLogSchema>;

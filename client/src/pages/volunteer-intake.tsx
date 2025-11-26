@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import { DataDiscrepancyAlert } from "@/components/ui/data-discrepancy-alert";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -453,6 +454,14 @@ export default function VolunteerIntake() {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              {/* Data Discrepancy Alert - shows if user data has issues */}
+              {currentUser?.id && (
+                <DataDiscrepancyAlert 
+                  userId={currentUser.id} 
+                  onResolved={() => form.reset()}
+                />
+              )}
+              
               {/* Profile Photo */}
               {currentUser?.id && (
                 <div className="mb-6">

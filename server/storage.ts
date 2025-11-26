@@ -19,6 +19,7 @@ import {
   rejectedOpportunities,
   messages,
   notifications,
+  userDataAuditLogs,
   type User, 
   type InsertUser,
   type Organization,
@@ -58,11 +59,13 @@ import {
   type Message,
   type InsertMessage,
   type Notification,
-  type InsertNotification
+  type InsertNotification,
+  type UserDataAuditLog,
+  type InsertUserDataAuditLog
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
-import { eq, and, or, asc, desc, inArray } from "drizzle-orm";
+import { eq, and, or, asc, desc, inArray, isNull, isNotNull } from "drizzle-orm";
 
 // Custom error for duplicate project assignments
 export class DuplicateAssignmentError extends Error {
@@ -232,6 +235,13 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   getNotifications(userId: number): Promise<Notification[]>;
   markNotificationRead(notificationId: number): Promise<Notification | undefined>;
+
+  // User Data Audit Log operations
+  createUserDataAuditLog(log: InsertUserDataAuditLog): Promise<UserDataAuditLog>;
+  getUserDataAuditLogs(userId: number): Promise<UserDataAuditLog[]>;
+  getUnresolvedDiscrepancies(userId?: number): Promise<UserDataAuditLog[]>;
+  getDiscrepancyById(id: number): Promise<UserDataAuditLog | undefined>;
+  resolveDiscrepancy(id: number, resolvedBy: number): Promise<UserDataAuditLog | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1046,6 +1056,58 @@ export class DatabaseStorage implements IStorage {
 
   async listOrganizationProfiles(): Promise<OrganizationProfile[]> {
     return await db.select().from(organizationProfiles);
+  }
+
+  // User Data Audit Log operations
+  async createUserDataAuditLog(log: InsertUserDataAuditLog): Promise<UserDataAuditLog> {
+    const [auditLog] = await db.insert(userDataAuditLogs).values(log).returning();
+    return auditLog;
+  }
+
+  async getUserDataAuditLogs(userId: number): Promise<UserDataAuditLog[]> {
+    return await db
+      .select()
+      .from(userDataAuditLogs)
+      .where(eq(userDataAuditLogs.userId, userId))
+      .orderBy(desc(userDataAuditLogs.createdAt));
+  }
+
+  async getUnresolvedDiscrepancies(userId?: number): Promise<UserDataAuditLog[]> {
+    const baseCondition = and(
+      isNull(userDataAuditLogs.resolvedAt),
+      isNotNull(userDataAuditLogs.discrepancyType)
+    );
+    
+    if (userId) {
+      return await db
+        .select()
+        .from(userDataAuditLogs)
+        .where(and(baseCondition, eq(userDataAuditLogs.userId, userId)))
+        .orderBy(desc(userDataAuditLogs.createdAt));
+    }
+    
+    return await db
+      .select()
+      .from(userDataAuditLogs)
+      .where(baseCondition)
+      .orderBy(desc(userDataAuditLogs.createdAt));
+  }
+
+  async getDiscrepancyById(id: number): Promise<UserDataAuditLog | undefined> {
+    const [result] = await db
+      .select()
+      .from(userDataAuditLogs)
+      .where(eq(userDataAuditLogs.id, id));
+    return result || undefined;
+  }
+
+  async resolveDiscrepancy(id: number, resolvedBy: number): Promise<UserDataAuditLog | undefined> {
+    const [result] = await db
+      .update(userDataAuditLogs)
+      .set({ resolvedAt: new Date(), resolvedBy })
+      .where(eq(userDataAuditLogs.id, id))
+      .returning();
+    return result || undefined;
   }
 }
 

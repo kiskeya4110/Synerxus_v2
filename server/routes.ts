@@ -4142,6 +4142,268 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
     }
   });
 
+  // === User Data Validation Routes ===
+  
+  // Validate user data consistency (users can only validate their own data)
+  app.get("/api/user-validation/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      // Authorization: Users can only validate their own data
+      const authenticatedUserId = extractUserId(req);
+      if (!authenticatedUserId || authenticatedUserId !== userId) {
+        return res.status(403).json({ message: "You can only validate your own data" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const discrepancies: any[] = [];
+      
+      // Check volunteer profile name consistency
+      if (user.userType === 'volunteer') {
+        const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+        if (volunteerProfile) {
+          const userName = (user.displayName || '').trim().toLowerCase();
+          const profileName = (volunteerProfile.volunteerName || '').trim().toLowerCase();
+          
+          if (userName && profileName && userName !== profileName) {
+            discrepancies.push({
+              type: 'name_mismatch',
+              field: 'displayName',
+              userValue: user.displayName,
+              profileValue: volunteerProfile.volunteerName,
+              severity: 'warning',
+              message: `User display name "${user.displayName}" differs from profile name "${volunteerProfile.volunteerName}"`
+            });
+            
+            // Log the discrepancy
+            await storage.createUserDataAuditLog({
+              userId,
+              action: 'validation_check',
+              tableName: 'volunteer_profiles',
+              recordId: volunteerProfile.id,
+              previousData: { displayName: user.displayName },
+              newData: { volunteerName: volunteerProfile.volunteerName },
+              discrepancyType: 'name_mismatch',
+              discrepancyDetails: `Name mismatch: "${user.displayName}" vs "${volunteerProfile.volunteerName}"`,
+              resolvedAt: null,
+              resolvedBy: null,
+              ipAddress: req.ip || null,
+              userAgent: req.get('user-agent') || null
+            });
+          }
+        } else {
+          discrepancies.push({
+            type: 'missing_profile',
+            field: 'volunteerProfile',
+            severity: 'warning',
+            message: 'Volunteer user is missing their volunteer profile'
+          });
+        }
+      }
+      
+      // Check organization profile consistency
+      if (user.userType === 'organization' && user.organizationId) {
+        const orgProfile = await storage.getOrganizationProfileByOrgId(user.organizationId);
+        if (!orgProfile) {
+          discrepancies.push({
+            type: 'missing_profile',
+            field: 'organizationProfile',
+            severity: 'warning',
+            message: 'Organization user is missing their organization profile'
+          });
+        }
+      }
+      
+      res.json({
+        userId,
+        isValid: discrepancies.filter(d => d.severity === 'error').length === 0,
+        discrepancies,
+        checkedAt: new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("Error validating user data:", err);
+      res.status(500).json({ message: "Failed to validate user data" });
+    }
+  });
+
+  // Sync user display name across all related tables (users can only sync their own data)
+  app.post("/api/user-validation/:userId/sync-name", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { displayName } = req.body;
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      // Authorization: Users can only sync their own data
+      const authenticatedUserId = extractUserId(req);
+      if (!authenticatedUserId || authenticatedUserId !== userId) {
+        return res.status(403).json({ message: "You can only update your own data" });
+      }
+      
+      if (!displayName || typeof displayName !== 'string') {
+        return res.status(400).json({ message: "displayName is required" });
+      }
+      
+      // Validate name format
+      const trimmedName = displayName.trim();
+      if (trimmedName.length < 2 || trimmedName.length > 100) {
+        return res.status(400).json({ message: "Name must be between 2 and 100 characters" });
+      }
+      
+      const nameRegex = /^[a-zA-Z\s\-'.]+$/;
+      if (!nameRegex.test(trimmedName)) {
+        return res.status(400).json({ message: "Name contains invalid characters" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const previousDisplayName = user.displayName;
+      
+      // Update user display name
+      await storage.updateUser(userId, { displayName: trimmedName });
+      
+      // Log the change
+      await storage.createUserDataAuditLog({
+        userId,
+        action: 'update',
+        tableName: 'users',
+        recordId: userId,
+        previousData: { displayName: previousDisplayName },
+        newData: { displayName: trimmedName },
+        discrepancyType: null,
+        discrepancyDetails: null,
+        resolvedAt: null,
+        resolvedBy: null,
+        ipAddress: req.ip || null,
+        userAgent: req.get('user-agent') || null
+      });
+      
+      // Sync to volunteer profile if applicable
+      if (user.userType === 'volunteer') {
+        const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
+        if (volunteerProfile) {
+          const previousVolunteerName = volunteerProfile.volunteerName;
+          await storage.updateVolunteerProfile(volunteerProfile.id, { volunteerName: trimmedName });
+          
+          await storage.createUserDataAuditLog({
+            userId,
+            action: 'data_sync',
+            tableName: 'volunteer_profiles',
+            recordId: volunteerProfile.id,
+            previousData: { volunteerName: previousVolunteerName },
+            newData: { volunteerName: trimmedName },
+            discrepancyType: null,
+            discrepancyDetails: 'Synced volunteer profile name to match user display name',
+            resolvedAt: null,
+            resolvedBy: null,
+            ipAddress: req.ip || null,
+            userAgent: req.get('user-agent') || null
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: 'Name synced successfully across all profiles',
+        userId,
+        displayName: trimmedName
+      });
+    } catch (err) {
+      console.error("Error syncing user name:", err);
+      res.status(500).json({ message: "Failed to sync user name" });
+    }
+  });
+
+  // Get user data audit logs (users can only view their own audit logs)
+  app.get("/api/user-validation/:userId/audit-logs", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+      }
+      
+      // Authorization: Users can only view their own audit logs
+      const authenticatedUserId = extractUserId(req);
+      if (!authenticatedUserId || authenticatedUserId !== userId) {
+        return res.status(403).json({ message: "You can only view your own audit logs" });
+      }
+      
+      const auditLogs = await storage.getUserDataAuditLogs(userId);
+      res.json(auditLogs);
+    } catch (err) {
+      console.error("Error fetching audit logs:", err);
+      res.status(500).json({ message: "Failed to fetch audit logs" });
+    }
+  });
+
+  // Get unresolved discrepancies (users can only view their own discrepancies)
+  app.get("/api/user-validation/discrepancies/unresolved", async (req, res) => {
+    try {
+      // Authorization: Require user ID and validate ownership
+      const authenticatedUserId = extractUserId(req);
+      if (!authenticatedUserId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Users can only fetch their own discrepancies
+      const discrepancies = await storage.getUnresolvedDiscrepancies(authenticatedUserId);
+      res.json(discrepancies);
+    } catch (err) {
+      console.error("Error fetching unresolved discrepancies:", err);
+      res.status(500).json({ message: "Failed to fetch unresolved discrepancies" });
+    }
+  });
+
+  // Resolve a discrepancy (users can only resolve their own discrepancies)
+  app.post("/api/user-validation/discrepancies/:id/resolve", async (req, res) => {
+    try {
+      const discrepancyId = parseInt(req.params.id);
+      
+      if (isNaN(discrepancyId)) {
+        return res.status(400).json({ message: "Invalid discrepancy ID" });
+      }
+      
+      // Authorization: Get authenticated user
+      const authenticatedUserId = extractUserId(req);
+      if (!authenticatedUserId) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      // Verify the discrepancy belongs to the authenticated user
+      const discrepancy = await storage.getDiscrepancyById(discrepancyId);
+      if (!discrepancy) {
+        return res.status(404).json({ message: "Discrepancy not found" });
+      }
+      
+      if (discrepancy.userId !== authenticatedUserId) {
+        return res.status(403).json({ message: "You can only resolve your own discrepancies" });
+      }
+      
+      const resolved = await storage.resolveDiscrepancy(discrepancyId, authenticatedUserId);
+      
+      if (!resolved) {
+        return res.status(404).json({ message: "Discrepancy not found" });
+      }
+      
+      res.json(resolved);
+    } catch (err) {
+      console.error("Error resolving discrepancy:", err);
+      res.status(500).json({ message: "Failed to resolve discrepancy" });
+    }
+  });
+
   // Helper: Deduplicate and aggregate metrics from stories
   function deduplicateMetrics(text: string): string {
     if (!text) return "";

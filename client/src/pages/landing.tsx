@@ -702,16 +702,16 @@ export default function Landing() {
           </div>
 
           {/* SDG Wheel and Compact Info Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 items-start lg:items-center">
             {/* SDG Wheel - Responsive */}
-            <div className="relative flex justify-center items-start md:items-center w-full overflow-visible md:overflow-hidden">
+            <div className="relative flex justify-center items-center w-full overflow-visible">
               {/* Background glow effect - reduced size on mobile */}
-              <div className="absolute inset-center flex justify-center items-center pointer-events-none hidden md:flex">
-                <div className="w-48 sm:w-56 md:w-64 lg:w-72 h-48 sm:h-56 md:h-64 lg:h-72 bg-gradient-to-r from-blue-900/3 to-amber-600/3 rounded-full blur-2xl"></div>
+              <div className="absolute flex justify-center items-center pointer-events-none">
+                <div className="w-56 sm:w-64 md:w-72 lg:w-80 h-56 sm:h-64 md:h-72 lg:h-80 bg-gradient-to-r from-blue-900/3 to-amber-600/3 rounded-full blur-2xl"></div>
               </div>
               
               {/* SDG Wheel */}
-              <div className="relative z-10 w-full md:max-w-xs lg:max-w-sm h-auto md:h-56 lg:h-64 flex items-center justify-center px-2">
+              <div className="relative z-10 w-full flex items-center justify-center px-2 py-4">
                 <SDGCircularWheel />
               </div>
             </div>

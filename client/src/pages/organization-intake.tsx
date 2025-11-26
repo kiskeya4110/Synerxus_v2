@@ -193,7 +193,7 @@ export default function OrganizationIntake() {
         {
           ...data,
           logo: profilePhotoUrl,
-          onboardingCompleted: !existingProfile, // Mark as completed on first submission only
+          onboardingCompleted: true, // Always mark as completed when form is submitted
         }
       );
     },
@@ -202,14 +202,12 @@ export default function OrganizationIntake() {
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
       toast({
         title: "Profile completed!",
-        description: "Your organization profile has been successfully created."
+        description: "Your organization profile has been successfully saved."
       });
-      // Redirect to dashboard if first time completing onboarding
-      if (!existingProfile) {
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
-      }
+      // Always redirect to dashboard after form submission
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 1000);
     },
     onError: (error: any) => {
       // If user not found (404 status), clear localStorage and redirect to login

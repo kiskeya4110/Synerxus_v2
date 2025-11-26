@@ -271,7 +271,7 @@ export default function VolunteerIntake() {
         preferredWorkStyle: "", // Will be set through settings page
         skillProficiency: data.skills, // Send full proficiency objects for matching algorithm
         profilePhotoUrl, // Include profile photo URL
-        onboardingCompleted: !existingProfile, // Mark as completed on first submission only
+        onboardingCompleted: true, // Always mark as completed when form is submitted
       };
       
       return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
@@ -290,12 +290,10 @@ export default function VolunteerIntake() {
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
-      // Redirect to dashboard if first time completing onboarding
-      if (!existingProfile) {
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
-      }
+      // Always redirect to dashboard after form submission
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
     },
     onError: (error: Error) => {
       toast({

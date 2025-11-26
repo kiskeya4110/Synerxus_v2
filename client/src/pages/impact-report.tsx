@@ -434,13 +434,9 @@ export default function ImpactReport(props: ImpactReportProps) {
   // But for consistency, we calculate tasks separately
   const filteredTasksCompleted = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
   
-  // Calculate filtered impact score
-  const filteredHoursScore = Math.min((filteredTotalHours / 100) * 100, 100);
-  const filteredTasksScore = totalTasks > 0 ? (filteredTasksCompleted / totalTasks) * 100 : 0;
-  const filteredProjectsScore = Math.min((filteredActiveProjects / 5) * 100, 100);
-  const filteredSkillsScore = Math.min((allSkills.length / 10) * 100, 100);
-  const filteredSdgScore = Math.min((sdgs.length / 5) * 100, 100);
-  const filteredImpactScore = Math.round((filteredHoursScore + filteredTasksScore + filteredProjectsScore + filteredSkillsScore + filteredSdgScore) / 5);
+  // Use backend-calculated impact score from dashboard for consistency with impact-visualization
+  // This ensures the same metric appears the same everywhere
+  const filteredImpactScore = dashboardData?.impactScore !== undefined ? dashboardData.impactScore : 0;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);

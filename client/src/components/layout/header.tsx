@@ -9,7 +9,8 @@ import {
   Menu,
   User,
   Settings,
-  LogOut
+  LogOut,
+  Home
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -118,6 +119,18 @@ export default function Header() {
     }
   };
 
+  const handleLogoClick = () => {
+    if (user) {
+      setLocation('/dashboard');
+    } else {
+      setLocation('/landing');
+    }
+  };
+
+  const handleHomeClick = () => {
+    setLocation('/landing');
+  };
+
   const handleProfileClick = () => {
     setLocation('/profile');
   };
@@ -181,21 +194,37 @@ export default function Header() {
 
         {/* Logo - Synerxus on left side of search bar */}
         <button 
-          onClick={() => setLocation('/')}
+          onClick={handleLogoClick}
           className="hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none hidden sm:block"
           data-testid="button-logo-header"
+          title={user ? "Go to dashboard" : "Go to home"}
         >
           <Logo size="sm" showMotto={true} showIcon={true} />
         </button>
 
         {/* Logo mobile version - icon only */}
         <button 
-          onClick={() => setLocation('/')}
+          onClick={handleLogoClick}
           className="hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none sm:hidden"
           data-testid="button-logo-header-mobile"
+          title={user ? "Go to dashboard" : "Go to home"}
         >
           <Logo size="sm" showMotto={false} showIcon={true} />
         </button>
+        
+        {/* Home Button - Show only when not logged in */}
+        {!user && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleHomeClick}
+            className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 flex-shrink-0 hidden sm:flex gap-1"
+            data-testid="button-home-header"
+          >
+            <Home className="h-4 w-4" />
+            <span>Home</span>
+          </Button>
+        )}
         
         {/* Search Bar */}
         <div className="hidden sm:flex flex-grow max-w-2xl mx-2">

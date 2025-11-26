@@ -23,6 +23,7 @@ export default function Login() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(localStorage.getItem('rememberMe') === 'true');
   
   // Register form state
   const [registerName, setRegisterName] = useState("");
@@ -89,6 +90,14 @@ export default function Login() {
         localStorage.setItem('currentUserId', dbUser.id);
         localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
         
+        // Store remember me preference
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+          localStorage.setItem('lastLoginTime', new Date().getTime().toString());
+        } else {
+          localStorage.removeItem('rememberMe');
+        }
+        
         // Determine redirect based on profile completion
         const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
         setLocation(redirectPath);
@@ -145,6 +154,14 @@ export default function Login() {
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
         localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
+        
+        // Store remember me preference
+        if (rememberMe) {
+          localStorage.setItem('rememberMe', 'true');
+          localStorage.setItem('lastLoginTime', new Date().getTime().toString());
+        } else {
+          localStorage.removeItem('rememberMe');
+        }
         
         // Determine redirect based on profile completion
         const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);

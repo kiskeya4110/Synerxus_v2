@@ -60,7 +60,7 @@ function RootRedirectRoute() {
           // Fetch intake completion status
           const endpoint = userType === 'volunteer' 
             ? `/api/intake/volunteer-profile?userId=${userId}`
-            : `/api/organizations/${user.organizationId}`;
+            : `/api/organizations?managerId=${userId}`;
           
           const response = await fetch(endpoint);
           

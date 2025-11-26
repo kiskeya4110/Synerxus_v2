@@ -105,7 +105,7 @@ export default function Assignments() {
     mutationFn: async ({ assignmentId, status }: { assignmentId: number; status: "active" | "declined" }) => {
       return await apiRequest("PATCH", `/api/project-assignments/${assignmentId}`, {
         status,
-        respondedAt: new Date().toISOString()
+        respondedAt: new Date()
       });
     },
     onSuccess: (_, variables) => {

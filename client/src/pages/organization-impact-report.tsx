@@ -733,7 +733,6 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
             </div>
 
             {/* View Mode Content */}
-            {viewMode === "tabs" ? (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-5 mb-6 print:hidden print:grid-cols-5">
                 <TabsTrigger value="overview" className="flex items-center gap-2">
@@ -1599,8 +1598,8 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

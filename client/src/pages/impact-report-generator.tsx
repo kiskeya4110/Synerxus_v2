@@ -36,8 +36,16 @@ export default function ImpactReportGenerator() {
   const [generating, setGenerating] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<string | null>(null);
 
+  const userId = localStorage.getItem("currentUserId");
   const { data: currentUser } = useQuery<any>({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
   });
 
   const { data: dashboardData } = useQuery<any>({

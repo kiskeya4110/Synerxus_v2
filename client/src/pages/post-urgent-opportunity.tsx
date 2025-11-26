@@ -44,15 +44,16 @@ export default function PostUrgentOpportunity() {
   const { user } = useAuth();
   const [customSkill, setCustomSkill] = useState("");
 
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery({ 
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      const id = localStorage.getItem('currentUserId');
-      if (!id) throw new Error("No user ID found");
-      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!userId) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${userId}`);
       if (!response.ok) throw new Error("User not found");
       return response.json();
-    }
+    },
+    enabled: !!userId
   });
 
   const form = useForm<UrgentOpportunityForm>({

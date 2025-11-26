@@ -792,7 +792,14 @@ export default function VolunteerProfileSettings() {
     displayName?: string;
     userType?: string;
   }>({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!userId,
     staleTime: 0, // Always fetch fresh - never cache user data
   });
 

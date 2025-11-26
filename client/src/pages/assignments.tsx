@@ -20,17 +20,17 @@ export default function Assignments() {
   const { toast } = useToast();
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
-  // Get current user from server session (no localStorage dependency)
+  // Get current user from server session
+  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser, isLoading: userLoading } = useQuery({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
     queryFn: async () => {
-      // Try with userId from localStorage first, then fall back to session-only
-      const id = localStorage.getItem('currentUserId');
-      const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
-      const response = await fetch(url, { credentials: "include" });
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`, { credentials: "include" });
       if (!response.ok) return null;
       return response.json();
     },
+    enabled: !!userId,
     retry: false
   });
 

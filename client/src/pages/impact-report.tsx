@@ -138,19 +138,21 @@ export default function ImpactReport(props: ImpactReportProps) {
   });
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
-  // Fetch the current logged-in user first
-  const { data: loggedInUser } = useQuery<User>({
-    queryKey: ["/api/users/me"],
-    queryFn: async () => {
-      const response = await fetch('/api/users/me');
-      if (!response.ok) throw new Error('Failed to fetch current user');
-      return response.json();
-    }
-  });
-
-  // Get volunteer ID from URL params or current user
+  // Get volunteer ID from URL params or localStorage
   const paramVolunteerId = props.volunteerId;
   const currentUserIdStr = localStorage.getItem('currentUserId');
+  
+  // Fetch the current logged-in user first
+  const { data: loggedInUser } = useQuery<User>({
+    queryKey: ["/api/users/me", currentUserIdStr],
+    queryFn: async () => {
+      if (!currentUserIdStr) return null;
+      const response = await fetch(`/api/users/me?userId=${currentUserIdStr}`);
+      if (!response.ok) throw new Error('Failed to fetch current user');
+      return response.json();
+    },
+    enabled: !!currentUserIdStr
+  });
   const volunteerId = paramVolunteerId 
     ? parseInt(paramVolunteerId) 
     : (currentUserIdStr ? parseInt(currentUserIdStr) : (loggedInUser?.id || undefined));

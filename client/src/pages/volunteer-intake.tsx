@@ -159,7 +159,14 @@ export default function VolunteerIntake() {
   // Fetch current user to get email
   const userId = localStorage.getItem("currentUserId");
   const { data: currentUser } = useQuery<{ id: number; email: string; displayName?: string }>({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!userId,
   });
 
   // Fetch existing volunteer profile using intake API which includes all availability fields

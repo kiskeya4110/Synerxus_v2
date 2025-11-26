@@ -1598,6 +1598,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                     </div>
                   </CardContent>
                 </Card>
+              </div>
               </TabsContent>
             </Tabs>
           </CardContent>

@@ -16,7 +16,20 @@ import ImpactVisualization from "./impact-visualization";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<string>('applications');
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    // Restore from sessionStorage first, then URL hash, then default
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('mywork-active-tab');
+      if (stored && ['applications', 'assignments', 'tasks', 'impact'].includes(stored)) {
+        return stored;
+      }
+      const hash = window.location.hash.replace('#', '');
+      if (hash === 'applications' || hash === 'assignments' || hash === 'tasks' || hash === 'impact') {
+        return hash;
+      }
+    }
+    return 'applications';
+  });
   
   // Initialize tab from URL hash on mount
   useEffect(() => {
@@ -235,6 +248,7 @@ export default function MyWork() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    sessionStorage.setItem('mywork-active-tab', value);
     window.history.replaceState(null, '', `#${value}`);
   };
 

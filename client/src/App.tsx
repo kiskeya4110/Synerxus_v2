@@ -46,7 +46,52 @@ function RootRedirectRoute() {
 
   useEffect(() => {
     if (user) {
-      setLocation('/dashboard');
+      // Check if user has completed intake
+      const checkIntakeAndRedirect = async () => {
+        try {
+          const userId = localStorage.getItem('currentUserId');
+          const userType = localStorage.getItem('userType');
+          
+          if (!userId || !userType) {
+            setLocation('/landing');
+            return;
+          }
+
+          // Fetch intake completion status
+          const endpoint = userType === 'volunteer' 
+            ? `/api/intake/volunteer-profile?userId=${userId}`
+            : `/api/organizations/${user.organizationId}`;
+          
+          const response = await fetch(endpoint);
+          
+          if (!response.ok) {
+            // If no profile exists, go to intake
+            const intakePath = userType === 'volunteer' ? '/volunteer-intake' : '/organization-intake';
+            setLocation(intakePath);
+            return;
+          }
+
+          const data = await response.json();
+          
+          // Check if intake is complete
+          const profile = userType === 'volunteer' ? data.volunteerProfile : data;
+          const isIntakeComplete = profile?.onboardingCompleted === true;
+          
+          if (!isIntakeComplete) {
+            // Redirect to intake if not complete
+            const intakePath = userType === 'volunteer' ? '/volunteer-intake' : '/organization-intake';
+            setLocation(intakePath);
+          } else {
+            // Intake complete, go to dashboard
+            setLocation('/dashboard');
+          }
+        } catch (error) {
+          console.error('Error checking intake status:', error);
+          setLocation('/dashboard'); // Default to dashboard on error
+        }
+      };
+
+      checkIntakeAndRedirect();
     } else {
       setLocation('/landing');
     }

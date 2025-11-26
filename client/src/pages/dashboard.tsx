@@ -923,8 +923,22 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* KPI Cards - Compact 2x2 on mobile, 4-col on desktop */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+      {/* Prominent Impact Card */}
+      {dashboardType === "organization" && (
+        <div className="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600 rounded-xl shadow-lg p-5 md:p-6 text-white mb-4 cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleKPIClick("Lives Touched", dashboardData?.lifeMetrics?.totalBeneficiariesReached || 0)}>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-white/80 font-medium text-sm md:text-base">Lives Touched</p>
+              <p className="text-3xl md:text-4xl font-bold mt-2">{(dashboardData?.lifeMetrics?.totalBeneficiariesReached || 0).toLocaleString()}+</p>
+              <p className="text-sm text-white/70 mt-2">Total beneficiaries reached</p>
+            </div>
+            <Globe className="h-10 w-10 text-white/30 flex-shrink-0" />
+          </div>
+        </div>
+      )}
+
+      {/* KPI Cards - Gradient backgrounds for PWA look */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard
@@ -933,6 +947,7 @@ export default function Dashboard() {
               icon={<Clock className="h-6 w-6" />}
               onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}
               compact={true}
+              gradient="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700"
               data-testid="kpi-hours"
             />
             <StatsCard
@@ -941,6 +956,7 @@ export default function Dashboard() {
               icon={<CheckSquare className="h-6 w-6" />}
               onClick={() => handleKPIClick("Tasks Completed", kpis.tasks)}
               compact={true}
+              gradient="bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700"
               data-testid="kpi-tasks"
             />
             <StatsCard
@@ -949,6 +965,7 @@ export default function Dashboard() {
               icon={<Target className="h-6 w-6" />}
               onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
               compact={true}
+              gradient="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700"
               data-testid="kpi-projects"
             />
             <StatsCard
@@ -957,6 +974,7 @@ export default function Dashboard() {
               icon={<Briefcase className="h-6 w-6" />}
               onClick={() => handleKPIClick("Skills", kpis.skills)}
               compact={true}
+              gradient="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700"
               data-testid="kpi-skills"
             />
           </>
@@ -968,6 +986,7 @@ export default function Dashboard() {
               icon={<Users className="h-6 w-6" />}
               onClick={() => handleKPIClick("Active Volunteers", kpis.volunteers)}
               compact={true}
+              gradient="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700"
               data-testid="kpi-volunteers"
             />
             <StatsCard
@@ -976,6 +995,7 @@ export default function Dashboard() {
               icon={<Building2 className="h-6 w-6" />}
               onClick={() => handleKPIClick("Active Projects", kpis.activeProjects)}
               compact={true}
+              gradient="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700"
               data-testid="kpi-projects"
             />
             <StatsCard
@@ -984,6 +1004,7 @@ export default function Dashboard() {
               icon={<Clock className="h-6 w-6" />}
               onClick={() => handleKPIClick("Total Hours", kpis.hours)}
               compact={true}
+              gradient="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700"
               data-testid="kpi-hours"
             />
             <StatsCard
@@ -992,6 +1013,7 @@ export default function Dashboard() {
               icon={<Globe className="h-6 w-6" />}
               onClick={() => handleKPIClick("SDGs Addressed", kpis.sdgs)}
               compact={true}
+              gradient="bg-gradient-to-br from-cyan-500 to-cyan-600 dark:from-cyan-600 dark:to-cyan-700"
               data-testid="kpi-sdgs"
             />
           </>

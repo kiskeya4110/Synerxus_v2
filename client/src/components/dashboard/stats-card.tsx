@@ -15,6 +15,8 @@ interface StatsCardProps {
     isPositive?: boolean;
     label: string;
   };
+  gradient?: string;
+  textColor?: string;
 }
 
 export default function StatsCard({
@@ -26,18 +28,20 @@ export default function StatsCard({
   trend,
   onClick,
   compact = false,
-  change
+  change,
+  gradient,
+  textColor = "text-gray-900 dark:text-white"
 }: StatsCardProps) {
   const cardClass = onClick 
-    ? `bg-white dark:bg-gray-800 rounded-lg shadow cursor-pointer hover:shadow-lg transition-shadow duration-200 ${compact ? "p-2 sm:p-3 md:p-4" : "p-4"}`
-    : `bg-white dark:bg-gray-800 rounded-lg shadow ${compact ? "p-2 sm:p-3 md:p-4" : "p-4"}`;
+    ? `rounded-xl shadow-md cursor-pointer hover:shadow-lg transition-shadow duration-200 ${gradient || "bg-white dark:bg-gray-800"} ${compact ? "p-3 sm:p-4 md:p-5" : "p-4"}`
+    : `rounded-xl shadow-md ${gradient || "bg-white dark:bg-gray-800"} ${compact ? "p-3 sm:p-4 md:p-5" : "p-4"}`;
     
   return (
     <div className={cardClass} onClick={onClick}>
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className={`font-medium text-gray-500 dark:text-gray-400 ${compact ? "text-xs sm:text-sm" : "text-sm"}`}>{title}</p>
-          <p className={`font-bold ${compact ? "text-lg sm:text-xl md:text-2xl mt-0.5" : "text-2xl mt-1"}`}>{value}</p>
+          <p className={`font-medium ${gradient ? "text-white/80" : "text-gray-500 dark:text-gray-400"} ${compact ? "text-xs sm:text-sm" : "text-sm"}`}>{title}</p>
+          <p className={`font-bold ${gradient ? "text-white" : textColor} ${compact ? "text-lg sm:text-xl md:text-2xl mt-0.5" : "text-2xl mt-1"}`}>{value}</p>
           {trend && (
             <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center">
               <ArrowUp className="h-3 w-3 mr-1" />

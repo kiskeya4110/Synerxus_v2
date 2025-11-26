@@ -313,26 +313,17 @@ export default function MyWork() {
   // Calculate organization KPIs for org managers
   const isOrganizationManager = currentUser?.userType === 'organization';
   
-  // Use dashboard-calculated metrics for consistency and automatic updates
-  const orgActiveVolunteers = isOrganizationManager && dashboardData?.activeVolunteers !== undefined 
-    ? dashboardData.activeVolunteers 
-    : 0;
+  // Use organization-wide data sources for accuracy
+  const orgTotalVolunteers = isOrganizationManager ? orgVolunteers.length : 0;
   
-  const orgTotalProjects = isOrganizationManager && dashboardData?.activeProjects !== undefined 
-    ? dashboardData.activeProjects 
-    : 0;
+  const orgTotalProjects = isOrganizationManager ? orgProjects.length : 0;
   
-  const orgTotalHours = isOrganizationManager && dashboardData?.totalHours !== undefined 
-    ? dashboardData.totalHours 
+  const orgTotalHours = isOrganizationManager 
+    ? orgActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0)
     : 0;
   
   const orgCompletedProjects = isOrganizationManager && orgProjects 
     ? orgProjects.filter(p => p.status?.toLowerCase() === 'completed').length 
-    : 0;
-  
-  // Total volunteers count (not just active)
-  const orgTotalVolunteers = isOrganizationManager && dashboardData?.volunteers 
-    ? dashboardData.volunteers.length 
     : 0;
 
   // Calculate Impact Leader (volunteer with most hours)

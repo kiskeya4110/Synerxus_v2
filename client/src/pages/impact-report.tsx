@@ -1266,6 +1266,56 @@ export default function ImpactReport(props: ImpactReportProps) {
                     </ul>
                   </CardContent>
                 </Card>
+
+                {/* Impact Verification Sources */}
+                <Card className="border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      <Target className="h-5 w-5 text-green-600" />
+                      Impact Verification Sources
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700">
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm mb-2">🏢 NGO Validation</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Partner organization verification of impact and activity data</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700">
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm mb-2">✓ Direct Program Confirmation</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Confirmed completion through project management systems</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700">
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm mb-2">👥 Peer Verification</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Validation from fellow volunteers and team members</p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-green-200 dark:border-green-700">
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm mb-2">🌍 Community Validation System</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Community ratings and feedback on demonstrated impact</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* AI Analytics */}
+                <Card className="border border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20">
+                  <CardContent className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-purple-600" />
+                      AI Analytics
+                    </h3>
+                    <div className="space-y-3">
+                      <div className="p-3 rounded-lg bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700">
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm mb-2">🤖 Automated Impact Measurement</p>
+                        <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                          <li>• Real-time impact scoring based on activities and outcomes</li>
+                          <li>• Predictive analytics for future impact potential</li>
+                          <li>• Pattern recognition across volunteer contributions</li>
+                          <li>• Anomaly detection for data quality assurance</li>
+                          <li>• Machine learning-driven SDG alignment optimization</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
                 </div>
               </TabsContent>
             </Tabs>

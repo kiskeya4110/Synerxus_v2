@@ -194,8 +194,8 @@ export default function VolunteerIntake() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      name: "",
+      email: currentUser?.email || "",
+      name: currentUser?.displayName || "",
       skills: [],
       interests: [],
       location: "",
@@ -205,35 +205,19 @@ export default function VolunteerIntake() {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       preferredCommitment: "flexible",
     },
-    values: existingProfile
-      ? {
-          email: profileUser?.email || currentUser?.email || "",
-          name: existingProfile.volunteerName || profileUser?.displayName || "",
-          skills: parseSkillsFromDb(existingProfile.skills),
-          interests: existingProfile.interests || [],
-          location: existingProfile.location || "",
-          sdgGoals: existingProfile.preferredSdgs || [],
-          weeklyHours: existingProfile.weeklyAvailability || 1,
-          availability: existingProfile.availability || [],
-          timezone:
-            existingProfile.timezone ||
-            Intl.DateTimeFormat().resolvedOptions().timeZone,
-          preferredCommitment:
-            existingProfile.preferredCommitment || "flexible",
-        }
-      : undefined,
   });
 
-  // Reset form when profile data loads (critical: useForm 'values' only reads once at init)
+  // Reset form when profile data loads - keeps database data visible and prevents duplication on re-entry
   useEffect(() => {
     if (!loadingProfile && profileResponse) {
       const profile = profileResponse.volunteerProfile;
       const user = profileResponse.user;
       
       if (profile) {
-        console.log("[Intake] Resetting form with profile data:", {
+        console.log("[Intake] Loading saved profile data:", {
           weeklyAvailability: profile.weeklyAvailability,
           availability: profile.availability?.length,
+          skills: profile.skills?.length,
         });
         form.reset({
           email: user?.email || currentUser?.email || "",
@@ -252,13 +236,21 @@ export default function VolunteerIntake() {
         }
       } else if (currentUser?.email) {
         // New profile - initialize with user data
-        form.setValue("email", currentUser.email);
-        if (currentUser.displayName) {
-          form.setValue("name", currentUser.displayName);
-        }
+        form.reset({
+          email: currentUser.email,
+          name: currentUser.displayName || "",
+          skills: [],
+          interests: [],
+          location: "",
+          sdgGoals: [],
+          weeklyHours: 1,
+          availability: [],
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          preferredCommitment: "flexible",
+        });
       }
     }
-  }, [loadingProfile, profileResponse, currentUser, form]);
+  }, [loadingProfile, profileResponse, currentUser]);
 
   // Profile mutation (create or update)
   const profileMutation = useMutation({

@@ -154,10 +154,13 @@ export default function OrganizationIntake() {
     }
   });
 
-  // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
+  // Reset form when profile data loads - keeps database data visible and prevents duplication on re-entry
   useEffect(() => {
     if (existingProfile) {
-      console.log("[Organization Intake] Resetting form with profile data");
+      console.log("[Organization Intake] Loading saved profile data", {
+        organizationName: existingProfile.organizationName,
+        primarySdgs: existingProfile.primarySdgs?.length
+      });
       form.reset({
         organizationName: existingProfile.organizationName || "",
         organizationLocation: existingProfile.organizationLocation || "",

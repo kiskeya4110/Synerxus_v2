@@ -886,38 +886,38 @@ export default function Dashboard() {
 
       {/* Mobile Quick Actions - Horizontal scroll on mobile only */}
       <div className="md:hidden overflow-x-auto hide-scrollbar -mx-3 px-3">
-        <div className="flex gap-2 pb-2">
+        <div className="flex gap-1 pb-2">
           <Link href="/log-activity">
-            <Button variant="outline" size="sm" className="min-h-[40px] whitespace-nowrap rounded-xl bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform">
-              <Clock className="h-4 w-4 mr-1.5" />
-              Log Hours
+            <Button variant="outline" size="sm" className="min-h-[36px] px-2 text-xs whitespace-nowrap rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform flex-shrink-0">
+              <Clock className="h-3.5 w-3.5 mr-0.5" />
+              Log
             </Button>
           </Link>
           {dashboardType === "volunteer" ? (
             <Link href="/discover-opportunities">
-              <Button variant="outline" size="sm" className="min-h-[40px] whitespace-nowrap rounded-xl bg-amber-50 border-amber-200 text-amber-700 active:scale-95 transition-transform">
-                <Target className="h-4 w-4 mr-1.5" />
-                Find Work
+              <Button variant="outline" size="sm" className="min-h-[36px] px-2 text-xs whitespace-nowrap rounded-lg bg-amber-50 border-amber-200 text-amber-700 active:scale-95 transition-transform flex-shrink-0">
+                <Target className="h-3.5 w-3.5 mr-0.5" />
+                Find
               </Button>
             </Link>
           ) : (
             <Link href="/projects">
-              <Button variant="outline" size="sm" className="min-h-[40px] whitespace-nowrap rounded-xl bg-green-50 border-green-200 text-green-700 active:scale-95 transition-transform">
-                <Building2 className="h-4 w-4 mr-1.5" />
+              <Button variant="outline" size="sm" className="min-h-[36px] px-2 text-xs whitespace-nowrap rounded-lg bg-green-50 border-green-200 text-green-700 active:scale-95 transition-transform flex-shrink-0">
+                <Building2 className="h-3.5 w-3.5 mr-0.5" />
                 Projects
               </Button>
             </Link>
           )}
           <Link href="/my-work">
-            <Button variant="outline" size="sm" className="min-h-[40px] whitespace-nowrap rounded-xl bg-purple-50 border-purple-200 text-purple-700 active:scale-95 transition-transform">
-              <CheckSquare className="h-4 w-4 mr-1.5" />
-              My Work
+            <Button variant="outline" size="sm" className="min-h-[36px] px-2 text-xs whitespace-nowrap rounded-lg bg-purple-50 border-purple-200 text-purple-700 active:scale-95 transition-transform flex-shrink-0">
+              <CheckSquare className="h-3.5 w-3.5 mr-0.5" />
+              Work
             </Button>
           </Link>
           <Link href="/calendar">
-            <Button variant="outline" size="sm" className="min-h-[40px] whitespace-nowrap rounded-xl bg-slate-50 border-slate-200 text-slate-700 active:scale-95 transition-transform">
-              <Zap className="h-4 w-4 mr-1.5" />
-              Calendar
+            <Button variant="outline" size="sm" className="min-h-[36px] px-2 text-xs whitespace-nowrap rounded-lg bg-slate-50 border-slate-200 text-slate-700 active:scale-95 transition-transform flex-shrink-0">
+              <Zap className="h-3.5 w-3.5 mr-0.5" />
+              Cal
             </Button>
           </Link>
         </div>

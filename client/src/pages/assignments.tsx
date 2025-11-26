@@ -114,14 +114,17 @@ export default function Assignments() {
           ? "You've been added to the project team!"
           : "The assignment has been declined",
       });
-      // Invalidate assignments and related queries
+      // Invalidate ALL queries related to projects and assignments to update volunteer counts everywhere
       queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const key = query.queryKey[0];
           return typeof key === 'string' && (
             key.startsWith('/api/dashboard') ||
-            key.startsWith('/api/projects')
+            key.startsWith('/api/projects') ||
+            key.startsWith('/api/my-work')
           );
         }
       });

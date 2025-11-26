@@ -12,6 +12,7 @@ import type { User, Task, ProjectAssignment } from "@shared/schema";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
 import MyTasksPage from "./my-tasks";
+import ImpactVisualization from "./impact-visualization";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
@@ -21,7 +22,7 @@ export default function MyWork() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'applications' || hash === 'assignments' || hash === 'tasks') {
+      if (hash === 'applications' || hash === 'assignments' || hash === 'tasks' || hash === 'impact') {
         setActiveTab(hash);
       }
     }
@@ -434,7 +435,7 @@ export default function MyWork() {
               <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Engagement</p>
               <div className="mt-2 space-y-1">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{orgActiveVolunteers} volunteers</span>
+                  <span className="text-gray-600 dark:text-gray-400">{orgTotalVolunteers} volunteers</span>
                   <span className="text-xs text-gray-500">{orgTotalProjects} projects</span>
                 </div>
               </div>
@@ -597,7 +598,7 @@ export default function MyWork() {
         </div>
       ) : (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-20 md:pb-4">
-          <TabsList className="grid w-full max-w-md grid-cols-3 mb-4 sm:mb-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="applications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-applications">
               <Briefcase className="h-4 w-4" />
               <span>Apps</span>
@@ -609,6 +610,10 @@ export default function MyWork() {
             <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
               <ListTodo className="h-4 w-4" />
               <span>Tasks</span>
+            </TabsTrigger>
+            <TabsTrigger value="impact" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-impact">
+              <TrendingUp className="h-4 w-4" />
+              <span>Impact</span>
             </TabsTrigger>
           </TabsList>
 
@@ -627,6 +632,12 @@ export default function MyWork() {
           <TabsContent value="tasks" className="mt-2">
             <div className="w-full overflow-x-hidden">
               <MyTasksPage />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="impact" className="mt-2">
+            <div className="w-full overflow-x-hidden">
+              <ImpactVisualization />
             </div>
           </TabsContent>
         </Tabs>

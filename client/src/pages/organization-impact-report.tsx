@@ -1600,7 +1600,6 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                   </CardContent>
                 </Card>
               </div>
-            </>
             )}
           </CardContent>
         </Card>

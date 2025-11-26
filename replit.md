@@ -3,6 +3,19 @@
 ## Overview
 Synerxus is an AI-powered platform that connects global volunteers with opportunities and helps organizations track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhancing global collaboration. Its core purpose is "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes (November 26, 2025)
+- **User Data Validation System**: Implemented comprehensive data validation with audit logging for user profile integrity:
+  - Added `userDataAuditLogs` table to track all user data changes (action, table, before/after data, discrepancies)
+  - Created validation API endpoints with proper authorization (users can only access their own data):
+    - `GET /api/user-validation/:userId` - Validate user data consistency and detect name mismatches
+    - `POST /api/user-validation/:userId/sync-name` - Sync display name across all profiles
+    - `GET /api/user-validation/:userId/audit-logs` - View user's data change history
+    - `GET /api/user-validation/discrepancies/unresolved` - Get user's unresolved data issues
+    - `POST /api/user-validation/discrepancies/:id/resolve` - Resolve a data discrepancy
+  - Added `DataDiscrepancyAlert` UI component that displays at top of volunteer intake form
+  - Name mismatch detection between user.displayName and volunteerProfile.volunteerName
+  - Authorization checks ensure users can only view/modify their own validation data
+
 ## Recent Changes (November 25, 2025)
 - **Data Persistence Fix (Volunteers & Organizations)**: Fixed both volunteer and organization intake/settings forms to properly hydrate persisted data. Forms now use `form.reset()` in useEffect to populate fields when async profile data loads. This ensures saved data displays correctly.
   - Volunteer Intake: Fixed to access `{ user, volunteerProfile }` API response structure

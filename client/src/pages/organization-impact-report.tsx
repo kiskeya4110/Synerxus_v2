@@ -1228,15 +1228,15 @@ export default function OrganizationImpactReport(
                     )}
                   </div>
 
-                  {/* KPIs in 1 row: Quarterly Growth, Performance Radar, Monthly Engagement */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* KPIs in 1 row: Quarterly Growth, Performance Metrics, Monthly Engagement */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Quarterly Growth */}
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <Card className="border border-gray-200 dark:border-gray-700 aspect-square">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                           Quarterly Growth
                         </h3>
-                        <div style={{ height: "200px" }}>
+                        <div className="flex-1 min-h-0">
                           <Line
                             data={{
                               labels: quarterlyGrowth.map((q) => q.quarter),
@@ -1269,97 +1269,79 @@ export default function OrganizationImpactReport(
                             }}
                           />
                         </div>
-                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
                             <span className="font-semibold">Insight:</span>{" "}
                             {quarterlyGrowth.length >= 4
-                              ? (() => {
-                                  const q4 = quarterlyGrowth[3];
-                                  const q3 = quarterlyGrowth[2];
-                                  const growth =
-                                    q3 && q3.beneficiaries > 0
-                                      ? Math.round(
-                                          ((q4.beneficiaries - q3.beneficiaries) /
-                                            q3.beneficiaries) *
-                                            100,
-                                        )
-                                      : 0;
-                                  const avg = Math.round(
-                                    quarterlyGrowth.reduce(
-                                      (s, q) => s + (q.beneficiaries || 0),
-                                      0,
-                                    ) / quarterlyGrowth.length,
-                                  );
-                                  return `${q4.beneficiaries} beneficiaries reached in Q4 (${growth}% QoQ). Average quarterly reach: ${avg} beneficiaries.`;
-                                })()
+                              ? `Q4: ${quarterlyGrowth[3].beneficiaries} beneficiaries`
                               : "Quarterly data available"}
                           </p>
                         </div>
                       </CardContent>
                     </Card>
 
-                    {/* Organizational Performance KPI Cards */}
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    {/* Performance Metrics KPI Cards */}
+                    <Card className="border border-gray-200 dark:border-gray-700 aspect-square">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                           Performance Metrics
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="flex-1 grid grid-cols-2 gap-2 min-h-0">
                           {/* Volunteer Management */}
-                          <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl border border-blue-200 dark:border-blue-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Volunteer Management</span>
+                          <div className="p-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg border border-blue-200 dark:border-blue-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Users className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Volunteer Mgmt</span>
                             </div>
-                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{volunteerManagementScore}%</div>
-                            <Progress value={volunteerManagementScore} className="h-2 bg-blue-200 dark:bg-blue-900" />
+                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{volunteerManagementScore}%</div>
+                            <Progress value={volunteerManagementScore} className="h-1 bg-blue-200 dark:bg-blue-900" />
                           </div>
                           
                           {/* Financial Health */}
-                          <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-xl border border-emerald-200 dark:border-emerald-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Financial Health</span>
+                          <div className="p-2 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-lg border border-emerald-200 dark:border-emerald-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <DollarSign className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Financial</span>
                             </div>
-                            <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">{financialHealthScore}%</div>
-                            <Progress value={financialHealthScore} className="h-2 bg-emerald-200 dark:bg-emerald-900" />
+                            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{financialHealthScore}%</div>
+                            <Progress value={financialHealthScore} className="h-1 bg-emerald-200 dark:bg-emerald-900" />
                           </div>
                           
                           {/* Program Quality */}
-                          <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl border border-purple-200 dark:border-purple-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Program Quality</span>
+                          <div className="p-2 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg border border-purple-200 dark:border-purple-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Award className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Program</span>
                             </div>
-                            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">{programQualityScore}%</div>
-                            <Progress value={programQualityScore} className="h-2 bg-purple-200 dark:bg-purple-900" />
+                            <div className="text-xl font-bold text-purple-600 dark:text-purple-400">{programQualityScore}%</div>
+                            <Progress value={programQualityScore} className="h-1 bg-purple-200 dark:bg-purple-900" />
                           </div>
                           
                           {/* Community Impact */}
-                          <div className="p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 rounded-xl border border-rose-200 dark:border-rose-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Target className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Community Impact</span>
+                          <div className="p-2 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 rounded-lg border border-rose-200 dark:border-rose-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Target className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Community</span>
                             </div>
-                            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400 mb-2">{communityImpactScore}%</div>
-                            <Progress value={communityImpactScore} className="h-2 bg-rose-200 dark:bg-rose-900" />
+                            <div className="text-xl font-bold text-rose-600 dark:text-rose-400">{communityImpactScore}%</div>
+                            <Progress value={communityImpactScore} className="h-1 bg-rose-200 dark:bg-rose-900" />
                           </div>
                         </div>
-                        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                        <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            <span className="font-semibold">Overall:</span> Average performance score of {Math.round((volunteerManagementScore + financialHealthScore + programQualityScore + communityImpactScore) / 4)}% across all dimensions.
+                            Avg: {Math.round((volunteerManagementScore + financialHealthScore + programQualityScore + communityImpactScore) / 4)}%
                           </p>
                         </div>
                       </CardContent>
                     </Card>
 
                     {/* Monthly Engagement */}
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <Card className="border border-gray-200 dark:border-gray-700 aspect-square">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                           Monthly Engagement
                         </h3>
-                        <div style={{ height: "200px" }}>
+                        <div className="flex-1 min-h-0">
                           <Line
                             data={{
                               labels: monthlyEngagement.map((m) => m.month),
@@ -1390,24 +1372,11 @@ export default function OrganizationImpactReport(
                             }}
                           />
                         </div>
-                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
                             <span className="font-semibold">Insight:</span>{" "}
                             {monthlyEngagement.length > 0
-                              ? (() => {
-                                  const latest =
-                                    monthlyEngagement[monthlyEngagement.length - 1];
-                                  const avg = Math.round(
-                                    monthlyEngagement.reduce(
-                                      (s, m) => s + (m.hours || 0),
-                                      0,
-                                    ) / monthlyEngagement.length,
-                                  );
-                                  const percentAboveAvg = Math.round(
-                                    ((latest.hours - avg) / avg) * 100,
-                                  );
-                                  return `${latest.month} recorded ${latest.hours} volunteer hours (${percentAboveAvg > 0 ? "+" : ""}${percentAboveAvg}% vs avg). Strong engagement sustained.`;
-                                })()
+                              ? `${monthlyEngagement[monthlyEngagement.length - 1].month}: ${monthlyEngagement[monthlyEngagement.length - 1].hours}h`
                               : "Monthly data available"}
                           </p>
                         </div>
@@ -2049,15 +2018,15 @@ export default function OrganizationImpactReport(
                     </div>
                   </div>
 
-                  {/* Charts Grid - 3 Column Layout */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:page-break-inside-avoid">
+                  {/* Charts Grid - 3 Column Square Layout */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:page-break-inside-avoid">
                     {/* Quarterly Growth */}
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <Card className="border border-gray-200 dark:border-gray-700 aspect-square">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                           Quarterly Growth
                         </h3>
-                        <div style={{ height: "200px" }}>
+                        <div className="flex-1 min-h-0">
                           <Line
                             data={{
                               labels: quarterlyGrowth.map((q) => q.quarter),
@@ -2090,29 +2059,11 @@ export default function OrganizationImpactReport(
                             }}
                           />
                         </div>
-                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
                             <span className="font-semibold">Insight:</span>{" "}
                             {quarterlyGrowth.length >= 4
-                              ? (() => {
-                                  const q4 = quarterlyGrowth[3];
-                                  const q3 = quarterlyGrowth[2];
-                                  const growth =
-                                    q3 && q3.beneficiaries > 0
-                                      ? Math.round(
-                                          ((q4.beneficiaries - q3.beneficiaries) /
-                                            q3.beneficiaries) *
-                                            100,
-                                        )
-                                      : 0;
-                                  const avg = Math.round(
-                                    quarterlyGrowth.reduce(
-                                      (s, q) => s + (q.beneficiaries || 0),
-                                      0,
-                                    ) / quarterlyGrowth.length,
-                                  );
-                                  return `${q4.beneficiaries} beneficiaries reached in Q4 (${growth}% QoQ). Average quarterly reach: ${avg} beneficiaries.`;
-                                })()
+                              ? `Q4: ${quarterlyGrowth[3].beneficiaries} beneficiaries`
                               : "Quarterly data available"}
                           </p>
                         </div>
@@ -2120,67 +2071,67 @@ export default function OrganizationImpactReport(
                     </Card>
 
                     {/* Performance Metrics KPI Cards */}
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <Card className="border border-gray-200 dark:border-gray-700 aspect-square">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                           Performance Metrics
                         </h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="flex-1 grid grid-cols-2 gap-2 min-h-0">
                           {/* Volunteer Management */}
-                          <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl border border-blue-200 dark:border-blue-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Volunteer Management</span>
+                          <div className="p-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg border border-blue-200 dark:border-blue-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Users className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Volunteer Mgmt</span>
                             </div>
-                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{volunteerManagementScore}%</div>
-                            <Progress value={volunteerManagementScore} className="h-2 bg-blue-200 dark:bg-blue-900" />
+                            <div className="text-xl font-bold text-blue-600 dark:text-blue-400">{volunteerManagementScore}%</div>
+                            <Progress value={volunteerManagementScore} className="h-1 bg-blue-200 dark:bg-blue-900" />
                           </div>
                           
                           {/* Financial Health */}
-                          <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-xl border border-emerald-200 dark:border-emerald-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Financial Health</span>
+                          <div className="p-2 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-lg border border-emerald-200 dark:border-emerald-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <DollarSign className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Financial</span>
                             </div>
-                            <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">{financialHealthScore}%</div>
-                            <Progress value={financialHealthScore} className="h-2 bg-emerald-200 dark:bg-emerald-900" />
+                            <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{financialHealthScore}%</div>
+                            <Progress value={financialHealthScore} className="h-1 bg-emerald-200 dark:bg-emerald-900" />
                           </div>
                           
                           {/* Program Quality */}
-                          <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl border border-purple-200 dark:border-purple-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Program Quality</span>
+                          <div className="p-2 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg border border-purple-200 dark:border-purple-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Award className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Program</span>
                             </div>
-                            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">{programQualityScore}%</div>
-                            <Progress value={programQualityScore} className="h-2 bg-purple-200 dark:bg-purple-900" />
+                            <div className="text-xl font-bold text-purple-600 dark:text-purple-400">{programQualityScore}%</div>
+                            <Progress value={programQualityScore} className="h-1 bg-purple-200 dark:bg-purple-900" />
                           </div>
                           
                           {/* Community Impact */}
-                          <div className="p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 rounded-xl border border-rose-200 dark:border-rose-700">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Target className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Community Impact</span>
+                          <div className="p-2 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 rounded-lg border border-rose-200 dark:border-rose-700 flex flex-col justify-center">
+                            <div className="flex items-center gap-1 mb-1">
+                              <Target className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">Community</span>
                             </div>
-                            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400 mb-2">{communityImpactScore}%</div>
-                            <Progress value={communityImpactScore} className="h-2 bg-rose-200 dark:bg-rose-900" />
+                            <div className="text-xl font-bold text-rose-600 dark:text-rose-400">{communityImpactScore}%</div>
+                            <Progress value={communityImpactScore} className="h-1 bg-rose-200 dark:bg-rose-900" />
                           </div>
                         </div>
-                        <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                          <p className="text-xs text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold">Insight:</span> Average performance score of {Math.round((volunteerManagementScore + financialHealthScore + programQualityScore + communityImpactScore) / 4)}% across all dimensions. {communityImpactScore >= programQualityScore && communityImpactScore >= volunteerManagementScore ? "Community Impact leads performance metrics." : programQualityScore >= communityImpactScore && programQualityScore >= volunteerManagementScore ? "Program Quality leads performance metrics." : "Volunteer Management leads performance metrics."}
+                        <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            Avg: {Math.round((volunteerManagementScore + financialHealthScore + programQualityScore + communityImpactScore) / 4)}%
                           </p>
                         </div>
                       </CardContent>
                     </Card>
 
                     {/* Monthly Engagement */}
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    <Card className="border border-gray-200 dark:border-gray-700 aspect-square">
+                      <CardContent className="p-3 h-full flex flex-col">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                           Monthly Engagement
                         </h3>
-                        <div style={{ height: "200px" }}>
+                        <div className="flex-1 min-h-0">
                           <Line
                             data={{
                               labels: monthlyEngagement.map((m) => m.month),
@@ -2211,24 +2162,11 @@ export default function OrganizationImpactReport(
                             }}
                           />
                         </div>
-                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                        <div className="mt-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
                             <span className="font-semibold">Insight:</span>{" "}
                             {monthlyEngagement.length > 0
-                              ? (() => {
-                                  const latest =
-                                    monthlyEngagement[monthlyEngagement.length - 1];
-                                  const avg = Math.round(
-                                    monthlyEngagement.reduce(
-                                      (s, m) => s + (m.hours || 0),
-                                      0,
-                                    ) / monthlyEngagement.length,
-                                  );
-                                  const percentAboveAvg = Math.round(
-                                    ((latest.hours - avg) / avg) * 100,
-                                  );
-                                  return `${latest.month} recorded ${latest.hours} volunteer hours (${percentAboveAvg > 0 ? "+" : ""}${percentAboveAvg}% vs avg). Strong engagement sustained.`;
-                                })()
+                              ? `${monthlyEngagement[monthlyEngagement.length - 1].month}: ${monthlyEngagement[monthlyEngagement.length - 1].hours}h`
                               : "Monthly data available"}
                           </p>
                         </div>

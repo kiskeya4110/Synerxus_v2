@@ -573,7 +573,13 @@ export default function OrganizationImpactReport(
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: "bottom" as const, labels: { font: { size: 10 } } },
+      legend: { 
+        position: "bottom" as const, 
+        labels: { 
+          font: { size: 10 },
+          padding: 12,
+        } 
+      },
       tooltip: {
         enabled: true,
         backgroundColor: "rgba(0,0,0,0.8)",
@@ -589,7 +595,6 @@ export default function OrganizationImpactReport(
           display: true,
           font: { size: 11, weight: "bold" as any },
           padding: 12,
-          color: "#1f2937",
         },
       },
     },
@@ -2094,45 +2099,7 @@ export default function OrganizationImpactReport(
                         <div className="flex justify-center items-center" style={{ height: "280px", padding: "16px" }}>
                           <Radar
                             data={organizationalPerformance}
-                            options={{
-                              responsive: true,
-                              maintainAspectRatio: false,
-                              plugins: {
-                                legend: {
-                                  display: true,
-                                  position: "bottom",
-                                  labels: {
-                                    font: { size: 11, weight: "500" },
-                                    padding: 12,
-                                    usePointStyle: true,
-                                    color: "currentColor",
-                                  },
-                                },
-                                tooltip: {
-                                  enabled: true,
-                                  backgroundColor: "rgba(0,0,0,0.8)",
-                                  padding: 12,
-                                  font: { size: 12 },
-                                },
-                              },
-                              scales: {
-                                r: {
-                                  beginAtZero: true,
-                                  max: 100,
-                                  ticks: {
-                                    stepSize: 20,
-                                    font: { size: 10 },
-                                  },
-                                  grid: {
-                                    color: "rgba(200, 200, 200, 0.2)",
-                                  },
-                                  pointLabels: {
-                                    font: { size: 11, weight: "600" },
-                                    padding: 8,
-                                  },
-                                },
-                              },
-                            }}
+                            options={radarChartOptions}
                           />
                         </div>
                         <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">

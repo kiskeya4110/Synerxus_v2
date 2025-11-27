@@ -568,15 +568,25 @@ export default function Landing() {
             </div>
           </Link>
           <div className="flex gap-2 sm:gap-3 flex-shrink-0">
-            <Link href="/login" className="hidden sm:block">
-              <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-login">Log In</Button>
-            </Link>
-            <Link href="/login">
-              <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-get-started">
-                <span className="sm:hidden">Get Started</span>
-                <span className="hidden sm:inline">Get Started</span>
-              </Button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/dashboard">
+                <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-my-dashboard">
+                  My Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="hidden sm:block">
+                  <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-login">Log In</Button>
+                </Link>
+                <Link href="/login">
+                  <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-get-started">
+                    <span className="sm:hidden">Get Started</span>
+                    <span className="hidden sm:inline">Get Started</span>
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -595,22 +605,32 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-fit">
-              <Link href="/volunteer-intake" className="w-full sm:w-auto">
-                <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-now">
-                  Join Now
-                </Button>
-              </Link>
-              <Link href="/login" className="w-full sm:w-auto">
-                <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-600/25" data-testid="button-sign-in">
-                  Sign In
-                </Button>
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-my-dashboard-hero">
+                    My Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/volunteer-intake" className="w-full sm:w-auto">
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-now">
+                      Join Now
+                    </Button>
+                  </Link>
+                  <Link href="/login" className="w-full sm:w-auto">
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-600/25" data-testid="button-sign-in">
+                      Sign In
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
           {/* Right Collage Image */}
           <div className="flex flex-col items-center gap-4 sm:gap-6 order-1 md:order-2">
-            <Link href="/login" className="flex justify-center cursor-pointer group w-full">
+            <Link href={isLoggedIn ? "/dashboard" : "/login"} className="flex justify-center cursor-pointer group w-full">
               <div className="relative w-full h-64 sm:h-80 md:h-96 rounded-2xl shadow-2xl overflow-hidden group-hover:shadow-3xl transition-shadow">
                 <img 
                   src={collageImg}
@@ -769,9 +789,9 @@ export default function Landing() {
             <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Join thousands making measurable impact across all 17 SDGs worldwide.
             </p>
-            <Link href="/login">
+            <Link href={isLoggedIn ? "/dashboard" : "/login"}>
               <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
-                Start Your Legacy Today
+                {isLoggedIn ? "Go to My Dashboard" : "Start Your Legacy Today"}
               </Button>
             </Link>
           </div>

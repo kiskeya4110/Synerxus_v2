@@ -2204,13 +2204,13 @@ export default function OrganizationImpactReport(
                     Financial
                   </h2>
 
-                  {/* KPIs */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  {/* Financial KPIs - Responsive layout: 2x2 mobile, 1x4 web */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
                       <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                         Total Revenue
                       </p>
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                         ${(totalRevenue / 1000).toFixed(0)}K
                       </p>
                     </div>
@@ -2218,7 +2218,7 @@ export default function OrganizationImpactReport(
                       <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                         Total Expenses
                       </p>
-                      <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                         ${(totalExpenses / 1000).toFixed(0)}K
                       </p>
                     </div>
@@ -2226,7 +2226,7 @@ export default function OrganizationImpactReport(
                       <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                         Operating Margin
                       </p>
-                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                         {operatingMargin}%
                       </p>
                     </div>
@@ -2234,114 +2234,124 @@ export default function OrganizationImpactReport(
                       <p className="text-xs text-gray-600 dark:text-gray-300 uppercase font-semibold mb-1">
                         Program Efficiency
                       </p>
-                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                      <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                         {programEfficiencyRate}%
                       </p>
                     </div>
                   </div>
 
-                  {/* Financial Charts */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <Card className="border border-gray-200 dark:border-gray-700">
+                  {/* Health indicators on left, Impact 2x2 on right */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left: Health Indicators Compact */}
+                    <Card className="border border-gray-200 dark:border-gray-700 lg:col-span-1">
                       <CardContent className="p-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Revenue Sources
+                          Financial Health
                         </h3>
-                        <Pie
-                          data={{
-                            labels: revenueSource.map((r) => r.source),
-                            datasets: [
-                              {
-                                data: revenueSource.map((r) => r.value),
-                                backgroundColor: [
-                                  "#3b82f6",
-                                  "#10b981",
-                                  "#f59e0b",
-                                  "#ef4444",
-                                ],
-                              },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: true,
-                            plugins: {
-                              legend: { position: "bottom" },
-                              tooltip: {
-                                enabled: true,
-                                backgroundColor: "rgba(0,0,0,0.8)",
-                                padding: 12,
-                              },
-                            },
-                          }}
-                        />
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
+                            <span>Liquidity Ratio</span>
+                            <Badge className="bg-green-100 text-green-800 text-xs">
+                              2.5x
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
+                            <span>Reserve Fund</span>
+                            <Badge className="bg-blue-100 text-blue-800 text-xs">
+                              6 mo
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
+                            <span>Growth Rate</span>
+                            <Badge className="bg-green-100 text-green-800 text-xs">
+                              +18%
+                            </Badge>
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
-                    <Card className="border border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Budget Allocation
-                        </h3>
-                        <Pie
-                          data={{
-                            labels: budgetAllocation.map((b) => b.category),
-                            datasets: [
-                              {
-                                data: budgetAllocation.map((b) => b.value),
-                                backgroundColor: [
-                                  "#10b981",
-                                  "#f59e0b",
-                                  "#ef4444",
-                                  "#8b5cf6",
-                                ],
-                              },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: true,
-                            plugins: {
-                              legend: { position: "bottom" },
-                              tooltip: {
-                                enabled: true,
-                                backgroundColor: "rgba(0,0,0,0.8)",
-                                padding: 12,
-                              },
-                            },
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
-                  </div>
 
-                  {/* Financial Health */}
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        Financial Health Indicators
-                      </h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                          <span className="text-sm">Liquidity Ratio</span>
-                          <Badge className="bg-green-100 text-green-800">
-                            2.5x Healthy
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                          <span className="text-sm">Reserve Fund</span>
-                          <Badge className="bg-blue-100 text-blue-800">
-                            6 months
-                          </Badge>
-                        </div>
-                        <div className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-900 rounded">
-                          <span className="text-sm">Growth Rate</span>
-                          <Badge className="bg-green-100 text-green-800">
-                            +18% YoY
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    {/* Right: Impact 2x2 Grid */}
+                    <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Card className="border border-gray-200 dark:border-gray-700">
+                        <CardContent className="p-4">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                            Revenue Sources
+                          </h3>
+                          <Pie
+                            data={{
+                              labels: revenueSource.map((r) => r.source),
+                              datasets: [
+                                {
+                                  data: revenueSource.map((r) => r.value),
+                                  backgroundColor: [
+                                    "#3b82f6",
+                                    "#10b981",
+                                    "#f59e0b",
+                                    "#ef4444",
+                                  ],
+                                },
+                              ],
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: true,
+                              plugins: {
+                                legend: {
+                                  position: "bottom",
+                                  labels: { font: { size: 11 } },
+                                },
+                                tooltip: {
+                                  enabled: true,
+                                  backgroundColor: "rgba(0,0,0,0.8)",
+                                  padding: 12,
+                                },
+                              },
+                            }}
+                          />
+                        </CardContent>
+                      </Card>
+
+                      <Card className="border border-gray-200 dark:border-gray-700">
+                        <CardContent className="p-4">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                            Budget Allocation
+                          </h3>
+                          <Pie
+                            data={{
+                              labels: budgetAllocation.map((b) => b.category),
+                              datasets: [
+                                {
+                                  data: budgetAllocation.map((b) => b.value),
+                                  backgroundColor: [
+                                    "#10b981",
+                                    "#f59e0b",
+                                    "#ef4444",
+                                    "#8b5cf6",
+                                  ],
+                                },
+                              ],
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: true,
+                              plugins: {
+                                legend: {
+                                  position: "bottom",
+                                  labels: { font: { size: 11 } },
+                                },
+                                tooltip: {
+                                  enabled: true,
+                                  backgroundColor: "rgba(0,0,0,0.8)",
+                                  padding: 12,
+                                },
+                              },
+                            }}
+                          />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
                 </div>
 
                 {/* IMPACT SECTION */}

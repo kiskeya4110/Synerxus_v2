@@ -400,7 +400,7 @@ export default function OrganizationImpactReport(
   const currentDate = new Date();
   const currentQuarter = Math.floor(currentDate.getMonth() / 3) + 1;
 
-  // Calculate real quarterly data
+  // Calculate real quarterly data - respects time filter
   const getQuarterlyData = (): Array<{
     quarter: string;
     volunteers: number;
@@ -421,7 +421,7 @@ export default function OrganizationImpactReport(
       const quarterStart = new Date(currentDate.getFullYear(), startMonth, 1);
       const quarterEnd = new Date(currentDate.getFullYear(), endMonth, 0);
 
-      const quarterActivities = filteredActivities.filter((a) => {
+      const quarterActivities = timeFilteredActivities.filter((a) => {
         if (!a.date) return false;
         const actDate = new Date(a.date);
         return actDate >= quarterStart && actDate <= quarterEnd;
@@ -475,7 +475,7 @@ export default function OrganizationImpactReport(
     { source: "Other", value: 5 },
   ];
 
-  // Use actual projects from organization - tied to real completion percentages
+  // Use actual projects from organization - tied to real completion percentages - respects time filter
   const topPrograms = projects
     .filter(
       (p) =>
@@ -485,8 +485,8 @@ export default function OrganizationImpactReport(
     )
     .slice(0, 4)
     .map((project) => {
-      // Get activities for this project to calculate beneficiaries
-      const projectActivities = filteredActivities.filter(
+      // Get activities for this project to calculate beneficiaries - respects time filter
+      const projectActivities = timeFilteredActivities.filter(
         (a) => a.projectId === project.id,
       );
       const beneficiaries =
@@ -595,7 +595,7 @@ export default function OrganizationImpactReport(
     },
   };
 
-  // Calculate real monthly engagement data
+  // Calculate real monthly engagement data - respects time filter
   const getMonthlyEngagement = (): Array<{
     month: string;
     volunteers: number;
@@ -623,7 +623,7 @@ export default function OrganizationImpactReport(
       const monthStart = new Date(currentDate.getFullYear(), m, 1);
       const monthEnd = new Date(currentDate.getFullYear(), m + 1, 0);
 
-      const monthActivities = filteredActivities.filter((a) => {
+      const monthActivities = timeFilteredActivities.filter((a) => {
         if (!a.date) return false;
         const actDate = new Date(a.date);
         return actDate >= monthStart && actDate <= monthEnd;
@@ -693,8 +693,14 @@ export default function OrganizationImpactReport(
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 relative overflow-hidden">
+      {/* UN SDG Wheel Watermark */}
+      <div className="fixed inset-0 pointer-events-none opacity-5 dark:opacity-3 flex items-center justify-center" style={{ zIndex: 0 }}>
+        <div className="text-9xl" title="UN Sustainable Development Goals">
+          🎯
+        </div>
+      </div>
+      <div className="max-w-6xl mx-auto relative z-10">
         {/* Header with Actions - Reorganized for Better UX */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           {/* Left: Back Button */}

@@ -1273,6 +1273,8 @@ export default function Dashboard() {
               const isSDGItem = item.isSDG === true;
               // Check if this is a project item (has isProjectItem flag)
               const isProjectItem = item.isProjectItem === true;
+              // Check if this is a highlight item
+              const isHighlight = item.isHighlight === true;
               
               // Impact Score Component Breakdown
               if (isImpactScoreItem) {
@@ -1313,8 +1315,28 @@ export default function Dashboard() {
                 );
               }
               
-              // Project Group Item with Activity Breakdown (for Total Hours)
-              if (item.isProjectGroup && item.activities) {
+              // Highlight Item (for Lives Touched key metrics)
+              if (isHighlight) {
+                return (
+                  <div key={index} className="p-4 border-2 border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20" data-testid={`kpi-item-${index}`}>
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-2xl">{item.icon}</span>
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{item.label}</h4>
+                    </div>
+                    <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-1">
+                      {item.value}
+                    </div>
+                    {item.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                );
+              }
+              
+              // Project Group Item with Activity Breakdown (for Total Hours or Lives Touched)
+              if (item.isProjectGroup && (item.activities || item.description)) {
                 return (
                   <Collapsible key={index}>
                     <div className="border rounded-lg">
@@ -1327,7 +1349,7 @@ export default function Dashboard() {
                             <div className="flex-1 text-left">
                               <h4 className="font-medium">{item.label}</h4>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {item.activities.length} activities • Click to view details
+                                {item.activities ? `${item.activities.length} activities` : item.description} • Click to view details
                               </p>
                             </div>
                           </div>
@@ -1341,7 +1363,7 @@ export default function Dashboard() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="border-t p-4 space-y-2 bg-gray-50 dark:bg-gray-900/50">
-                          {item.activities.map((activity: any, aIndex: number) => (
+                          {item.activities && item.activities.map((activity: any, aIndex: number) => (
                             <div key={aIndex} className="p-3 bg-white dark:bg-gray-800 rounded-md border" data-testid={`activity-${index}-${aIndex}`}>
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
@@ -1356,6 +1378,11 @@ export default function Dashboard() {
                               </div>
                             </div>
                           ))}
+                          {!item.activities && item.description && (
+                            <div className="p-3 bg-white dark:bg-gray-800 rounded-md border">
+                              <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
+                            </div>
+                          )}
                         </div>
                       </CollapsibleContent>
                     </div>

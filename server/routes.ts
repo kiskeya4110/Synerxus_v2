@@ -107,7 +107,7 @@ function calculateProfileCompletion(profile: Record<string, any>): number {
   if (typeof profile.weeklyAvailability === 'number' && profile.weeklyAvailability > 0) completedFields++;
   if (profile.preferredWorkStyle) completedFields++;
   
-  return Math.round((completedFields / totalFields) * 100);
+  return Math.min(100, Math.round((completedFields / totalFields) * 100));
 }
 
 // Helper function to handle validation and authorization errors

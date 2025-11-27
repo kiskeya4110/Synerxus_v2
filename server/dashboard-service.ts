@@ -923,7 +923,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       preferredWorkStyle: volunteerProfile?.preferredWorkStyle ? 1 : 0,
     };
     const completedFields = Object.values(profileFields).filter(v => v > 0).length;
-    const profileCompleteness = Math.round((completedFields / Object.keys(profileFields).length) * 100);
+    const profileCompleteness = Math.min(100, Math.round((completedFields / Object.keys(profileFields).length) * 100));
 
     // Derive people metric IDs BEFORE monthly impact trend (needed for monthly calculations)
     const peopleMetricIds = new Set<number>();

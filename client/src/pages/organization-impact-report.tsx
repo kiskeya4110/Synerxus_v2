@@ -836,7 +836,7 @@ export default function OrganizationImpactReport(
           className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black relative overflow-hidden"
         >
           {/* SDG Wheel Watermark */}
-          <div className="absolute inset-0 pointer-events-none opacity-8 dark:opacity-12 print:opacity-5 flex items-center justify-center">
+          <div className="absolute inset-0 pointer-events-none opacity-10 flex items-center justify-center">
             <img
               src={sdgWheelWatermark}
               alt="UN SDG Wheel"

@@ -1248,17 +1248,21 @@ export default function Dashboard() {
           <DialogHeader>
             <DialogTitle>{selectedKPI?.title}</DialogTitle>
             <DialogDescription>
-              Detailed breakdown of {selectedKPI?.title.toLowerCase()}
+              {selectedKPI?.title.includes("Impact Score") 
+                ? "Your impact score breakdown across multiple dimensions"
+                : selectedKPI?.title.includes("Lives Touched")
+                ? "Total beneficiaries reached and impact efficiency metrics"
+                : `Detailed breakdown of ${selectedKPI?.title.toLowerCase()}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Impact Score Breakdown - Special case */}
-            {selectedKPI?.totalScore !== undefined && (
+            {/* Impact Score Breakdown - Only show for actual Impact Score, not Lives Touched */}
+            {selectedKPI?.totalScore !== undefined && selectedKPI?.title.includes("Impact Score") && (
               <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold">Total Impact Score</span>
                   <span className="text-3xl font-bold text-primary-600 dark:text-primary-400">
-                    {selectedKPI.totalScore}
+                    {selectedKPI.totalScore} / 100
                   </span>
                 </div>
               </div>

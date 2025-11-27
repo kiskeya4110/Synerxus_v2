@@ -1112,33 +1112,30 @@ export default function ImpactReport() {
                   </Card>
                 </div>
 
-                {/* SDG Impact Section - Compact with Emojis */}
+                {/* SDG Impact Section - Numbered Buttons */}
                 {sdgs.length > 0 && (
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         UN Sustainable Development Goals
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {sdgs.map((sdgId: number) => {
-                          const goal = sdgGoals[sdgId];
+                      <div className="flex flex-wrap gap-2">
+                        {[...sdgs].sort((a, b) => a - b).map((sdgId: number) => {
                           const title = SDG_TITLES[sdgId];
                           return (
                             <div
                               key={sdgId}
-                              className="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-700 hover:shadow-md transition-all"
+                              className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-600 hover:shadow-md transition-all"
                             >
-                              <span className="text-4xl flex-shrink-0">
+                              <span className="text-lg flex-shrink-0">
                                 {SDG_LOGOS[sdgId]}
                               </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-bold text-gray-900 dark:text-white text-sm">
-                                  SDG {sdgId}
-                                </p>
-                                <p className="text-sm text-gray-700 dark:text-gray-200 font-semibold leading-tight">
-                                  {title}
-                                </p>
-                              </div>
+                              <span className="font-bold text-blue-700 dark:text-blue-300 text-sm">
+                                {sdgId}
+                              </span>
+                              <span className="text-xs text-gray-700 dark:text-gray-300 font-semibold hidden sm:inline">
+                                {title}
+                              </span>
                             </div>
                           );
                         })}

@@ -518,7 +518,7 @@ export default function OrganizationImpactReport(
     });
 
   // Calculate real performance scores
-  const volunteerEngagementScore =
+  const volunteerManagementScore =
     activeVolunteers > 0
       ? Math.min(Math.round((activeVolunteers / 100) * 100), 100)
       : 0;
@@ -545,16 +545,16 @@ export default function OrganizationImpactReport(
 
   const organizationalPerformance = {
     labels: [
-      "Volunteer Engagement",
-      "Financial Health",
-      "Program Quality",
-      "Community Impact",
-    ].map((label) => label.split(" ").join("\n")),
+      "Volunteer\nManagement",
+      "Financial\nHealth",
+      "Program\nQuality",
+      "Community\nImpact",
+    ],
     datasets: [
       {
         label: "Performance Score",
         data: [
-          volunteerEngagementScore,
+          volunteerManagementScore,
           financialHealthScore,
           programQualityScore,
           communityImpactScore,

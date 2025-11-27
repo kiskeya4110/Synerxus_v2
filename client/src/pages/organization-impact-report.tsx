@@ -115,13 +115,7 @@ ChartJS.register(
   Filler,
 );
 
-interface OrganizationImpactReportProps {
-  organizationId?: number;
-}
-
-export default function OrganizationImpactReport(
-  props: OrganizationImpactReportProps,
-) {
+export default function OrganizationImpactReport() {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [isPrinting, setIsPrinting] = useState(false);

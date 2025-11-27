@@ -115,11 +115,7 @@ const getSkillBadgeClass = (index: number): string => {
   return colorClasses[index % colorClasses.length];
 };
 
-interface ImpactReportProps {
-  volunteerId?: number;
-}
-
-export default function ImpactReport(props: ImpactReportProps) {
+export default function ImpactReport() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isPrinting, setIsPrinting] = useState(false);
@@ -139,7 +135,6 @@ export default function ImpactReport(props: ImpactReportProps) {
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
   // Get volunteer ID from URL params or localStorage
-  const paramVolunteerId = props.volunteerId;
   const currentUserIdStr = localStorage.getItem('currentUserId');
   
   // Fetch the current logged-in user first

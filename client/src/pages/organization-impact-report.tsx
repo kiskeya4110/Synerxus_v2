@@ -651,6 +651,17 @@ export default function OrganizationImpactReport(
 
   const monthlyEngagement = getMonthlyEngagement();
 
+  // Calculate dynamic resource allocation based on time-filtered activities
+  const getResourceAllocation = () => {
+    const staffCount = projectManagers;
+    const volunteerCount = activeVolunteers;
+    const equipmentCount = Math.max(1, Math.floor(totalProjects * 1.5));
+    const facilitiesCount = Math.max(1, Math.floor(totalProjects * 0.7));
+    return [staffCount, volunteerCount, equipmentCount, facilitiesCount];
+  };
+
+  const resourceAllocation = getResourceAllocation();
+
   // Summarize mission statement to first sentence or truncate to 150 chars
   const summarizeMission = (description: string) => {
     if (!description) return "";
@@ -1447,7 +1458,7 @@ export default function OrganizationImpactReport(
                             datasets: [
                               {
                                 label: "Resource Units",
-                                data: [25, 72, 40, 15],
+                                data: resourceAllocation,
                                 backgroundColor: "#f59e0b",
                               },
                             ],

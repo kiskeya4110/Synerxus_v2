@@ -63,6 +63,46 @@ import {
 } from "chart.js";
 import { Line, Bar, Pie, Radar } from "react-chartjs-2";
 
+const SDG_COLORS: { [key: number]: string } = {
+  1: "#e5243b",
+  2: "#dda63b",
+  3: "#4c9f38",
+  4: "#c6192b",
+  5: "#e5243b",
+  6: "#26bde2",
+  7: "#fccc0a",
+  8: "#a21942",
+  9: "#dd1c3b",
+  10: "#dd1c3b",
+  11: "#fd6925",
+  12: "#bf8b2e",
+  13: "#3f7e44",
+  14: "#0a97d9",
+  15: "#56c596",
+  16: "#00689d",
+  17: "#e1405a",
+};
+
+const SDG_NAMES: { [key: number]: string } = {
+  1: "No Poverty",
+  2: "Zero Hunger",
+  3: "Good Health",
+  4: "Quality Education",
+  5: "Gender Equality",
+  6: "Clean Water",
+  7: "Affordable Energy",
+  8: "Decent Work",
+  9: "Industry Innovation",
+  10: "Reduced Inequalities",
+  11: "Sustainable Cities",
+  12: "Responsible Consumption",
+  13: "Climate Action",
+  14: "Life Below Water",
+  15: "Life on Land",
+  16: "Peace Justice",
+  17: "Partnerships",
+};
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -875,7 +915,7 @@ export default function OrganizationImpactReport(
                   Global Impact Report
                 </h1>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div>
                     <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 text-base print:text-sm">
                       Impact Score:{" "}
@@ -885,6 +925,23 @@ export default function OrganizationImpactReport(
                       /100
                     </Badge>
                   </div>
+                  
+                  {/* SDG Commitments */}
+                  {organization?.primarySdgs && organization.primarySdgs.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {organization.primarySdgs.map((sdg: number) => (
+                        <div
+                          key={sdg}
+                          title={SDG_NAMES[sdg] || `SDG ${sdg}`}
+                          className="flex items-center justify-center w-10 h-10 rounded font-bold text-white text-xs print:w-8 print:h-8 print:text-xs"
+                          style={{ backgroundColor: SDG_COLORS[sdg] || "#888888" }}
+                        >
+                          {sdg}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     <span>Generated on </span>
                     <span className="font-semibold">

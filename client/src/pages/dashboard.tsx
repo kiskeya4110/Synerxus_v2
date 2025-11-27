@@ -704,7 +704,7 @@ export default function Dashboard() {
             name: volunteer.name,
             avatar: volunteer.avatar,
             label: volunteer.name,
-            value: `${volunteer.totalHours} hours`,
+            value: `${volunteer.totalHours.toLocaleString()} hours`,
             project: `${volunteer.activityCount} activities`,
             projectCount: volunteer.projectCount,
             projects: volunteer.projects,
@@ -775,7 +775,7 @@ export default function Dashboard() {
               value: `${Math.round(hoursScore)} / 100`,
               weight: "40%",
               contribution: Math.round(hoursScore * 0.40),
-              description: `${totalHours} hours logged`,
+              description: `${totalHours.toLocaleString()} hours logged`,
             },
             {
               label: "Task Completion",
@@ -855,7 +855,7 @@ export default function Dashboard() {
           },
           {
             label: "Impact Efficiency",
-            value: `${beneficiariesPerHour} people/hour`,
+            value: `${beneficiariesPerHour.toLocaleString()} people/hour`,
             icon: "⚡",
             isHighlight: true,
             description: `Based on ${totalHoursForImpact.toFixed(1)} total hours`
@@ -868,14 +868,14 @@ export default function Dashboard() {
           const totalProjectBeneficiaries = Array.from(beneficiariesByProject.values()).reduce((sum, p) => sum + p.beneficiaries, 0);
           items.push({
             label: "📋 Projects Impact",
-            value: `${totalProjectBeneficiaries} beneficiaries`,
+            value: `${totalProjectBeneficiaries.toLocaleString()} beneficiaries`,
             isCategory: true,
             description: `${totalProjectVolunteers} volunteer${totalProjectVolunteers !== 1 ? 's' : ''} across ${beneficiariesByProject.size} project${beneficiariesByProject.size !== 1 ? 's' : ''}`
           });
           Array.from(beneficiariesByProject.values()).forEach((data) => {
             items.push({
               label: data.projectName,
-              value: `${data.beneficiaries} beneficiaries`,
+              value: `${data.beneficiaries.toLocaleString()} beneficiaries`,
               description: `${data.volunteerCount} volunteer${data.volunteerCount !== 1 ? 's' : ''}`,
               isProjectGroup: true,
             });
@@ -1173,7 +1173,7 @@ export default function Dashboard() {
                   {projectsArray.map((project, idx) => (
                     <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
                       <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{project.projectName}</span>
-                      <span className="text-sm font-bold text-red-600 dark:text-red-400 ml-2">{project.beneficiaries}</span>
+                      <span className="text-sm font-bold text-red-600 dark:text-red-400 ml-2">{project.beneficiaries.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>

@@ -371,11 +371,11 @@ export default function ImpactReport() {
         if (totalHoursInPeriod === 0) {
           trendInsight = "💡 This month has no logged hours yet. Start tracking your contributions!";
         } else if (totalHoursInPeriod < 10) {
-          trendInsight = `💡 You've logged ${totalHoursInPeriod}h this month. Consider increasing your weekly commitment to reach your goals.`;
+          trendInsight = `💡 You've logged ${totalHoursInPeriod.toLocaleString()}h this month. Consider increasing your weekly commitment to reach your goals.`;
         } else if (totalHoursInPeriod < 20) {
-          trendInsight = `💡 Great effort! You've logged ${totalHoursInPeriod}h this month. Keep up the momentum!`;
+          trendInsight = `💡 Great effort! You've logged ${totalHoursInPeriod.toLocaleString()}h this month. Keep up the momentum!`;
         } else {
-          trendInsight = `💡 Excellent! You've exceeded expectations with ${totalHoursInPeriod}h logged this month. Outstanding commitment!`;
+          trendInsight = `💡 Excellent! You've exceeded expectations with ${totalHoursInPeriod.toLocaleString()}h logged this month. Outstanding commitment!`;
         }
         break;
         
@@ -391,13 +391,13 @@ export default function ImpactReport() {
         
       case 'year':
         if (totalHoursInPeriod < 50) {
-          trendInsight = `💡 You've contributed ${totalHoursInPeriod}h this year. Aim for more active participation to expand your impact.`;
+          trendInsight = `💡 You've contributed ${totalHoursInPeriod.toLocaleString()}h this year. Aim for more active participation to expand your impact.`;
         } else if (totalHoursInPeriod < 100) {
-          trendInsight = `👍 Good year so far! You've logged ${totalHoursInPeriod}h in 2025. Keep building on this progress.`;
+          trendInsight = `👍 Good year so far! You've logged ${totalHoursInPeriod.toLocaleString()}h in 2025. Keep building on this progress.`;
         } else if (totalHoursInPeriod < 200) {
-          trendInsight = `⭐ Impressive! You've contributed ${totalHoursInPeriod}h this year. Your consistent effort is making a real difference.`;
+          trendInsight = `⭐ Impressive! You've contributed ${totalHoursInPeriod.toLocaleString()}h this year. Your consistent effort is making a real difference.`;
         } else {
-          trendInsight = `🌟 Outstanding contribution! You've logged ${totalHoursInPeriod}h in 2025. You're a key pillar of impact!`;
+          trendInsight = `🌟 Outstanding contribution! You've logged ${totalHoursInPeriod.toLocaleString()}h in 2025. You're a key pillar of impact!`;
         }
         break;
         

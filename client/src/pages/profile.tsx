@@ -325,7 +325,7 @@ export default function Profile() {
                   <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{totalHours}</div>
+                  <div className="text-2xl font-bold">{totalHours.toLocaleString()}</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {totalActivities > 0 
                       ? `${totalActivities} activities recorded` 

@@ -925,7 +925,7 @@ export default function OrganizationImpactReport() {
                   {/* Volunteer Commitment Fact */}
                   <div className="bg-blue-50 dark:bg-blue-900/30 p-2.5 rounded border border-blue-200 dark:border-blue-700 print:p-1.5 print:text-xs">
                     <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
-                      🤝 {activeVolunteers} volunteers united
+                      🤝 {activeVolunteers.toLocaleString()} volunteers united
                     </p>
                     <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
                       Working toward our mission
@@ -939,7 +939,7 @@ export default function OrganizationImpactReport() {
                     </p>
                     <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
                       {totalHours > 0
-                        ? `${totalHours.toLocaleString()} hours invested in ${totalProjects} mission-aligned ${totalProjects === 1 ? "project" : "projects"}`
+                        ? `${totalHours.toLocaleString()} hours invested in ${totalProjects.toLocaleString()} mission-aligned ${totalProjects === 1 ? "project" : "projects"}`
                         : "Ready to mobilize impact"}
                     </p>
                   </div>
@@ -1009,7 +1009,7 @@ export default function OrganizationImpactReport() {
                             Volunteers:
                           </span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">
-                            {activeVolunteers}
+                            {activeVolunteers.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
@@ -1082,7 +1082,7 @@ export default function OrganizationImpactReport() {
                         Projects Managed
                       </p>
                       <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">
-                        {totalProjects}
+                        {totalProjects.toLocaleString()}
                       </p>
                       <div className="space-y-1.5">
                         {projects.length > 0 && (
@@ -1152,7 +1152,7 @@ export default function OrganizationImpactReport() {
                             Total Vol:
                           </span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
-                            {activeVolunteers}
+                            {activeVolunteers.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
@@ -1267,7 +1267,7 @@ export default function OrganizationImpactReport() {
                           <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
                             <span className="font-semibold">Insight:</span>{" "}
                             {quarterlyGrowth.length >= 4
-                              ? `Q4: ${quarterlyGrowth[3].beneficiaries} beneficiaries`
+                              ? `Q4: ${quarterlyGrowth[3].beneficiaries.toLocaleString()} beneficiaries`
                               : "Quarterly data available"}
                           </p>
                         </div>
@@ -1817,7 +1817,7 @@ export default function OrganizationImpactReport() {
                             Volunteers:
                           </span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">
-                            {activeVolunteers}
+                            {activeVolunteers.toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-xs">
@@ -1892,7 +1892,7 @@ export default function OrganizationImpactReport() {
                         Projects Managed
                       </p>
                       <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">
-                        {totalProjects}
+                        {totalProjects.toLocaleString()}
                       </p>
                       <div className="space-y-1.5">
                         {projects.length > 0 && (
@@ -2057,7 +2057,7 @@ export default function OrganizationImpactReport() {
                           <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-2">
                             <span className="font-semibold">Insight:</span>{" "}
                             {quarterlyGrowth.length >= 4
-                              ? `Q4: ${quarterlyGrowth[3].beneficiaries} beneficiaries`
+                              ? `Q4: ${quarterlyGrowth[3].beneficiaries.toLocaleString()} beneficiaries`
                               : "Quarterly data available"}
                           </p>
                         </div>

@@ -1,6 +1,7 @@
 import type { Opportunity } from "@shared/schema";
 import type { IStorage } from "./storage";
-import { calculateMatchScore } from "./matching-algorithm";
+import { calculateMatchScore, validateOpportunityData, validateVolunteerData } from "./matching-algorithm";
+import { log } from "./vite";
 
 interface EnrichedOpportunity extends Opportunity {
   organizationName?: string;
@@ -68,6 +69,12 @@ export async function getEnrichedOpportunities(
       enriched.matchPercentage = matchResult.score;
       enriched.matchReasons = matchResult.reasons;
       enriched.matchBreakdown = matchResult.breakdown;
+      
+      // Log data quality warnings for visibility and debugging
+      if (matchResult.dataQualityWarnings && matchResult.dataQualityWarnings.length > 0) {
+        log(`[Data Quality] Opportunity "${opportunity.title}" (ID: ${opportunity.id}): ${matchResult.dataQualityWarnings.join("; ")}`);
+        log(`[Data Quality] Volunteer "${volunteerWithProfile.displayName}" (ID: ${volunteerWithProfile.id}): ${matchResult.dataQualityWarnings.join("; ")}`);
+      }
     }
 
     return enriched;

@@ -225,6 +225,11 @@ export function calculateMatchScore(
     engagementBoost: 0,
   };
   const reasons: string[] = [];
+  
+  // Validate data completeness and collect warnings
+  const volunteerWarnings = validateVolunteerData(volunteer);
+  const opportunityWarnings = validateOpportunityData(opportunity);
+  const dataQualityWarnings = [...volunteerWarnings, ...opportunityWarnings];
 
   // 1. Skills Matching (35% weight)
   const volunteerSkills = normalizeSkills(volunteer.skills);
@@ -569,6 +574,7 @@ export function calculateMatchScore(
     breakdown,
     reasons,
     matchCategory: getMatchCategory(finalScore),
+    dataQualityWarnings: dataQualityWarnings.length > 0 ? dataQualityWarnings : undefined,
   };
 }
 

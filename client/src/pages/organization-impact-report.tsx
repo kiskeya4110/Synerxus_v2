@@ -55,13 +55,12 @@ import {
   LineElement,
   BarElement,
   ArcElement,
-  RadarController,
   Title,
   Tooltip,
   Legend,
   Filler,
 } from "chart.js";
-import { Line, Bar, Pie, Radar } from "react-chartjs-2";
+import { Line, Bar, Pie } from "react-chartjs-2";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#e5243b",
@@ -110,7 +109,6 @@ ChartJS.register(
   LineElement,
   BarElement,
   ArcElement,
-  RadarController,
   Title,
   Tooltip,
   Legend,
@@ -583,63 +581,6 @@ export default function OrganizationImpactReport(
       ? Math.min(Math.round((beneficiariesServed / 5000) * 100), 100)
       : 0;
 
-  const organizationalPerformance = {
-    labels: [
-      ["Volunteer", "Management"],
-      ["Financial", "Health"],
-      ["Program", "Quality"],
-      ["Community", "Impact"],
-    ],
-    datasets: [
-      {
-        label: "Performance Score",
-        data: [
-          volunteerManagementScore,
-          financialHealthScore,
-          programQualityScore,
-          communityImpactScore,
-        ],
-        borderColor: "#3b82f6",
-        backgroundColor: "rgba(59, 130, 246, 0.1)",
-        fill: true,
-        tension: 0.4,
-        borderWidth: 2,
-      },
-    ],
-  };
-
-  // Configure point labels with proper multi-line support - respects time filter
-  const radarChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { 
-        position: "bottom" as const, 
-        labels: { 
-          font: { size: 12 },
-          padding: 16,
-        } 
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: "rgba(0,0,0,0.8)",
-        padding: 12,
-      },
-    },
-    scales: {
-      r: {
-        beginAtZero: true,
-        max: 100,
-        ticks: { font: { size: 11 }, stepSize: 25 },
-        pointLabels: {
-          display: true,
-          font: { size: 13, weight: "bold" as any },
-          padding: 16,
-        },
-      },
-    },
-  };
-
   // Calculate real monthly engagement data - respects time filter
   const getMonthlyEngagement = (): Array<{
     month: string;
@@ -929,7 +870,7 @@ export default function OrganizationImpactReport(
                   {/* SDG Commitments */}
                   {organization?.primarySdgs && organization.primarySdgs.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {organization.primarySdgs.map((sdg: number) => (
+                      {[...organization.primarySdgs].sort((a: number, b: number) => a - b).map((sdg: number) => (
                         <div
                           key={sdg}
                           title={SDG_NAMES[sdg] || `SDG ${sdg}`}
@@ -1357,26 +1298,57 @@ export default function OrganizationImpactReport(
                       </CardContent>
                     </Card>
 
-                    {/* Organizational Performance Radar */}
+                    {/* Organizational Performance KPI Cards */}
                     <Card className="border border-gray-200 dark:border-gray-700">
                       <CardContent className="p-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Performance Radar
+                          Performance Metrics
                         </h3>
-                        <div
-                          style={{
-                            height: "520px",
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                          }}
-                        >
-                          <div style={{ width: "100%", height: "100%" }}>
-                            <Radar
-                              data={organizationalPerformance}
-                              options={radarChartOptions}
-                            />
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Volunteer Management */}
+                          <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl border border-blue-200 dark:border-blue-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Volunteer Management</span>
+                            </div>
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{volunteerManagementScore}%</div>
+                            <Progress value={volunteerManagementScore} className="h-2 bg-blue-200 dark:bg-blue-900" />
                           </div>
+                          
+                          {/* Financial Health */}
+                          <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-xl border border-emerald-200 dark:border-emerald-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Financial Health</span>
+                            </div>
+                            <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">{financialHealthScore}%</div>
+                            <Progress value={financialHealthScore} className="h-2 bg-emerald-200 dark:bg-emerald-900" />
+                          </div>
+                          
+                          {/* Program Quality */}
+                          <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl border border-purple-200 dark:border-purple-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Program Quality</span>
+                            </div>
+                            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">{programQualityScore}%</div>
+                            <Progress value={programQualityScore} className="h-2 bg-purple-200 dark:bg-purple-900" />
+                          </div>
+                          
+                          {/* Community Impact */}
+                          <div className="p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 rounded-xl border border-rose-200 dark:border-rose-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Target className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Community Impact</span>
+                            </div>
+                            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400 mb-2">{communityImpactScore}%</div>
+                            <Progress value={communityImpactScore} className="h-2 bg-rose-200 dark:bg-rose-900" />
+                          </div>
+                        </div>
+                        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            <span className="font-semibold">Overall:</span> Average performance score of {Math.round((volunteerManagementScore + financialHealthScore + programQualityScore + communityImpactScore) / 4)}% across all dimensions.
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -2147,21 +2119,56 @@ export default function OrganizationImpactReport(
                       </CardContent>
                     </Card>
 
-                    {/* Performance Radar */}
+                    {/* Performance Metrics KPI Cards */}
                     <Card className="border border-gray-200 dark:border-gray-700">
                       <CardContent className="p-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Performance Radar
+                          Performance Metrics
                         </h3>
-                        <div className="flex justify-center items-center" style={{ height: "520px", padding: "16px" }}>
-                          <Radar
-                            data={organizationalPerformance}
-                            options={radarChartOptions}
-                          />
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Volunteer Management */}
+                          <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-xl border border-blue-200 dark:border-blue-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Volunteer Management</span>
+                            </div>
+                            <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">{volunteerManagementScore}%</div>
+                            <Progress value={volunteerManagementScore} className="h-2 bg-blue-200 dark:bg-blue-900" />
+                          </div>
+                          
+                          {/* Financial Health */}
+                          <div className="p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/30 rounded-xl border border-emerald-200 dark:border-emerald-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Financial Health</span>
+                            </div>
+                            <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-2">{financialHealthScore}%</div>
+                            <Progress value={financialHealthScore} className="h-2 bg-emerald-200 dark:bg-emerald-900" />
+                          </div>
+                          
+                          {/* Program Quality */}
+                          <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-xl border border-purple-200 dark:border-purple-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Award className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Program Quality</span>
+                            </div>
+                            <div className="text-3xl font-bold text-purple-600 dark:text-purple-400 mb-2">{programQualityScore}%</div>
+                            <Progress value={programQualityScore} className="h-2 bg-purple-200 dark:bg-purple-900" />
+                          </div>
+                          
+                          {/* Community Impact */}
+                          <div className="p-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-rose-900/30 dark:to-rose-800/30 rounded-xl border border-rose-200 dark:border-rose-700">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Target className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Community Impact</span>
+                            </div>
+                            <div className="text-3xl font-bold text-rose-600 dark:text-rose-400 mb-2">{communityImpactScore}%</div>
+                            <Progress value={communityImpactScore} className="h-2 bg-rose-200 dark:bg-rose-900" />
+                          </div>
                         </div>
-                        <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
                           <p className="text-xs text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold">Insight:</span> Organization maintains strong performance across all dimensions. Efficiency (94%) and Community Impact (92%) lead performance metrics, while Resource Management (88%) shows solid operational execution.
+                            <span className="font-semibold">Insight:</span> Average performance score of {Math.round((volunteerManagementScore + financialHealthScore + programQualityScore + communityImpactScore) / 4)}% across all dimensions. {communityImpactScore >= programQualityScore && communityImpactScore >= volunteerManagementScore ? "Community Impact leads performance metrics." : programQualityScore >= communityImpactScore && programQualityScore >= volunteerManagementScore ? "Program Quality leads performance metrics." : "Volunteer Management leads performance metrics."}
                           </p>
                         </div>
                       </CardContent>

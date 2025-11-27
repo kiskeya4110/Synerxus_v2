@@ -2007,13 +2007,48 @@ export default function OrganizationImpactReport(
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                           Performance Radar
                         </h3>
-                        <div style={{ height: "200px" }}>
+                        <div className="flex justify-center items-center" style={{ height: "280px", padding: "16px" }}>
                           <Radar
-                            ref={(ref) =>
-                              (chartRefs.current["performance"] = ref)
-                            }
                             data={organizationalPerformance}
-                            options={radarChartOptions}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: false,
+                              plugins: {
+                                legend: {
+                                  display: true,
+                                  position: "bottom",
+                                  labels: {
+                                    font: { size: 11, weight: "500" },
+                                    padding: 12,
+                                    usePointStyle: true,
+                                    color: "currentColor",
+                                  },
+                                },
+                                tooltip: {
+                                  enabled: true,
+                                  backgroundColor: "rgba(0,0,0,0.8)",
+                                  padding: 12,
+                                  font: { size: 12 },
+                                },
+                              },
+                              scales: {
+                                r: {
+                                  beginAtZero: true,
+                                  max: 100,
+                                  ticks: {
+                                    stepSize: 20,
+                                    font: { size: 10 },
+                                  },
+                                  grid: {
+                                    color: "rgba(200, 200, 200, 0.2)",
+                                  },
+                                  pointLabels: {
+                                    font: { size: 11, weight: "600" },
+                                    padding: 8,
+                                  },
+                                },
+                              },
+                            }}
                           />
                         </div>
                         <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">

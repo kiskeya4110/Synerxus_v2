@@ -9,9 +9,86 @@ interface MatchResult {
     interestMatch: number;
     availabilityMatch: number;
     experienceMatch: number;
+    engagementBoost: number;
   };
   reasons: string[];
   matchCategory?: "nexus" | "strong" | "gap" | "no-match";
+}
+
+/**
+ * Calculate engagement boost based on volunteer activity and profile completeness
+ * Returns a bonus score of 0-10 points
+ */
+function calculateEngagementBoost(
+  volunteer: User & { profile?: VolunteerProfile | null },
+  recentActivityDays?: number,
+  completionRate?: number
+): { boost: number; reasons: string[] } {
+  let boost = 0;
+  const reasons: string[] = [];
+
+  // 1. Recent Activity Bonus (0-5 points)
+  // Check if volunteer has had activity in the last 30 days
+  // Note: lastActivityDate is on User, not profile
+  const lastActivity = (volunteer as any).lastActivityDate;
+  if (lastActivity) {
+    const daysSinceActivity = Math.floor(
+      (Date.now() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24)
+    );
+    if (daysSinceActivity <= 7) {
+      boost += 5;
+      reasons.push("🔥 Very active (activity this week)");
+    } else if (daysSinceActivity <= 30) {
+      boost += 3;
+      reasons.push("✅ Recently active (activity this month)");
+    } else if (daysSinceActivity <= 90) {
+      boost += 1;
+      reasons.push("📅 Active in last quarter");
+    }
+  } else if (recentActivityDays !== undefined && recentActivityDays <= 30) {
+    boost += recentActivityDays <= 7 ? 5 : 3;
+    reasons.push(recentActivityDays <= 7 ? "🔥 Very active volunteer" : "✅ Recently active");
+  }
+
+  // 2. Completion Rate Bonus (0-3 points) - if provided externally
+  if (completionRate !== undefined) {
+    if (completionRate >= 0.8) {
+      boost += 3;
+      reasons.push(`🎯 High completion rate (${Math.round(completionRate * 100)}%)`);
+    } else if (completionRate >= 0.5) {
+      boost += 1;
+      reasons.push(`📊 Good completion rate (${Math.round(completionRate * 100)}%)`);
+    }
+  }
+
+  // 3. Profile Completeness Bonus (0-2 points)
+  const profile = volunteer.profile;
+  if (profile) {
+    let filledFields = 0;
+    const totalFields = 10;
+    
+    if (profile.location) filledFields++;
+    if (profile.yearsOfExperience) filledFields++;
+    if (profile.weeklyAvailability) filledFields++;
+    if (profile.preferredWorkStyle) filledFields++;
+    if (Array.isArray(profile.preferredSdgs) && profile.preferredSdgs.length > 0) filledFields++;
+    if (Array.isArray(profile.preferredCauses) && profile.preferredCauses.length > 0) filledFields++;
+    if (profile.motivations) filledFields++;
+    if (profile.onboardingCompleted) filledFields++;
+    if (volunteer.skills && volunteer.skills.length > 0) filledFields++;
+    if (profile.skillRatings && Object.keys(profile.skillRatings as object).length > 0) filledFields++;
+    
+    const completeness = filledFields / totalFields;
+    if (completeness >= 0.9) {
+      boost += 2;
+      reasons.push("📋 Complete profile");
+    } else if (completeness >= 0.7) {
+      boost += 1;
+      reasons.push("📝 Well-detailed profile");
+    }
+  }
+
+  return { boost: Math.min(boost, 10), reasons };
 }
 
 /**
@@ -82,6 +159,7 @@ export function calculateMatchScore(
     interestMatch: 0,
     availabilityMatch: 0,
     experienceMatch: 0,
+    engagementBoost: 0,
   };
   const reasons: string[] = [];
 
@@ -223,13 +301,15 @@ export function calculateMatchScore(
     }
   }
 
-  // 3. SDG Overlap Matching (20% weight)
+  // 3. SDG Overlap Matching (20% weight) with Primary SDG Priority Boost
   const volSDGs = Array.isArray(volunteer.profile?.preferredSdgs)
     ? volunteer.profile.preferredSdgs
     : [];
   const oppSDGs = Array.isArray(opportunity.sdgGoals)
     ? opportunity.sdgGoals
     : [];
+  // Get volunteer's primary SDG (first in their list, typically most important)
+  const volunteerPrimarySDG = volSDGs.length > 0 ? volSDGs[0] : null;
 
   if (volSDGs.length > 0 && oppSDGs.length > 0) {
     const commonSDGs = volSDGs.filter((sdg) => oppSDGs.includes(sdg));
@@ -237,9 +317,14 @@ export function calculateMatchScore(
     if (commonSDGs.length > 0) {
       const overlapPercentage =
         (commonSDGs.length / Math.min(volSDGs.length, oppSDGs.length)) * 100;
-      breakdown.sdgMatch = Math.min(overlapPercentage, 100);
+      
+      // Apply 1.2x boost if volunteer's PRIMARY SDG is in the match
+      const primarySDGBoost = (volunteerPrimarySDG && commonSDGs.includes(volunteerPrimarySDG)) ? 1.2 : 1.0;
+      breakdown.sdgMatch = Math.min(overlapPercentage * primarySDGBoost, 100);
+      
+      const primaryNote = primarySDGBoost > 1 ? " (primary SDG match!)" : "";
       reasons.push(
-        `${commonSDGs.length} common SDG goal${commonSDGs.length > 1 ? "s" : ""}: #${commonSDGs.slice(0, 3).join(", #")}`,
+        `${commonSDGs.length} common SDG goal${commonSDGs.length > 1 ? "s" : ""}: #${commonSDGs.slice(0, 3).join(", #")}${primaryNote}`,
       );
     } else {
       breakdown.sdgMatch = 10;
@@ -297,22 +382,26 @@ export function calculateMatchScore(
   let availabilityScore = 0;
   let hasAvailabilityData = false;
 
-  // Check hours availability compatibility
+  // Check hours availability compatibility - 4-tier granular scoring
   if (volWeeklyAvailability && oppHoursPerWeek) {
     hasAvailabilityData = true;
     const hoursRatio = oppHoursPerWeek / volWeeklyAvailability;
     
-    if (hoursRatio <= 0.7) {
-      // Opportunity requires ≤70% of available time - excellent fit
+    if (hoursRatio <= 0.5) {
+      // Opportunity requires ≤50% of available time - under-utilized, excellent fit
       availabilityScore += 60;
-      reasons.push(`⏰ Great time fit: ${oppHoursPerWeek}hrs/week (${Math.round(hoursRatio * 100)}% of your availability)`);
+      reasons.push(`⏰ Perfect time fit: ${oppHoursPerWeek}hrs/week (${Math.round(hoursRatio * 100)}% of your availability)`);
+    } else if (hoursRatio <= 0.8) {
+      // Opportunity requires 50-80% of available time - good balanced fit
+      availabilityScore += 48;
+      reasons.push(`⏰ Great time fit: ${oppHoursPerWeek}hrs/week (${Math.round(hoursRatio * 100)}% of availability)`);
     } else if (hoursRatio <= 1.0) {
-      // Opportunity requires 70-100% of available time - good fit
-      availabilityScore += 40;
+      // Opportunity requires 80-100% of available time - tight but doable
+      availabilityScore += 36;
       reasons.push(`⏰ Fits your schedule: ${oppHoursPerWeek}hrs/week commitment`);
     } else {
-      // Opportunity exceeds available time
-      availabilityScore += 10;
+      // Opportunity exceeds available time - over-committed
+      availabilityScore += 12;
       reasons.push(`⚠️ Requires ${oppHoursPerWeek}hrs/week (more than your ${volWeeklyAvailability}hrs/week availability)`);
     }
   }
@@ -344,7 +433,7 @@ export function calculateMatchScore(
     }
   }
 
-  // 6. Experience Level Matching (10% weight - bonus factor)
+  // 6. Experience Level Matching (5% weight - bonus factor)
   const volExperience = volunteer.profile?.yearsOfExperience;
   const expScore = getExperienceScore(volExperience);
   breakdown.experienceMatch = expScore;
@@ -354,30 +443,41 @@ export function calculateMatchScore(
     reasons.push(`🎓 ${expLabel} years of experience`);
   }
 
+  // 7. Engagement Boost (0-10 bonus points)
+  // Rewards active, reliable volunteers with complete profiles
+  const engagementResult = calculateEngagementBoost(volunteer);
+  breakdown.engagementBoost = engagementResult.boost;
+  reasons.push(...engagementResult.reasons);
+
   // Calculate weighted final score
-  // MVP Rule-Based Matching Weights:
-  // - Skill Match: 40% (non-negotiable for project success)
-  // - Availability/Time Match: 25% (non-negotiable for retention & completion)
+  // OPTIMIZED Matching Weights (Nov 2025):
+  // - Skill Match: 35% (critical for project success, proficiency-weighted)
   // - SDG/Mission Overlap: 20% (essential for alignment & satisfaction)
-  // - Experience Level: 10% (valuable bonus factor for seniority/skill level)
-  // - Language/Location: 5% (necessary filter but lower weight)
+  // - Availability/Time Match: 20% (non-negotiable for retention & completion)
+  // - Interest/Cause Match: 10% (re-enabled for better mission alignment)
+  // - Location Match: 10% (increased for hybrid work considerations)
+  // - Experience Level: 5% (bonus factor for seniority)
+  // + Engagement Boost: 0-10 bonus points for active, reliable volunteers
   const weights = {
-    skillMatch: 0.40,
-    locationMatch: 0.05,
+    skillMatch: 0.35,
+    locationMatch: 0.10,
     sdgMatch: 0.20,
-    interestMatch: 0.00, // Absorbed into SDG matching
-    availabilityMatch: 0.25,
-    experienceMatch: 0.10,
+    interestMatch: 0.10, // Re-enabled for mission alignment
+    availabilityMatch: 0.20,
+    experienceMatch: 0.05,
   };
 
-  const finalScore = Math.round(
+  // Base weighted score (0-100) + Engagement boost (0-10 bonus)
+  const baseScore = 
     breakdown.skillMatch * weights.skillMatch +
-      breakdown.locationMatch * weights.locationMatch +
-      breakdown.sdgMatch * weights.sdgMatch +
-      breakdown.interestMatch * weights.interestMatch +
-      breakdown.availabilityMatch * weights.availabilityMatch +
-      breakdown.experienceMatch * weights.experienceMatch,
-  );
+    breakdown.locationMatch * weights.locationMatch +
+    breakdown.sdgMatch * weights.sdgMatch +
+    breakdown.interestMatch * weights.interestMatch +
+    breakdown.availabilityMatch * weights.availabilityMatch +
+    breakdown.experienceMatch * weights.experienceMatch;
+  
+  // Final score capped at 100, includes engagement boost
+  const finalScore = Math.min(Math.round(baseScore + breakdown.engagementBoost), 100);
 
   // Add overall assessment reason
   if (finalScore >= 80) {

@@ -105,7 +105,7 @@ def calculate_interest_match(volunteer_interests: List[str], org_mission: str, o
 
 def calculate_sdg_match(volunteer_sdgs: List[int], org_sdgs: List[int]) -> Tuple[float, str]:
     """
-    Calculate SDG goals alignment score (0-100)
+    Calculate SDG goals alignment score (0-100) with Primary SDG Priority Boost
     Weight: 20% of total score
     """
     if not volunteer_sdgs and not org_sdgs:
@@ -121,9 +121,62 @@ def calculate_sdg_match(volunteer_sdgs: List[int], org_sdgs: List[int]) -> Tuple
         return 20.0, "No common SDG goals"
     
     # Score based on percentage of alignment
-    score = min((len(common_sdgs) / max(len(volunteer_sdgs), len(org_sdgs))) * 100, 100)
+    base_score = (len(common_sdgs) / min(len(volunteer_sdgs), len(org_sdgs))) * 100
     
-    reason = f"Common SDG goal{'s' if len(common_sdgs) > 1 else ''}: {', '.join(f'#{sdg}' for sdg in sorted(common_sdgs))}"
+    # Apply 1.2x boost if volunteer's PRIMARY SDG (first in list) is in the match
+    primary_sdg = volunteer_sdgs[0] if volunteer_sdgs else None
+    primary_boost = 1.2 if primary_sdg and primary_sdg in common_sdgs else 1.0
+    score = min(base_score * primary_boost, 100)
+    
+    primary_note = " (primary SDG match!)" if primary_boost > 1 else ""
+    reason = f"Common SDG goal{'s' if len(common_sdgs) > 1 else ''}: {', '.join(f'#{sdg}' for sdg in sorted(common_sdgs))}{primary_note}"
+    
+    return score, reason
+
+
+def calculate_availability_match(volunteer_availability: float, org_hours_needed: float, 
+                                  volunteer_work_style: str, org_work_style: str) -> Tuple[float, str]:
+    """
+    Calculate availability matching score (0-100) with 4-tier granularity
+    Weight: 20% of total score
+    """
+    availability_score = 0
+    reasons = []
+    
+    # Hours compatibility - 4-tier scoring
+    if volunteer_availability and org_hours_needed and volunteer_availability > 0:
+        hours_ratio = org_hours_needed / volunteer_availability
+        
+        if hours_ratio <= 0.5:
+            availability_score += 60
+            reasons.append(f"Perfect time fit: {org_hours_needed}hrs/week ({int(hours_ratio * 100)}% of availability)")
+        elif hours_ratio <= 0.8:
+            availability_score += 48
+            reasons.append(f"Great time fit: {org_hours_needed}hrs/week ({int(hours_ratio * 100)}% of availability)")
+        elif hours_ratio <= 1.0:
+            availability_score += 36
+            reasons.append(f"Fits schedule: {org_hours_needed}hrs/week commitment")
+        else:
+            availability_score += 12
+            reasons.append(f"Requires {org_hours_needed}hrs/week (exceeds {volunteer_availability}hrs availability)")
+    else:
+        availability_score += 30  # Neutral if no data
+    
+    # Work style compatibility
+    if volunteer_work_style and org_work_style:
+        vol_style = volunteer_work_style.lower()
+        org_style = org_work_style.lower()
+        
+        if vol_style == org_style or vol_style == 'hybrid' or org_style == 'hybrid':
+            availability_score += 40
+            reasons.append(f"{org_style.title()} work matches preference")
+        else:
+            availability_score += 10
+    else:
+        availability_score += 20  # Neutral if no data
+    
+    score = min(availability_score, 100)
+    reason = "; ".join(reasons) if reasons else "Availability info incomplete"
     
     return score, reason
 
@@ -131,6 +184,14 @@ def calculate_sdg_match(volunteer_sdgs: List[int], org_sdgs: List[int]) -> Tuple
 def compute_match_score(volunteer: Dict[str, Any], organization: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calculate overall match score between a volunteer and organization
+    
+    OPTIMIZED Matching Weights (Nov 2025):
+    - Skill Match: 35% (critical for project success, proficiency-weighted)
+    - SDG/Mission Overlap: 20% (essential for alignment & satisfaction)
+    - Availability/Time Match: 20% (non-negotiable for retention & completion)
+    - Interest/Cause Match: 10% (re-enabled for better mission alignment)
+    - Location Match: 10% (increased for hybrid work considerations)
+    - Experience Level: 5% (bonus factor for seniority)
     
     Returns a dictionary with:
     - score: Overall match score (0-100)
@@ -160,40 +221,61 @@ def compute_match_score(volunteer: Dict[str, Any], organization: Dict[str, Any])
         organization.get('sdgFocus', [])
     )
     
+    # Availability matching (new)
+    availability_score, availability_reason = calculate_availability_match(
+        volunteer.get('weeklyAvailability', 0),
+        organization.get('hoursNeeded', 0),
+        volunteer.get('preferredWorkStyle', ''),
+        organization.get('engagementType', '')
+    )
+    
+    # Experience score (simplified for Python matchmaker)
+    experience = volunteer.get('yearsOfExperience', '')
+    experience_score = 50  # Default
+    if '0-1' in str(experience): experience_score = 20
+    elif '1-2' in str(experience): experience_score = 40
+    elif '3-5' in str(experience): experience_score = 60
+    elif '5-10' in str(experience): experience_score = 80
+    elif '10+' in str(experience): experience_score = 100
+    
     # Calculate weighted final score
-    # Weights: Skills 35%, Location 25%, Interests 20%, SDGs 20%
+    # OPTIMIZED Weights: Skills 35%, SDG 20%, Availability 20%, Interests 10%, Location 10%, Experience 5%
     final_score = (
         (skill_score * 0.35) +
-        (location_score * 0.25) +
-        (interest_score * 0.20) +
-        (sdg_score * 0.20)
+        (sdg_score * 0.20) +
+        (availability_score * 0.20) +
+        (interest_score * 0.10) +
+        (location_score * 0.10) +
+        (experience_score * 0.05)
     )
     
     # Round to 2 decimal places
-    final_score = round(final_score, 2)
+    final_score = round(min(final_score, 100), 2)
     
     # Build reasons list
     reasons = []
     
     # Add quality indicator
     if final_score >= 80:
-        reasons.append("⭐ Excellent match")
+        reasons.append("🌟 Excellent match")
     elif final_score >= 60:
         reasons.append("✨ Good match")
     elif final_score >= 40:
         reasons.append("👍 Fair match")
     else:
-        reasons.append("🤔 Limited compatibility")
+        reasons.append("🤔 Consider other opportunities")
     
-    # Add specific reasons
+    # Add specific reasons (only notable ones)
     if skill_score > 0:
         reasons.append(skill_reason)
+    if sdg_score >= 50:
+        reasons.append(sdg_reason)
+    if availability_score >= 50:
+        reasons.append(availability_reason)
     if location_score >= 60:
         reasons.append(location_reason)
     if interest_score >= 50:
         reasons.append(interest_reason)
-    if sdg_score >= 50:
-        reasons.append(sdg_reason)
     
     return {
         'volunteer_id': volunteer.get('id'),
@@ -203,7 +285,9 @@ def compute_match_score(volunteer: Dict[str, Any], organization: Dict[str, Any])
             'skillMatch': round(skill_score, 2),
             'locationMatch': round(location_score, 2),
             'interestMatch': round(interest_score, 2),
-            'sdgMatch': round(sdg_score, 2)
+            'sdgMatch': round(sdg_score, 2),
+            'availabilityMatch': round(availability_score, 2),
+            'experienceMatch': round(experience_score, 2)
         },
         'reasons': reasons
     }

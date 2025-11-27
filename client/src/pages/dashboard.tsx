@@ -803,34 +803,55 @@ export default function Dashboard() {
         };
         break;
       case "Lives Touched":
-        // Calculate beneficiary impact breakdown by project
+        // Calculate beneficiary impact breakdown by project, tasks, and other categories
         const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number; activities: number }>();
+        const beneficiariesByTask = new Map<number, { taskName: string; beneficiaries: number; count: number }>();
+        let otherBeneficiaries = 0;
+        let otherCount = 0;
         
         filteredData.activities.forEach((a: any) => {
-          const projectKey = a.projectId !== undefined && a.projectId !== null 
-            ? `project_${a.projectId}` 
-            : 'no_project';
+          const beneficiaryCount = a.peopleImpacted || 0;
           
-          let projectName = "Unknown Project";
+          // Group by project
           if (a.projectId !== undefined && a.projectId !== null) {
+            const projectKey = `project_${a.projectId}`;
+            let projectName = "Unknown Project";
             const project = filteredData.projects.find((p: any) => p.id === a.projectId) ||
                            projects.find((p: any) => p.id === a.projectId);
             projectName = project?.name || "Unknown Project";
-          } else {
-            projectName = "Unassigned Activities";
+            
+            if (!beneficiariesByProject.has(projectKey)) {
+              beneficiariesByProject.set(projectKey, {
+                projectName,
+                beneficiaries: 0,
+                activities: 0
+              });
+            }
+            const projectData = beneficiariesByProject.get(projectKey)!;
+            projectData.beneficiaries += beneficiaryCount;
+            projectData.activities += 1;
           }
           
-          if (!beneficiariesByProject.has(projectKey)) {
-            beneficiariesByProject.set(projectKey, {
-              projectName,
-              beneficiaries: 0,
-              activities: 0
-            });
+          // Group by task
+          if (a.taskId !== undefined && a.taskId !== null) {
+            const task = filteredData.tasks.find((t: any) => t.id === a.taskId);
+            const taskName = task?.title || `Task #${a.taskId}`;
+            
+            if (!beneficiariesByTask.has(a.taskId)) {
+              beneficiariesByTask.set(a.taskId, {
+                taskName,
+                beneficiaries: 0,
+                count: 0
+              });
+            }
+            const taskData = beneficiariesByTask.get(a.taskId)!;
+            taskData.beneficiaries += beneficiaryCount;
+            taskData.count += 1;
+          } else if (!a.projectId && !a.taskId) {
+            // Other activities without project or task assignment
+            otherBeneficiaries += beneficiaryCount;
+            otherCount += 1;
           }
-          
-          const projectData = beneficiariesByProject.get(projectKey)!;
-          projectData.beneficiaries += a.peopleImpacted || 0;
-          projectData.activities += 1;
         });
         
         const totalBeneficiaries = kpis.livesTouched;
@@ -838,30 +859,72 @@ export default function Dashboard() {
         const totalHoursForImpact = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
         const beneficiariesPerHour = totalHoursForImpact > 0 ? (totalBeneficiaries / totalHoursForImpact).toFixed(2) : "0";
         
-        detailData = {
-          title: "Lives Touched - Impact Breakdown",
-          items: [
-            {
-              label: "Total Beneficiaries Reached",
-              value: totalBeneficiaries.toLocaleString(),
-              icon: "🌍",
-              isHighlight: true,
-              description: `Across ${totalActivities} activities`
-            },
-            {
-              label: "Impact Efficiency",
-              value: `${beneficiariesPerHour} people/hour`,
-              icon: "⚡",
-              isHighlight: true,
-              description: `Based on ${totalHoursForImpact.toFixed(1)} total hours`
-            },
-            ...Array.from(beneficiariesByProject.values()).map((data) => ({
+        const items: any[] = [
+          {
+            label: "Total Beneficiaries Reached",
+            value: totalBeneficiaries.toLocaleString(),
+            icon: "🌍",
+            isHighlight: true,
+            description: `Across ${totalActivities} activities`
+          },
+          {
+            label: "Impact Efficiency",
+            value: `${beneficiariesPerHour} people/hour`,
+            icon: "⚡",
+            isHighlight: true,
+            description: `Based on ${totalHoursForImpact.toFixed(1)} total hours`
+          }
+        ];
+        
+        // Add Projects section
+        if (beneficiariesByProject.size > 0) {
+          items.push({
+            label: "📋 Projects Impact",
+            value: `${Array.from(beneficiariesByProject.values()).reduce((sum, p) => sum + p.beneficiaries, 0)} beneficiaries`,
+            isCategory: true,
+            description: `Across ${beneficiariesByProject.size} project${beneficiariesByProject.size !== 1 ? 's' : ''}`
+          });
+          Array.from(beneficiariesByProject.values()).forEach((data) => {
+            items.push({
               label: data.projectName,
               value: `${data.beneficiaries} beneficiaries`,
               description: `${data.activities} contribution${data.activities !== 1 ? 's' : ''}`,
               isProjectGroup: true,
-            }))
-          ],
+            });
+          });
+        }
+        
+        // Add Tasks section
+        if (beneficiariesByTask.size > 0) {
+          items.push({
+            label: "✓ Tasks Impact",
+            value: `${Array.from(beneficiariesByTask.values()).reduce((sum, t) => sum + t.beneficiaries, 0)} beneficiaries`,
+            isCategory: true,
+            description: `Across ${beneficiariesByTask.size} task${beneficiariesByTask.size !== 1 ? 's' : ''}`
+          });
+          Array.from(beneficiariesByTask.values()).forEach((data) => {
+            items.push({
+              label: data.taskName,
+              value: `${data.beneficiaries} beneficiaries`,
+              description: `${data.count} log${data.count !== 1 ? 's' : ''}`,
+              isProjectGroup: true,
+            });
+          });
+        }
+        
+        // Add Other Activities section
+        if (otherCount > 0) {
+          items.push({
+            label: "🔄 Other Activities",
+            value: `${otherBeneficiaries} beneficiaries`,
+            isCategory: true,
+            description: `${otherCount} unassigned activity/activities`
+          });
+        }
+        
+        detailData = {
+          title: "Lives Touched - Impact Breakdown",
+          items: items,
           totalScore: totalBeneficiaries,
         };
         break;
@@ -1279,6 +1342,8 @@ export default function Dashboard() {
               const isProjectItem = item.isProjectItem === true;
               // Check if this is a highlight item
               const isHighlight = item.isHighlight === true;
+              // Check if this is a category header
+              const isCategory = item.isCategory === true;
               
               // Impact Score Component Breakdown
               if (isImpactScoreItem) {
@@ -1315,6 +1380,21 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
+                  </div>
+                );
+              }
+              
+              // Category Header (for Lives Touched sections)
+              if (isCategory) {
+                return (
+                  <div key={index} className="p-4 bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700 mt-4" data-testid={`kpi-item-${index}`}>
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-semibold text-gray-900 dark:text-white">{item.label}</h4>
+                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{item.value}</span>
+                    </div>
+                    {item.description && (
+                      <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{item.description}</p>
+                    )}
                   </div>
                 );
               }

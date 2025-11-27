@@ -47,7 +47,7 @@ export async function getEnrichedOpportunities(
   let volunteerWithProfile = null;
   if (includeMatch && volunteerId) {
     const user = await storage.getUser(volunteerId);
-    const profile = await storage.getVolunteerProfile(volunteerId);
+    const profile = await storage.getVolunteerProfileByUserId(volunteerId);
     if (user && profile) {
       volunteerWithProfile = { ...user, profile };
     }

@@ -494,7 +494,7 @@ export function calculateMatchScore(
                            oppEngagementType === 'hybrid';
     
     if (workStyleMatch) {
-      availabilityScore += 40;
+      availabilityScore += 50;
       const styleLabel = oppEngagementType.charAt(0).toUpperCase() + oppEngagementType.slice(1);
       if (!volPreferredWorkStyle) {
         reasons.push(`💼 ${styleLabel} work available (set preference to lock this in)`);
@@ -502,8 +502,12 @@ export function calculateMatchScore(
         reasons.push(`💼 ${styleLabel} work matches your preference`);
       }
     } else {
-      availabilityScore += 10;
-      reasons.push(`⚠️ Work style preference differs from opportunity type`);
+      // Work style mismatch: only add 5 points (significant penalty relative to match bonus)
+      // This reduces availability score by 45 points compared to match (from 50 to 5)
+      availabilityScore += 5;
+      const volStyle = effectiveWorkStyle.charAt(0).toUpperCase() + effectiveWorkStyle.slice(1);
+      const oppStyle = oppEngagementType.charAt(0).toUpperCase() + oppEngagementType.slice(1);
+      reasons.push(`⚠️ Work style mismatch: You prefer ${volStyle}, this is ${oppStyle}`);
     }
   }
 

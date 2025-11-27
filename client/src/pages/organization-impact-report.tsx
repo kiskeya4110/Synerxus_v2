@@ -545,10 +545,10 @@ export default function OrganizationImpactReport(
 
   const organizationalPerformance = {
     labels: [
-      "Volunteer\nManagement",
-      "Financial\nHealth",
-      "Program\nQuality",
-      "Community\nImpact",
+      ["Volunteer", "Management"],
+      ["Financial", "Health"],
+      ["Program", "Quality"],
+      ["Community", "Impact"],
     ],
     datasets: [
       {

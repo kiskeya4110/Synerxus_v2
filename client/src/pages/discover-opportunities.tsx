@@ -562,9 +562,9 @@ export default function DiscoverOpportunities() {
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Match Analysis</span>
-                        {opportunity.matchBreakdown.engagementBoost > 0 && (
+                        {(opportunity.matchBreakdown.engagementBoost ?? 0) > 0 && (
                           <Badge variant="outline" className="ml-auto text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
-                            +{Math.round(opportunity.matchBreakdown.engagementBoost)} Engagement Boost
+                            +{Math.round(opportunity.matchBreakdown.engagementBoost ?? 0)} Engagement Boost
                           </Badge>
                         )}
                       </div>
@@ -577,14 +577,14 @@ export default function DiscoverOpportunities() {
                             <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                               <Target className="w-3 h-3" />Skills
                             </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.skillMatch)}`}>
-                              {Math.round(opportunity.matchBreakdown.skillMatch)}%
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.skillMatch ?? 0)}`}>
+                              {Math.round(opportunity.matchBreakdown.skillMatch ?? 0)}%
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.skillMatch)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.skillMatch}%` }}
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.skillMatch ?? 0)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.skillMatch ?? 0}%` }}
                             />
                           </div>
                         </div>
@@ -595,14 +595,14 @@ export default function DiscoverOpportunities() {
                             <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                               🎯 SDG
                             </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.sdgMatch)}`}>
-                              {Math.round(opportunity.matchBreakdown.sdgMatch)}%
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.sdgMatch ?? 0)}`}>
+                              {Math.round(opportunity.matchBreakdown.sdgMatch ?? 0)}%
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.sdgMatch)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.sdgMatch}%` }}
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.sdgMatch ?? 0)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.sdgMatch ?? 0}%` }}
                             />
                           </div>
                         </div>
@@ -613,14 +613,14 @@ export default function DiscoverOpportunities() {
                             <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                               <Clock className="w-3 h-3" />Time Fit
                             </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.availabilityMatch)}`}>
-                              {Math.round(opportunity.matchBreakdown.availabilityMatch)}%
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.availabilityMatch ?? 0)}`}>
+                              {Math.round(opportunity.matchBreakdown.availabilityMatch ?? 0)}%
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.availabilityMatch)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.availabilityMatch}%` }}
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.availabilityMatch ?? 0)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.availabilityMatch ?? 0}%` }}
                             />
                           </div>
                         </div>
@@ -631,14 +631,14 @@ export default function DiscoverOpportunities() {
                             <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                               <MapPin className="w-3 h-3" />Location
                             </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.locationMatch)}`}>
-                              {Math.round(opportunity.matchBreakdown.locationMatch)}%
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.locationMatch ?? 0)}`}>
+                              {Math.round(opportunity.matchBreakdown.locationMatch ?? 0)}%
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.locationMatch)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.locationMatch}%` }}
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.locationMatch ?? 0)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.locationMatch ?? 0}%` }}
                             />
                           </div>
                         </div>
@@ -649,14 +649,14 @@ export default function DiscoverOpportunities() {
                             <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                               <Lightbulb className="w-3 h-3" />Interests
                             </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.interestMatch)}`}>
-                              {Math.round(opportunity.matchBreakdown.interestMatch)}%
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.interestMatch ?? 0)}`}>
+                              {Math.round(opportunity.matchBreakdown.interestMatch ?? 0)}%
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.interestMatch)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.interestMatch}%` }}
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.interestMatch ?? 0)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.interestMatch ?? 0}%` }}
                             />
                           </div>
                         </div>
@@ -667,14 +667,14 @@ export default function DiscoverOpportunities() {
                             <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
                               <TrendingUp className="w-3 h-3" />Experience
                             </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.experienceMatch)}`}>
-                              {Math.round(opportunity.matchBreakdown.experienceMatch)}%
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.experienceMatch ?? 0)}`}>
+                              {Math.round(opportunity.matchBreakdown.experienceMatch ?? 0)}%
                             </span>
                           </div>
                           <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.experienceMatch)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.experienceMatch}%` }}
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.experienceMatch ?? 0)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.experienceMatch ?? 0}%` }}
                             />
                           </div>
                         </div>

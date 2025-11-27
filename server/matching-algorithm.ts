@@ -406,7 +406,7 @@ export function calculateMatchScore(
     breakdown.sdgMatch = 40;
   }
 
-  // 4. Interest/Cause Matching (20% weight)
+  // 4. Interest/Cause Matching (10% weight) - granular scoring
   const volCauses = Array.isArray(volunteer.profile?.preferredCauses)
     ? volunteer.profile.preferredCauses
         .map((c: string) => c.toLowerCase().trim())
@@ -422,23 +422,29 @@ export function calculateMatchScore(
   if (allVolInterests.length > 0 && opportunity.category) {
     const category = opportunity.category.toLowerCase().trim();
 
-    const hasMatch = allVolInterests.some(
+    // Check for exact or partial matches
+    const matchCount = allVolInterests.filter(
       (interest) => interest.includes(category) || category.includes(interest),
-    );
+    ).length;
 
-    if (hasMatch) {
-      breakdown.interestMatch = 100;
-      reasons.push(`Interest in ${opportunity.category}`);
+    if (matchCount > 0) {
+      // Granular scoring: base 60% + bonus for match proportion
+      const matchProportion = (matchCount / allVolInterests.length) * 100;
+      breakdown.interestMatch = Math.min(60 + matchProportion * 0.4, 100); // Proportional bonus up to 100
+      reasons.push(`${matchCount}/${allVolInterests.length} interests align with ${opportunity.category}`);
     } else {
-      breakdown.interestMatch = 20;
+      breakdown.interestMatch = 20; // Some interests, but category doesn't match
     }
   } else if (!opportunity.category && allVolInterests.length === 0) {
     breakdown.interestMatch = 40;
   } else if (allVolInterests.length === 0 && opportunity.category) {
-    breakdown.interestMatch = 30;
+    breakdown.interestMatch = 35; // Opportunity has category but volunteer has no interests
     reasons.push("Add your interests for better cause-aligned matches");
-  } else {
+  } else if (opportunity.category) {
+    // Category exists but no volunteer interests recorded - neutral
     breakdown.interestMatch = 40;
+  } else {
+    breakdown.interestMatch = 30;
   }
 
   // 5. Availability Matching (20% weight)

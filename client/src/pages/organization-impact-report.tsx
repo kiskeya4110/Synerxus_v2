@@ -1952,21 +1952,24 @@ export default function OrganizationImpactReport(
                     </div>
                   </div>
 
-                  {/* Charts Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
+                  {/* Charts Grid - 3 Column Layout */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 print:page-break-inside-avoid">
+                    {/* Quarterly Growth */}
                     <Card className="border border-gray-200 dark:border-gray-700">
                       <CardContent className="p-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Monthly Engagement
+                          Quarterly Growth
                         </h3>
-                        <div style={{ height: "250px" }}>
+                        <div style={{ height: "200px" }}>
                           <Line
                             data={{
-                              labels: monthlyEngagement.map((m) => m.month),
+                              labels: quarterlyGrowth.map((q) => q.quarter),
                               datasets: [
                                 {
-                                  label: "Hours Logged",
-                                  data: monthlyEngagement.map((m) => m.hours),
+                                  label: "Beneficiaries",
+                                  data: quarterlyGrowth.map(
+                                    (q) => q.beneficiaries,
+                                  ),
                                   borderColor: "#3b82f6",
                                   backgroundColor: "rgba(59, 130, 246, 0.1)",
                                   fill: true,
@@ -1990,15 +1993,21 @@ export default function OrganizationImpactReport(
                             }}
                           />
                         </div>
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">Insight:</span> Consistent quarterly growth demonstrates strong program expansion. Q4 shows 32% increase in beneficiary reach, indicating successful scaling initiatives and improved community engagement.
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
 
+                    {/* Performance Radar */}
                     <Card className="border border-gray-200 dark:border-gray-700">
                       <CardContent className="p-4">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                          Organizational Performance
+                          Performance Radar
                         </h3>
-                        <div style={{ height: "250px" }}>
+                        <div style={{ height: "200px" }}>
                           <Radar
                             ref={(ref) =>
                               (chartRefs.current["performance"] = ref)
@@ -2006,6 +2015,56 @@ export default function OrganizationImpactReport(
                             data={organizationalPerformance}
                             options={radarChartOptions}
                           />
+                        </div>
+                        <div className="mt-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">Insight:</span> Organization maintains strong performance across all dimensions. Efficiency (94%) and Community Impact (92%) lead performance metrics, while Resource Management (88%) shows solid operational execution.
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Monthly Engagement */}
+                    <Card className="border border-gray-200 dark:border-gray-700">
+                      <CardContent className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                          Monthly Engagement
+                        </h3>
+                        <div style={{ height: "200px" }}>
+                          <Line
+                            data={{
+                              labels: monthlyEngagement.map((m) => m.month),
+                              datasets: [
+                                {
+                                  label: "Hours Logged",
+                                  data: monthlyEngagement.map((m) => m.hours),
+                                  borderColor: "#10b981",
+                                  backgroundColor: "rgba(16, 185, 129, 0.1)",
+                                  fill: true,
+                                  tension: 0.4,
+                                  borderWidth: 2,
+                                },
+                              ],
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: true,
+                              plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                  enabled: true,
+                                  backgroundColor: "rgba(0,0,0,0.8)",
+                                  padding: 12,
+                                },
+                              },
+                              scales: { y: { beginAtZero: true } },
+                            }}
+                          />
+                        </div>
+                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">Insight:</span> November peaked at 2,450 volunteer hours (18% above average). Sustained engagement through year-end demonstrates strong volunteer retention and commitment to organizational mission.
+                          </p>
                         </div>
                       </CardContent>
                     </Card>

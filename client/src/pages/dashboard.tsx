@@ -1380,8 +1380,31 @@ export default function Dashboard() {
                 );
               }
               
-              // Project Group Item with Activity Breakdown (for Total Hours or Lives Touched)
-              if (item.isProjectGroup && (item.activities || item.description)) {
+              // Project Group Item (for Lives Touched projects)
+              if (item.isProjectGroup && item.description) {
+                return (
+                  <div key={index} className="p-4 border border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:shadow-md transition-shadow" data-testid={`kpi-item-${index}`}>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white text-base mb-2">{item.label}</h4>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-300">👥 Volunteers:</span>
+                            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{item.description}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600 dark:text-gray-300">🌍 Beneficiaries:</span>
+                            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{item.value}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              
+              // Project Group Item with Activity Breakdown (for Total Hours)
+              if (item.isProjectGroup && item.activities) {
                 return (
                   <Collapsible key={index}>
                     <div className="border rounded-lg">
@@ -1394,7 +1417,7 @@ export default function Dashboard() {
                             <div className="flex-1 text-left">
                               <h4 className="font-medium">{item.label}</h4>
                               <p className="text-sm text-gray-500 dark:text-gray-400">
-                                {item.activities ? `${item.activities.length} activities` : item.description} • Click to view details
+                                {item.activities.length} activities • Click to view details
                               </p>
                             </div>
                           </div>
@@ -1408,7 +1431,7 @@ export default function Dashboard() {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <div className="border-t p-4 space-y-2 bg-gray-50 dark:bg-gray-900/50">
-                          {item.activities && item.activities.map((activity: any, aIndex: number) => (
+                          {item.activities.map((activity: any, aIndex: number) => (
                             <div key={aIndex} className="p-3 bg-white dark:bg-gray-800 rounded-md border" data-testid={`activity-${index}-${aIndex}`}>
                               <div className="flex justify-between items-start">
                                 <div className="flex-1">
@@ -1423,11 +1446,6 @@ export default function Dashboard() {
                               </div>
                             </div>
                           ))}
-                          {!item.activities && item.description && (
-                            <div className="p-3 bg-white dark:bg-gray-800 rounded-md border">
-                              <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
-                            </div>
-                          )}
                         </div>
                       </CollapsibleContent>
                     </div>

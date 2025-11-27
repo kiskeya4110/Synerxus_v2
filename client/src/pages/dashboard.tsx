@@ -1120,32 +1120,36 @@ export default function Dashboard() {
 
       {/* Lives Touched Project Breakdown - Shows beneficiaries per project */}
       {dashboardType === "volunteer" && (() => {
-        const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number }>();
+        const beneficiariesByProjectId = new Map<number, { projectName: string; beneficiaries: number }>();
         const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
         
-        // Group impacts by project, only counting people-related metrics (same logic as modal)
-        (filteredData.impacts || []).forEach((impact: any) => {
-          if (!peopleMetricIdsSet.has(impact.metricId)) return;
+        // For each activity with a projectId, sum its associated impacts
+        (filteredData.activities || []).forEach((activity: any) => {
+          if (!activity.projectId) return;
           
-          if (impact.projectId !== undefined && impact.projectId !== null) {
-            const projectKey = `project_${impact.projectId}`;
-            let projectName = "Unknown Project";
-            const project = filteredData.projects.find((p: any) => p.id === impact.projectId) ||
-                           projects.find((p: any) => p.id === impact.projectId);
-            projectName = project?.name || "Unknown Project";
-            
-            if (!beneficiariesByProject.has(projectKey)) {
-              beneficiariesByProject.set(projectKey, {
-                projectName,
-                beneficiaries: 0
-              });
-            }
-            const projectData = beneficiariesByProject.get(projectKey)!;
-            projectData.beneficiaries += impact.value || 0;
+          // Initialize project entry if not exists
+          if (!beneficiariesByProjectId.has(activity.projectId)) {
+            const project = filteredData.projects.find((p: any) => p.id === activity.projectId) ||
+                           projects.find((p: any) => p.id === activity.projectId);
+            beneficiariesByProjectId.set(activity.projectId, {
+              projectName: project?.name || "Unknown Project",
+              beneficiaries: 0
+            });
           }
+          
+          // Sum impacts for this activity that are people-related metrics
+          const activityImpacts = (filteredData.impacts || []).filter((i: any) => 
+            i.activityId === activity.id && peopleMetricIdsSet.has(i.metricId)
+          );
+          
+          const projectData = beneficiariesByProjectId.get(activity.projectId)!;
+          activityImpacts.forEach((impact: any) => {
+            projectData.beneficiaries += impact.value || 0;
+          });
         });
         
-        const projectsArray = Array.from(beneficiariesByProject.values())
+        const projectsArray = Array.from(beneficiariesByProjectId.values())
+          .filter(p => p.beneficiaries > 0)
           .sort((a, b) => b.beneficiaries - a.beneficiaries);
         
         return projectsArray.length > 0 ? (

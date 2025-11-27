@@ -2013,56 +2013,61 @@ export default function OrganizationImpactReport(
                 </div>
 
                 {/* PROGRAMS SECTION */}
-                <div className="print:page-break-inside-avoid">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-3 pb-2 border-b-2 border-green-200 dark:border-green-700">
-                    Programs
-                  </h2>
-                  <Card className="border border-gray-200 dark:border-gray-700">
-                    <CardContent className="p-3">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                        Top Programs Performance
-                      </h3>
-                      <div className="space-y-3">
-                        {topPrograms.slice(0, 3).map((prog, idx) => (
-                          <div
-                            key={idx}
-                            className={`pb-3 ${idx < 2 ? "border-b" : ""}`}
-                          >
-                            <div className="flex justify-between mb-1">
-                              <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
-                                {prog.name}
-                              </h4>
-                              <span className="text-xs text-gray-500">
-                                {prog.beneficiaries} beneficiaries
-                              </span>
+                <div className="print:page-break-before">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-green-200 dark:border-green-700 text-center">Programs</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    {topPrograms.length > 0 ? (
+                      topPrograms.map((prog, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-semibold text-gray-900 dark:text-white text-sm flex-1 leading-tight">
+                              {prog.name}
+                            </h4>
+                            <Badge
+                              variant="outline"
+                              className="ml-2 text-xs whitespace-nowrap"
+                            >
+                              {prog.status}
+                            </Badge>
+                          </div>
+                          <div className="space-y-2 mt-3">
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Completion</span>
+                                <span className="font-bold">
+                                  {Math.round(prog.completion)}%
+                                </span>
+                              </div>
+                              <CompletionProgress
+                                value={prog.completion}
+                                className="h-2"
+                              />
                             </div>
-                            <div className="space-y-1">
-                              <div>
-                                <div className="flex justify-between text-xs mb-0.5">
-                                  <span>Completion</span>
-                                  <span>{prog.completion}%</span>
-                                </div>
-                                <CompletionProgress
-                                  value={prog.completion}
-                                  className="h-1.5"
-                                />
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Impact Score</span>
+                                <span className="font-bold">
+                                  {Math.round(prog.impact)}%
+                                </span>
                               </div>
-                              <div>
-                                <div className="flex justify-between text-xs mb-0.5">
-                                  <span>Impact</span>
-                                  <span>{prog.impact}%</span>
-                                </div>
-                                <Progress
-                                  value={prog.impact}
-                                  className="h-1.5"
-                                />
-                              </div>
+                              <Progress value={prog.impact} className="h-2" />
+                            </div>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 pt-2 border-t">
+                              {prog.beneficiaries.toLocaleString()}{" "}
+                              beneficiaries
                             </div>
                           </div>
-                        ))}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center py-8 text-gray-500 dark:text-gray-400">
+                        No active projects found
                       </div>
-                    </CardContent>
-                  </Card>
+                    )}
+                  </div>
                 </div>
 
                 {/* OPERATIONS SECTION */}

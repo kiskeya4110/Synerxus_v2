@@ -151,7 +151,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
   const getFilteredActivitiesByTime = () => {
     const now = new Date();
     let startDate = new Date(0);
-    
+
     switch(timeFilter) {
       case 'month':
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -163,7 +163,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         startDate = new Date(now.getFullYear(), 0, 1);
         break;
     }
-    
+
     return filteredActivities.filter(a => {
       if (!a.date) return true;
       const activityDate = new Date(a.date);
@@ -200,12 +200,12 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
   const totalHours = timeFilter === 'all' && dashboardData?.totalHours !== undefined
     ? dashboardData.totalHours
     : timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-  
+
   // Use backend-calculated totalPeopleImpacted for consistency, respecting time filter
   const beneficiariesServed = timeFilter === 'all' && dashboardData?.totalPeopleImpacted !== undefined
     ? dashboardData.totalPeopleImpacted
     : timeFilteredActivities.reduce((sum, a) => sum + (a.peopleImpacted || 0), 0);
-  
+
   // Calculate realistic funding based on hours and projects
   const fundingSecured = totalProjects > 0 ? totalProjects * 25000 + Math.round(totalHours * 50) : 0;
 
@@ -231,7 +231,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
 
   const impactLeader = Array.from(volunteerHoursMap.entries())
     .sort((a, b) => b[1].hours - a[1].hours)[0];
-  
+
   const leaderData = impactLeader ? {
     userId: impactLeader[0],
     name: impactLeader[1].name,
@@ -270,11 +270,11 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
   const handleDownloadPDF = () => {
     const element = document.getElementById('org-impact-report-content');
     if (!element) return;
-    
+
     // Temporarily switch to single view for complete PDF
     const originalViewMode = viewMode;
     setViewMode("single");
-    
+
     setTimeout(() => {
       const opt = {
         margin: 10,
@@ -283,7 +283,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         html2canvas: { scale: 2 },
         jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
       };
-      
+
       html2pdf().set(opt).from(element).save();
       setViewMode(originalViewMode);
       toast({
@@ -298,7 +298,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
     const url = shareUrl;
     const encodedUrl = encodeURIComponent(url);
     const encodedText = encodeURIComponent(text);
-    
+
     let shareLink = '';
     switch(platform) {
       case 'twitter':
@@ -311,39 +311,39 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
         break;
     }
-    
+
     window.open(shareLink, '_blank', 'width=600,height=400');
   };
 
   // Generate data for charts using real data
   const currentDate = new Date();
   const currentQuarter = Math.floor(currentDate.getMonth() / 3) + 1;
-  
+
   // Calculate real quarterly data
   const getQuarterlyData = (): Array<{ quarter: string; volunteers: number; hours: number; beneficiaries: number }> => {
     const data: Array<{ quarter: string; volunteers: number; hours: number; beneficiaries: number }> = [];
     const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-    
+
     for (let q: number = 1; q <= 4; q++) {
       const startMonth = (q - 1) * 3;
       const endMonth = startMonth + 3;
       const quarterStart = new Date(currentDate.getFullYear(), startMonth, 1);
       const quarterEnd = new Date(currentDate.getFullYear(), endMonth, 0);
-      
+
       const quarterActivities = filteredActivities.filter(a => {
         if (!a.date) return false;
         const actDate = new Date(a.date);
         return actDate >= quarterStart && actDate <= quarterEnd;
       });
-      
+
       const quarterVols = new Set<number>();
       quarterActivities.forEach(a => {
         if (a.userId) quarterVols.add(a.userId);
       });
-      
+
       const quarterHours = quarterActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
       const quarterBeneficiaries = quarterActivities.reduce((sum, a) => sum + (a.peopleImpacted || 0), 0);
-      
+
       data.push({
         quarter: quarters[q - 1],
         volunteers: quarterVols.size,
@@ -351,10 +351,10 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         beneficiaries: quarterBeneficiaries || Math.round(quarterHours * 2)
       });
     }
-    
+
     return data;
   };
-  
+
   const quarterlyGrowth = getQuarterlyData();
 
   const programDistribution = [
@@ -386,12 +386,12 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
       // Get activities for this project to calculate beneficiaries
       const projectActivities = filteredActivities.filter(a => a.projectId === project.id);
       const beneficiaries = projectActivities.reduce((sum, a) => sum + (a.peopleImpacted || 0), 0) || Math.round(projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0) * 1.5);
-      
+
       // Calculate impact score based on completion and engagement
       const completionPercentage = project.completionPercentage || 0;
       const engagement = projectActivities.length > 0 ? Math.min(100, projectActivities.length * 10) : 0;
       const impactScore = Math.round((completionPercentage * 0.6) + (engagement * 0.4));
-      
+
       return {
         name: project.name || 'Unnamed Project',
         status: project.status || 'In Progress',
@@ -406,7 +406,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
   const financialHealthScore = fundingSecured > 0 ? Math.min(Math.round((fundingSecured / 500000) * 100), 100) : 0;
   const programQualityScore = totalProjects > 0 ? Math.min(Math.round(projects.reduce((sum, p) => sum + (p.completionPercentage || 0), 0) / projects.length), 100) : 0;
   const communityImpactScore = beneficiariesServed > 0 ? Math.min(Math.round((beneficiariesServed / 5000) * 100), 100) : 0;
-  
+
   const organizationalPerformance = {
     labels: ['Volunteer Engagement', 'Financial Health', 'Program Quality', 'Community Impact'],
     datasets: [{
@@ -419,7 +419,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
       borderWidth: 2,
     }]
   };
-  
+
   // Configure point labels with proper multi-line support
   const radarChartOptions = {
     responsive: true,
@@ -448,34 +448,34 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const data: Array<{ month: string; volunteers: number; hours: number }> = [];
     const currentMonth = currentDate.getMonth();
-    
+
     for (let m: number = 0; m <= currentMonth; m++) {
       const monthStart = new Date(currentDate.getFullYear(), m, 1);
       const monthEnd = new Date(currentDate.getFullYear(), m + 1, 0);
-      
+
       const monthActivities = filteredActivities.filter(a => {
         if (!a.date) return false;
         const actDate = new Date(a.date);
         return actDate >= monthStart && actDate <= monthEnd;
       });
-      
+
       const monthVols = new Set<number>();
       monthActivities.forEach(a => {
         if (a.userId) monthVols.add(a.userId);
       });
-      
+
       const monthHours = monthActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-      
+
       data.push({
         month: months[m],
         volunteers: monthVols.size,
         hours: Math.round(monthHours)
       });
     }
-    
+
     return data;
   };
-  
+
   const monthlyEngagement = getMonthlyEngagement();
 
   // Summarize mission statement to first sentence or truncate to 150 chars
@@ -532,7 +532,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
             <span className="hidden md:inline">Back to Dashboard</span>
             <span className="md:hidden">Back</span>
           </Button>
-          
+
           {/* Right: All Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full md:w-auto print:hidden">
             {/* Row 1: Time Filter & View Mode */}
@@ -595,7 +595,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                 <Printer className="h-4 w-4 mr-1" />
                 <span className="hidden md:inline">Print</span>
               </Button>
-              
+
               <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 ml-auto sm:ml-0">
                 <Button
                   variant="ghost"
@@ -665,7 +665,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                 <p className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-1 print:text-2xl">
                   {organization?.name || 'Your Organization'}
                 </p>
-                
+
                 <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
                   Global Impact Report
                 </h1>
@@ -1208,7 +1208,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
             <div className="space-y-8">
               {/* OVERVIEW SECTION */}
               <div className="space-y-6">
-                
+
                 {/* Full-width KPIs matching tab view - 5 columns */}
                 <div className="grid grid-cols-5 gap-4">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -1391,7 +1391,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
               {/* OPERATIONS SECTION */}
               <div className="print:page-break-before">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-orange-200 dark:border-orange-700 text-center">Operations</h2>
-                
+
                 {/* Resource & Metrics Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                   <Card className="border border-gray-200 dark:border-gray-700">
@@ -1459,7 +1459,7 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
               {/* FINANCIAL SECTION */}
               <div className="print:page-break-before">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-purple-200 dark:border-purple-700 text-center">Financial</h2>
-                
+
                 {/* KPIs */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                   <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
@@ -1517,88 +1517,6 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
                   </CardContent>
                 </Card>
               </div>
-
-              {/* IMPACT SECTION */}
-              <div className="print:page-break-before">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 pb-2 border-b-2 border-red-200 dark:border-red-700 text-center">Impact</h2>
-                
-                {/* Community Impact Categories */}
-                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Community Impact By Category</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {programDistribution.map((prog, idx) => (
-                        <div key={idx} className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700">
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: prog.color }}></div>
-                            <h4 className="font-semibold text-gray-900 dark:text-white">{prog.name}</h4>
-                          </div>
-                          <p className="text-2xl font-bold text-gray-900 dark:text-white">{prog.value}%</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">Community impact reach</p>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Success Stories */}
-                <Card className="border border-gray-200 dark:border-gray-700 mb-6">
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Success Stories & Testimonials</h3>
-                    <div className="space-y-4">
-                      <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-500">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"This program changed the lives of 500+ children, providing access to quality education they never had before."</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- Community Leader</p>
-                      </div>
-                      <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border-l-4 border-green-500">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"The health camps reached 320 families and provided preventive care that saved lives."</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- Health Volunteer</p>
-                      </div>
-                      <div className="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border-l-4 border-purple-500">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 italic">"The environmental initiatives created sustainable livelihoods for 150+ families."</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">- Project Coordinator</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Long-term Impact Indicators */}
-                <Card className="border border-gray-200 dark:border-gray-700 print:page-break-inside-avoid">
-                  <CardContent className="p-4 print:p-3">
-                    <h3 className="text-base print:text-sm font-semibold text-gray-900 dark:text-white mb-4 print:mb-3">Long-term Impact Indicators</h3>
-                    <div className="space-y-2 print:space-y-1.5">
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-xs print:text-xs font-medium">Lives Transformed</span>
-                          <span className="text-xs print:text-xs font-bold">{(beneficiariesServed * 1.2).toLocaleString()}</span>
-                        </div>
-                        <Progress value={85} className="h-1.5 print:h-1" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-xs print:text-xs font-medium">Sustainability Index</span>
-                          <span className="text-xs print:text-xs font-bold">8.2/10</span>
-                        </div>
-                        <Progress value={82} className="h-1.5 print:h-1" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-xs print:text-xs font-medium">Community Satisfaction</span>
-                          <span className="text-xs print:text-xs font-bold">94%</span>
-                        </div>
-                        <Progress value={94} className="h-1.5 print:h-1" />
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-xs print:text-xs font-medium">SDG Alignment</span>
-                          <span className="text-xs print:text-xs font-bold">6/17 Goals</span>
-                        </div>
-                        <Progress value={35} className="h-1.5 print:h-1" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -1610,14 +1528,14 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
         @media print {
           body { margin: 0; padding: 0; }
           * { page-break-inside: avoid; }
-          
+
           /* Hide UI elements */
           .print\\:hidden { display: none !important; }
-          
+
           /* Report card styling */
           .print\\:shadow-none { box-shadow: none !important; }
           .print\\:border-black { border-color: black !important; }
-          
+
           /* Spacing */
           .print\\:p-4 { padding: 1rem !important; }
           .print\\:mb-4 { margin-bottom: 1rem !important; }
@@ -1626,38 +1544,38 @@ export default function OrganizationImpactReport(props: OrganizationImpactReport
           .print\\:mb-3 { margin-bottom: 0.75rem !important; }
           .print\\:p-1.5 { padding: 0.375rem !important; }
           .print\\:space-y-1.5 > * + * { margin-top: 0.375rem !important; }
-          
+
           /* Typography */
           .print\\:text-2xl { font-size: 1.5rem !important; }
           .print\\:text-xs { font-size: 0.75rem !important; }
           .print\\:text-sm { font-size: 0.875rem !important; }
           .print\\:text-lg { font-size: 1.125rem !important; }
-          
+
           /* Transforms */
           .print\\:scale-75 { transform: scale(0.75) !important; }
-          
+
           /* Page break rules for sections */
           .print\\:page-break-before { page-break-before: always !important; }
           .print\\:page-break-inside-avoid { page-break-inside: avoid !important; }
-          
+
           /* Prevent orphans/widows for readability */
           h1, h2, h3, h4, h5, h6 { page-break-after: avoid; page-break-inside: avoid; }
-          
+
           /* Keep cards together */
           [role="tabpanel"] { page-break-inside: avoid; }
-          
+
           /* Grid adjustments for print */
           .grid { page-break-inside: avoid; }
-          
+
           /* Charts should stay together */
           canvas { page-break-inside: avoid; }
-          
+
           /* Proper line height for readability */
           body { line-height: 1.5; }
-          
+
           /* Margin management */
           body { margin: 0.5in; }
-          
+
           /* Prevent color loss in grayscale */
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
         }

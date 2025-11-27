@@ -1147,19 +1147,36 @@ export default function Dashboard() {
           .filter(p => p.beneficiaries > 0)
           .sort((a, b) => b.beneficiaries - a.beneficiaries);
         
+        // Calculate efficiency metric
+        const totalHoursForEfficiency = (filteredData.activities || []).reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        const totalBeneficiariesEfficiency = Array.from(beneficiariesByProjectId.values()).reduce((sum, p) => sum + p.beneficiaries, 0);
+        const efficiencyPerHour = totalHoursForEfficiency > 0 ? Math.ceil(totalBeneficiariesEfficiency / totalHoursForEfficiency) : 0;
+        
         return projectsArray.length > 0 ? (
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="text-sm">Lives Touched - By Project</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {projectsArray.map((project, idx) => (
-                  <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{project.projectName}</span>
-                    <span className="text-sm font-bold text-red-600 dark:text-red-400 ml-2">{project.beneficiaries}</span>
+              <div className="space-y-4">
+                {/* Efficiency metric */}
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Impact Efficiency</span>
+                    <span className="text-lg font-bold text-red-600 dark:text-red-400">{efficiencyPerHour} people/hour</span>
                   </div>
-                ))}
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Based on {totalHoursForEfficiency.toFixed(1)} total hours</p>
+                </div>
+                
+                {/* Project breakdown */}
+                <div className="space-y-2">
+                  {projectsArray.map((project, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{project.projectName}</span>
+                      <span className="text-sm font-bold text-red-600 dark:text-red-400 ml-2">{project.beneficiaries}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>

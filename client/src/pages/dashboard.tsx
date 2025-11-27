@@ -1066,55 +1066,15 @@ export default function Dashboard() {
               gradient="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700"
               data-testid="kpi-skills"
             />
-            <div 
+            <StatsCard
+              title="Lives Touched"
+              value={kpis.livesTouched}
+              icon={<Globe className="h-6 w-6" />}
               onClick={() => handleKPIClick("Lives Touched", kpis.livesTouched)}
-              className="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600 rounded-xl shadow-lg p-5 md:p-6 text-white cursor-pointer hover:shadow-xl transition-shadow" 
+              compact={true}
+              gradient="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600"
               data-testid="kpi-lives-touched"
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <Globe className="h-6 w-6" />
-                <span className="text-white/80 font-medium text-sm md:text-base">Lives Touched</span>
-              </div>
-              <div className="text-3xl font-bold mb-3">{kpis.livesTouched}</div>
-              
-              {/* Project breakdown */}
-              {(() => {
-                const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number }>();
-                const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
-                
-                (filteredData.impacts || []).forEach((impact: any) => {
-                  if (!peopleMetricIdsSet.has(impact.metricId)) return;
-                  if (impact.projectId !== undefined && impact.projectId !== null) {
-                    const projectKey = `project_${impact.projectId}`;
-                    const project = filteredData.projects.find((p: any) => p.id === impact.projectId) || projects.find((p: any) => p.id === impact.projectId);
-                    
-                    if (!beneficiariesByProject.has(projectKey)) {
-                      beneficiariesByProject.set(projectKey, {
-                        projectName: project?.name || "Unknown Project",
-                        beneficiaries: 0
-                      });
-                    }
-                    const projectData = beneficiariesByProject.get(projectKey)!;
-                    projectData.beneficiaries += impact.value || 0;
-                  }
-                });
-                
-                const projectsArray = Array.from(beneficiariesByProject.values())
-                  .sort((a, b) => b.beneficiaries - a.beneficiaries)
-                  .slice(0, 3);
-                
-                return projectsArray.length > 0 ? (
-                  <div className="space-y-1 text-xs">
-                    {projectsArray.map((project, idx) => (
-                      <div key={idx} className="flex justify-between items-center text-white/90">
-                        <span className="truncate">{project.projectName}</span>
-                        <span className="font-semibold ml-2">{project.beneficiaries}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : null;
-              })()}
-            </div>
+            />
           </>
         ) : (
           <>
@@ -1157,6 +1117,50 @@ export default function Dashboard() {
           </>
         )}
       </div>
+
+      {/* Lives Touched Project Breakdown */}
+      {dashboardType === "volunteer" && (() => {
+        const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number }>();
+        const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
+        
+        (filteredData.impacts || []).forEach((impact: any) => {
+          if (!peopleMetricIdsSet.has(impact.metricId)) return;
+          if (impact.projectId !== undefined && impact.projectId !== null) {
+            const projectKey = `project_${impact.projectId}`;
+            const project = filteredData.projects.find((p: any) => p.id === impact.projectId) || projects.find((p: any) => p.id === impact.projectId);
+            
+            if (!beneficiariesByProject.has(projectKey)) {
+              beneficiariesByProject.set(projectKey, {
+                projectName: project?.name || "Unknown Project",
+                beneficiaries: 0
+              });
+            }
+            const projectData = beneficiariesByProject.get(projectKey)!;
+            projectData.beneficiaries += impact.value || 0;
+          }
+        });
+        
+        const projectsArray = Array.from(beneficiariesByProject.values())
+          .sort((a, b) => b.beneficiaries - a.beneficiaries);
+        
+        return projectsArray.length > 0 ? (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-sm">Lives Touched - By Project</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {projectsArray.map((project, idx) => (
+                  <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{project.projectName}</span>
+                    <span className="text-sm font-bold text-red-600 dark:text-red-400 ml-2">{project.beneficiaries}</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        ) : null;
+      })()}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

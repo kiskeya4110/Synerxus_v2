@@ -1621,7 +1621,7 @@ export default function OrganizationImpactReport(
                       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
                         Community Impact By Category
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         {programDistribution.map((prog, idx) => (
                           <div
                             key={idx}

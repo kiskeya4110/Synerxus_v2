@@ -545,6 +545,17 @@ export default function Landing() {
   const [volunteerFact, setVolunteerFact] = useState(() => getRandomFact('volunteers'));
   const [ngoFact, setNgoFact] = useState(() => getRandomFact('ngos'));
   const [csrFact, setCsrFact] = useState(() => getRandomFact('csr'));
+  
+  // Fetch current user to check if logged in
+  const { data: currentUser } = useQuery<any>({
+    queryKey: ["/api/users/me"],
+    queryFn: async () => {
+      const response = await fetch("/api/users/me");
+      return response.ok ? response.json() : null;
+    },
+  });
+  
+  const isLoggedIn = !!currentUser?.id;
 
   return (
     <div className="min-h-screen bg-slate-50 scroll-container">

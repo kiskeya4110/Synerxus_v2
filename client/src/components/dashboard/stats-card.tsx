@@ -41,7 +41,7 @@ export default function StatsCard({
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className={`font-medium ${gradient ? "text-white/80" : "text-gray-500 dark:text-gray-400"} ${compact ? "text-xs sm:text-sm" : "text-sm"}`}>{title}</p>
-          <p className={`font-bold ${gradient ? "text-white" : textColor} ${compact ? "text-lg sm:text-xl md:text-2xl mt-0.5" : "text-2xl mt-1"}`}>{value}</p>
+          <p className={`font-bold ${gradient ? "text-white" : textColor} ${compact ? "text-lg sm:text-xl md:text-2xl mt-0.5" : "text-2xl mt-1"}`}>{typeof value === 'number' ? value.toLocaleString() : value}</p>
           {trend && (
             <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center">
               <ArrowUp className="h-3 w-3 mr-1" />

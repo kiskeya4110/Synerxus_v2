@@ -3,6 +3,18 @@
 ## Overview
 Synerxus is an AI-powered platform that connects global volunteers with opportunities and helps organizations track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhancing global collaboration. Its core purpose is "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes (November 27, 2025)
+- **Optimized Matching Algorithm**: Upgraded the AI matching algorithm with refined weights and new features:
+  - **New Weights**: Skills 35%, SDG 20%, Availability 20%, Interests 10% (re-enabled), Location 10%, Experience 5%
+  - **SDG Primary Priority Boost**: 1.2x multiplier when volunteer's primary SDG matches opportunity
+  - **4-Tier Availability Scoring**: ≤50% (perfect), 50-80% (great), 80-100% (fits), >100% (over-committed)
+  - **Engagement Boost**: 0-10 bonus points for active, reliable volunteers:
+    - Recent activity (0-5 pts): 7 days=5, 30 days=3, 90 days=1
+    - Completion rate (0-3 pts): ≥80%=3, ≥50%=1
+    - Profile completeness (0-2 pts): ≥90%=2, ≥70%=1
+  - Python matchmaker synchronized with TypeScript weights
+  - Formula: `FinalScore = min(BaseWeightedScore + EngagementBoost, 100)`
+
 ## Recent Changes (November 26, 2025)
 - **User Data Validation System**: Implemented comprehensive data validation with audit logging for user profile integrity:
   - Added `userDataAuditLogs` table to track all user data changes (action, table, before/after data, discrepancies)

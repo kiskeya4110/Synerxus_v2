@@ -857,7 +857,7 @@ export default function Dashboard() {
         const totalBeneficiaries = kpis.livesTouched;
         const totalActivities = filteredData.activities.length;
         const totalHoursForImpact = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-        const beneficiariesPerHour = totalHoursForImpact > 0 ? (totalBeneficiaries / totalHoursForImpact).toFixed(2) : "0";
+        const beneficiariesPerHour = totalHoursForImpact > 0 ? Math.ceil(totalBeneficiaries / totalHoursForImpact) : "0";
         
         const items: any[] = [
           {

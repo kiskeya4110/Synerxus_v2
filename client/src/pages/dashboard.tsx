@@ -802,6 +802,69 @@ export default function Dashboard() {
           totalScore: value,
         };
         break;
+      case "Lives Touched":
+        // Calculate beneficiary impact breakdown by project
+        const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number; activities: number }>();
+        
+        filteredData.activities.forEach((a: any) => {
+          const projectKey = a.projectId !== undefined && a.projectId !== null 
+            ? `project_${a.projectId}` 
+            : 'no_project';
+          
+          let projectName = "Unknown Project";
+          if (a.projectId !== undefined && a.projectId !== null) {
+            const project = filteredData.projects.find((p: any) => p.id === a.projectId) ||
+                           projects.find((p: any) => p.id === a.projectId);
+            projectName = project?.name || "Unknown Project";
+          } else {
+            projectName = "Unassigned Activities";
+          }
+          
+          if (!beneficiariesByProject.has(projectKey)) {
+            beneficiariesByProject.set(projectKey, {
+              projectName,
+              beneficiaries: 0,
+              activities: 0
+            });
+          }
+          
+          const projectData = beneficiariesByProject.get(projectKey)!;
+          projectData.beneficiaries += a.peopleImpacted || 0;
+          projectData.activities += 1;
+        });
+        
+        const totalBeneficiaries = kpis.livesTouched;
+        const totalActivities = filteredData.activities.length;
+        const totalHoursForImpact = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        const beneficiariesPerHour = totalHoursForImpact > 0 ? (totalBeneficiaries / totalHoursForImpact).toFixed(2) : "0";
+        
+        detailData = {
+          title: "Lives Touched - Impact Breakdown",
+          items: [
+            {
+              label: "Total Beneficiaries Reached",
+              value: totalBeneficiaries.toLocaleString(),
+              icon: "🌍",
+              isHighlight: true,
+              description: `Across ${totalActivities} activities`
+            },
+            {
+              label: "Impact Efficiency",
+              value: `${beneficiariesPerHour} people/hour`,
+              icon: "⚡",
+              isHighlight: true,
+              description: `Based on ${totalHoursForImpact.toFixed(1)} total hours`
+            },
+            ...Array.from(beneficiariesByProject.values()).map((data) => ({
+              label: data.projectName,
+              value: `${data.beneficiaries} beneficiaries`,
+              description: `${data.activities} contribution${data.activities !== 1 ? 's' : ''}`,
+              isProjectGroup: true,
+            }))
+          ],
+          totalScore: totalBeneficiaries,
+        };
+        break;
       default:
         detailData = { title, items: [] };
     }

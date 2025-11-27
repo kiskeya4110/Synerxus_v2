@@ -568,7 +568,7 @@ export default function OrganizationImpactReport(
     ],
   };
 
-  // Configure point labels with proper multi-line support
+  // Configure point labels with proper multi-line support - respects time filter
   const radarChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -588,7 +588,7 @@ export default function OrganizationImpactReport(
         pointLabels: {
           display: true,
           font: { size: 11, weight: "bold" as any },
-          padding: 8,
+          padding: 12,
           color: "#1f2937",
         },
       },

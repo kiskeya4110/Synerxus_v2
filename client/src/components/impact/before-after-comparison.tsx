@@ -80,70 +80,70 @@ export default function BeforeAfterComparison({
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle>Before & After Impact</CardTitle>
+      <CardHeader className="pb-2 sm:pb-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+          <CardTitle className="text-base sm:text-lg">Before & After Impact</CardTitle>
           <Tabs
             value={view}
             onValueChange={(v) => setView(v as "side-by-side" | "slider")}
           >
-            <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
-              <TabsTrigger value="slider">Slider</TabsTrigger>
+            <TabsList className="grid grid-cols-2 text-xs sm:text-sm h-8 sm:h-10">
+              <TabsTrigger value="side-by-side" className="text-xs sm:text-sm px-2 sm:px-4">Side</TabsTrigger>
+              <TabsTrigger value="slider" className="text-xs sm:text-sm px-2 sm:px-4">Slider</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="p-4">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-lg font-semibold">{activeData.title}</h3>
-            <span className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="p-2 sm:p-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 mb-1 sm:mb-2">
+            <h3 className="text-base sm:text-lg font-semibold line-clamp-2">{activeData.title}</h3>
+            <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
               {activeData.date}
             </span>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1 sm:mb-2 line-clamp-2">
             {activeData.description}
           </p>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Location: {activeData.location}
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">
+            Loc: {activeData.location}
           </div>
         </div>
 
         {/* Side by side view */}
         {view === "side-by-side" && (
-          <div className="p-6 space-y-8">
+          <div className="p-2 sm:p-6 space-y-4 sm:space-y-8">
             {/* Images in 2 columns */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-6">
               <div>
-                <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-4 shadow-md">
+                <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 sm:mb-4 shadow-md">
                   <img
                     src={activeData.beforeImage}
                     alt={`Before: ${activeData.title}`}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h4 className="text-center font-bold text-lg mb-3">Before</h4>
-                <div className="space-y-3 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg">
+                <h4 className="text-center font-bold text-base sm:text-lg mb-2 sm:mb-3">Before</h4>
+                <div className="space-y-1 sm:space-y-3 bg-gray-50 dark:bg-gray-900 p-2 sm:p-4 rounded-lg">
                   {activeData.beforeMetrics.map((metric, idx) => (
-                    <div key={idx} className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">{metric.label}:</span>
-                      <span className="font-semibold text-base">{metric.value} {metric.unit}</span>
+                    <div key={idx} className="flex justify-between items-center text-xs sm:text-sm gap-2">
+                      <span className="text-gray-600 dark:text-gray-400 truncate">{metric.label}:</span>
+                      <span className="font-semibold text-sm sm:text-base flex-shrink-0">{metric.value} {metric.unit}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div>
-                <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-4 shadow-md">
+                <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2 sm:mb-4 shadow-md">
                   <img
                     src={activeData.afterImage}
                     alt={`After: ${activeData.title}`}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h4 className="text-center font-bold text-lg mb-3">After</h4>
-                <div className="space-y-3 bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <h4 className="text-center font-bold text-base sm:text-lg mb-2 sm:mb-3">After</h4>
+                <div className="space-y-1 sm:space-y-3 bg-green-50 dark:bg-green-900/20 p-2 sm:p-4 rounded-lg border border-green-200 dark:border-green-800">
                   {activeData.afterMetrics.map((metric, idx) => {
                     const beforeMetric = activeData.beforeMetrics.find(
                       (m) => m.label === metric.label,
@@ -156,19 +156,19 @@ export default function BeforeAfterComparison({
                       : 100;
 
                     return (
-                      <div key={idx} className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{metric.label}:</span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-base">{metric.value} {metric.unit}</span>
+                      <div key={idx} className="flex justify-between items-center text-xs sm:text-sm gap-1 min-w-0">
+                        <span className="text-gray-600 dark:text-gray-400 truncate">{metric.label}:</span>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <span className="font-semibold text-sm sm:text-base">{metric.value} {metric.unit}</span>
                           {change !== 0 && beforeMetric && (
                             <span
-                              className={`text-xs font-semibold px-2 py-1 rounded ${
+                              className={`text-xs font-semibold px-1 sm:px-2 py-0.5 sm:py-1 rounded whitespace-nowrap ${
                                 change > 0
                                   ? "bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300"
                                   : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
                               }`}
                             >
-                              {change > 0 ? "+" : ""}{change} ({change > 0 ? "+" : ""}{changePercent}%)
+                              {change > 0 ? "+" : ""}{change}
                             </span>
                           )}
                         </div>
@@ -180,12 +180,12 @@ export default function BeforeAfterComparison({
             </div>
 
             {/* Description below images */}
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-              <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-3">Project Details</h4>
-              <div className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                <p><strong>Description:</strong> {activeData.description}</p>
-                <p><strong>Location:</strong> {activeData.location}</p>
-                <p><strong>Date:</strong> {activeData.date}</p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 sm:p-6">
+              <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2 sm:mb-3 text-sm sm:text-base">Details</h4>
+              <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-gray-700 dark:text-gray-300">
+                <p className="truncate"><strong>Desc:</strong> {activeData.description}</p>
+                <p className="truncate"><strong>Loc:</strong> {activeData.location}</p>
+                <p className="truncate"><strong>Date:</strong> {activeData.date}</p>
               </div>
             </div>
           </div>
@@ -193,8 +193,8 @@ export default function BeforeAfterComparison({
 
         {/* Slider view */}
         {view === "slider" && (
-          <div className="p-4">
-            <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mb-4">
+          <div className="p-2 sm:p-4">
+            <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden mb-2 sm:mb-4">
               <div
                 className="absolute top-0 left-0 h-full overflow-hidden"
                 style={{ width: `${sliderPosition}%` }}
@@ -206,7 +206,7 @@ export default function BeforeAfterComparison({
                   className="h-full object-cover"
                   style={{ width: `${100 / (sliderPosition / 100)}%` }}
                 />
-                <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 text-xs rounded">
+                <div className="absolute top-1 left-1 sm:top-2 sm:left-2 bg-black/70 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs rounded">
                   Before
                 </div>
               </div>
@@ -221,7 +221,7 @@ export default function BeforeAfterComparison({
                   className="h-full object-cover absolute right-0"
                   style={{ width: `${100 / ((100 - sliderPosition) / 100)}%` }}
                 />
-                <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 text-xs rounded">
+                <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-black/70 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 text-xs rounded">
                   After
                 </div>
               </div>
@@ -240,15 +240,15 @@ export default function BeforeAfterComparison({
               className="w-full"
             />
 
-            <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mt-2 sm:mt-4">
               <div>
-                <h4 className="font-medium mb-2 text-sm">Before Metrics</h4>
-                <div className="space-y-2">
+                <h4 className="font-medium mb-1 sm:mb-2 text-xs sm:text-sm">Before</h4>
+                <div className="space-y-1">
                   {/* Display before metrics */}
                   {activeData.beforeMetrics.map((metric, idx) => (
-                    <div key={idx} className="flex justify-between text-sm">
-                      <span>{metric.label}:</span>
-                      <span className="font-medium">
+                    <div key={idx} className="flex justify-between text-xs sm:text-sm gap-1 min-w-0">
+                      <span className="truncate">{metric.label}:</span>
+                      <span className="font-medium flex-shrink-0">
                         {metric.value} {metric.unit}
                       </span>
                     </div>
@@ -256,8 +256,8 @@ export default function BeforeAfterComparison({
                 </div>
               </div>
               <div>
-                <h4 className="font-medium mb-2 text-sm">After Metrics</h4>
-                <div className="space-y-2">
+                <h4 className="font-medium mb-1 sm:mb-2 text-xs sm:text-sm">After</h4>
+                <div className="space-y-1">
                   {/* Display after metrics and changes compared to before metrics */}
                   {activeData.afterMetrics.map((metric, idx) => {
                     const beforeMetric = activeData.beforeMetrics.find(
@@ -266,28 +266,23 @@ export default function BeforeAfterComparison({
                     const change = beforeMetric
                       ? metric.value - beforeMetric.value
                       : metric.value;
-                    const changePercent = beforeMetric
-                      ? Math.round((change / beforeMetric.value) * 100)
-                      : 100;
 
                     return (
-                      <div key={idx} className="flex justify-between text-sm">
-                        <span>{metric.label}:</span>
-                        <div>
-                          <span className="font-medium mr-2">
+                      <div key={idx} className="flex justify-between text-xs sm:text-sm gap-1 min-w-0">
+                        <span className="truncate">{metric.label}:</span>
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          <span className="font-medium">
                             {metric.value} {metric.unit}
                           </span>
                           {change !== 0 && beforeMetric && (
                             <span
                               className={
                                 change > 0
-                                  ? "text-green-500 dark:text-green-400 text-xs"
-                                  : "text-red-500 dark:text-red-400 text-xs"
+                                  ? "text-green-500 dark:text-green-400 text-xs font-semibold"
+                                  : "text-red-500 dark:text-red-400 text-xs font-semibold"
                               }
                             >
-                              {change > 0 ? "+" : ""}
-                              {change} ({change > 0 ? "+" : ""}
-                              {changePercent}%)
+                              {change > 0 ? "+" : ""}{change}
                             </span>
                           )}
                         </div>
@@ -301,27 +296,27 @@ export default function BeforeAfterComparison({
         )}
 
         {/* Navigation controls */}
-        <div className="flex justify-between p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-between items-center p-2 sm:p-4 border-t border-gray-200 dark:border-gray-700 gap-1 sm:gap-4">
           <Button
             variant="outline"
             size="sm"
             onClick={handlePrevious}
-            className="flex items-center"
+            className="flex items-center text-xs sm:text-sm px-2 sm:px-4"
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Previous
+            <ChevronLeft className="h-3 sm:h-4 w-3 sm:w-4" />
+            <span className="hidden sm:inline ml-1">Prev</span>
           </Button>
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            {activeIndex + 1} of {data.length} {/* Current item count */}
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 flex-shrink-0">
+            {activeIndex + 1}/{data.length}
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleNext}
-            className="flex items-center"
+            className="flex items-center text-xs sm:text-sm px-2 sm:px-4"
           >
-            Next
-            <ChevronRight className="h-4 w-4 ml-1" />
+            <span className="hidden sm:inline mr-1">Next</span>
+            <ChevronRight className="h-3 sm:h-4 w-3 sm:w-4" />
           </Button>
         </div>
       </CardContent>

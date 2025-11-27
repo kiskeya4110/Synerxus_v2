@@ -1119,7 +1119,7 @@ export default function Dashboard() {
       </div>
 
       {/* Lives Touched Project Breakdown - Shows beneficiaries per project */}
-      {dashboardType === "volunteer" && (() => {
+      {(dashboardType === "volunteer" || dashboardType === "organization") && (() => {
         const beneficiariesByProjectId = new Map<number, { projectName: string; beneficiaries: number }>();
         const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
         

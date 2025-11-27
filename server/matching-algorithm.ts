@@ -13,7 +13,70 @@ interface MatchResult {
   };
   reasons: string[];
   matchCategory?: "nexus" | "strong" | "gap" | "no-match";
+  dataQualityWarnings?: string[];
 }
+
+/**
+ * Validate opportunity data completeness for accurate matching
+ * Returns warnings for missing critical fields that affect match scoring
+ */
+export function validateOpportunityData(opportunity: Opportunity): string[] {
+  const warnings: string[] = [];
+  
+  if (!opportunity.category) {
+    warnings.push("⚠️ Missing category field - interest matching disabled");
+  }
+  if (!opportunity.engagementType) {
+    warnings.push("⚠️ Missing engagement type - work style matching limited");
+  }
+  if (!opportunity.ongoingHoursPerWeek && opportunity.commitmentType !== "event") {
+    warnings.push("⚠️ Missing weekly hours - availability matching limited");
+  }
+  if (!opportunity.requiredSkills || opportunity.requiredSkills.length === 0) {
+    warnings.push("⚠️ No required skills specified - skill matching disabled");
+  }
+  if (!opportunity.primarySdg && (!opportunity.sdgGoals || opportunity.sdgGoals.length === 0)) {
+    warnings.push("⚠️ No SDG alignment specified - mission matching disabled");
+  }
+  
+  return warnings;
+}
+
+/**
+ * Validate volunteer profile data completeness for accurate matching
+ * Returns warnings for missing fields that affect match scoring
+ */
+export function validateVolunteerData(volunteer: User & { profile?: VolunteerProfile | null }): string[] {
+  const warnings: string[] = [];
+  const profile = volunteer.profile;
+  
+  if (!profile) {
+    warnings.push("⚠️ No volunteer profile - comprehensive matching unavailable");
+    return warnings;
+  }
+  
+  if (!profile.location) {
+    warnings.push("⚠️ Missing location - geographic matching disabled");
+  }
+  if (!profile.weeklyAvailability) {
+    warnings.push("⚠️ Missing weekly availability - time-based matching limited");
+  }
+  if (!profile.preferredWorkStyle) {
+    warnings.push("⚠️ Missing work style preference - work arrangement matching limited");
+  }
+  if (!profile.yearsOfExperience) {
+    warnings.push("⚠️ Missing experience level - experience matching disabled");
+  }
+  if (!Array.isArray(profile.preferredSdgs) || profile.preferredSdgs.length === 0) {
+    warnings.push("⚠️ No SDG preferences - mission alignment matching limited");
+  }
+  if (!Array.isArray(profile.skills) || profile.skills.length === 0) {
+    warnings.push("⚠️ No skills listed - skill matching disabled");
+  }
+  
+  return warnings;
+}
+
 
 /**
  * Calculate engagement boost based on volunteer activity and profile completeness

@@ -227,18 +227,13 @@ export default function OrganizationImpactReport(
   const timeFilteredActivities = getFilteredActivitiesByTime();
 
   // Calculate organizational metrics
-  // Count volunteers with assignments/activities in this organization
+  // Count volunteers with assignments/activities in this organization - respect time filter
   const activeVolunteerIds = new Set<number>();
-  projects.forEach((project) => {
-    if (project.volunteers) {
-      const vols = Array.isArray(project.volunteers) ? project.volunteers : [];
-      vols.forEach((v: any) =>
-        activeVolunteerIds.add(typeof v === "number" ? v : v.id),
-      );
-    }
-  });
-  filteredActivities.forEach((activity) => {
+  const projectsFromTimeFilter = new Set<number>();
+  
+  timeFilteredActivities.forEach((activity) => {
     if (activity.userId) activeVolunteerIds.add(activity.userId);
+    if (activity.projectId) projectsFromTimeFilter.add(activity.projectId);
   });
 
   // Count project managers (users with userType === 'organization' in this org)
@@ -256,8 +251,8 @@ export default function OrganizationImpactReport(
         ).length;
   const totalTeam = activeVolunteers + projectManagers;
   const totalProjects =
-    dashboardData?.activeProjects !== undefined
-      ? dashboardData.activeProjects
+    timeFilter !== "all" && projectsFromTimeFilter.size > 0
+      ? projectsFromTimeFilter.size
       : projects.length;
   // Use backend-calculated totalHours for consistency when available
   const totalHours =

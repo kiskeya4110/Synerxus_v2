@@ -15,6 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Share2,
   Copy,
   Printer,
@@ -124,6 +131,7 @@ export default function OrganizationImpactReport() {
   const [timeFilter, setTimeFilter] = useState<
     "all" | "month" | "quarter" | "year"
   >("all");
+  const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
   // Call ALL hooks unconditionally at the top - this is required by React

@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban, Users, CheckSquare } from "lucide-react";
+import { Plus, Search, Filter, Mail, Phone, Award, Target, User, MapPin, CheckCircle2, Clock, Briefcase, Calendar, FolderKanban, Users, CheckSquare, TrendingUp, AlertCircle, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -313,6 +313,57 @@ export default function Volunteers() {
                     <p className="text-lg font-bold text-primary">{volunteer.tasksCompleted || 0}</p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">Tasks</p>
                   </div>
+                </div>
+
+                {/* Work Entry & Status Insights */}
+                <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  {/* Completion Rate */}
+                  {volunteer.projectCount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-gray-600 dark:text-gray-400">Completion Rate</span>
+                      </div>
+                      <Badge className="bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300">
+                        {volunteer.projectCount > 0 ? Math.round((volunteer.tasksCompleted / Math.max(1, volunteer.projectCount)) * 100) : 0}%
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Active Status */}
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <div className={`h-2 w-2 rounded-full ${volunteer.hours > 0 ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      <span className="text-gray-600 dark:text-gray-400">Status</span>
+                    </div>
+                    <Badge 
+                      className={volunteer.hours > 0 
+                        ? "bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-300" 
+                        : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300"
+                      }
+                    >
+                      {volunteer.hours > 0 ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
+
+                  {/* Engagement Level */}
+                  {volunteer.hours > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        <span className="text-gray-600 dark:text-gray-400">Engagement</span>
+                      </div>
+                      <Badge className={
+                        volunteer.hours >= 50 
+                          ? "bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300"
+                          : volunteer.hours >= 20
+                          ? "bg-yellow-100 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-300"
+                          : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300"
+                      }>
+                        {volunteer.hours >= 50 ? 'High' : volunteer.hours >= 20 ? 'Medium' : 'Low'}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">

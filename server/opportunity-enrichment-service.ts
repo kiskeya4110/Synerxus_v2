@@ -12,6 +12,9 @@ interface EnrichedOpportunity extends Opportunity {
     locationMatch: number;
     sdgMatch: number;
     interestMatch: number;
+    availabilityMatch: number;
+    experienceMatch: number;
+    engagementBoost: number;
   };
 }
 

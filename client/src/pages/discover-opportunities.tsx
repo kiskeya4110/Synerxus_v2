@@ -26,6 +26,9 @@ interface EnrichedOpportunity extends Opportunity {
     locationMatch: number;
     sdgMatch: number;
     interestMatch: number;
+    availabilityMatch: number;
+    experienceMatch: number;
+    engagementBoost: number;
   };
 }
 
@@ -125,7 +128,7 @@ export default function DiscoverOpportunities() {
   });
 
   const getMatchBadge = (score?: number) => {
-    if (!score) return null;
+    if (!score && score !== 0) return null;
     
     if (score >= 80) {
       return <Badge className="bg-green-500 text-white"><Sparkles className="w-3 h-3 mr-1" />Excellent Match</Badge>;
@@ -134,7 +137,24 @@ export default function DiscoverOpportunities() {
     } else if (score >= 40) {
       return <Badge variant="outline">Fair Match</Badge>;
     }
-    return null;
+    return <Badge variant="outline" className="text-gray-500">Low Match</Badge>;
+  };
+
+  // Get match score color based on percentage
+  const getMatchScoreColor = (score?: number) => {
+    if (!score && score !== 0) return "text-gray-400";
+    if (score >= 80) return "text-green-600 dark:text-green-400";
+    if (score >= 60) return "text-blue-600 dark:text-blue-400";
+    if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
+    return "text-gray-500 dark:text-gray-400";
+  };
+
+  // Get progress bar color
+  const getProgressColor = (score: number) => {
+    if (score >= 80) return "bg-green-500";
+    if (score >= 60) return "bg-blue-500";
+    if (score >= 40) return "bg-yellow-500";
+    return "bg-gray-400";
   };
 
   const getOpportunityStatusBadge = (opportunityId: number) => {
@@ -328,42 +348,64 @@ export default function DiscoverOpportunities() {
             {filteredOpportunities.map((opportunity) => (
               <Card
                 key={opportunity.id}
-                className="hover:shadow-lg transition-shadow"
+                className="hover:shadow-lg transition-shadow overflow-hidden"
                 data-testid={`card-opportunity-${opportunity.id}`}
               >
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <Link href={`/opportunities/${opportunity.id}`}>
-                          <CardTitle className="text-lg hover:text-primary cursor-pointer transition-colors">
-                            {opportunity.title}
-                          </CardTitle>
-                        </Link>
-                        {opportunity.isUrgent && (
-                          <Badge className="bg-red-500 text-white text-xs">
-                            <AlertCircle className="w-3 h-3 mr-1" />
-                            Urgent
-                          </Badge>
-                        )}
+                {/* Prominent Match Score Header */}
+                <div className={`px-4 py-3 ${
+                  (opportunity.matchScore ?? 0) >= 80 ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                  (opportunity.matchScore ?? 0) >= 60 ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
+                  (opportunity.matchScore ?? 0) >= 40 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
+                  'bg-gradient-to-r from-gray-400 to-gray-500'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-white">
+                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                        <span className="text-lg font-bold">{opportunity.matchScore ?? 0}%</span>
                       </div>
+                      <div>
+                        <p className="text-sm font-semibold">AI Match Score</p>
+                        <p className="text-xs opacity-90">
+                          {(opportunity.matchScore ?? 0) >= 80 ? 'Excellent fit for you' :
+                           (opportunity.matchScore ?? 0) >= 60 ? 'Great opportunity' :
+                           (opportunity.matchScore ?? 0) >= 40 ? 'Worth exploring' :
+                           'Review details'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1 items-end">
+                      {getOpportunityStatusBadge(opportunity.id)}
+                      {opportunity.isUrgent && (
+                        <Badge className="bg-red-600 text-white text-xs border-0">
+                          <AlertCircle className="w-3 h-3 mr-1" />
+                          Urgent
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <Link href={`/opportunities/${opportunity.id}`}>
+                        <CardTitle className="text-lg hover:text-primary cursor-pointer transition-colors">
+                          {opportunity.title}
+                        </CardTitle>
+                      </Link>
                       {opportunity.organizationName && (
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mt-1">
                           <Building2 className="w-3.5 h-3.5 mr-1.5" />
                           <span className="font-medium">{opportunity.organizationName}</span>
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col gap-1 items-end">
-                      {getMatchBadge(opportunity.matchScore)}
-                      {getOpportunityStatusBadge(opportunity.id)}
-                    </div>
                   </div>
-                  <CardDescription className="line-clamp-2">
+                  <CardDescription className="line-clamp-2 mt-2">
                     {opportunity.description}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 pt-0">
                   {/* Basic Info */}
                   <div className="space-y-1.5 text-sm">
                     {opportunity.location && (
@@ -514,47 +556,148 @@ export default function DiscoverOpportunities() {
                     )}
                   </div>
 
-                  {/* Skills Match Breakdown - Collapsible */}
+                  {/* AI Match Analysis - Always Visible */}
                   {opportunity.matchBreakdown && (
-                    <Collapsible>
-                      <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-gray-50 dark:bg-gray-800 rounded-md hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors">
-                        <div className="flex items-center gap-2">
-                          <CheckCircle className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
-                          <span className="text-xs font-medium">Match Breakdown</span>
-                        </div>
-                        <ChevronDown className="w-4 h-4" />
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pt-2 space-y-2">
-                        <div className="space-y-1.5">
+                    <div className="p-3 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Match Analysis</span>
+                        {opportunity.matchBreakdown.engagementBoost > 0 && (
+                          <Badge variant="outline" className="ml-auto text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
+                            +{Math.round(opportunity.matchBreakdown.engagementBoost)} Engagement Boost
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      {/* KPI Grid - 2 columns */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* Skills - 35% weight */}
+                        <div className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">Skills Match</span>
-                            <span className="font-medium">{opportunity.matchBreakdown.skillMatch}%</span>
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                              <Target className="w-3 h-3" />Skills
+                            </span>
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.skillMatch)}`}>
+                              {Math.round(opportunity.matchBreakdown.skillMatch)}%
+                            </span>
                           </div>
-                          <Progress value={opportunity.matchBreakdown.skillMatch} className="h-1.5" />
+                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.skillMatch)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.skillMatch}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-1.5">
+
+                        {/* SDG - 20% weight */}
+                        <div className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">Location Match</span>
-                            <span className="font-medium">{opportunity.matchBreakdown.locationMatch}%</span>
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                              🎯 SDG
+                            </span>
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.sdgMatch)}`}>
+                              {Math.round(opportunity.matchBreakdown.sdgMatch)}%
+                            </span>
                           </div>
-                          <Progress value={opportunity.matchBreakdown.locationMatch} className="h-1.5" />
+                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.sdgMatch)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.sdgMatch}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-1.5">
+
+                        {/* Availability - 20% weight */}
+                        <div className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">SDG Alignment</span>
-                            <span className="font-medium">{opportunity.matchBreakdown.sdgMatch}%</span>
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />Time Fit
+                            </span>
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.availabilityMatch)}`}>
+                              {Math.round(opportunity.matchBreakdown.availabilityMatch)}%
+                            </span>
                           </div>
-                          <Progress value={opportunity.matchBreakdown.sdgMatch} className="h-1.5" />
+                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.availabilityMatch)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.availabilityMatch}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-1.5">
+
+                        {/* Location - 10% weight */}
+                        <div className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">Interest Alignment</span>
-                            <span className="font-medium">{opportunity.matchBreakdown.interestMatch}%</span>
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                              <MapPin className="w-3 h-3" />Location
+                            </span>
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.locationMatch)}`}>
+                              {Math.round(opportunity.matchBreakdown.locationMatch)}%
+                            </span>
                           </div>
-                          <Progress value={opportunity.matchBreakdown.interestMatch} className="h-1.5" />
+                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.locationMatch)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.locationMatch}%` }}
+                            />
+                          </div>
                         </div>
-                      </CollapsibleContent>
-                    </Collapsible>
+
+                        {/* Interests - 10% weight */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                              <Lightbulb className="w-3 h-3" />Interests
+                            </span>
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.interestMatch)}`}>
+                              {Math.round(opportunity.matchBreakdown.interestMatch)}%
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.interestMatch)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.interestMatch}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Experience - 5% weight */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
+                              <TrendingUp className="w-3 h-3" />Experience
+                            </span>
+                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.experienceMatch)}`}>
+                              {Math.round(opportunity.matchBreakdown.experienceMatch)}%
+                            </span>
+                          </div>
+                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.experienceMatch)} transition-all duration-500`}
+                              style={{ width: `${opportunity.matchBreakdown.experienceMatch}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Match Reasons */}
+                      {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                          <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3 text-green-500" />
+                            Why this matches you
+                          </p>
+                          <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-0.5">
+                            {opportunity.matchReasons.slice(0, 3).map((reason, idx) => (
+                              <li key={idx} className="flex items-start">
+                                <span className="mr-1.5 text-green-500">✓</span>
+                                <span>{reason}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Action Buttons */}

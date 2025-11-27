@@ -804,13 +804,17 @@ export default function Dashboard() {
         break;
       case "Lives Touched":
         // Calculate beneficiary impact breakdown by project, tasks, and other categories
-        const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number; activities: number }>();
+        const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number; activities: number; volunteers: Set<number> }>();
         const beneficiariesByTask = new Map<number, { taskName: string; beneficiaries: number; count: number }>();
         let otherBeneficiaries = 0;
         let otherCount = 0;
+        const allVolunteersSet = new Set<number>();
         
         filteredData.activities.forEach((a: any) => {
           const beneficiaryCount = a.peopleImpacted || 0;
+          if (a.userId) {
+            allVolunteersSet.add(a.userId);
+          }
           
           // Group by project
           if (a.projectId !== undefined && a.projectId !== null) {
@@ -824,18 +828,22 @@ export default function Dashboard() {
               beneficiariesByProject.set(projectKey, {
                 projectName,
                 beneficiaries: 0,
-                activities: 0
+                activities: 0,
+                volunteers: new Set<number>()
               });
             }
             const projectData = beneficiariesByProject.get(projectKey)!;
             projectData.beneficiaries += beneficiaryCount;
             projectData.activities += 1;
+            if (a.userId) {
+              projectData.volunteers.add(a.userId);
+            }
           }
           
           // Group by task
           if (a.taskId !== undefined && a.taskId !== null) {
             const task = filteredData.tasks.find((t: any) => t.id === a.taskId);
-            const taskName = task?.title || `Task #${a.taskId}`;
+            const taskName = task?.title || task?.name || `Task #${a.taskId}`;
             
             if (!beneficiariesByTask.has(a.taskId)) {
               beneficiariesByTask.set(a.taskId, {
@@ -878,17 +886,18 @@ export default function Dashboard() {
         
         // Add Projects section
         if (beneficiariesByProject.size > 0) {
+          const totalProjectVolunteers = Array.from(beneficiariesByProject.values()).reduce((total, p) => total + p.volunteers.size, 0);
           items.push({
             label: "📋 Projects Impact",
             value: `${Array.from(beneficiariesByProject.values()).reduce((sum, p) => sum + p.beneficiaries, 0)} beneficiaries`,
             isCategory: true,
-            description: `Across ${beneficiariesByProject.size} project${beneficiariesByProject.size !== 1 ? 's' : ''}`
+            description: `${totalProjectVolunteers} volunteer${totalProjectVolunteers !== 1 ? 's' : ''} across ${beneficiariesByProject.size} project${beneficiariesByProject.size !== 1 ? 's' : ''}`
           });
           Array.from(beneficiariesByProject.values()).forEach((data) => {
             items.push({
               label: data.projectName,
               value: `${data.beneficiaries} beneficiaries`,
-              description: `${data.activities} contribution${data.activities !== 1 ? 's' : ''}`,
+              description: `${data.volunteers.size} volunteer${data.volunteers.size !== 1 ? 's' : ''} • ${data.activities} contribution${data.activities !== 1 ? 's' : ''}`,
               isProjectGroup: true,
             });
           });

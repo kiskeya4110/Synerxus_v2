@@ -576,8 +576,8 @@ export default function OrganizationImpactReport(
       legend: { 
         position: "bottom" as const, 
         labels: { 
-          font: { size: 10 },
-          padding: 12,
+          font: { size: 12 },
+          padding: 16,
         } 
       },
       tooltip: {
@@ -590,11 +590,11 @@ export default function OrganizationImpactReport(
       r: {
         beginAtZero: true,
         max: 100,
-        ticks: { font: { size: 9 }, stepSize: 25 },
+        ticks: { font: { size: 11 }, stepSize: 25 },
         pointLabels: {
           display: true,
-          font: { size: 11, weight: "bold" as any },
-          padding: 12,
+          font: { size: 13, weight: "bold" as any },
+          padding: 16,
         },
       },
     },
@@ -1308,7 +1308,7 @@ export default function OrganizationImpactReport(
                         </h3>
                         <div
                           style={{
-                            height: "380px",
+                            height: "520px",
                             display: "flex",
                             justifyContent: "center",
                             alignItems: "center",
@@ -2096,7 +2096,7 @@ export default function OrganizationImpactReport(
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                           Performance Radar
                         </h3>
-                        <div className="flex justify-center items-center" style={{ height: "280px", padding: "16px" }}>
+                        <div className="flex justify-center items-center" style={{ height: "520px", padding: "16px" }}>
                           <Radar
                             data={organizationalPerformance}
                             options={radarChartOptions}

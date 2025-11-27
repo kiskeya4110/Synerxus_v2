@@ -554,7 +554,7 @@ export default function OrganizationImpactReport(
       "Financial\nHealth",
       "Program\nQuality",
       "Community\nImpact",
-    ],
+    ].map((label) => label.split(" ").join("\n")),
     datasets: [
       {
         label: "Performance Score",

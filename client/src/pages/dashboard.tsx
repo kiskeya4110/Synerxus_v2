@@ -974,38 +974,38 @@ export default function Dashboard() {
       {/* Dashboard Content Wrapper for PDF Export */}
       <div id="dashboard-content" className="space-y-6">
 
-      {/* Mobile Quick Actions - Horizontal scroll on mobile only */}
-      <div className="md:hidden overflow-x-auto hide-scrollbar -mx-2 px-2">
-        <div className="flex gap-0.5 pb-1">
+      {/* Mobile Quick Actions - Grid 2 columns on mobile only */}
+      <div className="md:hidden">
+        <div className="grid grid-cols-2 gap-1">
           <Link href="/log-activity">
-            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs whitespace-nowrap rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform flex-shrink-0">
+            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform w-full">
               <Clock className="h-3 w-3 mr-0.5" />
               Log
             </Button>
           </Link>
           {dashboardType === "volunteer" ? (
             <Link href="/discover-opportunities">
-              <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs whitespace-nowrap rounded-lg bg-amber-50 border-amber-200 text-amber-700 active:scale-95 transition-transform flex-shrink-0">
+              <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-amber-50 border-amber-200 text-amber-700 active:scale-95 transition-transform w-full">
                 <Target className="h-3 w-3 mr-0.5" />
                 Find
               </Button>
             </Link>
           ) : (
             <Link href="/projects">
-              <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs whitespace-nowrap rounded-lg bg-green-50 border-green-200 text-green-700 active:scale-95 transition-transform flex-shrink-0">
+              <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-green-50 border-green-200 text-green-700 active:scale-95 transition-transform w-full">
                 <Building2 className="h-3 w-3 mr-0.5" />
                 Projects
               </Button>
             </Link>
           )}
           <Link href="/my-work">
-            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs whitespace-nowrap rounded-lg bg-purple-50 border-purple-200 text-purple-700 active:scale-95 transition-transform flex-shrink-0">
+            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-purple-50 border-purple-200 text-purple-700 active:scale-95 transition-transform w-full">
               <CheckSquare className="h-3 w-3 mr-0.5" />
               Work
             </Button>
           </Link>
           <Link href="/calendar">
-            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs whitespace-nowrap rounded-lg bg-slate-50 border-slate-200 text-slate-700 active:scale-95 transition-transform flex-shrink-0">
+            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 active:scale-95 transition-transform w-full">
               <Zap className="h-3 w-3 mr-0.5" />
               Cal
             </Button>

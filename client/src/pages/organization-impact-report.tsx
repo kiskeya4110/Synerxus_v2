@@ -1221,37 +1221,44 @@ export default function OrganizationImpactReport(
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                           Quarterly Growth
                         </h3>
-                        <Line
-                          data={{
-                            labels: quarterlyGrowth.map((q) => q.quarter),
-                            datasets: [
-                              {
-                                label: "Beneficiaries",
-                                data: quarterlyGrowth.map(
-                                  (q) => q.beneficiaries,
-                                ),
-                                borderColor: "#3b82f6",
-                                backgroundColor: "rgba(59, 130, 246, 0.1)",
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
+                        <div style={{ height: "200px" }}>
+                          <Line
+                            data={{
+                              labels: quarterlyGrowth.map((q) => q.quarter),
+                              datasets: [
+                                {
+                                  label: "Beneficiaries",
+                                  data: quarterlyGrowth.map(
+                                    (q) => q.beneficiaries,
+                                  ),
+                                  borderColor: "#3b82f6",
+                                  backgroundColor: "rgba(59, 130, 246, 0.1)",
+                                  fill: true,
+                                  tension: 0.4,
+                                  borderWidth: 2,
+                                },
+                              ],
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: true,
+                              plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                  enabled: true,
+                                  backgroundColor: "rgba(0,0,0,0.8)",
+                                  padding: 12,
+                                },
                               },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: true,
-                            plugins: {
-                              legend: { display: false },
-                              tooltip: {
-                                enabled: true,
-                                backgroundColor: "rgba(0,0,0,0.8)",
-                                padding: 12,
-                              },
-                            },
-                            scales: { y: { beginAtZero: true } },
-                          }}
-                        />
+                              scales: { y: { beginAtZero: true } },
+                            }}
+                          />
+                        </div>
+                        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">Insight:</span> Consistent quarterly growth demonstrates strong program expansion. Q4 shows 32% increase in beneficiary reach, indicating successful scaling initiatives and improved community engagement.
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
 
@@ -1285,35 +1292,42 @@ export default function OrganizationImpactReport(
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                           Monthly Engagement
                         </h3>
-                        <Line
-                          data={{
-                            labels: monthlyEngagement.map((m) => m.month),
-                            datasets: [
-                              {
-                                label: "Volunteer Hours",
-                                data: monthlyEngagement.map((m) => m.hours),
-                                borderColor: "#10b981",
-                                backgroundColor: "rgba(16, 185, 129, 0.1)",
-                                fill: true,
-                                tension: 0.4,
-                                borderWidth: 2,
+                        <div style={{ height: "200px" }}>
+                          <Line
+                            data={{
+                              labels: monthlyEngagement.map((m) => m.month),
+                              datasets: [
+                                {
+                                  label: "Volunteer Hours",
+                                  data: monthlyEngagement.map((m) => m.hours),
+                                  borderColor: "#10b981",
+                                  backgroundColor: "rgba(16, 185, 129, 0.1)",
+                                  fill: true,
+                                  tension: 0.4,
+                                  borderWidth: 2,
+                                },
+                              ],
+                            }}
+                            options={{
+                              responsive: true,
+                              maintainAspectRatio: true,
+                              plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                  enabled: true,
+                                  backgroundColor: "rgba(0,0,0,0.8)",
+                                  padding: 12,
+                                },
                               },
-                            ],
-                          }}
-                          options={{
-                            responsive: true,
-                            maintainAspectRatio: true,
-                            plugins: {
-                              legend: { display: false },
-                              tooltip: {
-                                enabled: true,
-                                backgroundColor: "rgba(0,0,0,0.8)",
-                                padding: 12,
-                              },
-                            },
-                            scales: { y: { beginAtZero: true } },
-                          }}
-                        />
+                              scales: { y: { beginAtZero: true } },
+                            }}
+                          />
+                        </div>
+                        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                          <p className="text-xs text-gray-700 dark:text-gray-300">
+                            <span className="font-semibold">Insight:</span> November peaked at 2,450 volunteer hours (18% above average). Sustained engagement through year-end demonstrates strong volunteer retention and commitment to organizational mission.
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>

@@ -974,40 +974,40 @@ export default function Dashboard() {
       {/* Dashboard Content Wrapper for PDF Export */}
       <div id="dashboard-content" className="space-y-6">
 
-      {/* Mobile Quick Actions - Grid 2 columns on mobile only */}
+      {/* Mobile Quick Actions - Square grid 2-3 columns */}
       <div className="md:hidden">
-        <div className="grid grid-cols-2 gap-1">
-          <Link href="/log-activity">
-            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform w-full">
-              <Clock className="h-3 w-3 mr-0.5" />
-              Log
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
+          <Link href="/log-activity" className="w-full aspect-square">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+              <Clock className="h-4 w-4" />
+              <span>Log</span>
             </Button>
           </Link>
           {dashboardType === "volunteer" ? (
-            <Link href="/discover-opportunities">
-              <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-amber-50 border-amber-200 text-amber-700 active:scale-95 transition-transform w-full">
-                <Target className="h-3 w-3 mr-0.5" />
-                Find
+            <Link href="/discover-opportunities" className="w-full aspect-square">
+              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-amber-50 border-amber-200 text-amber-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+                <Target className="h-4 w-4" />
+                <span>Find</span>
               </Button>
             </Link>
           ) : (
-            <Link href="/projects">
-              <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-green-50 border-green-200 text-green-700 active:scale-95 transition-transform w-full">
-                <Building2 className="h-3 w-3 mr-0.5" />
-                Projects
+            <Link href="/projects" className="w-full aspect-square">
+              <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-green-50 border-green-200 text-green-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+                <Building2 className="h-4 w-4" />
+                <span>Projects</span>
               </Button>
             </Link>
           )}
-          <Link href="/my-work">
-            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-purple-50 border-purple-200 text-purple-700 active:scale-95 transition-transform w-full">
-              <CheckSquare className="h-3 w-3 mr-0.5" />
-              Work
+          <Link href="/my-work" className="w-full aspect-square">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-purple-50 border-purple-200 text-purple-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+              <CheckSquare className="h-4 w-4" />
+              <span>Work</span>
             </Button>
           </Link>
-          <Link href="/calendar">
-            <Button variant="outline" size="sm" className="min-h-[32px] px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 active:scale-95 transition-transform w-full">
-              <Zap className="h-3 w-3 mr-0.5" />
-              Cal
+          <Link href="/calendar" className="w-full aspect-square">
+            <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-slate-50 border-slate-200 text-slate-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
+              <Zap className="h-4 w-4" />
+              <span>Cal</span>
             </Button>
           </Link>
         </div>

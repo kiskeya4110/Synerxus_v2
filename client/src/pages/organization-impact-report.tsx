@@ -550,10 +550,10 @@ export default function OrganizationImpactReport(
 
   const organizationalPerformance = {
     labels: [
-      "Volunteer Engagement",
-      "Financial Health",
-      "Program Quality",
-      "Community Impact",
+      "Volunteer\nEngagement",
+      "Financial\nHealth",
+      "Program\nQuality",
+      "Community\nImpact",
     ],
     datasets: [
       {
@@ -1256,7 +1256,28 @@ export default function OrganizationImpactReport(
                         </div>
                         <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <p className="text-xs text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold">Insight:</span> Consistent quarterly growth demonstrates strong program expansion. Q4 shows 32% increase in beneficiary reach, indicating successful scaling initiatives and improved community engagement.
+                            <span className="font-semibold">Insight:</span>{" "}
+                            {quarterlyGrowth.length >= 4
+                              ? (() => {
+                                  const q4 = quarterlyGrowth[3];
+                                  const q3 = quarterlyGrowth[2];
+                                  const growth =
+                                    q3 && q3.beneficiaries > 0
+                                      ? Math.round(
+                                          ((q4.beneficiaries - q3.beneficiaries) /
+                                            q3.beneficiaries) *
+                                            100,
+                                        )
+                                      : 0;
+                                  const avg = Math.round(
+                                    quarterlyGrowth.reduce(
+                                      (s, q) => s + (q.beneficiaries || 0),
+                                      0,
+                                    ) / quarterlyGrowth.length,
+                                  );
+                                  return `${q4.beneficiaries} beneficiaries reached in Q4 (${growth}% QoQ). Average quarterly reach: ${avg} beneficiaries.`;
+                                })()
+                              : "Quarterly data available"}
                           </p>
                         </div>
                       </CardContent>
@@ -1325,7 +1346,23 @@ export default function OrganizationImpactReport(
                         </div>
                         <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                           <p className="text-xs text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold">Insight:</span> November peaked at 2,450 volunteer hours (18% above average). Sustained engagement through year-end demonstrates strong volunteer retention and commitment to organizational mission.
+                            <span className="font-semibold">Insight:</span>{" "}
+                            {monthlyEngagement.length > 0
+                              ? (() => {
+                                  const latest =
+                                    monthlyEngagement[monthlyEngagement.length - 1];
+                                  const avg = Math.round(
+                                    monthlyEngagement.reduce(
+                                      (s, m) => s + (m.hours || 0),
+                                      0,
+                                    ) / monthlyEngagement.length,
+                                  );
+                                  const percentAboveAvg = Math.round(
+                                    ((latest.hours - avg) / avg) * 100,
+                                  );
+                                  return `${latest.month} recorded ${latest.hours} volunteer hours (${percentAboveAvg > 0 ? "+" : ""}${percentAboveAvg}% vs avg). Strong engagement sustained.`;
+                                })()
+                              : "Monthly data available"}
                           </p>
                         </div>
                       </CardContent>
@@ -2009,7 +2046,28 @@ export default function OrganizationImpactReport(
                         </div>
                         <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                           <p className="text-xs text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold">Insight:</span> Consistent quarterly growth demonstrates strong program expansion. Q4 shows 32% increase in beneficiary reach, indicating successful scaling initiatives and improved community engagement.
+                            <span className="font-semibold">Insight:</span>{" "}
+                            {quarterlyGrowth.length >= 4
+                              ? (() => {
+                                  const q4 = quarterlyGrowth[3];
+                                  const q3 = quarterlyGrowth[2];
+                                  const growth =
+                                    q3 && q3.beneficiaries > 0
+                                      ? Math.round(
+                                          ((q4.beneficiaries - q3.beneficiaries) /
+                                            q3.beneficiaries) *
+                                            100,
+                                        )
+                                      : 0;
+                                  const avg = Math.round(
+                                    quarterlyGrowth.reduce(
+                                      (s, q) => s + (q.beneficiaries || 0),
+                                      0,
+                                    ) / quarterlyGrowth.length,
+                                  );
+                                  return `${q4.beneficiaries} beneficiaries reached in Q4 (${growth}% QoQ). Average quarterly reach: ${avg} beneficiaries.`;
+                                })()
+                              : "Quarterly data available"}
                           </p>
                         </div>
                       </CardContent>
@@ -2112,7 +2170,23 @@ export default function OrganizationImpactReport(
                         </div>
                         <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                           <p className="text-xs text-gray-700 dark:text-gray-300">
-                            <span className="font-semibold">Insight:</span> November peaked at 2,450 volunteer hours (18% above average). Sustained engagement through year-end demonstrates strong volunteer retention and commitment to organizational mission.
+                            <span className="font-semibold">Insight:</span>{" "}
+                            {monthlyEngagement.length > 0
+                              ? (() => {
+                                  const latest =
+                                    monthlyEngagement[monthlyEngagement.length - 1];
+                                  const avg = Math.round(
+                                    monthlyEngagement.reduce(
+                                      (s, m) => s + (m.hours || 0),
+                                      0,
+                                    ) / monthlyEngagement.length,
+                                  );
+                                  const percentAboveAvg = Math.round(
+                                    ((latest.hours - avg) / avg) * 100,
+                                  );
+                                  return `${latest.month} recorded ${latest.hours} volunteer hours (${percentAboveAvg > 0 ? "+" : ""}${percentAboveAvg}% vs avg). Strong engagement sustained.`;
+                                })()
+                              : "Monthly data available"}
                           </p>
                         </div>
                       </CardContent>

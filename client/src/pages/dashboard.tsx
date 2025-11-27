@@ -1014,7 +1014,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards - Gradient backgrounds for PWA look */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         {dashboardType === "volunteer" ? (
           <>
             <StatsCard

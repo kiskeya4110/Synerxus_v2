@@ -16,6 +16,7 @@ import ProfileOverview from "@/components/dashboard/profile-overview";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import { VolunteerInsightsSection } from "@/components/dashboard/volunteer-insights";
 import ImpactStorytelling from "@/components/impact/impact-storytelling";
+import OrganizationNav from "@/components/layout/organization-nav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";

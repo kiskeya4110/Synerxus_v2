@@ -1118,29 +1118,37 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* Lives Touched Project Breakdown */}
+      {/* Lives Touched Project Breakdown - Shows beneficiaries per project */}
       {dashboardType === "volunteer" && (() => {
-        const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number }>();
+        const projectBeneficiaries = new Map<number, { projectName: string; beneficiaries: number }>();
         const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
         
+        // First pass: Get all projects we have data for
+        (filteredData.projects || []).forEach((project: any) => {
+          projectBeneficiaries.set(project.id, {
+            projectName: project.name,
+            beneficiaries: 0
+          });
+        });
+        
+        // Second pass: Sum beneficiaries for each project from impacts
         (filteredData.impacts || []).forEach((impact: any) => {
           if (!peopleMetricIdsSet.has(impact.metricId)) return;
-          if (impact.projectId !== undefined && impact.projectId !== null) {
-            const projectKey = `project_${impact.projectId}`;
-            const project = filteredData.projects.find((p: any) => p.id === impact.projectId) || projects.find((p: any) => p.id === impact.projectId);
-            
-            if (!beneficiariesByProject.has(projectKey)) {
-              beneficiariesByProject.set(projectKey, {
-                projectName: project?.name || "Unknown Project",
-                beneficiaries: 0
-              });
+          
+          // For each activity (which has projectId), accumulate impact values
+          const activity = (filteredData.activities || []).find((a: any) => a.id === impact.activityId);
+          if (activity && activity.projectId) {
+            const projectId = activity.projectId;
+            if (projectBeneficiaries.has(projectId)) {
+              const projectData = projectBeneficiaries.get(projectId)!;
+              projectData.beneficiaries += impact.value || 0;
             }
-            const projectData = beneficiariesByProject.get(projectKey)!;
-            projectData.beneficiaries += impact.value || 0;
           }
         });
         
-        const projectsArray = Array.from(beneficiariesByProject.values())
+        // Filter to only projects with beneficiaries and sort
+        const projectsArray = Array.from(projectBeneficiaries.values())
+          .filter(p => p.beneficiaries > 0)
           .sort((a, b) => b.beneficiaries - a.beneficiaries);
         
         return projectsArray.length > 0 ? (

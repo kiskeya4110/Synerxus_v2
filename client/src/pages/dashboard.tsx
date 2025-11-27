@@ -1012,20 +1012,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Prominent Impact Card */}
-      {dashboardType === "organization" && (
-        <div className="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600 rounded-xl shadow-lg p-5 md:p-6 text-white mb-4 cursor-pointer hover:shadow-xl transition-shadow" onClick={() => handleKPIClick("Lives Touched", dashboardData?.lifeMetrics?.totalBeneficiariesReached || 0)}>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-white/80 font-medium text-sm md:text-base">Lives Touched</p>
-              <p className="text-3xl md:text-4xl font-bold mt-2">{(dashboardData?.lifeMetrics?.totalBeneficiariesReached || 0).toLocaleString()}+</p>
-              <p className="text-sm text-white/70 mt-2">Total beneficiaries reached</p>
-            </div>
-            <Globe className="h-10 w-10 text-white/30 flex-shrink-0" />
-          </div>
-        </div>
-      )}
-
       {/* KPI Cards - Gradient backgrounds for PWA look */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         {dashboardType === "volunteer" ? (
@@ -1113,6 +1099,15 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-cyan-500 to-cyan-600 dark:from-cyan-600 dark:to-cyan-700"
               data-testid="kpi-sdgs"
+            />
+            <StatsCard
+              title="Lives Touched"
+              value={kpis.livesTouched}
+              icon={<Globe className="h-6 w-6" />}
+              onClick={() => handleKPIClick("Lives Touched", kpis.livesTouched)}
+              compact={true}
+              gradient="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600"
+              data-testid="kpi-lives-touched"
             />
           </>
         )}

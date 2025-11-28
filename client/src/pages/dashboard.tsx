@@ -974,9 +974,9 @@ export default function Dashboard() {
       {/* Dashboard Content Wrapper for PDF Export */}
       <div id="dashboard-content" className="space-y-6">
 
-      {/* Mobile Quick Actions - Grid 2 columns on mobile */}
+      {/* Mobile Quick Actions - Grid 4 columns on mobile */}
       <div className="md:hidden">
-        <div className="grid grid-cols-2 gap-1">
+        <div className="grid grid-cols-4 gap-1">
           <Link href="/log-activity" className="w-full aspect-square">
             <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">
               <Clock className="h-4 w-4" />

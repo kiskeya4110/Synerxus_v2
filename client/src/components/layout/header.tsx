@@ -263,7 +263,7 @@ export default function Header() {
               <Button variant="ghost" size="icon" className="text-gray-500 dark:text-gray-400 focus:outline-none relative hidden md:flex" data-testid="button-notifications">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <Badge variant="destructive" className="absolute -top-3 -right-3 min-h-6 min-w-6 h-6 w-6 flex items-center justify-center p-0 text-[11px] font-bold leading-tight rounded-full">
+                  <Badge variant="destructive" className="absolute -top-2 -right-2 min-h-7 min-w-7 h-7 w-7 flex items-center justify-center px-1 text-xs font-bold leading-none rounded-full">
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </Badge>
                 )}

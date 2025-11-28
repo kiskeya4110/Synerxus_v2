@@ -21,9 +21,7 @@ import {
   FileText,
   Mail,
   Award,
-  Trophy,
-  MoreVertical,
-  TrendingUp
+  Trophy
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
@@ -103,20 +101,34 @@ export default function Sidebar() {
 
   // Volunteer-specific navigation
   const volunteerNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/projects", label: "Projects", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/discover-opportunities", label: "Impact", icon: <TrendingUp className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/organizations", label: "Organizations", icon: <Building2 className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/profile", label: "Menu", icon: <MoreVertical className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
+    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/profile", label: "Profile", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/volunteer-profile-settings", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/discover-opportunities", label: "Find Opportunities", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/impact-visualization", label: "My Impact", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/mobile-data-collection", label: "Log Activity", icon: <Smartphone className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/achievements", label: "Achievements", icon: <Award className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];
 
   // Organization-specific navigation
   const organizationNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/projects", label: "Projects", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/organization-impact-report", label: "Impacts", icon: <TrendingUp className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/dashboard", label: "Dashboard", icon: <Home className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/my-work", label: "My Work", icon: <Briefcase className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/profile", label: "Profile", icon: <UserCircle className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/organization-profile-settings", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/projects", label: "Projects & Tasks", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/volunteers", label: "Volunteers", icon: <Users className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/organization-profile-settings", label: "Menu", icon: <MoreVertical className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
+    { href: "/applications", label: "Applications", icon: <FileText className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/impact-visualization", label: "Impact Visualization", icon: <PieChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/sdg-mapping", label: "SDG Tracking", icon: <Globe className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/field-specific-metrics", label: "Metrics", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/calendar", label: "Calendar", icon: <Calendar className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/organization-leaderboard", label: "Leaderboard", icon: <Trophy className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/email-digests", label: "Email Digests", icon: <Mail className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];
 
   const navItems = userType === 'organization' ? organizationNavItems : volunteerNavItems;

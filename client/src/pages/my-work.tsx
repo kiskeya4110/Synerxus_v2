@@ -126,7 +126,7 @@ export default function MyWork() {
 
   // Fetch organization projects
   const { data: orgProjects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects", currentUser?.organizationId],
+    queryKey: ["/api/projects", { organizationId: currentUser?.organizationId }],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
       const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
@@ -137,10 +137,10 @@ export default function MyWork() {
 
   // Fetch all volunteers for organization (use org-specific endpoint)
   const { data: orgVolunteers = [] } = useQuery<any[]>({
-    queryKey: ["/api/organizations/:id/volunteers", currentUser?.organizationId],
+    queryKey: ["/api/volunteers", { organizationId: currentUser?.organizationId }],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/organizations/${currentUser.organizationId}/volunteers`);
+      const response = await fetch(`/api/volunteers?organizationId=${currentUser.organizationId}`);
       if (!response.ok) return [];
       return response.json();
     },
@@ -152,10 +152,9 @@ export default function MyWork() {
     queryKey: ["/api/volunteer-activities", currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
-      const response = await fetch("/api/volunteer-activities");
+      const response = await fetch(`/api/volunteer-activities?organizationId=${currentUser.organizationId}`);
       if (!response.ok) return [];
-      const allActivities = await response.json();
-      return allActivities.filter((a: any) => orgProjects.some(p => p.id === a.projectId));
+      return response.json();
     },
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
   });

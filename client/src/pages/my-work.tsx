@@ -387,11 +387,11 @@ export default function MyWork() {
             </Button>
           </Link>
         ) : (
-          <Link href="/impact-visualization">
+          <Link href="/impact-report">
             <Button variant="outline" size="sm" className="gap-2">
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">Share Impact Report</span>
-              <span className="sm:hidden">Impact</span>
+              <span className="sm:hidden">Report</span>
             </Button>
           </Link>
         )}

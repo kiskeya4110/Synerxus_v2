@@ -588,25 +588,44 @@ export default function MyWork() {
             </Link>
           </div>
           
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-left">Your Organization KPIs</h3>
-            <div className="bg-white dark:bg-slate-800 rounded-lg p-4 space-y-3">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Total Volunteers</span>
-                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{orgVolunteers.length}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Active Projects</span>
-                <span className="text-2xl font-bold text-green-600 dark:text-green-400">{orgTotalProjects}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-gray-600 dark:text-gray-400">Total Volunteer Hours</span>
-                <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">{orgTotalHours.toFixed(0)}h</span>
-              </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600 dark:text-gray-400">Completed Projects</span>
-                <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">{orgCompletedProjects}</span>
-              </div>
+          <div className="mt-8 px-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-left px-2">Your Organization KPIs</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {/* Total Volunteers */}
+              <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20" data-testid="kpi-total-volunteers">
+                <CardContent className="pt-4">
+                  <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Total Volunteers</p>
+                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{orgVolunteers.length}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Active contributors</p>
+                </CardContent>
+              </Card>
+
+              {/* Active Projects */}
+              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20" data-testid="kpi-active-projects">
+                <CardContent className="pt-4">
+                  <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">Active Projects</p>
+                  <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{orgTotalProjects}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Ongoing initiatives</p>
+                </CardContent>
+              </Card>
+
+              {/* Total Volunteer Hours */}
+              <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20" data-testid="kpi-total-hours">
+                <CardContent className="pt-4">
+                  <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Total Hours</p>
+                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">{Math.round(orgTotalHours)}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Volunteer hours logged</p>
+                </CardContent>
+              </Card>
+
+              {/* Completed Projects */}
+              <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20" data-testid="kpi-completed-projects">
+                <CardContent className="pt-4">
+                  <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide">Completed Projects</p>
+                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-2">{orgCompletedProjects}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Projects finished</p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

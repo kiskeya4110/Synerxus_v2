@@ -105,7 +105,8 @@ export default function Sidebar() {
   const volunteerNavItems = [
     { href: "/dashboard", label: "Dashboard", icon: <BarChart className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/projects", label: "Projects", icon: <FolderKanban className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
-    { href: "/discover-opportunities", label: "Impact", icon: <TrendingUp className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/discover-opportunities", label: "Discover", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/my-work", label: "My Work", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/organizations", label: "Organizations", icon: <Building2 className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/profile", label: "Menu", icon: <MoreVertical className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];

@@ -58,8 +58,8 @@ export default function ProfileOverview({ userId, userType }: ProfileOverviewPro
     }
   });
 
-  const volunteerProfile = volunteerData;
-  const orgProfile = orgData?.organization;
+  const volunteerProfile = volunteerData?.volunteerProfile || volunteerData;
+  const orgProfile = orgData?.organization || orgData;
 
   const isLoading = isLoadingUser || isLoadingProfile || isLoadingOrgProfile;
   const isVolunteer = userType === 'volunteer';

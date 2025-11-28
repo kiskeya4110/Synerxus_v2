@@ -108,6 +108,7 @@ export default function Sidebar() {
     { href: "/discover-opportunities", label: "Discover", icon: <Search className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/my-work", label: "My Work", icon: <CheckSquare className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/organizations", label: "Organizations", icon: <Building2 className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
+    { href: "/volunteer-intake", label: "Settings", icon: <Settings className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> },
     { href: "/profile", label: "Menu", icon: <MoreVertical className="w-5 h-5 sm:w-4 sm:h-4 mr-3" /> }
   ];
 

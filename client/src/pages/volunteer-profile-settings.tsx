@@ -1247,6 +1247,19 @@ export default function VolunteerProfileSettings() {
                 removeInterest={removeInterest}
               />
               <SDGGoalsSection form={form} />
+              
+              {/* Employer Linking - Optional for employees of CSR partners */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold mb-4">Corporate Employer Link (Optional)</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  If you work for a company with a CSR program, link your account to track your impact through their initiatives.
+                </p>
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    Coming soon: Corporate employer directory for seamless linking. For now, ask your HR department for a link code.
+                  </p>
+                </div>
+              </div>
 
               <div className="flex gap-3 pt-4">
                 <Button

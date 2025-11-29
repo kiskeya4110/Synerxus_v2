@@ -5057,20 +5057,40 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         return res.status(400).json({ error: "userId required" });
       }
 
-      const csrPartners = await storage.listCSRPartners?.() || [];
+      // Get the CSR partner for this user
+      const allPartners = await storage.listCSRPartners?.() || [];
+      const userPartner = allPartners.find((p: any) => p.userId === parseInt(userId));
+      if (!userPartner) {
+        return res.json({
+          totalPartners: 0,
+          activeEmployees: 0,
+          totalHours: 0,
+          totalImpact: 0,
+          sdgProgress: {},
+          partners: [],
+          challenges: [],
+          leaderboard: []
+        });
+      }
+
       const employeeEngagement = await storage.listEmployeeEngagement?.() || [];
       const csrChallenges = await storage.listCSRChallenges?.() || [];
       const projectBudgetLinks = await storage.listProjectBudgetLinks?.() || [];
 
+      // Filter data for this partner only
+      const partnerEngagement = employeeEngagement.filter((e: any) => e.partnerId === userPartner.id);
+      const partnerChallenges = csrChallenges.filter((c: any) => c.partnerId === userPartner.id);
+      const partnerBudgets = projectBudgetLinks.filter((b: any) => b.partnerId === userPartner.id);
+
       // Calculate KPIs
-      const totalPartners = csrPartners.length;
-      const activeEmployees = new Set(employeeEngagement.map((e: any) => e.employeeEmail)).size;
-      const totalHours = employeeEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
-      const totalRoi = projectBudgetLinks.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
+      const totalPartners = 1; // Their own company
+      const activeEmployees = new Set(partnerEngagement.map((e: any) => e.employeeEmail)).size;
+      const totalHours = partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
+      const totalRoi = partnerBudgets.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
 
       // SDG Progress (aggregate from challenges)
       const sdgProgress: Record<number, any> = {};
-      csrChallenges.forEach((challenge: any) => {
+      partnerChallenges.forEach((challenge: any) => {
         const sdg = challenge.sdgGoal;
         if (!sdgProgress[sdg]) {
           sdgProgress[sdg] = {
@@ -5087,7 +5107,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       });
 
       // Top employees leaderboard
-      const leaderboard = employeeEngagement
+      const leaderboard = partnerEngagement
         .sort((a: any, b: any) => (b.hoursVolunteered || 0) - (a.hoursVolunteered || 0))
         .slice(0, 5)
         .map((emp: any, idx: number) => ({
@@ -5103,18 +5123,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         totalHours,
         totalImpact: totalRoi,
         sdgProgress,
-        partners: csrPartners.map((p: any) => ({
-          id: p.id,
-          companyName: p.companyName,
-          employees: (employeeEngagement.filter((e: any) => e.partnerId === p.id) || []).length,
-          hours: employeeEngagement
-            .filter((e: any) => e.partnerId === p.id)
-            .reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
-          roi: projectBudgetLinks
-            .filter((b: any) => b.partnerId === p.id)
-            .reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0)
-        })),
-        challenges: csrChallenges.map((c: any) => ({
+        partners: [{
+          id: userPartner.id,
+          companyName: userPartner.companyName,
+          employees: activeEmployees,
+          hours: totalHours,
+          roi: totalRoi
+        }],
+        challenges: partnerChallenges.map((c: any) => ({
           id: c.id,
           title: c.title,
           sdgGoal: c.sdgGoal,

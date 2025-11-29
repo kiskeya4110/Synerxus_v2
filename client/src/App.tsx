@@ -39,6 +39,7 @@ import OrganizationLeaderboard from "@/pages/organization-leaderboard";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
 import SDGMapping from "@/pages/sdg-mapping";
 import CSRDashboard from "@/pages/csr-dashboard";
+import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
 import NotFound from "@/pages/not-found";
 
 function RootRedirectRoute() {
@@ -80,7 +81,10 @@ function RootRedirectRoute() {
           
           if (!isIntakeComplete) {
             // Redirect to intake if not complete
-            const intakePath = userType === 'volunteer' ? '/volunteer-intake' : '/organization-intake';
+            let intakePath = '/dashboard';
+            if (userType === 'volunteer') intakePath = '/volunteer-intake';
+            else if (userType === 'organization') intakePath = '/organization-intake';
+            else if (userType === 'corporate-partner') intakePath = '/corporate-partner-intake';
             setLocation(intakePath);
           } else {
             // Intake complete, go to dashboard
@@ -134,6 +138,7 @@ function LayoutRoute() {
       <Route path="/projects/:id" component={ProjectDetail} />
       <Route path="/volunteer-intake" component={VolunteerIntake} />
       <Route path="/organization-intake" component={OrganizationIntake} />
+      <Route path="/corporate-partner-intake" component={CorporatePartnerIntake} />
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route path="/opportunities/:id" component={OpportunityDetail} />

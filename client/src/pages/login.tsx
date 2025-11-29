@@ -236,6 +236,8 @@ export default function Login() {
           setLocation("/volunteer-intake");
         } else if (userType === 'organization') {
           setLocation("/organization-intake");
+        } else if (userType === 'corporate-partner') {
+          setLocation("/corporate-partner-intake");
         } else {
           setLocation("/dashboard");
         }
@@ -391,6 +393,20 @@ export default function Login() {
                         </div>
                       </div>
                     </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="w-full h-20 text-left justify-start border-blue-200 dark:border-blue-800"
+                      onClick={() => setUserType("corporate-partner")}
+                      data-testid="button-register-corporate"
+                    >
+                      <div>
+                        <div className="font-semibold text-base">I'm a Corporate Partner</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          Manage employee volunteer programs
+                        </div>
+                      </div>
+                    </Button>
                   </div>
                 ) : (
                   <form onSubmit={handleSignUp}>
@@ -406,12 +422,12 @@ export default function Login() {
                         ← Back to account type selection
                       </Button>
                       
-                      {userType === "organization" && (
+                      {(userType === "organization" || userType === "corporate-partner") && (
                         <div className="space-y-2">
-                          <Label htmlFor="org-name">Organization Name</Label>
+                          <Label htmlFor="org-name">{userType === "corporate-partner" ? "Company Name" : "Organization Name"}</Label>
                           <Input 
                             id="org-name" 
-                            placeholder="Global Impact Foundation" 
+                            placeholder={userType === "corporate-partner" ? "Acme Corp" : "Global Impact Foundation"} 
                             value={organizationName}
                             onChange={(e) => setOrganizationName(e.target.value)}
                             disabled={isLoading}
@@ -502,7 +518,7 @@ export default function Login() {
                         </div>
                       </div>
                       <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-submit-register">
-                        {isLoading ? "Creating account..." : `Create ${userType === "volunteer" ? "Volunteer" : "Organization"} Account`}
+                        {isLoading ? "Creating account..." : `Create ${userType === "volunteer" ? "Volunteer" : userType === "corporate-partner" ? "Corporate" : "Organization"} Account`}
                       </Button>
                     </div>
                   </form>

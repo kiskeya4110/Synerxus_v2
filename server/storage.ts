@@ -20,6 +20,11 @@ import {
   messages,
   notifications,
   userDataAuditLogs,
+  csrPartners,
+  employeeEngagement,
+  csrChallenges,
+  projectBudgetLinks,
+  verifiedOutputs,
   type User, 
   type InsertUser,
   type Organization,
@@ -61,7 +66,17 @@ import {
   type Notification,
   type InsertNotification,
   type UserDataAuditLog,
-  type InsertUserDataAuditLog
+  type InsertUserDataAuditLog,
+  type CSRPartner,
+  type InsertCSRPartner,
+  type EmployeeEngagement,
+  type InsertEmployeeEngagement,
+  type CSRChallenge,
+  type InsertCSRChallenge,
+  type ProjectBudgetLink,
+  type InsertProjectBudgetLink,
+  type VerifiedOutput,
+  type InsertVerifiedOutput
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
@@ -242,6 +257,36 @@ export interface IStorage {
   getUnresolvedDiscrepancies(userId?: number): Promise<UserDataAuditLog[]>;
   getDiscrepancyById(id: number): Promise<UserDataAuditLog | undefined>;
   resolveDiscrepancy(id: number, resolvedBy: number): Promise<UserDataAuditLog | undefined>;
+
+  // CSR Partner operations
+  createCSRPartner(partner: InsertCSRPartner): Promise<CSRPartner>;
+  listCSRPartners(): Promise<CSRPartner[]>;
+  getCSRPartner(id: number): Promise<CSRPartner | undefined>;
+  updateCSRPartner(id: number, partner: Partial<InsertCSRPartner>): Promise<CSRPartner | undefined>;
+
+  // Employee Engagement operations
+  createEmployeeEngagement(engagement: InsertEmployeeEngagement): Promise<EmployeeEngagement>;
+  listEmployeeEngagement(): Promise<EmployeeEngagement[]>;
+  getEmployeeEngagement(id: number): Promise<EmployeeEngagement | undefined>;
+  updateEmployeeEngagement(id: number, engagement: Partial<InsertEmployeeEngagement>): Promise<EmployeeEngagement | undefined>;
+
+  // CSR Challenge operations
+  createCSRChallenge(challenge: InsertCSRChallenge): Promise<CSRChallenge>;
+  listCSRChallenges(): Promise<CSRChallenge[]>;
+  getCSRChallenge(id: number): Promise<CSRChallenge | undefined>;
+  updateCSRChallenge(id: number, challenge: Partial<InsertCSRChallenge>): Promise<CSRChallenge | undefined>;
+
+  // Project Budget Link operations
+  createProjectBudgetLink(link: InsertProjectBudgetLink): Promise<ProjectBudgetLink>;
+  listProjectBudgetLinks(): Promise<ProjectBudgetLink[]>;
+  getProjectBudgetLink(id: number): Promise<ProjectBudgetLink | undefined>;
+  updateProjectBudgetLink(id: number, link: Partial<InsertProjectBudgetLink>): Promise<ProjectBudgetLink | undefined>;
+
+  // Verified Output operations
+  createVerifiedOutput(output: InsertVerifiedOutput): Promise<VerifiedOutput>;
+  listVerifiedOutputs(): Promise<VerifiedOutput[]>;
+  getVerifiedOutput(id: number): Promise<VerifiedOutput | undefined>;
+  updateVerifiedOutput(id: number, output: Partial<InsertVerifiedOutput>): Promise<VerifiedOutput | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1107,6 +1152,106 @@ export class DatabaseStorage implements IStorage {
       .set({ resolvedAt: new Date(), resolvedBy })
       .where(eq(userDataAuditLogs.id, id))
       .returning();
+    return result || undefined;
+  }
+
+  // CSR Partner operations
+  async createCSRPartner(partner: InsertCSRPartner): Promise<CSRPartner> {
+    const [result] = await db.insert(csrPartners).values(partner).returning();
+    return result;
+  }
+
+  async listCSRPartners(): Promise<CSRPartner[]> {
+    return await db.select().from(csrPartners);
+  }
+
+  async getCSRPartner(id: number): Promise<CSRPartner | undefined> {
+    const [result] = await db.select().from(csrPartners).where(eq(csrPartners.id, id));
+    return result || undefined;
+  }
+
+  async updateCSRPartner(id: number, partner: Partial<InsertCSRPartner>): Promise<CSRPartner | undefined> {
+    const [result] = await db.update(csrPartners).set(partner).where(eq(csrPartners.id, id)).returning();
+    return result || undefined;
+  }
+
+  // Employee Engagement operations
+  async createEmployeeEngagement(engagement: InsertEmployeeEngagement): Promise<EmployeeEngagement> {
+    const [result] = await db.insert(employeeEngagement).values(engagement).returning();
+    return result;
+  }
+
+  async listEmployeeEngagement(): Promise<EmployeeEngagement[]> {
+    return await db.select().from(employeeEngagement);
+  }
+
+  async getEmployeeEngagement(id: number): Promise<EmployeeEngagement | undefined> {
+    const [result] = await db.select().from(employeeEngagement).where(eq(employeeEngagement.id, id));
+    return result || undefined;
+  }
+
+  async updateEmployeeEngagement(id: number, engagement: Partial<InsertEmployeeEngagement>): Promise<EmployeeEngagement | undefined> {
+    const [result] = await db.update(employeeEngagement).set(engagement).where(eq(employeeEngagement.id, id)).returning();
+    return result || undefined;
+  }
+
+  // CSR Challenge operations
+  async createCSRChallenge(challenge: InsertCSRChallenge): Promise<CSRChallenge> {
+    const [result] = await db.insert(csrChallenges).values(challenge).returning();
+    return result;
+  }
+
+  async listCSRChallenges(): Promise<CSRChallenge[]> {
+    return await db.select().from(csrChallenges);
+  }
+
+  async getCSRChallenge(id: number): Promise<CSRChallenge | undefined> {
+    const [result] = await db.select().from(csrChallenges).where(eq(csrChallenges.id, id));
+    return result || undefined;
+  }
+
+  async updateCSRChallenge(id: number, challenge: Partial<InsertCSRChallenge>): Promise<CSRChallenge | undefined> {
+    const [result] = await db.update(csrChallenges).set(challenge).where(eq(csrChallenges.id, id)).returning();
+    return result || undefined;
+  }
+
+  // Project Budget Link operations
+  async createProjectBudgetLink(link: InsertProjectBudgetLink): Promise<ProjectBudgetLink> {
+    const [result] = await db.insert(projectBudgetLinks).values(link).returning();
+    return result;
+  }
+
+  async listProjectBudgetLinks(): Promise<ProjectBudgetLink[]> {
+    return await db.select().from(projectBudgetLinks);
+  }
+
+  async getProjectBudgetLink(id: number): Promise<ProjectBudgetLink | undefined> {
+    const [result] = await db.select().from(projectBudgetLinks).where(eq(projectBudgetLinks.id, id));
+    return result || undefined;
+  }
+
+  async updateProjectBudgetLink(id: number, link: Partial<InsertProjectBudgetLink>): Promise<ProjectBudgetLink | undefined> {
+    const [result] = await db.update(projectBudgetLinks).set(link).where(eq(projectBudgetLinks.id, id)).returning();
+    return result || undefined;
+  }
+
+  // Verified Output operations
+  async createVerifiedOutput(output: InsertVerifiedOutput): Promise<VerifiedOutput> {
+    const [result] = await db.insert(verifiedOutputs).values(output).returning();
+    return result;
+  }
+
+  async listVerifiedOutputs(): Promise<VerifiedOutput[]> {
+    return await db.select().from(verifiedOutputs);
+  }
+
+  async getVerifiedOutput(id: number): Promise<VerifiedOutput | undefined> {
+    const [result] = await db.select().from(verifiedOutputs).where(eq(verifiedOutputs.id, id));
+    return result || undefined;
+  }
+
+  async updateVerifiedOutput(id: number, output: Partial<InsertVerifiedOutput>): Promise<VerifiedOutput | undefined> {
+    const [result] = await db.update(verifiedOutputs).set(output).where(eq(verifiedOutputs.id, id)).returning();
     return result || undefined;
   }
 }

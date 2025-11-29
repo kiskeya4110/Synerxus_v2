@@ -589,7 +589,7 @@ export default function MyWork() {
           
           <div className="mt-8 px-2">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-left px-2">Your Organization KPIs</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Total Volunteers */}
               <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20" data-testid="kpi-total-volunteers">
                 <CardContent className="pt-4">

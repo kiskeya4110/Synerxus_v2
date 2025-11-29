@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
-import { TrendingUp, Users, Award, Target, BarChart3, PieChart, Download, Plus, Filter } from "lucide-react";
+import { useLocation } from "wouter";
+import { TrendingUp, Users, Award, Target, BarChart3, Globe, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 
 interface CSRDashboardData {
   totalPartners: number;
@@ -39,11 +39,10 @@ interface CSRDashboardData {
 }
 
 export default function CSRDashboard() {
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [showNewPartner, setShowNewPartner] = useState(false);
-  const [selectedPartner, setSelectedPartner] = useState<string>("all");
-
   const userId = localStorage.getItem('currentUserId');
+
   const { data: csrData, isLoading } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId],
     queryFn: async () => {
@@ -54,11 +53,28 @@ export default function CSRDashboard() {
     enabled: !!userId,
   });
 
+  // Mock data for engagement funnel
+  const engagementFunnel = [
+    { stage: "Eligible", count: 1500, percentage: 100 },
+    { stage: "Registered", count: 890, percentage: 59 },
+    { stage: "1+ Project", count: 650, percentage: 43 },
+    { stage: "Retained", count: 590, percentage: 39 }
+  ];
+
+  // SDG chart data
+  const sdgChartData = csrData?.sdgProgress 
+    ? Object.values(csrData.sdgProgress).map(sdg => ({
+        name: `SDG ${sdg.goal}`,
+        value: sdg.progress,
+        color: sdg.color
+      }))
+    : [];
+
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
         <Skeleton className="h-10 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
         </div>
       </div>
@@ -66,291 +82,243 @@ export default function CSRDashboard() {
   }
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="px-6 pt-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Corporate CSR Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Track impact, manage partnerships, and engage employees</p>
+      <div className="bg-slate-900 dark:bg-slate-950 text-white px-8 py-6 flex items-center justify-between border-b border-slate-700">
+        <div className="flex-1">
+          <h1 className="text-2xl font-bold">Corporate CSR Dashboard</h1>
+          <p className="text-sm text-slate-400 mt-1">Manage your global volunteer impact program</p>
         </div>
-        <Dialog open={showNewPartner} onOpenChange={setShowNewPartner}>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Partner
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Onboard New CSR Partner</DialogTitle>
-              <DialogDescription>
-                Add a corporate partner to track their volunteer program and impact.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <input type="text" placeholder="Company Name" className="w-full px-3 py-2 border rounded-lg" />
-              <input type="email" placeholder="Contact Email" className="w-full px-3 py-2 border rounded-lg" />
-              <input type="number" placeholder="Annual CSR Budget" className="w-full px-3 py-2 border rounded-lg" />
-              <Button onClick={() => setShowNewPartner(false)} className="w-full">Create Partner</Button>
+        <div className="flex items-center gap-6 text-sm">
+          <div className="text-right">
+            <p className="text-slate-400">Current Date</p>
+            <p className="font-semibold">{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          </div>
+          <div className="flex items-center gap-3 pl-6 border-l border-slate-700">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center font-bold">
+              {user?.displayName?.[0]?.toUpperCase() || 'A'}
             </div>
-          </DialogContent>
-        </Dialog>
+            <div>
+              <p className="text-slate-400">Admin</p>
+              <p className="font-semibold">{user?.displayName || 'User'}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="px-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Partners</p>
-                <p className="text-3xl font-bold mt-2">{csrData?.totalPartners || 0}</p>
-              </div>
-              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Main Content */}
+      <div className="p-8">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-4 gap-6 mb-8">
+          <Card className="bg-slate-800 dark:bg-slate-800 border-slate-700 text-white">
+            <CardContent className="p-6">
+              <p className="text-sm text-slate-400 mb-2">Total Hours Logged</p>
+              <p className="text-4xl font-bold">{csrData?.totalHours.toLocaleString() || '0'}</p>
+              <p className="text-xs text-green-400 mt-2">↑ 12% from last quarter</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Engaged Employees</p>
-                <p className="text-3xl font-bold mt-2">{csrData?.activeEmployees || 0}</p>
-              </div>
-              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                <Award className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-slate-800 dark:bg-slate-800 border-slate-700 text-white">
+            <CardContent className="p-6">
+              <p className="text-sm text-slate-400 mb-2">Employees Engaged</p>
+              <p className="text-4xl font-bold">{csrData?.activeEmployees || '0'}</p>
+              <p className="text-xs text-green-400 mt-2">↑ 8% from last quarter</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Hours</p>
-                <p className="text-3xl font-bold mt-2">{csrData?.totalHours || 0}</p>
-              </div>
-              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-slate-800 dark:bg-slate-800 border-slate-700 text-white">
+            <CardContent className="p-6">
+              <p className="text-sm text-slate-400 mb-2">Projects Completed</p>
+              <p className="text-4xl font-bold">{csrData?.partners.length || '0'}</p>
+              <p className="text-xs text-green-400 mt-2">↑ 5% from last quarter</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total ROI</p>
-                <p className="text-3xl font-bold mt-2">${(csrData?.totalImpact || 0).toLocaleString()}</p>
-              </div>
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                <BarChart3 className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="bg-slate-800 dark:bg-slate-800 border-slate-700 text-white">
+            <CardContent className="p-6">
+              <p className="text-sm text-slate-400 mb-2">SDG Score Delta</p>
+              <p className="text-4xl font-bold">+15%</p>
+              <p className="text-xs text-slate-400 mt-2">Q3 Performance</p>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Main Tabs */}
-      <div className="px-6">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="partners">Partners</TabsTrigger>
-            <TabsTrigger value="challenges">Challenges</TabsTrigger>
-            <TabsTrigger value="reporting">Reports</TabsTrigger>
-          </TabsList>
+        {/* Main Grid: 2x2 */}
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          {/* SDG Alignment Dashboard */}
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-lg">SDG Alignment Dashboard</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              {sdgChartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={sdgChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={80}
+                      outerRadius={120}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {sdgChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-12 text-gray-400">No SDG data available</div>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            {/* SDG Progress */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  SDG Alignment Progress
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {csrData?.sdgProgress && Object.values(csrData.sdgProgress).map((sdg: any) => (
-                    <div key={sdg.goal} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">SDG #{sdg.goal}: {sdg.name}</span>
-                        <span className="text-sm font-bold">{sdg.progress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className="h-2 rounded-full transition-all"
-                          style={{
-                            width: `${sdg.progress}%`,
-                            backgroundColor: sdg.color,
-                          }}
-                        />
-                      </div>
+          {/* Geographic Impact by Region */}
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-lg">Geographic Impact</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Globe className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <p className="font-semibold text-sm">Major Impact Regions</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">North America, Europe, Asia</p>
                     </div>
-                  ))}
+                  </div>
+                  <Badge className="bg-green-600">Active</Badge>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Employee Leaderboard */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5" />
-                  Top Engaged Employees
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+                
                 <div className="space-y-3">
-                  {csrData?.leaderboard && csrData.leaderboard.slice(0, 5).map((emp: any) => (
-                    <div key={emp.rank} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Badge className="bg-blue-600">{emp.rank}</Badge>
-                        <div>
-                          <p className="font-medium">{emp.employeeName}</p>
-                          <p className="text-xs text-muted-foreground">{emp.hours} hours • {emp.points} points</p>
-                        </div>
-                      </div>
-                      <TrendingUp className="h-5 w-5 text-green-600" />
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>North America</span>
+                      <span className="font-semibold">45%</span>
                     </div>
-                  ))}
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="bg-blue-600 h-2 rounded-full" style={{ width: '45%' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Europe</span>
+                      <span className="font-semibold">35%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="bg-green-600 h-2 rounded-full" style={{ width: '35%' }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Asia Pacific</span>
+                      <span className="font-semibold">20%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="bg-orange-600 h-2 rounded-full" style={{ width: '20%' }} />
+                    </div>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Partners Tab */}
-          <TabsContent value="partners" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {csrData?.partners && csrData.partners.map((partner: any) => (
-                <Card key={partner.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="text-lg">{partner.companyName}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Employees</p>
-                        <p className="text-xl font-bold">{partner.employees}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Hours</p>
-                        <p className="text-xl font-bold">{partner.hours}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">ROI</p>
-                        <p className="text-xl font-bold">${(partner.roi / 1000).toFixed(1)}K</p>
-                      </div>
+          {/* Employee Engagement Funnel */}
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-lg">Employee Engagement Funnel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {engagementFunnel.map((stage, idx) => (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">{stage.stage}</span>
+                      <span className="text-gray-500 dark:text-gray-400">({stage.count.toLocaleString()})</span>
                     </div>
-                    <Button variant="outline" className="w-full" size="sm">
-                      View Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div
+                        className={`h-3 rounded-full transition-all ${
+                          idx === 0 ? 'bg-blue-600' :
+                          idx === 1 ? 'bg-blue-500' :
+                          idx === 2 ? 'bg-blue-400' :
+                          'bg-blue-300'
+                        }`}
+                        style={{ width: `${stage.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Challenges Tab */}
-          <TabsContent value="challenges" className="space-y-6 mt-6">
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create Challenge
-            </Button>
+          {/* Pending Admin Actions */}
+          <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-lg">Pending Admin Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-amber-900 dark:text-amber-100">Review NGO: Green Earth</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-200">Pending approval</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <Clock className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-blue-900 dark:text-blue-100">Approve Impact: Solarize Africa</p>
+                    <p className="text-xs text-blue-700 dark:text-blue-200">Due in 2 days</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm text-green-900 dark:text-green-100">AI Flag: Project Alpha</p>
+                    <p className="text-xs text-green-700 dark:text-green-200">Auto-review complete</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Bottom Section: Employee Leaderboard */}
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5" />
+              Top Engaged Employees
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-3">
-              {csrData?.challenges && csrData.challenges.map((challenge: any) => (
-                <Card key={challenge.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold">{challenge.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">SDG #{challenge.sdgGoal}</p>
-                      </div>
-                      <Badge variant={challenge.status === 'active' ? 'default' : 'secondary'}>
-                        {challenge.status}
-                      </Badge>
+              {csrData?.leaderboard && csrData.leaderboard.slice(0, 5).map((emp, idx) => (
+                <div key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      {emp.rank}
                     </div>
-                    <div className="mt-3 space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Progress</span>
-                        <span className="font-medium">{challenge.progress}/{challenge.target} hours</span>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className="h-2 rounded-full bg-green-500 transition-all"
-                          style={{
-                            width: `${Math.min((challenge.progress / challenge.target) * 100, 100)}%`,
-                          }}
-                        />
-                      </div>
+                    <div>
+                      <p className="font-semibold">{emp.employeeName}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{emp.hours} hours • {emp.points} points</p>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                </div>
               ))}
             </div>
-          </TabsContent>
-
-          {/* Reports Tab */}
-          <TabsContent value="reporting" className="space-y-6 mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Export Impact Report</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Select Report Type</label>
-                  <select className="w-full px-3 py-2 border rounded-lg">
-                    <option>Executive Summary</option>
-                    <option>Detailed Impact Report</option>
-                    <option>Employee Engagement Report</option>
-                    <option>SDG Alignment Report</option>
-                    <option>ROI Analysis Report</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Date Range</label>
-                  <input type="date" className="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <Button className="w-full gap-2 bg-green-600 hover:bg-green-700">
-                  <Download className="h-4 w-4" />
-                  Generate PDF Report
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Verification Status */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Output Verification Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Pending Verification</p>
-                      <p className="text-sm text-muted-foreground">Awaiting audit approval</p>
-                    </div>
-                    <Badge variant="outline" className="bg-amber-100">12</Badge>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border rounded-lg">
-                    <div>
-                      <p className="font-medium">Verified Outputs</p>
-                      <p className="text-sm text-muted-foreground">Audit-ready data</p>
-                    </div>
-                    <Badge className="bg-green-600">48</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

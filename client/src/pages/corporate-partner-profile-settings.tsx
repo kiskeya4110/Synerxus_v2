@@ -192,7 +192,17 @@ export default function CorporatePartnerProfileSettings() {
   });
 
   async function onSubmit(data: CorporatePartnerForm) {
-    updatePartnerMutation.mutate({ ...data, primarySdgs: selectedSdgs });
+    // Use selected SDGs, or fall back to existing profile SDGs if not changed
+    const sdgsToSave = selectedSdgs.length > 0 ? selectedSdgs : (partnerProfile?.primarySdgs || []);
+    if (sdgsToSave.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one SDG focus area",
+        variant: "destructive"
+      });
+      return;
+    }
+    updatePartnerMutation.mutate({ ...data, primarySdgs: sdgsToSave });
   }
 
   if (isLoading) {
@@ -362,7 +372,8 @@ export default function CorporatePartnerProfileSettings() {
                   <Button
                     type="submit"
                     className="ml-auto"
-                    disabled={updatePartnerMutation.isPending || selectedSdgs.length === 0}
+                    disabled={updatePartnerMutation.isPending || (selectedSdgs.length === 0 && !partnerProfile?.primarySdgs?.length)}
+                    data-testid="button-save-corporate-profile"
                   >
                     {updatePartnerMutation.isPending ? "Updating..." : "Save Changes"}
                   </Button>

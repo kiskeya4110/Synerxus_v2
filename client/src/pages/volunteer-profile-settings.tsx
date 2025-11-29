@@ -999,6 +999,14 @@ export default function VolunteerProfileSettings() {
         title: `Profile ${existingProfile ? "updated" : "created"}!`,
         description: `Your volunteer profile has been ${existingProfile ? "updated" : "created"} successfully.`,
       });
+      
+      // Redirect to volunteer dashboard after successful save
+      setTimeout(() => {
+        const navigate = (window as any).__wouter_setLocation || (() => window.location.href = '/volunteer-dashboard');
+        if (typeof navigate === 'function') {
+          navigate('/volunteer-dashboard');
+        }
+      }, 500);
     },
     onError: (error: Error) => {
       console.error("Profile save error:", error);

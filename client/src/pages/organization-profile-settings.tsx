@@ -191,6 +191,9 @@ export default function OrganizationProfileSettings() {
         title: "Profile updated!",
         description: "Your organization profile has been updated successfully.",
       });
+      
+      // Redirect to organization dashboard after successful save
+      setTimeout(() => setLocation("/organization-dashboard"), 500);
     },
     onError: (error: Error) => {
       console.error("Profile update error:", error);

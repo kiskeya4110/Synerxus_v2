@@ -630,7 +630,7 @@ export default function MyWork() {
         </div>
       ) : (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-20 md:pb-4">
-          <TabsList className="grid w-full max-w-2xl grid-cols-4 mb-4 sm:mb-6">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3 md:grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="applications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-applications">
               <Briefcase className="h-4 w-4" />
               <span>Apps</span>

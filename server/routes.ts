@@ -5047,5 +5047,263 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // ==================== CSR Dashboard Routes ====================
+  
+  // Get CSR Dashboard Summary
+  app.get("/api/csr/dashboard", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ error: "userId required" });
+      }
+
+      const csrPartners = await storage.listCSRPartners?.() || [];
+      const employeeEngagement = await storage.listEmployeeEngagement?.() || [];
+      const csrChallenges = await storage.listCSRChallenges?.() || [];
+      const projectBudgetLinks = await storage.listProjectBudgetLinks?.() || [];
+
+      // Calculate KPIs
+      const totalPartners = csrPartners.length;
+      const activeEmployees = new Set(employeeEngagement.map((e: any) => e.employeeEmail)).size;
+      const totalHours = employeeEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
+      const totalRoi = projectBudgetLinks.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
+
+      // SDG Progress (aggregate from challenges)
+      const sdgProgress: Record<number, any> = {};
+      csrChallenges.forEach((challenge: any) => {
+        const sdg = challenge.sdgGoal;
+        if (!sdgProgress[sdg]) {
+          sdgProgress[sdg] = {
+            goal: sdg,
+            name: `Goal ${sdg}`,
+            color: `hsl(${sdg * 40}, 70%, 50%)`,
+            progress: 0
+          };
+        }
+        sdgProgress[sdg].progress = Math.min(
+          100,
+          (challenge.currentHours || 0) / (challenge.targetHours || 1) * 100
+        );
+      });
+
+      // Top employees leaderboard
+      const leaderboard = employeeEngagement
+        .sort((a: any, b: any) => (b.hoursVolunteered || 0) - (a.hoursVolunteered || 0))
+        .slice(0, 5)
+        .map((emp: any, idx: number) => ({
+          rank: idx + 1,
+          employeeName: emp.employeeName || emp.employeeEmail,
+          hours: emp.hoursVolunteered || 0,
+          points: (emp.impactScore || 0) * 10
+        }));
+
+      res.json({
+        totalPartners,
+        activeEmployees,
+        totalHours,
+        totalImpact: totalRoi,
+        sdgProgress,
+        partners: csrPartners.map((p: any) => ({
+          id: p.id,
+          companyName: p.companyName,
+          employees: (employeeEngagement.filter((e: any) => e.partnerId === p.id) || []).length,
+          hours: employeeEngagement
+            .filter((e: any) => e.partnerId === p.id)
+            .reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
+          roi: projectBudgetLinks
+            .filter((b: any) => b.partnerId === p.id)
+            .reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0)
+        })),
+        challenges: csrChallenges.map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          sdgGoal: c.sdgGoal,
+          progress: c.currentHours || 0,
+          target: c.targetHours || 0,
+          status: c.status
+        })),
+        leaderboard
+      });
+    } catch (err) {
+      console.error("Error fetching CSR dashboard:", err);
+      res.status(500).json({ error: "Failed to fetch dashboard" });
+    }
+  });
+
+  // Create CSR Partner
+  app.post("/api/csr/partners", async (req, res) => {
+    try {
+      const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs } = req.body;
+
+      const partner = {
+        companyName,
+        contactEmail,
+        contactPhone,
+        industryType,
+        employeeCount,
+        annualCSRBudget,
+        primarySdgs: primarySdgs || [],
+        rosterSyncStatus: "pending"
+      };
+
+      const created = await storage.createCSRPartner?.(partner) || { id: Date.now() };
+      res.json(created);
+    } catch (err) {
+      console.error("Error creating CSR partner:", err);
+      res.status(500).json({ error: "Failed to create partner" });
+    }
+  });
+
+  // List CSR Partners
+  app.get("/api/csr/partners", async (req, res) => {
+    try {
+      const partners = await storage.listCSRPartners?.() || [];
+      res.json(partners);
+    } catch (err) {
+      console.error("Error fetching CSR partners:", err);
+      res.status(500).json({ error: "Failed to fetch partners" });
+    }
+  });
+
+  // Create CSR Challenge
+  app.post("/api/csr/challenges", async (req, res) => {
+    try {
+      const { partnerId, title, description, sdgGoal, targetHours, targetParticipants, startDate, endDate, rewardType, rewardValue } = req.body;
+
+      const challenge = {
+        partnerId,
+        title,
+        description,
+        sdgGoal,
+        targetHours,
+        targetParticipants,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        rewardType,
+        rewardValue,
+        status: "active",
+        currentHours: 0,
+        currentParticipants: 0
+      };
+
+      const created = await storage.createCSRChallenge?.(challenge) || { id: Date.now() };
+      res.json(created);
+    } catch (err) {
+      console.error("Error creating CSR challenge:", err);
+      res.status(500).json({ error: "Failed to create challenge" });
+    }
+  });
+
+  // List CSR Challenges
+  app.get("/api/csr/challenges", async (req, res) => {
+    try {
+      const { partnerId } = req.query;
+      let challenges = await storage.listCSRChallenges?.() || [];
+      
+      if (partnerId) {
+        challenges = challenges.filter((c: any) => c.partnerId === parseInt(partnerId as string));
+      }
+
+      res.json(challenges);
+    } catch (err) {
+      console.error("Error fetching CSR challenges:", err);
+      res.status(500).json({ error: "Failed to fetch challenges" });
+    }
+  });
+
+  // Create Project Budget Link
+  app.post("/api/csr/budget-links", async (req, res) => {
+    try {
+      const { projectId, partnerId, budgetLineItem, allocatedBudget, volunteerHoursValue, attributedTo } = req.body;
+
+      const budgetLink = {
+        projectId,
+        partnerId,
+        budgetLineItem,
+        allocatedBudget,
+        volunteerHoursValue: volunteerHoursValue || 50,
+        attributedTo: attributedTo || [],
+        estimatedRoi: allocatedBudget || 0,
+        actualRoi: 0
+      };
+
+      const created = await storage.createProjectBudgetLink?.(budgetLink) || { id: Date.now() };
+      res.json(created);
+    } catch (err) {
+      console.error("Error creating budget link:", err);
+      res.status(500).json({ error: "Failed to create budget link" });
+    }
+  });
+
+  // List Project Budget Links
+  app.get("/api/csr/budget-links", async (req, res) => {
+    try {
+      const { partnerId, projectId } = req.query;
+      let budgetLinks = await storage.listProjectBudgetLinks?.() || [];
+
+      if (partnerId) {
+        budgetLinks = budgetLinks.filter((b: any) => b.partnerId === parseInt(partnerId as string));
+      }
+      if (projectId) {
+        budgetLinks = budgetLinks.filter((b: any) => b.projectId === parseInt(projectId as string));
+      }
+
+      res.json(budgetLinks);
+    } catch (err) {
+      console.error("Error fetching budget links:", err);
+      res.status(500).json({ error: "Failed to fetch budget links" });
+    }
+  });
+
+  // Create Verified Output
+  app.post("/api/csr/verified-outputs", async (req, res) => {
+    try {
+      const { projectId, partnerId, outputType, outputValue, evidence } = req.body;
+
+      const output = {
+        projectId,
+        partnerId,
+        outputType,
+        outputValue,
+        verificationStatus: "pending",
+        evidence: evidence || {},
+        auditTrail: [{
+          timestamp: new Date(),
+          action: "created",
+          userId: 0
+        }]
+      };
+
+      const created = await storage.createVerifiedOutput?.(output) || { id: Date.now() };
+      res.json(created);
+    } catch (err) {
+      console.error("Error creating verified output:", err);
+      res.status(500).json({ error: "Failed to create verified output" });
+    }
+  });
+
+  // List Verified Outputs
+  app.get("/api/csr/verified-outputs", async (req, res) => {
+    try {
+      const { projectId, partnerId, verificationStatus } = req.query;
+      let outputs = await storage.listVerifiedOutputs?.() || [];
+
+      if (projectId) {
+        outputs = outputs.filter((o: any) => o.projectId === parseInt(projectId as string));
+      }
+      if (partnerId) {
+        outputs = outputs.filter((o: any) => o.partnerId === parseInt(partnerId as string));
+      }
+      if (verificationStatus) {
+        outputs = outputs.filter((o: any) => o.verificationStatus === verificationStatus);
+      }
+
+      res.json(outputs);
+    } catch (err) {
+      console.error("Error fetching verified outputs:", err);
+      res.status(500).json({ error: "Failed to fetch verified outputs" });
+    }
+  });
+
   return httpServer;
 }

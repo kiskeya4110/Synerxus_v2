@@ -577,12 +577,12 @@ export default function Landing() {
             ) : (
               <>
                 <Link href="/login" className="hidden sm:block">
-                  <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-login">Log In</Button>
+                  <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-sign-in-nav">Sign In</Button>
                 </Link>
-                <Link href="/login">
-                  <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-get-started">
-                    <span className="sm:hidden">Get Started</span>
-                    <span className="hidden sm:inline">Get Started</span>
+                <Link href="/volunteer-intake">
+                  <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-join-nav">
+                    <span className="sm:hidden">Join</span>
+                    <span className="hidden sm:inline">Join</span>
                   </Button>
                 </Link>
               </>

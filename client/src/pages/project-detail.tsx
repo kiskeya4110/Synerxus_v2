@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +73,6 @@ export default function ProjectDetail() {
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
 
-  // Fetch current user from database
   const { data: currentUser } = useQuery<DBUser>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -112,7 +111,6 @@ export default function ProjectDetail() {
     queryKey: ["/api/users"],
   });
   
-  // Check if current user can edit this project
   const canEditProject = currentUser?.userType === 'organization' && 
                         project?.organizationId === currentUser?.organizationId;
 
@@ -130,9 +128,18 @@ export default function ProjectDetail() {
 
   if (loadingProject) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
+      <div className="w-full min-h-screen bg-white dark:bg-slate-900">
+        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-8" />
+          </div>
+        </div>
+        <div className="p-4 space-y-4">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
       </div>
     );
   }
@@ -155,18 +162,15 @@ export default function ProjectDetail() {
     );
   }
 
-  // Filter data for this project
   const projectTasks = tasks.filter((t: any) => t.projectId === projectId);
   const projectActivities = volunteerActivities.filter((a: any) => a.projectId === projectId);
   const projectImpact = projectImpacts.filter((i: any) => i.projectId === projectId);
 
-  // Calculate statistics
   const completedTasks = projectTasks.filter((t: any) => t.status === "Completed").length;
   const totalHours = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
   const uniqueVolunteers = new Set(projectActivities.map((a: any) => a.userId)).size;
   const totalImpact = projectImpact.reduce((sum: number, i: any) => sum + (i.value || 0), 0);
 
-  // Calculate completion percentage (use manual if set, otherwise calculate from tasks)
   const completionPercentage = project.completionPercentage ?? 
     (projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0);
 
@@ -187,9 +191,28 @@ export default function ProjectDetail() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 pb-20 md:pb-0">
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-10 bg-blue-600 text-white px-4 py-3 flex items-center justify-between md:hidden">
+        <Link href="/projects">
+          <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 -ml-2" data-testid="button-back-to-projects">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <h1 className="text-base font-semibold" data-testid="text-project-title">Project Detail</h1>
+        <div className="w-10" />
+      </div>
+
+      {/* Offline Badge for mobile */}
+      <div className="md:hidden px-4 pt-3 pb-0">
+        <Badge className="bg-amber-500 text-white w-full justify-center">
+          <AlertCircle className="h-3 w-3 mr-1" />
+          Offline Mode: Data may be outdated
+        </Badge>
+      </div>
+
+      {/* Desktop Header */}
+      <div className="hidden md:flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-4">
           <Link href="/projects">
             <Button variant="ghost" size="sm" data-testid="button-back-to-projects">
@@ -198,13 +221,13 @@ export default function ProjectDetail() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold" data-testid="text-project-title">{project.name}</h1>
+            <h1 className="text-3xl font-bold" data-testid="text-project-title">{project.name}</h1>
             <p className="text-muted-foreground mt-1">Project Details & Progress</p>
           </div>
         </div>
         {canEditProject && (
           <Link href={`/projects/${projectId}/edit`}>
-            <Button className="gap-2 w-full sm:w-auto" data-testid="button-edit-project-detail">
+            <Button className="gap-2" data-testid="button-edit-project-detail">
               <Edit className="h-4 w-4" />
               Edit Project
             </Button>
@@ -212,393 +235,375 @@ export default function ProjectDetail() {
         )}
       </div>
 
-      {/* Main Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="programs">Programs</TabsTrigger>
-          <TabsTrigger value="operations">Operations</TabsTrigger>
-          <TabsTrigger value="financials">Financials</TabsTrigger>
-          <TabsTrigger value="impact">Impact</TabsTrigger>
-        </TabsList>
-
-        {/* OVERVIEW TAB */}
-        <TabsContent value="overview" className="mt-6 space-y-6">
-          {/* Status and Key Info */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col lg:flex-row gap-6">
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <StatusBadge status={project.status} />
-                    {project.aiTrackingEnabled && (
-                      <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                        <TrendingUp className="h-3 w-3 mr-1" />
-                        AI Tracking
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <p className="text-base text-muted-foreground">{project.description}</p>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {project.location && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{project.location}</span>
-                      </div>
-                    )}
-                    {project.startDate && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{format(new Date(project.startDate), "MMM d, yyyy")}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Progress */}
-                <div className="lg:w-64 space-y-3">
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium">Completion</span>
-                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{completionPercentage}%</span>
-                    </div>
-                    <CompletionProgress value={completionPercentage} className="h-3" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 text-center pt-3 border-t">
-                    <div>
-                      <div className="text-2xl font-bold text-primary">{completedTasks}</div>
-                      <div className="text-xs text-muted-foreground">Completed</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{projectTasks.length}</div>
-                      <div className="text-xs text-muted-foreground">Total Tasks</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                    <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{uniqueVolunteers}</div>
-                    <div className="text-sm text-muted-foreground">Volunteers</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/30">
-                    <Clock className="h-6 w-6 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{totalHours}</div>
-                    <div className="text-sm text-muted-foreground">Total Hours</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30">
-                    <CheckCircle2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{completedTasks}</div>
-                    <div className="text-sm text-muted-foreground">Tasks Done</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30">
-                    <Target className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{totalImpact}</div>
-                    <div className="text-sm text-muted-foreground">Impact Score</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Mobile Card Layout */}
+      <div className="md:hidden p-4 space-y-4">
+        {/* Hero Card with Image */}
+        <Card className="overflow-hidden">
+          <div className="aspect-video bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+            <Target className="h-12 w-12 text-white opacity-50" />
           </div>
+          
+          {/* Status & Match Badge */}
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <StatusBadge status={project.status} />
+              {project.aiTrackingEnabled && (
+                <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900/30">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  AI Tracking
+                </Badge>
+              )}
+            </div>
 
-          {/* Project Requirements & Details from Intake Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Requirements & Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Skills Required */}
-              {project.requiredSkills && project.requiredSkills.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Required Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {project.requiredSkills.map((skill: string, index: number) => (
-                      <Badge key={index} variant="default">{skill}</Badge>
-                    ))}
-                  </div>
+            {/* Title */}
+            <div>
+              <h2 className="text-xl font-bold">{project.name}</h2>
+              <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+            </div>
+
+            {/* Key Info */}
+            <div className="space-y-2 py-3 border-t border-b border-slate-200 dark:border-slate-700">
+              {project.ongoingHoursPerWeek && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span>{project.ongoingHoursPerWeek} hours/week (Flexible)</span>
                 </div>
               )}
-
-              {/* Optional Skills */}
-              {project.optionalSkills && project.optionalSkills.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Optional Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {project.optionalSkills.map((skill: string, index: number) => (
-                      <Badge key={index} variant="outline">{skill}</Badge>
-                    ))}
-                  </div>
+              {project.location && (
+                <div className="flex items-center gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span>{project.location}</span>
                 </div>
               )}
+            </div>
 
-              {/* Experience Level, Engagement Type, Commitment Type */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {project.experienceLevel && (
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-muted-foreground">Experience Level</h3>
-                    <p className="text-base capitalize">{project.experienceLevel}</p>
-                  </div>
-                )}
-                {project.engagementType && (
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-muted-foreground">Engagement Type</h3>
-                    <p className="text-base capitalize">{project.engagementType}</p>
-                  </div>
-                )}
-                {project.commitmentType && (
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-muted-foreground">Commitment Type</h3>
-                    <p className="text-base capitalize">{project.commitmentType}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Time Commitment */}
-              {(project.ongoingHoursPerWeek || project.projectTotalHours) && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {project.ongoingHoursPerWeek && (
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-semibold text-muted-foreground">Hours Per Week</h3>
-                      <p className="text-base">{project.ongoingHoursPerWeek} hours/week</p>
-                    </div>
-                  )}
-                  {project.projectTotalHours && (
-                    <div className="space-y-1">
-                      <h3 className="text-sm font-semibold text-muted-foreground">Total Project Hours</h3>
-                      <p className="text-base">{project.projectTotalHours} hours</p>
-                    </div>
-                  )}
+            {/* SDG Goals - Compact */}
+            {project.sdgGoals && project.sdgGoals.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-1">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-xs font-semibold text-muted-foreground">SDG Goals</p>
                 </div>
-              )}
-
-              {/* Impact Metric */}
-              {(project.impactMetricName || project.impactMetricUnit) && (
-                <div className="space-y-1">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Impact Metric</h3>
-                  <p className="text-base">
-                    {project.impactMetricName} 
-                    {project.impactMetricUnit && ` (measured in ${project.impactMetricUnit})`}
-                  </p>
-                </div>
-              )}
-
-              {/* Primary SDG */}
-              {project.primarySdg && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-muted-foreground">Primary SDG Goal</h3>
-                  <div
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium"
-                    style={{ backgroundColor: SDG_COLORS[project.primarySdg] }}
-                  >
-                    <span className="font-bold">#{project.primarySdg}</span>
-                    <span className="text-sm">{SDG_NAMES[project.primarySdg]}</span>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* SDG Goals */}
-          {project.sdgGoals && project.sdgGoals.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  All Sustainable Development Goals
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {[...project.sdgGoals].sort((a, b) => a - b).map((sdg: number) => (
+                <div className="flex flex-wrap gap-1">
+                  {[...project.sdgGoals].slice(0, 4).map((sdg: number) => (
                     <div
                       key={sdg}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium"
+                      className="px-2 py-1 rounded text-white text-xs font-medium"
                       style={{ backgroundColor: SDG_COLORS[sdg] }}
                     >
-                      <span className="font-bold">#{sdg}</span>
-                      <span className="text-sm">{SDG_NAMES[sdg]}</span>
+                      #{sdg}
                     </div>
                   ))}
+                  {project.sdgGoals.length > 4 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{project.sdgGoals.length - 4}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* CTA Buttons */}
+            <div className="pt-3 space-y-2">
+              <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-12 text-base" data-testid="button-apply-project">
+                Apply for Project
+              </Button>
+              <Button variant="outline" className="w-full h-10">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tasks Preview */}
+        {projectTasks.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Expected Tasks ({projectTasks.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {projectTasks.slice(0, 3).map((task: any) => (
+                  <div key={task.id} className="flex items-center justify-between p-2 text-sm border-b border-slate-100 dark:border-slate-800 last:border-0">
+                    <span className="truncate flex-1">{task.title}</span>
+                    <StatusBadge status={task.status} />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <Card>
+            <CardContent className="p-3 text-center">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{uniqueVolunteers}</div>
+              <div className="text-xs text-muted-foreground mt-1">Volunteers</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 text-center">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{totalHours}</div>
+              <div className="text-xs text-muted-foreground mt-1">Hours</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Desktop Full Layout */}
+      <div className="hidden md:block container mx-auto p-6 space-y-6">
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="programs">Programs</TabsTrigger>
+            <TabsTrigger value="operations">Operations</TabsTrigger>
+            <TabsTrigger value="financials">Financials</TabsTrigger>
+            <TabsTrigger value="impact">Impact</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="mt-6 space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-col lg:flex-row gap-6">
+                  <div className="flex-1 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <StatusBadge status={project.status} />
+                      {project.aiTrackingEnabled && (
+                        <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
+                          <TrendingUp className="h-3 w-3 mr-1" />
+                          AI Tracking
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    <p className="text-base text-muted-foreground">{project.description}</p>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {project.location && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          <span>{project.location}</span>
+                        </div>
+                      )}
+                      {project.startDate && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>{format(new Date(project.startDate), "MMM d, yyyy")}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="lg:w-64 space-y-3">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-medium">Completion</span>
+                        <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{completionPercentage}%</span>
+                      </div>
+                      <CompletionProgress value={completionPercentage} className="h-3" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-center pt-3 border-t">
+                      <div>
+                        <div className="text-2xl font-bold text-primary">{completedTasks}</div>
+                        <div className="text-xs text-muted-foreground">Completed</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold">{projectTasks.length}</div>
+                        <div className="text-xs text-muted-foreground">Total Tasks</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
 
-        {/* PROGRAMS TAB */}
-        <TabsContent value="programs" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {projectTasks.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No tasks yet</p>
-              ) : (
-                <div className="space-y-3">
-                  {projectTasks.map((task: any) => (
-                    <div
-                      key={task.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                      data-testid={`task-item-${task.id}`}
-                    >
-                      <div className="flex-1">
-                        <h4 className="font-medium">{task.title}</h4>
-                        {task.description && (
-                          <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
-                        )}
-                      </div>
-                      <StatusBadge status={task.status} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+                      <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    <div>
+                      <div className="text-2xl font-bold">{uniqueVolunteers}</div>
+                      <div className="text-sm text-muted-foreground">Volunteers</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* OPERATIONS TAB */}
-        <TabsContent value="operations" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Members ({uniqueVolunteers})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {uniqueVolunteers === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No volunteers yet</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Array.from(new Set(projectActivities.map((a: any) => a.userId))).map((userId: any) => {
-                    const user = users.find((u: any) => u.id === userId);
-                    const userActivities = projectActivities.filter((a: any) => a.userId === userId);
-                    const userHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-                    
-                    return (
-                      <div key={userId} className="flex items-center gap-3 p-4 border rounded-lg">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={user?.avatar} />
-                          <AvatarFallback>{user?.displayName?.[0] || "V"}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{user?.displayName || `Volunteer #${userId}`}</p>
-                          <p className="text-sm text-muted-foreground">{userHours} hours logged</p>
-                        </div>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/30">
+                      <Clock className="h-6 w-6 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{totalHours}</div>
+                      <div className="text-sm text-muted-foreground">Total Hours</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30">
+                      <CheckCircle2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{completedTasks}</div>
+                      <div className="text-sm text-muted-foreground">Tasks Done</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30">
+                      <Target className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{totalImpact}</div>
+                      <div className="text-sm text-muted-foreground">Impact Score</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {project.sdgGoals && project.sdgGoals.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    All Sustainable Development Goals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-3">
+                    {[...project.sdgGoals].sort((a, b) => a - b).map((sdg: number) => (
+                      <div
+                        key={sdg}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium"
+                        style={{ backgroundColor: SDG_COLORS[sdg] }}
+                      >
+                        <span className="font-bold">#{sdg}</span>
+                        <span className="text-sm">{SDG_NAMES[sdg]}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-        {/* FINANCIALS TAB */}
-        <TabsContent value="financials" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2 p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground">Total Hours</p>
-                  <p className="text-3xl font-bold">{totalHours}</p>
-                </div>
-                <div className="space-y-2 p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground">Active Volunteers</p>
-                  <p className="text-3xl font-bold">{uniqueVolunteers}</p>
-                </div>
-                <div className="space-y-2 p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground">Tasks Completed</p>
-                  <p className="text-3xl font-bold">{completedTasks}/{projectTasks.length}</p>
-                </div>
-              </div>
-              {project.projectTotalHours && (
-                <div className="space-y-2 p-4 border rounded-lg">
-                  <p className="text-sm text-muted-foreground">Project Budget (Hours)</p>
-                  <p className="text-base">{project.projectTotalHours} hours allocated</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* IMPACT TAB */}
-        <TabsContent value="impact" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {projectActivities.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">No activity yet</p>
-              ) : (
-                <div className="space-y-4">
-                  {projectActivities.slice(0, 10).map((activity: any) => (
-                    <div key={activity.id} className="flex gap-4 p-4 border rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium">{activity.description || "Activity logged"}</p>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                          <span>{activity.hours} hours</span>
-                          <span>{format(new Date(activity.date), "MMM d, yyyy")}</span>
+          <TabsContent value="programs" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Project Tasks</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {projectTasks.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No tasks yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {projectTasks.map((task: any) => (
+                      <div
+                        key={task.id}
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        data-testid={`task-item-${task.id}`}
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium">{task.title}</h4>
+                          {task.description && (
+                            <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                          )}
                         </div>
-                        {activity.skillsApplied && activity.skillsApplied.length > 0 && (
-                          <div className="flex gap-2 mt-2">
-                            {activity.skillsApplied.map((skill: string, idx: number) => (
-                              <Badge key={idx} variant="secondary" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
+                        <StatusBadge status={task.status} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="operations" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Team Members ({uniqueVolunteers})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {uniqueVolunteers === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No volunteers yet</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from(new Set(projectActivities.map((a: any) => a.userId))).map((userId: any) => {
+                      const user = users.find((u: any) => u.id === userId);
+                      const userActivities = projectActivities.filter((a: any) => a.userId === userId);
+                      const userHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+                      
+                      return (
+                        <div key={userId} className="flex items-center gap-3 p-4 border rounded-lg">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={user?.avatar} />
+                            <AvatarFallback>{user?.displayName?.[0] || "V"}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{user?.displayName || `Volunteer #${userId}`}</p>
+                            <p className="text-sm text-muted-foreground">{userHours} hours logged</p>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="financials" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Financial Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2 p-4 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Total Hours</p>
+                    <p className="text-3xl font-bold">{totalHours}</p>
+                  </div>
+                  <div className="space-y-2 p-4 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Active Volunteers</p>
+                    <p className="text-3xl font-bold">{uniqueVolunteers}</p>
+                  </div>
+                  <div className="space-y-2 p-4 border rounded-lg">
+                    <p className="text-sm text-muted-foreground">Tasks Completed</p>
+                    <p className="text-3xl font-bold">{completedTasks}/{projectTasks.length}</p>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="impact" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Impact Metrics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">Total Impact Score: <span className="text-2xl font-bold text-primary">{totalImpact}</span></p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

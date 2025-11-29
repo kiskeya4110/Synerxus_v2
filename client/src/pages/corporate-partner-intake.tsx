@@ -125,10 +125,12 @@ export default function CorporatePartnerIntake() {
 
   const createPartnerMutation = useMutation({
     mutationFn: async (data: CorporatePartnerForm) => {
+      const userId = localStorage.getItem('currentUserId');
       const response = await fetch('/api/csr/partners', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          userId: userId ? parseInt(userId) : undefined,
           ...data,
           primarySdgs: selectedSdgs
         })

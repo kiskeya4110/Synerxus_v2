@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -117,6 +117,7 @@ const getSkillBadgeClass = (index: number): string => {
 
 export default function ImpactReport() {
   const [, setLocation] = useLocation();
+  const [match, params] = useRoute("/impact-report/:volunteerId");
   const { toast } = useToast();
   const [isPrinting, setIsPrinting] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -134,9 +135,10 @@ export default function ImpactReport() {
   });
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
-  // Get volunteer ID from localStorage
-  const currentUserIdStr = localStorage.getItem('currentUserId');
-  const volunteerId = currentUserIdStr ? parseInt(currentUserIdStr) : undefined;
+  // Get volunteer ID from URL parameter first, then fall back to localStorage
+  const volunteerId = params?.volunteerId 
+    ? parseInt(params.volunteerId) 
+    : (localStorage.getItem('currentUserId') ? parseInt(localStorage.getItem('currentUserId')!) : undefined);
   
   // Fetch the current logged-in user first
   const { data: loggedInUser } = useQuery<User>({

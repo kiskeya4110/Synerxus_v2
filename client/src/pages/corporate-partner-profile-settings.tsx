@@ -162,39 +162,60 @@ export default function CorporatePartnerProfileSettings() {
 
   const updatePartnerMutation = useMutation({
     mutationFn: async (data: CorporatePartnerForm) => {
-      const response = await fetch(`/api/csr/partners/${partnerProfile?.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          primarySdgs: selectedSdgs
-        })
-      });
-      if (!response.ok) throw new Error('Failed to update CSR partner profile');
-      return response.json();
+      const sdgsToSave = selectedSdgs.length > 0 ? selectedSdgs : (partnerProfile?.primarySdgs || []);
+      const payload = {
+        ...data,
+        primarySdgs: sdgsToSave
+      };
+
+      // If profile exists, update it; otherwise create new one
+      if (partnerProfile?.id) {
+        console.log(`[Corporate Settings] Updating existing partner ID: ${partnerProfile.id}`);
+        const response = await fetch(`/api/csr/partners/${partnerProfile.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) throw new Error('Failed to update CSR partner profile');
+        return response.json();
+      } else {
+        console.log(`[Corporate Settings] Creating new CSR partner for user ${currentUser?.id}`);
+        const response = await fetch('/api/csr/partners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser?.id,
+            ...payload
+          })
+        });
+        if (!response.ok) throw new Error('Failed to create CSR partner profile');
+        return response.json();
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/csr/partners'] });
       toast({
         title: "Success!",
-        description: "Your corporate partner profile has been updated."
+        description: "Your corporate partner profile has been saved."
       });
       // Redirect to CSR Dashboard after successful save
       setTimeout(() => navigate("/csr-dashboard"), 500);
     },
     onError: (error) => {
+      console.error("[Corporate Settings] Save error:", error);
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save profile. Please try again.",
         variant: "destructive"
       });
     }
   });
 
   async function onSubmit(data: CorporatePartnerForm) {
-    // Use selected SDGs, or fall back to existing profile SDGs if not changed
     const sdgsToSave = selectedSdgs.length > 0 ? selectedSdgs : (partnerProfile?.primarySdgs || []);
-    if (sdgsToSave.length === 0) {
+    
+    // Require at least one SDG for new profiles, or allow save if updating existing with no SDG changes
+    if (sdgsToSave.length === 0 && !partnerProfile?.id) {
       toast({
         title: "Error",
         description: "Please select at least one SDG focus area",
@@ -202,7 +223,9 @@ export default function CorporatePartnerProfileSettings() {
       });
       return;
     }
-    updatePartnerMutation.mutate({ ...data, primarySdgs: sdgsToSave });
+    
+    console.log("[Corporate Settings] Form submitted with:", { data, sdgsToSave, hasExistingProfile: !!partnerProfile?.id });
+    updatePartnerMutation.mutate(data);
   }
 
   if (isLoading) {
@@ -372,10 +395,10 @@ export default function CorporatePartnerProfileSettings() {
                   <Button
                     type="submit"
                     className="ml-auto"
-                    disabled={updatePartnerMutation.isPending || (selectedSdgs.length === 0 && !partnerProfile?.primarySdgs?.length)}
+                    disabled={updatePartnerMutation.isPending}
                     data-testid="button-save-corporate-profile"
                   >
-                    {updatePartnerMutation.isPending ? "Updating..." : "Save Changes"}
+                    {updatePartnerMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
                 </div>
               </form>

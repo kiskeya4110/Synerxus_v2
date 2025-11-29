@@ -135,7 +135,7 @@ export default function OrganizationImpactReport() {
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
   // Call ALL hooks unconditionally at the top - this is required by React
-  const { data: currentUser } = useQuery<User>({
+  const { data: currentUser, isLoading: userLoading } = useQuery<User>({
     queryKey: ["/api/users/me"],
     queryFn: async () => {
       const id = localStorage.getItem("currentUserId");
@@ -225,10 +225,10 @@ export default function OrganizationImpactReport() {
 
   // Redirect users without organization context away from organization pages
   useEffect(() => {
-    if (currentUser && !canViewReport) {
+    if (!userLoading && currentUser && !canViewReport) {
       setLocation("/dashboard");
     }
-  }, [currentUser, canViewReport, setLocation]);
+  }, [userLoading, currentUser, canViewReport, setLocation]);
 
   // Filter activities by organization's projects
   const orgProjectIds = new Set(projects.map((p) => p.id));

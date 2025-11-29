@@ -61,10 +61,12 @@ export default function OrganizationProfileSettings() {
     queryKey: ["/api/users/me"],
   });
 
-  // Redirect volunteers to volunteer profile settings
+  // Redirect non-organization users
   useEffect(() => {
     if (currentUser?.userType === "volunteer") {
       setLocation("/volunteer-profile-settings");
+    } else if (currentUser?.userType === "corporate-partner") {
+      setLocation("/corporate-partner-profile-settings");
     }
   }, [currentUser?.userType, setLocation]);
 

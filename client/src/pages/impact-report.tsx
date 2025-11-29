@@ -261,13 +261,8 @@ export default function ImpactReport() {
   const sdgs = volunteerProfile?.preferredSdgs || [];
   const assignmentsCount = projectAssignments.length;
 
-  // Calculate Total Impact Score (composite metric)
-  const hoursScore = Math.min((totalHours / 100) * 100, 100);
-  const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
-  const projectsScore = Math.min((activeProjects / 5) * 100, 100);
-  const skillsScore = Math.min((allSkills.length / 10) * 100, 100);
-  const sdgScore = Math.min((sdgs.length / 5) * 100, 100);
-  const totalImpactScore = Math.round((hoursScore + tasksScore + projectsScore + skillsScore + sdgScore) / 5);
+  // Use optimized impact score from backend calculator (hours 35%, people 30%, tasks 20%, sdg 10%, match 5%)
+  const totalImpactScore = dashboardData?.impactScore ?? 0;
 
   const shareUrl = `${window.location.origin}/impact-report/${volunteerId}`;
 

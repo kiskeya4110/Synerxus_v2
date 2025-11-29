@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation, useRoute } from "wouter";
+import { useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -117,7 +117,6 @@ const getSkillBadgeClass = (index: number): string => {
 
 export default function ImpactReport() {
   const [, setLocation] = useLocation();
-  const [match, params] = useRoute("/impact-report/:volunteerId");
   const { toast } = useToast();
   const [isPrinting, setIsPrinting] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -133,12 +132,16 @@ export default function ImpactReport() {
     impact: true,
     analytics: true
   });
-  const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
+  const chartRefs = useRef<Record<string, any>>({});
 
-  // Get volunteer ID from URL parameter first, then fall back to localStorage
-  const volunteerId = params?.volunteerId 
-    ? parseInt(params.volunteerId) 
-    : (localStorage.getItem('currentUserId') ? parseInt(localStorage.getItem('currentUserId')!) : undefined);
+  // Extract volunteer ID from URL parameter
+  const getVolunteerIdFromUrl = () => {
+    const match = typeof window !== 'undefined' ? window.location.pathname.match(/\/impact-report\/(\d+)/) : null;
+    return match ? parseInt(match[1]) : undefined;
+  };
+
+  const urlVolunteerId = getVolunteerIdFromUrl();
+  const volunteerId = urlVolunteerId || (localStorage.getItem('currentUserId') ? parseInt(localStorage.getItem('currentUserId')!) : undefined);
   
   // Fetch the current logged-in user first
   const { data: loggedInUser } = useQuery<User>({

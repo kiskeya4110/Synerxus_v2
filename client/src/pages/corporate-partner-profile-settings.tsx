@@ -179,6 +179,8 @@ export default function CorporatePartnerProfileSettings() {
         title: "Success!",
         description: "Your corporate partner profile has been updated."
       });
+      // Redirect to CSR Dashboard after successful save
+      setTimeout(() => navigate("/csr-dashboard"), 500);
     },
     onError: (error) => {
       toast({

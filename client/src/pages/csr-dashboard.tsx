@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { TrendingUp, Users, Award, Target, Home, BarChart3, Settings, Menu, X } from "lucide-react";
@@ -41,11 +41,11 @@ interface CSRDashboardData {
 
 export default function CSRDashboard() {
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
-  const { data: csrData, isLoading } = useQuery<CSRDashboardData>({
+  const { data: csrData, isLoading, refetch } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId],
     queryFn: async () => {
       const response = await fetch(`/api/csr/dashboard?userId=${userId}`);
@@ -53,6 +53,8 @@ export default function CSRDashboard() {
       return response.json();
     },
     enabled: !!userId,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const engagementFunnel = [
@@ -115,9 +117,9 @@ export default function CSRDashboard() {
       {/* Mobile Menu Dropdown */}
       {menuOpen && (
         <div className="md:hidden bg-blue-900 border-b border-blue-800 px-4 py-3 space-y-2">
-          <button onClick={() => setLocation('/csr-dashboard')} className="w-full text-left px-4 py-2 hover:bg-blue-800 rounded">Home</button>
-          <button onClick={() => setLocation('/csr-dashboard')} className="w-full text-left px-4 py-2 hover:bg-blue-800 rounded">Reporting</button>
-          <button onClick={() => setLocation('/corporate-partner-profile-settings')} className="w-full text-left px-4 py-2 hover:bg-blue-800 rounded">Settings</button>
+          <button onClick={() => navigate('/csr-dashboard')} className="w-full text-left px-4 py-2 hover:bg-blue-800 rounded">Home</button>
+          <button onClick={() => navigate('/csr-dashboard')} className="w-full text-left px-4 py-2 hover:bg-blue-800 rounded">Reporting</button>
+          <button onClick={() => navigate('/corporate-partner-profile-settings')} className="w-full text-left px-4 py-2 hover:bg-blue-800 rounded">Settings</button>
         </div>
       )}
 
@@ -228,91 +230,121 @@ export default function CSRDashboard() {
             </Card>
           </div>
 
-          {/* SDG Contributions Grid - Mobile Optimized */}
+          {/* SDG Contributions - Optimized UI */}
           <div className="bg-white dark:bg-slate-800 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-slate-700">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">SDG Commitments & Impact</h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-6">Your company's focus areas and contribution progress</p>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">SDG Commitments</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Your company's strategic focus areas</p>
+              </div>
+              <button 
+                onClick={() => refetch()}
+                className="text-xs px-3 py-1 rounded-lg bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+              >
+                Refresh
+              </button>
+            </div>
             
-            <div className="grid grid-cols-5 md:grid-cols-8 gap-2 md:gap-3">
-              {Object.values(sdgGoals).map((sdg) => {
-                const sdgData = csrData?.sdgProgress?.[sdg.id];
-                const isCommitted = sdgData?.status === 'committed' || sdgData?.status === 'active';
-                const hasProgress = sdgData && sdgData.progress > 0;
-                const progressPercent = sdgData?.progress || 0;
-                
-                return (
-                  <div key={sdg.id} className="flex flex-col items-center group">
-                    <div className="relative">
-                      <div 
-                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base transition-all duration-200 ${
-                          isCommitted ? 'hover:scale-110 shadow-lg' : 'opacity-40'
-                        }`}
-                        style={{ backgroundColor: sdgData?.color || '#e5e7eb' }}
-                      >
+            {/* Committed SDGs - Featured Section */}
+            {Object.values(csrData?.sdgProgress || {}).filter(s => s.status === 'committed' || s.status === 'active').length > 0 ? (
+              <div>
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide">Your Focus Areas</p>
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+                  {Object.values(csrData?.sdgProgress || {})
+                    .filter(s => s.status === 'committed' || s.status === 'active')
+                    .map((sdgData) => {
+                      const progressPercent = sdgData.progress || 0;
+                      const hasProgress = progressPercent > 0;
+                      
+                      return (
+                        <div key={sdgData.goal} className="flex flex-col items-center group cursor-pointer">
+                          <div className="relative">
+                            <div 
+                              className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center text-white font-bold text-lg md:text-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
+                              style={{ backgroundColor: sdgData.color }}
+                            >
+                              {sdgData.goal}
+                            </div>
+                            
+                            {/* Progress ring */}
+                            {hasProgress && (
+                              <svg className="absolute inset-0 w-16 h-16 md:w-20 md:h-20 -rotate-90" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.2))' }}>
+                                <circle
+                                  cx="50%"
+                                  cy="50%"
+                                  r="32"
+                                  fill="none"
+                                  stroke="rgba(255,255,255,0.2)"
+                                  strokeWidth="2"
+                                />
+                                <circle
+                                  cx="50%"
+                                  cy="50%"
+                                  r="32"
+                                  fill="none"
+                                  stroke="white"
+                                  strokeWidth="2.5"
+                                  strokeDasharray={`${2 * Math.PI * 32}`}
+                                  strokeDashoffset={`${2 * Math.PI * 32 * (1 - progressPercent / 100)}`}
+                                  strokeLinecap="round"
+                                  style={{ transition: 'stroke-dashoffset 0.5s ease-in-out' }}
+                                />
+                              </svg>
+                            )}
+                            
+                            {/* Status indicator */}
+                            <div className={`absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold shadow-md ${
+                              hasProgress ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+                            }`}>
+                              {hasProgress ? '✓' : '◆'}
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-3">Goal {sdgData.goal}</p>
+                          
+                          {/* Tooltip */}
+                          <div className="hidden group-hover:block absolute top-full mt-2 z-50 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                            <p className="font-semibold">{hasProgress ? `${Math.round(progressPercent)}% Complete` : 'Committed'}</p>
+                            {sdgData.targetHours && <p className="text-gray-300">{sdgData.currentHours || 0} / {sdgData.targetHours} hours</p>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <p className="text-sm">No SDG commitments selected yet</p>
+                <button 
+                  onClick={() => navigate('/corporate-partner-profile-settings')}
+                  className="text-xs mt-2 text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Add SDG focus areas
+                </button>
+              </div>
+            )}
+            
+            {/* All SDGs Reference */}
+            {Object.values(csrData?.sdgProgress || {}).filter(s => s.status === 'committed' || s.status === 'active').length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-slate-700">
+                <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide">All SDG Reference</p>
+                <div className="grid grid-cols-6 md:grid-cols-9 gap-2">
+                  {Object.values(sdgGoals).map((sdg) => {
+                    const sdgData = csrData?.sdgProgress?.[sdg.id];
+                    const isCommitted = sdgData?.status === 'committed' || sdgData?.status === 'active';
+                    
+                    return (
+                      <div key={sdg.id} className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs transition-all ${
+                        isCommitted ? 'shadow-md hover:scale-105' : 'opacity-30'
+                      }`}
+                      style={{ backgroundColor: sdgData?.color || '#d1d5db' }}>
                         {sdg.id}
                       </div>
-                      
-                      {/* Progress ring overlay */}
-                      {hasProgress && (
-                        <svg className="absolute inset-0 w-14 h-14 md:w-16 md:h-16 -rotate-90" style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.2))' }}>
-                          <circle
-                            cx="50%"
-                            cy="50%"
-                            r="26"
-                            fill="none"
-                            stroke="rgba(255,255,255,0.3)"
-                            strokeWidth="2"
-                          />
-                          <circle
-                            cx="50%"
-                            cy="50%"
-                            r="26"
-                            fill="none"
-                            stroke="white"
-                            strokeWidth="2"
-                            strokeDasharray={`${2 * Math.PI * 26}`}
-                            strokeDashoffset={`${2 * Math.PI * 26 * (1 - progressPercent / 100)}`}
-                            strokeLinecap="round"
-                          />
-                        </svg>
-                      )}
-                      
-                      {/* Status badge */}
-                      {isCommitted && (
-                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold ${
-                          hasProgress ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
-                        }`}>
-                          {hasProgress ? '✓' : '◆'}
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center font-semibold">G{sdg.id}</p>
-                    
-                    {/* Tooltip on hover */}
-                    <div className="hidden group-hover:block absolute top-full mt-1 z-50 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
-                      {isCommitted ? `${Math.round(progressPercent)}% Complete` : 'Not selected'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            {/* Legend */}
-            <div className="flex items-center gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-slate-700 text-xs text-gray-600 dark:text-gray-400">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span>Active with progress</span>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span>Committed</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                <span>Not selected</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Desktop Only: 2x2 Grid */}
@@ -455,15 +487,15 @@ export default function CSRDashboard() {
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-700 flex items-center justify-around">
-        <button onClick={() => setLocation('/csr-dashboard')} className="flex-1 flex flex-col items-center justify-center py-4 text-blue-600 hover:bg-gray-50 dark:hover:bg-slate-800">
+        <button onClick={() => navigate('/csr-dashboard')} className="flex-1 flex flex-col items-center justify-center py-4 text-blue-600 hover:bg-gray-50 dark:hover:bg-slate-800">
           <Home className="h-6 w-6" />
           <span className="text-xs mt-1">Home</span>
         </button>
-        <button onClick={() => setLocation('/csr-dashboard')} className="flex-1 flex flex-col items-center justify-center py-4 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800">
+        <button onClick={() => navigate('/csr-dashboard')} className="flex-1 flex flex-col items-center justify-center py-4 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800">
           <BarChart3 className="h-6 w-6" />
           <span className="text-xs mt-1">Reporting</span>
         </button>
-        <button onClick={() => setLocation('/corporate-partner-profile-settings')} className="flex-1 flex flex-col items-center justify-center py-4 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800">
+        <button onClick={() => navigate('/corporate-partner-profile-settings')} className="flex-1 flex flex-col items-center justify-center py-4 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800">
           <Settings className="h-6 w-6" />
           <span className="text-xs mt-1">Settings</span>
         </button>

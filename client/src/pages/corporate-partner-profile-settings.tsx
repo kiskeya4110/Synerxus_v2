@@ -201,6 +201,7 @@ export default function CorporatePartnerProfileSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/csr/partners'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/csr/dashboard'] });
       toast({
         title: "Success!",
         description: "Your corporate partner profile has been saved."

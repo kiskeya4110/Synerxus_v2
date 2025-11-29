@@ -331,6 +331,90 @@ export const userDataAuditLogs = pgTable("user_data_audit_logs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// CSR Partners - Corporate partners onboarded for volunteer program management
+export const csrPartners = pgTable("csr_partners", {
+  id: serial("id").primaryKey(),
+  companyName: text("company_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone"),
+  industryType: text("industry_type"), // Technology, Finance, Healthcare, etc.
+  employeeCount: integer("employee_count"),
+  annualCSRBudget: doublePrecision("annual_csr_budget"),
+  primarySdgs: integer("primary_sdgs").array(), // CSR focus areas
+  rosterSyncStatus: text("roster_sync_status").default("pending"), // pending, synced, failed
+  lastRosterSyncDate: timestamp("last_roster_sync_date"),
+  vtoTrackingEnabled: boolean("vto_tracking_enabled").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Employee Engagement - Track which employees volunteered on which projects
+export const employeeEngagement = pgTable("employee_engagement", {
+  id: serial("id").primaryKey(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  employeeEmail: text("employee_email").notNull(),
+  employeeName: text("employee_name"),
+  projectId: integer("project_id").references(() => projects.id),
+  hoursVolunteered: integer("hours_volunteered").default(0),
+  engagementType: text("engagement_type"), // vto (Volunteer Time Off), erg (Employee Resource Group), skills-based
+  impactScore: integer("impact_score").default(0), // 0-100 rating
+  completionStatus: text("completion_status").default("in-progress"), // in-progress, completed, pending
+  certificateIssued: boolean("certificate_issued").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// CSR Challenges - Gamified challenges aligned with SDGs
+export const csrChallenges = pgTable("csr_challenges", {
+  id: serial("id").primaryKey(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  sdgGoal: integer("sdg_goal").notNull(), // Primary SDG alignment
+  targetHours: integer("target_hours"), // Total hours to reach
+  targetParticipants: integer("target_participants"), // Number of employees
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  rewardType: text("reward_type"), // points, certificate, badge, recognition
+  rewardValue: text("reward_value"), // Description of reward
+  currentHours: integer("current_hours").default(0),
+  currentParticipants: integer("current_participants").default(0),
+  status: text("status").default("active"), // active, completed, paused
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Project Budget Links - Connect projects to company budget lines for ROI tracking
+export const projectBudgetLinks = pgTable("project_budget_links", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  budgetLineItem: text("budget_line_item"), // e.g., "Community Outreach Q3 2024"
+  allocatedBudget: doublePrecision("allocated_budget"), // Dollar amount
+  estimatedRoi: doublePrecision("estimated_roi"), // Expected return (dollar value of impact)
+  actualRoi: doublePrecision("actual_roi"), // Calculated from volunteer hours and outcomes
+  volunteerHoursValue: doublePrecision("volunteer_hours_value"), // $/hour rate
+  attributedTo: text("attributed_to").array(), // List of initiatives/programs
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Verified Outputs - Audit-ready outcomes with verification status
+export const verifiedOutputs = pgTable("verified_outputs", {
+  id: serial("id").primaryKey(),
+  activityId: integer("activity_id").references(() => volunteerActivities.id),
+  partnerId: integer("partner_id").references(() => csrPartners.id),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  outputType: text("output_type").notNull(), // hours, people_served, outcomes_achieved
+  outputValue: integer("output_value").notNull(),
+  verificationStatus: text("verification_status").default("pending"), // pending, verified, rejected
+  verifiedBy: integer("verified_by").references(() => users.id), // Who verified it
+  verifiedAt: timestamp("verified_at"),
+  evidence: jsonb("evidence"), // {photoUrl, documentUrl, notes}
+  auditTrail: jsonb("audit_trail"), // {timestamp, action, userId}
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Matching Weights - Admin panel for simple weight adjustments (Optimization Layer)
 export const matchingWeights = pgTable("matching_weights", {
   id: serial("id").primaryKey(),
@@ -707,6 +791,38 @@ export const insertUserDataAuditLogSchema = createInsertSchema(userDataAuditLogs
   createdAt: true
 });
 
+export const insertCSRPartnerSchema = createInsertSchema(csrPartners).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertEmployeeEngagementSchema = createInsertSchema(employeeEngagement).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertCSRChallengeSchema = createInsertSchema(csrChallenges).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+}).extend({
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+});
+
+export const insertProjectBudgetLinkSchema = createInsertSchema(projectBudgetLinks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertVerifiedOutputSchema = createInsertSchema(verifiedOutputs).omit({
+  id: true,
+  createdAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -782,3 +898,18 @@ export type InsertVolunteerSpotlight = z.infer<typeof insertVolunteerSpotlightSc
 
 export type UserDataAuditLog = typeof userDataAuditLogs.$inferSelect;
 export type InsertUserDataAuditLog = z.infer<typeof insertUserDataAuditLogSchema>;
+
+export type CSRPartner = typeof csrPartners.$inferSelect;
+export type InsertCSRPartner = z.infer<typeof insertCSRPartnerSchema>;
+
+export type EmployeeEngagement = typeof employeeEngagement.$inferSelect;
+export type InsertEmployeeEngagement = z.infer<typeof insertEmployeeEngagementSchema>;
+
+export type CSRChallenge = typeof csrChallenges.$inferSelect;
+export type InsertCSRChallenge = z.infer<typeof insertCSRChallengeSchema>;
+
+export type ProjectBudgetLink = typeof projectBudgetLinks.$inferSelect;
+export type InsertProjectBudgetLink = z.infer<typeof insertProjectBudgetLinkSchema>;
+
+export type VerifiedOutput = typeof verifiedOutputs.$inferSelect;
+export type InsertVerifiedOutput = z.infer<typeof insertVerifiedOutputSchema>;

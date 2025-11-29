@@ -51,10 +51,10 @@ function RootRedirectRoute() {
     if (user) {
       // Check if user has completed intake
       const checkIntakeAndRedirect = async () => {
+        const userId = localStorage.getItem('currentUserId');
+        const userType = localStorage.getItem('userType');
+        
         try {
-          const userId = localStorage.getItem('currentUserId');
-          const userType = localStorage.getItem('userType');
-          
           if (!userId || !userType) {
             setLocation('/landing');
             return;
@@ -88,12 +88,17 @@ function RootRedirectRoute() {
             else if (userType === 'corporate-partner') intakePath = '/corporate-partner-intake';
             setLocation(intakePath);
           } else {
-            // Intake complete, go to dashboard
-            setLocation('/dashboard');
+            // Intake complete, go to appropriate dashboard based on user type
+            if (userType === 'corporate-partner') {
+              setLocation('/csr-dashboard');
+            } else {
+              setLocation('/dashboard');
+            }
           }
         } catch (error) {
           console.error('Error checking intake status:', error);
-          setLocation('/dashboard'); // Default to dashboard on error
+          const defaultDashboard = userType === 'corporate-partner' ? '/csr-dashboard' : '/dashboard';
+          setLocation(defaultDashboard);
         }
       };
 

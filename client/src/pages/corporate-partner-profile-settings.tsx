@@ -19,11 +19,11 @@ import { Building2, Check } from "lucide-react";
 const corporatePartnerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
   contactEmail: z.string().email("Valid email required"),
-  contactPhone: z.string().min(10, "Valid phone number required"),
+  contactPhone: z.string().min(1, "Phone number required"),
   industryType: z.string().min(1, "Select an industry"),
   employeeCount: z.coerce.number().min(1, "Employee count required"),
   annualCSRBudget: z.coerce.number().min(0, "Budget is required"),
-  primarySdgs: z.array(z.number()).min(1, "Select at least one SDG focus"),
+  primarySdgs: z.array(z.number()).optional(),
   vtoTrackingEnabled: z.boolean().default(true),
 });
 
@@ -122,9 +122,16 @@ export default function CorporatePartnerProfileSettings() {
   const { data: partnerProfile, isLoading } = useQuery({
     queryKey: ['/api/csr/partners', userId],
     queryFn: async () => {
-      const response = await fetch(`/api/csr/partners?userId=${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch CSR partner');
-      return response.json();
+      if (!userId) return null;
+      try {
+        const response = await fetch(`/api/csr/partners?userId=${userId}`);
+        const data = await response.json();
+        console.log("[Corporate Settings] Fetched partner profile:", data);
+        return data || null;
+      } catch (err) {
+        console.error("[Corporate Settings] Error fetching profile:", err);
+        return null;
+      }
     },
     enabled: !!userId
   });
@@ -212,20 +219,36 @@ export default function CorporatePartnerProfileSettings() {
   });
 
   async function onSubmit(data: CorporatePartnerForm) {
-    const sdgsToSave = selectedSdgs.length > 0 ? selectedSdgs : (partnerProfile?.primarySdgs || []);
-    
-    // Require at least one SDG for new profiles, or allow save if updating existing with no SDG changes
-    if (sdgsToSave.length === 0 && !partnerProfile?.id) {
+    try {
+      const sdgsToSave = selectedSdgs.length > 0 ? selectedSdgs : (partnerProfile?.primarySdgs || []);
+      
+      // Require at least one SDG
+      if (sdgsToSave.length === 0) {
+        toast({
+          title: "Error",
+          description: "Please select at least one SDG focus area",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      console.log("[Corporate Settings] Form submitted:", { 
+        data, 
+        sdgsToSave, 
+        hasExistingProfile: !!partnerProfile?.id,
+        partnerProfileId: partnerProfile?.id,
+        currentUserId: currentUser?.id
+      });
+      
+      updatePartnerMutation.mutate(data);
+    } catch (err) {
+      console.error("[Corporate Settings] Submit error:", err);
       toast({
         title: "Error",
-        description: "Please select at least one SDG focus area",
+        description: "An error occurred. Please try again.",
         variant: "destructive"
       });
-      return;
     }
-    
-    console.log("[Corporate Settings] Form submitted with:", { data, sdgsToSave, hasExistingProfile: !!partnerProfile?.id });
-    updatePartnerMutation.mutate(data);
   }
 
   if (isLoading) {

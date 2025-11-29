@@ -18,7 +18,7 @@ export default function Login() {
   const { signInWithGoogle, signInWithEmail, signUp } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [userType, setUserType] = useState<"volunteer" | "organization" | null>(null);
+  const [userType, setUserType] = useState<"volunteer" | "organization" | "corporate-partner" | null>(null);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");

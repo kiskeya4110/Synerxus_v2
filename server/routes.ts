@@ -5133,9 +5133,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   // Create CSR Partner
   app.post("/api/csr/partners", async (req, res) => {
     try {
-      const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs } = req.body;
+      const { userId, companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs } = req.body;
 
       const partner = {
+        userId,
         companyName,
         contactEmail,
         contactPhone,
@@ -5154,11 +5155,17 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
-  // List CSR Partners
+  // List CSR Partners - Get partner for current user
   app.get("/api/csr/partners", async (req, res) => {
     try {
-      const partners = await storage.listCSRPartners?.() || [];
-      res.json(partners);
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (!userId) {
+        return res.status(400).json({ error: "User ID required" });
+      }
+      const allPartners = await storage.listCSRPartners?.() || [];
+      const userPartners = allPartners.filter((p: any) => p.userId === userId);
+      // Return the first partner (corporate admin typically has one) or empty array
+      res.json(userPartners.length > 0 ? userPartners[0] : null);
     } catch (err) {
       console.error("Error fetching CSR partners:", err);
       res.status(500).json({ error: "Failed to fetch partners" });

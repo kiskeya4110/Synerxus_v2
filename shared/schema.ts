@@ -334,6 +334,7 @@ export const userDataAuditLogs = pgTable("user_data_audit_logs", {
 // CSR Partners - Corporate partners onboarded for volunteer program management
 export const csrPartners = pgTable("csr_partners", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(), // Corporate admin user who owns this partner
   companyName: text("company_name").notNull(),
   contactEmail: text("contact_email").notNull(),
   contactPhone: text("contact_phone"),

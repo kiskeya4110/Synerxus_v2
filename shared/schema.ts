@@ -415,6 +415,20 @@ export const verifiedOutputs = pgTable("verified_outputs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Volunteer Employer Links - Connect volunteers to their corporate employers
+export const volunteerEmployerLinks = pgTable("volunteer_employer_links", {
+  id: serial("id").primaryKey(),
+  volunteerId: integer("volunteer_id").references(() => volunteerProfiles.id).notNull(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  employeeId: text("employee_id"), // Company's employee ID
+  department: text("department"), // e.g., "Engineering", "HR"
+  jobTitle: text("job_title"), // Employee's title at company
+  verificationStatus: text("verification_status").default("pending"), // pending, verified, rejected
+  verifiedAt: timestamp("verified_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Matching Weights - Admin panel for simple weight adjustments (Optimization Layer)
 export const matchingWeights = pgTable("matching_weights", {
   id: serial("id").primaryKey(),
@@ -823,6 +837,12 @@ export const insertVerifiedOutputSchema = createInsertSchema(verifiedOutputs).om
   createdAt: true
 });
 
+export const insertVolunteerEmployerLinkSchema = createInsertSchema(volunteerEmployerLinks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -913,3 +933,6 @@ export type InsertProjectBudgetLink = z.infer<typeof insertProjectBudgetLinkSche
 
 export type VerifiedOutput = typeof verifiedOutputs.$inferSelect;
 export type InsertVerifiedOutput = z.infer<typeof insertVerifiedOutputSchema>;
+
+export type VolunteerEmployerLink = typeof volunteerEmployerLinks.$inferSelect;
+export type InsertVolunteerEmployerLink = z.infer<typeof insertVolunteerEmployerLinkSchema>;

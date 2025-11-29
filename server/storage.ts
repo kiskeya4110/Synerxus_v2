@@ -25,6 +25,7 @@ import {
   csrChallenges,
   projectBudgetLinks,
   verifiedOutputs,
+  volunteerEmployerLinks,
   type User, 
   type InsertUser,
   type Organization,
@@ -76,7 +77,9 @@ import {
   type ProjectBudgetLink,
   type InsertProjectBudgetLink,
   type VerifiedOutput,
-  type InsertVerifiedOutput
+  type InsertVerifiedOutput,
+  type VolunteerEmployerLink,
+  type InsertVolunteerEmployerLink
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
@@ -287,6 +290,12 @@ export interface IStorage {
   listVerifiedOutputs(): Promise<VerifiedOutput[]>;
   getVerifiedOutput(id: number): Promise<VerifiedOutput | undefined>;
   updateVerifiedOutput(id: number, output: Partial<InsertVerifiedOutput>): Promise<VerifiedOutput | undefined>;
+
+  // Volunteer Employer Link operations
+  createVolunteerEmployerLink(link: InsertVolunteerEmployerLink): Promise<VolunteerEmployerLink>;
+  listVolunteerEmployerLinks(): Promise<VolunteerEmployerLink[]>;
+  getVolunteerEmployerLink(volunteerId: number): Promise<VolunteerEmployerLink | undefined>;
+  updateVolunteerEmployerLink(id: number, link: Partial<InsertVolunteerEmployerLink>): Promise<VolunteerEmployerLink | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1252,6 +1261,26 @@ export class DatabaseStorage implements IStorage {
 
   async updateVerifiedOutput(id: number, output: Partial<InsertVerifiedOutput>): Promise<VerifiedOutput | undefined> {
     const [result] = await db.update(verifiedOutputs).set(output).where(eq(verifiedOutputs.id, id)).returning();
+    return result || undefined;
+  }
+
+  // Volunteer Employer Link operations
+  async createVolunteerEmployerLink(link: InsertVolunteerEmployerLink): Promise<VolunteerEmployerLink> {
+    const [result] = await db.insert(volunteerEmployerLinks).values(link).returning();
+    return result;
+  }
+
+  async listVolunteerEmployerLinks(): Promise<VolunteerEmployerLink[]> {
+    return await db.select().from(volunteerEmployerLinks);
+  }
+
+  async getVolunteerEmployerLink(volunteerId: number): Promise<VolunteerEmployerLink | undefined> {
+    const [result] = await db.select().from(volunteerEmployerLinks).where(eq(volunteerEmployerLinks.volunteerId, volunteerId));
+    return result || undefined;
+  }
+
+  async updateVolunteerEmployerLink(id: number, link: Partial<InsertVolunteerEmployerLink>): Promise<VolunteerEmployerLink | undefined> {
+    const [result] = await db.update(volunteerEmployerLinks).set(link).where(eq(volunteerEmployerLinks.id, id)).returning();
     return result || undefined;
   }
 }

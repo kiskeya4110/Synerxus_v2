@@ -5165,6 +5165,66 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // Update CSR Partner
+  app.patch("/api/csr/partners/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { companyName, contactEmail, contactPhone, industryType, employeeCount, annualCSRBudget, primarySdgs, vtoTrackingEnabled } = req.body;
+      
+      const updated = await storage.updateCSRPartner?.(parseInt(id), {
+        companyName,
+        contactEmail,
+        contactPhone,
+        industryType,
+        employeeCount,
+        annualCSRBudget,
+        primarySdgs,
+        vtoTrackingEnabled
+      });
+      
+      if (!updated) {
+        return res.status(404).json({ error: "CSR Partner not found" });
+      }
+      res.json(updated);
+    } catch (err) {
+      console.error("Error updating CSR partner:", err);
+      res.status(500).json({ error: "Failed to update partner" });
+    }
+  });
+
+  // Link volunteer to employer
+  app.post("/api/volunteer-employers", async (req, res) => {
+    try {
+      const { volunteerId, partnerId, employeeId, department, jobTitle } = req.body;
+      
+      const link = await storage.createVolunteerEmployerLink?.({
+        volunteerId,
+        partnerId,
+        employeeId,
+        department,
+        jobTitle,
+        verificationStatus: "pending"
+      });
+      
+      res.json(link);
+    } catch (err) {
+      console.error("Error linking volunteer to employer:", err);
+      res.status(500).json({ error: "Failed to link employer" });
+    }
+  });
+
+  // Get volunteer's employer link
+  app.get("/api/volunteer-employers/:volunteerId", async (req, res) => {
+    try {
+      const { volunteerId } = req.params;
+      const link = await storage.getVolunteerEmployerLink?.(parseInt(volunteerId));
+      res.json(link || null);
+    } catch (err) {
+      console.error("Error fetching employer link:", err);
+      res.status(500).json({ error: "Failed to fetch employer" });
+    }
+  });
+
   // Create CSR Challenge
   app.post("/api/csr/challenges", async (req, res) => {
     try {

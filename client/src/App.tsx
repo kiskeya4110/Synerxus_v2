@@ -40,6 +40,7 @@ import DiscoverOpportunities from "@/pages/discover-opportunities";
 import SDGMapping from "@/pages/sdg-mapping";
 import CSRDashboard from "@/pages/csr-dashboard";
 import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
+import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
 import NotFound from "@/pages/not-found";
 
 function RootRedirectRoute() {
@@ -131,6 +132,7 @@ function LayoutRoute() {
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
       <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
+      <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
       <Route path="/my-work" component={MyWork} />
       <Route path="/tasks" component={Tasks} />
       <Route path="/projects" component={Projects} />

@@ -803,10 +803,12 @@ export default function VolunteerProfileSettings() {
     staleTime: 0, // Always fetch fresh - never cache user data
   });
 
-  // Redirect organization managers to organization profile settings
+  // Redirect non-volunteer users to their appropriate settings page
   useEffect(() => {
     if (currentUser?.userType === "organization") {
       setLocation("/organization-profile-settings");
+    } else if (currentUser?.userType === "corporate-partner") {
+      setLocation("/corporate-partner-profile-settings");
     }
   }, [currentUser?.userType, setLocation]);
 

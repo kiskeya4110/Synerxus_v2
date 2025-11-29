@@ -5088,8 +5088,22 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const totalHours = partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
       const totalRoi = partnerBudgets.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
 
-      // SDG Progress (aggregate from challenges)
+      // SDG Progress - combine partner's primary SDGs with challenge progress
       const sdgProgress: Record<number, any> = {};
+      
+      // First, initialize all primary SDGs from partner settings
+      const primarySdgs = userPartner.primarySdgs || [];
+      primarySdgs.forEach((sdgId: number) => {
+        sdgProgress[sdgId] = {
+          goal: sdgId,
+          name: `Goal ${sdgId}`,
+          color: `hsl(${sdgId * 40}, 70%, 50%)`,
+          progress: 0,
+          status: 'committed'
+        };
+      });
+      
+      // Then overlay challenge progress data
       partnerChallenges.forEach((challenge: any) => {
         const sdg = challenge.sdgGoal;
         if (!sdgProgress[sdg]) {
@@ -5097,13 +5111,17 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
             goal: sdg,
             name: `Goal ${sdg}`,
             color: `hsl(${sdg * 40}, 70%, 50%)`,
-            progress: 0
+            progress: 0,
+            status: 'active'
           };
         }
         sdgProgress[sdg].progress = Math.min(
           100,
           (challenge.currentHours || 0) / (challenge.targetHours || 1) * 100
         );
+        sdgProgress[sdg].currentHours = challenge.currentHours || 0;
+        sdgProgress[sdg].targetHours = challenge.targetHours || 0;
+        sdgProgress[sdg].status = 'active';
       });
 
       // Top employees leaderboard

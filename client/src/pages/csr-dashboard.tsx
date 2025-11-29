@@ -15,7 +15,7 @@ interface CSRDashboardData {
   activeEmployees: number;
   totalHours: number;
   totalImpact: number;
-  sdgProgress: Record<number, { goal: number; name: string; color: string; progress: number }>;
+  sdgProgress: Record<number, { goal: number; name: string; color: string; progress: number; status?: string; currentHours?: number; targetHours?: number }>;
   partners: Array<{
     id: number;
     companyName: string;
@@ -229,28 +229,89 @@ export default function CSRDashboard() {
           </div>
 
           {/* SDG Contributions Grid - Mobile Optimized */}
-          <div className="bg-white dark:bg-slate-800 rounded-lg p-4 md:p-6">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Your SDG Contributions</h3>
-            <div className="grid grid-cols-5 md:grid-cols-8 gap-3 md:gap-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg p-4 md:p-6 border border-gray-200 dark:border-slate-700">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">SDG Commitments & Impact</h3>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-6">Your company's focus areas and contribution progress</p>
+            
+            <div className="grid grid-cols-5 md:grid-cols-8 gap-2 md:gap-3">
               {Object.values(sdgGoals).map((sdg) => {
-                const progress = csrData?.sdgProgress?.[sdg.id];
-                const hasProgress = progress && progress.progress > 0;
+                const sdgData = csrData?.sdgProgress?.[sdg.id];
+                const isCommitted = sdgData?.status === 'committed' || sdgData?.status === 'active';
+                const hasProgress = sdgData && sdgData.progress > 0;
+                const progressPercent = sdgData?.progress || 0;
                 
                 return (
-                  <div key={sdg.id} className="flex flex-col items-center">
-                    <div className="relative w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base transition-transform hover:scale-110"
-                         style={{ backgroundColor: progress?.color || '#d1d5db' }}>
-                      {sdg.id}
+                  <div key={sdg.id} className="flex flex-col items-center group">
+                    <div className="relative">
+                      <div 
+                        className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base transition-all duration-200 ${
+                          isCommitted ? 'hover:scale-110 shadow-lg' : 'opacity-40'
+                        }`}
+                        style={{ backgroundColor: sdgData?.color || '#e5e7eb' }}
+                      >
+                        {sdg.id}
+                      </div>
+                      
+                      {/* Progress ring overlay */}
                       {hasProgress && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                          <span className="text-xs">✓</span>
+                        <svg className="absolute inset-0 w-14 h-14 md:w-16 md:h-16 -rotate-90" style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.2))' }}>
+                          <circle
+                            cx="50%"
+                            cy="50%"
+                            r="26"
+                            fill="none"
+                            stroke="rgba(255,255,255,0.3)"
+                            strokeWidth="2"
+                          />
+                          <circle
+                            cx="50%"
+                            cy="50%"
+                            r="26"
+                            fill="none"
+                            stroke="white"
+                            strokeWidth="2"
+                            strokeDasharray={`${2 * Math.PI * 26}`}
+                            strokeDashoffset={`${2 * Math.PI * 26 * (1 - progressPercent / 100)}`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      )}
+                      
+                      {/* Status badge */}
+                      {isCommitted && (
+                        <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold ${
+                          hasProgress ? 'bg-green-500 text-white' : 'bg-blue-500 text-white'
+                        }`}>
+                          {hasProgress ? '✓' : '◆'}
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center">Goal {sdg.id}</p>
+                    
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 text-center font-semibold">G{sdg.id}</p>
+                    
+                    {/* Tooltip on hover */}
+                    <div className="hidden group-hover:block absolute top-full mt-1 z-50 bg-gray-900 dark:bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap">
+                      {isCommitted ? `${Math.round(progressPercent)}% Complete` : 'Not selected'}
+                    </div>
                   </div>
                 );
               })}
+            </div>
+            
+            {/* Legend */}
+            <div className="flex items-center gap-4 mt-6 pt-4 border-t border-gray-200 dark:border-slate-700 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <span>Active with progress</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                <span>Committed</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
+                <span>Not selected</span>
+              </div>
             </div>
           </div>
 

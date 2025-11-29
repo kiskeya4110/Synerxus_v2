@@ -398,7 +398,7 @@ export default function MyWork() {
 
       {/* Organization Impact KPIs */}
       {isOrganizationManager ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 px-6 pb-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-6 gap-3 px-6 pb-4">
           {/* Impact Score - Primary Metric */}
           <Card className="lg:col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20" data-testid="card-impact-score">
             <CardContent className="pt-6">

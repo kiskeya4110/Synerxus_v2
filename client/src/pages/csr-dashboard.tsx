@@ -56,6 +56,8 @@ export default function CSRDashboard() {
   const userId = localStorage.getItem('currentUserId');
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
+  const [selectedAdminTab, setSelectedAdminTab] = useState<'reviews' | 'insights' | 'flagged'>('reviews');
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
   // Check for authentication
   const isAuthenticated = !!user && !!userId;
@@ -74,6 +76,26 @@ export default function CSRDashboard() {
     },
     enabled: isAuthenticated,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: funnelData } = useQuery({
+    queryKey: ["/api/csr/engagement-funnel", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/csr/engagement-funnel?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch funnel");
+      return response.json();
+    },
+    enabled: isAuthenticated,
+  });
+
+  const { data: adminActionsData } = useQuery({
+    queryKey: ["/api/csr/pending-actions", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/csr/pending-actions?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch actions");
+      return response.json();
+    },
+    enabled: isAuthenticated,
   });
 
   // Show loading while checking auth
@@ -1223,25 +1245,25 @@ export default function CSRDashboard() {
               padding: '16px'
             }} data-testid="chart-employee-funnel">
               <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Employee Engagement Funnel</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '18px', fontWeight: 'bold' }}>+</span>
-                <span style={{ color: '#6b7280' }}>(15,900)</span>
-                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
-                <span>Registered</span>
-                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
-                <span>1+ Project</span>
-                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
-                <span style={{ fontWeight: '600' }}>890</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', marginTop: '12px', flexWrap: 'wrap' }}>
-                <span>Eligible (1,500)</span>
-                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
-                <span>(1,100)</span>
-                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
-                <span>Retained</span>
-                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
-                <span style={{ fontWeight: '600' }}>650</span>
-              </div>
+              {funnelData?.funnel ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {funnelData.funnel.map((stage: any, idx: number) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                      {idx > 0 && <ChevronRight style={{ width: '14px', height: '14px', color: '#9ca3af' }} />}
+                      <span style={{ fontWeight: idx === 0 ? '600' : '500', color: idx === 0 ? '#1e3a8a' : '#374151' }}>
+                        {stage.stage}
+                      </span>
+                      <span style={{ fontWeight: '600', color: '#059669' }}>({stage.count})</span>
+                      {idx > 0 && <span style={{ fontSize: '11px', color: '#6b7280' }}>-{stage.dropoff}%</span>}
+                    </div>
+                  ))}
+                  <div style={{ marginTop: '8px', padding: '8px 0', borderTop: '1px solid #e5e7eb', fontSize: '12px', color: '#6b7280' }}>
+                    Conversion to Active: {funnelData.conversion.toActive}% • Top Performers: {funnelData.conversion.toTopPerformers}%
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#9ca3af', fontSize: '13px' }}>Loading funnel data...</div>
+              )}
             </div>
 
             {/* Row 2, Col 2: Pending Admin Actions */}

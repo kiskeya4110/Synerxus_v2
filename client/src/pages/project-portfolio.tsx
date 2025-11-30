@@ -46,8 +46,10 @@ export default function ProjectPortfolio() {
   const [viewType, setViewType] = useState<"grid" | "kanban" | "timeline" | "impact">("grid");
   const [filterTier, setFilterTier] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [filterRisk, setFilterRisk] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showInsightsPanel, setShowInsightsPanel] = useState(true);
 
   const { data: portfolioData, isLoading } = useQuery<PortfolioSummary>({
     queryKey: ["/api/csr/portfolio/summary", userId],
@@ -67,6 +69,59 @@ export default function ProjectPortfolio() {
     month: "long",
     day: "numeric",
   });
+
+  // AI-Powered Health Score Algorithm
+  const calculateHealthScore = (project: PortfolioProject): { score: number; status: string; color: string } => {
+    let score = 100;
+    
+    // Progress penalty (20%)
+    const progressPenalty = Math.max(0, (100 - project.completionPercentage) * 0.15);
+    score -= progressPenalty;
+    
+    // Budget efficiency penalty (20%)
+    const budgetEfficiency = project.budgetSpent / project.budgetAllocated;
+    if (budgetEfficiency > 0.95) score -= 15;
+    else if (budgetEfficiency > 0.85) score -= 10;
+    else if (budgetEfficiency < 0.3) score -= 5;
+    
+    // Risk impact (20%)
+    const riskPenalty = project.riskLevel === "high" ? 20 : project.riskLevel === "medium" ? 10 : 0;
+    score -= riskPenalty;
+    
+    // Beneficiary impact bonus (15%)
+    const beneficiaryBonus = Math.min(10, (project.beneficiariesDirect / 1000) * 10);
+    score += beneficiaryBonus;
+    
+    // Team engagement bonus (10%)
+    const teamBonus = Math.min(5, project.teamMembers * 0.5);
+    score += teamBonus;
+
+    score = Math.max(0, Math.min(100, Math.round(score)));
+    
+    let status = "Excellent";
+    let color = "#10b981";
+    if (score >= 80) status = "Excellent";
+    else if (score >= 60) { status = "Good"; color = "#3b82f6"; }
+    else if (score >= 40) { status = "At Risk"; color = "#f59e0b"; }
+    else { status = "Critical"; color = "#ef4444"; }
+    
+    return { score, status, color };
+  };
+
+  // Portfolio Optimization Recommendations
+  const generateInsights = (): string[] => {
+    const insights: string[] = [];
+    const avgCompletion = (portfolioData?.projects?.reduce((sum, p) => sum + p.completionPercentage, 0) || 0) / (portfolioData?.projects?.length || 1);
+    const avgBudgetUtilization = (portfolioData?.totalBudgetSpent || 0) / (portfolioData?.totalBudget || 1);
+    
+    if (avgCompletion < 50) insights.push("🎯 Accelerate: Portfolio avg completion is below 50%. Consider resource reallocation.");
+    if (avgBudgetUtilization > 0.9) insights.push("⚠️ Budget Alert: Over 90% budget utilized. Monitor spending closely.");
+    if ((portfolioData?.atRiskProjects || 0) > (portfolioData?.totalProjects || 1) * 0.2) insights.push("🚨 Risk Management: >20% projects at risk. Review mitigation strategies.");
+    if ((portfolioData?.strategicAlignment || 0) < 60) insights.push("🔗 Alignment: Strategic alignment below 60%. Review project prioritization.");
+    if (insights.length === 0) insights.push("✅ Portfolio is performing well with balanced metrics.");
+    
+    return insights;
+  };
 
   if (isLoading) {
     return (
@@ -95,8 +150,14 @@ export default function ProjectPortfolio() {
   const filteredProjects = portfolioData?.projects?.filter((p: PortfolioProject) => {
     if (filterTier && p.tier !== filterTier) return false;
     if (filterStatus && p.status !== filterStatus) return false;
+    if (filterRisk && p.riskLevel !== filterRisk) return false;
     return true;
   }) || [];
+
+  // Sort projects by health score (descending)
+  const sortedProjects = [...filteredProjects].sort((a, b) => 
+    calculateHealthScore(b).score - calculateHealthScore(a).score
+  );
 
   const KPICard = ({ icon, label, value, color }: { icon: string; label: string; value: any; color: string }) => (
     <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "1px solid #e5e7eb", flex: 1, minWidth: "150px" }}>
@@ -105,7 +166,11 @@ export default function ProjectPortfolio() {
     </div>
   );
 
-  const ProjectCard = ({ project }: { project: PortfolioProject }) => (
+  const ProjectCard = ({ project }: { project: PortfolioProject }) => {
+    const health = calculateHealthScore(project);
+    const budgetUtilization = Math.round((project.budgetSpent / project.budgetAllocated) * 100);
+    
+    return (
     <div
       onClick={() => {
         setSelectedProject(project);
@@ -130,21 +195,35 @@ export default function ProjectPortfolio() {
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "8px" }}>
         <span style={{ fontSize: "13px", fontWeight: "600", color: tierColors[project.tier], textTransform: "uppercase" }}>{project.tier}</span>
-        <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "4px", backgroundColor: statusColors[project.status] + "20", color: statusColors[project.status] }}>
-          {project.status}
-        </span>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <span style={{ fontSize: "10px", fontWeight: "700", padding: "2px 8px", borderRadius: "4px", backgroundColor: health.color + "20", color: health.color }}>
+            {health.score}
+          </span>
+          <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "4px", backgroundColor: statusColors[project.status] + "20", color: statusColors[project.status] }}>
+            {project.status}
+          </span>
+        </div>
       </div>
       <h3 style={{ fontSize: "15px", fontWeight: "600", color: "#111827", margin: "0 0 8px 0" }}>{project.name}</h3>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "12px", marginBottom: "12px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "11px", marginBottom: "12px" }}>
         <div style={{ color: "#6b7280" }}>💰 ${project.budgetAllocated.toLocaleString()}</div>
         <div style={{ color: "#6b7280" }}>👥 {project.beneficiariesDirect.toLocaleString()}</div>
+        <div style={{ color: "#6b7280" }}>⏱️ {project.completionPercentage}%</div>
+        <div style={{ color: project.riskLevel === "high" ? "#ef4444" : project.riskLevel === "medium" ? "#f59e0b" : "#10b981", fontWeight: "600" }}>
+          {project.riskLevel.toUpperCase()} RISK
+        </div>
       </div>
       <div style={{ backgroundColor: "#f3f4f6", height: "4px", borderRadius: "2px", overflow: "hidden", marginBottom: "8px" }}>
         <div style={{ height: "100%", width: `${project.completionPercentage}%`, backgroundColor: "#059669", transition: "width 0.3s" }} />
       </div>
-      <div style={{ fontSize: "11px", color: "#9ca3af" }}>{project.completionPercentage}% Complete</div>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", color: "#9ca3af" }}>
+        <span>Progress: {project.completionPercentage}%</span>
+        <span>Budget: {budgetUtilization}%</span>
+        <span style={{ color: health.color, fontWeight: "600" }}>{health.status}</span>
+      </div>
     </div>
   );
+  };
 
   return (
     <div
@@ -392,27 +471,45 @@ export default function ProjectPortfolio() {
               </button>
             </div>
 
+            {/* AI Health Score Summary */}
+            {(() => {
+              const health = calculateHealthScore(selectedProject);
+              const budgetEff = Math.round((selectedProject.budgetSpent / selectedProject.budgetAllocated) * 100);
+              const avgCompletion = (portfolioData?.projects?.reduce((sum, p) => sum + p.completionPercentage, 0) || 0) / (portfolioData?.projects?.length || 1);
+              return (
+                <div style={{ backgroundColor: "#f0f9ff", border: "1px solid #3b82f6", borderRadius: "8px", padding: "12px", marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#1e40af", marginBottom: "8px" }}>📊 AI HEALTH ANALYSIS</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "8px", fontSize: "12px" }}>
+                    <div><span style={{ color: "#6b7280" }}>Health Score:</span> <span style={{ fontWeight: "700", color: health.color }}>{health.score}/100</span></div>
+                    <div><span style={{ color: "#6b7280" }}>Status:</span> <span style={{ fontWeight: "600", color: health.color }}>{health.status}</span></div>
+                    <div><span style={{ color: "#6b7280" }}>vs Avg:</span> <span style={{ fontWeight: "600", color: health.score > avgCompletion ? "#10b981" : "#ef4444" }}>+{Math.round(health.score - avgCompletion)}%</span></div>
+                  </div>
+                </div>
+              );
+            })()}
+            
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "24px" }}>
               <div style={{ backgroundColor: "#f9fafb", padding: "12px", borderRadius: "8px" }}>
-                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Budget</div>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>💰 Budget</div>
                 <div style={{ fontSize: "18px", fontWeight: "bold", color: "#059669" }}>${selectedProject.budgetAllocated.toLocaleString()}</div>
-                <div style={{ fontSize: "10px", color: "#9ca3af" }}>Spent: ${selectedProject.budgetSpent.toLocaleString()}</div>
+                <div style={{ fontSize: "10px", color: "#9ca3af" }}>Spent: ${selectedProject.budgetSpent.toLocaleString()} ({Math.round((selectedProject.budgetSpent / selectedProject.budgetAllocated) * 100)}%)</div>
               </div>
               <div style={{ backgroundColor: "#f9fafb", padding: "12px", borderRadius: "8px" }}>
-                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Beneficiaries</div>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>👥 Beneficiaries</div>
                 <div style={{ fontSize: "18px", fontWeight: "bold", color: "#3b82f6" }}>{selectedProject.beneficiariesDirect.toLocaleString()}</div>
                 <div style={{ fontSize: "10px", color: "#9ca3af" }}>Indirect: {selectedProject.beneficiariesIndirect.toLocaleString()}</div>
               </div>
               <div style={{ backgroundColor: "#f9fafb", padding: "12px", borderRadius: "8px" }}>
-                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Progress</div>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>⏱️ Progress</div>
                 <div style={{ fontSize: "18px", fontWeight: "bold", color: "#f59e0b" }}>{selectedProject.completionPercentage}%</div>
-                <div style={{ fontSize: "10px", color: "#9ca3af" }}>Complete</div>
+                <div style={{ fontSize: "10px", color: "#9ca3af" }}>Complete • {selectedProject.teamMembers} team members</div>
               </div>
               <div style={{ backgroundColor: "#f9fafb", padding: "12px", borderRadius: "8px" }}>
-                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Timeline</div>
-                <div style={{ fontSize: "18px", fontWeight: "bold", color: "#1e3a8a" }}>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>📅 Timeline</div>
+                <div style={{ fontSize: "12px", fontWeight: "bold", color: "#1e3a8a" }}>
                   {new Date(selectedProject.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(selectedProject.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </div>
+                <div style={{ fontSize: "10px", color: "#9ca3af" }}>Risk: {selectedProject.riskLevel.toUpperCase()}</div>
               </div>
             </div>
 
@@ -424,6 +521,25 @@ export default function ProjectPortfolio() {
                 Update Status
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Insights Panel */}
+      {showInsightsPanel && (
+        <div style={{ backgroundColor: "#eff6ff", border: "1px solid #3b82f6", borderRadius: "12px", padding: "16px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+            <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#1e40af", margin: 0 }}>✨ AI Portfolio Insights & Recommendations</h3>
+            <button onClick={() => setShowInsightsPanel(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#3b82f6" }}>
+              ✕
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {generateInsights().map((insight, idx) => (
+              <div key={idx} style={{ fontSize: "13px", color: "#1e40af", padding: "8px 12px", backgroundColor: "white", borderRadius: "6px", borderLeft: "3px solid #3b82f6" }}>
+                {insight}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -452,28 +568,40 @@ export default function ProjectPortfolio() {
         </div>
       </div>
 
-      {/* View Controls */}
-      <div style={{ display: "flex", gap: "12px", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button onClick={() => setViewType("grid")} style={{ padding: "8px 16px", backgroundColor: viewType === "grid" ? "#3b82f6" : "#f3f4f6", color: viewType === "grid" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>
-            <Grid3x3 style={{ width: "16px", height: "16px", display: "inline", marginRight: "4px" }} /> Grid
+      {/* View Controls & Advanced Filters */}
+      <div style={{ display: "flex", gap: "12px", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <button onClick={() => setViewType("grid")} style={{ padding: "8px 16px", backgroundColor: viewType === "grid" ? "#3b82f6" : "#f3f4f6", color: viewType === "grid" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+            <Grid3x3 style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} /> Grid
           </button>
-          <button onClick={() => setViewType("kanban")} style={{ padding: "8px 16px", backgroundColor: viewType === "kanban" ? "#3b82f6" : "#f3f4f6", color: viewType === "kanban" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>
-            <Trello style={{ width: "16px", height: "16px", display: "inline", marginRight: "4px" }} /> Kanban
+          <button onClick={() => setViewType("kanban")} style={{ padding: "8px 16px", backgroundColor: viewType === "kanban" ? "#3b82f6" : "#f3f4f6", color: viewType === "kanban" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+            <Trello style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} /> Kanban
           </button>
-          <button onClick={() => setViewType("timeline")} style={{ padding: "8px 16px", backgroundColor: viewType === "timeline" ? "#3b82f6" : "#f3f4f6", color: viewType === "timeline" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>
-            <Calendar style={{ width: "16px", height: "16px", display: "inline", marginRight: "4px" }} /> Timeline
+          <button onClick={() => setViewType("timeline")} style={{ padding: "8px 16px", backgroundColor: viewType === "timeline" ? "#3b82f6" : "#f3f4f6", color: viewType === "timeline" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+            <Calendar style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} /> Timeline
+          </button>
+          <span style={{ fontSize: "12px", color: "#9ca3af", margin: "0 8px" }}>|</span>
+          
+          {/* Risk Level Filters */}
+          <button onClick={() => setFilterRisk(filterRisk === "high" ? null : "high")} style={{ padding: "8px 16px", backgroundColor: filterRisk === "high" ? "#ef4444" : "#f3f4f6", color: filterRisk === "high" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+            🔴 High Risk
+          </button>
+          <button onClick={() => setFilterRisk(filterRisk === "medium" ? null : "medium")} style={{ padding: "8px 16px", backgroundColor: filterRisk === "medium" ? "#f59e0b" : "#f3f4f6", color: filterRisk === "medium" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+            🟡 Medium Risk
+          </button>
+          <button onClick={() => setFilterRisk(filterRisk === "low" ? null : "low")} style={{ padding: "8px 16px", backgroundColor: filterRisk === "low" ? "#10b981" : "#f3f4f6", color: filterRisk === "low" ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+            🟢 Low Risk
           </button>
         </div>
-        <button style={{ padding: "8px 16px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>
-          <Plus style={{ width: "16px", height: "16px", display: "inline", marginRight: "4px" }} /> New Project
+        <button style={{ padding: "8px 16px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+          <Plus style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} /> New Project
         </button>
       </div>
 
-      {/* Portfolio Grid View */}
+      {/* Portfolio Grid View - Sorted by Health Score */}
       {viewType === "grid" && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
-          {filteredProjects.map((project: PortfolioProject) => (
+          {sortedProjects.map((project: PortfolioProject) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>

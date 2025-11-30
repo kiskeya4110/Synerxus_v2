@@ -5202,7 +5202,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const csrPartners = (await storage.listCSRPartners?.()) || [];
       
       const userPartner = csrPartners.find((p: any) => p.userId === parseInt(userId));
-      const linkedPartner = profile?.employerId ? csrPartners.find((p: any) => p.id === parseInt(profile.employerId)) : null;
+      const linkedPartner = profile?.employerId ? csrPartners.find((p: any) => p.id === parseInt(String(profile.employerId))) : null;
       
       const partnerEngagement = employeeEngagement.filter((e: any) => 
         (userPartner && e?.partnerId === userPartner.id) ||

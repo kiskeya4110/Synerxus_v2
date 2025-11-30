@@ -5335,7 +5335,35 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         })),
         leaderboard,
         sidebarProjects,
-        sidebarEmployees
+        sidebarEmployees,
+        // Real breakdown data for KPI modals
+        kpiBreakdown: {
+          hours: {
+            total: totalHours,
+            fromEmployeeEngagement: partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
+            fromVolunteerActivities: volunteerActivityHours,
+            averagePerEmployee: activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0,
+            economicValue: totalHours * 35
+          },
+          employees: {
+            total: activeEmployees,
+            fromEmployeeEngagement: new Set(partnerEngagement.map((e: any) => e.employeeEmail)).size,
+            fromVolunteerActivities: new Set(partnerVolunteerActivities.map((a: any) => a.userId)).size,
+            totalHoursContributed: totalHours,
+            engagementRate: Math.round((activeEmployees / (userPartner.employeeCount || 5000)) * 100)
+          },
+          projects: {
+            total: projectsCompleted,
+            totalRoi: totalRoi,
+            averageRoiPerProject: projectsCompleted > 0 ? Math.round(totalRoi / projectsCompleted) : 0,
+            totalHoursInvested: totalHours
+          },
+          sdg: {
+            scoreDelta: sdgScoreDelta,
+            activeCommitments: Object.keys(sdgProgress).length,
+            averageProgress: Math.round(Object.values(sdgProgress).reduce((sum: number, s: any) => sum + (s.progress || 0), 0) / Math.max(1, Object.keys(sdgProgress).length))
+          }
+        }
       });
     } catch (err) {
       console.error("Error fetching CSR dashboard:", err);

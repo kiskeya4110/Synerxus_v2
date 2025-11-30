@@ -515,17 +515,18 @@ export default function CSRDashboard() {
                 {selectedKPI === 'hours' && (
                   <div style={{ color: '#374151' }}>
                     <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
-                      {(csrData?.totalHours || 12450).toLocaleString()} hours
+                      {((csrData as any)?.kpiBreakdown?.hours?.total || 0).toLocaleString()} hours
                     </p>
                     <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
-                      Total volunteer hours contributed across all employee participants in CSR initiatives.
+                      Total volunteer hours contributed across all employee and volunteer participants in CSR initiatives.
                     </p>
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
-                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Key Metrics:</p>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Hours Breakdown:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ Average hours per employee: {csrData?.activeEmployees ? Math.round((csrData.totalHours || 12450) / csrData.activeEmployees) : 14} hours</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Active employee contributors: {csrData?.activeEmployees || 890}</li>
-                        <li>✓ Total economic value: ${((csrData?.totalHours || 12450) * 35).toLocaleString()}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ From employee engagement: {((csrData as any)?.kpiBreakdown?.hours?.fromEmployeeEngagement || 0).toLocaleString()} hours</li>
+                        <li style={{ marginBottom: '8px' }}>✓ From volunteer activities: {((csrData as any)?.kpiBreakdown?.hours?.fromVolunteerActivities || 0).toLocaleString()} hours</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Average per contributor: {((csrData as any)?.kpiBreakdown?.hours?.averagePerEmployee || 0)} hours</li>
+                        <li>✓ Economic value: ${(((csrData as any)?.kpiBreakdown?.hours?.economicValue || 0)).toLocaleString()}</li>
                       </ul>
                     </div>
                   </div>
@@ -534,17 +535,18 @@ export default function CSRDashboard() {
                 {selectedKPI === 'employees' && (
                   <div style={{ color: '#374151' }}>
                     <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
-                      {csrData?.activeEmployees || 890} employees
+                      {((csrData as any)?.kpiBreakdown?.employees?.total || 0)} people engaged
                     </p>
                     <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
-                      Unique employee participants engaged in volunteer activities through your CSR program.
+                      Unique participants including company employees and volunteer contributors engaged in CSR initiatives.
                     </p>
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
-                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Engagement Summary:</p>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Engagement Breakdown:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ Total hours logged: {(csrData?.totalHours || 12450).toLocaleString()}</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Projects supported: {csrData?.projectsCompleted || 112}</li>
-                        <li>✓ Engagement rate: {csrData?.activeEmployees ? Math.round(((csrData.activeEmployees / 5000) * 100)) : 18}% of workforce</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Company employees: {((csrData as any)?.kpiBreakdown?.employees?.fromEmployeeEngagement || 0)}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Volunteer contributors: {((csrData as any)?.kpiBreakdown?.employees?.fromVolunteerActivities || 0)}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Total hours contributed: {((csrData as any)?.kpiBreakdown?.employees?.totalHoursContributed || 0).toLocaleString()}</li>
+                        <li>✓ Engagement rate: {((csrData as any)?.kpiBreakdown?.employees?.engagementRate || 0)}% of workforce</li>
                       </ul>
                     </div>
                   </div>
@@ -553,17 +555,17 @@ export default function CSRDashboard() {
                 {selectedKPI === 'projects' && (
                   <div style={{ color: '#374151' }}>
                     <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
-                      {csrData?.projectsCompleted || 112} projects
+                      {((csrData as any)?.kpiBreakdown?.projects?.total || 0)} projects
                     </p>
                     <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
-                      Complete CSR projects with verified outcomes and impact tracking.
+                      CSR projects completed with verified outcomes and measurable impact.
                     </p>
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
-                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Project Impact:</p>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Project Impact Metrics:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ Total ROI: ${(csrData?.totalImpact || 435750).toLocaleString()}</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Average ROI per project: ${(csrData?.totalImpact && csrData?.projectsCompleted ? Math.round((csrData.totalImpact / csrData.projectsCompleted)) : 3891).toLocaleString()}</li>
-                        <li>✓ Employee hours invested: {(csrData?.totalHours || 12450).toLocaleString()}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Total ROI generated: ${(((csrData as any)?.kpiBreakdown?.projects?.totalRoi || 0)).toLocaleString()}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Average ROI per project: ${(((csrData as any)?.kpiBreakdown?.projects?.averageRoiPerProject || 0)).toLocaleString()}</li>
+                        <li>✓ Total hours invested: {(((csrData as any)?.kpiBreakdown?.projects?.totalHoursInvested || 0)).toLocaleString()}</li>
                       </ul>
                     </div>
                   </div>
@@ -572,7 +574,7 @@ export default function CSRDashboard() {
                 {selectedKPI === 'sdg' && (
                   <div style={{ color: '#374151' }}>
                     <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
-                      +{csrData?.sdgScoreDelta || 15}% Q3 Performance
+                      +{((csrData as any)?.kpiBreakdown?.sdg?.scoreDelta || 0)}% Q3 Performance
                     </p>
                     <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                       Quarter-over-quarter improvement in SDG goal alignment and progress across active initiatives.
@@ -580,8 +582,8 @@ export default function CSRDashboard() {
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
                       <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>SDG Progress Metrics:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ Active SDG commitments: {Object.keys(csrData?.sdgProgress || {}).length}</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Average SDG progress: {Math.round((Object.values(csrData?.sdgProgress || {}).reduce((sum: number, s: any) => sum + (s.progress || 0), 0) / Math.max(1, Object.keys(csrData?.sdgProgress || {}).length)))  }%</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Active SDG commitments: {((csrData as any)?.kpiBreakdown?.sdg?.activeCommitments || 0)}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Average SDG progress: {((csrData as any)?.kpiBreakdown?.sdg?.averageProgress || 0)}%</li>
                         <li>✓ Momentum: Strong growth trend in Q3 vs Q2</li>
                       </ul>
                     </div>

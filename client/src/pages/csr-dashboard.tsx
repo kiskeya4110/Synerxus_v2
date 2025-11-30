@@ -471,7 +471,7 @@ export default function CSRDashboard() {
           )}
           {selectedMainTab === 'overview' && (
             <>
-          {/* KPI Cards Row - 4 cards in dark navy */}
+              {/* KPI Cards Row - 4 cards in dark navy */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
             <div 
               onClick={() => setSelectedKPI('hours')}
@@ -1675,6 +1675,8 @@ export default function CSRDashboard() {
           </div>
         </div>
       )}
+            </>
+          )}
     </div>
   );
 }

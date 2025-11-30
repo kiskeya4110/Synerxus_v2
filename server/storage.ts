@@ -26,6 +26,10 @@ import {
   projectBudgetLinks,
   verifiedOutputs,
   volunteerEmployerLinks,
+  employeeCommitments,
+  employeeActivityLogs,
+  employeeMilestones,
+  csrCommitmentGoals,
   type User, 
   type InsertUser,
   type Organization,
@@ -79,7 +83,15 @@ import {
   type VerifiedOutput,
   type InsertVerifiedOutput,
   type VolunteerEmployerLink,
-  type InsertVolunteerEmployerLink
+  type InsertVolunteerEmployerLink,
+  type EmployeeCommitment,
+  type InsertEmployeeCommitment,
+  type EmployeeActivityLog,
+  type InsertEmployeeActivityLog,
+  type EmployeeMilestone,
+  type InsertEmployeeMilestone,
+  type CSRCommitmentGoal,
+  type InsertCSRCommitmentGoal
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
@@ -1261,6 +1273,76 @@ export class DatabaseStorage implements IStorage {
 
   async updateVerifiedOutput(id: number, output: Partial<InsertVerifiedOutput>): Promise<VerifiedOutput | undefined> {
     const [result] = await db.update(verifiedOutputs).set(output).where(eq(verifiedOutputs.id, id)).returning();
+    return result || undefined;
+  }
+
+  // Employee Commitment operations
+  async createEmployeeCommitment(commitment: InsertEmployeeCommitment): Promise<EmployeeCommitment> {
+    const [result] = await db.insert(employeeCommitments).values(commitment).returning();
+    return result;
+  }
+
+  async listEmployeeCommitments(): Promise<EmployeeCommitment[]> {
+    return await db.select().from(employeeCommitments);
+  }
+
+  async getEmployeeCommitment(id: number): Promise<EmployeeCommitment | undefined> {
+    const [result] = await db.select().from(employeeCommitments).where(eq(employeeCommitments.id, id));
+    return result || undefined;
+  }
+
+  async updateEmployeeCommitment(id: number, commitment: Partial<InsertEmployeeCommitment>): Promise<EmployeeCommitment | undefined> {
+    const [result] = await db.update(employeeCommitments).set(commitment).where(eq(employeeCommitments.id, id)).returning();
+    return result || undefined;
+  }
+
+  // Employee Activity Log operations
+  async createEmployeeActivityLog(log: InsertEmployeeActivityLog): Promise<EmployeeActivityLog> {
+    const [result] = await db.insert(employeeActivityLogs).values(log).returning();
+    return result;
+  }
+
+  async listEmployeeActivityLogs(): Promise<EmployeeActivityLog[]> {
+    return await db.select().from(employeeActivityLogs);
+  }
+
+  async getEmployeeActivityLog(id: number): Promise<EmployeeActivityLog | undefined> {
+    const [result] = await db.select().from(employeeActivityLogs).where(eq(employeeActivityLogs.id, id));
+    return result || undefined;
+  }
+
+  // Employee Milestone operations
+  async createEmployeeMilestone(milestone: InsertEmployeeMilestone): Promise<EmployeeMilestone> {
+    const [result] = await db.insert(employeeMilestones).values(milestone).returning();
+    return result;
+  }
+
+  async listEmployeeMilestones(): Promise<EmployeeMilestone[]> {
+    return await db.select().from(employeeMilestones);
+  }
+
+  async getEmployeeMilestone(id: number): Promise<EmployeeMilestone | undefined> {
+    const [result] = await db.select().from(employeeMilestones).where(eq(employeeMilestones.id, id));
+    return result || undefined;
+  }
+
+  // CSR Commitment Goal operations
+  async createCSRCommitmentGoal(goal: InsertCSRCommitmentGoal): Promise<CSRCommitmentGoal> {
+    const [result] = await db.insert(csrCommitmentGoals).values(goal).returning();
+    return result;
+  }
+
+  async listCSRCommitmentGoals(): Promise<CSRCommitmentGoal[]> {
+    return await db.select().from(csrCommitmentGoals);
+  }
+
+  async getCSRCommitmentGoal(id: number): Promise<CSRCommitmentGoal | undefined> {
+    const [result] = await db.select().from(csrCommitmentGoals).where(eq(csrCommitmentGoals.id, id));
+    return result || undefined;
+  }
+
+  async updateCSRCommitmentGoal(id: number, goal: Partial<InsertCSRCommitmentGoal>): Promise<CSRCommitmentGoal | undefined> {
+    const [result] = await db.update(csrCommitmentGoals).set(goal).where(eq(csrCommitmentGoals.id, id)).returning();
     return result || undefined;
   }
 

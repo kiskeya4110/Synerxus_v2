@@ -5206,7 +5206,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         });
       }
 
-      // Parse date range for filtering (defaults to all time if not provided)
+      // Parse date range for filtering (only apply if dates are provided)
+      const shouldFilterByDate = !!startDateStr || !!endDateStr;
       const startDate = startDateStr ? new Date(startDateStr) : new Date(0);
       const endDate = endDateStr ? new Date(endDateStr) : new Date();
 
@@ -5223,19 +5224,23 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const partnerChallenges = csrChallenges.filter((c: any) => c.partnerId === userPartner.id);
       const partnerBudgets = projectBudgetLinks.filter((b: any) => b.partnerId === userPartner.id);
 
-      // Apply date filtering to engagement records
-      const filteredEngagement = partnerEngagement.filter((e: any) => {
-        const engagementDate = e.createdAt ? new Date(e.createdAt) : new Date();
-        return engagementDate >= startDate && engagementDate <= endDate;
-      });
+      // Apply date filtering to engagement records (only if dates provided)
+      const filteredEngagement = shouldFilterByDate 
+        ? partnerEngagement.filter((e: any) => {
+            const engagementDate = e.createdAt ? new Date(e.createdAt) : new Date(0);
+            return engagementDate >= startDate && engagementDate <= endDate;
+          })
+        : partnerEngagement;
 
-      // Apply date filtering to volunteer activities
+      // Apply date filtering to volunteer activities (only if dates provided)
       const partnerProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId).filter(Boolean));
-      const filteredVolunteerActivities = volunteerActivities.filter((a: any) => {
-        if (!partnerProjectIds.has(a.projectId)) return false;
-        const activityDate = a.createdAt ? new Date(a.createdAt) : new Date();
-        return activityDate >= startDate && activityDate <= endDate;
-      });
+      const filteredVolunteerActivities = shouldFilterByDate
+        ? volunteerActivities.filter((a: any) => {
+            if (!partnerProjectIds.has(a.projectId)) return false;
+            const activityDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            return activityDate >= startDate && activityDate <= endDate;
+          })
+        : volunteerActivities.filter((a: any) => partnerProjectIds.has(a.projectId));
 
       // Calculate KPIs from real employee engagement data with date filtering
       const totalPartners = 1; // Their own company

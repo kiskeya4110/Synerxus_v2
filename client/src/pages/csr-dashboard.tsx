@@ -619,8 +619,8 @@ export default function CSRDashboard() {
             }} data-testid="chart-sdg-alignment">
               <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>SDG Alignment Dashboard</h3>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                {/* Dynamic sizing based on projects and employees - Fixed height for pie chart */}
-                <div style={{ height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
+                {/* Dynamic sizing based on projects and employees */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 0 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -633,7 +633,7 @@ export default function CSRDashboard() {
                         outerRadius={Math.max(70, Math.min(95, (csrData?.activeEmployees || 890) / 8))}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ name, value }) => `${name} ${value}%`}
+                        label={({ fullName, value }) => `${fullName} ${value}%`}
                         labelLine={true}
                         onClick={(data) => setSelectedSDG(data.goal)}
                       >
@@ -668,45 +668,6 @@ export default function CSRDashboard() {
                     <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>Avg Impact</p>
                     <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#f97316' }}>{Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length) || 20)}%</p>
                   </div>
-                </div>
-                
-                {/* SDG Labels Legend - Interactive and Scrollable */}
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(3, 1fr)', 
-                  gap: '4px', 
-                  marginTop: '8px', 
-                  fontSize: '9px',
-                  overflowY: 'auto',
-                  maxHeight: '120px',
-                  paddingRight: '4px'
-                }}>
-                  {chartData.map((sdg, idx) => (
-                    <div 
-                      key={idx}
-                      onClick={() => setSelectedSDG(sdg.goal)}
-                      title={`${sdg.fullName}\n${sdg.hours} hours | ${sdg.employees} employees | ${sdg.projects} projects`}
-                      style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: '3px',
-                        cursor: 'pointer',
-                        padding: '3px 4px',
-                        borderRadius: '3px',
-                        backgroundColor: selectedSDG === sdg.goal ? '#f0f4f8' : 'transparent',
-                        border: selectedSDG === sdg.goal ? `1px solid ${sdg.color}` : '1px solid transparent',
-                        transition: 'all 0.2s ease',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      <div style={{ width: '8px', height: '8px', borderRadius: '1px', backgroundColor: sdg.color, flexShrink: 0 }} />
-                      <span style={{ color: '#4b5563', fontWeight: '500', fontSize: '8px' }}>
-                        {sdg.name} {sdg.value}%
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>

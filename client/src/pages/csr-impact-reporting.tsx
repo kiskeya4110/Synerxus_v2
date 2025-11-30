@@ -200,6 +200,7 @@ export function CSRImpactReporting() {
               { id: "timeseries", label: "Time-Series Analysis", icon: "📈" },
               { id: "impact", label: "Impact Deep Dive", icon: "🎯" },
               { id: "projects", label: "Projects", icon: "📁" },
+              { id: "insights", label: "Insights", icon: "💡" },
               { id: "sdg", label: "SDG Alignment", icon: "🌍" },
               { id: "benchmarks", label: "Benchmarking", icon: "📍" },
               { id: "compliance", label: "Compliance", icon: "✅" }
@@ -450,7 +451,113 @@ export function CSRImpactReporting() {
                   <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
                     <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>Largest Project</div>
                     <div style={{ fontSize: "28px", fontWeight: "bold", color: "#f59e0b" }}>
-                      {Math.max(...impactData?.projectMetrics?.map((p: any) => p.hours || 0), 0) || 0} hrs
+                      {(impactData?.projectMetrics && impactData.projectMetrics.length > 0 ? Math.max(...impactData.projectMetrics.map((p: any) => p.hours || 0)) : 0)} hrs
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {selectedTab === "insights" && (
+            <Section title="Strategic Insights & Recommendations" icon="💡">
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}>
+                {/* Engagement Insights */}
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#111827", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>👥</span> Employee Engagement
+                  </h4>
+                  {impactData?.engagementMetrics?.participationRate && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      {impactData.engagementMetrics.participationRate >= 50 ? (
+                        <div style={{ padding: "12px", backgroundColor: "#d1fae5", borderRadius: "8px", border: "1px solid #10b981", color: "#065f46", fontSize: "14px" }}>
+                          ✅ <strong>Strong participation:</strong> {impactData.engagementMetrics.participationRate}% of employees are engaged. Maintain momentum with recognition programs.
+                        </div>
+                      ) : impactData.engagementMetrics.participationRate >= 30 ? (
+                        <div style={{ padding: "12px", backgroundColor: "#fef3c7", borderRadius: "8px", border: "1px solid #f59e0b", color: "#92400e", fontSize: "14px" }}>
+                          ⚠️ <strong>Moderate engagement:</strong> Focus on outreach to inactive employees and showcase impact stories.
+                        </div>
+                      ) : (
+                        <div style={{ padding: "12px", backgroundColor: "#fee2e2", borderRadius: "8px", border: "1px solid #ef4444", color: "#991b1b", fontSize: "14px" }}>
+                          🎯 <strong>Growth opportunity:</strong> Launch targeted engagement campaign. Consider new project types or flexible commitment options.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Financial Insights */}
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#111827", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>💰</span> Financial Impact
+                  </h4>
+                  {impactData?.financialMetrics?.roi && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      {impactData.financialMetrics.roi > 300 ? (
+                        <div style={{ padding: "12px", backgroundColor: "#d1fae5", borderRadius: "8px", border: "1px solid #10b981", color: "#065f46", fontSize: "14px" }}>
+                          ✅ <strong>Exceptional ROI:</strong> {impactData.financialMetrics.roi}% return demonstrates strong program efficiency. Scale with confidence.
+                        </div>
+                      ) : impactData.financialMetrics.roi > 150 ? (
+                        <div style={{ padding: "12px", backgroundColor: "#dbeafe", borderRadius: "8px", border: "1px solid #3b82f6", color: "#1e40af", fontSize: "14px" }}>
+                          ✅ <strong>Solid ROI:</strong> {impactData.financialMetrics.roi}% exceeds industry benchmarks. Opportunity to increase program budget.
+                        </div>
+                      ) : (
+                        <div style={{ padding: "12px", backgroundColor: "#fef3c7", borderRadius: "8px", border: "1px solid #f59e0b", color: "#92400e", fontSize: "14px" }}>
+                          💡 <strong>Optimize efficiency:</strong> Focus on high-impact projects and cost-effective delivery models.
+                        </div>
+                      )}
+                      <div style={{ fontSize: "13px", color: "#6b7280", marginTop: "8px" }}>
+                        Economic value generated: <strong>${impactData?.financialMetrics?.volunteerHourValue || 0}</strong> | Cost per beneficiary: <strong>${impactData?.financialMetrics?.costPerBeneficiary || 0}</strong>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* SDG Insights */}
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#111827", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>🌍</span> SDG Coverage
+                  </h4>
+                  {impactData?.sdgMetrics && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      {impactData.sdgMetrics.length >= 5 ? (
+                        <div style={{ padding: "12px", backgroundColor: "#d1fae5", borderRadius: "8px", border: "1px solid #10b981", color: "#065f46", fontSize: "14px" }}>
+                          ✅ <strong>Broad SDG alignment:</strong> Contributing to {impactData.sdgMetrics.length} UN goals. Demonstrates comprehensive impact approach.
+                        </div>
+                      ) : impactData.sdgMetrics.length >= 3 ? (
+                        <div style={{ padding: "12px", backgroundColor: "#dbeafe", borderRadius: "8px", border: "1px solid #3b82f6", color: "#1e40af", fontSize: "14px" }}>
+                          ✅ <strong>Strong alignment:</strong> {impactData.sdgMetrics.length} SDG goals supported. Meet GRI and sustainability reporting standards.
+                        </div>
+                      ) : (
+                        <div style={{ padding: "12px", backgroundColor: "#fef3c7", borderRadius: "8px", border: "1px solid #f59e0b", color: "#92400e", fontSize: "14px" }}>
+                          💡 <strong>Expand diversity:</strong> Current focus: {impactData.sdgMetrics.map((s: any) => `SDG ${s.goal}`).join(", ")}. Consider adding complementary goals.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Compliance Insights */}
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#111827", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>✅</span> Compliance Status
+                  </h4>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {impactData?.complianceStatus?.avgComplianceScore && impactData.complianceStatus.avgComplianceScore >= 80 ? (
+                      <div style={{ padding: "12px", backgroundColor: "#d1fae5", borderRadius: "8px", border: "1px solid #10b981", color: "#065f46", fontSize: "14px" }}>
+                        ✅ <strong>High compliance:</strong> Score {impactData.complianceStatus.avgComplianceScore}/100. Ready for certification and investor reporting.
+                      </div>
+                    ) : impactData?.complianceStatus?.avgComplianceScore && impactData.complianceStatus.avgComplianceScore >= 60 ? (
+                      <div style={{ padding: "12px", backgroundColor: "#dbeafe", borderRadius: "8px", border: "1px solid #3b82f6", color: "#1e40af", fontSize: "14px" }}>
+                        💡 <strong>On track:</strong> Score {impactData.complianceStatus.avgComplianceScore}/100. Address gaps before certification deadline.
+                      </div>
+                    ) : (
+                      <div style={{ padding: "12px", backgroundColor: "#fef3c7", borderRadius: "8px", border: "1px solid #f59e0b", color: "#92400e", fontSize: "14px" }}>
+                        🎯 <strong>Action needed:</strong> Score {impactData.complianceStatus.avgComplianceScore || 0}/100. Focus on highest-impact improvements.
+                      </div>
+                    )}
+                    <div style={{ fontSize: "13px", color: "#6b7280", marginTop: "8px" }}>
+                      B-Corp: {impactData?.complianceStatus?.complianceScores?.bCorpScore || 0}/100 | GRI: {impactData?.complianceStatus?.complianceScores?.griScore || 0}/100 | ISO: {impactData?.complianceStatus?.complianceScores?.isoScore || 0}/100
                     </div>
                   </div>
                 </div>

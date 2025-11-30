@@ -25,22 +25,110 @@ interface CSRDashboardData {
 }
 
 export default function CSRDashboard() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
-  const userId = localStorage.getItem('currentUserId') || '1';
+  const userId = localStorage.getItem('currentUserId');
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
 
-  const { data: csrData, isLoading } = useQuery<CSRDashboardData>({
+  // Check for authentication
+  const isAuthenticated = !!user && !!userId;
+
+  const { data: csrData, isLoading, error } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId],
     queryFn: async () => {
       const response = await fetch(`/api/csr/dashboard?userId=${userId}`);
-      if (!response.ok) throw new Error("Failed to fetch CSR dashboard");
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("Access denied - you don't have permission to view this dashboard");
+        }
+        throw new Error("Failed to fetch CSR dashboard");
+      }
       return response.json();
     },
-    enabled: true,
+    enabled: isAuthenticated,
     refetchOnWindowFocus: true,
   });
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Skeleton className="h-8 w-48 mb-4" />
+          <p style={{ color: '#6b7280' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+        <Card style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
+          <CardHeader>
+            <CardTitle style={{ color: '#1e3a8a' }}>Access Required</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p style={{ color: '#6b7280', marginBottom: '16px' }}>
+              Please sign in to access the CSR Dashboard.
+            </p>
+            <button 
+              onClick={() => navigate('/login')}
+              style={{ 
+                backgroundColor: '#1e3a8a', 
+                color: 'white', 
+                padding: '8px 24px', 
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+              data-testid="btn-login-redirect"
+            >
+              Sign In
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error if access denied
+  if (error) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+        <Card style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
+          <CardHeader>
+            <CardTitle style={{ color: '#dc2626' }}>Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p style={{ color: '#6b7280', marginBottom: '16px' }}>
+              {error.message}
+            </p>
+            <button 
+              onClick={() => navigate('/dashboard')}
+              style={{ 
+                backgroundColor: '#1e3a8a', 
+                color: 'white', 
+                padding: '8px 24px', 
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}
+              data-testid="btn-dashboard-redirect"
+            >
+              Go to Dashboard
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

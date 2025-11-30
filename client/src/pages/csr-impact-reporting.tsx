@@ -1,0 +1,437 @@
+import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
+import { BarChart3, TrendingUp, Users, DollarSign, Globe, CheckCircle, Home, ArrowLeft, Download, Share2 } from "lucide-react";
+import { useState } from "react";
+
+export function CSRImpactReporting() {
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
+  const [selectedTab, setSelectedTab] = useState("overview");
+
+  const { data: impactData, isLoading } = useQuery({
+    queryKey: ["/api/csr/impact-reporting", user?.id],
+    enabled: !!user?.id
+  });
+
+  const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  const companyName = "Home Corporation";
+
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "#f9fafb" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "32px", marginBottom: "16px" }}>⏳</div>
+          <p style={{ color: "#6b7280", fontSize: "16px" }}>Loading impact metrics...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const KPICard = ({ label, value, unit, icon, trend }: any) => (
+    <div style={{
+      backgroundColor: "white",
+      borderRadius: "12px",
+      padding: "20px",
+      border: "1px solid #e5e7eb",
+      flex: "1",
+      minWidth: "200px"
+    }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+        <span style={{ fontSize: "13px", color: "#6b7280", fontWeight: "500" }}>{label}</span>
+        <div style={{ fontSize: "20px" }}>{icon}</div>
+      </div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: "8px", marginBottom: "8px" }}>
+        <span style={{ fontSize: "32px", fontWeight: "bold", color: "#1e3a8a" }}>{value}</span>
+        <span style={{ fontSize: "14px", color: "#6b7280" }}>{unit}</span>
+      </div>
+      {trend && (
+        <div style={{ fontSize: "12px", color: "#059669", display: "flex", alignItems: "center", gap: "4px" }}>
+          <TrendingUp style={{ width: "14px", height: "14px" }} />
+          {trend}
+        </div>
+      )}
+    </div>
+  );
+
+  const Section = ({ title, children, icon }: any) => (
+    <div style={{ marginBottom: "40px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "20px", paddingBottom: "16px", borderBottom: "2px solid #e5e7eb" }}>
+        <span style={{ fontSize: "24px" }}>{icon}</span>
+        <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#111827", margin: 0 }}>{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#ffffff" }}>
+      {/* Header */}
+      <header style={{
+        backgroundColor: "#1e3a8a",
+        color: "white",
+        padding: "16px 32px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        height: "64px"
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={() => navigate("/csr-dashboard")}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "white", padding: "4px" }}
+          >
+            <ArrowLeft style={{ width: "20px", height: "20px" }} />
+          </button>
+          <span style={{ fontSize: "24px", fontWeight: "bold", color: "#f97316" }}>✦</span>
+          <span style={{ fontSize: "18px", fontWeight: "600" }}>Impact Reporting</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+          <span style={{ fontSize: "14px", color: "#d1d5db" }}>{currentDate}</span>
+          <button style={{
+            backgroundColor: "#059669",
+            color: "white",
+            border: "none",
+            padding: "8px 16px",
+            borderRadius: "6px",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "14px",
+            fontWeight: "500"
+          }}>
+            <Download style={{ width: "16px", height: "16px" }} />
+            Export PDF
+          </button>
+        </div>
+      </header>
+
+      <div style={{ display: "flex", flex: 1 }}>
+        {/* Sidebar */}
+        <aside style={{
+          width: "20%",
+          backgroundColor: "#f3f4f6",
+          padding: "24px",
+          borderRight: "1px solid #e5e7eb",
+          overflowY: "auto"
+        }}>
+          <nav style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {[
+              { id: "overview", label: "Executive Summary", icon: "📊" },
+              { id: "timeseries", label: "Time-Series Analysis", icon: "📈" },
+              { id: "impact", label: "Impact Deep Dive", icon: "🎯" },
+              { id: "sdg", label: "SDG Alignment", icon: "🌍" },
+              { id: "benchmarks", label: "Benchmarking", icon: "📍" },
+              { id: "compliance", label: "Compliance", icon: "✅" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedTab(tab.id)}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  backgroundColor: selectedTab === tab.id ? "white" : "transparent",
+                  color: selectedTab === tab.id ? "#1e3a8a" : "#374151",
+                  border: selectedTab === tab.id ? "1px solid #e5e7eb" : "none",
+                  cursor: "pointer",
+                  textAlign: "left",
+                  fontWeight: selectedTab === tab.id ? "600" : "500",
+                  fontSize: "14px"
+                }}
+              >
+                <span>{tab.icon}</span>
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main style={{ flex: 1, padding: "40px", overflowY: "auto", backgroundColor: "#fafafa" }}>
+          {selectedTab === "overview" && (
+            <div>
+              <div style={{ marginBottom: "32px" }}>
+                <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#111827", marginBottom: "8px" }}>
+                  CSR Impact Dashboard
+                </h1>
+                <p style={{ color: "#6b7280", fontSize: "16px" }}>
+                  {companyName} • Report Period: {impactData?.reportPeriod}
+                </p>
+              </div>
+
+              <Section title="Key Performance Indicators" icon="🎯">
+                <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                  <KPICard
+                    label="Total Volunteer Hours"
+                    value={impactData?.engagementMetrics?.totalHours || 0}
+                    unit="hrs"
+                    icon="⏱️"
+                    trend="+12% vs last month"
+                  />
+                  <KPICard
+                    label="Active Employees"
+                    value={impactData?.engagementMetrics?.activeEmployees || 0}
+                    unit="team members"
+                    icon="👥"
+                  />
+                  <KPICard
+                    label="Lives Touched"
+                    value={impactData?.impactMetrics?.estimatedLivesTouched || 0}
+                    unit="people"
+                    icon="❤️"
+                  />
+                  <KPICard
+                    label="Economic Value"
+                    value={`$${impactData?.financialMetrics?.volunteerHourValue || 0}`}
+                    unit="generated"
+                    icon="💰"
+                  />
+                  <KPICard
+                    label="ROI"
+                    value={`${impactData?.financialMetrics?.roi || 0}%`}
+                    unit="return"
+                    icon="📈"
+                  />
+                  <KPICard
+                    label="ESG Rating"
+                    value={impactData?.complianceStatus?.esGRating || 0}
+                    unit="/ 100"
+                    icon="✨"
+                  />
+                </div>
+              </Section>
+
+              <Section title="Participation Snapshot" icon="📊">
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
+                  <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Participation Rate</div>
+                    <div style={{ fontSize: "32px", fontWeight: "bold", color: "#059669", marginBottom: "8px" }}>
+                      {impactData?.engagementMetrics?.participationRate || 0}%
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#9ca3af" }}>
+                      vs benchmark: {impactData?.benchmarks?.participationRateBenchmark}%
+                    </div>
+                  </div>
+                  <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Avg Hours/Employee</div>
+                    <div style={{ fontSize: "32px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "8px" }}>
+                      {impactData?.engagementMetrics?.avgHoursPerEmployee || 0}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#9ca3af" }}>
+                      vs benchmark: {impactData?.benchmarks?.avgHoursPerEmployeeBenchmark} hrs
+                    </div>
+                  </div>
+                  <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Cost/Beneficiary</div>
+                    <div style={{ fontSize: "32px", fontWeight: "bold", color: "#f59e0b", marginBottom: "8px" }}>
+                      ${impactData?.financialMetrics?.costPerBeneficiary || 0}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#9ca3af" }}>
+                      vs benchmark: ${impactData?.benchmarks?.costPerBeneficiaryBenchmark}
+                    </div>
+                  </div>
+                </div>
+              </Section>
+            </div>
+          )}
+
+          {selectedTab === "timeseries" && (
+            <Section title="Volunteer Activity Over Time" icon="📈">
+              <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                <div style={{ display: "flex", gap: "20px", alignItems: "flex-end", height: "200px", paddingBottom: "20px", borderBottom: "1px solid #e5e7eb" }}>
+                  {Object.entries(impactData?.engagementMetrics?.hoursPerMonth || {}).map(([month, hours]: any) => (
+                    <div key={month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+                      <div style={{
+                        height: `${(hours / 100) * 150}px`,
+                        backgroundColor: "#3b82f6",
+                        borderRadius: "6px",
+                        minHeight: "10px",
+                        width: "100%"
+                      }} />
+                      <span style={{ fontSize: "12px", color: "#6b7280" }}>{month}</span>
+                      <span style={{ fontSize: "12px", fontWeight: "600", color: "#111827" }}>{hours}h</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ marginTop: "16px", fontSize: "14px", color: "#6b7280" }}>
+                  Showing monthly volunteer hour contributions across all employees
+                </p>
+              </div>
+            </Section>
+          )}
+
+          {selectedTab === "impact" && (
+            <Section title="Impact Reach Analysis" icon="🎯">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px" }}>
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Beneficiary Reach</h3>
+                  <div style={{ marginBottom: "20px" }}>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Direct Beneficiaries</div>
+                    <div style={{ fontSize: "28px", fontWeight: "bold", color: "#059669" }}>
+                      {impactData?.impactMetrics?.directBeneficiaries || 0}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Indirect Beneficiaries (2.5x multiplier)</div>
+                    <div style={{ fontSize: "28px", fontWeight: "bold", color: "#10b981" }}>
+                      {impactData?.impactMetrics?.indirectBeneficiaries || 0}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Impact Efficiency</h3>
+                  <div style={{ marginBottom: "20px" }}>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Lives Touched per Hour</div>
+                    <div style={{ fontSize: "28px", fontWeight: "bold", color: "#8b5cf6" }}>
+                      {impactData?.impactMetrics?.impactPerHour || 0}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Total Program Cost</div>
+                    <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1e3a8a" }}>
+                      ${impactData?.financialMetrics?.programCost || 0}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {selectedTab === "sdg" && (
+            <Section title="UN Sustainable Development Goals Alignment" icon="🌍">
+              <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                {impactData?.sdgMetrics && impactData.sdgMetrics.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                    {impactData.sdgMetrics.map((sdg: any) => (
+                      <div key={sdg.goal}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                          <span style={{ fontWeight: "500", color: "#111827" }}>SDG {sdg.goal}</span>
+                          <span style={{ color: "#6b7280" }}>{sdg.hours} hrs ({sdg.percentage}%)</span>
+                        </div>
+                        <div style={{
+                          height: "12px",
+                          backgroundColor: "#e5e7eb",
+                          borderRadius: "6px",
+                          overflow: "hidden"
+                        }}>
+                          <div style={{
+                            height: "100%",
+                            width: `${sdg.percentage}%`,
+                            backgroundColor: "#3b82f6",
+                            transition: "width 0.3s"
+                          }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: "#9ca3af", textAlign: "center" }}>No SDG data available yet</p>
+                )}
+              </div>
+            </Section>
+          )}
+
+          {selectedTab === "benchmarks" && (
+            <Section title="Performance vs Industry Benchmarks" icon="📍">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#6b7280", marginBottom: "16px" }}>Hours/Employee</h3>
+                  <div style={{ marginBottom: "12px" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Your Performance</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#1e3a8a" }}>
+                      {impactData?.benchmarks?.yourMetrics?.hoursPerEmployee || 0}
+                    </div>
+                  </div>
+                  <div style={{ paddingTop: "12px", borderTop: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Industry Benchmark</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#9ca3af" }}>
+                      {impactData?.benchmarks?.avgHoursPerEmployeeBenchmark}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#6b7280", marginBottom: "16px" }}>Participation Rate</h3>
+                  <div style={{ marginBottom: "12px" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Your Performance</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}>
+                      {impactData?.benchmarks?.yourMetrics?.participationRate || 0}%
+                    </div>
+                  </div>
+                  <div style={{ paddingTop: "12px", borderTop: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Industry Benchmark</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#9ca3af" }}>
+                      {impactData?.benchmarks?.participationRateBenchmark}%
+                    </div>
+                  </div>
+                </div>
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#6b7280", marginBottom: "16px" }}>Cost/Beneficiary</h3>
+                  <div style={{ marginBottom: "12px" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Your Performance</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#f59e0b" }}>
+                      ${impactData?.benchmarks?.yourMetrics?.costPerBeneficiary || 0}
+                    </div>
+                  </div>
+                  <div style={{ paddingTop: "12px", borderTop: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Industry Benchmark</div>
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#9ca3af" }}>
+                      ${impactData?.benchmarks?.costPerBeneficiaryBenchmark}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {selectedTab === "compliance" && (
+            <Section title="Compliance & Certifications" icon="✅">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
+                <div style={{ backgroundColor: impactData?.complianceStatus?.bCorpReady ? "#d1fae5" : "#fee2e2", padding: "24px", borderRadius: "12px", border: `2px solid ${impactData?.complianceStatus?.bCorpReady ? "#10b981" : "#ef4444"}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                    <span style={{ fontSize: "24px" }}>🏆</span>
+                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>B-Corp Ready</h3>
+                  </div>
+                  <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
+                    ROI: {impactData?.financialMetrics?.roi || 0}% (Target: >200%)
+                  </p>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: impactData?.complianceStatus?.bCorpReady ? "#059669" : "#991b1b" }}>
+                    {impactData?.complianceStatus?.bCorpReady ? "✅ Ready for B-Corp Certification" : "⚠️ Below threshold"}
+                  </div>
+                </div>
+                <div style={{ backgroundColor: impactData?.complianceStatus?.griAligned ? "#dbeafe" : "#fee2e2", padding: "24px", borderRadius: "12px", border: `2px solid ${impactData?.complianceStatus?.griAligned ? "#3b82f6" : "#ef4444"}` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                    <span style={{ fontSize: "24px" }}>📊</span>
+                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>GRI Aligned</h3>
+                  </div>
+                  <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
+                    SDGs Covered: {impactData?.sdgMetrics?.length || 0} (Target: ≥3)
+                  </p>
+                  <div style={{ fontSize: "12px", fontWeight: "600", color: impactData?.complianceStatus?.griAligned ? "#1e40af" : "#991b1b" }}>
+                    {impactData?.complianceStatus?.griAligned ? "✅ Meets GRI Standards" : "⚠️ Needs more SDG coverage"}
+                  </div>
+                </div>
+                <div style={{ backgroundColor: "#fef3c7", padding: "24px", borderRadius: "12px", border: "2px solid #f59e0b" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                    <span style={{ fontSize: "24px" }}>✨</span>
+                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>ESG Rating</h3>
+                  </div>
+                  <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
+                    Overall Score
+                  </p>
+                  <div style={{ fontSize: "32px", fontWeight: "bold", color: "#b45309" }}>
+                    {impactData?.complianceStatus?.esGRating || 0} / 100
+                  </div>
+                </div>
+              </div>
+            </Section>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}

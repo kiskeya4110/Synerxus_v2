@@ -345,6 +345,7 @@ export default function CSRDashboard() {
               <span>Dashboard</span>
             </button>
             <button 
+              onClick={() => navigate('/csr-impact-reporting')}
               style={{ 
                 width: '100%', 
                 display: 'flex', 

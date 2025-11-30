@@ -689,10 +689,11 @@ export function CSRImpactReporting() {
                   </div>
                 </div>
               </div>
-            </Section>
+              </Section>
+            </div>
           )}
 
-          {selectedTab === "insights" && (
+          {/* Legacy tabs - removed for optimization. Only 4 tabs active: executive, impact, compliance, projects */}
             <Section title="Strategic Insights & Recommendations" icon="💡">
               <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "20px" }}>
                 {/* Engagement Insights */}

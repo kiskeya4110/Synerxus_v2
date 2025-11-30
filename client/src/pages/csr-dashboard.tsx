@@ -39,15 +39,15 @@ export default function CSRDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col">
-        <div className="h-16 bg-blue-900 flex-shrink-0" />
-        <div className="flex flex-1">
-          <div className="w-1/5 bg-blue-900 h-screen flex-shrink-0" />
-          <div className="w-4/5 bg-gray-50 p-8">
-            <div className="grid grid-cols-4 gap-4 mb-6">
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#ffffff' }}>
+        <div style={{ height: '64px', backgroundColor: '#1e3a8a', flexShrink: 0 }} />
+        <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 64px)' }}>
+          <div style={{ width: '20%', backgroundColor: '#1e3a8a', flexShrink: 0 }} />
+          <div style={{ width: '80%', backgroundColor: '#f9fafb', padding: '32px', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
               {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 bg-slate-200" />)}
             </div>
-            <div className="grid grid-cols-2 gap-6">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
               <Skeleton className="h-96 bg-slate-200" />
               <Skeleton className="h-96 bg-slate-200" />
               <Skeleton className="h-48 bg-slate-200" />

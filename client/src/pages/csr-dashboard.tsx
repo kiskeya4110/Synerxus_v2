@@ -633,17 +633,32 @@ export default function CSRDashboard() {
                         outerRadius={Math.max(70, Math.min(95, (csrData?.activeEmployees || 890) / 8))}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ name, value }: any) => {
+                        label={(props: any) => {
+                          const { name, value, cx, cy, midAngle } = props;
+                          const radius = props.innerRadius + (props.outerRadius - props.innerRadius) * 0.5;
+                          const x = cx + radius * Math.cos((midAngle * Math.PI) / 180);
+                          const y = cy + radius * Math.sin((midAngle * Math.PI) / 180);
+                          
                           // Wrap long names to fit in pie sections
                           const words = (name || '').split(' ');
+                          let text = '';
                           if (words.length === 1) {
-                            return `${name}\n${value}%`;
+                            text = `${name} ${value}%`;
                           } else if (words.length === 2) {
-                            return `${words[0]}\n${words[1]}\n${value}%`;
+                            text = `${words[0]} ${words[1]}\n${value}%`;
                           } else {
-                            // For longer names, split at word boundaries
-                            return `${words[0]}\n${words.slice(1).join(' ')}\n${value}%`;
+                            text = `${words[0]}\n${value}%`;
                           }
+                          
+                          return (
+                            <text x={x} y={y} fill="white" textAnchor="middle" fontSize="8" fontWeight="bold">
+                              {text.split('\n').map((line, idx) => (
+                                <tspan x={x} dy={idx === 0 ? 0 : 10} key={idx}>
+                                  {line}
+                                </tspan>
+                              ))}
+                            </text>
+                          );
                         }}
                         labelLine={false}
                         onClick={(data) => setSelectedSDG(data.goal)}

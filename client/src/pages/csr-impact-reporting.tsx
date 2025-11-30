@@ -42,6 +42,13 @@ interface ImpactData {
     bCorpReady: boolean;
     griAligned: boolean;
     esGRating: number;
+    complianceScores?: {
+      bCorpScore: number;
+      griScore: number;
+      isoScore: number;
+      sasbScore: number;
+    };
+    avgComplianceScore?: number;
   };
 }
 
@@ -134,23 +141,45 @@ export function CSRImpactReporting() {
           <span style={{ fontSize: "24px", fontWeight: "bold", color: "#f97316" }}>✦</span>
           <span style={{ fontSize: "18px", fontWeight: "600" }}>Impact Reporting</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <span style={{ fontSize: "14px", color: "#d1d5db" }}>{currentDate}</span>
-          <button style={{
-            backgroundColor: "#059669",
-            color: "white",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "6px",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            fontSize: "14px",
-            fontWeight: "500"
-          }}>
+          <button 
+            onClick={() => window.open(`/api/csr/impact-reporting/export/pdf?userId=${userId}`)}
+            style={{
+              backgroundColor: "#059669",
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "14px",
+              fontWeight: "500"
+            }}
+          >
             <Download style={{ width: "16px", height: "16px" }} />
             Export PDF
+          </button>
+          <button 
+            onClick={() => window.open(`/api/csr/impact-reporting/export/csv?userId=${userId}`)}
+            style={{
+              backgroundColor: "#1e3a8a",
+              color: "white",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              fontSize: "14px",
+              fontWeight: "500"
+            }}
+          >
+            <Download style={{ width: "16px", height: "16px" }} />
+            Export CSV
           </button>
         </div>
       </header>
@@ -438,41 +467,89 @@ export function CSRImpactReporting() {
 
           {selectedTab === "compliance" && (
             <Section title="Compliance & Certifications" icon="✅">
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
-                <div style={{ backgroundColor: impactData?.complianceStatus?.bCorpReady ? "#d1fae5" : "#fee2e2", padding: "24px", borderRadius: "12px", border: impactData?.complianceStatus?.bCorpReady ? "2px solid #10b981" : "2px solid #ef4444" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "24px" }}>🏆</span>
-                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>B-Corp Ready</h3>
+              <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "24px" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Overall Compliance Score</h3>
+                <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "48px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "4px" }}>
+                      {impactData?.complianceStatus?.avgComplianceScore || 0}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#6b7280" }}>/ 100</div>
                   </div>
-                  <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
-                    ROI: {impactData?.financialMetrics?.roi || 0}% (Target: greater than 200%)
-                  </p>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: impactData?.complianceStatus?.bCorpReady ? "#059669" : "#991b1b" }}>
-                    {impactData?.complianceStatus?.bCorpReady ? "✅ Ready for B-Corp Certification" : "⚠️ Below threshold"}
-                  </div>
-                </div>
-                <div style={{ backgroundColor: impactData?.complianceStatus?.griAligned ? "#dbeafe" : "#fee2e2", padding: "24px", borderRadius: "12px", border: impactData?.complianceStatus?.griAligned ? "2px solid #3b82f6" : "2px solid #ef4444" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "24px" }}>📊</span>
-                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>GRI Aligned</h3>
-                  </div>
-                  <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
-                    SDGs Covered: {impactData?.sdgMetrics?.length || 0} (Target: 3 or more)
-                  </p>
-                  <div style={{ fontSize: "12px", fontWeight: "600", color: impactData?.complianceStatus?.griAligned ? "#1e40af" : "#991b1b" }}>
-                    {impactData?.complianceStatus?.griAligned ? "✅ Meets GRI Standards" : "⚠️ Needs more SDG coverage"}
+                  <div style={{ flex: 1, height: "40px", backgroundColor: "#e5e7eb", borderRadius: "8px", overflow: "hidden" }}>
+                    <div style={{
+                      height: "100%",
+                      width: `${(impactData?.complianceStatus?.avgComplianceScore || 0)}%`,
+                      backgroundColor: "#3b82f6",
+                      transition: "width 0.3s"
+                    }} />
                   </div>
                 </div>
-                <div style={{ backgroundColor: "#fef3c7", padding: "24px", borderRadius: "12px", border: "2px solid #f59e0b" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "24px" }}>✨</span>
-                    <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>ESG Rating</h3>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px" }}>
+                <div style={{ backgroundColor: "#f0f9ff", padding: "20px", borderRadius: "12px", border: "2px solid #3b82f6" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#1e40af", margin: "0 0 8px 0" }}>B-Corp Alignment</h4>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "8px" }}>
+                    {impactData?.complianceStatus?.complianceScores?.bCorpScore || 0}/100
                   </div>
-                  <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
-                    Overall Score
+                  <p style={{ fontSize: "12px", color: "#374151", margin: "0" }}>
+                    ROI: {impactData?.financialMetrics?.roi || 0}% | Participation: {impactData?.engagementMetrics?.participationRate || 0}%
                   </p>
-                  <div style={{ fontSize: "32px", fontWeight: "bold", color: "#b45309" }}>
-                    {impactData?.complianceStatus?.esGRating || 0} / 100
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: impactData?.complianceStatus?.bCorpReady ? "#059669" : "#991b1b", marginTop: "8px" }}>
+                    {impactData?.complianceStatus?.bCorpReady ? "✅ Ready for certification" : "⚠️ Below threshold"}
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: "#f0fdf4", padding: "20px", borderRadius: "12px", border: "2px solid #10b981" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#166534", margin: "0 0 8px 0" }}>GRI Standards</h4>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#059669", marginBottom: "8px" }}>
+                    {impactData?.complianceStatus?.complianceScores?.griScore || 0}/100
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#374151", margin: "0" }}>
+                    SDGs: {impactData?.sdgMetrics?.length || 0} | Hours: {impactData?.engagementMetrics?.totalHours || 0}
+                  </p>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: impactData?.complianceStatus?.griAligned ? "#059669" : "#991b1b", marginTop: "8px" }}>
+                    {impactData?.complianceStatus?.griAligned ? "✅ Standards met" : "⚠️ Needs more coverage"}
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: "#fef3c7", padding: "20px", borderRadius: "12px", border: "2px solid #f59e0b" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#92400e", margin: "0 0 8px 0" }}>ISO 26000</h4>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#b45309", marginBottom: "8px" }}>
+                    {impactData?.complianceStatus?.complianceScores?.isoScore || 0}/100
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#374151", margin: "0" }}>
+                    Employees: {impactData?.engagementMetrics?.activeEmployees || 0} | Cost/Beneficiary: ${impactData?.financialMetrics?.costPerBeneficiary || 0}
+                  </p>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#b45309", marginTop: "8px" }}>
+                    Community responsibility standards
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: "#f5f3ff", padding: "20px", borderRadius: "12px", border: "2px solid #8b5cf6" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#5b21b6", margin: "0 0 8px 0" }}>SASB Metrics</h4>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#7c3aed", marginBottom: "8px" }}>
+                    {impactData?.complianceStatus?.complianceScores?.sasbScore || 0}/100
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#374151", margin: "0" }}>
+                    Lives Touched: {impactData?.impactMetrics?.estimatedLivesTouched || 0} | ROI: {impactData?.financialMetrics?.roi || 0}%
+                  </p>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#7c3aed", marginTop: "8px" }}>
+                    Sustainability accounting standards
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: "#fef2f2", padding: "20px", borderRadius: "12px", border: "2px solid #f59e0b" }}>
+                  <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#92400e", margin: "0 0 8px 0" }}>ESG Overall Rating</h4>
+                  <div style={{ fontSize: "28px", fontWeight: "bold", color: "#b45309", marginBottom: "8px" }}>
+                    {impactData?.complianceStatus?.esGRating || 0}/100
+                  </div>
+                  <p style={{ fontSize: "12px", color: "#374151", margin: "0" }}>
+                    Environmental, Social, Governance assessment
+                  </p>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#b45309", marginTop: "8px" }}>
+                    ✨ Stakeholder confidence indicator
                   </div>
                 </div>
               </div>

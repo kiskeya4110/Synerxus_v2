@@ -6034,6 +6034,32 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       };
 
+      // Enhanced Compliance Scoring
+      const complianceScores = {
+        bCorpScore: Math.min(100, Math.round(
+          (financialMetrics.roi > 200 ? 50 : financialMetrics.roi > 100 ? 30 : 10) +
+          (engagementMetrics.participationRate > 50 ? 30 : 20) +
+          (sdgMetrics.length >= 3 ? 20 : 10)
+        )),
+        griScore: Math.min(100, Math.round(
+          (sdgMetrics.length >= 3 ? 40 : sdgMetrics.length === 2 ? 25 : 10) +
+          (totalEmployeeHours > 100 ? 30 : 20) +
+          (engagementMetrics.participationRate > 30 ? 30 : 20)
+        )),
+        isoScore: Math.min(100, Math.round(
+          (engagementMetrics.participationRate > 40 ? 35 : 20) +
+          (financialMetrics.costPerBeneficiary < 30 ? 35 : 20) +
+          (uniqueEmployees > 5 ? 30 : 20)
+        )),
+        sasbScore: Math.min(100, Math.round(
+          (financialMetrics.roi > 150 ? 40 : 25) +
+          (impactMetrics.estimatedLivesTouched > 100 ? 35 : 20) +
+          (engagementMetrics.participationRate > 35 ? 25 : 15)
+        ))
+      };
+
+      const avgComplianceScore = Math.round((complianceScores.bCorpScore + complianceScores.griScore + complianceScores.isoScore + complianceScores.sasbScore) / 4);
+
       res.json({
         reportPeriod: new Date().toISOString().slice(0, 7),
         engagementMetrics,
@@ -6045,12 +6071,195 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         complianceStatus: {
           bCorpReady: financialMetrics.roi > 200,
           griAligned: sdgMetrics.length >= 3,
-          esGRating: Math.min(100, Math.round((engagementMetrics.participationRate * 1.5) + (financialMetrics.roi / 10)))
+          esGRating: Math.min(100, Math.round((engagementMetrics.participationRate * 1.5) + (financialMetrics.roi / 10))),
+          complianceScores,
+          avgComplianceScore
         }
       });
     } catch (err) {
       console.error("Error fetching impact reporting:", err);
       res.status(500).json({ error: "Failed to fetch impact metrics" });
+    }
+  });
+
+  // CSR Impact Report - CSV Export
+  app.get("/api/csr/impact-reporting/export/csv", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (!userId) return res.status(400).json({ error: "User ID required" });
+
+      const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+      if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
+
+      // Fetch impact data
+      const impactResponse = await fetch(`http://localhost:5000/api/csr/impact-reporting?userId=${userId}`);
+      const impactData = await impactResponse.json();
+
+      // Generate CSV
+      const rows = [
+        ["CSR Impact Report - " + userPartner.companyName],
+        ["Report Period:", impactData.reportPeriod],
+        [""],
+        ["ENGAGEMENT METRICS"],
+        ["Total Hours", impactData.engagementMetrics.totalHours],
+        ["Active Employees", impactData.engagementMetrics.activeEmployees],
+        ["Avg Hours/Employee", impactData.engagementMetrics.avgHoursPerEmployee],
+        ["Participation Rate", impactData.engagementMetrics.participationRate + "%"],
+        [""],
+        ["IMPACT METRICS"],
+        ["Direct Beneficiaries", impactData.impactMetrics.directBeneficiaries],
+        ["Indirect Beneficiaries", impactData.impactMetrics.indirectBeneficiaries],
+        ["Total Lives Touched", impactData.impactMetrics.estimatedLivesTouched],
+        ["Impact per Hour", impactData.impactMetrics.impactPerHour],
+        [""],
+        ["FINANCIAL METRICS"],
+        ["Volunteer Hour Value", "$" + impactData.financialMetrics.volunteerHourValue],
+        ["ROI", impactData.financialMetrics.roi + "%"],
+        ["Cost per Beneficiary", "$" + impactData.financialMetrics.costPerBeneficiary],
+        ["Program Cost", "$" + impactData.financialMetrics.programCost],
+        [""],
+        ["SDG ALIGNMENT"],
+        ...impactData.sdgMetrics.map((sdg: any) => ["SDG " + sdg.goal, sdg.hours + " hrs", sdg.percentage + "%"]),
+        [""],
+        ["COMPLIANCE STATUS"],
+        ["B-Corp Ready", impactData.complianceStatus.bCorpReady ? "Yes" : "No"],
+        ["GRI Aligned", impactData.complianceStatus.griAligned ? "Yes" : "No"],
+        ["ESG Rating", impactData.complianceStatus.esGRating + "/100"],
+        ["B-Corp Compliance Score", impactData.complianceStatus.complianceScores?.bCorpScore || "N/A"],
+        ["GRI Compliance Score", impactData.complianceStatus.complianceScores?.griScore || "N/A"],
+        ["ISO 26000 Score", impactData.complianceStatus.complianceScores?.isoScore || "N/A"],
+        ["SASB Score", impactData.complianceStatus.complianceScores?.sasbScore || "N/A"]
+      ];
+
+      const csv = rows.map(r => r.map((cell: any) => `"${cell}"`).join(",")).join("\n");
+      
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="csr-impact-report-${new Date().toISOString().split('T')[0]}.csv"`);
+      res.send(csv);
+    } catch (err) {
+      console.error("Error exporting CSV:", err);
+      res.status(500).json({ error: "Failed to export CSV" });
+    }
+  });
+
+  // CSR Impact Report - PDF Export (text-based)
+  app.get("/api/csr/impact-reporting/export/pdf", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (!userId) return res.status(400).json({ error: "User ID required" });
+
+      const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+      if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
+
+      // Fetch impact data
+      const impactResponse = await fetch(`http://localhost:5000/api/csr/impact-reporting?userId=${userId}`);
+      const impactData = await impactResponse.json();
+
+      // Generate HTML for PDF
+      const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
+    h1 { color: #1e3a8a; text-align: center; }
+    h2 { color: #1e3a8a; margin-top: 30px; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; }
+    .metric { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+    .metric-label { font-weight: bold; }
+    .metric-value { color: #059669; font-weight: bold; }
+    .compliance-score { background: #f3f4f6; padding: 10px; margin: 5px 0; border-radius: 5px; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    th { background: #1e3a8a; color: white; padding: 10px; text-align: left; }
+    td { padding: 8px; border-bottom: 1px solid #e5e7eb; }
+    .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>CSR Impact Report</h1>
+  <p><strong>${userPartner.companyName}</strong> | Report Period: ${impactData.reportPeriod}</p>
+  
+  <h2>Executive Summary</h2>
+  <div class="metric">
+    <span class="metric-label">Total Volunteer Hours:</span>
+    <span class="metric-value">${impactData.engagementMetrics.totalHours} hrs</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Active Employees:</span>
+    <span class="metric-value">${impactData.engagementMetrics.activeEmployees}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Lives Touched:</span>
+    <span class="metric-value">${impactData.impactMetrics.estimatedLivesTouched}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Economic Value Generated:</span>
+    <span class="metric-value">$${impactData.financialMetrics.volunteerHourValue}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Return on Investment (ROI):</span>
+    <span class="metric-value">${impactData.financialMetrics.roi}%</span>
+  </div>
+  
+  <h2>Engagement Metrics</h2>
+  <div class="metric">
+    <span class="metric-label">Avg Hours per Employee:</span>
+    <span>${impactData.engagementMetrics.avgHoursPerEmployee} hrs</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Participation Rate:</span>
+    <span>${impactData.engagementMetrics.participationRate}% (vs ${impactData.benchmarks.participationRateBenchmark}% benchmark)</span>
+  </div>
+  
+  <h2>Impact Analysis</h2>
+  <div class="metric">
+    <span class="metric-label">Direct Beneficiaries:</span>
+    <span>${impactData.impactMetrics.directBeneficiaries}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Indirect Beneficiaries:</span>
+    <span>${impactData.impactMetrics.indirectBeneficiaries}</span>
+  </div>
+  <div class="metric">
+    <span class="metric-label">Cost per Beneficiary:</span>
+    <span>$${impactData.financialMetrics.costPerBeneficiary} (vs $${impactData.benchmarks.costPerBeneficiaryBenchmark} benchmark)</span>
+  </div>
+  
+  <h2>SDG Alignment</h2>
+  <table>
+    <tr><th>Goal</th><th>Hours</th><th>Percentage</th></tr>
+    ${impactData.sdgMetrics.map((sdg: any) => `<tr><td>SDG ${sdg.goal}</td><td>${sdg.hours}</td><td>${sdg.percentage}%</td></tr>`).join('')}
+  </table>
+  
+  <h2>Compliance & Certification</h2>
+  <div class="compliance-score">
+    <strong>B-Corp Alignment:</strong> ${impactData.complianceStatus.complianceScores?.bCorpScore || 'N/A'}/100 ${impactData.complianceStatus.bCorpReady ? '✓ Ready' : 'In Progress'}
+  </div>
+  <div class="compliance-score">
+    <strong>GRI Alignment:</strong> ${impactData.complianceStatus.complianceScores?.griScore || 'N/A'}/100 ${impactData.complianceStatus.griAligned ? '✓ Aligned' : 'Needs Coverage'}
+  </div>
+  <div class="compliance-score">
+    <strong>ISO 26000:</strong> ${impactData.complianceStatus.complianceScores?.isoScore || 'N/A'}/100
+  </div>
+  <div class="compliance-score">
+    <strong>SASB:</strong> ${impactData.complianceStatus.complianceScores?.sasbScore || 'N/A'}/100
+  </div>
+  <div class="compliance-score">
+    <strong>Overall ESG Rating:</strong> ${impactData.complianceStatus.esGRating}/100
+  </div>
+  
+  <div class="footer">
+    <p>Generated on ${new Date().toLocaleDateString()} | Synerxus CSR Impact Reporting</p>
+  </div>
+</body>
+</html>
+      `;
+
+      res.setHeader("Content-Type", "text/html");
+      res.setHeader("Content-Disposition", `attachment; filename="csr-impact-report-${new Date().toISOString().split('T')[0]}.html"`);
+      res.send(html);
+    } catch (err) {
+      console.error("Error exporting PDF:", err);
+      res.status(500).json({ error: "Failed to export report" });
     }
   });
 

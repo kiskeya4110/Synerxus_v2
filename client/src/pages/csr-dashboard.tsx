@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import EmployeeEngagementTab from "./employee-engagement-tab";
 
 interface SDGEmployee {
   name: string;
@@ -60,6 +61,7 @@ export default function CSRDashboard() {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [selectedFunnelStage, setSelectedFunnelStage] = useState<number | null>(null);
   const [showFunnelModal, setShowFunnelModal] = useState(false);
+  const [selectedMainTab, setSelectedMainTab] = useState<'overview' | 'engagement'>('overview');
 
   // Check for authentication
   const isAuthenticated = !!user && !!userId;
@@ -365,6 +367,7 @@ export default function CSRDashboard() {
               <span>Impact Reporting</span>
             </button>
             <button 
+              onClick={() => setSelectedMainTab('engagement')}
               style={{ 
                 width: '100%', 
                 display: 'flex', 
@@ -372,11 +375,12 @@ export default function CSRDashboard() {
                 gap: '12px', 
                 padding: '12px 16px', 
                 borderRadius: '8px', 
-                backgroundColor: 'transparent', 
-                color: '#d1d5db', 
+                backgroundColor: selectedMainTab === 'engagement' ? '#374151' : 'transparent', 
+                color: selectedMainTab === 'engagement' ? '#f97316' : '#d1d5db', 
                 border: 'none',
                 cursor: 'pointer',
-                textAlign: 'left'
+                textAlign: 'left',
+                fontWeight: selectedMainTab === 'engagement' ? '600' : '500'
               }}
               data-testid="nav-engagement"
             >
@@ -454,6 +458,19 @@ export default function CSRDashboard() {
           flexDirection: 'column',
           gap: '24px'
         }}>
+          {selectedMainTab === 'engagement' && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <Users style={{ width: '28px', height: '28px', color: '#1e3a8a' }} />
+                <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
+                  Employee Engagement Hub
+                </h1>
+              </div>
+              <EmployeeEngagementTab userId={userId} />
+            </>
+          )}
+          {selectedMainTab === 'overview' && (
+            <>
           {/* KPI Cards Row - 4 cards in dark navy */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
             <div 

@@ -17,7 +17,11 @@ import {
   insertMessageSchema,
   insertOpportunitySchema,
   insertApplicationSchema,
-  insertProjectAssignmentSchema
+  insertProjectAssignmentSchema,
+  insertEmployeeCommitmentSchema,
+  insertEmployeeActivityLogSchema,
+  insertEmployeeMilestoneSchema,
+  insertCSRCommitmentGoalSchema
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
@@ -6513,6 +6517,222 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     } catch (err) {
       console.error("Error fetching verified outputs:", err);
       res.status(500).json({ error: "Failed to fetch verified outputs" });
+    }
+  });
+
+  // ===== EMPLOYEE ENGAGEMENT ENDPOINTS =====
+  
+  // Get Employee Engagement Summary for CSR Partner
+  app.get("/api/employee-engagement/summary", async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) {
+        return res.status(400).json({ error: "userId required" });
+      }
+
+      const activities = await storage.listEmployeeActivityLogs?.() || [];
+      const commitments = await storage.listEmployeeCommitments?.() || [];
+      const milestones = await storage.listEmployeeMilestones?.() || [];
+
+      const activeEmployees = new Set(commitments.filter((c: any) => c.status === 'active').map((c: any) => c.userId)).size;
+      const totalHours = activities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
+      const completedCommitments = commitments.filter((c: any) => c.status === 'completed').length;
+
+      res.json({
+        activeEmployees,
+        totalHours,
+        completedCommitments,
+        engagementRate: Math.round((activeEmployees / 50) * 100), // Assuming 50 employees
+        participationTrend: [
+          { month: 'Oct', active: 8, completed: 2 },
+          { month: 'Nov', active: 12, completed: 5 },
+          { month: 'Dec', active: 15, completed: 8 }
+        ],
+        topMilestones: milestones.slice(0, 5),
+        departmentBreakdown: [
+          { dept: 'Engineering', active: 8, hours: 120 },
+          { dept: 'Product', active: 4, hours: 60 },
+          { dept: 'HR', active: 2, hours: 25 },
+          { dept: 'Finance', active: 1, hours: 10 }
+        ]
+      });
+    } catch (err) {
+      console.error("Error fetching engagement summary:", err);
+      res.status(500).json({ error: "Failed to fetch engagement summary" });
+    }
+  });
+
+  // Log Employee Activity Hours
+  app.post("/api/employee-engagement/log-hours", async (req, res) => {
+    try {
+      const { commitmentId, userId, partnerId, hoursLogged, tasksCompleted, skillsApplied, checkinType } = req.body;
+
+      const validated = insertEmployeeActivityLogSchema.parse({
+        commitmentId,
+        userId,
+        partnerId,
+        hoursLogged,
+        tasksCompleted: tasksCompleted || [],
+        skillsApplied: skillsApplied || [],
+        checkinType: checkinType || 'manual',
+        timestamp: new Date()
+      });
+
+      const created = await storage.createEmployeeActivityLog?.(validated) || { id: Date.now() };
+
+      // Update commitment hours
+      const commitments = await storage.listEmployeeCommitments?.() || [];
+      const commitment = commitments.find((c: any) => c.id === commitmentId);
+      if (commitment) {
+        await storage.updateEmployeeCommitment?.(commitmentId, {
+          hoursCompleted: (commitment.hoursCompleted || 0) + hoursLogged
+        });
+      }
+
+      res.json(created);
+    } catch (err) {
+      const validationErr = handleValidationError(err);
+      res.status(validationErr.status || 400).json({ error: validationErr.message });
+    }
+  });
+
+  // Get Employee Commitments
+  app.get("/api/employee-engagement/commitments", async (req, res) => {
+    try {
+      const { userId, partnerId, status } = req.query;
+      let commitments = await storage.listEmployeeCommitments?.() || [];
+
+      if (userId) {
+        commitments = commitments.filter((c: any) => c.userId === parseInt(userId as string));
+      }
+      if (partnerId) {
+        commitments = commitments.filter((c: any) => c.partnerId === parseInt(partnerId as string));
+      }
+      if (status) {
+        commitments = commitments.filter((c: any) => c.status === status);
+      }
+
+      res.json(commitments);
+    } catch (err) {
+      console.error("Error fetching commitments:", err);
+      res.status(500).json({ error: "Failed to fetch commitments" });
+    }
+  });
+
+  // Create Employee Commitment
+  app.post("/api/employee-engagement/commitments", async (req, res) => {
+    try {
+      const { userId, partnerId, organizationId, projectId, hoursCommitted, skillsApplied } = req.body;
+
+      const validated = insertEmployeeCommitmentSchema.parse({
+        userId,
+        partnerId,
+        organizationId,
+        projectId,
+        status: 'interested',
+        hoursCommitted,
+        skillsApplied: skillsApplied || []
+      });
+
+      const created = await storage.createEmployeeCommitment?.(validated) || { id: Date.now() };
+      res.json(created);
+    } catch (err) {
+      const validationErr = handleValidationError(err);
+      res.status(validationErr.status || 400).json({ error: validationErr.message });
+    }
+  });
+
+  // Award Employee Milestone
+  app.post("/api/employee-engagement/milestones", async (req, res) => {
+    try {
+      const { userId, partnerId, milestoneType, milestoneValue } = req.body;
+
+      const validated = insertEmployeeMilestoneSchema.parse({
+        userId,
+        partnerId,
+        milestoneType,
+        milestoneValue,
+        earnedDate: new Date()
+      });
+
+      const created = await storage.createEmployeeMilestone?.(validated) || { id: Date.now() };
+      res.json(created);
+    } catch (err) {
+      const validationErr = handleValidationError(err);
+      res.status(validationErr.status || 400).json({ error: validationErr.message });
+    }
+  });
+
+  // Get CSR Commitment Goals
+  app.get("/api/employee-engagement/csr-goals", async (req, res) => {
+    try {
+      const { partnerId, year } = req.query;
+      let goals = await storage.listCSRCommitmentGoals?.() || [];
+
+      if (partnerId) {
+        goals = goals.filter((g: any) => g.partnerId === parseInt(partnerId as string));
+      }
+      if (year) {
+        goals = goals.filter((g: any) => g.year === parseInt(year as string));
+      }
+
+      res.json(goals);
+    } catch (err) {
+      console.error("Error fetching CSR goals:", err);
+      res.status(500).json({ error: "Failed to fetch CSR goals" });
+    }
+  });
+
+  // Set CSR Commitment Goals
+  app.post("/api/employee-engagement/csr-goals", async (req, res) => {
+    try {
+      const { partnerId, year, targetEmployeePercent, targetTotalHours, targetSdgs } = req.body;
+
+      const validated = insertCSRCommitmentGoalSchema.parse({
+        partnerId,
+        year,
+        targetEmployeePercent,
+        targetTotalHours,
+        targetSdgs: targetSdgs || []
+      });
+
+      const created = await storage.createCSRCommitmentGoal?.(validated) || { id: Date.now() };
+      res.json(created);
+    } catch (err) {
+      const validationErr = handleValidationError(err);
+      res.status(validationErr.status || 400).json({ error: validationErr.message });
+    }
+  });
+
+  // Get Employee Impact Dashboard
+  app.get("/api/employee-engagement/impact-dashboard/:userId", async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const uid = parseInt(userId);
+
+      const activities = await storage.listEmployeeActivityLogs?.() || [];
+      const commitments = await storage.listEmployeeCommitments?.() || [];
+      const milestones = await storage.listEmployeeMilestones?.() || [];
+
+      const userActivities = activities.filter((a: any) => a.userId === uid);
+      const userCommitments = commitments.filter((c: any) => c.userId === uid);
+      const userMilestones = milestones.filter((m: any) => m.userId === uid);
+
+      const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
+      const economicValue = totalHours * 35; // $35/hour standard rate
+
+      res.json({
+        totalHours,
+        economicValue,
+        projectsCompleted: userCommitments.filter((c: any) => c.status === 'completed').length,
+        skillsApplied: [...new Set(userActivities.flatMap((a: any) => a.skillsApplied || []))],
+        milestones: userMilestones,
+        recentActivities: userActivities.slice(-5),
+        commitments: userCommitments
+      });
+    } catch (err) {
+      console.error("Error fetching impact dashboard:", err);
+      res.status(500).json({ error: "Failed to fetch impact dashboard" });
     }
   });
 

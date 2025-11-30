@@ -199,6 +199,7 @@ export function CSRImpactReporting() {
               { id: "overview", label: "Executive Summary", icon: "📊" },
               { id: "timeseries", label: "Time-Series Analysis", icon: "📈" },
               { id: "impact", label: "Impact Deep Dive", icon: "🎯" },
+              { id: "projects", label: "Projects", icon: "📁" },
               { id: "sdg", label: "SDG Alignment", icon: "🌍" },
               { id: "benchmarks", label: "Benchmarking", icon: "📍" },
               { id: "compliance", label: "Compliance", icon: "✅" }
@@ -373,6 +374,83 @@ export function CSRImpactReporting() {
                     <div style={{ fontSize: "14px", color: "#6b7280", marginBottom: "8px" }}>Total Program Cost</div>
                     <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1e3a8a" }}>
                       ${impactData?.financialMetrics?.programCost || 0}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Section>
+          )}
+
+          {selectedTab === "projects" && (
+            <Section title="Project Breakdown & Performance" icon="📁">
+              <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb", overflowX: "auto" }}>
+                {impactData?.projectMetrics && impactData.projectMetrics.length > 0 ? (
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#f3f4f6" }}>
+                        <th style={{ padding: "12px", textAlign: "left", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Project Name</th>
+                        <th style={{ padding: "12px", textAlign: "right", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Hours</th>
+                        <th style={{ padding: "12px", textAlign: "right", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Employees</th>
+                        <th style={{ padding: "12px", textAlign: "right", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Avg/Employee</th>
+                        <th style={{ padding: "12px", textAlign: "center", fontWeight: "600", color: "#111827", borderBottom: "2px solid #e5e7eb" }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {impactData.projectMetrics.map((project: any, idx: number) => {
+                        const avgHours = project.employees > 0 ? Math.round(project.hours / project.employees) : 0;
+                        const statusColor = 
+                          project.status === "active" ? "#059669" :
+                          project.status === "completed" ? "#3b82f6" :
+                          project.status === "paused" ? "#f59e0b" : "#9ca3af";
+                        return (
+                          <tr key={idx} style={{ borderBottom: "1px solid #e5e7eb", backgroundColor: idx % 2 === 0 ? "#f9fafb" : "white" }}>
+                            <td style={{ padding: "12px", color: "#111827", fontWeight: "500" }}>{project.name}</td>
+                            <td style={{ padding: "12px", textAlign: "right", color: "#059669", fontWeight: "600" }}>{project.hours} hrs</td>
+                            <td style={{ padding: "12px", textAlign: "right", color: "#374151", fontWeight: "500" }}>{project.employees}</td>
+                            <td style={{ padding: "12px", textAlign: "right", color: "#6b7280", fontWeight: "500" }}>{avgHours} hrs</td>
+                            <td style={{ padding: "12px", textAlign: "center" }}>
+                              <span style={{
+                                display: "inline-block",
+                                padding: "4px 12px",
+                                borderRadius: "12px",
+                                backgroundColor: statusColor + "20",
+                                color: statusColor,
+                                fontSize: "12px",
+                                fontWeight: "600",
+                                textTransform: "capitalize"
+                              }}>
+                                {project.status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div style={{ textAlign: "center", padding: "40px", color: "#9ca3af" }}>
+                    No project data available yet
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: "32px" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Project Performance Summary</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
+                  <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>Total Projects</div>
+                    <div style={{ fontSize: "28px", fontWeight: "bold", color: "#1e3a8a" }}>{impactData?.projectMetrics?.length || 0}</div>
+                  </div>
+                  <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>Combined Hours</div>
+                    <div style={{ fontSize: "28px", fontWeight: "bold", color: "#059669" }}>
+                      {impactData?.projectMetrics?.reduce((sum: number, p: any) => sum + (p.hours || 0), 0) || 0}
+                    </div>
+                  </div>
+                  <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                    <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "8px" }}>Largest Project</div>
+                    <div style={{ fontSize: "28px", fontWeight: "bold", color: "#f59e0b" }}>
+                      {Math.max(...impactData?.projectMetrics?.map((p: any) => p.hours || 0), 0) || 0} hrs
                     </div>
                   </div>
                 </div>

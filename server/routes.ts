@@ -5624,7 +5624,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           
           // REAL employee count from CSR partner record
           const realEmployeeCount = userPartner.employeeCount || 50;
-          const realEngagementRate = realEmployeeCount > 0 ? Math.round((activeEmployees / realEmployeeCount) * 100) : 0;
+          const realEngagementRate = realEmployeeCount > 0 ? parseFloat(((activeEmployees / realEmployeeCount) * 100).toFixed(2)) : 0;
           
           return {
             hours: {
@@ -6576,8 +6576,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const totalCommitments = partnerCommitments.length || 1;
       const completionRate = Math.round((completedCommitments / totalCommitments) * 100);
 
-      // Calculate engagement rate with REAL employee count
-      const engagementRate = totalEmployeeCount > 0 ? Math.round((engagedEmployees / totalEmployeeCount) * 100) : 0;
+      // Calculate engagement rate with REAL employee count (show 2 decimal places)
+      const engagementRate = totalEmployeeCount > 0 ? parseFloat(((engagedEmployees / totalEmployeeCount) * 100).toFixed(2)) : 0;
 
       res.json({
         activeEmployees: engagedEmployees,

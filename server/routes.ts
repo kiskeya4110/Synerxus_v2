@@ -5582,7 +5582,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         sidebarEmployees,
         sdgMetrics,
         dateRange: { startDate: startDateStr || 'all-time', endDate: endDateStr || 'all-time' },
-        // Enhanced breakdown data for KPI modals with comprehensive metrics
+        // CSR Dashboard KPI Breakdown - EMPLOYEE METRICS ONLY (excludes non-employee volunteers)
         kpiBreakdown: (() => {
           // Get employee user IDs (users with employer_id matching this partner)
           const employeeUserIds = new Set(
@@ -5595,35 +5595,17 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           const employeeActivities = filteredVolunteerActivities.filter((a: any) => 
             employeeUserIds.has(a.userId)
           );
-          const realEmployeeHours = employeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-          const realActiveEmployees = new Set(employeeActivities.map((a: any) => a.userId)).size;
-          
-          // Calculate NON-employee volunteer hours (volunteers who are NOT linked to this corporation)
-          const nonEmployeeActivities = filteredVolunteerActivities.filter((a: any) => 
-            !employeeUserIds.has(a.userId)
-          );
-          const volunteerHours = nonEmployeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-          const uniqueVolunteers = new Set(nonEmployeeActivities.map((a: any) => a.userId)).size;
-          
-          const totalContributors = realActiveEmployees + uniqueVolunteers;
-          const combinedHours = realEmployeeHours + volunteerHours;
+          const employeeHours = employeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          const activeEmployees = new Set(employeeActivities.map((a: any) => a.userId)).size;
           
           // Calculate per-project metrics from REAL activity data
-          const projectsWithEngagement = partnerBudgets.filter((b: any) => {
+          const projectsWithEmployeeEngagement = partnerBudgets.filter((b: any) => {
             const activityCount = employeeActivities.filter((a: any) => a.projectId === b.projectId).length;
             return activityCount > 0;
           });
           
-          // Calculate average hours per contributor
-          const avgHoursPerContributor = totalContributors > 0 ? Math.round(combinedHours / totalContributors) : 0;
-          
-          // Calculate economic value at $35/hour standard rate
-          const economicValue = combinedHours * 35;
-          
-          // Top SDG by hours
-          const topSdgEntry = Object.entries(orgwideSDGMetrics).sort((a: any, b: any) => b[1].totalHours - a[1].totalHours)[0];
-          const topSdg = topSdgEntry ? parseInt(topSdgEntry[0]) : 0;
-          const topSdgHours = topSdgEntry ? (topSdgEntry[1] as any).totalHours : 0;
+          // Calculate economic value at $35/hour standard rate (EMPLOYEE HOURS ONLY)
+          const economicValue = employeeHours * 35;
           
           // Build employee leaderboard from real activities
           const employeeLeaderboard = Array.from(employeeUserIds).map((userId: any) => {
@@ -5638,38 +5620,31 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           
           return {
             hours: {
-              total: combinedHours,
-              fromEmployeeEngagement: realEmployeeHours,
-              fromVolunteerActivities: volunteerHours,
-              averagePerContributor: avgHoursPerContributor,
-              averagePerEmployee: realActiveEmployees > 0 ? Math.round(realEmployeeHours / realActiveEmployees) : 0,
+              total: employeeHours,
+              averagePerEmployee: activeEmployees > 0 ? Math.round(employeeHours / activeEmployees) : 0,
               economicValue: economicValue,
-              topProjectHours: projectsWithEngagement.length > 0 
-                ? employeeActivities.filter((a: any) => a.projectId === projectsWithEngagement[0]?.projectId)
+              topProjectHours: projectsWithEmployeeEngagement.length > 0 
+                ? employeeActivities.filter((a: any) => a.projectId === projectsWithEmployeeEngagement[0]?.projectId)
                     .reduce((sum: number, a: any) => sum + (a.hours || 0), 0)
                 : 0,
-              weeklyAverage: Math.round(combinedHours / 12) // Approximate 12 weeks in quarter
+              weeklyAverage: Math.round(employeeHours / 12) // Approximate 12 weeks in quarter
             },
             employees: {
-              total: realActiveEmployees,
-              fromEmployeeEngagement: realActiveEmployees,
-              fromVolunteerActivities: uniqueVolunteers,
-              totalContributors: totalContributors,
-              totalHoursContributed: realEmployeeHours,
-              averageHoursPerEmployee: realActiveEmployees > 0 ? Math.round(realEmployeeHours / realActiveEmployees) : 0,
-              engagementRate: Math.round((realActiveEmployees / (userPartner.employeeCount || 100)) * 100),
+              total: activeEmployees,
+              averageHoursPerEmployee: activeEmployees > 0 ? Math.round(employeeHours / activeEmployees) : 0,
+              engagementRate: Math.round((activeEmployees / (userPartner.employeeCount || 100)) * 100),
               topPerformer: employeeLeaderboard[0]?.name || 'N/A',
               topPerformerHours: employeeLeaderboard[0]?.hours || 0,
-              newThisMonth: Math.max(1, Math.floor(realActiveEmployees * 0.2)) // Approximate new joiners
+              newThisMonth: Math.max(1, Math.floor(activeEmployees * 0.2)) // Approximate new joiners
             },
             projects: {
               total: projectsCompleted,
-              activeProjects: projectsWithEngagement.length,
+              activeProjects: projectsWithEmployeeEngagement.length,
               sponsoredProjects: partnerBudgets.length,
               totalRoi: totalRoi,
               averageRoiPerProject: projectsCompleted > 0 ? Math.round(totalRoi / projectsCompleted) : 0,
-              totalHoursInvested: realEmployeeHours,
-              averageHoursPerProject: projectsWithEngagement.length > 0 ? Math.round(realEmployeeHours / projectsWithEngagement.length) : 0,
+              totalHoursInvested: employeeHours,
+              averageHoursPerProject: projectsWithEmployeeEngagement.length > 0 ? Math.round(employeeHours / projectsWithEmployeeEngagement.length) : 0,
               beneficiariesReached: projectsCompleted * 150, // Estimated impact
               regionsServed: projectLocations.length
             },
@@ -5677,8 +5652,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
               scoreDelta: sdgScoreDelta,
               activeCommitments: Object.keys(sdgProgress).length,
               averageProgress: Math.round(Object.values(sdgProgress).reduce((sum: number, s: any) => sum + (s.progress || 0), 0) / Math.max(1, Object.keys(sdgProgress).length)),
-              topSdg: topSdg,
-              topSdgHours: topSdgHours,
+              topSdg: Object.entries(orgwideSDGMetrics).sort((a: any, b: any) => b[1].totalHours - a[1].totalHours)[0] ? parseInt(Object.entries(orgwideSDGMetrics).sort((a: any, b: any) => b[1].totalHours - a[1].totalHours)[0][0]) : 0,
+              topSdgHours: Object.entries(orgwideSDGMetrics).sort((a: any, b: any) => b[1].totalHours - a[1].totalHours)[0] ? (Object.entries(orgwideSDGMetrics).sort((a: any, b: any) => b[1].totalHours - a[1].totalHours)[0][1] as any).totalHours : 0,
               totalSdgHours: Object.values(orgwideSDGMetrics).reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0),
               challengesActive: partnerChallenges.filter((c: any) => c.status === 'active').length,
               challengesCompleted: partnerChallenges.filter((c: any) => c.status === 'completed').length

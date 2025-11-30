@@ -633,21 +633,8 @@ export default function CSRDashboard() {
                         outerRadius={Math.max(70, Math.min(95, (csrData?.activeEmployees || 890) / 8))}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ fullName, value }) => {
-                          // Wrap long names across multiple lines
-                          const words = (fullName || '').split(' ');
-                          let label = '';
-                          if (words.length === 1) {
-                            label = fullName;
-                          } else if (words.length === 2) {
-                            label = `${words[0]}\n${words[1]}`;
-                          } else {
-                            // For longer names, break after first word
-                            label = `${words[0]}\n${words.slice(1).join(' ')}`;
-                          }
-                          return `${label}\n${value}%`;
-                        }}
-                        labelLine={true}
+                        label={({ value }) => `${value}%`}
+                        labelLine={false}
                         onClick={(data) => setSelectedSDG(data.goal)}
                       >
                         {chartData.map((entry, index) => (

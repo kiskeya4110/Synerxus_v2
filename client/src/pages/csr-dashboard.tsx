@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Home, BarChart3, Users, Briefcase, FileText, Settings, ChevronRight  } from "lucide-react";
+import { Home, BarChart3, Users, Briefcase, FileText, Settings, ChevronRight, X  } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { sdgGoals, getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
+import { useState } from "react";
 
 interface CSRDashboardData {
   totalPartners: number;
@@ -25,6 +26,7 @@ export default function CSRDashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const userId = localStorage.getItem('currentUserId');
+  const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
 
   const { data: csrData, isLoading } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId],
@@ -305,50 +307,207 @@ export default function CSRDashboard() {
         }}>
           {/* KPI Cards Row - 4 cards in dark navy */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-            <div style={{ 
-              backgroundColor: '#1e3a8a', 
-              color: 'white', 
-              padding: '20px', 
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }} data-testid="kpi-total-hours">
+            <div 
+              onClick={() => setSelectedKPI('hours')}
+              style={{ 
+                backgroundColor: '#1e3a8a', 
+                color: 'white', 
+                padding: '20px', 
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: selectedKPI === 'hours' ? '2px solid #f97316' : 'none'
+              }} 
+              onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-4px)', e.currentTarget.style.boxShadow = '0 8px 12px -1px rgba(0, 0, 0, 0.2)')}
+              onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)')}
+              data-testid="kpi-total-hours"
+            >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Total Hours Logged</p>
               <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.totalHours?.toLocaleString() || '12,450'}</p>
             </div>
             
-            <div style={{ 
-              backgroundColor: '#1e3a8a', 
-              color: 'white', 
-              padding: '20px', 
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }} data-testid="kpi-employees">
+            <div 
+              onClick={() => setSelectedKPI('employees')}
+              style={{ 
+                backgroundColor: '#1e3a8a', 
+                color: 'white', 
+                padding: '20px', 
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: selectedKPI === 'employees' ? '2px solid #f97316' : 'none'
+              }} 
+              onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-4px)', e.currentTarget.style.boxShadow = '0 8px 12px -1px rgba(0, 0, 0, 0.2)')}
+              onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)')}
+              data-testid="kpi-employees"
+            >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Employees Engaged</p>
               <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.activeEmployees || '890'}</p>
             </div>
             
-            <div style={{ 
-              backgroundColor: '#1e3a8a', 
-              color: 'white', 
-              padding: '20px', 
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }} data-testid="kpi-projects">
+            <div 
+              onClick={() => setSelectedKPI('projects')}
+              style={{ 
+                backgroundColor: '#1e3a8a', 
+                color: 'white', 
+                padding: '20px', 
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: selectedKPI === 'projects' ? '2px solid #f97316' : 'none'
+              }} 
+              onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-4px)', e.currentTarget.style.boxShadow = '0 8px 12px -1px rgba(0, 0, 0, 0.2)')}
+              onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)')}
+              data-testid="kpi-projects"
+            >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Projects Completed</p>
               <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.projectsCompleted || '112'}</p>
             </div>
             
-            <div style={{ 
-              backgroundColor: '#1e3a8a', 
-              color: 'white', 
-              padding: '20px', 
-              borderRadius: '8px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-            }} data-testid="kpi-sdg-delta">
+            <div 
+              onClick={() => setSelectedKPI('sdg')}
+              style={{ 
+                backgroundColor: '#1e3a8a', 
+                color: 'white', 
+                padding: '20px', 
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                border: selectedKPI === 'sdg' ? '2px solid #f97316' : 'none'
+              }} 
+              onMouseOver={(e) => (e.currentTarget.style.transform = 'translateY(-4px)', e.currentTarget.style.boxShadow = '0 8px 12px -1px rgba(0, 0, 0, 0.2)')}
+              onMouseOut={(e) => (e.currentTarget.style.transform = 'translateY(0)', e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)')}
+              data-testid="kpi-sdg-delta"
+            >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>SDG Score Delta</p>
               <p style={{ fontSize: '30px', fontWeight: 'bold' }}>+{csrData?.sdgScoreDelta || '15'}% <span style={{ fontSize: '18px', fontWeight: 'normal', color: '#d1d5db' }}>Q3</span></p>
             </div>
           </div>
+
+          {/* KPI Detail Modal */}
+          {selectedKPI && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 50
+            }} onClick={() => setSelectedKPI(null)}>
+              <div 
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+                  maxWidth: '600px',
+                  width: '90%',
+                  maxHeight: '80vh',
+                  overflowY: 'auto',
+                  padding: '32px'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
+                    {selectedKPI === 'hours' && 'Total Hours Logged'}
+                    {selectedKPI === 'employees' && 'Employees Engaged'}
+                    {selectedKPI === 'projects' && 'Projects Completed'}
+                    {selectedKPI === 'sdg' && 'SDG Score Performance'}
+                  </h2>
+                  <button 
+                    onClick={() => setSelectedKPI(null)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                  >
+                    <X style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+                  </button>
+                </div>
+
+                {selectedKPI === 'hours' && (
+                  <div style={{ color: '#374151' }}>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
+                      {(csrData?.totalHours || 12450).toLocaleString()} hours
+                    </p>
+                    <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
+                      Total volunteer hours contributed across all employee participants in CSR initiatives.
+                    </p>
+                    <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Key Metrics:</p>
+                      <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
+                        <li style={{ marginBottom: '8px' }}>✓ Average hours per employee: {csrData?.activeEmployees ? Math.round((csrData.totalHours || 12450) / csrData.activeEmployees) : 14} hours</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Active employee contributors: {csrData?.activeEmployees || 890}</li>
+                        <li>✓ Total economic value: ${((csrData?.totalHours || 12450) * 35).toLocaleString()}</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {selectedKPI === 'employees' && (
+                  <div style={{ color: '#374151' }}>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
+                      {csrData?.activeEmployees || 890} employees
+                    </p>
+                    <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
+                      Unique employee participants engaged in volunteer activities through your CSR program.
+                    </p>
+                    <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Engagement Summary:</p>
+                      <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
+                        <li style={{ marginBottom: '8px' }}>✓ Total hours logged: {(csrData?.totalHours || 12450).toLocaleString()}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Projects supported: {csrData?.projectsCompleted || 112}</li>
+                        <li>✓ Engagement rate: {csrData?.activeEmployees ? Math.round(((csrData.activeEmployees / 5000) * 100)) : 18}% of workforce</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {selectedKPI === 'projects' && (
+                  <div style={{ color: '#374151' }}>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
+                      {csrData?.projectsCompleted || 112} projects
+                    </p>
+                    <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
+                      Complete CSR projects with verified outcomes and impact tracking.
+                    </p>
+                    <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Project Impact:</p>
+                      <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
+                        <li style={{ marginBottom: '8px' }}>✓ Total ROI: ${(csrData?.totalImpact || 435750).toLocaleString()}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Average ROI per project: ${(csrData?.totalImpact && csrData?.projectsCompleted ? Math.round((csrData.totalImpact / csrData.projectsCompleted)) : 3891).toLocaleString()}</li>
+                        <li>✓ Employee hours invested: {(csrData?.totalHours || 12450).toLocaleString()}</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                {selectedKPI === 'sdg' && (
+                  <div style={{ color: '#374151' }}>
+                    <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
+                      +{csrData?.sdgScoreDelta || 15}% Q3 Performance
+                    </p>
+                    <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
+                      Quarter-over-quarter improvement in SDG goal alignment and progress across active initiatives.
+                    </p>
+                    <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>SDG Progress Metrics:</p>
+                      <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
+                        <li style={{ marginBottom: '8px' }}>✓ Active SDG commitments: {Object.keys(csrData?.sdgProgress || {}).length}</li>
+                        <li style={{ marginBottom: '8px' }}>✓ Average SDG progress: {Math.round((Object.values(csrData?.sdgProgress || {}).reduce((sum: number, s: any) => sum + (s.progress || 0), 0) / Math.max(1, Object.keys(csrData?.sdgProgress || {}).length)))  }%</li>
+                        <li>✓ Momentum: Strong growth trend in Q3 vs Q2</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Analytics Grid - 2x2 layout */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>

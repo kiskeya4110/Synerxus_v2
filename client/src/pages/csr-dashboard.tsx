@@ -612,12 +612,15 @@ export default function CSRDashboard() {
               border: '1px solid #e5e7eb', 
               borderRadius: '8px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              padding: '16px'
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%'
             }} data-testid="chart-sdg-alignment">
               <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>SDG Alignment Dashboard</h3>
-              <div style={{ height: '300px', display: 'flex', flexDirection: 'column' }}>
-                {/* Dynamic sizing based on projects and employees */}
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                {/* Dynamic sizing based on projects and employees - Fixed height for pie chart */}
+                <div style={{ height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -667,8 +670,17 @@ export default function CSRDashboard() {
                   </div>
                 </div>
                 
-                {/* SDG Labels Legend - Interactive */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginTop: '12px', fontSize: '11px' }}>
+                {/* SDG Labels Legend - Interactive and Scrollable */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '4px', 
+                  marginTop: '8px', 
+                  fontSize: '9px',
+                  overflowY: 'auto',
+                  maxHeight: '120px',
+                  paddingRight: '4px'
+                }}>
                   {chartData.map((sdg, idx) => (
                     <div 
                       key={idx}
@@ -677,19 +689,21 @@ export default function CSRDashboard() {
                       style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
-                        gap: '6px',
+                        gap: '3px',
                         cursor: 'pointer',
-                        padding: '6px',
-                        borderRadius: '4px',
+                        padding: '3px 4px',
+                        borderRadius: '3px',
                         backgroundColor: selectedSDG === sdg.goal ? '#f0f4f8' : 'transparent',
                         border: selectedSDG === sdg.goal ? `1px solid ${sdg.color}` : '1px solid transparent',
-                        transition: 'all 0.2s ease'
+                        transition: 'all 0.2s ease',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
                       }}
                     >
-                      <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: sdg.color, flexShrink: 0 }} />
-                      <span style={{ color: '#4b5563', fontWeight: '500', fontSize: '10px' }}>
-                        {sdg.name}: {sdg.value}%
-                        <span style={{ fontSize: '9px', color: '#9ca3af', marginLeft: '4px' }}>({sdg.hours}h)</span>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '1px', backgroundColor: sdg.color, flexShrink: 0 }} />
+                      <span style={{ color: '#4b5563', fontWeight: '500', fontSize: '8px' }}>
+                        {sdg.name} {sdg.value}%
                       </span>
                     </div>
                   ))}

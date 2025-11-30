@@ -123,6 +123,7 @@ export default function App() {
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
+          <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route component={LayoutRoute} />
         </Router>
       </OnboardingProvider>
@@ -165,7 +166,6 @@ function LayoutRoute() {
       <Route path="/achievements" component={Achievements} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
-      <Route path="/csr-dashboard" component={CSRDashboard} />
       <Route path="/sdg-mapping" component={SDGMapping} />
     </Layout>
   );

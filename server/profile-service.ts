@@ -25,6 +25,10 @@ interface ProfileUpdateData {
   yearsOfExperience?: string;
   linkedinProfile?: string;
   matchingPriorities?: Record<string, number>;
+  // Employer linking fields
+  employerId?: number;
+  departmentName?: string;
+  jobTitleAtCompany?: string;
 }
 
 /**
@@ -113,6 +117,15 @@ export async function updateVolunteerProfileWithUser(
     }
     if (profileData.matchingPriorities !== undefined) {
       profileUpdates.matchingPriorities = profileData.matchingPriorities;
+    }
+    if (profileData.employerId !== undefined) {
+      profileUpdates.employerId = profileData.employerId || null;
+    }
+    if (profileData.departmentName !== undefined) {
+      profileUpdates.departmentName = profileData.departmentName || null;
+    }
+    if (profileData.jobTitleAtCompany !== undefined) {
+      profileUpdates.jobTitleAtCompany = profileData.jobTitleAtCompany || null;
     }
     
     let updatedProfile: VolunteerProfile;

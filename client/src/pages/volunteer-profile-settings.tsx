@@ -1306,7 +1306,6 @@ export default function VolunteerProfileSettings() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No employer selected</SelectItem>
                           {csrPartners.map((partner: any) => (
                             <SelectItem key={partner.id} value={partner.id.toString()}>
                               {partner.companyName}

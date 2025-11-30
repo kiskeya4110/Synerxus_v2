@@ -5365,17 +5365,58 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         .sort((a: any, b: any) => b.hours - a.hours)
         .slice(0, 8);
 
-      // Generate project locations with geocoordinates for map visualization - only show projects with actual engagement
-      const sampleCoordinates = [
-        { lat: 40.7128, lng: -74.0060, region: "North America - New York" },
-        { lat: 34.0522, lng: -118.2437, region: "North America - Los Angeles" },
-        { lat: 51.5074, lng: -0.1278, region: "Europe - London" },
-        { lat: 48.8566, lng: 2.3522, region: "Europe - Paris" },
-        { lat: 35.6762, lng: 139.6503, region: "Asia - Tokyo" },
-        { lat: 28.6139, lng: 77.2090, region: "Asia - India" },
-        { lat: -33.8688, lng: 151.2093, region: "Oceania - Sydney" },
-        { lat: -23.5505, lng: -46.6333, region: "South America - São Paulo" },
-      ];
+      // Generate project locations with real geocoordinates based on actual project locations
+      // Geocoding lookup for known locations (Africa-focused for actual project regions)
+      const geocodingLookup: Record<string, { lat: number; lng: number; region: string }> = {
+        // Zimbabwe locations
+        'zimbabwe': { lat: -19.0154, lng: 29.1549, region: 'Africa - Zimbabwe' },
+        'harare': { lat: -17.8252, lng: 31.0335, region: 'Africa - Harare, Zimbabwe' },
+        'bulawayo': { lat: -20.1500, lng: 28.5833, region: 'Africa - Bulawayo, Zimbabwe' },
+        // Zambia locations
+        'zambia': { lat: -13.1339, lng: 27.8493, region: 'Africa - Zambia' },
+        'ndola': { lat: -12.9587, lng: 28.6366, region: 'Africa - Ndola, Zambia' },
+        'lusaka': { lat: -15.3875, lng: 28.3228, region: 'Africa - Lusaka, Zambia' },
+        'kitwe': { lat: -12.8024, lng: 28.2132, region: 'Africa - Kitwe, Zambia' },
+        // Other African locations
+        'kenya': { lat: -1.2921, lng: 36.8219, region: 'Africa - Kenya' },
+        'nairobi': { lat: -1.2921, lng: 36.8219, region: 'Africa - Nairobi, Kenya' },
+        'south africa': { lat: -33.9249, lng: 18.4241, region: 'Africa - South Africa' },
+        'cape town': { lat: -33.9249, lng: 18.4241, region: 'Africa - Cape Town, South Africa' },
+        'johannesburg': { lat: -26.2041, lng: 28.0473, region: 'Africa - Johannesburg, South Africa' },
+        'nigeria': { lat: 9.0820, lng: 8.6753, region: 'Africa - Nigeria' },
+        'lagos': { lat: 6.5244, lng: 3.3792, region: 'Africa - Lagos, Nigeria' },
+        'ghana': { lat: 5.6037, lng: -0.1870, region: 'Africa - Ghana' },
+        'accra': { lat: 5.6037, lng: -0.1870, region: 'Africa - Accra, Ghana' },
+        'tanzania': { lat: -6.3690, lng: 34.8888, region: 'Africa - Tanzania' },
+        'dar es salaam': { lat: -6.7924, lng: 39.2083, region: 'Africa - Dar es Salaam, Tanzania' },
+        'uganda': { lat: 0.3476, lng: 32.5825, region: 'Africa - Uganda' },
+        'kampala': { lat: 0.3476, lng: 32.5825, region: 'Africa - Kampala, Uganda' },
+        // Global fallbacks
+        'united states': { lat: 39.8283, lng: -98.5795, region: 'North America - United States' },
+        'miami': { lat: 25.7617, lng: -80.1918, region: 'North America - Miami, USA' },
+        'new york': { lat: 40.7128, lng: -74.0060, region: 'North America - New York, USA' },
+        'remote': { lat: 0, lng: 0, region: 'Remote / Virtual' },
+      };
+      
+      // Function to geocode a location string
+      const geocodeLocation = (locationStr: string): { lat: number; lng: number; region: string } | null => {
+        if (!locationStr) return null;
+        const normalizedLocation = locationStr.toLowerCase().trim();
+        
+        // Direct match
+        if (geocodingLookup[normalizedLocation]) {
+          return geocodingLookup[normalizedLocation];
+        }
+        
+        // Partial match - check if any key is contained in the location string
+        for (const [key, coords] of Object.entries(geocodingLookup)) {
+          if (normalizedLocation.includes(key)) {
+            return coords;
+          }
+        }
+        
+        return null;
+      };
       
       const projectLocations = partnerBudgets
         .map((budget: any, idx: number) => {
@@ -5388,13 +5429,25 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
             return null;
           }
           
-          const coord = sampleCoordinates[idx % sampleCoordinates.length];
+          // Get the actual project from database to access its location
+          const project = projects.find((p: any) => p.id === budget.projectId);
+          const projectLocation = project?.location || '';
+          
+          // Geocode the actual project location
+          const geoResult = geocodeLocation(projectLocation);
+          
+          if (!geoResult) {
+            // If we can't geocode, skip this project from the map
+            console.log(`CSR Map: Could not geocode location "${projectLocation}" for project ${budget.projectId}`);
+            return null;
+          }
+          
           return {
             id: budget.projectId,
-            name: budget.projectName || `Project ${idx + 1}`,
-            lat: coord.lat,
-            lng: coord.lng,
-            region: coord.region,
+            name: project?.name || budget.projectName || `Project ${idx + 1}`,
+            lat: geoResult.lat,
+            lng: geoResult.lng,
+            region: geoResult.region,
             employees: employeeCountForProject,
             hours: totalHoursForProject,
             status: budget.status === 'completed' ? 'completed' : budget.status === 'active' ? 'active' : 'sponsored'

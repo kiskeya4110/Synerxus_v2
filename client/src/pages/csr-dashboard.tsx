@@ -762,7 +762,7 @@ export default function CSRDashboard() {
 
           {/* Analytics Grid - 2x2 layout */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-            {/* Row 1, Col 1: SDG Alignment Dashboard - Partial Wheel */}
+            {/* Row 1, Col 1: SDG Alignment Dashboard - Enhanced View */}
             <div style={{ 
               backgroundColor: 'white', 
               border: '1px solid #e5e7eb', 
@@ -771,113 +771,132 @@ export default function CSRDashboard() {
               padding: '16px',
               display: 'flex',
               flexDirection: 'column',
-              height: '100%'
+              height: '100%',
+              minHeight: '420px'
             }} data-testid="chart-sdg-alignment">
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>SDG Alignment Dashboard</h3>
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-                {/* Dynamic sizing based on projects and employees */}
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', minHeight: 0 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        startAngle={180}
-                        endAngle={-180}
-                        innerRadius={Math.max(40, Math.min(60, (csrData?.projectsCompleted || 112) / 2))}
-                        outerRadius={Math.max(70, Math.min(95, (csrData?.activeEmployees || 890) / 8))}
-                        paddingAngle={2}
-                        dataKey="value"
-                        label={(props: any) => {
-                          const { name, value, cx, cy, midAngle, outerRadius } = props;
-                          // Position labels outside the pie with extra radius
-                          const RADIAN = Math.PI / 180;
-                          const labelRadius = outerRadius + 50;
-                          const x = cx + labelRadius * Math.cos(-midAngle * RADIAN);
-                          const y = cy + labelRadius * Math.sin(-midAngle * RADIAN);
-                          
-                          return (
-                            <text 
-                              x={x} 
-                              y={y} 
-                              fill="#1e293b" 
-                              textAnchor={x > cx ? "start" : "end"} 
-                              fontSize="12" 
-                              fontWeight="600"
-                            >
-                              {name} {value}%
-                            </text>
-                          );
-                        }}
-                        labelLine={true}
-                        onClick={(data) => setSelectedSDG(data.goal)}
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={entry.color}
-                            style={{ cursor: 'pointer', opacity: selectedSDG === entry.goal ? 1 : 0.8 }}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        content={({ active, payload }) => {
-                          if (active && payload && payload[0]) {
-                            const data = payload[0].payload;
-                            return (
-                              <div style={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white', padding: '12px', fontSize: '12px' }}>
-                                <p style={{ margin: '0 0 6px 0', fontWeight: '600' }}>{data.fullName}</p>
-                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Progress: {data.value}%</p>
-                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Hours: {data.hours?.toLocaleString() || 0}</p>
-                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Employees: {data.employees || 0}</p>
-                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Projects: {data.projects || 0}</p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>Avg Impact</p>
-                    <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#f97316' }}>{Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length) || 20)}%</p>
-                  </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>SDG Alignment Dashboard</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#6b7280' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }}></span>
+                    Active
+                  </span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3b82f6' }}></span>
+                    Committed
+                  </span>
                 </div>
-                {/* AI Insights Section */}
-                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', borderLeft: '4px solid #3b82f6' }}>
-                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#1e40af', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>✨ AI Insight</span>
+              </div>
+              
+              {/* Summary Stats Row */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ backgroundColor: '#f0fdf4', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#166534', margin: 0 }}>{sdgMetrics.length || 0}</p>
+                  <p style={{ fontSize: '11px', color: '#15803d', margin: '2px 0 0 0' }}>Active SDGs</p>
+                </div>
+                <div style={{ backgroundColor: '#eff6ff', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>{totalSDGHours.toLocaleString()}</p>
+                  <p style={{ fontSize: '11px', color: '#1d4ed8', margin: '2px 0 0 0' }}>Total Hours</p>
+                </div>
+                <div style={{ backgroundColor: '#fef3c7', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#92400e', margin: 0 }}>
+                    {sdgMetrics.reduce((sum: number, m: any) => sum + (m.uniqueEmployees || 0), 0)}
                   </p>
-                  <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.5' }}>
-                    {(() => {
-                      const totalHours = sdgMetrics.reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0);
-                      const avgEmployeesPerSDG = sdgMetrics.length > 0 
-                        ? Math.round(sdgMetrics.reduce((sum: number, m: any) => sum + (m.uniqueEmployees || 0), 0) / sdgMetrics.length)
-                        : 0;
-                      const topSDG = sdgMetrics[0];
-                      const engagementRate = (csrData?.activeEmployees || 0) > 0 
-                        ? Math.round(((csrData?.totalHours || 0) / ((csrData?.activeEmployees || 1) * 40)) * 100)
-                        : 0;
-
-                      if (totalHours === 0) {
-                        return "Start tracking employee contributions to unlock AI-powered impact insights and recommendations.";
-                      }
-
-                      const insights = [];
-                      if (topSDG) {
-                        insights.push(`Your team is leading with ${getSDGFullName(topSDG.sdg)}, with ${topSDG.totalHours} hours contributed across ${topSDG.projectsContributed} projects.`);
-                      }
-                      insights.push(`An average of ${avgEmployeesPerSDG} employees are collaborating per SDG goal, creating strong cross-functional impact.`);
-                      if (engagementRate > 0) {
-                        insights.push(`Current engagement is at ${Math.min(100, engagementRate)}% of target capacity—your team is ${engagementRate > 40 ? 'actively contributing' : 'building momentum'} toward global goals.`);
-                      }
-
-                      return insights.join(" ");
-                    })()}
-                  </div>
+                  <p style={{ fontSize: '11px', color: '#b45309', margin: '2px 0 0 0' }}>Volunteers</p>
                 </div>
+              </div>
+
+              {/* SDG Progress Bars - Scrollable List */}
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px' }}>
+                {chartData.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {chartData.map((sdg, idx) => (
+                      <div 
+                        key={sdg.goal} 
+                        style={{ 
+                          padding: '10px 12px', 
+                          backgroundColor: selectedSDG === sdg.goal ? '#f8fafc' : 'white',
+                          borderRadius: '8px',
+                          border: selectedSDG === sdg.goal ? `2px solid ${sdg.color}` : '1px solid #e5e7eb',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                        onClick={() => setSelectedSDG(selectedSDG === sdg.goal ? null : sdg.goal)}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ 
+                              width: '28px', 
+                              height: '28px', 
+                              borderRadius: '6px', 
+                              backgroundColor: sdg.color, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontSize: '12px',
+                              fontWeight: 'bold'
+                            }}>
+                              {sdg.goal}
+                            </div>
+                            <div>
+                              <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{sdg.name}</p>
+                              <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>{sdg.fullName}</p>
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <p style={{ fontSize: '14px', fontWeight: 'bold', color: sdg.color, margin: 0 }}>{sdg.value}%</p>
+                          </div>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div style={{ height: '6px', backgroundColor: '#e5e7eb', borderRadius: '3px', overflow: 'hidden', marginBottom: '6px' }}>
+                          <div style={{ 
+                            height: '100%', 
+                            width: `${Math.min(100, sdg.value)}%`, 
+                            backgroundColor: sdg.color,
+                            borderRadius: '3px',
+                            transition: 'width 0.3s'
+                          }}></div>
+                        </div>
+                        
+                        {/* Stats Row */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#6b7280' }}>
+                          <span>⏱️ {(sdg.hours || 0).toLocaleString()} hrs</span>
+                          <span>👥 {sdg.employees || 0} volunteers</span>
+                          <span>📁 {sdg.projects || 0} projects</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
+                    <p>No SDG data available yet</p>
+                  </div>
+                )}
+              </div>
+
+              {/* AI Insights Section */}
+              <div style={{ padding: '10px', backgroundColor: '#f0f9ff', borderRadius: '6px', borderLeft: '4px solid #3b82f6' }}>
+                <p style={{ fontSize: '11px', fontWeight: '600', color: '#1e40af', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  ✨ AI Insight
+                </p>
+                <p style={{ fontSize: '12px', color: '#334155', lineHeight: '1.4', margin: 0 }}>
+                  {(() => {
+                    const totalHours = sdgMetrics.reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0);
+                    const totalVolunteers = sdgMetrics.reduce((sum: number, m: any) => sum + (m.uniqueEmployees || 0), 0);
+                    const topSDG = sdgMetrics[0];
+
+                    if (totalHours === 0) {
+                      return "Start tracking contributions to unlock impact insights.";
+                    }
+
+                    if (topSDG) {
+                      return `Leading with ${getSDGName(topSDG.sdg)} (${topSDG.totalHours} hrs). ${totalVolunteers} volunteers across ${sdgMetrics.length} SDGs.`;
+                    }
+                    return `${totalVolunteers} volunteers contributing ${totalHours} hours across global goals.`;
+                  })()}
+                </p>
               </div>
             </div>
 

@@ -38,6 +38,14 @@ export default function Dashboard() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
+  const userType = localStorage.getItem('userType');
+
+  // Redirect corporate partners to CSR Dashboard
+  if (userType === 'corporate-partner') {
+    navigate('/csr-dashboard');
+    return null;
+  }
+
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
   interface KPIState {

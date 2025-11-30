@@ -63,14 +63,14 @@ export default function ProjectPortfolio() {
     );
   }
 
-  const tierColors = {
+  const tierColors: Record<string, string> = {
     strategic: "#1e3a8a",
     core: "#3b82f6",
     pilot: "#f59e0b",
     employee: "#8b5cf6",
   };
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     pipeline: "#9ca3af",
     approved: "#3b82f6",
     active: "#059669",
@@ -85,14 +85,14 @@ export default function ProjectPortfolio() {
     return true;
   }) || [];
 
-  const KPICard = ({ icon, label, value, color }: any) => (
+  const KPICard = ({ icon, label, value, color }: { icon: string; label: string; value: any; color: string }) => (
     <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "1px solid #e5e7eb", flex: 1, minWidth: "150px" }}>
       <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>{icon} {label}</div>
       <div style={{ fontSize: "24px", fontWeight: "bold", color }}>{value}</div>
     </div>
   );
 
-  const ProjectCard = ({ project }: any) => (
+  const ProjectCard = ({ project }: { project: PortfolioProject }) => (
     <div
       onClick={() => {
         setSelectedProject(project);

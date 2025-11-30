@@ -1677,7 +1677,7 @@ export default function CSRDashboard() {
           </div>
         </div>
             </div>
-          )}
+            )}
         </main>
       </div>
 

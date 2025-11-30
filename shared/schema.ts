@@ -848,6 +848,98 @@ export const insertVolunteerEmployerLinkSchema = createInsertSchema(volunteerEmp
   updatedAt: true
 });
 
+// Employee Commitments - Track employee applications to volunteer opportunities
+export const employeeCommitments = pgTable("employee_commitments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  organizationId: integer("organization_id").references(() => organizations.id),
+  projectId: integer("project_id").references(() => projects.id),
+  status: text("status").notNull().default("interested"), // interested, applied, accepted, active, completed, withdrawn
+  hoursCommitted: integer("hours_committed"),
+  hoursCompleted: integer("hours_completed").default(0),
+  skillsApplied: text("skills_applied").array(),
+  impactObserved: text("impact_observed"),
+  reflectionNotes: text("reflection_notes"),
+  certificateIssued: boolean("certificate_issued").default(false),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Employee Activity Logs - Real-time tracking of volunteer hours
+export const employeeActivityLogs = pgTable("employee_activity_logs", {
+  id: serial("id").primaryKey(),
+  commitmentId: integer("commitment_id").references(() => employeeCommitments.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  checkinType: text("checkin_type"), // mobile, kiosk, manual
+  hoursLogged: integer("hours_logged").notNull(),
+  tasksCompleted: text("tasks_completed").array(),
+  skillsApplied: text("skills_applied").array(),
+  locationCoordinates: text("location_coordinates"),
+  timestamp: timestamp("timestamp").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Employee Milestones - Track badges and achievements
+export const employeeMilestones = pgTable("employee_milestones", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  milestoneType: text("milestone_type").notNull(), // hours_25, hours_50, hours_100, hours_250, hours_500, skill_certification, project_completion
+  milestoneValue: text("milestone_value"),
+  badgeImage: text("badge_image"),
+  earnedDate: timestamp("earned_date").notNull(),
+  visibility: text("visibility").default("organization"), // private, team, organization
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// CSR Commitment Goals - Track corporate CSR targets
+export const csrCommitmentGoals = pgTable("csr_commitment_goals", {
+  id: serial("id").primaryKey(),
+  partnerId: integer("partner_id").references(() => csrPartners.id).notNull(),
+  year: integer("year").notNull(),
+  targetEmployeePercent: integer("target_employee_percent"), // e.g., 50 = 50%
+  targetTotalHours: integer("target_total_hours"),
+  targetSdgs: integer("target_sdgs").array(),
+  targetBeneficiaries: integer("target_beneficiaries"),
+  actualEmployeePercent: integer("actual_employee_percent").default(0),
+  actualHours: integer("actual_hours").default(0),
+  actualBeneficiaries: integer("actual_beneficiaries").default(0),
+  completionPercent: integer("completion_percent").default(0),
+  status: text("status").default("in-progress"), // in-progress, completed, missed
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertEmployeeCommitmentSchema = createInsertSchema(employeeCommitments).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+  updatedAt: true
+});
+
+export const insertEmployeeActivityLogSchema = createInsertSchema(employeeActivityLogs).omit({
+  id: true,
+  createdAt: true
+});
+
+export const insertEmployeeMilestoneSchema = createInsertSchema(employeeMilestones).omit({
+  id: true,
+  createdAt: true
+}).extend({
+  earnedDate: z.coerce.date(),
+});
+
+export const insertCSRCommitmentGoalSchema = createInsertSchema(csrCommitmentGoals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 // Define types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -941,3 +1033,15 @@ export type InsertVerifiedOutput = z.infer<typeof insertVerifiedOutputSchema>;
 
 export type VolunteerEmployerLink = typeof volunteerEmployerLinks.$inferSelect;
 export type InsertVolunteerEmployerLink = z.infer<typeof insertVolunteerEmployerLinkSchema>;
+
+export type EmployeeCommitment = typeof employeeCommitments.$inferSelect;
+export type InsertEmployeeCommitment = z.infer<typeof insertEmployeeCommitmentSchema>;
+
+export type EmployeeActivityLog = typeof employeeActivityLogs.$inferSelect;
+export type InsertEmployeeActivityLog = z.infer<typeof insertEmployeeActivityLogSchema>;
+
+export type EmployeeMilestone = typeof employeeMilestones.$inferSelect;
+export type InsertEmployeeMilestone = z.infer<typeof insertEmployeeMilestoneSchema>;
+
+export type CSRCommitmentGoal = typeof csrCommitmentGoals.$inferSelect;
+export type InsertCSRCommitmentGoal = z.infer<typeof insertCSRCommitmentGoalSchema>;

@@ -73,54 +73,59 @@ export function CSRImpactReporting() {
   const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const companyName = "Home Corporation";
 
-  const exportToCSV = () => {
+  const exportToCSV = async () => {
     if (!impactData) return;
     setIsExporting(true);
-    
-    const headers = ["Metric", "Value"];
-    const rows = [
-      ["CSR Impact Report", ""],
-      ["Company", companyName],
-      ["Report Period", impactData.reportPeriod],
-      ["Generated", currentDate],
-      ["", ""],
-      ["ENGAGEMENT METRICS", ""],
-      ["Total Hours", impactData.engagementMetrics.totalHours],
-      ["Active Employees", impactData.engagementMetrics.activeEmployees],
-      ["Avg Hours/Employee", impactData.engagementMetrics.avgHoursPerEmployee],
-      ["Participation Rate", `${impactData.engagementMetrics.participationRate}%`],
-      ["", ""],
-      ["IMPACT METRICS", ""],
-      ["Direct Beneficiaries", impactData.impactMetrics.directBeneficiaries],
-      ["Lives Touched", impactData.impactMetrics.estimatedLivesTouched],
-      ["Impact per Hour", impactData.impactMetrics.impactPerHour],
-      ["", ""],
-      ["FINANCIAL METRICS", ""],
-      ["Volunteer Hour Value", `$${impactData.financialMetrics.volunteerHourValue}`],
-      ["Cost if Paid Staff", `$${impactData.financialMetrics.estimatedCostIfPaidStaff}`],
-      ["ROI", `${impactData.financialMetrics.roi}%`],
-      ["", ""],
-      ["COMPLIANCE STATUS", ""],
-      ["B-Corp Ready", impactData.complianceStatus.bCorpReady ? "Yes" : "No"],
-      ["GRI Aligned", impactData.complianceStatus.griAligned ? "Yes" : "No"],
-      ["B-Corp Score", impactData.complianceStatus.complianceScores?.bCorpScore || "N/A"],
-      ["GRI Score", impactData.complianceStatus.complianceScores?.griScore || "N/A"],
-      ["ISO Score", impactData.complianceStatus.complianceScores?.isoScore || "N/A"],
-      ["SASB Score", impactData.complianceStatus.complianceScores?.sasbScore || "N/A"],
-    ];
+    try {
+      const headers = ["Metric", "Value"];
+      const rows = [
+        ["CSR Impact Report", ""],
+        ["Company", companyName],
+        ["Report Period", impactData.reportPeriod],
+        ["Generated", currentDate],
+        ["", ""],
+        ["ENGAGEMENT METRICS", ""],
+        ["Total Hours", impactData.engagementMetrics.totalHours],
+        ["Active Employees", impactData.engagementMetrics.activeEmployees],
+        ["Avg Hours/Employee", impactData.engagementMetrics.avgHoursPerEmployee],
+        ["Participation Rate", `${impactData.engagementMetrics.participationRate}%`],
+        ["", ""],
+        ["IMPACT METRICS", ""],
+        ["Direct Beneficiaries", impactData.impactMetrics.directBeneficiaries],
+        ["Lives Touched", impactData.impactMetrics.estimatedLivesTouched],
+        ["Impact per Hour", impactData.impactMetrics.impactPerHour],
+        ["", ""],
+        ["FINANCIAL METRICS", ""],
+        ["Volunteer Hour Value", `$${impactData.financialMetrics.volunteerHourValue}`],
+        ["Cost if Paid Staff", `$${impactData.financialMetrics.estimatedCostIfPaidStaff}`],
+        ["ROI", `${impactData.financialMetrics.roi}%`],
+        ["", ""],
+        ["COMPLIANCE STATUS", ""],
+        ["B-Corp Ready", impactData.complianceStatus.bCorpReady ? "Yes" : "No"],
+        ["GRI Aligned", impactData.complianceStatus.griAligned ? "Yes" : "No"],
+        ["B-Corp Score", impactData.complianceStatus.complianceScores?.bCorpScore || "N/A"],
+        ["GRI Score", impactData.complianceStatus.complianceScores?.griScore || "N/A"],
+        ["ISO Score", impactData.complianceStatus.complianceScores?.isoScore || "N/A"],
+        ["SASB Score", impactData.complianceStatus.complianceScores?.sasbScore || "N/A"],
+      ];
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(","))
-      .join("\n");
+      const csvContent = [headers, ...rows]
+        .map(row => row.map(cell => `"${cell}"`).join(","))
+        .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `CSR_Impact_Report_${impactData.reportPeriod}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-    setIsExporting(false);
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `CSR_Impact_Report_${impactData.reportPeriod}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("CSV export failed:", error);
+      alert("Failed to export CSV");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const exportToPDF = async () => {
@@ -192,26 +197,37 @@ export function CSRImpactReporting() {
       const element = document.createElement("div");
       element.innerHTML = pdfContent;
       element.style.padding = "20px";
+      element.style.width = "800px";
+      element.style.backgroundColor = "white";
+      document.body.appendChild(element);
       
       // Convert to canvas then PDF
-      const canvas = await html2Canvas(element, { scale: 2 });
+      const canvas = await html2Canvas(element, { scale: 2, backgroundColor: "#ffffff" });
       const pdf = new jsPDF("p", "mm", "a4");
       const imgData = canvas.toDataURL("image/png");
-      pdf.addImage(imgData, "PNG", 10, 10, 190, 277);
+      const width = pdf.internal.pageSize.getWidth();
+      const height = (canvas.height * width) / canvas.width;
+      pdf.addImage(imgData, "PNG", 0, 0, width, height);
       pdf.save(`CSR_Impact_Report_${impactData.reportPeriod}.pdf`);
+      document.body.removeChild(element);
     } catch (error) {
       console.error("PDF export failed:", error);
       alert("Failed to export PDF. Using fallback...");
-      // Fallback: just download as text
-      const blob = new Blob([pdfContent], { type: "text/html" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `CSR_Impact_Report_${impactData.reportPeriod}.html`;
-      link.click();
-      window.URL.revokeObjectURL(url);
+      // Fallback: download as HTML
+      try {
+        const blob = new Blob([pdfContent], { type: "text/html;charset=utf-8;" });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `CSR_Impact_Report_${impactData.reportPeriod}.html`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      } catch (fallbackError) {
+        console.error("Fallback export failed:", fallbackError);
+      }
+    } finally {
+      setIsExporting(false);
     }
-    setIsExporting(false);
   };
 
   if (isLoading) {
@@ -286,42 +302,50 @@ export function CSRImpactReporting() {
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <span style={{ fontSize: "14px", color: "#d1d5db" }}>{currentDate}</span>
           <button 
-            onClick={() => window.open(`/api/csr/impact-reporting/export/pdf?userId=${userId}`)}
+            onClick={exportToPDF}
+            disabled={isExporting}
             style={{
-              backgroundColor: "#059669",
+              backgroundColor: isExporting ? "#6b7280" : "#059669",
               color: "white",
               border: "none",
               padding: "8px 16px",
               borderRadius: "6px",
-              cursor: "pointer",
+              cursor: isExporting ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               gap: "8px",
               fontSize: "14px",
-              fontWeight: "500"
+              fontWeight: "500",
+              opacity: isExporting ? 0.7 : 1,
+              transition: "all 0.2s"
             }}
+            data-testid="export-pdf-button"
           >
             <Download style={{ width: "16px", height: "16px" }} />
-            Export PDF
+            {isExporting ? "Exporting..." : "Export PDF"}
           </button>
           <button 
-            onClick={() => window.open(`/api/csr/impact-reporting/export/csv?userId=${userId}`)}
+            onClick={exportToCSV}
+            disabled={isExporting}
             style={{
-              backgroundColor: "#1e3a8a",
+              backgroundColor: isExporting ? "#6b7280" : "#1e3a8a",
               color: "white",
               border: "none",
               padding: "8px 16px",
               borderRadius: "6px",
-              cursor: "pointer",
+              cursor: isExporting ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               gap: "8px",
               fontSize: "14px",
-              fontWeight: "500"
+              fontWeight: "500",
+              opacity: isExporting ? 0.7 : 1,
+              transition: "all 0.2s"
             }}
+            data-testid="export-csv-button"
           >
             <Download style={{ width: "16px", height: "16px" }} />
-            Export CSV
+            {isExporting ? "Exporting..." : "Export CSV"}
           </button>
         </div>
       </header>

@@ -5622,6 +5622,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
             };
           }).filter(e => e.hours > 0).sort((a, b) => b.hours - a.hours);
           
+          // REAL employee count from CSR partner record
+          const realEmployeeCount = userPartner.employeeCount || 50;
+          const realEngagementRate = realEmployeeCount > 0 ? Math.round((activeEmployees / realEmployeeCount) * 100) : 0;
+          
           return {
             hours: {
               total: employeeHours,
@@ -5635,8 +5639,9 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
             },
             employees: {
               total: activeEmployees,
+              totalRoster: realEmployeeCount,
               averageHoursPerEmployee: activeEmployees > 0 ? Math.round(employeeHours / activeEmployees) : 0,
-              engagementRate: Math.round((activeEmployees / (userPartner.employeeCount || 100)) * 100),
+              engagementRate: realEngagementRate,
               topPerformer: employeeLeaderboard[0]?.name || 'N/A',
               topPerformerHours: employeeLeaderboard[0]?.hours || 0,
               newThisMonth: Math.max(1, Math.floor(activeEmployees * 0.2)) // Approximate new joiners

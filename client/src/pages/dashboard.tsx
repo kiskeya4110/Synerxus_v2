@@ -40,9 +40,9 @@ export default function Dashboard() {
   const [, navigate] = useLocation();
   const userType = localStorage.getItem('userType');
 
-  // Redirect corporate partners to CSR Dashboard
+  // Redirect corporate partners to Organization Dashboard
   if (userType === 'corporate-partner') {
-    navigate('/csr-dashboard');
+    navigate('/organization-dashboard');
     return null;
   }
 

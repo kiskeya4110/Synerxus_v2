@@ -38,7 +38,7 @@ import Leaderboard from "@/pages/leaderboard";
 import OrganizationLeaderboard from "@/pages/organization-leaderboard";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
 import SDGMapping from "@/pages/sdg-mapping";
-import CSRDashboard from "@/pages/csr-dashboard";
+import OrganizationDashboard from "@/pages/organization-dashboard";
 import { CSRImpactReporting } from "@/pages/csr-impact-reporting";
 import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
 import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
@@ -120,7 +120,7 @@ function RootRedirectRoute() {
           } else {
             // Intake complete, go to appropriate dashboard based on user type
             if (userType === 'corporate-partner') {
-              setLocation('/csr-dashboard');
+              setLocation('/organization-dashboard');
             } else {
               setLocation('/dashboard');
             }
@@ -128,7 +128,7 @@ function RootRedirectRoute() {
         } catch (error) {
           console.error('Error checking intake status:', error);
           // Fallback to appropriate dashboard based on current userType
-          const defaultDashboard = userType === 'corporate-partner' ? '/csr-dashboard' : '/dashboard';
+          const defaultDashboard = userType === 'corporate-partner' ? '/organization-dashboard' : '/dashboard';
           setLocation(defaultDashboard);
         }
       };
@@ -154,7 +154,7 @@ export default function App() {
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
-          <Route path="/csr-dashboard" component={CSRDashboard} />
+          <Route path="/organization-dashboard" component={OrganizationDashboard} />
           <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
           <Route component={LayoutRoute} />
         </Router>

@@ -5444,23 +5444,30 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         })
         .filter((p: any) => p !== null);
 
-      // Organization-wide SDG contribution tracking
+      // Organization-wide SDG contribution tracking - use partner's primary SDGs or challenge SDGs
       const orgwideSDGMetrics: Record<number, any> = {};
+      const partnerPrimarySdgs = userPartner.primarySdgs || [];
+      const challengeSdgs = partnerChallenges.map((c: any) => c.sdgGoal).filter(Boolean);
+      const defaultSdgs = partnerPrimarySdgs.length > 0 ? partnerPrimarySdgs : challengeSdgs;
+      
       filteredEngagement.forEach((emp: any) => {
         if (emp.projectId) {
           const project = projects.find((p: any) => p.id === emp.projectId);
-          if (project?.primarySdg) {
-            if (!orgwideSDGMetrics[project.primarySdg]) {
-              orgwideSDGMetrics[project.primarySdg] = {
-                sdg: project.primarySdg,
+          // Use project SDG if available, otherwise use partner's primary SDGs or challenge SDGs
+          const sdgToUse = project?.primarySdg || defaultSdgs[0] || 3; // Default to SDG 3 if none set
+          
+          if (sdgToUse) {
+            if (!orgwideSDGMetrics[sdgToUse]) {
+              orgwideSDGMetrics[sdgToUse] = {
+                sdg: sdgToUse,
                 totalHours: 0,
                 employeeCount: new Set(),
                 projectCount: new Set()
               };
             }
-            orgwideSDGMetrics[project.primarySdg].totalHours += emp.hoursVolunteered || 0;
-            orgwideSDGMetrics[project.primarySdg].employeeCount.add(emp.employeeEmail);
-            orgwideSDGMetrics[project.primarySdg].projectCount.add(emp.projectId);
+            orgwideSDGMetrics[sdgToUse].totalHours += emp.hoursVolunteered || 0;
+            orgwideSDGMetrics[sdgToUse].employeeCount.add(emp.employeeEmail);
+            orgwideSDGMetrics[sdgToUse].projectCount.add(emp.projectId);
           }
         }
       });

@@ -5326,40 +5326,46 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       }
 
-      // SDG Progress - combine partner's primary SDGs with challenge progress
+      // SDG Progress - only show SDGs with active challenges or real employee engagement
       const sdgProgress: Record<number, any> = {};
       
-      // First, initialize all primary SDGs from partner settings
-      const primarySdgs = userPartner.primarySdgs || [];
-      primarySdgs.forEach((sdgId: number) => {
-        sdgProgress[sdgId] = {
-          goal: sdgId,
-          name: `Goal ${sdgId}`,
-          color: `hsl(${sdgId * 40}, 70%, 50%)`,
-          progress: 0,
-          status: 'committed'
-        };
-      });
-      
-      // Then overlay challenge progress data
+      // Only overlay challenge progress data for active challenges with real progress
       partnerChallenges.forEach((challenge: any) => {
         const sdg = challenge.sdgGoal;
-        if (!sdgProgress[sdg]) {
+        const progress = Math.min(
+          100,
+          (challenge.currentHours || 0) / (challenge.targetHours || 1) * 100
+        );
+        
+        // Only include if there's actual progress
+        if ((challenge.currentHours || 0) > 0) {
           sdgProgress[sdg] = {
             goal: sdg,
             name: `Goal ${sdg}`,
             color: `hsl(${sdg * 40}, 70%, 50%)`,
-            progress: 0,
+            progress: progress,
+            currentHours: challenge.currentHours || 0,
+            targetHours: challenge.targetHours || 0,
             status: 'active'
           };
         }
-        sdgProgress[sdg].progress = Math.min(
-          100,
-          (challenge.currentHours || 0) / (challenge.targetHours || 1) * 100
-        );
-        sdgProgress[sdg].currentHours = challenge.currentHours || 0;
-        sdgProgress[sdg].targetHours = challenge.targetHours || 0;
-        sdgProgress[sdg].status = 'active';
+      });
+      
+      // Also include SDGs from employee engagement metrics
+      Object.keys(orgwideSDGMetrics).forEach((sdgKey: any) => {
+        const sdg = parseInt(sdgKey);
+        const metric = orgwideSDGMetrics[sdg];
+        if (metric.totalHours > 0) {
+          sdgProgress[sdg] = {
+            goal: sdg,
+            name: `Goal ${sdg}`,
+            color: `hsl(${sdg * 40}, 70%, 50%)`,
+            progress: (metric.totalHours / totalHours) * 100,
+            currentHours: metric.totalHours,
+            targetHours: totalHours,
+            status: 'active'
+          };
+        }
       });
 
       // Top employees leaderboard with date filtering and SDG tracking

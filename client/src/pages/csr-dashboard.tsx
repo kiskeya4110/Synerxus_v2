@@ -167,8 +167,9 @@ export default function CSRDashboard() {
   const sdgMetrics = csrData?.sdgMetrics || [];
   const totalSDGHours = sdgMetrics.reduce((sum: number, metric: any) => sum + (metric.totalHours || 0), 0);
   
-  // Build SDG chart data from real metrics
+  // Build SDG chart data from real metrics - only include SDGs with actual hours
   const sdgChartData = sdgMetrics
+    .filter(metric => metric.totalHours > 0) // Only show SDGs with real hours
     .map(metric => {
       const percentage = totalSDGHours > 0 
         ? Math.round((metric.totalHours / totalSDGHours) * 100)
@@ -198,6 +199,7 @@ export default function CSRDashboard() {
     { name: getSDGName(5), fullName: getSDGFullName(5), value: 22, color: getSDGColor(5), goal: 5, hours: 0, employees: 0, projects: 0 },
   ];
 
+  // Only show chart data if there's real employee engagement, otherwise show placeholder
   const chartData = sdgChartData.length > 0 ? sdgChartData : defaultSdgData;
 
   // Pending admin actions - use real data from API

@@ -28,6 +28,7 @@ export default function CSRDashboard() {
   const [, navigate] = useLocation();
   const userId = localStorage.getItem('currentUserId');
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
+  const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
 
   const { data: csrData, isLoading } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId],
@@ -389,6 +390,86 @@ export default function CSRDashboard() {
             </div>
           </div>
 
+          {/* SDG Detail Modal */}
+          {selectedSDG && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 50
+            }} onClick={() => setSelectedSDG(null)}>
+              <div 
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+                  maxWidth: '600px',
+                  width: '90%',
+                  maxHeight: '80vh',
+                  overflowY: 'auto',
+                  padding: '32px'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>
+                    {getSDGFullName(selectedSDG)}
+                  </h2>
+                  <button 
+                    onClick={() => setSelectedSDG(null)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                  >
+                    <X style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+                  </button>
+                </div>
+
+                <div style={{ color: '#374151' }}>
+                  {(() => {
+                    const sdgProgress = csrData?.sdgProgress?.[selectedSDG];
+                    const progress = sdgProgress?.progress || 0;
+                    return (
+                      <>
+                        <p style={{ fontSize: '32px', fontWeight: 'bold', color: getSDGColor(selectedSDG), marginBottom: '16px' }}>
+                          {Math.round(progress)}% Complete
+                        </p>
+                        <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
+                          Progress on SDG Goal {selectedSDG}: {getSDGFullName(selectedSDG)} as part of your CSR initiatives.
+                        </p>
+                        <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginBottom: '16px' }}>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Progress Bar:</p>
+                          <div style={{ width: '100%', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div style={{ width: `${progress}%`, height: '100%', backgroundColor: getSDGColor(selectedSDG), transition: 'width 0.3s ease' }} />
+                          </div>
+                        </div>
+                        <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Goal Details:</p>
+                          <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
+                            <li style={{ marginBottom: '8px' }}>✓ Status: {sdgProgress?.status === 'active' ? '🔴 Active' : '✅ Committed'}</li>
+                            <li style={{ marginBottom: '8px' }}>✓ Current Progress: {sdgProgress?.currentHours || 0} hours logged</li>
+                            <li style={{ marginBottom: '8px' }}>✓ Target Hours: {sdgProgress?.targetHours || 'Not set'}</li>
+                            <li>✓ Impact Level: {progress > 75 ? '🌟 Excellent' : progress > 50 ? '⭐ Good' : progress > 25 ? '⚡ On Track' : '⏳ Starting'}</li>
+                          </ul>
+                        </div>
+                        <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '8px', marginTop: '16px', border: '1px solid #bfdbfe' }}>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#1e40af', marginBottom: '8px' }}>📊 Contribution:</p>
+                          <p style={{ fontSize: '13px', color: '#1e40af', margin: 0 }}>
+                            Your CSR program is contributing {Math.round(progress)}% towards this UN Sustainable Development Goal, supported by employee volunteers and strategic initiatives.
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* KPI Detail Modal */}
           {selectedKPI && (
             <div style={{
@@ -538,9 +619,14 @@ export default function CSRDashboard() {
                         dataKey="value"
                         label={({ name, value }) => `${name} ${value}%`}
                         labelLine={true}
+                        onClick={(data) => setSelectedSDG(data.goal)}
                       >
                         {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.color}
+                            style={{ cursor: 'pointer', opacity: selectedSDG === entry.goal ? 1 : 0.8 }}
+                          />
                         ))}
                       </Pie>
                       <Tooltip 
@@ -555,10 +641,24 @@ export default function CSRDashboard() {
                   </div>
                 </div>
                 
-                {/* SDG Labels Legend */}
+                {/* SDG Labels Legend - Interactive */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginTop: '12px', fontSize: '11px' }}>
                   {chartData.map((sdg, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div 
+                      key={idx}
+                      onClick={() => setSelectedSDG(sdg.goal)}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px',
+                        cursor: 'pointer',
+                        padding: '6px',
+                        borderRadius: '4px',
+                        backgroundColor: selectedSDG === sdg.goal ? '#f0f4f8' : 'transparent',
+                        border: selectedSDG === sdg.goal ? `1px solid ${sdg.color}` : '1px solid transparent',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
                       <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: sdg.color, flexShrink: 0 }} />
                       <span style={{ color: '#4b5563', fontWeight: '500' }}>{sdg.name}: {sdg.value}%</span>
                     </div>
@@ -585,7 +685,23 @@ export default function CSRDashboard() {
                     csrData.projectLocations.map((project) => {
                       const statusColor = project.status === 'active' ? '#1e3a8a' : project.status === 'completed' ? '#22c55e' : '#f97316';
                       return (
-                        <div key={project.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: 'white', padding: '12px', borderRadius: '6px', border: `2px solid ${statusColor}` }}>
+                        <div 
+                        key={project.id}
+                        onClick={() => setSelectedKPI(`project-${project.id}`)}
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '12px', 
+                          backgroundColor: 'white', 
+                          padding: '12px', 
+                          borderRadius: '6px', 
+                          border: `2px solid ${statusColor}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          transform: selectedKPI === `project-${project.id}` ? 'scale(1.02)' : 'scale(1)',
+                          boxShadow: selectedKPI === `project-${project.id}` ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
+                        }}
+                      >
                           <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: statusColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '12px', flexShrink: 0 }}>
                             {project.employees}
                           </div>

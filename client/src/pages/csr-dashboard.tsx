@@ -689,6 +689,39 @@ export default function CSRDashboard() {
                     <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#f97316' }}>{Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length) || 20)}%</p>
                   </div>
                 </div>
+                {/* AI Insights Section */}
+                <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', borderLeft: '4px solid #3b82f6' }}>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#1e40af', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>✨ AI Insight</span>
+                  </p>
+                  <div style={{ fontSize: '13px', color: '#334155', lineHeight: '1.5' }}>
+                    {(() => {
+                      const totalHours = sdgMetrics.reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0);
+                      const avgEmployeesPerSDG = sdgMetrics.length > 0 
+                        ? Math.round(sdgMetrics.reduce((sum: number, m: any) => sum + (m.uniqueEmployees || 0), 0) / sdgMetrics.length)
+                        : 0;
+                      const topSDG = sdgMetrics[0];
+                      const engagementRate = csrData?.activeEmployees > 0 
+                        ? Math.round((csrData?.totalEmployeeHours / (csrData?.activeEmployees * 40)) * 100)
+                        : 0;
+
+                      if (totalHours === 0) {
+                        return "Start tracking employee contributions to unlock AI-powered impact insights and recommendations.";
+                      }
+
+                      const insights = [];
+                      if (topSDG) {
+                        insights.push(`Your team is leading with ${getSDGFullName(topSDG.sdg)}, with ${topSDG.totalHours} hours contributed across ${topSDG.projectsContributed} projects.`);
+                      }
+                      insights.push(`An average of ${avgEmployeesPerSDG} employees are collaborating per SDG goal, creating strong cross-functional impact.`);
+                      if (engagementRate > 0) {
+                        insights.push(`Current engagement is at ${Math.min(100, engagementRate)}% of target capacity—your team is ${engagementRate > 40 ? 'actively contributing' : 'building momentum'} toward global goals.`);
+                      }
+
+                      return insights.join(" ");
+                    })()}
+                  </div>
+                </div>
               </div>
             </div>
 

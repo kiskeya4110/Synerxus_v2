@@ -576,13 +576,12 @@ export default function Landing() {
               </Link>
             ) : (
               <>
-                <Link href="/login" className="hidden sm:block">
-                  <Button variant="ghost" size="sm" className="whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-sign-in-nav">Sign In</Button>
+                <Link href="/login" className="w-full sm:w-auto">
+                  <Button variant="ghost" size="sm" className="w-full sm:w-auto whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-sign-up-nav">Sign Up</Button>
                 </Link>
-                <Link href="/volunteer-intake">
-                  <Button size="sm" className="min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-join-nav">
-                    <span className="sm:hidden">Join</span>
-                    <span className="hidden sm:inline">Join</span>
+                <Link href="/volunteer-intake" className="w-full sm:w-auto">
+                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-join-nav">
+                    Join
                   </Button>
                 </Link>
               </>
@@ -614,13 +613,13 @@ export default function Landing() {
               ) : (
                 <>
                   <Link href="/volunteer-intake" className="w-full sm:w-auto">
-                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-now">
-                      Join Now
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-hero">
+                      Join
                     </Button>
                   </Link>
                   <Link href="/login" className="w-full sm:w-auto">
-                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-600/25" data-testid="button-sign-in">
-                      Sign In
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-600/25" data-testid="button-sign-up-hero">
+                      Sign Up
                     </Button>
                   </Link>
                 </>
@@ -789,9 +788,9 @@ export default function Landing() {
             <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
               Join thousands making measurable impact across all 17 SDGs worldwide.
             </p>
-            <Link href={isLoggedIn ? "/dashboard" : "/login"}>
+            <Link href={isLoggedIn ? "/dashboard" : "/volunteer-intake"}>
               <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
-                {isLoggedIn ? "Go to My Dashboard" : "Start Your Legacy Today"}
+                {isLoggedIn ? "My Dashboard" : "Join Now"}
               </Button>
             </Link>
           </div>

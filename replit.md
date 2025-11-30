@@ -67,6 +67,21 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Meta Tags**: iOS app capability tags, Android mobile web app support, theme color configuration
 - **Installation**: App is installable on iOS (Home Screen) and Android devices (app drawer)
 
+## Recent Changes (November 30, 2025) - Employee Engagement Planning
+- **Comprehensive CSR Impact Reporting System**: Deployed complete 8-tab Impact Reporting dashboard with industry-standard metrics (Salesforce, HubSpot, VolunteerHub benchmarks):
+  - Executive Summary, Time-Series, Impact Deep Dive, Projects, Strategic Insights, SDG Alignment, Benchmarking, Compliance tabs
+  - Enhanced compliance scoring (B-Corp, GRI, ISO 26000, SASB frameworks)
+  - PDF/CSV export functionality
+  - Dark navy theme matching CSR Dashboard for consistent UX
+- **Employee Engagement Tab Planning**: Created detailed implementation roadmap based on industry research:
+  - Salesforce 1-1-1 model (56 VTO hours, 1.4M+ tracked, 50% lower turnover)
+  - HubSpot volunteer lifecycle tracking (Interest → Discovery → Placement → Engagement)
+  - VolunteerHub/Galaxy Digital standards (hour tracking, reporting, mobile apps)
+  - 2025 benchmarks: 25-60% participation, 25-75 hours/employee, 200-400% ROI
+  - Phase-based implementation (Weeks 1-8): Foundation → AI Matching → Recognition → CSR Admin
+  - Database schema, API endpoints, frontend components specified
+  - Integration with existing Synerxus platform (volunteer profiles, impact reporting, funnel analytics)
+
 ## External Dependencies
 
 -   **Authentication & User Management**: Firebase Auth, Firebase Firestore, Firebase Storage
@@ -75,3 +90,5 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 -   **Development & Build Tools**: TypeScript, Vite, ESBuild
 -   **Matching Algorithm**: Python and TypeScript implementation
 -   **Email Service**: Mock transporter (configurable for SendGrid, Mailgun, nodemailer in production)
+-   **Location Services**: Google Maps API (for geolocation-based opportunity matching)
+-   **Integration Platforms**: Zapier (CRM connectors - Salesforce, HubSpot)

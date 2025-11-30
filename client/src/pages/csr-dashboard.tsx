@@ -451,8 +451,8 @@ export default function CSRDashboard() {
                           <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Goal Details:</p>
                           <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
                             <li style={{ marginBottom: '8px' }}>✓ Status: {sdgProgress?.status === 'active' ? '🔴 Active' : '✅ Committed'}</li>
-                            <li style={{ marginBottom: '8px' }}>✓ Current Progress: {sdgProgress?.currentHours || 0} hours logged</li>
-                            <li style={{ marginBottom: '8px' }}>✓ Target Hours: {sdgProgress?.targetHours || 'Not set'}</li>
+                            <li style={{ marginBottom: '8px' }}>✓ Current Progress: {(sdgProgress as any)?.currentHours || 0} hours logged</li>
+                            <li style={{ marginBottom: '8px' }}>✓ Target Hours: {(sdgProgress as any)?.targetHours || 'Not set'}</li>
                             <li>✓ Impact Level: {progress > 75 ? '🌟 Excellent' : progress > 50 ? '⭐ Good' : progress > 25 ? '⚡ On Track' : '⏳ Starting'}</li>
                           </ul>
                         </div>
@@ -682,7 +682,7 @@ export default function CSRDashboard() {
               <div style={{ height: '300px', borderRadius: '8px', overflow: 'hidden', position: 'relative', backgroundColor: '#f0f4f8' }}>
                 <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px', gap: '12px' }}>
                   {(csrData?.projectLocations || []).length > 0 ? (
-                    csrData.projectLocations.map((project) => {
+                    csrData?.projectLocations?.map((project) => {
                       const statusColor = project.status === 'active' ? '#1e3a8a' : project.status === 'completed' ? '#22c55e' : '#f97316';
                       return (
                         <div 

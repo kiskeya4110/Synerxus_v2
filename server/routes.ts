@@ -5189,9 +5189,21 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         return res.status(400).json({ error: "userId required" });
       }
 
-      // Get the CSR partner for this user
+      // Get the CSR partner for this user - handles both corporate admin and employee users
       const allPartners = await storage.listCSRPartners?.() || [];
-      const userPartner = allPartners.find((p: any) => p.userId === parseInt(userId));
+      let userPartner = allPartners.find((p: any) => p.userId === parseInt(userId));
+      
+      // If not a corporate admin, check if user is an employee linked to a CSR partner
+      if (!userPartner) {
+        const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+        const employeeProfile = volunteerProfiles.find((v: any) => v.userId === parseInt(userId));
+        
+        if (employeeProfile?.employerId) {
+          // User is an employee linked to a CSR partner
+          userPartner = allPartners.find((p: any) => p.id === parseInt(employeeProfile.employerId));
+        }
+      }
+      
       if (!userPartner) {
         return res.json({
           totalPartners: 0,

@@ -5748,20 +5748,20 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           reviews.push({
             type: 'name_mismatch',
             title: 'Name Mismatch',
-            description: `${user.displayName} ≠ ${profile.volunteerName}`,
+            description: `${user?.displayName} ≠ ${profile.volunteerName}`,
             severity: 'medium',
             employeeId: userId,
-            employeeName: user.displayName
+            employeeName: user?.displayName || 'Unknown'
           });
         }
         if (profile && !profile.skills) {
           reviews.push({
             type: 'incomplete_skills',
             title: 'Incomplete Profile',
-            description: `${user.displayName} - Missing skills`,
+            description: `${user?.displayName} - Missing skills`,
             severity: 'low',
             employeeId: userId,
-            employeeName: user.displayName
+            employeeName: user?.displayName || 'Unknown'
           });
         }
       });

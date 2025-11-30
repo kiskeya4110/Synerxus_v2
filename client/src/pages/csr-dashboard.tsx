@@ -96,15 +96,15 @@ export default function CSRDashboard() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 8);
 
-  // Default SDG data if none exists
+  // Default SDG data if none exists - using proper shortNames
   const defaultSdgData = [
-    { name: "SDG 4", fullName: "Quality Education", value: 19, color: "#C5192D", goal: 4, hours: 0, employees: 0, projects: 0 },
-    { name: "Climate Action", fullName: "Climate Action", value: 29, color: "#3F7E44", goal: 13, hours: 0, employees: 0, projects: 0 },
-    { name: "SDG 15", fullName: "Life on Land", value: 18, color: "#56C02B", goal: 15, hours: 0, employees: 0, projects: 0 },
-    { name: "SDG 13", fullName: "Climate Action", value: 18, color: "#3F7E44", goal: 13, hours: 0, employees: 0, projects: 0 },
-    { name: "SDG 1", fullName: "No Poverty", value: 18, color: "#E5243B", goal: 1, hours: 0, employees: 0, projects: 0 },
-    { name: "SDG 10", fullName: "Reduced Inequalities", value: 22, color: "#DD3E39", goal: 10, hours: 0, employees: 0, projects: 0 },
-    { name: "SDG 5", fullName: "Gender Equality", value: 22, color: "#FF3A21", goal: 5, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(4), fullName: getSDGFullName(4), value: 19, color: getSDGColor(4), goal: 4, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(13), fullName: getSDGFullName(13), value: 29, color: getSDGColor(13), goal: 13, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(15), fullName: getSDGFullName(15), value: 18, color: getSDGColor(15), goal: 15, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(3), fullName: getSDGFullName(3), value: 18, color: getSDGColor(3), goal: 3, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(1), fullName: getSDGFullName(1), value: 18, color: getSDGColor(1), goal: 1, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(10), fullName: getSDGFullName(10), value: 22, color: getSDGColor(10), goal: 10, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(5), fullName: getSDGFullName(5), value: 22, color: getSDGColor(5), goal: 5, hours: 0, employees: 0, projects: 0 },
   ];
 
   const chartData = sdgChartData.length > 0 ? sdgChartData : defaultSdgData;
@@ -634,13 +634,15 @@ export default function CSRDashboard() {
                         paddingAngle={2}
                         dataKey="value"
                         label={({ name, value }: any) => {
+                          // Wrap long names to fit in pie sections
                           const words = (name || '').split(' ');
                           if (words.length === 1) {
-                            return `${name} ${value}%`;
+                            return `${name}\n${value}%`;
                           } else if (words.length === 2) {
-                            return `${words[0]} ${words[1]} ${value}%`;
+                            return `${words[0]}\n${words[1]}\n${value}%`;
                           } else {
-                            return `${words[0]} ${words.slice(1).join(' ')} ${value}%`;
+                            // For longer names, split at word boundaries
+                            return `${words[0]}\n${words.slice(1).join(' ')}\n${value}%`;
                           }
                         }}
                         labelLine={false}

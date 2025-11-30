@@ -513,11 +513,41 @@ export default function ProjectPortfolio() {
               </div>
             </div>
 
+            {/* AI-Generated Recommendations */}
+            {(() => {
+              const recommendations: string[] = [];
+              const health = calculateHealthScore(selectedProject);
+              
+              if (selectedProject.completionPercentage < 30) 
+                recommendations.push("🚀 Accelerate delivery: Project is <30% complete. Consider increasing resource allocation or revisiting timeline.");
+              if ((selectedProject.budgetSpent / selectedProject.budgetAllocated) > 0.9) 
+                recommendations.push("⚠️ Budget Warning: >90% budget spent. Monitor remaining expenses closely to avoid overruns.");
+              if (selectedProject.riskLevel === "high") 
+                recommendations.push("🎯 Mitigate risks: High-risk designation detected. Implement contingency plans and increase stakeholder communication.");
+              if (selectedProject.beneficiariesDirect < 100 && selectedProject.budgetAllocated > 50000)
+                recommendations.push("📊 Low impact-to-cost ratio: Consider scope optimization or beneficiary expansion strategies.");
+              if (selectedProject.teamMembers < 3 && selectedProject.completionPercentage < 70)
+                recommendations.push("👥 Resource Gap: <3 team members with <70% completion. Team expansion recommended.");
+              if (health.score >= 80)
+                recommendations.push("✅ Excellent Progress: Maintain current trajectory. Project is performing well across all metrics.");
+              
+              return recommendations.length > 0 ? (
+                <div style={{ backgroundColor: "#f0fdf4", border: "1px solid #22c55e", borderRadius: "8px", padding: "12px", marginBottom: "16px" }}>
+                  <div style={{ fontSize: "11px", fontWeight: "600", color: "#15803d", marginBottom: "8px" }}>💡 AI RECOMMENDATIONS</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {recommendations.map((rec, idx) => (
+                      <div key={idx} style={{ fontSize: "12px", color: "#166534", lineHeight: "1.4" }}>{rec}</div>
+                    ))}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
             <div style={{ display: "flex", gap: "8px" }}>
-              <button style={{ flex: 1, padding: "10px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>
+              <button style={{ flex: 1, padding: "10px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
                 View Details
               </button>
-              <button style={{ flex: 1, padding: "10px", backgroundColor: "#f3f4f6", color: "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600" }}>
+              <button style={{ flex: 1, padding: "10px", backgroundColor: "#f3f4f6", color: "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
                 Update Status
               </button>
             </div>
@@ -607,6 +637,34 @@ export default function ProjectPortfolio() {
         </div>
       )}
 
+      {/* Portfolio Performance Analytics */}
+      <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+        <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>📈 Portfolio Performance Summary</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+          <div style={{ backgroundColor: "#f0fdf4", padding: "16px", borderRadius: "8px", borderLeft: "4px solid #22c55e" }}>
+            <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Avg Health Score</div>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#15803d" }}>
+              {Math.round((portfolioData?.projects?.reduce((sum, p) => sum + calculateHealthScore(p).score, 0) || 0) / (portfolioData?.projects?.length || 1))}%
+            </div>
+            <div style={{ fontSize: "11px", color: "#6b7280" }}>Across {portfolioData?.projects?.length || 0} projects</div>
+          </div>
+          <div style={{ backgroundColor: "#eff6ff", padding: "16px", borderRadius: "8px", borderLeft: "4px solid #3b82f6" }}>
+            <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Completion Rate</div>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#1e40af" }}>
+              {Math.round((portfolioData?.projects?.reduce((sum, p) => sum + p.completionPercentage, 0) || 0) / (portfolioData?.projects?.length || 1))}%
+            </div>
+            <div style={{ fontSize: "11px", color: "#6b7280" }}>Portfolio avg progress</div>
+          </div>
+          <div style={{ backgroundColor: "#fef3c7", padding: "16px", borderRadius: "8px", borderLeft: "4px solid #f59e0b" }}>
+            <div style={{ fontSize: "12px", color: "#6b7280", marginBottom: "4px" }}>Budget Utilization</div>
+            <div style={{ fontSize: "24px", fontWeight: "bold", color: "#92400e" }}>
+              {Math.round(((portfolioData?.totalBudgetSpent || 0) / (portfolioData?.totalBudget || 1)) * 100)}%
+            </div>
+            <div style={{ fontSize: "11px", color: "#6b7280" }}>Total spend vs allocation</div>
+          </div>
+        </div>
+      </div>
+
       {/* Analytics */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
         <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
@@ -628,13 +686,19 @@ export default function ProjectPortfolio() {
           </ResponsiveContainer>
         </div>
         <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
-          <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Status Distribution</h3>
+          <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Project Status & Health</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={[{ name: "Active", value: portfolioData?.activeProjects }, { name: "Pending", value: 3 }, { name: "Complete", value: portfolioData?.completedProjects }]} cx="50%" cy="50%" outerRadius={60} dataKey="value">
-                <Cell fill="#059669" />
-                <Cell fill="#f59e0b" />
+              <Pie data={[
+                { name: "Excellent", value: portfolioData?.projects?.filter(p => calculateHealthScore(p).score >= 80).length || 0 },
+                { name: "Good", value: portfolioData?.projects?.filter(p => {const s = calculateHealthScore(p).score; return s >= 60 && s < 80;}).length || 0 },
+                { name: "At Risk", value: portfolioData?.projects?.filter(p => {const s = calculateHealthScore(p).score; return s >= 40 && s < 60;}).length || 0 },
+                { name: "Critical", value: portfolioData?.projects?.filter(p => calculateHealthScore(p).score < 40).length || 0 }
+              ]} cx="50%" cy="50%" outerRadius={60} dataKey="value">
                 <Cell fill="#10b981" />
+                <Cell fill="#3b82f6" />
+                <Cell fill="#f59e0b" />
+                <Cell fill="#ef4444" />
               </Pie>
             </PieChart>
           </ResponsiveContainer>

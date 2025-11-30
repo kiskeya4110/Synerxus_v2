@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Home, BarChart3, Users, Briefcase, FileText, Settings, ChevronRight, X  } from "lucide-react";
+import { Home, BarChart3, Users, Briefcase, FileText, Settings, ChevronRight, X, MapPin  } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { sdgGoals, getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
 
 interface CSRDashboardData {
   totalPartners: number;
@@ -20,6 +22,7 @@ interface CSRDashboardData {
   challenges: Array<{ id: number; title: string; sdgGoal: number; progress: number; target: number; status: string }>;
   leaderboard: Array<{ rank: number; employeeName: string; hours: number; points: number }>;
   pendingActions: Array<{ type: string; orgName: string; description: string }>;
+  projectLocations: Array<{ id: number; name: string; lat: number; lng: number; region: string; employees: number; hours: number; status: string }>;
 }
 
 export default function CSRDashboard() {
@@ -566,7 +569,7 @@ export default function CSRDashboard() {
               </div>
             </div>
 
-            {/* Row 1, Col 2: Geographic Impact by Region - World Map */}
+            {/* Row 1, Col 2: Geographic Impact by Region - Leaflet Map */}
             <div style={{ 
               backgroundColor: 'white', 
               border: '1px solid #e5e7eb', 
@@ -574,42 +577,53 @@ export default function CSRDashboard() {
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               padding: '16px'
             }} data-testid="chart-geographic-impact">
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Geographic Impact by Region</h3>
-              <div style={{ height: '192px', backgroundColor: '#1e293b', borderRadius: '8px', position: 'relative', overflow: 'hidden' }}>
-                <svg viewBox="0 0 400 200" style={{ width: '100%', height: '100%', opacity: 0.6 }}>
-                  <path d="M50,40 Q70,30 90,35 L110,50 Q130,60 120,80 L100,90 Q80,85 60,70 Z" fill="#4B5563" />
-                  <path d="M100,100 Q110,110 105,140 L95,160 Q85,155 90,130 Z" fill="#4B5563" />
-                  <path d="M180,35 Q200,30 210,40 L215,60 Q205,65 190,55 Z" fill="#4B5563" />
-                  <path d="M190,70 Q210,65 220,85 L215,120 Q200,125 185,110 Z" fill="#4B5563" />
-                  <path d="M230,30 Q280,25 320,40 L330,70 Q310,90 270,80 L240,60 Z" fill="#4B5563" />
-                  <path d="M300,120 Q320,115 330,130 L325,145 Q310,150 300,140 Z" fill="#4B5563" />
-                  <circle cx="200" cy="50" r="4" fill="#F97316" />
-                  <line x1="200" y1="50" x2="80" y2="60" stroke="#3B82F6" strokeWidth="1" strokeDasharray="4" />
-                  <line x1="200" y1="50" x2="280" y2="50" stroke="#F97316" strokeWidth="1" strokeDasharray="4" />
-                  <line x1="200" y1="50" x2="200" y2="100" stroke="#22C55E" strokeWidth="1" strokeDasharray="4" />
-                  <line x1="200" y1="50" x2="310" y2="130" stroke="#3B82F6" strokeWidth="1" strokeDasharray="4" />
-                  <circle cx="80" cy="60" r="3" fill="#3B82F6" />
-                  <circle cx="280" cy="50" r="3" fill="#F97316" />
-                  <circle cx="200" cy="100" r="3" fill="#22C55E" />
-                  <circle cx="310" cy="130" r="3" fill="#3B82F6" />
-                </svg>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <MapPin style={{ width: '16px', height: '16px' }} />
+                Geographic Impact by Region
+              </h3>
+              <div style={{ height: '300px', borderRadius: '8px', overflow: 'hidden', position: 'relative' }}>
+                <MapContainer center={[20, 0]} zoom={3} style={{ height: '100%', width: '100%' }}>
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; OpenStreetMap contributors'
+                  />
+                  {(csrData?.projectLocations || []).map((project) => {
+                    const statusColor = project.status === 'active' ? '#1e3a8a' : project.status === 'completed' ? '#22c55e' : '#f97316';
+                    const icon = L.divIcon({
+                      html: `<div style="background-color: ${statusColor}; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.2); color: white; font-weight: bold; font-size: 12px;">${project.employees > 0 ? project.employees : '●'}</div>`,
+                      iconSize: [32, 32],
+                      className: 'custom-marker'
+                    });
+                    return (
+                      <Marker key={project.id} position={[project.lat, project.lng]} icon={icon}>
+                        <Popup>
+                          <div style={{ fontSize: '12px', minWidth: '180px' }}>
+                            <p style={{ fontWeight: 'bold', marginBottom: '4px' }}>{project.name}</p>
+                            <p style={{ color: '#6b7280', marginBottom: '8px' }}>{project.region}</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px' }}>
+                              <span>👥 Employees: {project.employees}</span>
+                              <span>⏱️ Hours: {project.hours.toLocaleString()}</span>
+                              <span>📍 Status: {project.status}</span>
+                            </div>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    );
+                  })}
+                </MapContainer>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '12px', justifyContent: 'center', fontSize: '12px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3B82F6' }}></div>
-                  <span style={{ color: '#4b5563' }}>Northie focpart</span>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#1e3a8a' }}></div>
+                  <span style={{ color: '#4b5563' }}>Active Projects</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3B82F6' }}></div>
-                  <span style={{ color: '#4b5563' }}>Vrorsie neelto/soiken</span>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#22c55e' }}></div>
+                  <span style={{ color: '#4b5563' }}>Completed</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#F97316' }}></div>
-                  <span style={{ color: '#4b5563' }}>Hue qoysit</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E' }}></div>
-                  <span style={{ color: '#4b5563' }}>Pot.upvsilla</span>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#f97316' }}></div>
+                  <span style={{ color: '#4b5563' }}>Sponsored</span>
                 </div>
               </div>
             </div>

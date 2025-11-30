@@ -5160,6 +5160,34 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         hours: e.hoursVolunteered || 0
       }));
 
+      // Generate project locations with geocoordinates for map visualization
+      const projectLocations = partnerBudgets.map((budget: any, idx: number) => {
+        // Sample global coordinates for different regions
+        const sampleCoordinates = [
+          { lat: 40.7128, lng: -74.0060, region: "North America - New York" },
+          { lat: 34.0522, lng: -118.2437, region: "North America - Los Angeles" },
+          { lat: 51.5074, lng: -0.1278, region: "Europe - London" },
+          { lat: 48.8566, lng: 2.3522, region: "Europe - Paris" },
+          { lat: 35.6762, lng: 139.6503, region: "Asia - Tokyo" },
+          { lat: 28.6139, lng: 77.2090, region: "Asia - India" },
+          { lat: -33.8688, lng: 151.2093, region: "Oceania - Sydney" },
+          { lat: -23.5505, lng: -46.6333, region: "South America - São Paulo" },
+        ];
+        const coord = sampleCoordinates[idx % sampleCoordinates.length];
+        const engagementForProject = partnerEngagement.filter((e: any) => e.projectId === budget.projectId);
+        
+        return {
+          id: budget.projectId,
+          name: budget.projectName || `Project ${idx + 1}`,
+          lat: coord.lat,
+          lng: coord.lng,
+          region: coord.region,
+          employees: engagementForProject.length,
+          hours: engagementForProject.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
+          status: budget.status === 'completed' ? 'completed' : budget.status === 'active' ? 'active' : 'sponsored'
+        };
+      });
+
       res.json({
         totalPartners,
         activeEmployees,
@@ -5168,6 +5196,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         projectsCompleted,
         sdgScoreDelta,
         sdgProgress,
+        projectLocations,
         partners: [{
           id: userPartner.id,
           companyName: userPartner.companyName,

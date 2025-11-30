@@ -5326,48 +5326,6 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       }
 
-      // SDG Progress - only show SDGs with active challenges or real employee engagement
-      const sdgProgress: Record<number, any> = {};
-      
-      // Only overlay challenge progress data for active challenges with real progress
-      partnerChallenges.forEach((challenge: any) => {
-        const sdg = challenge.sdgGoal;
-        const progress = Math.min(
-          100,
-          (challenge.currentHours || 0) / (challenge.targetHours || 1) * 100
-        );
-        
-        // Only include if there's actual progress
-        if ((challenge.currentHours || 0) > 0) {
-          sdgProgress[sdg] = {
-            goal: sdg,
-            name: `Goal ${sdg}`,
-            color: `hsl(${sdg * 40}, 70%, 50%)`,
-            progress: progress,
-            currentHours: challenge.currentHours || 0,
-            targetHours: challenge.targetHours || 0,
-            status: 'active'
-          };
-        }
-      });
-      
-      // Also include SDGs from employee engagement metrics
-      Object.keys(orgwideSDGMetrics).forEach((sdgKey: any) => {
-        const sdg = parseInt(sdgKey);
-        const metric = orgwideSDGMetrics[sdg];
-        if (metric.totalHours > 0) {
-          sdgProgress[sdg] = {
-            goal: sdg,
-            name: `Goal ${sdg}`,
-            color: `hsl(${sdg * 40}, 70%, 50%)`,
-            progress: (metric.totalHours / totalHours) * 100,
-            currentHours: metric.totalHours,
-            targetHours: totalHours,
-            status: 'active'
-          };
-        }
-      });
-
       // Top employees leaderboard with date filtering and SDG tracking
       const leaderboard = filteredEngagement
         .sort((a: any, b: any) => (b.hoursVolunteered || 0) - (a.hoursVolunteered || 0))
@@ -5479,6 +5437,44 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         uniqueEmployees: m.employeeCount.size,
         projectsContributed: m.projectCount.size
       }));
+
+      // SDG Progress - build from challenges and employee engagement metrics
+      const sdgProgress: Record<number, any> = {};
+      
+      // Add progress from active challenges with real hours
+      partnerChallenges.forEach((challenge: any) => {
+        const sdg = challenge.sdgGoal;
+        const progress = Math.min(100, (challenge.currentHours || 0) / (challenge.targetHours || 1) * 100);
+        
+        if ((challenge.currentHours || 0) > 0) {
+          sdgProgress[sdg] = {
+            goal: sdg,
+            name: `Goal ${sdg}`,
+            color: `hsl(${sdg * 40}, 70%, 50%)`,
+            progress: progress,
+            currentHours: challenge.currentHours || 0,
+            targetHours: challenge.targetHours || 0,
+            status: 'active'
+          };
+        }
+      });
+      
+      // Add SDGs from employee engagement metrics
+      Object.keys(orgwideSDGMetrics).forEach((sdgKey: any) => {
+        const sdg = parseInt(sdgKey);
+        const metric = orgwideSDGMetrics[sdg];
+        if (metric && metric.totalHours > 0 && !sdgProgress[sdg]) {
+          sdgProgress[sdg] = {
+            goal: sdg,
+            name: `Goal ${sdg}`,
+            color: `hsl(${sdg * 40}, 70%, 50%)`,
+            progress: totalHours > 0 ? (metric.totalHours / totalHours) * 100 : 0,
+            currentHours: metric.totalHours,
+            targetHours: totalHours,
+            status: 'active'
+          };
+        }
+      });
 
       res.json({
         totalPartners,

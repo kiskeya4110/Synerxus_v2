@@ -361,35 +361,48 @@ export default function CSRDashboard() {
               padding: '16px'
             }} data-testid="chart-sdg-alignment">
               <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>SDG Alignment Dashboard</h3>
-              <div style={{ height: '256px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      startAngle={180}
-                      endAngle={-180}
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      dataKey="value"
-                      label={({ value }) => `${value}%`}
-                      labelLine={false}
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: number) => [`${value}%`, 'Progress']}
-                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b' }}>SDG %</p>
-                  <p style={{ fontSize: '16px', color: '#6b7280' }}>18%</p>
+              <div style={{ height: '300px', display: 'flex', flexDirection: 'column' }}>
+                {/* Dynamic sizing based on projects and employees */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        startAngle={180}
+                        endAngle={-180}
+                        innerRadius={Math.max(40, Math.min(60, (csrData?.projectsCompleted || 112) / 2))}
+                        outerRadius={Math.max(70, Math.min(95, (csrData?.activeEmployees || 890) / 8))}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={({ name, value }) => `${name} ${value}%`}
+                        labelLine={true}
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => [`${value}%`, 'Progress']}
+                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#1e293b' }}>Avg Impact</p>
+                    <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#f97316' }}>{Math.round((chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length) || 20)}%</p>
+                  </div>
+                </div>
+                
+                {/* SDG Labels Legend */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginTop: '12px', fontSize: '11px' }}>
+                  {chartData.map((sdg, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: sdg.color, flexShrink: 0 }} />
+                      <span style={{ color: '#4b5563', fontWeight: '500' }}>{sdg.name}: {sdg.value}%</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

@@ -476,6 +476,10 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   overallRating: doublePrecision("overall_rating").default(0), // Overall volunteer rating (0-5 stars)
   emailDigestEnabled: boolean("email_digest_enabled").default(true), // Weekly email digests
   onboardingCompleted: boolean("onboarding_completed").default(false),
+  // Employer linking for CSR dashboard
+  employerId: integer("employer_id").references(() => csrPartners.id), // Link to CSR partner company
+  departmentName: text("department_name"), // Department at employer company
+  jobTitleAtCompany: text("job_title_at_company"), // Job title at employer
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

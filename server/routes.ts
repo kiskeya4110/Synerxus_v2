@@ -3418,10 +3418,10 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         return res.status(403).json({ message: "User is not a volunteer" });
       }
       
-      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName, skillRatings, weeklyAvailability, availability, preferredWorkStyle, volunteerName, professionalTitle, yearsOfExperience, linkedinProfile, timezone, preferredCommitment, matchingPriorities } = req.body;
+      const { profilePhotoUrl, skills, interests, location, sdgGoals, bio, displayName, skillRatings, weeklyAvailability, availability, preferredWorkStyle, volunteerName, professionalTitle, yearsOfExperience, linkedinProfile, timezone, preferredCommitment, matchingPriorities, employerId, departmentName, jobTitleAtCompany } = req.body;
       
       // Use profile service to atomically update both users and volunteer_profiles tables
-      await updateVolunteerProfileWithUser(userId, {
+      const profileUpdate = await updateVolunteerProfileWithUser(userId, {
         avatar: profilePhotoUrl,
         bio,
         displayName,
@@ -3439,8 +3439,41 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         linkedinProfile,
         timezone,
         preferredCommitment,
-        matchingPriorities
+        matchingPriorities,
+        employerId,
+        departmentName,
+        jobTitleAtCompany
       });
+
+      // If employer info is provided, link to employee engagement for CSR dashboard
+      if (employerId) {
+        try {
+          const volunteerId = (await storage.getVolunteerProfileByUserId(userId))?.id;
+          if (volunteerId) {
+            const existing = await storage.listEmployeeEngagement?.() || [];
+            const linkedRecord = existing.find((e: any) => 
+              e.partnerId === parseInt(employerId) && 
+              e.employeeEmail === user.email
+            );
+            
+            if (!linkedRecord) {
+              // Create new employee engagement record
+              await storage.createEmployeeEngagement?.({
+                partnerId: parseInt(employerId),
+                employeeEmail: user.email,
+                employeeName: displayName || volunteerName,
+                hoursVolunteered: 0,
+                engagementType: 'vto',
+                impactScore: 0,
+                completionStatus: 'in-progress'
+              });
+            }
+          }
+        } catch (err) {
+          console.error("Error linking employee engagement:", err);
+          // Non-critical, don't fail the request
+        }
+      }
       
       // Update legacy volunteer matching profile (best effort, outside transaction)
       if (user.email) {

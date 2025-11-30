@@ -1133,6 +1133,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Don't fail the activity creation if update fails
         }
       }
+
+      // **CSR Dashboard KPI Tracking**: Update employee engagement hours when volunteer with employer link logs activity
+      if (activity.userId && activity.hours) {
+        try {
+          const volunteerProfile = await storage.getVolunteerProfileByUserId(activity.userId);
+          if (volunteerProfile?.employerId) {
+            // Get user email for employee engagement tracking
+            const user = await storage.getUser(activity.userId);
+            if (user?.email) {
+              // Get existing employee engagement record
+              const allEngagements = await storage.listEmployeeEngagement();
+              const existing = allEngagements.find((e: any) =>
+                e.partnerId === volunteerProfile.employerId &&
+                e.employeeEmail === user.email
+              );
+
+              if (existing) {
+                // Increment hours
+                await storage.updateEmployeeEngagement(existing.id, {
+                  hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours
+                });
+              } else {
+                // Create new employee engagement record
+                await storage.createEmployeeEngagement({
+                  partnerId: volunteerProfile.employerId,
+                  employeeEmail: user.email,
+                  employeeName: volunteerProfile.volunteerName || user.displayName,
+                  hoursVolunteered: activity.hours,
+                  engagementType: 'vto',
+                  impactScore: 0,
+                  completionStatus: 'in-progress'
+                });
+              }
+            }
+          }
+        } catch (crsErr) {
+          console.error("Error updating employee engagement hours:", crsErr);
+          // Non-critical, don't fail the activity creation
+        }
+      }
       
       broadcastUpdate("volunteer_activity_created", activity);
       res.status(201).json(activity);
@@ -1145,6 +1185,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/volunteer-activities/:id", async (req, res) => {
     try {
       const activityId = parseInt(req.params.id);
+      
+      // Get the old activity to compare hours
+      const oldActivity = await storage.getVolunteerActivity(activityId);
       const activityData = insertVolunteerActivitySchema.partial().parse(req.body);
       
       const updatedActivity = await storage.updateVolunteerActivity(activityId, activityData);
@@ -1178,6 +1221,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (updateErr) {
           console.error("Error updating assignment hoursCompleted:", updateErr);
           // Don't fail the activity update if assignment update fails
+        }
+      }
+
+      // **CSR Dashboard KPI Tracking**: Update employee engagement hours when activity hours are changed
+      if (updatedActivity.userId && oldActivity && oldActivity.hours !== updatedActivity.hours) {
+        try {
+          const volunteerProfile = await storage.getVolunteerProfileByUserId(updatedActivity.userId);
+          if (volunteerProfile?.employerId) {
+            const user = await storage.getUser(updatedActivity.userId);
+            if (user?.email) {
+              const allEngagements = await storage.listEmployeeEngagement();
+              const existing = allEngagements.find((e: any) =>
+                e.partnerId === volunteerProfile.employerId &&
+                e.employeeEmail === user.email
+              );
+
+              if (existing) {
+                // Calculate hour difference
+                const hourDifference = (updatedActivity.hours || 0) - (oldActivity.hours || 0);
+                await storage.updateEmployeeEngagement(existing.id, {
+                  hoursVolunteered: (existing.hoursVolunteered || 0) + hourDifference
+                });
+              }
+            }
+          }
+        } catch (csrErr) {
+          console.error("Error updating employee engagement hours on activity update:", csrErr);
+          // Non-critical, don't fail the activity update
         }
       }
       

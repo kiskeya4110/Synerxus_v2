@@ -206,8 +206,8 @@ export default function CorporatePartnerProfileSettings() {
         title: "Success!",
         description: "Your corporate partner profile has been saved."
       });
-      // Redirect to Organization Dashboard after successful save
-      setTimeout(() => navigate("/organization-dashboard"), 500);
+      // Redirect to CSR Dashboard after successful save
+      setTimeout(() => navigate("/csr-dashboard"), 500);
     },
     onError: (error) => {
       console.error("[Corporate Settings] Save error:", error);

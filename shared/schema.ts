@@ -1045,3 +1045,47 @@ export type InsertEmployeeMilestone = z.infer<typeof insertEmployeeMilestoneSche
 
 export type CSRCommitmentGoal = typeof csrCommitmentGoals.$inferSelect;
 export type InsertCSRCommitmentGoal = z.infer<typeof insertCSRCommitmentGoalSchema>;
+
+// CSR Project Portfolio schema
+export const csrProjectPortfolios = pgTable("csr_project_portfolios", {
+  id: serial("id").primaryKey(),
+  partnerId: integer("partner_id").references(() => csrPartners.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  tier: text("tier").notNull(), // strategic, core, pilot, employee
+  status: text("status").notNull(), // pipeline, approved, active, review, complete, archived
+  primarySdg: integer("primary_sdg"),
+  secondarySdgs: integer("secondary_sdgs").array(),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  budgetAllocated: integer("budget_allocated"),
+  budgetSpent: integer("budget_spent").default(0),
+  budgetVariance: integer("budget_variance"),
+  projectLead: text("project_lead"),
+  teamMembers: jsonb("team_members"), // Array of {id, name, role, allocation}
+  partners: jsonb("partners"), // Array of {id, name, type}
+  theoryOfChange: text("theory_of_change"),
+  baselineMetrics: jsonb("baseline_metrics"),
+  targetMetrics: jsonb("target_metrics"),
+  currentMetrics: jsonb("current_metrics"),
+  leadingIndicators: jsonb("leading_indicators"),
+  trailingIndicators: jsonb("trailing_indicators"),
+  beneficiariesDirect: integer("beneficiaries_direct"),
+  beneficiariesIndirect: integer("beneficiaries_indirect"),
+  milestones: jsonb("milestones"), // Array of {name, targetDate, actualDate, status}
+  deliverables: jsonb("deliverables"), // Array of {name, dueDate, completionDate, status}
+  riskAssessment: jsonb("risk_assessment"), // Array of {risk, probability, impact, mitigation}
+  stakeholderSatisfaction: integer("stakeholder_satisfaction"),
+  completionPercentage: integer("completion_percentage").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertCSRProjectPortfolioSchema = createInsertSchema(csrProjectPortfolios).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CSRProjectPortfolio = typeof csrProjectPortfolios.$inferSelect;
+export type InsertCSRProjectPortfolio = z.infer<typeof insertCSRProjectPortfolioSchema>;

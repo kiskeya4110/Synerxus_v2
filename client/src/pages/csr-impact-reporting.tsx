@@ -56,6 +56,7 @@ export function CSRImpactReporting() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [selectedTab, setSelectedTab] = useState("overview");
+  const [isExporting, setIsExporting] = useState(false);
 
   const userId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
   
@@ -71,6 +72,147 @@ export function CSRImpactReporting() {
 
   const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const companyName = "Home Corporation";
+
+  const exportToCSV = () => {
+    if (!impactData) return;
+    setIsExporting(true);
+    
+    const headers = ["Metric", "Value"];
+    const rows = [
+      ["CSR Impact Report", ""],
+      ["Company", companyName],
+      ["Report Period", impactData.reportPeriod],
+      ["Generated", currentDate],
+      ["", ""],
+      ["ENGAGEMENT METRICS", ""],
+      ["Total Hours", impactData.engagementMetrics.totalHours],
+      ["Active Employees", impactData.engagementMetrics.activeEmployees],
+      ["Avg Hours/Employee", impactData.engagementMetrics.avgHoursPerEmployee],
+      ["Participation Rate", `${impactData.engagementMetrics.participationRate}%`],
+      ["", ""],
+      ["IMPACT METRICS", ""],
+      ["Direct Beneficiaries", impactData.impactMetrics.directBeneficiaries],
+      ["Lives Touched", impactData.impactMetrics.estimatedLivesTouched],
+      ["Impact per Hour", impactData.impactMetrics.impactPerHour],
+      ["", ""],
+      ["FINANCIAL METRICS", ""],
+      ["Volunteer Hour Value", `$${impactData.financialMetrics.volunteerHourValue}`],
+      ["Cost if Paid Staff", `$${impactData.financialMetrics.estimatedCostIfPaidStaff}`],
+      ["ROI", `${impactData.financialMetrics.roi}%`],
+      ["", ""],
+      ["COMPLIANCE STATUS", ""],
+      ["B-Corp Ready", impactData.complianceStatus.bCorpReady ? "Yes" : "No"],
+      ["GRI Aligned", impactData.complianceStatus.griAligned ? "Yes" : "No"],
+      ["B-Corp Score", impactData.complianceStatus.complianceScores?.bCorpScore || "N/A"],
+      ["GRI Score", impactData.complianceStatus.complianceScores?.griScore || "N/A"],
+      ["ISO Score", impactData.complianceStatus.complianceScores?.isoScore || "N/A"],
+      ["SASB Score", impactData.complianceStatus.complianceScores?.sasbScore || "N/A"],
+    ];
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `CSR_Impact_Report_${impactData.reportPeriod}.csv`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    setIsExporting(false);
+  };
+
+  const exportToPDF = async () => {
+    if (!impactData) return;
+    setIsExporting(true);
+    
+    const pdfContent = `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #1e3a8a; border-bottom: 2px solid #f97316; padding-bottom: 10px; }
+            h2 { color: #1e3a8a; margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+            td { padding: 8px; border: 1px solid #ddd; }
+            tr:nth-child(even) { background-color: #f9fafb; }
+            .header { background-color: #1e3a8a; color: white; font-weight: bold; }
+            .metric { font-weight: bold; color: #111827; }
+            .value { text-align: right; }
+          </style>
+        </head>
+        <body>
+          <h1>CSR Impact Report - ${companyName}</h1>
+          <p><strong>Report Period:</strong> ${impactData.reportPeriod}</p>
+          <p><strong>Generated:</strong> ${currentDate}</p>
+          
+          <h2>Engagement Metrics</h2>
+          <table>
+            <tr class="header"><td>Metric</td><td class="value">Value</td></tr>
+            <tr><td class="metric">Total Hours</td><td class="value">${impactData.engagementMetrics.totalHours}</td></tr>
+            <tr><td class="metric">Active Employees</td><td class="value">${impactData.engagementMetrics.activeEmployees}</td></tr>
+            <tr><td class="metric">Avg Hours/Employee</td><td class="value">${impactData.engagementMetrics.avgHoursPerEmployee}</td></tr>
+            <tr><td class="metric">Participation Rate</td><td class="value">${impactData.engagementMetrics.participationRate}%</td></tr>
+          </table>
+
+          <h2>Impact Metrics</h2>
+          <table>
+            <tr class="header"><td>Metric</td><td class="value">Value</td></tr>
+            <tr><td class="metric">Direct Beneficiaries</td><td class="value">${impactData.impactMetrics.directBeneficiaries}</td></tr>
+            <tr><td class="metric">Lives Touched</td><td class="value">${impactData.impactMetrics.estimatedLivesTouched}</td></tr>
+            <tr><td class="metric">Impact per Hour</td><td class="value">${impactData.impactMetrics.impactPerHour}</td></tr>
+          </table>
+
+          <h2>Financial Metrics</h2>
+          <table>
+            <tr class="header"><td>Metric</td><td class="value">Value</td></tr>
+            <tr><td class="metric">Volunteer Hour Value</td><td class="value">$${impactData.financialMetrics.volunteerHourValue}</td></tr>
+            <tr><td class="metric">Cost if Paid Staff</td><td class="value">$${impactData.financialMetrics.estimatedCostIfPaidStaff}</td></tr>
+            <tr><td class="metric">ROI</td><td class="value">${impactData.financialMetrics.roi}%</td></tr>
+          </table>
+
+          <h2>Compliance Status</h2>
+          <table>
+            <tr class="header"><td>Framework</td><td class="value">Score/Status</td></tr>
+            <tr><td class="metric">B-Corp</td><td class="value">${impactData.complianceStatus.complianceScores?.bCorpScore || "N/A"}</td></tr>
+            <tr><td class="metric">GRI</td><td class="value">${impactData.complianceStatus.complianceScores?.griScore || "N/A"}</td></tr>
+            <tr><td class="metric">ISO 26000</td><td class="value">${impactData.complianceStatus.complianceScores?.isoScore || "N/A"}</td></tr>
+            <tr><td class="metric">SASB</td><td class="value">${impactData.complianceStatus.complianceScores?.sasbScore || "N/A"}</td></tr>
+          </table>
+        </body>
+      </html>
+    `;
+
+    try {
+      const { jsPDF } = await import("jspdf");
+      const html2Canvas = (await import("html2canvas")).default;
+      
+      // Create element with PDF content
+      const element = document.createElement("div");
+      element.innerHTML = pdfContent;
+      element.style.padding = "20px";
+      
+      // Convert to canvas then PDF
+      const canvas = await html2Canvas(element, { scale: 2 });
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
+      pdf.addImage(imgData, "PNG", 10, 10, 190, 277);
+      pdf.save(`CSR_Impact_Report_${impactData.reportPeriod}.pdf`);
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      alert("Failed to export PDF. Using fallback...");
+      // Fallback: just download as text
+      const blob = new Blob([pdfContent], { type: "text/html" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `CSR_Impact_Report_${impactData.reportPeriod}.html`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    }
+    setIsExporting(false);
+  };
 
   if (isLoading) {
     return (

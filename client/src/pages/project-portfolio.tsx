@@ -50,6 +50,8 @@ export default function ProjectPortfolio() {
   const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showInsightsPanel, setShowInsightsPanel] = useState(true);
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [newStatusValue, setNewStatusValue] = useState("");
 
   const { data: portfolioData, isLoading } = useQuery<PortfolioSummary>({
     queryKey: ["/api/csr/portfolio/summary", userId],
@@ -544,13 +546,32 @@ export default function ProjectPortfolio() {
             })()}
 
             <div style={{ display: "flex", gap: "8px" }}>
-              <button style={{ flex: 1, padding: "10px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
-                View Details
+              <button onClick={() => setShowDetailModal(true)} style={{ flex: 1, padding: "10px", backgroundColor: "#3b82f6", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
+                View Full Details
               </button>
-              <button style={{ flex: 1, padding: "10px", backgroundColor: "#f3f4f6", color: "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
-                Update Status
+              <button onClick={() => {
+                setEditingStatus(!editingStatus);
+                if (!editingStatus && selectedProject) {
+                  setNewStatusValue(selectedProject.status);
+                }
+              }} style={{ flex: 1, padding: "10px", backgroundColor: editingStatus ? "#f59e0b" : "#f3f4f6", color: editingStatus ? "white" : "#111827", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "13px" }}>
+                {editingStatus ? "Save Status" : "Update Status"}
               </button>
             </div>
+
+            {editingStatus && (
+              <div style={{ marginTop: "12px", padding: "12px", backgroundColor: "#fef3c7", borderRadius: "6px", border: "1px solid #f59e0b" }}>
+                <label style={{ fontSize: "12px", fontWeight: "600", color: "#92400e", display: "block", marginBottom: "8px" }}>New Status:</label>
+                <select value={newStatusValue} onChange={(e) => setNewStatusValue(e.target.value)} style={{ width: "100%", padding: "8px", borderRadius: "4px", border: "1px solid #f59e0b", fontSize: "13px" }}>
+                  <option value="pipeline">Pipeline</option>
+                  <option value="approved">Approved</option>
+                  <option value="active">Active</option>
+                  <option value="review">Review</option>
+                  <option value="complete">Complete</option>
+                  <option value="archived">Archived</option>
+                </select>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -623,7 +644,7 @@ export default function ProjectPortfolio() {
             🟢 Low Risk
           </button>
         </div>
-        <button style={{ padding: "8px 16px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
+        <button onClick={() => alert("New Project creation form would open here. (Feature coming soon)")} style={{ padding: "8px 16px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}>
           <Plus style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} /> New Project
         </button>
       </div>

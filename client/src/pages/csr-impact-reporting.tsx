@@ -54,6 +54,11 @@ export function CSRImpactReporting() {
   
   const { data: impactData, isLoading } = useQuery<ImpactData>({
     queryKey: ["/api/csr/impact-reporting", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/csr/impact-reporting?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch impact data");
+      return response.json();
+    },
     enabled: !!userId
   });
 

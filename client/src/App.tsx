@@ -52,39 +52,68 @@ function RootRedirectRoute() {
       // Check if user has completed intake
       const checkIntakeAndRedirect = async () => {
         const userId = localStorage.getItem('currentUserId');
-        const userType = localStorage.getItem('userType');
+        let userType = localStorage.getItem('userType');
         
         try {
-          if (!userId || !userType) {
+          if (!userId) {
             setLocation('/landing');
             return;
           }
 
-          // Fetch intake completion status
-          const endpoint = userType === 'volunteer' 
-            ? `/api/intake/volunteer-profile?userId=${userId}`
-            : `/api/organizations?managerId=${userId}`;
+          // Fetch user from /api/users to get the latest userType from database
+          const userResponse = await fetch(`/api/users?id=${userId}`);
+          if (userResponse.ok) {
+            const users = await userResponse.json();
+            const currentUser = users.find((u: any) => u.id === parseInt(userId));
+            if (currentUser && currentUser.userType) {
+              userType = currentUser.userType;
+              // Update localStorage with fresh data from database
+              localStorage.setItem('userType', userType);
+            }
+          }
+
+          if (!userType) {
+            setLocation('/landing');
+            return;
+          }
+
+          // Fetch intake completion status based on user type
+          let endpoint = '';
+          if (userType === 'volunteer') {
+            endpoint = `/api/intake/volunteer-profile?userId=${userId}`;
+          } else if (userType === 'organization') {
+            endpoint = `/api/organizations?managerId=${userId}`;
+          } else if (userType === 'corporate-partner') {
+            endpoint = `/api/corporate-partners?userId=${userId}`;
+          }
           
           const response = await fetch(endpoint);
           
           if (!response.ok) {
             // If no profile exists, go to intake
-            const intakePath = userType === 'volunteer' ? '/volunteer-intake' : '/organization-intake';
+            let intakePath = '/volunteer-intake';
+            if (userType === 'organization') intakePath = '/organization-intake';
+            else if (userType === 'corporate-partner') intakePath = '/corporate-partner-intake';
             setLocation(intakePath);
             return;
           }
 
-          const data = await response.json();
+          const data = Array.isArray(response) ? response[0] : await response.json();
           
           // Check if intake is complete
-          const profile = userType === 'volunteer' ? data.volunteerProfile : data;
-          const isIntakeComplete = profile?.onboardingCompleted === true;
+          let isIntakeComplete = false;
+          if (userType === 'volunteer') {
+            isIntakeComplete = data?.volunteerProfile?.onboardingCompleted === true;
+          } else if (userType === 'organization') {
+            isIntakeComplete = data?.onboardingCompleted === true;
+          } else if (userType === 'corporate-partner') {
+            isIntakeComplete = data?.onboardingCompleted === true;
+          }
           
           if (!isIntakeComplete) {
             // Redirect to intake if not complete
-            let intakePath = '/dashboard';
-            if (userType === 'volunteer') intakePath = '/volunteer-intake';
-            else if (userType === 'organization') intakePath = '/organization-intake';
+            let intakePath = '/volunteer-intake';
+            if (userType === 'organization') intakePath = '/organization-intake';
             else if (userType === 'corporate-partner') intakePath = '/corporate-partner-intake';
             setLocation(intakePath);
           } else {
@@ -97,6 +126,7 @@ function RootRedirectRoute() {
           }
         } catch (error) {
           console.error('Error checking intake status:', error);
+          // Fallback to appropriate dashboard based on current userType
           const defaultDashboard = userType === 'corporate-partner' ? '/csr-dashboard' : '/dashboard';
           setLocation(defaultDashboard);
         }

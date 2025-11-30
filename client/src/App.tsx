@@ -39,6 +39,7 @@ import OrganizationLeaderboard from "@/pages/organization-leaderboard";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
 import SDGMapping from "@/pages/sdg-mapping";
 import CSRDashboard from "@/pages/csr-dashboard";
+import { CSRImpactReporting } from "@/pages/csr-impact-reporting";
 import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
 import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
 import NotFound from "@/pages/not-found";
@@ -154,6 +155,7 @@ export default function App() {
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
           <Route path="/csr-dashboard" component={CSRDashboard} />
+          <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
           <Route component={LayoutRoute} />
         </Router>
       </OnboardingProvider>

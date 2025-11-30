@@ -4,14 +4,57 @@ import { useAuth } from "@/hooks/use-auth";
 import { BarChart3, TrendingUp, Users, DollarSign, Globe, CheckCircle, Home, ArrowLeft, Download, Share2 } from "lucide-react";
 import { useState } from "react";
 
+interface ImpactData {
+  reportPeriod: string;
+  engagementMetrics: {
+    totalHours: number;
+    activeEmployees: number;
+    avgHoursPerEmployee: number;
+    participationRate: number;
+    hoursPerMonth: Record<string, number>;
+  };
+  impactMetrics: {
+    directBeneficiaries: number;
+    indirectBeneficiaries: number;
+    estimatedLivesTouched: number;
+    impactPerHour: number;
+  };
+  financialMetrics: {
+    volunteerHourValue: number;
+    estimatedCostIfPaidStaff: number;
+    costPerBeneficiary: number;
+    roi: number;
+    programCost: number;
+  };
+  sdgMetrics: Array<{ goal: number; hours: number; percentage: number }>;
+  projectMetrics: Array<any>;
+  benchmarks: {
+    avgHoursPerEmployeeBenchmark: number;
+    participationRateBenchmark: number;
+    costPerBeneficiaryBenchmark: number;
+    yourMetrics: {
+      hoursPerEmployee: number;
+      participationRate: number;
+      costPerBeneficiary: number;
+    };
+  };
+  complianceStatus: {
+    bCorpReady: boolean;
+    griAligned: boolean;
+    esGRating: number;
+  };
+}
+
 export function CSRImpactReporting() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const [selectedTab, setSelectedTab] = useState("overview");
 
-  const { data: impactData, isLoading } = useQuery({
-    queryKey: ["/api/csr/impact-reporting", user?.id],
-    enabled: !!user?.id
+  const userId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
+  
+  const { data: impactData, isLoading } = useQuery<ImpactData>({
+    queryKey: ["/api/csr/impact-reporting", userId],
+    enabled: !!userId
   });
 
   const currentDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -391,25 +434,25 @@ export function CSRImpactReporting() {
           {selectedTab === "compliance" && (
             <Section title="Compliance & Certifications" icon="✅">
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "24px" }}>
-                <div style={{ backgroundColor: impactData?.complianceStatus?.bCorpReady ? "#d1fae5" : "#fee2e2", padding: "24px", borderRadius: "12px", border: `2px solid ${impactData?.complianceStatus?.bCorpReady ? "#10b981" : "#ef4444"}` }}>
+                <div style={{ backgroundColor: impactData?.complianceStatus?.bCorpReady ? "#d1fae5" : "#fee2e2", padding: "24px", borderRadius: "12px", border: impactData?.complianceStatus?.bCorpReady ? "2px solid #10b981" : "2px solid #ef4444" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
                     <span style={{ fontSize: "24px" }}>🏆</span>
                     <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>B-Corp Ready</h3>
                   </div>
                   <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
-                    ROI: {impactData?.financialMetrics?.roi || 0}% (Target: >200%)
+                    ROI: {impactData?.financialMetrics?.roi || 0}% (Target: greater than 200%)
                   </p>
                   <div style={{ fontSize: "12px", fontWeight: "600", color: impactData?.complianceStatus?.bCorpReady ? "#059669" : "#991b1b" }}>
                     {impactData?.complianceStatus?.bCorpReady ? "✅ Ready for B-Corp Certification" : "⚠️ Below threshold"}
                   </div>
                 </div>
-                <div style={{ backgroundColor: impactData?.complianceStatus?.griAligned ? "#dbeafe" : "#fee2e2", padding: "24px", borderRadius: "12px", border: `2px solid ${impactData?.complianceStatus?.griAligned ? "#3b82f6" : "#ef4444"}` }}>
+                <div style={{ backgroundColor: impactData?.complianceStatus?.griAligned ? "#dbeafe" : "#fee2e2", padding: "24px", borderRadius: "12px", border: impactData?.complianceStatus?.griAligned ? "2px solid #3b82f6" : "2px solid #ef4444" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
                     <span style={{ fontSize: "24px" }}>📊</span>
                     <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>GRI Aligned</h3>
                   </div>
                   <p style={{ fontSize: "14px", color: "#374151", margin: "0 0 12px 0" }}>
-                    SDGs Covered: {impactData?.sdgMetrics?.length || 0} (Target: ≥3)
+                    SDGs Covered: {impactData?.sdgMetrics?.length || 0} (Target: 3 or more)
                   </p>
                   <div style={{ fontSize: "12px", fontWeight: "600", color: impactData?.complianceStatus?.griAligned ? "#1e40af" : "#991b1b" }}>
                     {impactData?.complianceStatus?.griAligned ? "✅ Meets GRI Standards" : "⚠️ Needs more SDG coverage"}

@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign } from "lucide-react";
+import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign, Briefcase, Settings, Home } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 interface PortfolioProject {
   id: number;
@@ -38,6 +40,8 @@ interface PortfolioSummary {
 }
 
 export default function ProjectPortfolio() {
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
   const userId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
   const [viewType, setViewType] = useState<"grid" | "kanban" | "timeline" | "impact">("grid");
   const [filterTier, setFilterTier] = useState<string | null>(null);
@@ -53,6 +57,15 @@ export default function ProjectPortfolio() {
       return response.json();
     },
     enabled: !!userId,
+  });
+
+  // Get corporation name and admin info
+  const companyName = "Your Company";
+  const adminName = user?.displayName || "Admin";
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
   });
 
   if (isLoading) {
@@ -134,7 +147,218 @@ export default function ProjectPortfolio() {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        backgroundColor: "#ffffff",
+      }}
+    >
+      {/* Top Header Bar - Dark Navy with Blue Ribbon */}
+      <div style={{ borderTop: "8px solid #0f172a", width: "100%" }} />
+      <header
+        style={{
+          backgroundColor: "#111827",
+          color: "white",
+          padding: "16px 32px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+          height: "64px",
+        }}
+      >
+        {/* Left: Synerxus Logo */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            minWidth: "fit-content",
+          }}
+        >
+          <span
+            style={{ fontSize: "24px", fontWeight: "bold", color: "#f97316" }}
+          >
+            ✦
+          </span>
+          <span
+            style={{
+              fontSize: "18px",
+              fontWeight: "600",
+              letterSpacing: "0.025em",
+              color: "#ffffff",
+            }}
+          >
+            synerxus
+          </span>
+        </div>
+
+        {/* Center: Project Portfolio Title with Company Name */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flex: 1,
+            justifyContent: "center",
+          }}
+        >
+          <span
+            style={{ fontSize: "16px", fontWeight: "600", color: "#ffffff" }}
+          >
+            Project Portfolio
+          </span>
+          <span style={{ fontSize: "16px", color: "#ffffff" }}>•</span>
+          <Briefcase
+            style={{ width: "18px", height: "18px", color: "#ffffff" }}
+          />
+          <span
+            style={{ fontSize: "16px", fontWeight: "500", color: "#ffffff" }}
+          >
+            {companyName}
+          </span>
+        </div>
+
+        {/* Right: Date and Admin User */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "24px",
+            minWidth: "fit-content",
+          }}
+        >
+          <span style={{ fontSize: "14px", color: "#ffffff" }}>
+            {currentDate}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{
+                width: "28px",
+                height: "28px",
+                backgroundColor: "#1f2937",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "16px",
+              }}
+            >
+              👤
+            </div>
+            <span style={{ fontSize: "14px", color: "#ffffff" }}>
+              Admin {adminName}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <div
+        style={{ display: "flex", flex: 1, minHeight: "calc(100vh - 64px)" }}
+      >
+        {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
+        <aside
+          style={{
+            width: "20%",
+            backgroundColor: "#111827",
+            color: "white",
+            padding: "24px",
+            flexShrink: 0,
+          }}
+        >
+          <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <button
+              onClick={() => navigate("/csr-dashboard")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                backgroundColor: "transparent",
+                color: "#d1d5db",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
+              }}
+            >
+              <Home style={{ width: "20px", height: "20px" }} />
+              <span>Dashboard</span>
+            </button>
+            <button
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                backgroundColor: "#1f2937",
+                color: "#f97316",
+                border: "1px solid #374151",
+                fontWeight: "500",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+            >
+              <Briefcase style={{ width: "20px", height: "20px" }} />
+              <span>Project Portfolio</span>
+            </button>
+            <button
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                backgroundColor: "transparent",
+                color: "#d1d5db",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
+              }}
+            >
+              <Settings style={{ width: "20px", height: "20px" }} />
+              <span>Settings</span>
+            </button>
+          </nav>
+        </aside>
+
+        {/* Main Content - 4/5 width (80%) */}
+        <main
+          style={{
+            width: "80%",
+            padding: "24px",
+            backgroundColor: "#f9fafb",
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+          }}
+        >
+
       {/* Detail Modal */}
       {showDetailModal && selectedProject && (
         <div style={{
@@ -287,6 +511,8 @@ export default function ProjectPortfolio() {
             </PieChart>
           </ResponsiveContainer>
         </div>
+      </div>
+        </main>
       </div>
     </div>
   );

@@ -58,6 +58,8 @@ export default function CSRDashboard() {
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const [selectedAdminTab, setSelectedAdminTab] = useState<'reviews' | 'insights' | 'flagged'>('reviews');
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [selectedFunnelStage, setSelectedFunnelStage] = useState<number | null>(null);
+  const [showFunnelModal, setShowFunnelModal] = useState(false);
 
   // Check for authentication
   const isAuthenticated = !!user && !!userId;
@@ -1248,13 +1250,39 @@ export default function CSRDashboard() {
               {funnelData?.funnel ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {funnelData.funnel.map((stage: any, idx: number) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                    <div 
+                      key={idx}
+                      onClick={() => { setSelectedFunnelStage(idx); setShowFunnelModal(true); }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '8px', 
+                        fontSize: '13px',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        backgroundColor: selectedFunnelStage === idx ? '#eff6ff' : 'transparent',
+                        border: selectedFunnelStage === idx ? '1px solid #3b82f6' : '1px solid transparent',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f0f9ff';
+                        e.currentTarget.style.border = '1px solid #3b82f6';
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedFunnelStage !== idx) {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.border = '1px solid transparent';
+                        }
+                      }}
+                    >
                       {idx > 0 && <ChevronRight style={{ width: '14px', height: '14px', color: '#9ca3af' }} />}
-                      <span style={{ fontWeight: idx === 0 ? '600' : '500', color: idx === 0 ? '#1e3a8a' : '#374151' }}>
+                      <span style={{ fontWeight: idx === 0 ? '600' : '500', color: idx === 0 ? '#1e3a8a' : '#374151', flex: 1 }}>
                         {stage.stage}
                       </span>
                       <span style={{ fontWeight: '600', color: '#059669' }}>({stage.count})</span>
                       {idx > 0 && <span style={{ fontSize: '11px', color: '#6b7280' }}>-{stage.dropoff}%</span>}
+                      <span style={{ fontSize: '11px', color: '#3b82f6', fontWeight: '500' }}>→</span>
                     </div>
                   ))}
                   <div style={{ marginTop: '8px', padding: '8px 0', borderTop: '1px solid #e5e7eb', fontSize: '12px', color: '#6b7280' }}>

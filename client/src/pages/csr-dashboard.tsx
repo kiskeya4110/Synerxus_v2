@@ -1537,7 +1537,9 @@ export default function CSRDashboard() {
                           backgroundColor: "#1e3a8a",
                         }}
                       ></div>
-                      <span style={{ color: "#4b5563" }}>Active Projects</span>
+                      <span style={{ color: "#4b5563" }}>
+                        Active Projects ({(csrData?.projectLocations || []).filter(p => p.status === "active").length})
+                      </span>
                     </div>
                     <div
                       style={{
@@ -1554,7 +1556,9 @@ export default function CSRDashboard() {
                           backgroundColor: "#22c55e",
                         }}
                       ></div>
-                      <span style={{ color: "#4b5563" }}>Completed</span>
+                      <span style={{ color: "#4b5563" }}>
+                        Completed ({(csrData?.projectLocations || []).filter(p => p.status === "completed").length})
+                      </span>
                     </div>
                     <div
                       style={{
@@ -1571,7 +1575,9 @@ export default function CSRDashboard() {
                           backgroundColor: "#f97316",
                         }}
                       ></div>
-                      <span style={{ color: "#4b5563" }}>Sponsored</span>
+                      <span style={{ color: "#4b5563" }}>
+                        Pending ({(csrData?.projectLocations || []).filter(p => p.status === "pending").length})
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -5280,10 +5280,21 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           })
         : volunteerActivities.filter((a: any) => partnerProjectIds.has(a.projectId));
 
-      // Calculate KPIs from ONLY employee engagement data with date filtering
+      // Get employee user IDs (users with employer_id matching this partner) for accurate filtering
+      const employeeUserIds = new Set(
+        volunteerProfiles
+          .filter((vp: any) => vp.employerId === userPartner.id)
+          .map((vp: any) => vp.userId)
+      );
+      
+      // Calculate KPIs from REAL volunteer_activities logged by employees (not stale employee_engagement)
+      const employeeActivitiesOnSponsoredProjects = filteredVolunteerActivities.filter((a: any) => 
+        employeeUserIds.has(a.userId)
+      );
+      
       const totalPartners = 1; // Their own company
-      const activeEmployees = new Set(filteredEngagement.map((e: any) => e.employeeEmail)).size;
-      const totalHours = filteredEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
+      const activeEmployees = new Set(employeeActivitiesOnSponsoredProjects.map((a: any) => a.userId)).size;
+      const totalHours = employeeActivitiesOnSponsoredProjects.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
       
       const totalRoi = partnerBudgets.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
       const projectsCompleted = partnerBudgets.filter((b: any) => b.actualRoi && b.actualRoi > 0).length;
@@ -5299,15 +5310,28 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       }
 
-      // Top employees leaderboard with date filtering and SDG tracking
-      const leaderboard = filteredEngagement
-        .sort((a: any, b: any) => (b.hoursVolunteered || 0) - (a.hoursVolunteered || 0))
+      // Top employees leaderboard from REAL volunteer activities
+      const employeeHoursByUser = Array.from(employeeUserIds).map((userId: any) => {
+        const userActivities = employeeActivitiesOnSponsoredProjects.filter((a: any) => a.userId === userId);
+        const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
+        const totalUserHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        return {
+          userId,
+          employeeName: profile?.volunteerName || `Employee ${userId}`,
+          hours: totalUserHours,
+          points: Math.round(totalUserHours * 10), // 10 points per hour
+          projectId: userActivities[0]?.projectId || null
+        };
+      }).filter(e => e.hours > 0);
+      
+      const leaderboard = employeeHoursByUser
+        .sort((a, b) => b.hours - a.hours)
         .slice(0, 5)
-        .map((emp: any, idx: number) => ({
+        .map((emp, idx) => ({
           rank: idx + 1,
-          employeeName: emp.employeeName || emp.employeeEmail,
-          hours: emp.hoursVolunteered || 0,
-          points: (emp.impactScore || 0) * 10,
+          employeeName: emp.employeeName,
+          hours: emp.hours,
+          points: emp.points,
           projectId: emp.projectId
         }));
 
@@ -5318,21 +5342,13 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         status: b.status || 'active'
       }));
 
-      // Get all unique employees for this organization (organization-wide aggregation)
-      const allOrgEmployees = filteredEngagement.reduce((acc: any[], e: any) => {
-        const exists = acc.find((emp: any) => emp.employeeEmail === e.employeeEmail);
-        if (!exists) {
-          acc.push({
-            id: e.employeeEmail,
-            name: e.employeeName || e.employeeEmail.split('@')[0],
-            hours: e.hoursVolunteered || 0,
-            employeeEmail: e.employeeEmail
-          });
-        } else {
-          exists.hours += e.hoursVolunteered || 0;
-        }
-        return acc;
-      }, []);
+      // Get all unique employees for this organization from REAL activity data
+      const allOrgEmployees = employeeHoursByUser.map((emp: any) => ({
+        id: emp.userId,
+        name: emp.employeeName,
+        hours: emp.hours,
+        userId: emp.userId
+      }));
 
       const sidebarEmployees = allOrgEmployees
         .sort((a: any, b: any) => b.hours - a.hours)
@@ -5393,9 +5409,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       
       const projectLocations = partnerBudgets
         .map((budget: any, idx: number) => {
-          const engagementForProject = partnerEngagement.filter((e: any) => e.projectId === budget.projectId);
-          const totalHoursForProject = engagementForProject.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
-          const employeeCountForProject = engagementForProject.length;
+          // Use REAL activity data instead of stale employee_engagement
+          const activitiesForProject = employeeActivitiesOnSponsoredProjects.filter((a: any) => a.projectId === budget.projectId);
+          const totalHoursForProject = activitiesForProject.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          const employeeCountForProject = new Set(activitiesForProject.map((a: any) => a.userId)).size;
           
           // Only include projects with actual employee engagement
           if (employeeCountForProject === 0 || totalHoursForProject === 0) {
@@ -5428,15 +5445,17 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         })
         .filter((p: any) => p !== null);
 
-      // Organization-wide SDG contribution tracking - use partner's primary SDGs or challenge SDGs
+      // Organization-wide SDG contribution tracking from REAL employee volunteer activities
       const orgwideSDGMetrics: Record<number, any> = {};
       const partnerPrimarySdgs = userPartner.primarySdgs || [];
       const challengeSdgs = partnerChallenges.map((c: any) => c.sdgGoal).filter(Boolean);
       const defaultSdgs = partnerPrimarySdgs.length > 0 ? partnerPrimarySdgs : challengeSdgs;
       
-      filteredEngagement.forEach((emp: any) => {
-        if (emp.projectId) {
-          const project = projects.find((p: any) => p.id === emp.projectId);
+      // Use real employee activities instead of stale employee_engagement records
+      employeeActivitiesOnSponsoredProjects.forEach((activity: any) => {
+        if (activity.projectId) {
+          const project = projects.find((p: any) => p.id === activity.projectId);
+          const profile = volunteerProfiles.find((vp: any) => vp.userId === activity.userId);
           // Use project SDG if available, otherwise use partner's primary SDGs or challenge SDGs
           const sdgToUse = project?.primarySdg || defaultSdgs[0] || 3; // Default to SDG 3 if none set
           
@@ -5451,36 +5470,37 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
                 projectDetails: []
               };
             }
-            orgwideSDGMetrics[sdgToUse].totalHours += emp.hoursVolunteered || 0;
-            orgwideSDGMetrics[sdgToUse].employeeCount.add(emp.employeeEmail);
-            orgwideSDGMetrics[sdgToUse].projectCount.add(emp.projectId);
+            orgwideSDGMetrics[sdgToUse].totalHours += activity.hours || 0;
+            orgwideSDGMetrics[sdgToUse].employeeCount.add(activity.userId);
+            orgwideSDGMetrics[sdgToUse].projectCount.add(activity.projectId);
             
             // Track employee details for this SDG
             const existingEmployee = orgwideSDGMetrics[sdgToUse].employeeDetails.find(
-              (e: any) => e.email === emp.employeeEmail
+              (e: any) => e.userId === activity.userId
             );
             if (existingEmployee) {
-              existingEmployee.hours += emp.hoursVolunteered || 0;
+              existingEmployee.hours += activity.hours || 0;
             } else {
               orgwideSDGMetrics[sdgToUse].employeeDetails.push({
-                name: emp.employeeName || emp.employeeEmail.split('@')[0],
-                email: emp.employeeEmail,
-                hours: emp.hoursVolunteered || 0,
-                projectId: emp.projectId,
-                projectName: project?.title || 'Project'
+                name: profile?.volunteerName || `Employee ${activity.userId}`,
+                email: profile?.volunteerName || '',
+                userId: activity.userId,
+                hours: activity.hours || 0,
+                projectId: activity.projectId,
+                projectName: project?.name || 'Project'
               });
             }
             
             // Track project details
-            if (!orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === emp.projectId)) {
+            if (!orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === activity.projectId)) {
               orgwideSDGMetrics[sdgToUse].projectDetails.push({
-                id: emp.projectId,
-                name: project?.title || 'Project',
+                id: activity.projectId,
+                name: project?.name || 'Project',
                 hours: 0
               });
             }
-            const projDetail = orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === emp.projectId);
-            if (projDetail) projDetail.hours += emp.hoursVolunteered || 0;
+            const projDetail = orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === activity.projectId);
+            if (projDetail) projDetail.hours += activity.hours || 0;
           }
         }
       });
@@ -5564,16 +5584,34 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         dateRange: { startDate: startDateStr || 'all-time', endDate: endDateStr || 'all-time' },
         // Enhanced breakdown data for KPI modals with comprehensive metrics
         kpiBreakdown: (() => {
-          // Calculate volunteer activity metrics for partner-sponsored projects
-          const volunteerHours = filteredVolunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-          const uniqueVolunteers = new Set(filteredVolunteerActivities.map((a: any) => a.userId)).size;
-          const totalContributors = activeEmployees + uniqueVolunteers;
-          const combinedHours = totalHours + volunteerHours;
+          // Get employee user IDs (users with employer_id matching this partner)
+          const employeeUserIds = new Set(
+            volunteerProfiles
+              .filter((vp: any) => vp.employerId === userPartner.id)
+              .map((vp: any) => vp.userId)
+          );
           
-          // Calculate per-project metrics
+          // Calculate REAL employee hours from volunteer_activities (not stale employee_engagement)
+          const employeeActivities = filteredVolunteerActivities.filter((a: any) => 
+            employeeUserIds.has(a.userId)
+          );
+          const realEmployeeHours = employeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          const realActiveEmployees = new Set(employeeActivities.map((a: any) => a.userId)).size;
+          
+          // Calculate NON-employee volunteer hours (volunteers who are NOT linked to this corporation)
+          const nonEmployeeActivities = filteredVolunteerActivities.filter((a: any) => 
+            !employeeUserIds.has(a.userId)
+          );
+          const volunteerHours = nonEmployeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          const uniqueVolunteers = new Set(nonEmployeeActivities.map((a: any) => a.userId)).size;
+          
+          const totalContributors = realActiveEmployees + uniqueVolunteers;
+          const combinedHours = realEmployeeHours + volunteerHours;
+          
+          // Calculate per-project metrics from REAL activity data
           const projectsWithEngagement = partnerBudgets.filter((b: any) => {
-            const engCount = partnerEngagement.filter((e: any) => e.projectId === b.projectId).length;
-            return engCount > 0;
+            const activityCount = employeeActivities.filter((a: any) => a.projectId === b.projectId).length;
+            return activityCount > 0;
           });
           
           // Calculate average hours per contributor
@@ -5587,31 +5625,42 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           const topSdg = topSdgEntry ? parseInt(topSdgEntry[0]) : 0;
           const topSdgHours = topSdgEntry ? (topSdgEntry[1] as any).totalHours : 0;
           
+          // Build employee leaderboard from real activities
+          const employeeLeaderboard = Array.from(employeeUserIds).map((userId: any) => {
+            const userActivities = employeeActivities.filter((a: any) => a.userId === userId);
+            const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
+            return {
+              userId,
+              name: profile?.volunteerName || `Employee ${userId}`,
+              hours: userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0)
+            };
+          }).filter(e => e.hours > 0).sort((a, b) => b.hours - a.hours);
+          
           return {
             hours: {
               total: combinedHours,
-              fromEmployeeEngagement: totalHours,
+              fromEmployeeEngagement: realEmployeeHours,
               fromVolunteerActivities: volunteerHours,
               averagePerContributor: avgHoursPerContributor,
-              averagePerEmployee: activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0,
+              averagePerEmployee: realActiveEmployees > 0 ? Math.round(realEmployeeHours / realActiveEmployees) : 0,
               economicValue: economicValue,
               topProjectHours: projectsWithEngagement.length > 0 
-                ? partnerEngagement.filter((e: any) => e.projectId === projectsWithEngagement[0]?.projectId)
-                    .reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0)
+                ? employeeActivities.filter((a: any) => a.projectId === projectsWithEngagement[0]?.projectId)
+                    .reduce((sum: number, a: any) => sum + (a.hours || 0), 0)
                 : 0,
               weeklyAverage: Math.round(combinedHours / 12) // Approximate 12 weeks in quarter
             },
             employees: {
-              total: activeEmployees,
-              fromEmployeeEngagement: activeEmployees,
+              total: realActiveEmployees,
+              fromEmployeeEngagement: realActiveEmployees,
               fromVolunteerActivities: uniqueVolunteers,
               totalContributors: totalContributors,
-              totalHoursContributed: totalHours,
-              averageHoursPerEmployee: activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0,
-              engagementRate: Math.round((activeEmployees / (userPartner.employeeCount || 100)) * 100),
-              topPerformer: leaderboard[0]?.employeeName || 'N/A',
-              topPerformerHours: leaderboard[0]?.hours || 0,
-              newThisMonth: Math.max(1, Math.floor(activeEmployees * 0.2)) // Approximate new joiners
+              totalHoursContributed: realEmployeeHours,
+              averageHoursPerEmployee: realActiveEmployees > 0 ? Math.round(realEmployeeHours / realActiveEmployees) : 0,
+              engagementRate: Math.round((realActiveEmployees / (userPartner.employeeCount || 100)) * 100),
+              topPerformer: employeeLeaderboard[0]?.name || 'N/A',
+              topPerformerHours: employeeLeaderboard[0]?.hours || 0,
+              newThisMonth: Math.max(1, Math.floor(realActiveEmployees * 0.2)) // Approximate new joiners
             },
             projects: {
               total: projectsCompleted,
@@ -5619,8 +5668,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
               sponsoredProjects: partnerBudgets.length,
               totalRoi: totalRoi,
               averageRoiPerProject: projectsCompleted > 0 ? Math.round(totalRoi / projectsCompleted) : 0,
-              totalHoursInvested: totalHours,
-              averageHoursPerProject: projectsWithEngagement.length > 0 ? Math.round(totalHours / projectsWithEngagement.length) : 0,
+              totalHoursInvested: realEmployeeHours,
+              averageHoursPerProject: projectsWithEngagement.length > 0 ? Math.round(realEmployeeHours / projectsWithEngagement.length) : 0,
               beneficiariesReached: projectsCompleted * 150, // Estimated impact
               regionsServed: projectLocations.length
             },

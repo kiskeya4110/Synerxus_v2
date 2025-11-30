@@ -5565,8 +5565,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         // Enhanced breakdown data for KPI modals with comprehensive metrics
         kpiBreakdown: (() => {
           // Calculate volunteer activity metrics for partner-sponsored projects
-          const volunteerHours = filteredVolunteerActivities.reduce((sum: number, a: any) => sum + (a.hoursContributed || 0), 0);
-          const uniqueVolunteers = new Set(filteredVolunteerActivities.map((a: any) => a.volunteerId)).size;
+          const volunteerHours = filteredVolunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          const uniqueVolunteers = new Set(filteredVolunteerActivities.map((a: any) => a.userId)).size;
           const totalContributors = activeEmployees + uniqueVolunteers;
           const combinedHours = totalHours + volunteerHours;
           

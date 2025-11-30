@@ -470,7 +470,7 @@ export default function CSRDashboard() {
             </>
           )}
           {selectedMainTab === 'overview' && (
-            <>
+            <div>
               {/* KPI Cards Row - 4 cards in dark navy */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
             <div 
@@ -1364,6 +1364,8 @@ export default function CSRDashboard() {
               )}
             </div>
           </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -1674,9 +1676,9 @@ export default function CSRDashboard() {
             </div>
           </div>
         </div>
-      )}
-            </>
+            </div>
           )}
-    </div>
-  );
-}
+        </main>
+      </div>
+
+      {/* Admin Actions Modal */}

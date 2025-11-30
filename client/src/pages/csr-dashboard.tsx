@@ -461,10 +461,11 @@ export default function CSRDashboard() {
         backgroundColor: "#ffffff",
       }}
     >
-      {/* Top Header Bar - Dark Navy */}
+      {/* Top Header Bar - Dark Navy with Blue Ribbon */}
+      <div style={{ borderTop: "8px solid #0f172a", width: "100%" }} />
       <header
         style={{
-          backgroundColor: "#1e3a8a",
+          backgroundColor: "#111827",
           color: "white",
           padding: "16px 32px",
           display: "flex",
@@ -493,6 +494,7 @@ export default function CSRDashboard() {
               fontSize: "18px",
               fontWeight: "600",
               letterSpacing: "0.025em",
+              color: "#ffffff",
             }}
           >
             synerxus
@@ -510,16 +512,16 @@ export default function CSRDashboard() {
           }}
         >
           <span
-            style={{ fontSize: "16px", fontWeight: "600", color: "#e5e7eb" }}
+            style={{ fontSize: "16px", fontWeight: "600", color: "#ffffff" }}
           >
             CSR Dashboard
           </span>
-          <span style={{ fontSize: "16px", color: "#9ca3af" }}>•</span>
+          <span style={{ fontSize: "16px", color: "#ffffff" }}>•</span>
           <Briefcase
-            style={{ width: "18px", height: "18px", color: "#d1d5db" }}
+            style={{ width: "18px", height: "18px", color: "#ffffff" }}
           />
           <span
-            style={{ fontSize: "16px", fontWeight: "500", color: "#d1d5db" }}
+            style={{ fontSize: "16px", fontWeight: "500", color: "#ffffff" }}
           >
             {companyName}
           </span>
@@ -534,7 +536,7 @@ export default function CSRDashboard() {
             minWidth: "fit-content",
           }}
         >
-          <span style={{ fontSize: "14px", color: "#d1d5db" }}>
+          <span style={{ fontSize: "14px", color: "#ffffff" }}>
             {currentDate}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -542,7 +544,7 @@ export default function CSRDashboard() {
               style={{
                 width: "28px",
                 height: "28px",
-                backgroundColor: "#374151",
+                backgroundColor: "#1f2937",
                 borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
@@ -552,7 +554,7 @@ export default function CSRDashboard() {
             >
               👤
             </div>
-            <span style={{ fontSize: "14px", color: "#d1d5db" }}>
+            <span style={{ fontSize: "14px", color: "#ffffff" }}>
               Admin {adminName}
             </span>
           </div>

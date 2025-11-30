@@ -1500,6 +1500,163 @@ export default function CSRDashboard() {
           </div>
         </div>
       )}
+
+      {/* Funnel Stage Modal */}
+      {showFunnelModal && selectedFunnelStage !== null && funnelData?.funnel && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50
+        }} onClick={() => setShowFunnelModal(false)}>
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              padding: '32px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', marginBottom: '8px' }}>
+                  {funnelData.funnel[selectedFunnelStage].stage}
+                </h2>
+                <p style={{ fontSize: '13px', color: '#6b7280' }}>
+                  {funnelData.funnel[selectedFunnelStage].description}
+                </p>
+              </div>
+              <button 
+                onClick={() => setShowFunnelModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+              >
+                <X style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+              </button>
+            </div>
+
+            <div style={{ backgroundColor: '#f3f4f6', padding: '12px', borderRadius: '8px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total in Stage</div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e3a8a' }}>
+                  {funnelData.funnel[selectedFunnelStage].count}
+                </div>
+              </div>
+              {selectedFunnelStage > 0 && (
+                <div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Drop-off</div>
+                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#dc2626' }}>
+                    {funnelData.funnel[selectedFunnelStage].dropoff}%
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>
+                Employees ({funnelStageData?.employees?.length || 0})
+              </h3>
+              {funnelStageData?.employees && funnelStageData.employees.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {funnelStageData.employees.map((emp: any, idx: number) => (
+                    <div 
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px',
+                        backgroundColor: '#f9fafb',
+                        borderRadius: '6px',
+                        border: '1px solid #e5e7eb'
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: '500', color: '#111827', marginBottom: '4px' }}>
+                          {idx + 1}. {emp.name}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                          {emp.status === 'linked' ? '🔗 Linked' : emp.status === 'started' ? '🚀 Started' : emp.status === 'active' ? '⭐ Active' : '🏆 Top Performer'}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#059669' }}>
+                          {emp.hours}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#6b7280' }}>hrs</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af', fontSize: '14px' }}>
+                  Loading employee data...
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <button
+                onClick={() => setShowFunnelModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'white',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151'
+                }}
+              >
+                Close
+              </button>
+              {selectedFunnelStage === 1 && (
+                <button
+                  style={{
+                    padding: '8px 16px',
+                    border: 'none',
+                    backgroundColor: '#1e3a8a',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Send Engagement Tips
+                </button>
+              )}
+              {selectedFunnelStage === 3 && (
+                <button
+                  style={{
+                    padding: '8px 16px',
+                    border: 'none',
+                    backgroundColor: '#059669',
+                    color: 'white',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}
+                >
+                  Recognize Performance
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

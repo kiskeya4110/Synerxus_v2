@@ -5200,7 +5200,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         
         if (employeeProfile?.employerId) {
           // User is an employee linked to a CSR partner
-          userPartner = allPartners.find((p: any) => p.id === parseInt(employeeProfile.employerId));
+          const employerIdNum = typeof employeeProfile.employerId === 'string' 
+            ? parseInt(employeeProfile.employerId) 
+            : employeeProfile.employerId;
+          userPartner = allPartners.find((p: any) => p.id === employerIdNum);
         }
       }
       

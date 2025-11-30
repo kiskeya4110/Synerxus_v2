@@ -109,26 +109,11 @@ export default function CSRDashboard() {
 
   const chartData = sdgChartData.length > 0 ? sdgChartData : defaultSdgData;
 
-  // Engagement funnel data
-  const engagementFunnelData = [
-    { stage: "+", count: "(15,900)", next: "Registered", nextCount: "" },
-    { stage: "Eligible (1,500)", count: "", next: "(1,100)", nextCount: "Retained", final: "650" },
-  ];
+  // Pending admin actions - use real data from API
+  const pendingActions = csrData?.pendingActions || [];
 
-  // Pending admin actions
-  const pendingActions = csrData?.pendingActions || [
-    { type: "Review NGO", orgName: "Green Earth", description: "Pending approval" },
-    { type: "Approve Impact", orgName: "Solarize Africa", description: "Awaiting review" },
-    { type: "AI Flag", orgName: "Project Alpha", description: "Flagged for review" },
-  ];
-
-  // Region connection data for map
-  const regionConnections = [
-    { name: "Northie focpart", color: "#3B82F6" },
-    { name: "Vrorsie neelto/soiken", color: "#3B82F6" },
-    { name: "Hue qoysit", color: "#F97316" },
-    { name: "Pot.upvsilla", color: "#22C55E" },
-  ];
+  // Active challenges from real data
+  const activeChallenges = csrData?.challenges || [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#ffffff' }}>
@@ -337,7 +322,7 @@ export default function CSRDashboard() {
               data-testid="kpi-total-hours"
             >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Total Hours Logged</p>
-              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.totalHours?.toLocaleString() || '12,450'}</p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{(csrData?.totalHours || 0).toLocaleString()}</p>
             </div>
             
             <div 
@@ -357,7 +342,7 @@ export default function CSRDashboard() {
               data-testid="kpi-employees"
             >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Employees Engaged</p>
-              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.activeEmployees || '890'}</p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.activeEmployees || 0}</p>
             </div>
             
             <div 
@@ -377,7 +362,7 @@ export default function CSRDashboard() {
               data-testid="kpi-projects"
             >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Projects Completed</p>
-              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.projectsCompleted || '112'}</p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.projectsCompleted || 0}</p>
             </div>
             
             <div 
@@ -397,7 +382,7 @@ export default function CSRDashboard() {
               data-testid="kpi-sdg-delta"
             >
               <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>SDG Score Delta</p>
-              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>+{csrData?.sdgScoreDelta || '15'}% <span style={{ fontSize: '18px', fontWeight: 'normal', color: '#d1d5db' }}>Q3</span></p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{(csrData?.sdgScoreDelta || 0) >= 0 ? '+' : ''}{csrData?.sdgScoreDelta || 0}% <span style={{ fontSize: '18px', fontWeight: 'normal', color: '#d1d5db' }}>Q3</span></p>
             </div>
           </div>
 

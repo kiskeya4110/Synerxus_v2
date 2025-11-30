@@ -1267,26 +1267,201 @@ export default function CSRDashboard() {
             </div>
 
             {/* Row 2, Col 2: Pending Admin Actions */}
-            <div style={{ 
-              backgroundColor: 'white', 
-              border: '1px solid #e5e7eb', 
-              borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              padding: '16px'
-            }} data-testid="chart-pending-actions">
+            <div 
+              onClick={() => setShowAdminModal(true)}
+              style={{ 
+                backgroundColor: 'white', 
+                border: '1px solid #e5e7eb', 
+                borderRadius: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                padding: '16px',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'}
+              data-testid="chart-pending-actions"
+            >
               <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Pending Admin Actions</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {pendingActions.map((action, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
-                    <ChevronRight style={{ width: '16px', height: '16px', color: '#2563eb' }} />
-                    <span>{action.type}: {action.orgName}</span>
+              {adminActionsData ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '8px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#dc2626' }}>{adminActionsData.reviews.count}</div>
+                      <div style={{ fontSize: '11px', color: '#6b7280' }}>Reviews</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b' }}>{adminActionsData.insights.count}</div>
+                      <div style={{ fontSize: '11px', color: '#6b7280' }}>Insights</div>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f97316' }}>{adminActionsData.flagged.count}</div>
+                      <div style={{ fontSize: '11px', color: '#6b7280' }}>Flagged</div>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  <div style={{ fontSize: '12px', color: '#6b7280', textAlign: 'center', padding: '8px 0', borderTop: '1px solid #e5e7eb' }}>
+                    {adminActionsData.totalActions} total actions • Click to review
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#9ca3af', fontSize: '13px' }}>Loading actions...</div>
+              )}
             </div>
           </div>
         </main>
       </div>
+
+      {/* Admin Actions Modal */}
+      {showAdminModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50
+        }} onClick={() => setShowAdminModal(false)}>
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+              maxWidth: '700px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              padding: '32px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827' }}>Admin Actions</h2>
+              <button 
+                onClick={() => setShowAdminModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+              >
+                <X style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+              </button>
+            </div>
+
+            {/* Tab Navigation */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', borderBottom: '1px solid #e5e7eb', paddingBottom: '12px' }}>
+              {['reviews', 'insights', 'flagged'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setSelectedAdminTab(tab as any)}
+                  style={{
+                    padding: '8px 12px',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    color: selectedAdminTab === tab ? '#1e3a8a' : '#6b7280',
+                    fontWeight: selectedAdminTab === tab ? '600' : '500',
+                    borderBottom: selectedAdminTab === tab ? '2px solid #1e3a8a' : 'none',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)} ({adminActionsData?.[tab]?.count || 0})
+                </button>
+              ))}
+            </div>
+
+            {/* Tab Content */}
+            <div style={{ color: '#374151' }}>
+              {selectedAdminTab === 'reviews' && (
+                <div>
+                  {adminActionsData?.reviews?.items && adminActionsData.reviews.items.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {adminActionsData.reviews.items.map((item: any, idx: number) => (
+                        <div key={idx} style={{ padding: '12px', backgroundColor: '#fef2f2', borderRadius: '6px', borderLeft: '4px solid #dc2626' }}>
+                          <div style={{ fontWeight: '600', color: '#dc2626', marginBottom: '4px' }}>{item.title}</div>
+                          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{item.description}</div>
+                          <div style={{ fontSize: '11px', color: '#9ca3af' }}>Severity: {item.severity}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af', fontSize: '14px' }}>No reviews needed ✓</div>
+                  )}
+                </div>
+              )}
+
+              {selectedAdminTab === 'insights' && (
+                <div>
+                  {adminActionsData?.insights?.items && adminActionsData.insights.items.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {adminActionsData.insights.items.map((item: any, idx: number) => (
+                        <div key={idx} style={{ padding: '12px', backgroundColor: '#fffbeb', borderRadius: '6px', borderLeft: '4px solid #f59e0b' }}>
+                          <div style={{ fontWeight: '600', color: '#f59e0b', marginBottom: '4px' }}>{item.title}</div>
+                          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{item.description}</div>
+                          <div style={{ fontSize: '12px', color: '#059669', marginBottom: '4px' }}>💡 {item.recommendation}</div>
+                          <div style={{ fontSize: '11px', color: '#9ca3af' }}>Severity: {item.severity}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af', fontSize: '14px' }}>No insights available</div>
+                  )}
+                </div>
+              )}
+
+              {selectedAdminTab === 'flagged' && (
+                <div>
+                  {adminActionsData?.flagged?.items && adminActionsData.flagged.items.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {adminActionsData.flagged.items.map((item: any, idx: number) => (
+                        <div key={idx} style={{ padding: '12px', backgroundColor: '#fff7ed', borderRadius: '6px', borderLeft: '4px solid #f97316' }}>
+                          <div style={{ fontWeight: '600', color: '#f97316', marginBottom: '4px' }}>{item.title}</div>
+                          <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>{item.description}</div>
+                          <div style={{ fontSize: '11px', color: '#9ca3af' }}>Severity: {item.severity}</div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af', fontSize: '14px' }}>No flagged items</div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div style={{ marginTop: '20px', padding: '16px 0', borderTop: '1px solid #e5e7eb', display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowAdminModal(false)}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #e5e7eb',
+                  backgroundColor: 'white',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: '#374151'
+                }}
+              >
+                Close
+              </button>
+              <button
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  backgroundColor: '#1e3a8a',
+                  color: 'white',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '500'
+                }}
+              >
+                Review All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

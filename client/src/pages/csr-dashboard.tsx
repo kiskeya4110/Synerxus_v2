@@ -643,8 +643,21 @@ export default function CSRDashboard() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value: number) => [`${value}%`, 'Progress']}
-                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white' }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload[0]) {
+                            const data = payload[0].payload;
+                            return (
+                              <div style={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white', padding: '12px', fontSize: '12px' }}>
+                                <p style={{ margin: '0 0 6px 0', fontWeight: '600' }}>{data.fullName}</p>
+                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Progress: {data.value}%</p>
+                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Hours: {data.hours?.toLocaleString() || 0}</p>
+                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Employees: {data.employees || 0}</p>
+                                <p style={{ margin: '2px 0', color: '#d1d5db' }}>Projects: {data.projects || 0}</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -660,6 +673,7 @@ export default function CSRDashboard() {
                     <div 
                       key={idx}
                       onClick={() => setSelectedSDG(sdg.goal)}
+                      title={`${sdg.fullName}\n${sdg.hours} hours | ${sdg.employees} employees | ${sdg.projects} projects`}
                       style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
@@ -673,7 +687,10 @@ export default function CSRDashboard() {
                       }}
                     >
                       <div style={{ width: '10px', height: '10px', borderRadius: '2px', backgroundColor: sdg.color, flexShrink: 0 }} />
-                      <span style={{ color: '#4b5563', fontWeight: '500' }}>{sdg.name}: {sdg.value}%</span>
+                      <span style={{ color: '#4b5563', fontWeight: '500', fontSize: '10px' }}>
+                        {sdg.name}: {sdg.value}%
+                        <span style={{ fontSize: '9px', color: '#9ca3af', marginLeft: '4px' }}>({sdg.hours}h)</span>
+                      </span>
                     </div>
                   ))}
                 </div>

@@ -27,7 +27,7 @@ interface CSRDashboardData {
 export default function CSRDashboard() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
-  const userId = localStorage.getItem('currentUserId');
+  const userId = localStorage.getItem('currentUserId') || '1';
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
 
@@ -38,7 +38,7 @@ export default function CSRDashboard() {
       if (!response.ok) throw new Error("Failed to fetch CSR dashboard");
       return response.json();
     },
-    enabled: !!userId,
+    enabled: true,
     refetchOnWindowFocus: true,
   });
 
@@ -686,8 +686,8 @@ export default function CSRDashboard() {
                         ? Math.round(sdgMetrics.reduce((sum: number, m: any) => sum + (m.uniqueEmployees || 0), 0) / sdgMetrics.length)
                         : 0;
                       const topSDG = sdgMetrics[0];
-                      const engagementRate = csrData?.activeEmployees > 0 
-                        ? Math.round((csrData?.totalEmployeeHours / (csrData?.activeEmployees * 40)) * 100)
+                      const engagementRate = (csrData?.activeEmployees || 0) > 0 
+                        ? Math.round(((csrData?.totalHours || 0) / ((csrData?.activeEmployees || 1) * 40)) * 100)
                         : 0;
 
                       if (totalHours === 0) {

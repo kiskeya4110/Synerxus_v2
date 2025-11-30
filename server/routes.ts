@@ -5182,6 +5182,9 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   app.get("/api/csr/dashboard", async (req, res) => {
     try {
       const userId = req.query.userId as string;
+      const startDateStr = req.query.startDate as string;
+      const endDateStr = req.query.endDate as string;
+      
       if (!userId) {
         return res.status(400).json({ error: "userId required" });
       }
@@ -5198,9 +5201,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           sdgProgress: {},
           partners: [],
           challenges: [],
-          leaderboard: []
+          leaderboard: [],
+          dateRange: { startDate: startDateStr, endDate: endDateStr }
         });
       }
+
+      // Parse date range for filtering (defaults to all time if not provided)
+      const startDate = startDateStr ? new Date(startDateStr) : new Date(0);
+      const endDate = endDateStr ? new Date(endDateStr) : new Date();
 
       const employeeEngagement = await storage.listEmployeeEngagement?.() || [];
       const csrChallenges = await storage.listCSRChallenges?.() || [];
@@ -5215,20 +5223,32 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const partnerChallenges = csrChallenges.filter((c: any) => c.partnerId === userPartner.id);
       const partnerBudgets = projectBudgetLinks.filter((b: any) => b.partnerId === userPartner.id);
 
-      // Calculate KPIs from real employee engagement data
+      // Apply date filtering to engagement records
+      const filteredEngagement = partnerEngagement.filter((e: any) => {
+        const engagementDate = e.createdAt ? new Date(e.createdAt) : new Date();
+        return engagementDate >= startDate && engagementDate <= endDate;
+      });
+
+      // Apply date filtering to volunteer activities
+      const partnerProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId).filter(Boolean));
+      const filteredVolunteerActivities = volunteerActivities.filter((a: any) => {
+        if (!partnerProjectIds.has(a.projectId)) return false;
+        const activityDate = a.createdAt ? new Date(a.createdAt) : new Date();
+        return activityDate >= startDate && activityDate <= endDate;
+      });
+
+      // Calculate KPIs from real employee engagement data with date filtering
       const totalPartners = 1; // Their own company
-      let activeEmployees = new Set(partnerEngagement.map((e: any) => e.employeeEmail)).size;
-      let totalHours = partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
+      let activeEmployees = new Set(filteredEngagement.map((e: any) => e.employeeEmail)).size;
+      let totalHours = filteredEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
       
       // Add hours from volunteer activities (beyond employee tracking)
-      const partnerProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId).filter(Boolean));
-      const partnerVolunteerActivities = volunteerActivities.filter((a: any) => partnerProjectIds.has(a.projectId));
-      const volunteerActivityHours = partnerVolunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+      const volunteerActivityHours = filteredVolunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
       totalHours += volunteerActivityHours;
       
       // Count unique volunteers from both employee engagement and volunteer activities
-      const employeeIds = new Set(partnerEngagement.map((e: any) => e.employeeEmail));
-      const volunteerIds = new Set(partnerVolunteerActivities.map((a: any) => a.userId));
+      const employeeIds = new Set(filteredEngagement.map((e: any) => e.employeeEmail));
+      const volunteerIds = new Set(filteredVolunteerActivities.map((a: any) => a.userId));
       const totalUniqueEngaged = new Set([...Array.from(employeeIds), ...Array.from(volunteerIds)]).size;
       activeEmployees = totalUniqueEngaged || activeEmployees;
       
@@ -5282,29 +5302,44 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         sdgProgress[sdg].status = 'active';
       });
 
-      // Top employees leaderboard
-      const leaderboard = partnerEngagement
+      // Top employees leaderboard with date filtering and SDG tracking
+      const leaderboard = filteredEngagement
         .sort((a: any, b: any) => (b.hoursVolunteered || 0) - (a.hoursVolunteered || 0))
         .slice(0, 5)
         .map((emp: any, idx: number) => ({
           rank: idx + 1,
           employeeName: emp.employeeName || emp.employeeEmail,
           hours: emp.hoursVolunteered || 0,
-          points: (emp.impactScore || 0) * 10
+          points: (emp.impactScore || 0) * 10,
+          projectId: emp.projectId
         }));
 
-      // Get sidebar data: projects and employees
+      // Get sidebar data: projects and employees (with date filtering)
       const sidebarProjects = partnerBudgets.slice(0, 5).map((b: any) => ({
         id: b.id,
         projectName: b.projectName || 'Project',
         status: b.status || 'active'
       }));
 
-      const sidebarEmployees = partnerEngagement.slice(0, 8).map((e: any) => ({
-        id: e.employeeEmail,
-        name: e.employeeName || e.employeeEmail.split('@')[0],
-        hours: e.hoursVolunteered || 0
-      }));
+      // Get all unique employees for this organization (organization-wide aggregation)
+      const allOrgEmployees = filteredEngagement.reduce((acc: any[], e: any) => {
+        const exists = acc.find((emp: any) => emp.employeeEmail === e.employeeEmail);
+        if (!exists) {
+          acc.push({
+            id: e.employeeEmail,
+            name: e.employeeName || e.employeeEmail.split('@')[0],
+            hours: e.hoursVolunteered || 0,
+            employeeEmail: e.employeeEmail
+          });
+        } else {
+          exists.hours += e.hoursVolunteered || 0;
+        }
+        return acc;
+      }, []);
+
+      const sidebarEmployees = allOrgEmployees
+        .sort((a: any, b: any) => b.hours - a.hours)
+        .slice(0, 8);
 
       // Generate project locations with geocoordinates for map visualization
       const projectLocations = partnerBudgets.map((budget: any, idx: number) => {
@@ -5334,6 +5369,35 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         };
       });
 
+      // Organization-wide SDG contribution tracking
+      const orgwideSDGMetrics: Record<number, any> = {};
+      filteredEngagement.forEach((emp: any) => {
+        if (emp.projectId) {
+          const project = projects.find((p: any) => p.id === emp.projectId);
+          if (project?.primarySdg) {
+            if (!orgwideSDGMetrics[project.primarySdg]) {
+              orgwideSDGMetrics[project.primarySdg] = {
+                sdg: project.primarySdg,
+                totalHours: 0,
+                employeeCount: new Set(),
+                projectCount: new Set()
+              };
+            }
+            orgwideSDGMetrics[project.primarySdg].totalHours += emp.hoursVolunteered || 0;
+            orgwideSDGMetrics[project.primarySdg].employeeCount.add(emp.employeeEmail);
+            orgwideSDGMetrics[project.primarySdg].projectCount.add(emp.projectId);
+          }
+        }
+      });
+
+      // Convert to final format
+      const sdgMetrics = Object.values(orgwideSDGMetrics).map((m: any) => ({
+        sdg: m.sdg,
+        totalHours: m.totalHours,
+        uniqueEmployees: m.employeeCount.size,
+        projectsContributed: m.projectCount.size
+      }));
+
       res.json({
         totalPartners,
         activeEmployees,
@@ -5361,19 +5425,21 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         leaderboard,
         sidebarProjects,
         sidebarEmployees,
-        // Real breakdown data for KPI modals
+        sdgMetrics,
+        dateRange: { startDate: startDateStr || 'all-time', endDate: endDateStr || 'all-time' },
+        // Real breakdown data for KPI modals with date filtering
         kpiBreakdown: {
           hours: {
             total: totalHours,
-            fromEmployeeEngagement: partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
+            fromEmployeeEngagement: filteredEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
             fromVolunteerActivities: volunteerActivityHours,
             averagePerEmployee: activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0,
             economicValue: totalHours * 35
           },
           employees: {
             total: activeEmployees,
-            fromEmployeeEngagement: new Set(partnerEngagement.map((e: any) => e.employeeEmail)).size,
-            fromVolunteerActivities: new Set(partnerVolunteerActivities.map((a: any) => a.userId)).size,
+            fromEmployeeEngagement: new Set(filteredEngagement.map((e: any) => e.employeeEmail)).size,
+            fromVolunteerActivities: new Set(filteredVolunteerActivities.map((a: any) => a.userId)).size,
             totalHoursContributed: totalHours,
             engagementRate: Math.round((activeEmployees / (userPartner.employeeCount || 5000)) * 100)
           },

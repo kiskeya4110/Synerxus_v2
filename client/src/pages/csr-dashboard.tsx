@@ -19,6 +19,8 @@ interface CSRDashboardData {
   partners: Array<{ id: number; companyName: string; employees: number; hours: number; roi: number }>;
   challenges: Array<{ id: number; title: string; sdgGoal: number; progress: number; target: number; status: string }>;
   leaderboard: Array<{ rank: number; employeeName: string; hours: number; points: number }>;
+  sidebarProjects: Array<{ id: number; projectName: string; status: string }>;
+  sidebarEmployees: Array<{ id: string; name: string; hours: number }>;
 }
 
 export default function CSRDashboard() {
@@ -100,34 +102,67 @@ export default function CSRDashboard() {
       </div>
 
       <div className="flex h-[calc(100vh-72px)]">
-        {/* Left Sidebar */}
-        <div className="w-64 bg-slate-900 text-white p-6 border-r border-slate-800">
-          <nav className="space-y-4">
-            <button onClick={() => navigate('/csr-dashboard')} className="w-full flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-800 text-white">
-              <Home className="h-5 w-5" />
-              <span>Dashboard</span>
+        {/* Left Sidebar - Corporation Tracking Menu */}
+        <div className="w-64 bg-slate-900 text-white p-6 border-r border-slate-800 overflow-y-auto">
+          {/* Projects Section */}
+          <div className="mb-8">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              Projects Supporting
+            </h3>
+            <div className="space-y-2">
+              {csrData?.sidebarProjects.map((proj) => (
+                <div key={proj.id} className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer">
+                  <p className="text-sm font-semibold text-white truncate">{proj.projectName}</p>
+                  <p className="text-xs text-slate-400">{proj.status}</p>
+                </div>
+              ))}
+              {!csrData?.sidebarProjects?.length && (
+                <p className="text-xs text-slate-500 italic">No projects yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Employees Section */}
+          <div className="mb-8">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Employee Volunteers ({csrData?.activeEmployees || 0})
+            </h3>
+            <div className="space-y-2">
+              {csrData?.sidebarEmployees.map((emp) => (
+                <div key={emp.id} className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer">
+                  <p className="text-sm font-semibold text-white truncate">{emp.name}</p>
+                  <p className="text-xs text-green-400">{emp.hours} hours</p>
+                </div>
+              ))}
+              {!csrData?.sidebarEmployees?.length && (
+                <p className="text-xs text-slate-500 italic">No employees yet</p>
+              )}
+            </div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="border-t border-slate-700 pt-6">
+            <div className="space-y-3">
+              <div className="px-3 py-2">
+                <p className="text-xs text-slate-400 mb-1">Total Impact</p>
+                <p className="text-lg font-bold text-white">{csrData?.totalImpact?.toLocaleString() || '0'}</p>
+              </div>
+              <div className="px-3 py-2">
+                <p className="text-xs text-slate-400 mb-1">Team Hours</p>
+                <p className="text-lg font-bold text-blue-400">{csrData?.totalHours?.toLocaleString() || '0'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="border-t border-slate-700 pt-6 mt-6 space-y-2">
+            <button onClick={() => navigate('/corporate-partner-profile-settings')} className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 text-sm">
+              <Settings className="h-4 w-4" />
+              Settings
             </button>
-            <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800">
-              <BarChart3 className="h-5 w-5" />
-              <span>Impact Reporting</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800">
-              <Users className="h-5 w-5" />
-              <span>Employee Engagement</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800">
-              <Award className="h-5 w-5" />
-              <span>Project Portfolio</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800">
-              <BarChart3 className="h-5 w-5" />
-              <span>Reports & Exports</span>
-            </button>
-            <button onClick={() => navigate('/corporate-partner-profile-settings')} className="w-full flex items-center gap-3 px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800">
-              <Settings className="h-5 w-5" />
-              <span>Settings</span>
-            </button>
-          </nav>
+          </div>
         </div>
 
         {/* Main Content */}

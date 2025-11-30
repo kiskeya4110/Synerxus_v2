@@ -5137,6 +5137,19 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           points: (emp.impactScore || 0) * 10
         }));
 
+      // Get sidebar data: projects and employees
+      const sidebarProjects = partnerBudgets.slice(0, 5).map((b: any) => ({
+        id: b.id,
+        projectName: b.projectName || 'Project',
+        status: b.status || 'active'
+      }));
+
+      const sidebarEmployees = partnerEngagement.slice(0, 8).map((e: any) => ({
+        id: e.employeeEmail,
+        name: e.employeeName || e.employeeEmail.split('@')[0],
+        hours: e.hoursVolunteered || 0
+      }));
+
       res.json({
         totalPartners,
         activeEmployees,
@@ -5160,7 +5173,9 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           target: c.targetHours || 0,
           status: c.status
         })),
-        leaderboard
+        leaderboard,
+        sidebarProjects,
+        sidebarEmployees
       });
     } catch (err) {
       console.error("Error fetching CSR dashboard:", err);

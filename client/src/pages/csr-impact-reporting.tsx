@@ -185,15 +185,16 @@ export function CSRImpactReporting() {
       </header>
 
       <div style={{ display: "flex", flex: 1 }}>
-        {/* Sidebar */}
+        {/* Sidebar - Dark Navy matching CSR Dashboard */}
         <aside style={{
           width: "20%",
-          backgroundColor: "#f3f4f6",
+          backgroundColor: "#1e3a8a",
+          color: "white",
           padding: "24px",
-          borderRight: "1px solid #e5e7eb",
+          flexShrink: 0,
           overflowY: "auto"
         }}>
-          <nav style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             {[
               { id: "overview", label: "Executive Summary", icon: "📊" },
               { id: "timeseries", label: "Time-Series Analysis", icon: "📈" },
@@ -201,7 +202,7 @@ export function CSRImpactReporting() {
               { id: "sdg", label: "SDG Alignment", icon: "🌍" },
               { id: "benchmarks", label: "Benchmarking", icon: "📍" },
               { id: "compliance", label: "Compliance", icon: "✅" }
-            ].map((tab) => (
+            ].map((tab, index) => (
               <button
                 key={tab.id}
                 onClick={() => setSelectedTab(tab.id)}
@@ -212,9 +213,9 @@ export function CSRImpactReporting() {
                   gap: "12px",
                   padding: "12px 16px",
                   borderRadius: "8px",
-                  backgroundColor: selectedTab === tab.id ? "white" : "transparent",
-                  color: selectedTab === tab.id ? "#1e3a8a" : "#374151",
-                  border: selectedTab === tab.id ? "1px solid #e5e7eb" : "none",
+                  backgroundColor: selectedTab === tab.id ? "rgba(59, 130, 246, 0.2)" : "transparent",
+                  color: selectedTab === tab.id ? "#60a5fa" : "#d1d5db",
+                  border: selectedTab === tab.id ? "1px solid rgba(59, 130, 246, 0.3)" : "none",
                   cursor: "pointer",
                   textAlign: "left",
                   fontWeight: selectedTab === tab.id ? "600" : "500",
@@ -229,7 +230,7 @@ export function CSRImpactReporting() {
         </aside>
 
         {/* Main Content */}
-        <main style={{ flex: 1, padding: "40px", overflowY: "auto", backgroundColor: "#fafafa" }}>
+        <main style={{ flex: 1, padding: "40px", overflowY: "auto", backgroundColor: "#ffffff" }}>
           {selectedTab === "overview" && (
             <div>
               <div style={{ marginBottom: "32px" }}>

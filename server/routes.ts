@@ -1138,7 +1138,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (activity.userId && activity.hours) {
         try {
           const volunteerProfile = await storage.getVolunteerProfileByUserId(activity.userId);
-          console.log(`[CSR Tracking] Activity logged - userId: ${activity.userId}, hours: ${activity.hours}, employerId: ${volunteerProfile?.employerId}`);
           
           if (volunteerProfile?.employerId) {
             // Get user email for employee engagement tracking
@@ -1150,9 +1149,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 ? parseInt(volunteerProfile.employerId) 
                 : volunteerProfile.employerId;
               
-              console.log(`[CSR Tracking] Looking for engagement - partnerId: ${employerIdNum}, email: ${user.email}`);
-              console.log(`[CSR Tracking] Total engagements in DB: ${Array.isArray(allEngagements) ? allEngagements.length : 0}`);
-              
               const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
                 e?.partnerId === employerIdNum &&
                 e?.employeeEmail === user.email
@@ -1160,14 +1156,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
               if (existing) {
                 // Increment hours
-                console.log(`[CSR Tracking] Found existing engagement, updating hours from ${existing.hoursVolunteered} to ${(existing.hoursVolunteered || 0) + activity.hours}`);
                 await storage.updateEmployeeEngagement(existing.id, {
                   hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours,
                   projectId: activity.projectId
                 });
               } else {
                 // Create new employee engagement record with correct partnerId type
-                console.log(`[CSR Tracking] No existing engagement found - creating new record with partnerId: ${employerIdNum}, hours: ${activity.hours}`);
                 await storage.createEmployeeEngagement({
                   partnerId: employerIdNum,
                   employeeEmail: user.email,
@@ -5193,6 +5187,47 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
   // ==================== CSR Dashboard Routes ====================
   
+  // Diagnostic endpoint for CSR Dashboard system verification
+  app.get("/api/csr/diagnostic", async (req, res) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ error: "userId required" });
+      }
+
+      const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+      const profile = volunteerProfiles.find((v: any) => v.userId === parseInt(userId));
+      
+      const employeeEngagement = (await storage.listEmployeeEngagement?.()) || [];
+      const csrPartners = (await storage.listCSRPartners?.()) || [];
+      
+      const userPartner = csrPartners.find((p: any) => p.userId === parseInt(userId));
+      const linkedPartner = profile?.employerId ? csrPartners.find((p: any) => p.id === parseInt(profile.employerId)) : null;
+      
+      const partnerEngagement = employeeEngagement.filter((e: any) => 
+        (userPartner && e?.partnerId === userPartner.id) ||
+        (linkedPartner && e?.partnerId === linkedPartner.id)
+      );
+
+      res.json({
+        user: { id: userId, profile: profile ? { volunteerName: profile.volunteerName, employerId: profile.employerId } : null },
+        asAdmin: userPartner ? { companyName: userPartner.companyName, id: userPartner.id } : null,
+        asEmployee: linkedPartner ? { companyName: linkedPartner.companyName, id: linkedPartner.id } : null,
+        employeeEngagementRecords: partnerEngagement.map((e: any) => ({
+          email: e.employeeEmail,
+          hours: e.hoursVolunteered,
+          partnerId: e.partnerId,
+          projectId: e.projectId
+        })),
+        totalRecords: employeeEngagement.length,
+        totalPartners: csrPartners.length
+      });
+    } catch (err) {
+      console.error("Error fetching CSR diagnostic:", err);
+      res.status(500).json({ error: "Failed to fetch diagnostic data" });
+    }
+  });
+
   // Get CSR Dashboard Summary
   app.get("/api/csr/dashboard", async (req, res) => {
     try {
@@ -5253,13 +5288,6 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const partnerEngagement = (Array.isArray(employeeEngagement) ? employeeEngagement : []).filter((e: any) => e?.partnerId === userPartner?.id);
       const partnerChallenges = (Array.isArray(csrChallenges) ? csrChallenges : []).filter((c: any) => c?.partnerId === userPartner?.id);
       const partnerBudgets = (Array.isArray(projectBudgetLinks) ? projectBudgetLinks : []).filter((b: any) => b?.partnerId === userPartner?.id);
-      
-      console.log(`[CSR Dashboard] Partner: ${userPartner.companyName} (id: ${userPartner.id})`);
-      console.log(`[CSR Dashboard] Employee engagement records found: ${partnerEngagement.length}`);
-      console.log(`[CSR Dashboard] Total engagement records in DB: ${Array.isArray(employeeEngagement) ? employeeEngagement.length : 0}`);
-      if (partnerEngagement.length > 0) {
-        console.log(`[CSR Dashboard] Partner engagement records:`, partnerEngagement.map((e: any) => ({ email: e.employeeEmail, hours: e.hoursVolunteered, partnerId: e.partnerId })));
-      }
 
       // Apply date filtering to engagement records (only if dates provided)
       const filteredEngagement = shouldFilterByDate 

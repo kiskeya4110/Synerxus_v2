@@ -39,15 +39,20 @@ export default function CSRDashboard() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-900">
-        <div className="h-16 bg-slate-900 border-b border-slate-700" />
-        <div className="flex">
-          <div className="w-1/5 bg-slate-900 h-screen" />
-          <div className="w-4/5 bg-gray-100 p-6">
+      <div className="min-h-screen bg-white flex flex-col">
+        <div className="h-16 bg-blue-900 flex-shrink-0" />
+        <div className="flex flex-1">
+          <div className="w-1/5 bg-blue-900 h-screen flex-shrink-0" />
+          <div className="w-4/5 bg-gray-50 p-8">
             <div className="grid grid-cols-4 gap-4 mb-6">
-              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+              {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 bg-slate-200" />)}
             </div>
-            <Skeleton className="h-96" />
+            <div className="grid grid-cols-2 gap-6">
+              <Skeleton className="h-96 bg-slate-200" />
+              <Skeleton className="h-96 bg-slate-200" />
+              <Skeleton className="h-48 bg-slate-200" />
+              <Skeleton className="h-48 bg-slate-200" />
+            </div>
           </div>
         </div>
       </div>
@@ -111,38 +116,38 @@ export default function CSRDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Top Header Bar - Dark Navy */}
-      <header className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+      <header className="bg-blue-900 text-white px-8 py-4 flex items-center justify-between flex-shrink-0">
         {/* Left: Logo */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <div className="text-2xl">✦</div>
-            <span className="text-xl font-semibold tracking-wide">synerxus</span>
+            <div className="text-2xl font-bold text-orange-500">✦</div>
+            <span className="text-lg font-semibold tracking-wide">synerxus</span>
           </div>
         </div>
 
         {/* Center: Company Name */}
-        <div className="flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-gray-400" />
-          <span className="text-lg font-medium">{companyName}</span>
+        <div className="flex items-center gap-2 flex-1 justify-center">
+          <Briefcase className="h-5 w-5 text-gray-300" />
+          <span className="text-base font-medium">{companyName}</span>
         </div>
 
         {/* Right: Date and User */}
         <div className="flex items-center gap-6">
           <span className="text-sm text-gray-300">{currentDate}</span>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center">
-              <span className="text-sm">👤</span>
+            <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
+              <span className="text-xs">👤</span>
             </div>
             <span className="text-sm">Admin {adminName}</span>
           </div>
         </div>
       </header>
 
-      <div className="flex min-h-[calc(100vh-64px)]">
+      <div className="flex flex-1 min-h-[calc(100vh-64px)]">
         {/* Left Sidebar - 1/5 width, Dark Navy */}
-        <aside className="w-1/5 bg-slate-900 text-white p-4">
+        <aside className="w-1/5 bg-blue-900 text-white p-6 flex-shrink-0">
           <nav className="space-y-1">
             <button 
               onClick={() => navigate('/csr-dashboard')}
@@ -192,44 +197,44 @@ export default function CSRDashboard() {
         </aside>
 
         {/* Main Content - 4/5 width */}
-        <main className="w-4/5 p-6 space-y-6">
+        <main className="w-4/5 p-8 space-y-6 bg-gray-50 overflow-y-auto">
           {/* KPI Cards Row - 4 cards in dark navy */}
           <div className="grid grid-cols-4 gap-4">
-            <Card className="bg-slate-900 border-0 text-white" data-testid="kpi-total-hours">
+            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-total-hours">
               <CardContent className="p-5">
-                <p className="text-sm text-gray-400 mb-1">Total Hours Logged</p>
+                <p className="text-xs text-gray-300 mb-2 font-medium">Total Hours Logged</p>
                 <p className="text-3xl font-bold">{csrData?.totalHours?.toLocaleString() || '12,450'}</p>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-900 border-0 text-white" data-testid="kpi-employees">
+            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-employees">
               <CardContent className="p-5">
-                <p className="text-sm text-gray-400 mb-1">Employees Engaged</p>
+                <p className="text-xs text-gray-300 mb-2 font-medium">Employees Engaged</p>
                 <p className="text-3xl font-bold">{csrData?.activeEmployees || '890'}</p>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-900 border-0 text-white" data-testid="kpi-projects">
+            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-projects">
               <CardContent className="p-5">
-                <p className="text-sm text-gray-400 mb-1">Projects Completed</p>
+                <p className="text-xs text-gray-300 mb-2 font-medium">Projects Completed</p>
                 <p className="text-3xl font-bold">{csrData?.projectsCompleted || '112'}</p>
               </CardContent>
             </Card>
             
-            <Card className="bg-slate-900 border-0 text-white" data-testid="kpi-sdg-delta">
+            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-sdg-delta">
               <CardContent className="p-5">
-                <p className="text-sm text-gray-400 mb-1">SDG Score Delta</p>
-                <p className="text-3xl font-bold">+{csrData?.sdgScoreDelta || '15'}% <span className="text-lg font-normal text-gray-400">Q3</span></p>
+                <p className="text-xs text-gray-300 mb-2 font-medium">SDG Score Delta</p>
+                <p className="text-3xl font-bold">+{csrData?.sdgScoreDelta || '15'}% <span className="text-lg font-normal text-gray-300">Q3</span></p>
               </CardContent>
             </Card>
           </div>
 
           {/* Analytics Grid - 2x2 layout */}
-          <div className="grid grid-cols-2 gap-4" style={{ gridTemplateRows: '2fr 1fr' }}>
+          <div className="grid grid-cols-2 gap-6">
             {/* Row 1, Col 1: SDG Alignment Dashboard - Partial Wheel */}
-            <Card className="bg-white border border-gray-200 row-span-1" data-testid="chart-sdg-alignment">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">SDG Alignment Dashboard</CardTitle>
+            <Card className="bg-white border border-gray-200 shadow-sm" data-testid="chart-sdg-alignment">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold text-gray-900">SDG Alignment Dashbnop</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center h-64">
                 <div className="relative w-full h-full flex items-center justify-center">

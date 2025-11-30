@@ -650,11 +650,11 @@ export default function CSRDashboard() {
                             const words = (name || '').split(' ');
                             let label = '';
                             if (words.length === 1) {
-                              label = `${name}\n${entry.payload.value}%`;
+                              label = `${name}\n${entry.value}%`;
                             } else if (words.length === 2) {
-                              label = `${words[0]} ${words[1]}\n${entry.payload.value}%`;
+                              label = `${words[0]} ${words[1]}\n${entry.value}%`;
                             } else {
-                              label = `${words[0]}\n${words.slice(1).join(' ')}\n${entry.payload.value}%`;
+                              label = `${words[0]}\n${words.slice(1).join(' ')}\n${entry.value}%`;
                             }
                             return label;
                           }}

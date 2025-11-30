@@ -100,6 +100,16 @@ export default function CSRDashboard() {
     enabled: isAuthenticated,
   });
 
+  const { data: funnelStageData } = useQuery({
+    queryKey: ["/api/csr/engagement-funnel-stage", userId, selectedFunnelStage],
+    queryFn: async () => {
+      const response = await fetch(`/api/csr/engagement-funnel-stage?userId=${userId}&stage=${selectedFunnelStage}`);
+      if (!response.ok) throw new Error("Failed to fetch stage");
+      return response.json();
+    },
+    enabled: isAuthenticated && selectedFunnelStage !== null,
+  });
+
   // Show loading while checking auth
   if (authLoading) {
     return (

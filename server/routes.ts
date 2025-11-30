@@ -5719,6 +5719,78 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // CSR Engagement Funnel - Get employees for specific stage
+  app.get("/api/csr/engagement-funnel-stage", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      const stage = req.query.stage ? parseInt(req.query.stage as string) : null;
+      if (!userId || stage === null) return res.status(400).json({ error: "User ID and stage required" });
+
+      const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+      if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
+
+      const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+      const users = await storage.listUsers?.() || [];
+
+      const employeeUserIds = new Set(
+        volunteerProfiles
+          .filter((vp: any) => vp.employerId === userPartner.id)
+          .map((vp: any) => vp.userId)
+      );
+
+      const employeesActiveHours: Record<number, number> = {};
+      volunteerActivities.forEach((activity: any) => {
+        if (employeeUserIds.has(activity.userId)) {
+          employeesActiveHours[activity.userId] = (employeesActiveHours[activity.userId] || 0) + (activity.hours || 0);
+        }
+      });
+
+      let employees: any[] = [];
+      
+      if (stage === 0) {
+        // All employees
+        employees = Array.from(employeeUserIds).map((uid: any) => {
+          const profile = volunteerProfiles.find((vp: any) => vp.userId === uid);
+          const user = users.find((u: any) => u.id === uid);
+          return { userId: uid, name: user?.displayName || profile?.volunteerName || 'Unknown', hours: employeesActiveHours[uid] || 0, status: 'linked' };
+        });
+      } else if (stage === 1) {
+        // Started activity (≥1 activity)
+        employees = Array.from(employeeUserIds)
+          .filter((uid: any) => employeesActiveHours[uid] > 0)
+          .map((uid: any) => {
+            const profile = volunteerProfiles.find((vp: any) => vp.userId === uid);
+            const user = users.find((u: any) => u.id === uid);
+            return { userId: uid, name: user?.displayName || profile?.volunteerName || 'Unknown', hours: employeesActiveHours[uid] || 0, status: 'started' };
+          });
+      } else if (stage === 2) {
+        // Active (≥4 hours)
+        employees = Array.from(employeeUserIds)
+          .filter((uid: any) => employeesActiveHours[uid] >= 4)
+          .map((uid: any) => {
+            const profile = volunteerProfiles.find((vp: any) => vp.userId === uid);
+            const user = users.find((u: any) => u.id === uid);
+            return { userId: uid, name: user?.displayName || profile?.volunteerName || 'Unknown', hours: employeesActiveHours[uid] || 0, status: 'active' };
+          });
+      } else if (stage === 3) {
+        // Top performers (≥25 hours)
+        employees = Array.from(employeeUserIds)
+          .filter((uid: any) => employeesActiveHours[uid] >= 25)
+          .map((uid: any) => {
+            const profile = volunteerProfiles.find((vp: any) => vp.userId === uid);
+            const user = users.find((u: any) => u.id === uid);
+            return { userId: uid, name: user?.displayName || profile?.volunteerName || 'Unknown', hours: employeesActiveHours[uid] || 0, status: 'topPerformer' };
+          });
+      }
+
+      res.json({ employees: employees.sort((a, b) => b.hours - a.hours) });
+    } catch (err) {
+      console.error("Error fetching funnel stage:", err);
+      res.status(500).json({ error: "Failed to fetch stage" });
+    }
+  });
+
   // CSR Pending Admin Actions - Reviews, Insights, Flagging
   app.get("/api/csr/pending-actions", async (req, res) => {
     try {

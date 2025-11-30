@@ -42,6 +42,7 @@ import CSRDashboard from "@/pages/csr-dashboard";
 import VolunteerDashboard from "@/pages/volunteer-dashboard";
 import OrganizationDashboard from "@/pages/organization-dashboard";
 import { CSRImpactReporting } from "@/pages/csr-impact-reporting";
+import ProjectPortfolio from "@/pages/project-portfolio";
 import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
 import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
 import NotFound from "@/pages/not-found";
@@ -162,6 +163,7 @@ export default function App() {
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
           <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
+          <Route path="/project-portfolio" component={ProjectPortfolio} />
           <Route component={LayoutRoute} />
         </Router>
       </OnboardingProvider>

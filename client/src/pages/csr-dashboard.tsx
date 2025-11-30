@@ -661,6 +661,7 @@ export default function CSRDashboard() {
               <span>Employee Engagement</span>
             </button>
             <button
+              onClick={() => navigate("/project-portfolio")}
               style={{
                 width: "100%",
                 display: "flex",

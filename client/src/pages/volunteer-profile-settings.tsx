@@ -154,6 +154,10 @@ const formSchema = insertVolunteerSchema
       .optional()
       .or(z.literal("")),
     languages: z.array(z.string()).optional(),
+    // Employer linking
+    employerId: z.string().optional(),
+    departmentName: z.string().optional(),
+    jobTitleAtCompany: z.string().optional(),
     // Existing fields
     skills: z
       .array(skillProficiencySchema)
@@ -846,6 +850,16 @@ export default function VolunteerProfileSettings() {
   });
   const { data: existingProfile, isLoading: loadingProfile } = profileQuery;
 
+  // Fetch list of CSR partners for employer selection
+  const { data: csrPartners = [] } = useQuery<any[]>({
+    queryKey: ["/api/csr/partners/list"],
+    queryFn: async () => {
+      const response = await fetch("/api/csr/partners/list");
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
   // Form setup - use defaultValues only, let effects populate from profile
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -856,6 +870,9 @@ export default function VolunteerProfileSettings() {
       yearsOfExperience: "",
       linkedinProfile: "",
       languages: [],
+      employerId: "",
+      departmentName: "",
+      jobTitleAtCompany: "",
       skills: [],
       interests: [],
       location: "",
@@ -891,6 +908,9 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: existingProfile.yearsOfExperience || "",
         linkedinProfile: existingProfile.linkedinProfile || "",
         languages: existingProfile.languages || [],
+        employerId: existingProfile.employerId || "",
+        departmentName: existingProfile.departmentName || "",
+        jobTitleAtCompany: existingProfile.jobTitleAtCompany || "",
         skills: parseSkillsFromDb(existingProfile.skills),
         interests: existingProfile.interests || [],
         location: existingProfile.location || "",
@@ -1265,15 +1285,79 @@ export default function VolunteerProfileSettings() {
               
               {/* Employer Linking - Optional for employees of CSR partners */}
               <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Corporate Employer Link (Optional)</h3>
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
+                  Corporate Employer Link (Optional)
+                </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   If you work for a company with a CSR program, link your account to track your impact through their initiatives.
                 </p>
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <p className="text-sm text-blue-900 dark:text-blue-100">
-                    Coming soon: Corporate employer directory for seamless linking. For now, ask your HR department for a link code.
-                  </p>
-                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="employerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company/Employer</FormLabel>
+                      <Select value={field.value || ""} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-employer">
+                            <SelectValue placeholder="Select your employer company" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">No employer selected</SelectItem>
+                          {csrPartners.map((partner: any) => (
+                            <SelectItem key={partner.id} value={partner.id.toString()}>
+                              {partner.companyName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select your employer to link your volunteer hours to their CSR program
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                {form.watch("employerId") && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="departmentName"
+                      render={({ field }) => (
+                        <FormItem className="mt-4">
+                          <FormLabel>Department (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="e.g., Engineering, HR, Marketing"
+                              data-testid="input-department"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="jobTitleAtCompany"
+                      render={({ field }) => (
+                        <FormItem className="mt-4">
+                          <FormLabel>Job Title (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="e.g., Senior Software Engineer"
+                              data-testid="input-job-title"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
               </div>
 
               <div className="flex gap-3 pt-4">

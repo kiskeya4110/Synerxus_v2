@@ -5082,13 +5082,23 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const partnerChallenges = csrChallenges.filter((c: any) => c.partnerId === userPartner.id);
       const partnerBudgets = projectBudgetLinks.filter((b: any) => b.partnerId === userPartner.id);
 
-      // Calculate KPIs
+      // Calculate KPIs from real employee engagement data
       const totalPartners = 1; // Their own company
       const activeEmployees = new Set(partnerEngagement.map((e: any) => e.employeeEmail)).size;
       const totalHours = partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
       const totalRoi = partnerBudgets.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
-      const projectsCompleted = partnerBudgets.length;
-      const sdgScoreDelta = 15; // Q3 performance delta
+      const projectsCompleted = partnerBudgets.filter((b: any) => b.actualRoi && b.actualRoi > 0).length;
+      
+      // Calculate SDG Score Delta from the most recent challenges
+      let sdgScoreDelta = 0;
+      if (partnerChallenges.length > 0) {
+        const activeChallenge = partnerChallenges.find((c: any) => c.status === 'active');
+        if (activeChallenge) {
+          sdgScoreDelta = Math.round(
+            ((activeChallenge.currentHours || 0) / (activeChallenge.targetHours || 1)) * 100
+          ) - 50; // Baseline 50% for comparison
+        }
+      }
 
       // SDG Progress - combine partner's primary SDGs with challenge progress
       const sdgProgress: Record<number, any> = {};
@@ -5221,6 +5231,17 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       res.json(userPartners.length > 0 ? userPartners[0] : null);
     } catch (err) {
       console.error("Error fetching CSR partners:", err);
+      res.status(500).json({ error: "Failed to fetch partners" });
+    }
+  });
+
+  // List all CSR Partners for volunteer employer selection
+  app.get("/api/csr/partners/list", async (req, res) => {
+    try {
+      const allPartners = await storage.listCSRPartners?.() || [];
+      res.json(allPartners);
+    } catch (err) {
+      console.error("Error fetching CSR partners list:", err);
       res.status(500).json({ error: "Failed to fetch partners" });
     }
   });

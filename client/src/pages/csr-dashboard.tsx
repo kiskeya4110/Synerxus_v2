@@ -568,7 +568,7 @@ export default function CSRDashboard() {
         <aside
           style={{
             width: "20%",
-            backgroundColor: "#1e3a8a",
+            backgroundColor: "#111827",
             color: "white",
             padding: "24px",
             flexShrink: 0,
@@ -584,9 +584,9 @@ export default function CSRDashboard() {
                 gap: "12px",
                 padding: "12px 16px",
                 borderRadius: "8px",
-                backgroundColor: "rgba(59, 130, 246, 0.2)",
-                color: "#60a5fa",
-                border: "1px solid rgba(59, 130, 246, 0.3)",
+                backgroundColor: "#1f2937",
+                color: "#f97316",
+                border: "1px solid #374151",
                 fontWeight: "500",
                 cursor: "pointer",
                 textAlign: "left",
@@ -610,6 +610,15 @@ export default function CSRDashboard() {
                 border: "none",
                 cursor: "pointer",
                 textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
               }}
               data-testid="nav-impact-report"
             >
@@ -626,12 +635,25 @@ export default function CSRDashboard() {
                 padding: "12px 16px",
                 borderRadius: "8px",
                 backgroundColor:
-                  selectedMainTab === "engagement" ? "#374151" : "transparent",
+                  selectedMainTab === "engagement" ? "#1f2937" : "transparent",
                 color: selectedMainTab === "engagement" ? "#f97316" : "#d1d5db",
                 border: "none",
                 cursor: "pointer",
                 textAlign: "left",
                 fontWeight: selectedMainTab === "engagement" ? "600" : "500",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (selectedMainTab !== "engagement") {
+                  e.currentTarget.style.backgroundColor = "#1f2937";
+                  e.currentTarget.style.color = "#ffffff";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedMainTab !== "engagement") {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#d1d5db";
+                }
               }}
               data-testid="nav-engagement"
             >
@@ -651,6 +673,15 @@ export default function CSRDashboard() {
                 border: "none",
                 cursor: "pointer",
                 textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
               }}
               data-testid="nav-project-portfolio"
             >
@@ -670,6 +701,15 @@ export default function CSRDashboard() {
                 border: "none",
                 cursor: "pointer",
                 textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
               }}
               data-testid="nav-reports"
             >
@@ -690,6 +730,15 @@ export default function CSRDashboard() {
                 border: "none",
                 cursor: "pointer",
                 textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
               }}
               data-testid="nav-settings"
             >

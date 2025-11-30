@@ -5667,6 +5667,191 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // CSR Engagement Funnel - Employee progression stages
+  app.get("/api/csr/engagement-funnel", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (!userId) return res.status(400).json({ error: "User ID required" });
+
+      const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+      if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
+
+      const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+
+      const employeeUserIds = new Set(
+        volunteerProfiles
+          .filter((vp: any) => vp.employerId === userPartner.id)
+          .map((vp: any) => vp.userId)
+      );
+
+      const totalEmployees = employeeUserIds.size;
+      const employeesWithActivity = new Set();
+      const employeesActiveHours: Record<number, number> = {};
+
+      volunteerActivities.forEach((activity: any) => {
+        if (employeeUserIds.has(activity.userId)) {
+          employeesWithActivity.add(activity.userId);
+          employeesActiveHours[activity.userId] = (employeesActiveHours[activity.userId] || 0) + (activity.hours || 0);
+        }
+      });
+
+      const startedCount = employeesWithActivity.size;
+      const activeCount = Array.from(employeesWithActivity).filter((uid: any) => employeesActiveHours[uid] >= 4).length;
+      const topPerformersCount = Array.from(employeesWithActivity).filter((uid: any) => employeesActiveHours[uid] >= 25).length;
+
+      res.json({
+        funnel: [
+          { stage: 'Total Employees', count: totalEmployees, description: 'Linked to CSR partner' },
+          { stage: 'Started Activity', count: startedCount, description: '≥1 activity logged', dropoff: totalEmployees > 0 ? Math.round((1 - startedCount / totalEmployees) * 100) : 0 },
+          { stage: 'Active Contributors', count: activeCount, description: '≥4 hours contributed', dropoff: startedCount > 0 ? Math.round((1 - activeCount / startedCount) * 100) : 0 },
+          { stage: 'Top Performers', count: topPerformersCount, description: '≥25 hours contributed', dropoff: activeCount > 0 ? Math.round((1 - topPerformersCount / activeCount) * 100) : 0 }
+        ],
+        conversion: {
+          toActive: totalEmployees > 0 ? Math.round((startedCount / totalEmployees) * 100) : 0,
+          toEngaged: startedCount > 0 ? Math.round((activeCount / startedCount) * 100) : 0,
+          toTopPerformers: activeCount > 0 ? Math.round((topPerformersCount / activeCount) * 100) : 0
+        }
+      });
+    } catch (err) {
+      console.error("Error fetching engagement funnel:", err);
+      res.status(500).json({ error: "Failed to fetch funnel" });
+    }
+  });
+
+  // CSR Pending Admin Actions - Reviews, Insights, Flagging
+  app.get("/api/csr/pending-actions", async (req, res) => {
+    try {
+      const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
+      if (!userId) return res.status(400).json({ error: "User ID required" });
+
+      const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+      if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
+
+      const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+      const users = await storage.listUsers?.() || [];
+
+      const employeeUserIds = new Set(
+        volunteerProfiles
+          .filter((vp: any) => vp.employerId === userPartner.id)
+          .map((vp: any) => vp.userId)
+      );
+
+      // Reviews: Name mismatches and incomplete profiles
+      const reviews: any[] = [];
+      const now = new Date();
+      Array.from(employeeUserIds).forEach((userId: any) => {
+        const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
+        const user = users.find((u: any) => u.id === userId);
+        if (profile && user && profile.volunteerName !== user.displayName) {
+          reviews.push({
+            type: 'name_mismatch',
+            title: 'Name Mismatch',
+            description: `${user.displayName} ≠ ${profile.volunteerName}`,
+            severity: 'medium',
+            employeeId: userId,
+            employeeName: user.displayName
+          });
+        }
+        if (profile && !profile.skills) {
+          reviews.push({
+            type: 'incomplete_skills',
+            title: 'Incomplete Profile',
+            description: `${user.displayName} - Missing skills`,
+            severity: 'low',
+            employeeId: userId,
+            employeeName: user.displayName
+          });
+        }
+      });
+
+      // Insights: Disengaged employees or low performers
+      const insights: any[] = [];
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const employeeActivityMap: Record<number, any[]> = {};
+
+      volunteerActivities.forEach((activity: any) => {
+        if (employeeUserIds.has(activity.userId)) {
+          if (!employeeActivityMap[activity.userId]) employeeActivityMap[activity.userId] = [];
+          employeeActivityMap[activity.userId].push(activity);
+        }
+      });
+
+      Array.from(employeeUserIds).forEach((userId: any) => {
+        const activities = employeeActivityMap[userId] || [];
+        const recentActivities = activities.filter((a: any) => new Date(a.createdAt || now) > thirtyDaysAgo);
+        const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
+        const user = users.find((u: any) => u.id === userId);
+
+        if (recentActivities.length === 0 && activities.length > 0) {
+          insights.push({
+            type: 'disengaged',
+            title: 'Disengaged Employee',
+            description: `${user?.displayName} - No activity in 30 days`,
+            severity: 'high',
+            employeeId: userId,
+            employeeName: user?.displayName,
+            recommendation: 'Send re-engagement email'
+          });
+        } else if (activities.length > 0) {
+          const totalHours = activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+          if (totalHours < 4) {
+            insights.push({
+              type: 'low_performer',
+              title: 'Low Engagement',
+              description: `${user?.displayName} - Only ${totalHours} total hours`,
+              severity: 'medium',
+              employeeId: userId,
+              employeeName: user?.displayName,
+              recommendation: 'Suggest nearby opportunities'
+            });
+          }
+        }
+      });
+
+      // Flagging: Data integrity and profile issues
+      const flagged: any[] = [];
+      volunteerProfiles.forEach((profile: any) => {
+        if (employeeUserIds.has(profile.userId)) {
+          const completenessFields = [profile.volunteerName, profile.skills, profile.primarySdg, profile.availability];
+          const filledFields = completenessFields.filter(f => f).length;
+          const completeness = (filledFields / completenessFields.length) * 100;
+
+          if (completeness < 70) {
+            flagged.push({
+              type: 'low_completeness',
+              title: 'Low Profile Completeness',
+              description: `${profile.volunteerName} - ${Math.round(completeness)}% complete`,
+              severity: 'low',
+              employeeId: profile.userId,
+              employeeName: profile.volunteerName
+            });
+          }
+        }
+      });
+
+      res.json({
+        reviews: {
+          count: reviews.length,
+          items: reviews.slice(0, 3)
+        },
+        insights: {
+          count: insights.length,
+          items: insights.slice(0, 3)
+        },
+        flagged: {
+          count: flagged.length,
+          items: flagged.slice(0, 3)
+        },
+        totalActions: reviews.length + insights.length + flagged.length
+      });
+    } catch (err) {
+      console.error("Error fetching pending actions:", err);
+      res.status(500).json({ error: "Failed to fetch actions" });
+    }
+  });
+
   // Create CSR Partner
   app.post("/api/csr/partners", async (req, res) => {
     try {

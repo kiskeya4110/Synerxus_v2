@@ -634,33 +634,27 @@ export default function CSRDashboard() {
                         paddingAngle={2}
                         dataKey="value"
                         label={(props: any) => {
-                          const { name, value, cx, cy, midAngle } = props;
-                          const radius = props.innerRadius + (props.outerRadius - props.innerRadius) * 0.5;
-                          const x = cx + radius * Math.cos((midAngle * Math.PI) / 180);
-                          const y = cy + radius * Math.sin((midAngle * Math.PI) / 180);
-                          
-                          // Wrap long names to fit in pie sections
-                          const words = (name || '').split(' ');
-                          let text = '';
-                          if (words.length === 1) {
-                            text = `${name} ${value}%`;
-                          } else if (words.length === 2) {
-                            text = `${words[0]} ${words[1]}\n${value}%`;
-                          } else {
-                            text = `${words[0]}\n${value}%`;
-                          }
+                          const { name, value, cx, cy, midAngle, outerRadius } = props;
+                          // Position labels outside the pie with extra radius
+                          const RADIAN = Math.PI / 180;
+                          const labelRadius = outerRadius + 50;
+                          const x = cx + labelRadius * Math.cos(-midAngle * RADIAN);
+                          const y = cy + labelRadius * Math.sin(-midAngle * RADIAN);
                           
                           return (
-                            <text x={x} y={y} fill="white" textAnchor="middle" fontSize="11" fontWeight="bold">
-                              {text.split('\n').map((line, idx) => (
-                                <tspan x={x} dy={idx === 0 ? 0 : 13} key={idx}>
-                                  {line}
-                                </tspan>
-                              ))}
+                            <text 
+                              x={x} 
+                              y={y} 
+                              fill="#1e293b" 
+                              textAnchor={x > cx ? "start" : "end"} 
+                              fontSize="12" 
+                              fontWeight="600"
+                            >
+                              {name} {value}%
                             </text>
                           );
                         }}
-                        labelLine={false}
+                        labelLine={true}
                         onClick={(data) => setSelectedSDG(data.goal)}
                       >
                         {chartData.map((entry, index) => (

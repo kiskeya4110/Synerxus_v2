@@ -11,6 +11,29 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
+interface SDGEmployee {
+  name: string;
+  email: string;
+  hours: number;
+  projectId: number;
+  projectName: string;
+}
+
+interface SDGProject {
+  id: number;
+  name: string;
+  hours: number;
+}
+
+interface SDGMetric {
+  sdg: number;
+  totalHours: number;
+  uniqueEmployees: number;
+  projectsContributed: number;
+  employees?: SDGEmployee[];
+  projects?: SDGProject[];
+}
+
 interface CSRDashboardData {
   totalPartners: number;
   activeEmployees: number;
@@ -19,7 +42,7 @@ interface CSRDashboardData {
   projectsCompleted: number;
   sdgScoreDelta: number;
   sdgProgress: Record<number, { goal: number; name: string; color: string; progress: number; status?: string }>;
-  sdgMetrics: Array<{ sdg: number; totalHours: number; uniqueEmployees: number; projectsContributed: number }>;
+  sdgMetrics: SDGMetric[];
   partners: Array<{ id: number; companyName: string; employees: number; hours: number; roi: number }>;
   challenges: Array<{ id: number; title: string; sdgGoal: number; progress: number; target: number; status: string }>;
   leaderboard: Array<{ rank: number; employeeName: string; hours: number; points: number }>;
@@ -756,6 +779,225 @@ export default function CSRDashboard() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* SDG Detail Modal */}
+          {selectedSDG && (
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
+            }} onClick={() => setSelectedSDG(null)}>
+              <div 
+                style={{
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+                  maxWidth: '600px',
+                  width: '90%',
+                  maxHeight: '80vh',
+                  overflowY: 'auto',
+                  padding: '24px'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {(() => {
+                  const selectedMetric = sdgMetrics.find((m: SDGMetric) => m.sdg === selectedSDG);
+                  const sdgColor = getSDGColor(selectedSDG);
+                  
+                  return (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ 
+                            width: '48px', 
+                            height: '48px', 
+                            borderRadius: '10px', 
+                            backgroundColor: sdgColor, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '20px',
+                            fontWeight: 'bold'
+                          }}>
+                            {selectedSDG}
+                          </div>
+                          <div>
+                            <h2 style={{ fontSize: '20px', fontWeight: 'bold', color: '#111827', margin: 0 }}>
+                              {getSDGName(selectedSDG)}
+                            </h2>
+                            <p style={{ fontSize: '14px', color: '#6b7280', margin: '2px 0 0 0' }}>
+                              {getSDGFullName(selectedSDG)}
+                            </p>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedSDG(null)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                        >
+                          <X style={{ width: '24px', height: '24px', color: '#6b7280' }} />
+                        </button>
+                      </div>
+
+                      {/* Summary Stats */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+                        <div style={{ backgroundColor: '#f0fdf4', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#166534', margin: 0 }}>
+                            {selectedMetric?.totalHours || 0}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#15803d', margin: '2px 0 0 0' }}>Total Hours</p>
+                        </div>
+                        <div style={{ backgroundColor: '#eff6ff', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#1e40af', margin: 0 }}>
+                            {selectedMetric?.uniqueEmployees || 0}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#1d4ed8', margin: '2px 0 0 0' }}>Volunteers</p>
+                        </div>
+                        <div style={{ backgroundColor: '#fef3c7', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                          <p style={{ fontSize: '24px', fontWeight: 'bold', color: '#92400e', margin: 0 }}>
+                            {selectedMetric?.projectsContributed || 0}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#b45309', margin: '2px 0 0 0' }}>Projects</p>
+                        </div>
+                      </div>
+
+                      {/* Employees Section */}
+                      <div style={{ marginBottom: '20px' }}>
+                        <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Users style={{ width: '16px', height: '16px' }} />
+                          Contributing Employees
+                        </h3>
+                        <div style={{ backgroundColor: '#f9fafb', borderRadius: '8px', padding: '12px' }}>
+                          {selectedMetric?.employees && selectedMetric.employees.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {selectedMetric.employees.map((emp, idx) => (
+                                <div 
+                                  key={emp.email} 
+                                  style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center',
+                                    padding: '10px 12px',
+                                    backgroundColor: 'white',
+                                    borderRadius: '6px',
+                                    border: '1px solid #e5e7eb'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{ 
+                                      width: '32px', 
+                                      height: '32px', 
+                                      borderRadius: '50%', 
+                                      backgroundColor: sdgColor,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: 'white',
+                                      fontSize: '12px',
+                                      fontWeight: 'bold'
+                                    }}>
+                                      {idx + 1}
+                                    </div>
+                                    <div>
+                                      <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{emp.name}</p>
+                                      <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>{emp.projectName}</p>
+                                    </div>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <p style={{ fontSize: '14px', fontWeight: 'bold', color: sdgColor, margin: 0 }}>{emp.hours} hrs</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: 0 }}>
+                              No employee data available
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Projects Section */}
+                      <div>
+                        <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Briefcase style={{ width: '16px', height: '16px' }} />
+                          Contributing Projects
+                        </h3>
+                        <div style={{ backgroundColor: '#f9fafb', borderRadius: '8px', padding: '12px' }}>
+                          {selectedMetric?.projects && selectedMetric.projects.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {selectedMetric.projects.map((proj) => (
+                                <div 
+                                  key={proj.id} 
+                                  style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'space-between', 
+                                    alignItems: 'center',
+                                    padding: '10px 12px',
+                                    backgroundColor: 'white',
+                                    borderRadius: '6px',
+                                    border: '1px solid #e5e7eb'
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{ 
+                                      width: '32px', 
+                                      height: '32px', 
+                                      borderRadius: '6px', 
+                                      backgroundColor: '#f3f4f6',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}>
+                                      <Briefcase style={{ width: '16px', height: '16px', color: '#6b7280' }} />
+                                    </div>
+                                    <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{proj.name}</p>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <p style={{ fontSize: '14px', fontWeight: 'bold', color: '#1e3a8a', margin: 0 }}>{proj.hours} hrs</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={{ fontSize: '13px', color: '#6b7280', textAlign: 'center', margin: 0 }}>
+                              No project data available
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Economic Impact */}
+                      <div style={{ 
+                        marginTop: '20px', 
+                        padding: '12px', 
+                        backgroundColor: '#f0fdf4', 
+                        borderRadius: '8px',
+                        borderLeft: `4px solid ${sdgColor}`
+                      }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#166534', margin: '0 0 4px 0' }}>
+                          💰 Economic Impact
+                        </p>
+                        <p style={{ fontSize: '18px', fontWeight: 'bold', color: '#166534', margin: 0 }}>
+                          ${((selectedMetric?.totalHours || 0) * 35).toLocaleString()}
+                        </p>
+                        <p style={{ fontSize: '11px', color: '#15803d', margin: '2px 0 0 0' }}>
+                          Based on $35/hour volunteer value
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}

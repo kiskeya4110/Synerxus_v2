@@ -5420,22 +5420,53 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
                 sdg: sdgToUse,
                 totalHours: 0,
                 employeeCount: new Set(),
-                projectCount: new Set()
+                projectCount: new Set(),
+                employeeDetails: [],
+                projectDetails: []
               };
             }
             orgwideSDGMetrics[sdgToUse].totalHours += emp.hoursVolunteered || 0;
             orgwideSDGMetrics[sdgToUse].employeeCount.add(emp.employeeEmail);
             orgwideSDGMetrics[sdgToUse].projectCount.add(emp.projectId);
+            
+            // Track employee details for this SDG
+            const existingEmployee = orgwideSDGMetrics[sdgToUse].employeeDetails.find(
+              (e: any) => e.email === emp.employeeEmail
+            );
+            if (existingEmployee) {
+              existingEmployee.hours += emp.hoursVolunteered || 0;
+            } else {
+              orgwideSDGMetrics[sdgToUse].employeeDetails.push({
+                name: emp.employeeName || emp.employeeEmail.split('@')[0],
+                email: emp.employeeEmail,
+                hours: emp.hoursVolunteered || 0,
+                projectId: emp.projectId,
+                projectName: project?.title || 'Project'
+              });
+            }
+            
+            // Track project details
+            if (!orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === emp.projectId)) {
+              orgwideSDGMetrics[sdgToUse].projectDetails.push({
+                id: emp.projectId,
+                name: project?.title || 'Project',
+                hours: 0
+              });
+            }
+            const projDetail = orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === emp.projectId);
+            if (projDetail) projDetail.hours += emp.hoursVolunteered || 0;
           }
         }
       });
 
-      // Convert to final format
+      // Convert to final format with detailed employee and project info
       const sdgMetrics = Object.values(orgwideSDGMetrics).map((m: any) => ({
         sdg: m.sdg,
         totalHours: m.totalHours,
         uniqueEmployees: m.employeeCount.size,
-        projectsContributed: m.projectCount.size
+        projectsContributed: m.projectCount.size,
+        employees: m.employeeDetails.sort((a: any, b: any) => b.hours - a.hours),
+        projects: m.projectDetails.sort((a: any, b: any) => b.hours - a.hours)
       }));
 
       // SDG Progress - build from challenges and employee engagement metrics

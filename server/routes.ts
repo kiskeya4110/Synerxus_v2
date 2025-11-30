@@ -3550,35 +3550,8 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
         jobTitleAtCompany
       });
 
-      // If employer info is provided, link to employee engagement for CSR dashboard
-      if (employerId) {
-        try {
-          const volunteerId = (await storage.getVolunteerProfileByUserId(userId))?.id;
-          if (volunteerId) {
-            const existing = await storage.listEmployeeEngagement?.() || [];
-            const linkedRecord = existing.find((e: any) => 
-              e.partnerId === parseInt(employerId) && 
-              e.employeeEmail === user.email
-            );
-            
-            if (!linkedRecord) {
-              // Create new employee engagement record
-              await storage.createEmployeeEngagement?.({
-                partnerId: parseInt(employerId),
-                employeeEmail: user.email,
-                employeeName: displayName || volunteerName,
-                hoursVolunteered: 0,
-                engagementType: 'vto',
-                impactScore: 0,
-                completionStatus: 'in-progress'
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error linking employee engagement:", err);
-          // Non-critical, don't fail the request
-        }
-      }
+      // Note: employerId is stored in the profile but NOT automatically linked to employee engagement.
+      // Employees must manually assign work to their corporation via the dashboard/work assignment feature.
       
       // Update legacy volunteer matching profile (best effort, outside transaction)
       if (user.email) {

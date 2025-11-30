@@ -116,283 +116,377 @@ export default function CSRDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#ffffff' }}>
       {/* Top Header Bar - Dark Navy */}
-      <header className="bg-blue-900 text-white px-8 py-4 flex items-center justify-between flex-shrink-0">
+      <header style={{ 
+        backgroundColor: '#1e3a8a', 
+        color: 'white', 
+        padding: '16px 32px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between',
+        flexShrink: 0,
+        height: '64px'
+      }}>
         {/* Left: Logo */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-orange-500">✦</div>
-            <span className="text-lg font-semibold tracking-wide">synerxus</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#f97316' }}>✦</span>
+          <span style={{ fontSize: '18px', fontWeight: '600', letterSpacing: '0.025em' }}>synerxus</span>
         </div>
 
         {/* Center: Company Name */}
-        <div className="flex items-center gap-2 flex-1 justify-center">
-          <Briefcase className="h-5 w-5 text-gray-300" />
-          <span className="text-base font-medium">{companyName}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'center' }}>
+          <Briefcase style={{ width: '20px', height: '20px', color: '#d1d5db' }} />
+          <span style={{ fontSize: '16px', fontWeight: '500' }}>{companyName}</span>
         </div>
 
         {/* Right: Date and User */}
-        <div className="flex items-center gap-6">
-          <span className="text-sm text-gray-300">{currentDate}</span>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gray-600 rounded-full flex items-center justify-center">
-              <span className="text-xs">👤</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          <span style={{ fontSize: '14px', color: '#d1d5db' }}>{currentDate}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ 
+              width: '24px', 
+              height: '24px', 
+              backgroundColor: '#4b5563', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center' 
+            }}>
+              <span style={{ fontSize: '12px' }}>👤</span>
             </div>
-            <span className="text-sm">Admin {adminName}</span>
+            <span style={{ fontSize: '14px' }}>Admin {adminName}</span>
           </div>
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-[calc(100vh-64px)]">
-        {/* Left Sidebar - 1/5 width, Dark Navy */}
-        <aside className="w-1/5 bg-blue-900 text-white p-6 flex-shrink-0">
-          <nav className="space-y-1">
+      <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 64px)' }}>
+        {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
+        <aside style={{ 
+          width: '20%', 
+          backgroundColor: '#1e3a8a', 
+          color: 'white', 
+          padding: '24px',
+          flexShrink: 0
+        }}>
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <button 
               onClick={() => navigate('/csr-dashboard')}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 font-medium"
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                backgroundColor: 'rgba(59, 130, 246, 0.2)', 
+                color: '#60a5fa', 
+                border: '1px solid rgba(59, 130, 246, 0.3)', 
+                fontWeight: '500',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
               data-testid="nav-dashboard"
             >
-              <Home className="h-5 w-5" />
+              <Home style={{ width: '20px', height: '20px' }} />
               <span>Dashboard</span>
             </button>
             <button 
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-800 transition-colors"
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                backgroundColor: 'transparent', 
+                color: '#d1d5db', 
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
               data-testid="nav-impact-report"
             >
-              <BarChart3 className="h-5 w-5" />
+              <BarChart3 style={{ width: '20px', height: '20px' }} />
               <span>Impact Reporting</span>
             </button>
             <button 
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-800 transition-colors"
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                backgroundColor: 'transparent', 
+                color: '#d1d5db', 
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
               data-testid="nav-engagement"
             >
-              <Users className="h-5 w-5" />
+              <Users style={{ width: '20px', height: '20px' }} />
               <span>Employee Engagement</span>
             </button>
             <button 
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-800 transition-colors"
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                backgroundColor: 'transparent', 
+                color: '#d1d5db', 
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
               data-testid="nav-project-portfolio"
             >
-              <Briefcase className="h-5 w-5" />
+              <Briefcase style={{ width: '20px', height: '20px' }} />
               <span>Project Portfolio</span>
             </button>
             <button 
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-800 transition-colors"
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                backgroundColor: 'transparent', 
+                color: '#d1d5db', 
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
               data-testid="nav-reports"
             >
-              <FileText className="h-5 w-5" />
+              <FileText style={{ width: '20px', height: '20px' }} />
               <span>Reports & Exports</span>
             </button>
             <button 
               onClick={() => navigate('/corporate-partner-profile-settings')}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-800 transition-colors"
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '12px', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                backgroundColor: 'transparent', 
+                color: '#d1d5db', 
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
               data-testid="nav-settings"
             >
-              <Settings className="h-5 w-5" />
+              <Settings style={{ width: '20px', height: '20px' }} />
               <span>Settings</span>
             </button>
           </nav>
         </aside>
 
-        {/* Main Content - 4/5 width */}
-        <main className="w-4/5 p-8 space-y-6 bg-gray-50 overflow-y-auto">
+        {/* Main Content - 4/5 width (80%) */}
+        <main style={{ 
+          width: '80%', 
+          padding: '24px', 
+          backgroundColor: '#f9fafb', 
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '24px'
+        }}>
           {/* KPI Cards Row - 4 cards in dark navy */}
-          <div className="grid grid-cols-4 gap-4">
-            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-total-hours">
-              <CardContent className="p-5">
-                <p className="text-xs text-gray-300 mb-2 font-medium">Total Hours Logged</p>
-                <p className="text-3xl font-bold">{csrData?.totalHours?.toLocaleString() || '12,450'}</p>
-              </CardContent>
-            </Card>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+            <div style={{ 
+              backgroundColor: '#1e3a8a', 
+              color: 'white', 
+              padding: '20px', 
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }} data-testid="kpi-total-hours">
+              <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Total Hours Logged</p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.totalHours?.toLocaleString() || '12,450'}</p>
+            </div>
             
-            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-employees">
-              <CardContent className="p-5">
-                <p className="text-xs text-gray-300 mb-2 font-medium">Employees Engaged</p>
-                <p className="text-3xl font-bold">{csrData?.activeEmployees || '890'}</p>
-              </CardContent>
-            </Card>
+            <div style={{ 
+              backgroundColor: '#1e3a8a', 
+              color: 'white', 
+              padding: '20px', 
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }} data-testid="kpi-employees">
+              <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Employees Engaged</p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.activeEmployees || '890'}</p>
+            </div>
             
-            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-projects">
-              <CardContent className="p-5">
-                <p className="text-xs text-gray-300 mb-2 font-medium">Projects Completed</p>
-                <p className="text-3xl font-bold">{csrData?.projectsCompleted || '112'}</p>
-              </CardContent>
-            </Card>
+            <div style={{ 
+              backgroundColor: '#1e3a8a', 
+              color: 'white', 
+              padding: '20px', 
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }} data-testid="kpi-projects">
+              <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>Projects Completed</p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>{csrData?.projectsCompleted || '112'}</p>
+            </div>
             
-            <Card className="bg-blue-900 border-0 text-white shadow-md" data-testid="kpi-sdg-delta">
-              <CardContent className="p-5">
-                <p className="text-xs text-gray-300 mb-2 font-medium">SDG Score Delta</p>
-                <p className="text-3xl font-bold">+{csrData?.sdgScoreDelta || '15'}% <span className="text-lg font-normal text-gray-300">Q3</span></p>
-              </CardContent>
-            </Card>
+            <div style={{ 
+              backgroundColor: '#1e3a8a', 
+              color: 'white', 
+              padding: '20px', 
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }} data-testid="kpi-sdg-delta">
+              <p style={{ fontSize: '12px', color: '#d1d5db', marginBottom: '8px', fontWeight: '500' }}>SDG Score Delta</p>
+              <p style={{ fontSize: '30px', fontWeight: 'bold' }}>+{csrData?.sdgScoreDelta || '15'}% <span style={{ fontSize: '18px', fontWeight: 'normal', color: '#d1d5db' }}>Q3</span></p>
+            </div>
           </div>
 
           {/* Analytics Grid - 2x2 layout */}
-          <div className="grid grid-cols-2 gap-6">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
             {/* Row 1, Col 1: SDG Alignment Dashboard - Partial Wheel */}
-            <Card className="bg-white border border-gray-200 shadow-sm" data-testid="chart-sdg-alignment">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold text-gray-900">SDG Alignment Dashbnop</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center justify-center h-64">
-                <div className="relative w-full h-full flex items-center justify-center">
-                  {/* SDG Partial Wheel Chart */}
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chartData}
-                        cx="50%"
-                        cy="50%"
-                        startAngle={180}
-                        endAngle={-180}
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={2}
-                        dataKey="value"
-                        label={({ name, value }) => `${value}%`}
-                        labelLine={false}
-                      >
-                        {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        formatter={(value: number) => [`${value}%`, 'Progress']}
-                        contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  {/* Center label */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-slate-900">SDG %</p>
-                      <p className="text-lg text-gray-500">18%</p>
-                    </div>
-                  </div>
+            <div style={{ 
+              backgroundColor: 'white', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              padding: '16px'
+            }} data-testid="chart-sdg-alignment">
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>SDG Alignment Dashboard</h3>
+              <div style={{ height: '256px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      cx="50%"
+                      cy="50%"
+                      startAngle={180}
+                      endAngle={-180}
+                      innerRadius={60}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                      label={({ value }) => `${value}%`}
+                      labelLine={false}
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip 
+                      formatter={(value: number) => [`${value}%`, 'Progress']}
+                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px', color: 'white' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                  <p style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b' }}>SDG %</p>
+                  <p style={{ fontSize: '16px', color: '#6b7280' }}>18%</p>
                 </div>
-                {/* SDG Labels around the chart */}
-                <div className="absolute top-4 left-4 text-xs text-gray-600">
-                  <p>SDG 4: Quality</p>
-                  <p>22%</p>
-                </div>
-                <div className="absolute top-4 right-4 text-xs text-gray-600">
-                  <p>SDG 4</p>
-                  <p>19%</p>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Row 1, Col 2: Geographic Impact by Region - World Map */}
-            <Card className="bg-white border border-gray-200 row-span-1" data-testid="chart-geographic-impact">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Geographic Impact by Region</CardTitle>
-              </CardHeader>
-              <CardContent className="h-64 relative">
-                {/* Navy World Map Placeholder */}
-                <div className="w-full h-48 bg-slate-800 rounded-lg relative overflow-hidden">
-                  {/* Simplified world map silhouette */}
-                  <svg viewBox="0 0 400 200" className="w-full h-full opacity-60">
-                    {/* North America */}
-                    <path d="M50,40 Q70,30 90,35 L110,50 Q130,60 120,80 L100,90 Q80,85 60,70 Z" fill="#4B5563" />
-                    {/* South America */}
-                    <path d="M100,100 Q110,110 105,140 L95,160 Q85,155 90,130 Z" fill="#4B5563" />
-                    {/* Europe */}
-                    <path d="M180,35 Q200,30 210,40 L215,60 Q205,65 190,55 Z" fill="#4B5563" />
-                    {/* Africa */}
-                    <path d="M190,70 Q210,65 220,85 L215,120 Q200,125 185,110 Z" fill="#4B5563" />
-                    {/* Asia */}
-                    <path d="M230,30 Q280,25 320,40 L330,70 Q310,90 270,80 L240,60 Z" fill="#4B5563" />
-                    {/* Australia */}
-                    <path d="M300,120 Q320,115 330,130 L325,145 Q310,150 300,140 Z" fill="#4B5563" />
-                    
-                    {/* Connection lines from HQ */}
-                    <circle cx="200" cy="50" r="4" fill="#F97316" /> {/* HQ */}
-                    <line x1="200" y1="50" x2="80" y2="60" stroke="#3B82F6" strokeWidth="1" strokeDasharray="4" />
-                    <line x1="200" y1="50" x2="280" y2="50" stroke="#F97316" strokeWidth="1" strokeDasharray="4" />
-                    <line x1="200" y1="50" x2="200" y2="100" stroke="#22C55E" strokeWidth="1" strokeDasharray="4" />
-                    <line x1="200" y1="50" x2="310" y2="130" stroke="#3B82F6" strokeWidth="1" strokeDasharray="4" />
-                    
-                    {/* Project dots */}
-                    <circle cx="80" cy="60" r="3" fill="#3B82F6" />
-                    <circle cx="280" cy="50" r="3" fill="#F97316" />
-                    <circle cx="200" cy="100" r="3" fill="#22C55E" />
-                    <circle cx="310" cy="130" r="3" fill="#3B82F6" />
-                  </svg>
+            <div style={{ 
+              backgroundColor: 'white', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              padding: '16px'
+            }} data-testid="chart-geographic-impact">
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Geographic Impact by Region</h3>
+              <div style={{ height: '192px', backgroundColor: '#1e293b', borderRadius: '8px', position: 'relative', overflow: 'hidden' }}>
+                <svg viewBox="0 0 400 200" style={{ width: '100%', height: '100%', opacity: 0.6 }}>
+                  <path d="M50,40 Q70,30 90,35 L110,50 Q130,60 120,80 L100,90 Q80,85 60,70 Z" fill="#4B5563" />
+                  <path d="M100,100 Q110,110 105,140 L95,160 Q85,155 90,130 Z" fill="#4B5563" />
+                  <path d="M180,35 Q200,30 210,40 L215,60 Q205,65 190,55 Z" fill="#4B5563" />
+                  <path d="M190,70 Q210,65 220,85 L215,120 Q200,125 185,110 Z" fill="#4B5563" />
+                  <path d="M230,30 Q280,25 320,40 L330,70 Q310,90 270,80 L240,60 Z" fill="#4B5563" />
+                  <path d="M300,120 Q320,115 330,130 L325,145 Q310,150 300,140 Z" fill="#4B5563" />
+                  <circle cx="200" cy="50" r="4" fill="#F97316" />
+                  <line x1="200" y1="50" x2="80" y2="60" stroke="#3B82F6" strokeWidth="1" strokeDasharray="4" />
+                  <line x1="200" y1="50" x2="280" y2="50" stroke="#F97316" strokeWidth="1" strokeDasharray="4" />
+                  <line x1="200" y1="50" x2="200" y2="100" stroke="#22C55E" strokeWidth="1" strokeDasharray="4" />
+                  <line x1="200" y1="50" x2="310" y2="130" stroke="#3B82F6" strokeWidth="1" strokeDasharray="4" />
+                  <circle cx="80" cy="60" r="3" fill="#3B82F6" />
+                  <circle cx="280" cy="50" r="3" fill="#F97316" />
+                  <circle cx="200" cy="100" r="3" fill="#22C55E" />
+                  <circle cx="310" cy="130" r="3" fill="#3B82F6" />
+                </svg>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '12px', justifyContent: 'center', fontSize: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3B82F6' }}></div>
+                  <span style={{ color: '#4b5563' }}>Northie focpart</span>
                 </div>
-                
-                {/* Legend */}
-                <div className="flex flex-wrap gap-4 mt-3 justify-center text-xs">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-gray-600">Northie focpart</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                    <span className="text-gray-600">Vrorsie neelto/soiken</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                    <span className="text-gray-600">Hue qoysit</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                    <span className="text-gray-600">Pot.upvsilla</span>
-                  </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#3B82F6' }}></div>
+                  <span style={{ color: '#4b5563' }}>Vrorsie neelto/soiken</span>
                 </div>
-              </CardContent>
-            </Card>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#F97316' }}></div>
+                  <span style={{ color: '#4b5563' }}>Hue qoysit</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22C55E' }}></div>
+                  <span style={{ color: '#4b5563' }}>Pot.upvsilla</span>
+                </div>
+              </div>
+            </div>
 
             {/* Row 2, Col 1: Employee Engagement Funnel */}
-            <Card className="bg-white border border-gray-200" data-testid="chart-employee-funnel">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Employee Engagement Funnel</CardTitle>
-              </CardHeader>
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between text-sm">
-                  {/* Funnel visualization */}
-                  <div className="flex items-center gap-2 flex-1">
-                    <div className="flex items-center gap-1">
-                      <span className="text-lg font-bold">+</span>
-                      <span className="text-gray-500">(15,900)</span>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span>Registered</span>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span>1+ Project</span>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span className="font-semibold">890</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm mt-3">
-                  <div className="flex items-center gap-2 flex-1">
-                    <span>Eligible (1,500)</span>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span>(1,100)</span>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span>Retained</span>
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                    <span className="font-semibold">650</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div style={{ 
+              backgroundColor: 'white', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              padding: '16px'
+            }} data-testid="chart-employee-funnel">
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Employee Engagement Funnel</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '18px', fontWeight: 'bold' }}>+</span>
+                <span style={{ color: '#6b7280' }}>(15,900)</span>
+                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                <span>Registered</span>
+                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                <span>1+ Project</span>
+                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                <span style={{ fontWeight: '600' }}>890</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', marginTop: '12px', flexWrap: 'wrap' }}>
+                <span>Eligible (1,500)</span>
+                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                <span>(1,100)</span>
+                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                <span>Retained</span>
+                <ChevronRight style={{ width: '16px', height: '16px', color: '#9ca3af' }} />
+                <span style={{ fontWeight: '600' }}>650</span>
+              </div>
+            </div>
 
             {/* Row 2, Col 2: Pending Admin Actions */}
-            <Card className="bg-white border border-gray-200" data-testid="chart-pending-actions">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-semibold">Pending Admin Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="py-2 space-y-2">
+            <div style={{ 
+              backgroundColor: 'white', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '8px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              padding: '16px'
+            }} data-testid="chart-pending-actions">
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Pending Admin Actions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {pendingActions.map((action, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-sm">
-                    <ChevronRight className="h-4 w-4 text-blue-600" />
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px' }}>
+                    <ChevronRight style={{ width: '16px', height: '16px', color: '#2563eb' }} />
                     <span>{action.type}: {action.orgName}</span>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </main>
       </div>

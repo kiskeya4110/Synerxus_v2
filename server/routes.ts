@@ -5180,6 +5180,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const employeeEngagement = await storage.listEmployeeEngagement?.() || [];
       const csrChallenges = await storage.listCSRChallenges?.() || [];
       const projectBudgetLinks = await storage.listProjectBudgetLinks?.() || [];
+      const projects = await storage.listProjects?.() || [];
+      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
+      const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+      const organizations = await storage.listOrganizations?.() || [];
 
       // Filter data for this partner only
       const partnerEngagement = employeeEngagement.filter((e: any) => e.partnerId === userPartner.id);
@@ -5188,8 +5192,21 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       // Calculate KPIs from real employee engagement data
       const totalPartners = 1; // Their own company
-      const activeEmployees = new Set(partnerEngagement.map((e: any) => e.employeeEmail)).size;
-      const totalHours = partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
+      let activeEmployees = new Set(partnerEngagement.map((e: any) => e.employeeEmail)).size;
+      let totalHours = partnerEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
+      
+      // Add hours from volunteer activities (beyond employee tracking)
+      const partnerProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId).filter(Boolean));
+      const partnerVolunteerActivities = volunteerActivities.filter((a: any) => partnerProjectIds.has(a.projectId));
+      const volunteerActivityHours = partnerVolunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+      totalHours += volunteerActivityHours;
+      
+      // Count unique volunteers from both employee engagement and volunteer activities
+      const employeeIds = new Set(partnerEngagement.map((e: any) => e.employeeEmail));
+      const volunteerIds = new Set(partnerVolunteerActivities.map((a: any) => a.userId));
+      const totalUniqueEngaged = new Set([...Array.from(employeeIds), ...Array.from(volunteerIds)]).size;
+      activeEmployees = totalUniqueEngaged || activeEmployees;
+      
       const totalRoi = partnerBudgets.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
       const projectsCompleted = partnerBudgets.filter((b: any) => b.actualRoi && b.actualRoi > 0).length;
       

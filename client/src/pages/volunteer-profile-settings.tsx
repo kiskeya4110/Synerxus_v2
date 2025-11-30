@@ -200,6 +200,21 @@ const formSchema = insertVolunteerSchema
 
 type FormData = z.infer<typeof formSchema>;
 type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
+type SkillProficiency = z.infer<typeof skillProficiencySchema>;
+
+// Parse skills from database format "Skill Name (75%)" to {name, proficiency}
+const parseSkillsFromDb = (skills: any): SkillProficiency[] => {
+  if (!skills || !Array.isArray(skills)) return [];
+  return skills.map((skill: string) => {
+    // Handle format like "Teaching (89%)"
+    const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
+    if (match) {
+      return { name: match[1].trim(), proficiency: parseInt(match[2], 10) };
+    }
+    // Handle plain string format without proficiency
+    return { name: skill, proficiency: 50 }; // Default proficiency for legacy data
+  });
+};
 
 // Custom hooks for form operations
 const useFormOperations = (form: any) => {
@@ -876,7 +891,7 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: existingProfile.yearsOfExperience || "",
         linkedinProfile: existingProfile.linkedinProfile || "",
         languages: existingProfile.languages || [],
-        skills: existingProfile.skills || [],
+        skills: parseSkillsFromDb(existingProfile.skills),
         interests: existingProfile.interests || [],
         location: existingProfile.location || "",
         sdgGoals: existingProfile.preferredSdgs || [],
@@ -957,7 +972,7 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: profileData.yearsOfExperience || "",
         linkedinProfile: profileData.linkedinProfile || "",
         languages: profileData.languages || [],
-        skills: profileData.skills || [],
+        skills: parseSkillsFromDb(profileData.skills),
         interests: profileData.interests || [],
         location: profileData.location || "",
         sdgGoals: profileData.preferredSdgs || [],

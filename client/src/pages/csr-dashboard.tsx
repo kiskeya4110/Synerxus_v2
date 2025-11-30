@@ -6,7 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { sdgGoals, getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 interface CSRDashboardData {
   totalPartners: number;
@@ -798,61 +801,73 @@ export default function CSRDashboard() {
               </div>
             </div>
 
-            {/* Row 1, Col 2: Geographic Impact by Region - Project Map */}
+            {/* Row 1, Col 2: Geographic Impact by Region - Interactive Map */}
             <div style={{ 
               backgroundColor: 'white', 
               border: '1px solid #e5e7eb', 
               borderRadius: '8px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              padding: '16px'
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column'
             }} data-testid="chart-geographic-impact">
               <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <MapPin style={{ width: '16px', height: '16px' }} />
                 Geographic Impact by Region
               </h3>
-              <div style={{ height: '300px', borderRadius: '8px', overflow: 'hidden', position: 'relative', backgroundColor: '#f0f4f8' }}>
-                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: '16px', gap: '12px' }}>
-                  {(csrData?.projectLocations || []).length > 0 ? (
-                    csrData?.projectLocations?.map((project) => {
+              <div style={{ flex: 1, borderRadius: '8px', overflow: 'hidden', position: 'relative', backgroundColor: '#f0f4f8', minHeight: '300px' }}>
+                {(csrData?.projectLocations || []).length > 0 ? (
+                  <MapContainer 
+                    center={[20, 0]} 
+                    zoom={2} 
+                    style={{ width: '100%', height: '100%' }}
+                    data-testid="geographic-map"
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; OpenStreetMap contributors'
+                    />
+                    {csrData?.projectLocations?.map((project) => {
                       const statusColor = project.status === 'active' ? '#1e3a8a' : project.status === 'completed' ? '#22c55e' : '#f97316';
+                      
+                      // Create custom icon for each marker
+                      const customIcon = L.divIcon({
+                        html: `<div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background-color: ${statusColor}; color: white; font-weight: bold; font-size: 14px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                          ${project.employees}
+                        </div>`,
+                        className: 'custom-marker',
+                        iconSize: [40, 40],
+                        iconAnchor: [20, 20],
+                        popupAnchor: [0, -20]
+                      });
+
                       return (
-                        <div 
-                        key={project.id}
-                        onClick={() => setSelectedKPI(`project-${project.id}`)}
-                        style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '12px', 
-                          backgroundColor: 'white', 
-                          padding: '12px', 
-                          borderRadius: '6px', 
-                          border: `2px solid ${statusColor}`,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          transform: selectedKPI === `project-${project.id}` ? 'scale(1.02)' : 'scale(1)',
-                          boxShadow: selectedKPI === `project-${project.id}` ? '0 4px 12px rgba(0,0,0,0.1)' : 'none'
-                        }}
-                      >
-                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: statusColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '12px', flexShrink: 0 }}>
-                            {project.employees}
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '12px', fontWeight: '600', color: '#111827', margin: '0 0 4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.name}</p>
-                            <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>{project.region}</p>
-                          </div>
-                          <div style={{ textAlign: 'right', fontSize: '11px', color: '#4b5563', flexShrink: 0 }}>
-                            <div>{project.hours.toLocaleString()}h</div>
-                            <div style={{ color: '#9ca3af' }}>{project.status}</div>
-                          </div>
-                        </div>
+                        <Marker 
+                          key={project.id} 
+                          position={[project.lat, project.lng]}
+                          icon={customIcon}
+                          data-testid={`map-marker-${project.id}`}
+                        >
+                          <Popup>
+                            <div style={{ fontSize: '12px', minWidth: '200px' }}>
+                              <p style={{ fontWeight: '600', margin: '0 0 4px 0', color: '#111827' }}>{project.name}</p>
+                              <p style={{ margin: '2px 0', color: '#6b7280' }}>📍 {project.region}</p>
+                              <p style={{ margin: '2px 0', color: '#6b7280' }}>👥 {project.employees} employee{project.employees !== 1 ? 's' : ''}</p>
+                              <p style={{ margin: '2px 0', color: '#6b7280' }}>⏱️ {project.hours.toLocaleString()} hours</p>
+                              <p style={{ margin: '4px 0 0 0', padding: '4px 0 0 0', borderTop: '1px solid #e5e7eb', color: '#1e3a8a', fontWeight: '600', textTransform: 'capitalize' }}>
+                                Status: {project.status}
+                              </p>
+                            </div>
+                          </Popup>
+                        </Marker>
                       );
-                    })
-                  ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af', fontSize: '13px' }}>
-                      No project locations mapped yet
-                    </div>
-                  )}
-                </div>
+                    })}
+                  </MapContainer>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af', fontSize: '13px' }}>
+                    No project locations mapped yet
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '12px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

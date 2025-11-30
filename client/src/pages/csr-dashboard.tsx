@@ -128,34 +128,37 @@ export default function CSRDashboard() {
         flexShrink: 0,
         height: '64px'
       }}>
-        {/* Left: Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* Left: Synerxus Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 'fit-content' }}>
           <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#f97316' }}>✦</span>
           <span style={{ fontSize: '18px', fontWeight: '600', letterSpacing: '0.025em' }}>synerxus</span>
         </div>
 
-        {/* Center: Company Name */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'center' }}>
-          <Briefcase style={{ width: '20px', height: '20px', color: '#d1d5db' }} />
-          <span style={{ fontSize: '16px', fontWeight: '500' }}>{companyName}</span>
+        {/* Center: CSR Dashboard Title with Company Name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, justifyContent: 'center' }}>
+          <span style={{ fontSize: '16px', fontWeight: '600', color: '#e5e7eb' }}>CSR Dashboard</span>
+          <span style={{ fontSize: '16px', color: '#9ca3af' }}>•</span>
+          <Briefcase style={{ width: '18px', height: '18px', color: '#d1d5db' }} />
+          <span style={{ fontSize: '16px', fontWeight: '500', color: '#d1d5db' }}>{companyName}</span>
         </div>
 
-        {/* Right: Date and User */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        {/* Right: Date and Admin User */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', minWidth: 'fit-content' }}>
           <span style={{ fontSize: '14px', color: '#d1d5db' }}>{currentDate}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ 
-              width: '24px', 
-              height: '24px', 
-              backgroundColor: '#4b5563', 
+              width: '28px', 
+              height: '28px', 
+              backgroundColor: '#374151', 
               borderRadius: '50%', 
               display: 'flex', 
               alignItems: 'center', 
-              justifyContent: 'center' 
+              justifyContent: 'center',
+              fontSize: '16px'
             }}>
-              <span style={{ fontSize: '12px' }}>👤</span>
+              👤
             </div>
-            <span style={{ fontSize: '14px' }}>Admin {adminName}</span>
+            <span style={{ fontSize: '14px', color: '#d1d5db' }}>Admin {adminName}</span>
           </div>
         </div>
       </header>

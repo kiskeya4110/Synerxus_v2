@@ -1152,7 +1152,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (existing) {
                 // Increment hours
                 await storage.updateEmployeeEngagement(existing.id, {
-                  hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours
+                  hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours,
+                  projectId: activity.projectId
                 });
               } else {
                 // Create new employee engagement record
@@ -1160,11 +1161,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   partnerId: volunteerProfile.employerId,
                   employeeEmail: user.email,
                   employeeName: volunteerProfile.volunteerName || user.displayName,
+                  projectId: activity.projectId,
                   hoursVolunteered: activity.hours,
                   engagementType: 'vto',
                   impactScore: 0,
                   completionStatus: 'in-progress'
                 });
+              }
+
+              // **SDG-Specific Tracking**: Track hours against corporation's SDG progress
+              if (activity.projectId) {
+                try {
+                  const project = await storage.getProject(activity.projectId);
+                  if (project?.primarySdg) {
+                    // Find or create CSR challenge for this partner-SDG combination
+                    const allChallenges = await storage.listCSRChallenges?.() || [];
+                    const partnerChallenges = allChallenges.filter((c: any) => c.partnerId === volunteerProfile.employerId && c.sdgGoal === project.primarySdg);
+                    
+                    if (partnerChallenges.length > 0) {
+                      // Update the first matching active challenge
+                      const activeChallenge = partnerChallenges.find((c: any) => c.status === 'active') || partnerChallenges[0];
+                      await storage.updateCSRChallenge?.(activeChallenge.id, {
+                        currentHours: (activeChallenge.currentHours || 0) + activity.hours
+                      });
+                    }
+                  }
+                } catch (sdgErr) {
+                  console.error("Error updating SDG-specific hours for challenge:", sdgErr);
+                  // Non-critical
+                }
               }
             }
           }

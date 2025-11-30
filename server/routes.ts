@@ -5307,20 +5307,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           })
         : volunteerActivities.filter((a: any) => partnerProjectIds.has(a.projectId));
 
-      // Calculate KPIs from real employee engagement data with date filtering
+      // Calculate KPIs from ONLY employee engagement data with date filtering
       const totalPartners = 1; // Their own company
-      let activeEmployees = new Set(filteredEngagement.map((e: any) => e.employeeEmail)).size;
-      let totalHours = filteredEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
-      
-      // Add hours from volunteer activities (beyond employee tracking)
-      const volunteerActivityHours = filteredVolunteerActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-      totalHours += volunteerActivityHours;
-      
-      // Count unique volunteers from both employee engagement and volunteer activities
-      const employeeIds = new Set(filteredEngagement.map((e: any) => e.employeeEmail));
-      const volunteerIds = new Set(filteredVolunteerActivities.map((a: any) => a.userId));
-      const totalUniqueEngaged = new Set([...Array.from(employeeIds), ...Array.from(volunteerIds)]).size;
-      activeEmployees = totalUniqueEngaged || activeEmployees;
+      const activeEmployees = new Set(filteredEngagement.map((e: any) => e.employeeEmail)).size;
+      const totalHours = filteredEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0);
       
       const totalRoi = partnerBudgets.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
       const projectsCompleted = partnerBudgets.filter((b: any) => b.actualRoi && b.actualRoi > 0).length;
@@ -5497,19 +5487,16 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         sidebarEmployees,
         sdgMetrics,
         dateRange: { startDate: startDateStr || 'all-time', endDate: endDateStr || 'all-time' },
-        // Real breakdown data for KPI modals with date filtering
+        // Real breakdown data for KPI modals with date filtering - EMPLOYEE ENGAGEMENT ONLY
         kpiBreakdown: {
           hours: {
             total: totalHours,
-            fromEmployeeEngagement: filteredEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
-            fromVolunteerActivities: volunteerActivityHours,
+            directEmployeeHours: filteredEngagement.reduce((sum: number, e: any) => sum + (e.hoursVolunteered || 0), 0),
             averagePerEmployee: activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0,
             economicValue: totalHours * 35
           },
           employees: {
             total: activeEmployees,
-            fromEmployeeEngagement: new Set(filteredEngagement.map((e: any) => e.employeeEmail)).size,
-            fromVolunteerActivities: new Set(filteredVolunteerActivities.map((a: any) => a.userId)).size,
             totalHoursContributed: totalHours,
             engagementRate: Math.round((activeEmployees / (userPartner.employeeCount || 5000)) * 100)
           },

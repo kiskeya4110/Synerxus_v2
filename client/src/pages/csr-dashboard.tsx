@@ -16,6 +16,7 @@ interface CSRDashboardData {
   projectsCompleted: number;
   sdgScoreDelta: number;
   sdgProgress: Record<number, { goal: number; name: string; color: string; progress: number; status?: string }>;
+  sdgMetrics: Array<{ sdg: number; totalHours: number; uniqueEmployees: number; projectsContributed: number }>;
   partners: Array<{ id: number; companyName: string; employees: number; hours: number; roi: number }>;
   challenges: Array<{ id: number; title: string; sdgGoal: number; progress: number; target: number; status: string }>;
   leaderboard: Array<{ rank: number; employeeName: string; hours: number; points: number }>;
@@ -71,29 +72,39 @@ export default function CSRDashboard() {
   });
   const adminName = user?.displayName || "Sarah Chen";
 
-  // SDG Chart Data with real SDG colors
-  const sdgChartData = Object.values(csrData?.sdgProgress || {})
-    .filter(sdg => sdg.status === 'committed' || sdg.status === 'active')
-    .slice(0, 8)
-    .map(sdg => {
+  // Calculate SDG percentages based on real employee contribution data
+  const sdgMetrics = csrData?.sdgMetrics || [];
+  const totalSDGHours = sdgMetrics.reduce((sum: number, metric: any) => sum + (metric.totalHours || 0), 0);
+  
+  // Build SDG chart data from real metrics
+  const sdgChartData = sdgMetrics
+    .map(metric => {
+      const percentage = totalSDGHours > 0 
+        ? Math.round((metric.totalHours / totalSDGHours) * 100)
+        : 0;
       return {
-        name: getSDGName(sdg.goal),
-        fullName: getSDGFullName(sdg.goal),
-        value: sdg.progress || 20,
-        color: getSDGColor(sdg.goal),
-        goal: sdg.goal
+        name: getSDGName(metric.sdg),
+        fullName: getSDGFullName(metric.sdg),
+        value: Math.max(5, percentage), // Min 5% for visibility in pie chart
+        color: getSDGColor(metric.sdg),
+        goal: metric.sdg,
+        hours: metric.totalHours,
+        employees: metric.uniqueEmployees,
+        projects: metric.projectsContributed
       };
-    });
+    })
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8);
 
   // Default SDG data if none exists
   const defaultSdgData = [
-    { name: "SDG 4", fullName: "Quality Education", value: 19, color: "#C5192D", goal: 4 },
-    { name: "Climate Action", fullName: "Climate Action", value: 29, color: "#3F7E44", goal: 13 },
-    { name: "SDG Ecore", fullName: "Life on Land", value: 18, color: "#56C02B", goal: 15 },
-    { name: "SDG 13", fullName: "Climate Action", value: 18, color: "#3F7E44", goal: 13 },
-    { name: "Climate Action", fullName: "Climate Action", value: 18, color: "#3F7E44", goal: 13 },
-    { name: "SDG 4: Quality", fullName: "Quality Education", value: 22, color: "#C5192D", goal: 4 },
-    { name: "SDG 13", fullName: "Climate Action", value: 22, color: "#3F7E44", goal: 13 },
+    { name: "SDG 4", fullName: "Quality Education", value: 19, color: "#C5192D", goal: 4, hours: 0, employees: 0, projects: 0 },
+    { name: "Climate Action", fullName: "Climate Action", value: 29, color: "#3F7E44", goal: 13, hours: 0, employees: 0, projects: 0 },
+    { name: "SDG 15", fullName: "Life on Land", value: 18, color: "#56C02B", goal: 15, hours: 0, employees: 0, projects: 0 },
+    { name: "SDG 13", fullName: "Climate Action", value: 18, color: "#3F7E44", goal: 13, hours: 0, employees: 0, projects: 0 },
+    { name: "SDG 1", fullName: "No Poverty", value: 18, color: "#E5243B", goal: 1, hours: 0, employees: 0, projects: 0 },
+    { name: "SDG 10", fullName: "Reduced Inequalities", value: 22, color: "#DD3E39", goal: 10, hours: 0, employees: 0, projects: 0 },
+    { name: "SDG 5", fullName: "Gender Equality", value: 22, color: "#FF3A21", goal: 5, hours: 0, employees: 0, projects: 0 },
   ];
 
   const chartData = sdgChartData.length > 0 ? sdgChartData : defaultSdgData;

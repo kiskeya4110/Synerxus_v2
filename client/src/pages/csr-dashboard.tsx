@@ -651,9 +651,9 @@ export default function CSRDashboard() {
                           }
                           
                           return (
-                            <text x={x} y={y} fill="white" textAnchor="middle" fontSize="8" fontWeight="bold">
+                            <text x={x} y={y} fill="white" textAnchor="middle" fontSize="11" fontWeight="bold">
                               {text.split('\n').map((line, idx) => (
-                                <tspan x={x} dy={idx === 0 ? 0 : 10} key={idx}>
+                                <tspan x={x} dy={idx === 0 ? 0 : 13} key={idx}>
                                   {line}
                                 </tspan>
                               ))}

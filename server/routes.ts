@@ -6552,7 +6552,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       // Get volunteer activities for employees linked to this partner
       const volunteerActivities = await storage.listVolunteerActivities?.() || [];
-      const partnerEmployeeIds = employeeLinks.filter((link: any) => link.partnerId === userPartner.id).map((link: any) => link.volunteerId);
+      const partnerEmployeeIds = employerLinks.filter((link: any) => link.partnerId === userPartner.id).map((link: any) => link.volunteerId);
       const partnerActivities = volunteerActivities.filter((act: any) => partnerEmployeeIds.includes(act.userId));
 
       // Count unique engaged employees from volunteer activities

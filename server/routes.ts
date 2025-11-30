@@ -1142,10 +1142,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Get user email for employee engagement tracking
             const user = await storage.getUser(activity.userId);
             if (user?.email) {
-              // Get existing employee engagement record
+              // Get existing employee engagement record (ensure type consistency)
               const allEngagements = await storage.listEmployeeEngagement();
+              const employerIdNum = typeof volunteerProfile.employerId === 'string' 
+                ? parseInt(volunteerProfile.employerId) 
+                : volunteerProfile.employerId;
               const existing = allEngagements.find((e: any) =>
-                e.partnerId === volunteerProfile.employerId &&
+                e.partnerId === employerIdNum &&
                 e.employeeEmail === user.email
               );
 
@@ -1156,9 +1159,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   projectId: activity.projectId
                 });
               } else {
-                // Create new employee engagement record
+                // Create new employee engagement record with correct partnerId type
                 await storage.createEmployeeEngagement({
-                  partnerId: volunteerProfile.employerId,
+                  partnerId: employerIdNum,
                   employeeEmail: user.email,
                   employeeName: volunteerProfile.volunteerName || user.displayName,
                   projectId: activity.projectId,
@@ -1176,7 +1179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   if (project?.primarySdg) {
                     // Find or create CSR challenge for this partner-SDG combination
                     const allChallenges = await storage.listCSRChallenges?.() || [];
-                    const partnerChallenges = allChallenges.filter((c: any) => c.partnerId === volunteerProfile.employerId && c.sdgGoal === project.primarySdg);
+                    const partnerChallenges = allChallenges.filter((c: any) => c.partnerId === employerIdNum && c.sdgGoal === project.primarySdg);
                     
                     if (partnerChallenges.length > 0) {
                       // Update the first matching active challenge
@@ -1256,9 +1259,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (volunteerProfile?.employerId) {
             const user = await storage.getUser(updatedActivity.userId);
             if (user?.email) {
+              // Ensure type consistency for partnerId comparison
+              const employerIdNum = typeof volunteerProfile.employerId === 'string' 
+                ? parseInt(volunteerProfile.employerId) 
+                : volunteerProfile.employerId;
               const allEngagements = await storage.listEmployeeEngagement();
               const existing = allEngagements.find((e: any) =>
-                e.partnerId === volunteerProfile.employerId &&
+                e.partnerId === employerIdNum &&
                 e.employeeEmail === user.email
               );
 

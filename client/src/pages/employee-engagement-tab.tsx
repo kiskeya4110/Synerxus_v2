@@ -100,9 +100,9 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
         description: "Percentage of eligible employees actively volunteering",
         stats: [
           { label: "Current Rate", value: `${engagementData?.engagementRate || 0}%` },
-          { label: "Target Rate", value: "50%" },
-          { label: "vs Target", value: `${Math.max(0, (engagementData?.engagementRate || 0) - 50)}%` },
-          { label: "Month-over-Month", value: `${engagementData?.engagementGrowth || 0}%` },
+          { label: "Active Employees", value: `${engagementData?.activeEmployees || 0} / ${engagementData?.totalEmployees || 0}` },
+          { label: "New This Month", value: engagementData?.newEmployeesThisMonth || 0 },
+          { label: "Monthly Growth", value: `${engagementData?.engagementGrowth || 0}%` },
         ],
         trend: engagementData?.engagementTrend || "stable",
       }

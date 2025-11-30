@@ -4,7 +4,7 @@ import { Home, BarChart3, Users, Briefcase, FileText, Settings, ChevronRight, X,
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LabelList } from "recharts";
 import { sdgGoals, getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
 import { useState } from "react";
 
@@ -633,8 +633,6 @@ export default function CSRDashboard() {
                         outerRadius={Math.max(70, Math.min(95, (csrData?.activeEmployees || 890) / 8))}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ value }) => `${value}%`}
-                        labelLine={false}
                         onClick={(data) => setSelectedSDG(data.goal)}
                       >
                         {chartData.map((entry, index) => (
@@ -644,6 +642,27 @@ export default function CSRDashboard() {
                             style={{ cursor: 'pointer', opacity: selectedSDG === entry.goal ? 1 : 0.8 }}
                           />
                         ))}
+                        <LabelList
+                          dataKey="name"
+                          position="insideBottomRight"
+                          formatter={(name: string, entry: any) => {
+                            // Wrap name and add percentage
+                            const words = (name || '').split(' ');
+                            let label = '';
+                            if (words.length === 1) {
+                              label = `${name}\n${entry.payload.value}%`;
+                            } else if (words.length === 2) {
+                              label = `${words[0]} ${words[1]}\n${entry.payload.value}%`;
+                            } else {
+                              label = `${words[0]}\n${words.slice(1).join(' ')}\n${entry.payload.value}%`;
+                            }
+                            return label;
+                          }}
+                          fill="white"
+                          fontSize={11}
+                          fontWeight="bold"
+                          textAnchor="middle"
+                        />
                       </Pie>
                       <Tooltip 
                         content={({ active, payload }) => {

@@ -612,10 +612,26 @@ export default function CSRDashboard() {
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
                       <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Hours Breakdown:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ From employee engagement: {((csrData as any)?.kpiBreakdown?.hours?.fromEmployeeEngagement || 0).toLocaleString()} hours</li>
-                        <li style={{ marginBottom: '8px' }}>✓ From volunteer activities: {((csrData as any)?.kpiBreakdown?.hours?.fromVolunteerActivities || 0).toLocaleString()} hours</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Average per contributor: {((csrData as any)?.kpiBreakdown?.hours?.averagePerEmployee || 0)} hours</li>
-                        <li>✓ Economic value: ${(((csrData as any)?.kpiBreakdown?.hours?.economicValue || 0)).toLocaleString()}</li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ From employee engagement:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.hours?.fromEmployeeEngagement || 0).toLocaleString()} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ From volunteer activities:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.hours?.fromVolunteerActivities || 0).toLocaleString()} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Average per contributor:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.hours?.averagePerContributor || 0)} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Weekly average:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.hours?.weeklyAverage || 0)} hrs/week</span>
+                        </li>
+                        <li style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                          <span>💰 Economic value (@$35/hr):</span>
+                          <span style={{ fontWeight: '600', color: '#059669' }}>${(((csrData as any)?.kpiBreakdown?.hours?.economicValue || 0)).toLocaleString()}</span>
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -624,7 +640,7 @@ export default function CSRDashboard() {
                 {selectedKPI === 'employees' && (
                   <div style={{ color: '#374151' }}>
                     <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
-                      {((csrData as any)?.kpiBreakdown?.employees?.total || 0)} people engaged
+                      {((csrData as any)?.kpiBreakdown?.employees?.totalContributors || (csrData as any)?.kpiBreakdown?.employees?.total || 0)} people engaged
                     </p>
                     <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                       Unique participants including company employees and volunteer contributors engaged in CSR initiatives.
@@ -632,10 +648,30 @@ export default function CSRDashboard() {
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
                       <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Engagement Breakdown:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ Company employees: {((csrData as any)?.kpiBreakdown?.employees?.fromEmployeeEngagement || 0)}</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Volunteer contributors: {((csrData as any)?.kpiBreakdown?.employees?.fromVolunteerActivities || 0)}</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Total hours contributed: {((csrData as any)?.kpiBreakdown?.employees?.totalHoursContributed || 0).toLocaleString()}</li>
-                        <li>✓ Engagement rate: {((csrData as any)?.kpiBreakdown?.employees?.engagementRate || 0)}% of workforce</li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Company employees:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.employees?.fromEmployeeEngagement || 0)}</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Volunteer contributors:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.employees?.fromVolunteerActivities || 0)}</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Total hours contributed:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.employees?.totalHoursContributed || 0).toLocaleString()} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Average per employee:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.employees?.averageHoursPerEmployee || 0)} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Engagement rate:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.employees?.engagementRate || 0)}% of workforce</span>
+                        </li>
+                        <li style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                          <span>🏆 Top performer:</span>
+                          <span style={{ fontWeight: '600', color: '#059669' }}>{((csrData as any)?.kpiBreakdown?.employees?.topPerformer || 'N/A')} ({((csrData as any)?.kpiBreakdown?.employees?.topPerformerHours || 0)} hrs)</span>
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -644,17 +680,38 @@ export default function CSRDashboard() {
                 {selectedKPI === 'projects' && (
                   <div style={{ color: '#374151' }}>
                     <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
-                      {((csrData as any)?.kpiBreakdown?.projects?.total || 0)} projects
+                      {((csrData as any)?.kpiBreakdown?.projects?.total || 0)} projects completed
                     </p>
                     <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
                       CSR projects completed with verified outcomes and measurable impact.
                     </p>
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
-                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Project Impact Metrics:</p>
+                      <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Project Portfolio:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ Total ROI generated: ${(((csrData as any)?.kpiBreakdown?.projects?.totalRoi || 0)).toLocaleString()}</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Average ROI per project: ${(((csrData as any)?.kpiBreakdown?.projects?.averageRoiPerProject || 0)).toLocaleString()}</li>
-                        <li>✓ Total hours invested: {(((csrData as any)?.kpiBreakdown?.projects?.totalHoursInvested || 0)).toLocaleString()}</li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Active projects:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.projects?.activeProjects || 0)}</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Sponsored projects:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.projects?.sponsoredProjects || 0)}</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Total hours invested:</span>
+                          <span style={{ fontWeight: '600' }}>{(((csrData as any)?.kpiBreakdown?.projects?.totalHoursInvested || 0)).toLocaleString()} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Avg hours per project:</span>
+                          <span style={{ fontWeight: '600' }}>{(((csrData as any)?.kpiBreakdown?.projects?.averageHoursPerProject || 0)).toLocaleString()} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Regions served:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.projects?.regionsServed || 0)}</span>
+                        </li>
+                        <li style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                          <span>👥 Beneficiaries reached:</span>
+                          <span style={{ fontWeight: '600', color: '#059669' }}>{(((csrData as any)?.kpiBreakdown?.projects?.beneficiariesReached || 0)).toLocaleString()}</span>
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -663,17 +720,38 @@ export default function CSRDashboard() {
                 {selectedKPI === 'sdg' && (
                   <div style={{ color: '#374151' }}>
                     <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#1e3a8a', marginBottom: '16px' }}>
-                      +{((csrData as any)?.kpiBreakdown?.sdg?.scoreDelta || 0)}% Q3 Performance
+                      +{((csrData as any)?.kpiBreakdown?.sdg?.scoreDelta || 0)}% SDG Performance
                     </p>
                     <p style={{ fontSize: '14px', marginBottom: '16px', lineHeight: '1.6' }}>
-                      Quarter-over-quarter improvement in SDG goal alignment and progress across active initiatives.
+                      Progress across Sustainable Development Goals aligned with your CSR strategy.
                     </p>
                     <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '8px', marginTop: '16px' }}>
                       <p style={{ fontSize: '12px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>SDG Progress Metrics:</p>
                       <ul style={{ fontSize: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
-                        <li style={{ marginBottom: '8px' }}>✓ Active SDG commitments: {((csrData as any)?.kpiBreakdown?.sdg?.activeCommitments || 0)}</li>
-                        <li style={{ marginBottom: '8px' }}>✓ Average SDG progress: {((csrData as any)?.kpiBreakdown?.sdg?.averageProgress || 0)}%</li>
-                        <li>✓ Momentum: Strong growth trend in Q3 vs Q2</li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Active SDG commitments:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.sdg?.activeCommitments || 0)}</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Average progress:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.sdg?.averageProgress || 0)}%</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Total SDG hours:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.sdg?.totalSdgHours || 0).toLocaleString()} hrs</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Active challenges:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.sdg?.challengesActive || 0)}</span>
+                        </li>
+                        <li style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>✓ Completed challenges:</span>
+                          <span style={{ fontWeight: '600' }}>{((csrData as any)?.kpiBreakdown?.sdg?.challengesCompleted || 0)}</span>
+                        </li>
+                        <li style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                          <span>🎯 Top SDG (Goal {((csrData as any)?.kpiBreakdown?.sdg?.topSdg || 0)}):</span>
+                          <span style={{ fontWeight: '600', color: '#059669' }}>{((csrData as any)?.kpiBreakdown?.sdg?.topSdgHours || 0).toLocaleString()} hrs</span>
+                        </li>
                       </ul>
                     </div>
                   </div>

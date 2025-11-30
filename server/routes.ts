@@ -6720,12 +6720,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
 
       const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
       const economicValue = totalHours * 35; // $35/hour standard rate
+      const allSkills = userActivities.flatMap((a: any) => a.skillsApplied || []);
+      const uniqueSkills = Array.from(new Set(allSkills));
 
       res.json({
         totalHours,
         economicValue,
         projectsCompleted: userCommitments.filter((c: any) => c.status === 'completed').length,
-        skillsApplied: [...new Set(userActivities.flatMap((a: any) => a.skillsApplied || []))],
+        skillsApplied: uniqueSkills,
         milestones: userMilestones,
         recentActivities: userActivities.slice(-5),
         commitments: userCommitments

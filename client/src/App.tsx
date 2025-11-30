@@ -64,9 +64,9 @@ function RootRedirectRoute() {
           const userResponse = await fetch(`/api/users?id=${userId}`);
           if (userResponse.ok) {
             const users = await userResponse.json();
-            const currentUser = users.find((u: any) => u.id === parseInt(userId));
-            if (currentUser && currentUser.userType) {
-              userType = currentUser.userType;
+            const currentUser = users.find((u: any) => u.id === parseInt(userId!));
+            if (currentUser?.userType) {
+              userType = currentUser.userType as string;
               // Update localStorage with fresh data from database
               localStorage.setItem('userType', userType);
             }

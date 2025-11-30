@@ -1138,28 +1138,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (activity.userId && activity.hours) {
         try {
           const volunteerProfile = await storage.getVolunteerProfileByUserId(activity.userId);
+          console.log(`[CSR Tracking] Activity logged - userId: ${activity.userId}, hours: ${activity.hours}, employerId: ${volunteerProfile?.employerId}`);
+          
           if (volunteerProfile?.employerId) {
             // Get user email for employee engagement tracking
             const user = await storage.getUser(activity.userId);
             if (user?.email) {
               // Get existing employee engagement record (ensure type consistency)
-              const allEngagements = await storage.listEmployeeEngagement();
+              const allEngagements = (await storage.listEmployeeEngagement()) || [];
               const employerIdNum = typeof volunteerProfile.employerId === 'string' 
                 ? parseInt(volunteerProfile.employerId) 
                 : volunteerProfile.employerId;
-              const existing = allEngagements.find((e: any) =>
-                e.partnerId === employerIdNum &&
-                e.employeeEmail === user.email
+              
+              console.log(`[CSR Tracking] Looking for engagement - partnerId: ${employerIdNum}, email: ${user.email}`);
+              console.log(`[CSR Tracking] Total engagements in DB: ${Array.isArray(allEngagements) ? allEngagements.length : 0}`);
+              
+              const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
+                e?.partnerId === employerIdNum &&
+                e?.employeeEmail === user.email
               );
 
               if (existing) {
                 // Increment hours
+                console.log(`[CSR Tracking] Found existing engagement, updating hours from ${existing.hoursVolunteered} to ${(existing.hoursVolunteered || 0) + activity.hours}`);
                 await storage.updateEmployeeEngagement(existing.id, {
                   hoursVolunteered: (existing.hoursVolunteered || 0) + activity.hours,
                   projectId: activity.projectId
                 });
               } else {
                 // Create new employee engagement record with correct partnerId type
+                console.log(`[CSR Tracking] No existing engagement found - creating new record with partnerId: ${employerIdNum}, hours: ${activity.hours}`);
                 await storage.createEmployeeEngagement({
                   partnerId: employerIdNum,
                   employeeEmail: user.email,
@@ -1263,10 +1271,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const employerIdNum = typeof volunteerProfile.employerId === 'string' 
                 ? parseInt(volunteerProfile.employerId) 
                 : volunteerProfile.employerId;
-              const allEngagements = await storage.listEmployeeEngagement();
-              const existing = allEngagements.find((e: any) =>
-                e.partnerId === employerIdNum &&
-                e.employeeEmail === user.email
+              const allEngagements = (await storage.listEmployeeEngagement()) || [];
+              const existing = (Array.isArray(allEngagements) ? allEngagements : []).find((e: any) =>
+                e?.partnerId === employerIdNum &&
+                e?.employeeEmail === user.email
               );
 
               if (existing) {
@@ -5233,18 +5241,25 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const startDate = startDateStr ? new Date(startDateStr) : new Date(0);
       const endDate = endDateStr ? new Date(endDateStr) : new Date();
 
-      const employeeEngagement = await storage.listEmployeeEngagement?.() || [];
-      const csrChallenges = await storage.listCSRChallenges?.() || [];
-      const projectBudgetLinks = await storage.listProjectBudgetLinks?.() || [];
-      const projects = await storage.listProjects?.() || [];
-      const volunteerActivities = await storage.listVolunteerActivities?.() || [];
-      const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
-      const organizations = await storage.listOrganizations?.() || [];
+      const employeeEngagement = (await storage.listEmployeeEngagement?.()) || [];
+      const csrChallenges = (await storage.listCSRChallenges?.()) || [];
+      const projectBudgetLinks = (await storage.listProjectBudgetLinks?.()) || [];
+      const projects = (await storage.listProjects?.()) || [];
+      const volunteerActivities = (await storage.listVolunteerActivities?.()) || [];
+      const volunteerProfiles = (await storage.listVolunteerProfiles?.()) || [];
+      const organizations = (await storage.listOrganizations?.()) || [];
 
-      // Filter data for this partner only
-      const partnerEngagement = employeeEngagement.filter((e: any) => e.partnerId === userPartner.id);
-      const partnerChallenges = csrChallenges.filter((c: any) => c.partnerId === userPartner.id);
-      const partnerBudgets = projectBudgetLinks.filter((b: any) => b.partnerId === userPartner.id);
+      // Filter data for this partner only - ensure all arrays are properly typed
+      const partnerEngagement = (Array.isArray(employeeEngagement) ? employeeEngagement : []).filter((e: any) => e?.partnerId === userPartner?.id);
+      const partnerChallenges = (Array.isArray(csrChallenges) ? csrChallenges : []).filter((c: any) => c?.partnerId === userPartner?.id);
+      const partnerBudgets = (Array.isArray(projectBudgetLinks) ? projectBudgetLinks : []).filter((b: any) => b?.partnerId === userPartner?.id);
+      
+      console.log(`[CSR Dashboard] Partner: ${userPartner.companyName} (id: ${userPartner.id})`);
+      console.log(`[CSR Dashboard] Employee engagement records found: ${partnerEngagement.length}`);
+      console.log(`[CSR Dashboard] Total engagement records in DB: ${Array.isArray(employeeEngagement) ? employeeEngagement.length : 0}`);
+      if (partnerEngagement.length > 0) {
+        console.log(`[CSR Dashboard] Partner engagement records:`, partnerEngagement.map((e: any) => ({ email: e.employeeEmail, hours: e.hoursVolunteered, partnerId: e.partnerId })));
+      }
 
       // Apply date filtering to engagement records (only if dates provided)
       const filteredEngagement = shouldFilterByDate 

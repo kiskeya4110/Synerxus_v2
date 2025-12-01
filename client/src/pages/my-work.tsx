@@ -722,7 +722,7 @@ export default function MyWork() {
       )}
       
       {/* Mobile Bottom Navigation - Organization Only */}
-      {isOrganizationManager && <MobileBottomNav />}
+      {isOrganizationManager && <MobileBottomNav activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} livesTouched={dashboardData?.livesTouched || 0} />}
     </div>
   );
 }

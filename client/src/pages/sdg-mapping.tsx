@@ -1110,7 +1110,7 @@ export default function SDGMapping() {
       </div>
       
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      <MobileBottomNav activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
       
       {/* Footer - Hidden on Mobile */}
       <div className="hidden md:block">

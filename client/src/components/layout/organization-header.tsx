@@ -4,6 +4,7 @@ import {
   FolderOpen, Users, Plus, 
   Target, BarChart3, FileText, Bell, Settings
 } from "lucide-react";
+import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/projects' },
@@ -35,8 +36,20 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   return (
     <div style={{ backgroundColor: '#166534', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Left: Navigation Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        {/* Left: Logo + Brand Name + Navigation Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Logo and Brand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.2)' }}>
+            <img 
+              src={logoUrl} 
+              alt="Synerxus Logo" 
+              style={{ height: '32px', width: 'auto' }}
+            />
+            <span style={{ color: 'white', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>SYNERXUS</span>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}
@@ -72,6 +85,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
               {tab.label}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Right: Notifications, Settings, Profile */}

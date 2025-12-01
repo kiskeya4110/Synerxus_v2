@@ -727,10 +727,11 @@ export default function MyWork() {
         <>
           <div className="md:hidden" style={{ 
             padding: '16px', 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-            paddingBottom: '0'
+            backgroundColor: 'white',
+            borderBottom: '1px solid #e5e7eb',
+            paddingBottom: '8px'
           }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#ffffff', margin: '0 0 16px 0' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
               Projects Overview
             </h2>
           </div>

@@ -22,7 +22,7 @@ export default function MobileMetricsGrid({
         style={{
           width: '24px',
           height: '24px',
-          backgroundColor: '#667eea',
+          backgroundColor: 'white',
           borderRadius: '6px',
           opacity: 0.8 + (i * 0.02)
         }}
@@ -38,7 +38,7 @@ export default function MobileMetricsGrid({
         <div style={{ 
           width: '100%', 
           height: '40px', 
-          backgroundColor: '#f0f0f0', 
+          backgroundColor: 'rgba(255,255,255,0.3)', 
           borderRadius: '8px', 
           overflow: 'hidden'
         }}>
@@ -46,7 +46,7 @@ export default function MobileMetricsGrid({
             style={{
               height: '100%',
               width: `${percentage}%`,
-              background: 'linear-gradient(90deg, #764ba2, #f093fb)',
+              backgroundColor: 'rgba(255,255,255,0.8)',
               borderRadius: '8px',
               transition: 'width 0.3s ease'
             }}
@@ -67,13 +67,13 @@ export default function MobileMetricsGrid({
               width: '28px',
               height: '28px',
               borderRadius: '50%',
-              background: `hsl(${280 + (i * 15)}, 80%, 60%)`,
+              backgroundColor: 'rgba(255,255,255,0.7)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '12px',
               fontWeight: 'bold',
-              color: 'white'
+              color: '#f093fb'
             }}
           >
             {i + 1}
@@ -85,13 +85,13 @@ export default function MobileMetricsGrid({
               width: '28px',
               height: '28px',
               borderRadius: '50%',
-              backgroundColor: '#ddd',
+              backgroundColor: 'rgba(255,255,255,0.5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '12px',
               fontWeight: 'bold',
-              color: '#666'
+              color: '#f093fb'
             }}
           >
             +{value - 5}
@@ -110,7 +110,7 @@ export default function MobileMetricsGrid({
             key={i}
             size={28}
             style={{
-              color: '#667eea',
+              color: 'white',
               opacity: 0.7 + (i * 0.05),
               strokeWidth: 2.5
             }}
@@ -124,25 +124,25 @@ export default function MobileMetricsGrid({
     { 
       label: "Active Projects", 
       value: activeProjects, 
-      color: "#667eea",
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       visualization: getProjectVisualization(activeProjects)
     },
     { 
       label: "Total Hours", 
       value: totalHours, 
-      color: "#764ba2",
+      gradient: 'linear-gradient(135deg, #764ba2 0%, #f093fb 100%)',
       visualization: getHoursVisualization(totalHours)
     },
     { 
       label: "SDGs Addressed", 
       value: sdgsAddressed, 
-      color: "#f093fb",
+      gradient: 'linear-gradient(135deg, #f093fb 0%, #667eea 100%)',
       visualization: getSdgVisualization(sdgsAddressed)
     },
     { 
       label: "Lives Touched", 
       value: livesTouched, 
-      color: "#667eea",
+      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       visualization: getLivesTouachedVisualization(livesTouched)
     },
   ];
@@ -150,7 +150,7 @@ export default function MobileMetricsGrid({
   return (
     <div className="md:hidden" style={{ 
       padding: '16px', 
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+      backgroundColor: '#f9fafb',
       marginBottom: '16px'
     }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -158,15 +158,15 @@ export default function MobileMetricsGrid({
           <div
             key={index}
             style={{
-              backgroundColor: 'white',
+              background: metric.gradient,
               borderRadius: '14px',
               padding: '16px',
-              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)',
+              boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               gap: '12px',
-              border: `1px solid ${metric.color}20`,
+              border: 'none',
             }}
           >
             <div style={{ 
@@ -178,10 +178,10 @@ export default function MobileMetricsGrid({
             }}>
               {metric.visualization}
             </div>
-            <div style={{ fontSize: '22px', fontWeight: '800', color: metric.color, textAlign: 'center' }}>
+            <div style={{ fontSize: '22px', fontWeight: '800', color: 'white', textAlign: 'center' }}>
               {metric.value.toLocaleString()}
             </div>
-            <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '600', textAlign: 'center', lineHeight: '1.2' }}>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.9)', fontWeight: '600', textAlign: 'center', lineHeight: '1.2' }}>
               {metric.label}
             </div>
           </div>

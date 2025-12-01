@@ -1171,6 +1171,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
 
 function getCoordinatesFromLocation(location: string): { lat: number; lng: number } | null {
   const locationCoords: Record<string, { lat: number; lng: number }> = {
+    // US Cities
     'new york': { lat: 40.7128, lng: -74.006 },
     'los angeles': { lat: 34.0522, lng: -118.2437 },
     'chicago': { lat: 41.8781, lng: -87.6298 },
@@ -1182,25 +1183,88 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'atlanta': { lat: 33.749, lng: -84.388 },
     'miami': { lat: 25.7617, lng: -80.1918 },
     'denver': { lat: 39.7392, lng: -104.9903 },
+    'austin': { lat: 30.2672, lng: -97.7431 },
+    'portland': { lat: 45.5152, lng: -122.6784 },
+    'dallas': { lat: 32.7767, lng: -96.797 },
+    
+    // Africa
     'nairobi': { lat: -1.2921, lng: 36.8219 },
     'lagos': { lat: 6.5244, lng: 3.3792 },
     'cape town': { lat: -33.9249, lng: 18.4241 },
+    'johannesburg': { lat: -26.2023, lng: 28.0436 },
+    'cairo': { lat: 30.0444, lng: 31.2357 },
+    'kinshasa': { lat: -4.3276, lng: 15.3136 },
+    'accra': { lat: 5.6037, lng: -0.187 },
+    
+    // Europe
     'london': { lat: 51.5074, lng: -0.1278 },
     'paris': { lat: 48.8566, lng: 2.3522 },
     'berlin': { lat: 52.52, lng: 13.405 },
+    'madrid': { lat: 40.4168, lng: -3.7038 },
+    'rome': { lat: 41.9028, lng: 12.4964 },
+    'amsterdam': { lat: 52.3676, lng: 4.9041 },
+    'brussels': { lat: 50.8503, lng: 4.3517 },
+    'vienna': { lat: 48.2082, lng: 16.3738 },
+    'prague': { lat: 50.0755, lng: 14.4378 },
+    'warsaw': { lat: 52.2297, lng: 21.0122 },
+    
+    // Asia
     'tokyo': { lat: 35.6762, lng: 139.6503 },
     'mumbai': { lat: 19.076, lng: 72.8777 },
+    'delhi': { lat: 28.7041, lng: 77.1025 },
+    'bangkok': { lat: 13.7563, lng: 100.5018 },
+    'singapore': { lat: 1.3521, lng: 103.8198 },
+    'hongkong': { lat: 22.3193, lng: 114.1694 },
+    'shanghai': { lat: 31.2304, lng: 121.4737 },
+    'beijing': { lat: 39.9042, lng: 116.4074 },
+    'seoul': { lat: 37.5665, lng: 126.978 },
+    'manila': { lat: 14.5995, lng: 120.9842 },
+    'jakarta': { lat: -6.2088, lng: 106.8456 },
+    'karachi': { lat: 24.8607, lng: 67.0011 },
+    
+    // South America
+    'sao paulo': { lat: -23.5505, lng: -46.6333 },
+    'buenos aires': { lat: -34.6037, lng: -58.3816 },
+    'lima': { lat: -12.0464, lng: -77.0428 },
+    'bogota': { lat: 4.7110, lng: -74.0721 },
+    'santiago': { lat: -33.4489, lng: -70.6693 },
+    'mexico city': { lat: 19.4326, lng: -99.1332 },
+    
+    // Oceania
     'sydney': { lat: -33.8688, lng: 151.2093 },
-    'remote': { lat: 0, lng: 0 },
-    'global': { lat: 0, lng: 0 },
+    'melbourne': { lat: -37.8136, lng: 144.9631 },
+    'auckland': { lat: -37.0742, lng: 174.885 },
+    'fiji': { lat: -17.7134, lng: 178.0650 },
+    
+    // Special cases
+    'united states': { lat: 38, lng: -97 },
+    'usa': { lat: 38, lng: -97 },
+    'india': { lat: 20, lng: 78 },
+    'africa': { lat: -8.7832, lng: 34.5085 },
+    'europe': { lat: 54.5260, lng: 15.2551 },
+    'asia': { lat: 34.0479, lng: 100.6197 },
+    'south america': { lat: -8.7832, lng: -55.4915 },
+    'caribbean': { lat: 15, lng: -75 },
+    'remote': { lat: 20, lng: 0 },
+    'online': { lat: 20, lng: 0 },
+    'virtual': { lat: 20, lng: 0 },
+    'global': { lat: 20, lng: 0 },
   };
 
-  const locationLower = location.toLowerCase();
+  const locationLower = location.toLowerCase().trim();
+  
+  // Exact matches first
+  if (locationCoords[locationLower]) {
+    return locationCoords[locationLower];
+  }
+  
+  // Partial matches (checks if location contains any key)
   for (const [key, coords] of Object.entries(locationCoords)) {
     if (locationLower.includes(key)) {
       return coords;
     }
   }
   
-  return { lat: 20 + Math.random() * 40, lng: -40 + Math.random() * 80 };
+  // Fallback to center of the world for unknown locations
+  return { lat: 20, lng: 0 };
 }

@@ -901,6 +901,8 @@ interface MetricsModalProps {
 }
 
 function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers = [], color }: MetricsModalProps) {
+  const [, navigate] = useLocation();
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -918,7 +920,16 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                 <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No projects yet</p>
               ) : (
                 data.map((project: any) => (
-                  <div key={project.id} style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${color}20` }}>
+                  <button 
+                    key={project.id} 
+                    onClick={() => {
+                      navigate(`/projects/${project.id}`);
+                      onClose();
+                    }}
+                    style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${color}20`, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${color}10`}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
                       <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{project.name}</h4>
                       <span style={{ padding: '4px 12px', backgroundColor: color, color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: '600' }}>
@@ -938,7 +949,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                         <p>{project.sdgGoals?.length || 0} goals</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>
@@ -958,7 +969,16 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                     <p style={{ color: '#9ca3af', fontSize: '13px' }}>No volunteer data</p>
                   ) : (
                     volunteers.slice(0, 5).map((vol: any) => (
-                      <div key={vol.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+                      <button 
+                        key={vol.id} 
+                        onClick={() => {
+                          navigate('/volunteers');
+                          onClose();
+                        }}
+                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '6px', border: 'none', cursor: 'pointer', transition: 'all 0.2s', width: '100%' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${color}10`}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                      >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '600', color }}>
                             {vol.name?.charAt(0).toUpperCase()}
@@ -969,7 +989,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                           </div>
                         </div>
                         <p style={{ fontSize: '12px', fontWeight: '600', color }}>{vol.hours}h</p>
-                      </div>
+                      </button>
                     ))
                   )}
                 </div>
@@ -983,7 +1003,16 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                 <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No SDG data</p>
               ) : (
                 data.map((sdg: any) => (
-                  <div key={sdg.goal} style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${SDG_GOALS[sdg.goal]?.color || color}20` }}>
+                  <button 
+                    key={sdg.goal} 
+                    onClick={() => {
+                      navigate('/sdg-mapping');
+                      onClose();
+                    }}
+                    style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${SDG_GOALS[sdg.goal]?.color || color}20`, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${SDG_GOALS[sdg.goal]?.color || color}10`}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: SDG_GOALS[sdg.goal]?.color || color, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>
@@ -1008,7 +1037,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                         <p style={{ fontSize: '11px', color: '#6b7280' }}>Volunteers</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>

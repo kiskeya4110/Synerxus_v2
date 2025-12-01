@@ -187,9 +187,6 @@ function LayoutRoute() {
       <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
       <Route path="/my-work" component={MyWork} />
       <Route path="/tasks" component={Tasks} />
-      <Route path="/projects" component={Projects} />
-      <Route path="/projects/:id/edit" component={ProjectEdit} />
-      <Route path="/projects/:id" component={ProjectDetail} />
       <Route path="/volunteer-intake" component={VolunteerIntake} />
       <Route path="/organization-intake" component={OrganizationIntake} />
       <Route path="/corporate-partner-intake" component={CorporatePartnerIntake} />

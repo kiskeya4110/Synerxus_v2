@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   FolderOpen, Clock, Target, Users, Plus,
   ChevronDown, AlertTriangle, CheckSquare, TrendingUp, 
@@ -416,32 +416,7 @@ export default function OrganizationDashboard() {
             <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>Project Locations</h3>
               <div style={{ height: '250px', borderRadius: '8px', overflow: 'hidden' }}>
-                <MapContainer
-                  center={[20, 0]}
-                  zoom={2}
-                  style={{ width: '100%', height: '100%' }}
-                  data-testid="project-map"
-                >
-                  <TileLayer
-                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                    attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
-                  />
-                  {dashboardData?.projectLocations?.map((project) => {
-                    const coords = getCoordinatesFromLocation(project.location);
-                    if (!coords) return null;
-                    return (
-                      <Marker key={project.id} position={[coords.lat, coords.lng]}>
-                        <Popup>
-                          <strong>{project.name}</strong>
-                          <br />
-                          Status: {project.status}
-                          <br />
-                          SDGs: {project.sdgGoals.join(', ') || 'None'}
-                        </Popup>
-                      </Marker>
-                    );
-                  })}
-                </MapContainer>
+                <ProjectMapComponent projectLocations={dashboardData?.projectLocations || []} />
               </div>
             </div>
           </div>
@@ -1156,6 +1131,67 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
         </div>
       </div>
     </div>
+  );
+}
+
+interface ProjectLocation {
+  id: number;
+  name: string;
+  location: string;
+  status: string;
+  sdgGoals: number[];
+}
+
+function ProjectMapComponent({ projectLocations }: { projectLocations: ProjectLocation[] }) {
+  const mapRef = useRef<L.Map>(null);
+
+  useEffect(() => {
+    if (!mapRef.current || !projectLocations || projectLocations.length === 0) return;
+
+    const coords = projectLocations
+      .map(project => getCoordinatesFromLocation(project.location))
+      .filter((coord): coord is { lat: number; lng: number } => coord !== null);
+
+    if (coords.length === 0) return;
+
+    if (coords.length === 1) {
+      // Single project - zoom to that location
+      mapRef.current.setView([coords[0].lat, coords[0].lng], 10);
+    } else {
+      // Multiple projects - fit bounds to all
+      const bounds = L.latLngBounds(coords.map(c => [c.lat, c.lng] as [number, number]));
+      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+  }, [projectLocations]);
+
+  return (
+    <MapContainer
+      ref={mapRef}
+      center={[20, 0]}
+      zoom={2}
+      style={{ width: '100%', height: '100%' }}
+      data-testid="project-map"
+    >
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
+      />
+      {projectLocations?.map((project) => {
+        const coords = getCoordinatesFromLocation(project.location);
+        if (!coords) return null;
+        return (
+          <Marker key={project.id} position={[coords.lat, coords.lng]}>
+            <Popup>
+              <strong>{project.name}</strong>
+              <br />
+              Status: {project.status}
+              <br />
+              SDGs: {project.sdgGoals.join(', ') || 'None'}
+            </Popup>
+          </Marker>
+        );
+      })}
+    </MapContainer>
   );
 }
 

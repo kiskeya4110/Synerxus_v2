@@ -133,14 +133,19 @@ export default function MyWork() {
   });
 
   // Fetch organization projects
-  const { data: orgProjects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects", { organizationId: currentUser?.organizationId }],
+  const { data: orgProjects = [], isLoading: orgProjectsLoading } = useQuery<any[]>({
+    queryKey: ["/api/projects", "org", currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
+      console.log("Fetching projects for org:", currentUser.organizationId);
       const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
-      return response.ok ? response.json() : [];
+      const data = response.ok ? await response.json() : [];
+      console.log("Projects fetched:", data.length, data);
+      return data;
     },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
+    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization',
+    staleTime: 0,
+    refetchOnMount: true
   });
 
   // Fetch all volunteers for organization (use org-specific endpoint)
@@ -604,7 +609,14 @@ export default function MyWork() {
               )}
             </div>
             <div className="space-y-4">
-              {orgProjects.length > 0 ? (
+              {orgProjectsLoading ? (
+                <Card className="p-8 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                    <p className="text-gray-500">Loading projects...</p>
+                  </div>
+                </Card>
+              ) : orgProjects.length > 0 ? (
                 orgProjects.map((project: Project) => {
                   const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
                   const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;

@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -715,6 +716,9 @@ export default function ProjectDetail() {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

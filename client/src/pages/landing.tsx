@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import { SDGCircularWheel } from "@/components/sdg/sdg-circular-wheel";
+import Footer from "@/components/layout/footer";
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -799,11 +800,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 py-8 bg-slate-100 mt-16">
-        <div className="container mx-auto px-4 text-center text-sm text-slate-600">
-          <p>© 2025 Synerxus. Intelligent connections for sustainable development worldwide.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 
 export default function Volunteers() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -710,6 +711,9 @@ export default function Volunteers() {
         </DialogContent>
       </Dialog>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </>
   );
 }

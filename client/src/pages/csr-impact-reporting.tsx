@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Users, DollarSign, Globe, CheckCircle, ArrowLeft, Download, Zap, AlertCircle, Target } from "lucide-react";
 import { useState } from "react";
 import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
+import Footer from "@/components/layout/footer";
 
 interface ComplianceCalculation {
   engagementScore: number;
@@ -596,6 +597,9 @@ export function CSRImpactReporting() {
           </div>
         )}
       </main>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

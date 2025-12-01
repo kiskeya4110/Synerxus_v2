@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -1104,6 +1105,9 @@ export default function SDGMapping() {
           </DialogContent>
         </Dialog>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

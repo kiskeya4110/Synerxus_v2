@@ -11,6 +11,7 @@ import { Link, useLocation } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -1032,6 +1033,9 @@ export default function ImpactVisualization() {
         </DialogContent>
       </Dialog>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

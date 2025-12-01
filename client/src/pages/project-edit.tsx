@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 
 const projectEditSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -378,6 +379,9 @@ export default function ProjectEdit() {
         </CardContent>
       </Card>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </>
   );
 }

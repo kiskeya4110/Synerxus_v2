@@ -4,6 +4,7 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign, Briefcase, Settings, Home } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import Footer from "@/components/layout/footer";
 
 interface PortfolioProject {
   id: number;
@@ -727,6 +728,9 @@ export default function ProjectPortfolio() {
       </div>
         </main>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -125,7 +125,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
           {/* Settings Button */}
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/organization-profile-settings')}
             data-testid="settings-button"
             style={{
               width: '36px',
@@ -148,7 +148,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
           {/* Profile Button */}
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/organization-profile-settings')}
             data-testid="profile-button"
             style={{
               width: '36px',

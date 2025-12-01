@@ -1,9 +1,18 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { 
   FolderOpen, Users, Plus, 
-  Target, BarChart3, FileText, Bell, Settings, CheckSquare
+  Target, BarChart3, FileText, Bell, Settings, CheckSquare, LogOut, User
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
@@ -20,8 +29,10 @@ interface OrganizationHeaderProps {
 }
 
 export default function OrganizationHeader({ activeTab = 'dashboard', onCreateClick }: OrganizationHeaderProps) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [location, navigate] = useLocation();
+  const { toast } = useToast();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const handleTabClick = (tab: typeof NAV_TABS[0]) => {
     if (tab.id === 'create') {
@@ -33,6 +44,25 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
   const handleLogoClick = () => {
     navigate('/landing');
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "You have been signed out of your account.",
+      });
+      setIsProfileOpen(false);
+      navigate('/landing');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const currentTab = NAV_TABS.find(tab => tab.path === location)?.id || activeTab;
@@ -146,30 +176,60 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             <Settings size={18} />
           </button>
 
-          {/* Profile Button */}
-          <button
-            onClick={() => navigate('/organization-profile-settings')}
-            data-testid="profile-button"
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              overflow: 'hidden',
-            }}
-          >
-            {(user as any)?.avatar ? (
-              <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-            ) : (
-              <Users size={18} />
-            )}
-          </button>
+          {/* Profile Dropdown Menu */}
+          <DropdownMenu open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+            <DropdownMenuTrigger asChild>
+              <button
+                data-testid="profile-button"
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  overflow: 'hidden',
+                  transition: 'background-color 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.3)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+              >
+                {(user as any)?.avatar ? (
+                  <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <Users size={18} />
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="flex flex-col space-y-1 p-2">
+                <p className="text-sm font-medium leading-none" data-testid="text-user-display-name">
+                  {user?.displayName || user?.email?.split('@')[0]}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground" data-testid="text-user-email">
+                  {user?.email}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/profile')} data-testid="menu-profile">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/organization-profile-settings')} data-testid="menu-settings">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer" onClick={handleSignOut} data-testid="menu-logout">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
         </div>
       </nav>

@@ -689,8 +689,8 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Bottom Section (2/5): Impact Over Time | AI Insights */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="bottom-section">
+        {/* Bottom Section (2/5): Impact Over Time | AI Insights - Desktop Only */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="bottom-section hidden md:grid">
           {/* Left: Impact Over Time Chart */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>

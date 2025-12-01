@@ -5,7 +5,7 @@ import { useState } from "react";
 import { 
   FolderOpen, Clock, Target, Users, Plus,
   ChevronDown, AlertTriangle, CheckSquare, TrendingUp, 
-  Lightbulb, MapPin, UserPlus, BarChart3
+  Lightbulb, MapPin, UserPlus, BarChart3, X
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -66,6 +66,7 @@ export default function OrganizationDashboard() {
   const [projectFilter, setProjectFilter] = useState('all');
   const [timePeriod, setTimePeriod] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | null>(null);
 
   if (userType !== 'organization') {
     if (userType === 'volunteer') {
@@ -186,7 +187,7 @@ export default function OrganizationDashboard() {
             value={metrics.activeProjects}
             color="#166534"
             testId="metric-active-projects"
-            onClick={() => navigate('/projects')}
+            onClick={() => setActiveModal('projects')}
           />
           <MetricCard
             icon={<Clock size={24} />}
@@ -194,7 +195,7 @@ export default function OrganizationDashboard() {
             value={metrics.totalHours}
             color="#1e40af"
             testId="metric-total-hours"
-            onClick={() => navigate('/impact-visualization')}
+            onClick={() => setActiveModal('hours')}
           />
           <MetricCard
             icon={<Target size={24} />}
@@ -202,7 +203,7 @@ export default function OrganizationDashboard() {
             value={metrics.sdgsAddressed}
             color="#7c3aed"
             testId="metric-sdgs"
-            onClick={() => navigate('/sdg-mapping')}
+            onClick={() => setActiveModal('sdgs')}
           />
           <MetricCard
             icon={<Users size={24} />}
@@ -210,7 +211,7 @@ export default function OrganizationDashboard() {
             value={metrics.livesTouched}
             color="#dc2626"
             testId="metric-lives"
-            onClick={() => navigate('/volunteers')}
+            onClick={() => setActiveModal('lives')}
           />
         </div>
 
@@ -725,6 +726,49 @@ export default function OrganizationDashboard() {
         </div>
       )}
 
+      {/* Modals */}
+      {activeModal === 'projects' && (
+        <MetricsModal
+          title="Active Projects"
+          onClose={() => setActiveModal(null)}
+          type="projects"
+          data={dashboardData?.projects || []}
+          color="#166534"
+        />
+      )}
+      
+      {activeModal === 'hours' && (
+        <MetricsModal
+          title="Total Volunteer Hours"
+          onClose={() => setActiveModal(null)}
+          type="hours"
+          data={dashboardData?.impactOverTime || []}
+          totalHours={metrics.totalHours}
+          volunteers={dashboardData?.volunteerSummaries || []}
+          color="#1e40af"
+        />
+      )}
+      
+      {activeModal === 'sdgs' && (
+        <MetricsModal
+          title="SDGs Addressed"
+          onClose={() => setActiveModal(null)}
+          type="sdgs"
+          data={dashboardData?.sdgDistribution || []}
+          color="#7c3aed"
+        />
+      )}
+      
+      {activeModal === 'lives' && (
+        <MetricsModal
+          title="Lives Touched"
+          onClose={() => setActiveModal(null)}
+          type="lives"
+          volunteers={dashboardData?.volunteerSummaries || []}
+          color="#dc2626"
+        />
+      )}
+
       {/* Responsive Styles */}
       <style>{`
         @media (max-width: 1024px) {
@@ -746,6 +790,39 @@ export default function OrganizationDashboard() {
         }
         .task-btn:hover {
           background-color: #f9fafb !important;
+        }
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0,0,0,0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 16px;
+        }
+        .modal-content {
+          background-color: white;
+          border-radius: 12px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          max-width: 600px;
+          width: 100%;
+          max-height: 80vh;
+          overflow-y: auto;
+          animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+          from {
+            transform: translateY(20px);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
         }
       `}</style>
     </div>
@@ -810,6 +887,162 @@ function QuickActionButton({ icon, label, onClick, testId }: { icon: React.React
       <span style={{ color: '#166534' }}>{icon}</span>
       {label}
     </button>
+  );
+}
+
+interface MetricsModalProps {
+  title: string;
+  onClose: () => void;
+  type: 'projects' | 'hours' | 'sdgs' | 'lives';
+  data?: any[];
+  totalHours?: number;
+  volunteers?: any[];
+  color: string;
+}
+
+function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers = [], color }: MetricsModalProps) {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>{title}</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+            <X size={24} />
+          </button>
+        </div>
+
+        <div style={{ padding: '24px' }}>
+          {type === 'projects' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {data.length === 0 ? (
+                <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No projects yet</p>
+              ) : (
+                data.map((project: any) => (
+                  <div key={project.id} style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${color}20` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{project.name}</h4>
+                      <span style={{ padding: '4px 12px', backgroundColor: color, color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: '600' }}>
+                        {project.status}
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <p style={{ fontWeight: '500', marginBottom: '4px' }}>Completion</p>
+                        <div style={{ height: '6px', backgroundColor: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', backgroundColor: color, width: `${project.completionPercentage || 0}%` }} />
+                        </div>
+                        <p style={{ marginTop: '4px', fontSize: '11px' }}>{project.completionPercentage || 0}%</p>
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
+                        <p style={{ fontWeight: '500', marginBottom: '4px' }}>SDGs</p>
+                        <p>{project.sdgGoals?.length || 0} goals</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {type === 'hours' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ padding: '16px', backgroundColor: color + '10', borderRadius: '8px', border: `2px solid ${color}` }}>
+                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total Hours</p>
+                <p style={{ fontSize: '32px', fontWeight: '700', color: color }}>{totalHours?.toLocaleString() || 0}</p>
+              </div>
+
+              <div>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Top Contributors</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {volunteers.length === 0 ? (
+                    <p style={{ color: '#9ca3af', fontSize: '13px' }}>No volunteer data</p>
+                  ) : (
+                    volunteers.slice(0, 5).map((vol: any) => (
+                      <div key={vol.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: '600', color }}>
+                            {vol.name?.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '12px', fontWeight: '600', color: '#111827' }}>{vol.name}</p>
+                            <p style={{ fontSize: '11px', color: '#6b7280' }}>{vol.projects} projects</p>
+                          </div>
+                        </div>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color }}>{vol.hours}h</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {type === 'sdgs' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {data.length === 0 ? (
+                <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No SDG data</p>
+              ) : (
+                data.map((sdg: any) => (
+                  <div key={sdg.goal} style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${SDG_GOALS[sdg.goal]?.color || color}20` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: SDG_GOALS[sdg.goal]?.color || color, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>
+                          {sdg.goal}
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{getSDGName(sdg.goal)}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 'bold', color: SDG_GOALS[sdg.goal]?.color || color }}>{sdg.hours}</p>
+                        <p style={{ fontSize: '11px', color: '#6b7280' }}>Hours</p>
+                      </div>
+                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 'bold', color: SDG_GOALS[sdg.goal]?.color || color }}>{sdg.projects}</p>
+                        <p style={{ fontSize: '11px', color: '#6b7280' }}>Projects</p>
+                      </div>
+                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 'bold', color: SDG_GOALS[sdg.goal]?.color || color }}>{sdg.volunteers || 0}</p>
+                        <p style={{ fontSize: '11px', color: '#6b7280' }}>Volunteers</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {type === 'lives' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {volunteers.length === 0 ? (
+                <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No volunteers</p>
+              ) : (
+                volunteers.map((vol: any) => (
+                  <div key={vol.id} style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${color}20` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color }}>
+                          {vol.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{vol.name}</p>
+                          <p style={{ fontSize: '12px', color: '#6b7280' }}>{vol.hours} hours • {vol.projects} projects</p>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '16px', fontWeight: '700', color: color }}>✓</p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

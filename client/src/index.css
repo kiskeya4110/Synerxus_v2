@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent outer scrollbar - only inner page scrollbars */
+body, html {
+  overflow: hidden;
+  height: 100%;
+}
+
 /* Leaflet map styles */
 .leaflet-container {
   z-index: 1;

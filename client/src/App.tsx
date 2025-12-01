@@ -159,6 +159,7 @@ export default function App() {
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
@@ -181,7 +182,6 @@ export default function App() {
 function LayoutRoute() {
   return (
     <Layout>
-      <Route path="/dashboard" component={Dashboard} />
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
       <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />

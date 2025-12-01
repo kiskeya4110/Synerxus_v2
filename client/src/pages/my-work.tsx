@@ -49,15 +49,20 @@ export default function MyWork() {
     }
   }, []);
   
-  // Fetch current user
+  // Get the current userId from localStorage for cache key
+  const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
+  
+  // Fetch current user with userId in cache key to avoid stale data
   const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", storedUserId],
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       const url = id ? `/api/users/me?userId=${id}` : '/api/users/me';
       const response = await fetch(url);
       return response.json();
-    }
+    },
+    staleTime: 0,
+    refetchOnMount: true
   });
 
   const userId = localStorage.getItem('currentUserId');

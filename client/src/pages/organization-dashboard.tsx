@@ -247,7 +247,7 @@ export default function OrganizationDashboard() {
         </div>
 
         {/* Key Metrics Section (Top 1/5) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }} className="md:grid-cols-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }} className="md:grid-cols-4 md:gap-4">
           <div style={{ display: 'none' }} className="md:block">
             <MetricCard
               icon={<FolderOpen size={24} />}
@@ -993,25 +993,29 @@ function MetricCard({ icon, label, value, color, testId, onClick }: { icon: Reac
       style={{
         backgroundColor: 'white',
         borderRadius: '12px',
-        padding: '20px',
+        padding: '16px',
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        gap: '16px',
+        justifyContent: 'center',
+        gap: '8px',
         border: `2px solid ${color}20`,
         cursor: 'pointer',
         transition: 'transform 0.15s, box-shadow 0.15s',
         width: '100%',
-        textAlign: 'left',
+        height: '140px',
+        textAlign: 'center',
+        minHeight: 'auto',
       }}
       data-testid={testId}
     >
-      <div style={{ padding: '12px', backgroundColor: `${color}10`, borderRadius: '10px', color }}>
+      <div style={{ padding: '8px', backgroundColor: `${color}10`, borderRadius: '8px', color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {icon}
       </div>
-      <div>
-        <p style={{ fontSize: '28px', fontWeight: 'bold', color }}>{value.toLocaleString()}</p>
-        <p style={{ fontSize: '13px', color: '#6b7280' }}>{label}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+        <p style={{ fontSize: '24px', fontWeight: 'bold', color, margin: 0 }}>{value.toLocaleString()}</p>
+        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0, lineHeight: '1.2' }}>{label}</p>
       </div>
     </button>
   );

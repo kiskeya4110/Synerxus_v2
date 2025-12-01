@@ -11,8 +11,32 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { getSDGName, SDG_GOALS } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
+import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
+import sdg2 from "@assets/E_SDG_PRINT-02_1762550174896.jpg";
+import sdg3 from "@assets/E_SDG_PRINT-03_1762550174898.jpg";
+import sdg4 from "@assets/E_SDG_PRINT-04_1762550174899.jpg";
+import sdg5 from "@assets/E_SDG_PRINT-05_1762550174900.jpg";
+import sdg6 from "@assets/E_SDG_PRINT-06_1762550174902.jpg";
+import sdg7 from "@assets/E_SDG_PRINT-07_1762550174903.jpg";
+import sdg8 from "@assets/E_SDG_PRINT-08_1762550174904.jpg";
+import sdg9 from "@assets/E_SDG_PRINT-09_1762550174905.jpg";
+import sdg10 from "@assets/E_SDG_PRINT-10_1762550174906.jpg";
+import sdg11 from "@assets/E_SDG_PRINT-11_1762550174908.jpg";
+import sdg12 from "@assets/E_SDG_PRINT-12_1762550174909.jpg";
+import sdg13 from "@assets/E_SDG_PRINT-13_1762550174910.jpg";
+import sdg14 from "@assets/E_SDG_PRINT-14_1762550174911.jpg";
+import sdg15 from "@assets/E_SDG_PRINT-15_1762550174912.jpg";
+import sdg16 from "@assets/E_SDG_PRINT-16_1762550174914.jpg";
+import sdg17 from "@assets/E_SDG_PRINT-17_1762550174915.jpg";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+
+const SDG_ICONS: Record<number, string> = {
+  1: sdg1, 2: sdg2, 3: sdg3, 4: sdg4, 5: sdg5,
+  6: sdg6, 7: sdg7, 8: sdg8, 9: sdg9, 10: sdg10,
+  11: sdg11, 12: sdg12, 13: sdg13, 14: sdg14, 15: sdg15,
+  16: sdg16, 17: sdg17,
+};
 
 const defaultIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -1066,6 +1090,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
               ) : (
                 data.map((sdg: any) => {
                   const sdgColor = SDG_GOALS[sdg.goal]?.color || color;
+                  const sdgIcon = SDG_ICONS[sdg.goal];
                   return (
                     <button 
                       key={sdg.goal} 
@@ -1099,16 +1124,17 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                         width: '80px', 
                         height: '80px', 
                         borderRadius: '8px', 
-                        backgroundColor: sdgColor, 
-                        color: 'white', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center',
-                        fontWeight: 'bold',
-                        fontSize: '32px',
-                        flexShrink: 0
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                       }}>
-                        {sdg.goal}
+                        <img 
+                          src={sdgIcon} 
+                          alt={`SDG ${sdg.goal}`}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
                       <div style={{ width: '100%' }}>
                         <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '0 0 8px 0' }}>{getSDGName(sdg.goal)}</p>

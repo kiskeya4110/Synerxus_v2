@@ -697,14 +697,13 @@ export default function OrganizationImpactReport() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
       <OrganizationHeader activeTab="reports" />
-      <div className="p-4 md:p-8">
       {/* UN SDG Wheel Watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-5 dark:opacity-3 flex items-center justify-center" style={{ zIndex: 0 }}>
         <div className="text-9xl" title="UN Sustainable Development Goals">
           🎯
         </div>
       </div>
-      <div className="max-w-6xl mx-auto relative z-10">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto relative z-10">
         {/* Header with Actions - Reorganized for Better UX */}
         <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           {/* Left: Back Button */}
@@ -2720,7 +2719,6 @@ export default function OrganizationImpactReport() {
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
         }
       `}</style>
-      </div>
       </div>
     </div>
   );

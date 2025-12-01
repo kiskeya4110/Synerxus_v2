@@ -186,6 +186,7 @@ export default function OrganizationDashboard() {
             value={metrics.activeProjects}
             color="#166534"
             testId="metric-active-projects"
+            onClick={() => navigate('/projects')}
           />
           <MetricCard
             icon={<Clock size={24} />}
@@ -193,6 +194,7 @@ export default function OrganizationDashboard() {
             value={metrics.totalHours}
             color="#1e40af"
             testId="metric-total-hours"
+            onClick={() => navigate('/impact-visualization')}
           />
           <MetricCard
             icon={<Target size={24} />}
@@ -200,6 +202,7 @@ export default function OrganizationDashboard() {
             value={metrics.sdgsAddressed}
             color="#7c3aed"
             testId="metric-sdgs"
+            onClick={() => navigate('/sdg-mapping')}
           />
           <MetricCard
             icon={<Users size={24} />}
@@ -207,6 +210,7 @@ export default function OrganizationDashboard() {
             value={metrics.livesTouched}
             color="#dc2626"
             testId="metric-lives"
+            onClick={() => navigate('/volunteers')}
           />
         </div>
 
@@ -359,26 +363,53 @@ export default function OrganizationDashboard() {
 
           {/* Right Column: Alerts & Tasks */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', height: 'fit-content' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertTriangle size={18} style={{ color: '#f59e0b' }} />
-              Alerts & Tasks
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={18} style={{ color: '#f59e0b' }} />
+                Alerts & Tasks
+              </h3>
+              <button
+                onClick={() => navigate('/tasks')}
+                data-testid="view-all-tasks"
+                style={{ fontSize: '12px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}
+              >
+                View All →
+              </button>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {dashboardData?.alerts && dashboardData.alerts.length > 0 ? (
                 dashboardData.alerts.slice(0, 6).map((alert) => (
-                  <div
+                  <button
                     key={alert.id}
+                    type="button"
+                    className="alert-btn"
+                    onClick={() => {
+                      if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
+                        navigate('/tasks');
+                      } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
+                        navigate('/projects');
+                      } else if (alert.type === 'volunteer') {
+                        navigate('/volunteers');
+                      } else {
+                        navigate('/tasks');
+                      }
+                    }}
                     style={{
                       padding: '12px',
                       borderRadius: '8px',
                       backgroundColor: alert.severity === 'high' ? '#fef2f2' : '#fffbeb',
                       borderLeft: `4px solid ${alert.severity === 'high' ? '#dc2626' : '#f59e0b'}`,
+                      border: 'none',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      transition: 'transform 0.15s, box-shadow 0.15s',
+                      width: '100%',
                     }}
                     data-testid={`alert-${alert.id}`}
                   >
                     <p style={{ fontSize: '13px', fontWeight: '500', color: '#111827', marginBottom: '2px' }}>{alert.title}</p>
                     <p style={{ fontSize: '12px', color: '#6b7280' }}>{alert.message}</p>
-                  </div>
+                  </button>
                 ))
               ) : (
                 <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
@@ -389,12 +420,34 @@ export default function OrganizationDashboard() {
             </div>
             {dashboardData?.pendingTasks && dashboardData.pendingTasks.length > 0 && (
               <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-                <p style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280', marginBottom: '8px' }}>Pending Tasks</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280' }}>Pending Tasks</p>
+                </div>
                 {dashboardData.pendingTasks.slice(0, 3).map((task) => (
-                  <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 0', borderBottom: '1px solid #f3f4f6' }}>
-                    <CheckSquare size={14} style={{ color: '#9ca3af' }} />
+                  <button
+                    key={task.id}
+                    type="button"
+                    className="task-btn"
+                    onClick={() => navigate(`/tasks?id=${task.id}`)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 8px',
+                      borderBottom: '1px solid #f3f4f6',
+                      width: '100%',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background-color 0.15s',
+                    }}
+                    data-testid={`task-${task.id}`}
+                  >
+                    <CheckSquare size={14} style={{ color: '#9ca3af', flexShrink: 0 }} />
                     <span style={{ fontSize: '13px', color: '#374151' }}>{task.title}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -679,14 +732,33 @@ export default function OrganizationDashboard() {
             grid-template-columns: 1fr !important;
           }
         }
+        .metric-card-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        }
+        .metric-card-btn:focus {
+          outline: 2px solid #166534;
+          outline-offset: 2px;
+        }
+        .alert-btn:hover {
+          transform: translateX(4px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .task-btn:hover {
+          background-color: #f9fafb !important;
+        }
       `}</style>
     </div>
   );
 }
 
-function MetricCard({ icon, label, value, color, testId }: { icon: React.ReactNode; label: string; value: number; color: string; testId: string }) {
+function MetricCard({ icon, label, value, color, testId, onClick }: { icon: React.ReactNode; label: string; value: number; color: string; testId: string; onClick?: () => void }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${label}: ${value.toLocaleString()}`}
+      className="metric-card-btn"
       style={{
         backgroundColor: 'white',
         borderRadius: '12px',
@@ -696,6 +768,10 @@ function MetricCard({ icon, label, value, color, testId }: { icon: React.ReactNo
         alignItems: 'center',
         gap: '16px',
         border: `2px solid ${color}20`,
+        cursor: 'pointer',
+        transition: 'transform 0.15s, box-shadow 0.15s',
+        width: '100%',
+        textAlign: 'left',
       }}
       data-testid={testId}
     >
@@ -706,7 +782,7 @@ function MetricCard({ icon, label, value, color, testId }: { icon: React.ReactNo
         <p style={{ fontSize: '28px', fontWeight: 'bold', color }}>{value.toLocaleString()}</p>
         <p style={{ fontSize: '13px', color: '#6b7280' }}>{label}</p>
       </div>
-    </div>
+    </button>
   );
 }
 

@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { 
   FolderOpen, Users, Menu, X, Plus, 
-  Target, BarChart3, FileText
+  Target, BarChart3, FileText, Bell, Settings
 } from "lucide-react";
 import synerxusLogo from "@assets/image_1764559495133.png";
 
@@ -40,8 +40,9 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   return (
     <div style={{ backgroundColor: '#166534', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Left: Logo */}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        {/* Left: Logo + Navigation Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+          {/* Logo */}
           <img 
             src={synerxusLogo} 
             alt="SYNERXUS - Connect. Manage. Impact Globally." 
@@ -49,38 +50,96 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             onClick={() => navigate('/organization-dashboard')}
             data-testid="logo-image"
           />
+
+          {/* Desktop Navigation Tabs - Right next to logo */}
+          <div style={{ display: 'flex', gap: '4px' }} className="desktop-nav">
+            {NAV_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab)}
+                data-testid={`nav-tab-${tab.id}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  backgroundColor: currentTab === tab.id ? 'rgba(255,255,255,0.2)' : 'transparent',
+                  border: 'none',
+                  borderRadius: '8px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  if (currentTab !== tab.id) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (currentTab !== tab.id) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <tab.icon size={16} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Center: Desktop Tabs */}
-        <div style={{ display: 'flex', gap: '8px' }} className="desktop-nav">
-          {NAV_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab)}
-              data-testid={`nav-tab-${tab.id}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 16px',
-                backgroundColor: currentTab === tab.id ? 'rgba(255,255,255,0.2)' : 'transparent',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s',
-              }}
-            >
-              <tab.icon size={16} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Right: Notifications, Settings, Profile & Mobile Menu */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Notifications Button */}
+          <button
+            onClick={() => navigate('/notifications')}
+            data-testid="notifications-button"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <Bell size={18} />
+          </button>
 
-        {/* Right: Profile & Mobile Menu */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Settings Button */}
+          <button
+            onClick={() => navigate('/settings')}
+            data-testid="settings-button"
+            style={{
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              transition: 'background-color 0.2s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+          >
+            <Settings size={18} />
+          </button>
+
+          {/* Profile Button */}
           <button
             onClick={() => navigate('/settings')}
             data-testid="profile-button"
@@ -95,6 +154,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white',
+              overflow: 'hidden',
             }}
           >
             {(user as any)?.avatar ? (
@@ -137,12 +197,14 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 gap: '12px',
                 width: '100%',
                 padding: '12px 16px',
-                backgroundColor: 'transparent',
+                backgroundColor: currentTab === tab.id ? 'rgba(255,255,255,0.1)' : 'transparent',
                 border: 'none',
+                borderRadius: '8px',
                 color: 'white',
                 fontSize: '16px',
                 textAlign: 'left',
                 cursor: 'pointer',
+                marginBottom: '4px',
               }}
             >
               <tab.icon size={20} />
@@ -154,7 +216,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
       {/* Responsive Styles */}
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
           .desktop-nav {
             display: none !important;
           }
@@ -162,7 +224,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             display: block !important;
           }
         }
-        @media (min-width: 769px) {
+        @media (min-width: 901px) {
           .mobile-menu {
             display: none !important;
           }

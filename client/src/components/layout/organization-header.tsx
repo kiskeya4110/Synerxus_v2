@@ -4,8 +4,6 @@ import {
   FolderOpen, Users, Plus, 
   Target, BarChart3, FileText, Bell, Settings
 } from "lucide-react";
-import synerxusLogo from "@assets/image_1764559495133.png";
-
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/projects' },
@@ -37,55 +35,43 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   return (
     <div style={{ backgroundColor: '#166534', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Left: Logo + Navigation Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Logo */}
-          <img 
-            src={synerxusLogo} 
-            alt="SYNERXUS - Connect. Manage. Impact Globally." 
-            style={{ height: '40px', objectFit: 'contain', cursor: 'pointer' }}
-            onClick={() => navigate('/organization-dashboard')}
-            data-testid="logo-image"
-          />
-
-          {/* Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {NAV_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab)}
-                data-testid={`nav-tab-${tab.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 14px',
-                  backgroundColor: currentTab === tab.id ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  if (currentTab !== tab.id) {
-                    e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (currentTab !== tab.id) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
-              >
-                <tab.icon size={16} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        {/* Left: Navigation Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {NAV_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabClick(tab)}
+              data-testid={`nav-tab-${tab.id}`}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                backgroundColor: currentTab === tab.id ? 'rgba(255,255,255,0.2)' : 'transparent',
+                border: 'none',
+                borderRadius: '8px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => {
+                if (currentTab !== tab.id) {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentTab !== tab.id) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
+            >
+              <tab.icon size={16} />
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Right: Notifications, Settings, Profile */}

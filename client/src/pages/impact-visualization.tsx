@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { useQuery, useLocation as useWouterLocation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { BarChart, Share2, Download, Twitter, Linkedin, Facebook, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -504,7 +504,9 @@ export default function ImpactVisualization() {
     volunteerActivities.length > 0;
 
   return (
-    <>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+      <OrganizationHeader activeTab="reports" />
+      <>
       {/* Page Header with Action Buttons */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

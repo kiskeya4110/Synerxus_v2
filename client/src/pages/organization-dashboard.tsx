@@ -266,7 +266,11 @@ export default function OrganizationDashboard() {
             value={metrics.livesTouched}
             color="#dc2626"
             testId="metric-lives"
-            onClick={() => setActiveModal('lives')}
+            onClick={() => {
+              setActiveModal('lives');
+              // Sort projects by lives touched
+              dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
+            }}
           />
         </div>
 
@@ -850,7 +854,7 @@ export default function OrganizationDashboard() {
           title="Lives Touched"
           onClose={() => setActiveModal(null)}
           type="lives"
-          volunteers={dashboardData?.volunteerSummaries || []}
+          data={dashboardData?.projects?.slice(0, 10).sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0)) || []}
           color="#dc2626"
         />
       )}
@@ -1162,26 +1166,44 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
 
           {type === 'lives' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {volunteers.length === 0 ? (
-                <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No volunteers</p>
+              {data.length === 0 ? (
+                <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No projects</p>
               ) : (
-                volunteers.map((vol: any) => (
-                  <div key={vol.id} style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${color}20` }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '600', color }}>
-                          {vol.name?.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{vol.name}</p>
-                          <p style={{ fontSize: '12px', color: '#6b7280' }}>{vol.hours} hours • {vol.projects} projects</p>
-                        </div>
+                data.map((project: any) => (
+                  <button 
+                    key={project.id}
+                    onClick={() => {
+                      navigate(`/projects/${project.id}`);
+                      onClose();
+                    }}
+                    style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${color}20`, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${color}10`}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                      <div>
+                        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{project.name}</h4>
+                        <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Status: {project.status}</p>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '16px', fontWeight: '700', color: color }}>✓</p>
+                      <span style={{ padding: '4px 12px', backgroundColor: color, color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', marginLeft: '8px' }}>
+                        {project.livesTouched || 0} lives
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 'bold', color }}>{project.completionPercentage || 0}%</p>
+                        <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Complete</p>
+                      </div>
+                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 'bold', color }}>{project.totalHours || 0}h</p>
+                        <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Hours</p>
+                      </div>
+                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '16px', fontWeight: 'bold', color }}>{project.sdgGoals?.length || 0}</p>
+                        <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>SDGs</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))
               )}
             </div>

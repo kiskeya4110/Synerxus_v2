@@ -31,6 +31,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
     }
   };
 
+  const handleLogoClick = () => {
+    navigate('/landing');
+  };
+
   const currentTab = NAV_TABS.find(tab => tab.path === location)?.id || activeTab;
 
   return (
@@ -39,14 +43,20 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
         {/* Left: Logo + Brand Name + Navigation Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {/* Logo and Brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.2)' }}>
+          <button
+            onClick={handleLogoClick}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', transition: 'opacity 0.2s' }}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+            title="Go to landing page"
+          >
             <img 
               src={logoUrl} 
               alt="Synerxus Logo" 
               style={{ height: '32px', width: 'auto' }}
             />
             <span style={{ color: 'white', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>SYNERXUS</span>
-          </div>
+          </button>
 
           {/* Navigation Tabs */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

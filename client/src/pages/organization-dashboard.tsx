@@ -264,34 +264,6 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Mobile Metrics Section - Stacked Cards */}
-        <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-          <MobileMetricCard
-            icon={<Users size={20} />}
-            label="Total Volunteers"
-            value={metrics.livesTouched}
-            color="#667eea"
-            testId="mobile-metric-volunteers"
-            onClick={() => setActiveModal('lives')}
-          />
-          <MobileMetricCard
-            icon={<FolderOpen size={20} />}
-            label="Active Projects"
-            value={metrics.activeProjects}
-            color="#764ba2"
-            testId="mobile-metric-projects"
-            onClick={() => setActiveModal('projects')}
-          />
-          <MobileMetricCard
-            icon={<Clock size={20} />}
-            label="Hours Contributed"
-            value={metrics.totalHours}
-            color="#f093fb"
-            testId="mobile-metric-hours"
-            onClick={() => setActiveModal('hours')}
-          />
-        </div>
-
         {/* Mobile Chart Section */}
         <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <div style={{ height: '160px' }}>
@@ -1082,7 +1054,7 @@ export default function OrganizationDashboard() {
       `}</style>
 
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav onCreateClick={() => setShowCreateModal(true)} />
+      <MobileBottomNav activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />
 
       {/* Footer - Hidden on Mobile */}
       <div className="hidden md:block">

@@ -1399,7 +1399,7 @@ export default function CSRDashboard() {
                       borderRadius: "8px",
                       overflow: "hidden",
                       position: "relative",
-                      backgroundColor: "#f0f4f8",
+                      backgroundColor: "#0f172a",
                       minHeight: "300px",
                     }}
                   >
@@ -1411,8 +1411,8 @@ export default function CSRDashboard() {
                         data-testid="geographic-map"
                       >
                         <TileLayer
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                          attribution="&copy; OpenStreetMap contributors"
+                          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                          attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
                         />
                         {csrData?.projectLocations?.map((project) => {
                           const statusColor =
@@ -1577,7 +1577,7 @@ export default function CSRDashboard() {
                         }}
                       ></div>
                       <span style={{ color: "#4b5563" }}>
-                        Pending ({(csrData?.projectLocations || []).filter(p => p.status === "pending").length})
+                        Sponsored ({(csrData?.projectLocations || []).filter(p => p.status === "sponsored").length})
                       </span>
                     </div>
                   </div>

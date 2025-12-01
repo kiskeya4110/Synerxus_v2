@@ -14,6 +14,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 
 export default function Volunteers() {
@@ -184,6 +186,7 @@ export default function Volunteers() {
 
   return (
     <>
+      {isOrganization && <OfflineBanner />}
       {isOrganization && <OrganizationHeader activeTab="volunteers" />}
       <div className={isOrganization ? "max-h-screen overflow-y-auto max-w-[1400px] mx-auto p-6" : "max-h-screen overflow-y-auto"}>
       {/* Page Header */}
@@ -712,8 +715,13 @@ export default function Volunteers() {
       </Dialog>
       </div>
       
-      {/* Footer */}
-      <Footer />
+      {/* Mobile Bottom Navigation - Organization Only */}
+      {isOrganization && <MobileBottomNav />}
+      
+      {/* Footer - Hidden on Mobile */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </>
   );
 }

@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
 import OrganizationHeader from "@/components/layout/organization-header";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OfflineBanner from "@/components/layout/offline-banner";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
 import MyTasksPage from "./my-tasks";
@@ -400,6 +402,7 @@ export default function MyWork() {
 
   return (
     <div className="h-screen overflow-y-auto">
+      {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
       <div className="p-6 pb-4 flex items-start justify-between">
         <div>
@@ -717,6 +720,9 @@ export default function MyWork() {
           </TabsContent>
         </Tabs>
       )}
+      
+      {/* Mobile Bottom Navigation - Organization Only */}
+      {isOrganizationManager && <MobileBottomNav />}
     </div>
   );
 }

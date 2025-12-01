@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
 import OrganizationHeader from "@/components/layout/organization-header";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
@@ -454,6 +456,7 @@ export default function SDGMapping() {
   
   return (
     <div className="h-screen overflow-y-auto">
+      <OfflineBanner />
       <OrganizationHeader activeTab="sdgs" />
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 24px' }}>
         {/* Page Header */}
@@ -1106,8 +1109,13 @@ export default function SDGMapping() {
         </Dialog>
       </div>
       
-      {/* Footer */}
-      <Footer />
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
+      
+      {/* Footer - Hidden on Mobile */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 }

@@ -162,6 +162,7 @@ export default function App() {
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
+          <Route path="/organization-my-work" component={MyWork} />
           <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
           <Route path="/project-portfolio" component={ProjectPortfolio} />
           <Route path="/projects" component={Projects} />

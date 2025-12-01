@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
@@ -736,6 +737,9 @@ export default function MyWork() {
           <MobileMetricsGrid activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} livesTouched={dashboardData?.livesTouched || 0} />
         </>
       )}
+      
+      {/* Mobile Bottom Navigation - Organization Only */}
+      {isOrganizationManager && <MobileBottomNav activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} livesTouched={dashboardData?.livesTouched || 0} />}
     </div>
   );
 }

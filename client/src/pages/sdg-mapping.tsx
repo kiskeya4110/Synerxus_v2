@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useTheme } from "@/components/layout/theme-provider";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
@@ -1120,6 +1121,7 @@ export default function SDGMapping() {
         </h2>
       </div>
       <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
+      <MobileBottomNav activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
       
       {/* Footer - Hidden on Mobile */}
       <div className="hidden md:block">

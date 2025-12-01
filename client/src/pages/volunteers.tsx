@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 
@@ -728,6 +729,7 @@ export default function Volunteers() {
             </h2>
           </div>
           <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
+          <MobileBottomNav activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
         </>
       )}
       

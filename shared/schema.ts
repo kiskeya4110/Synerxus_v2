@@ -68,6 +68,7 @@ export const projects = pgTable("projects", {
   primarySdg: integer("primary_sdg"), // Main SDG alignment for the project
   impactMetricName: text("impact_metric_name"), // e.g., "Students Tutored", "Trees Planted"
   impactMetricUnit: text("impact_metric_unit"), // e.g., "students", "trees"
+  livesTouched: integer("lives_touched").default(0), // Total lives impacted by this project
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

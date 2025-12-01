@@ -81,27 +81,41 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '4px',
-                padding: '8px 12px',
+                gap: '6px',
+                padding: '10px 14px',
                 backgroundColor: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                color: active ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
-                transition: 'color 0.2s',
-                minWidth: '60px',
+                color: active ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
+                transition: 'all 0.3s ease',
+                minWidth: '70px',
+                borderRadius: '14px',
+                transform: active ? 'scale(1.08)' : 'scale(1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.transform = 'scale(1.12)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.transform = active ? 'scale(1.08)' : 'scale(1)';
               }}
             >
               <div
                 style={{
-                  padding: '8px',
-                  borderRadius: '12px',
-                  backgroundColor: active ? 'rgba(255, 255, 255, 0.25)' : 'transparent',
-                  transition: 'background-color 0.2s',
+                  padding: '12px',
+                  borderRadius: '14px',
+                  backgroundColor: active ? 'rgba(255, 255, 255, 0.35)' : 'rgba(255, 255, 255, 0.08)',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: active ? '0 4px 12px rgba(255, 255, 255, 0.2)' : 'none',
                 }}
               >
-                <item.icon size={22} />
+                <item.icon size={28} strokeWidth={2.2} />
               </div>
-              <span style={{ fontSize: '11px', fontWeight: active ? '600' : '500' }}>
+              <span style={{ fontSize: '12px', fontWeight: active ? '700' : '600', letterSpacing: '0.3px' }}>
                 {item.label}
               </span>
             </button>

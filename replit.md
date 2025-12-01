@@ -3,6 +3,22 @@
 ## Overview
 Synerxus is an AI-powered platform that connects global volunteers with opportunities and helps organizations track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhancing global collaboration. Its core purpose is "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes (December 1, 2025)
+- **Complete Organization Dashboard Redesign**: Built a new dedicated organization dashboard with comprehensive features:
+  - **API Endpoint**: New `/api/organization/dashboard` aggregates key metrics, SDG distribution, project locations, alerts, impact over time, and AI-generated insights with project and time period filtering
+  - **Dark Green Theme**: Navigation ribbon uses #166534 (forest green) for organization branding
+  - **Responsive Navigation**: Desktop tabs (Dashboard, Projects, SDGs, Volunteers, Reports, +Create) collapse into hamburger menu on mobile
+  - **Key Metrics Cards**: Active Projects, Total Volunteer Hours, SDGs Addressed, Lives Touched
+  - **SDG Impact Distribution**: Bar chart showing volunteer hours contribution by SDG
+  - **Project Locations Map**: Interactive Leaflet map with project markers
+  - **Alerts & Tasks Panel**: Shows overdue tasks and pending items requiring attention
+  - **Impact Over Time**: Area chart tracking hours and people impacted over 12 months
+  - **AI Insights Panel**: Auto-generated insights on engagement, task completion, and SDG focus
+  - **Below-the-Fold Content**: Active projects list, quick actions, and primary SDG summary
+  - **+Create Modal**: Quick access to create projects, opportunities, and tasks
+  - **Full Filter Support**: Project and time period filters (7d, 30d, 90d, 1y, all time)
+  - Complete data-testid coverage for e2e testing
+
 ## Recent Changes (November 27, 2025)
 - **Optimized Matching Algorithm**: Upgraded the AI matching algorithm with refined weights and new features:
   - **New Weights**: Skills 35%, SDG 20%, Availability 20%, Interests 10% (re-enabled), Location 10%, Experience 5%

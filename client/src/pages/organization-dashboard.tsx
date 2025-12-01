@@ -282,10 +282,13 @@ export default function OrganizationDashboard() {
                               const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
                               const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
                               const percent = ((hoursNum / total) * 100).toFixed(0);
-                              const sdgName = SDG_GOALS[goal]?.shortName || `SDG ${goal}`;
-                              return parseInt(percent) > 6 ? `${sdgName}\n${percent}%` : '';
+                              const sdgInfo = SDG_GOALS[goal];
+                              const sdgName = sdgInfo?.shortName || `SDG ${goal}`;
+                              // Show label for all segments with readable size
+                              return `${sdgName} ${percent}%`;
                             }}
-                            labelLine={false}
+                            labelLine={true}
+                            labelPosition="outside"
                           >
                             {dashboardData.sdgDistribution.map((entry) => (
                               <Cell 

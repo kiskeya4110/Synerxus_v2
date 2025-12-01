@@ -1,3 +1,4 @@
+import React from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -277,7 +278,14 @@ export default function OrganizationDashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ goal, hours }) => `SDG ${goal}: ${hours}h`}
+                    label={({ goal, hours }) => {
+                      const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                      const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
+                      const percent = ((hoursNum / total) * 100).toFixed(0);
+                      const sdgInfo = SDG_GOALS[goal];
+                      const sdgName = sdgInfo?.shortName || `SDG ${goal}`;
+                      return `${sdgName}: ${percent}%`;
+                    }}
                     outerRadius={60}
                     fill="#8884d8"
                     dataKey="hours"

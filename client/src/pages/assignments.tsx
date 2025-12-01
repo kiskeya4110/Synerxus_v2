@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 export default function Assignments() {
   const { toast } = useToast();
@@ -22,6 +23,8 @@ export default function Assignments() {
 
   // Get current user from server session
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
+  const isOrganizationUser = userType === 'organization';
   const { data: currentUser, isLoading: userLoading } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -167,13 +170,15 @@ export default function Assignments() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Assignments</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Manage your project assignments and invitations
-        </p>
-      </div>
+    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+      <div className={isOrganizationUser ? "p-6 space-y-6" : "container mx-auto p-6 space-y-6"}>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Assignments</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">
+            Manage your project assignments and invitations
+          </p>
+        </div>
 
       {/* Pending Invitations */}
       <div>
@@ -354,6 +359,7 @@ export default function Assignments() {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

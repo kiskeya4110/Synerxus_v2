@@ -15,6 +15,7 @@ import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 // Form schema for adding events
 const eventFormSchema = z.object({
@@ -37,8 +38,10 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { toast } = useToast();
 
-  // Get current user ID for scoping
+  // Get current user ID and type for scoping
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
+  const isOrganizationUser = userType === 'organization';
 
   // Fetch events from API - scoped to user
   const { data: events = [], isLoading } = useQuery({
@@ -160,20 +163,22 @@ export default function Calendar() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Calendar</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-            Manage volunteer shifts, meetings, and deadlines
-          </p>
+    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+      <div className={isOrganizationUser ? "p-6 space-y-6" : "space-y-6"}>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Calendar</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Manage volunteer shifts, meetings, and deadlines
+            </p>
+          </div>
+          <Button onClick={() => setIsAddEventOpen(true)} data-testid="button-add-event">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Event
+          </Button>
         </div>
-        <Button onClick={() => setIsAddEventOpen(true)} data-testid="button-add-event">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Event
-        </Button>
-      </div>
 
       <Card>
         <CardHeader className="border-b">
@@ -487,6 +492,7 @@ export default function Calendar() {
           </div>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

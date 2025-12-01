@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 interface ITask {
   id: number;
@@ -27,6 +28,9 @@ export default function Tasks() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
+  
+  const userType = localStorage.getItem('userType');
+  const isOrganizationUser = userType === 'organization';
 
   const { data: tasks = [], isLoading } = useQuery<ITask[]>({ 
     queryKey: ["/api/tasks"] 
@@ -63,14 +67,16 @@ export default function Tasks() {
   };
 
   return (
-    <>
-      {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold mb-2">Tasks</h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          Manage and track volunteer tasks across all projects
-        </p>
-      </div>
+    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+      <div className={isOrganizationUser ? "p-6" : ""}>
+        {/* Page Header */}
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold mb-2">Tasks</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            Manage and track volunteer tasks across all projects
+          </p>
+        </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid w-full grid-cols-3 min-h-[44px]">
@@ -174,6 +180,7 @@ export default function Tasks() {
           )}
         </TabsContent>
       </Tabs>
-    </>
+      </div>
+    </div>
   );
 }

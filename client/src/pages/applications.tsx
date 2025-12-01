@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Target, Calendar } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 interface Application {
   id: number;
@@ -40,8 +41,10 @@ export default function ApplicationsPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const { toast } = useToast();
 
-  // Get current user ID
+  // Get current user ID and type
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
+  const isOrganizationUser = userType === 'organization';
 
   // Fetch current user data to get organizationId
   const { data: currentUser } = useQuery<{ organizationId?: number }>({
@@ -295,13 +298,15 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Applications</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Review and manage volunteer applications
-        </p>
-      </div>
+    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
+      <div className={isOrganizationUser ? "p-6" : "p-6"}>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">Applications</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Review and manage volunteer applications
+          </p>
+        </div>
 
       <Tabs defaultValue="pending" className="space-y-6">
         <TabsList>
@@ -788,6 +793,7 @@ export default function ApplicationsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

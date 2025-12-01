@@ -511,7 +511,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
 
   return (
     <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }}>
-      <OrganizationHeader activeTab="reports" />
+      {!embedded && <OrganizationHeader activeTab="reports" />}
       <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Page Header with Action Buttons */}
       <div className="mb-6">

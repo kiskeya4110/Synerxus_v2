@@ -24,15 +24,15 @@ export default function MyWork() {
     // Restore from sessionStorage first, then URL hash, then default
     if (typeof window !== 'undefined') {
       const stored = sessionStorage.getItem('mywork-active-tab');
-      if (stored && ['projects', 'applications', 'assignments', 'tasks', 'impact'].includes(stored)) {
+      if (stored && ['tasks', 'applications', 'assignments', 'impact'].includes(stored)) {
         return stored;
       }
       const hash = window.location.hash.replace('#', '');
-      if (['projects', 'applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
+      if (['tasks', 'applications', 'assignments', 'impact'].includes(hash)) {
         return hash;
       }
     }
-    return 'projects'; // Default to projects for org users, will be overridden for volunteers
+    return 'tasks'; // Default to tasks for org users, applications for volunteers
   });
   
   // State for projects tab
@@ -43,7 +43,7 @@ export default function MyWork() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
-      if (['projects', 'applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
+      if (['tasks', 'applications', 'assignments', 'impact'].includes(hash)) {
         setActiveTab(hash);
       }
     }
@@ -611,13 +611,9 @@ export default function MyWork() {
             </Link>
           </div>
           
-          {/* Organization Tabs: Projects, Tasks, Impact */}
+          {/* Organization Tabs: Tasks, Impact */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-4 mt-6">
-            <TabsList className="grid w-full max-w-lg grid-cols-3 mb-4 sm:mb-6">
-              <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-projects">
-                <FolderOpen className="h-4 w-4" />
-                <span>Projects</span>
-              </TabsTrigger>
+            <TabsList className="grid w-full max-w-lg grid-cols-2 mb-4 sm:mb-6">
               <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
                 <ListTodo className="h-4 w-4" />
                 <span>Tasks</span>
@@ -627,79 +623,6 @@ export default function MyWork() {
                 <span>Impact</span>
               </TabsTrigger>
             </TabsList>
-
-            {/* Projects Tab Content */}
-            <TabsContent value="projects" className="mt-2">
-              <div className="w-full overflow-x-hidden">
-                {/* Search and Create Project */}
-                <div className="flex flex-col sm:flex-row gap-3 mb-6">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="Search projects..."
-                      value={projectSearchTerm}
-                      onChange={(e) => setProjectSearchTerm(e.target.value)}
-                      className="pl-10"
-                      data-testid="input-project-search"
-                    />
-                  </div>
-                  {currentUser?.organizationId && (
-                    <CreateProjectDialog organizationId={currentUser.organizationId} />
-                  )}
-                </div>
-
-                {/* Project List */}
-                <div className="space-y-4">
-                  {orgProjects
-                    .filter((project: Project) => 
-                      project.name?.toLowerCase().includes(projectSearchTerm.toLowerCase()) ||
-                      project.description?.toLowerCase().includes(projectSearchTerm.toLowerCase())
-                    )
-                    .map((project: Project) => {
-                      const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
-                      const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
-                      const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
-                      
-                      return (
-                        <ProjectListCard
-                          key={project.id}
-                          project={project}
-                          tasks={projectTasks}
-                          metrics={{
-                            volunteers: orgVolunteers.length,
-                            totalCommitted: projectTasks.length,
-                            totalCompleted: completedTasks
-                          }}
-                          progress={project.completionPercentage ?? progress}
-                          isExpanded={expandedProjects.has(project.id)}
-                          onToggle={() => {
-                            setExpandedProjects(prev => {
-                              const newSet = new Set(prev);
-                              if (newSet.has(project.id)) {
-                                newSet.delete(project.id);
-                              } else {
-                                newSet.add(project.id);
-                              }
-                              return newSet;
-                            });
-                          }}
-                          canManageProjects={true}
-                        />
-                      );
-                    })
-                  }
-                  {orgProjects.length === 0 && (
-                    <Card className="p-8 text-center">
-                      <p className="text-gray-500 mb-4">No projects yet. Create your first project to get started!</p>
-                      {currentUser?.organizationId && (
-                        <CreateProjectDialog organizationId={currentUser.organizationId} />
-                      )}
-                    </Card>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
 
             {/* Tasks Tab Content */}
             <TabsContent value="tasks" className="mt-2">

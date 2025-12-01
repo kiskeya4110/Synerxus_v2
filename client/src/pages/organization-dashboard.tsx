@@ -205,6 +205,9 @@ export default function OrganizationDashboard() {
         </p>
       </div>
 
+      {/* Mobile Bottom Metrics - Shows at bottom */}
+      {metrics && <MobileBottomNav activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />}
+
       {/* Main Content */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }} className="md:p-6">
         {/* Filters Section - Desktop Only */}

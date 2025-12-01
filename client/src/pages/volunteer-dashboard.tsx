@@ -921,7 +921,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="max-h-screen overflow-y-auto space-y-4 md:space-y-6">
       {/* Header - Mobile optimized */}
       <div className="space-y-3 md:space-y-6">
         <div className="flex items-center justify-between">

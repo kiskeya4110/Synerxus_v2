@@ -565,7 +565,7 @@ export default function Landing() {
   const isLoggedIn = !!currentUser?.id;
 
   return (
-    <div className="min-h-screen bg-slate-50 scroll-container">
+    <div className="max-h-screen overflow-y-auto bg-slate-50 scroll-container">
       {/* Navigation - PWA optimized with glass effect */}
       <nav className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl safe-area-top shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">

@@ -425,7 +425,7 @@ export default function SDGMapping() {
   // Empty state when organization hasn't selected SDGs in Settings
   if (sdgData.length === 0) {
     return (
-      <div className="max-h-screen overflow-y-auto">
+      <div className="h-screen overflow-y-auto">
         <OrganizationHeader activeTab="sdgs" />
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
           <div className="mb-4 sm:mb-6">
@@ -452,7 +452,7 @@ export default function SDGMapping() {
   }
   
   return (
-    <div className="max-h-screen overflow-y-auto">
+    <div className="h-screen overflow-y-auto">
       <OrganizationHeader activeTab="sdgs" />
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 24px' }}>
         {/* Page Header */}

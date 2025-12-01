@@ -24,7 +24,7 @@ export default function Organizations() {
   );
 
   return (
-    <div className="max-h-screen overflow-y-auto">
+    <div className="h-screen overflow-y-auto">
       {/* Page Header */}
       <div className="p-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-2">Organizations</h1>

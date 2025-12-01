@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
@@ -723,24 +722,7 @@ export default function MyWork() {
       )}
       
       {/* Mobile Metrics Grid - Organization Only */}
-      {isOrganizationManager && (
-        <>
-          <div className="md:hidden" style={{ 
-            padding: '16px', 
-            backgroundColor: 'white',
-            borderBottom: '1px solid #e5e7eb',
-            paddingBottom: '8px'
-          }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
-              Projects Overview
-            </h2>
-          </div>
-          <MobileMetricsGrid activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} livesTouched={dashboardData?.livesTouched || 0} />
-        </>
-      )}
-      
-      {/* Mobile Bottom Navigation - Organization Only */}
-      {isOrganizationManager && <MobileBottomNav activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} livesTouched={dashboardData?.livesTouched || 0} />}
+      {isOrganizationManager && <MobileMetricsGrid activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} livesTouched={dashboardData?.livesTouched || 0} />}
     </div>
   );
 }

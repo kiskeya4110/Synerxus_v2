@@ -12,7 +12,6 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getSDGName, SDG_GOALS } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
@@ -180,7 +179,7 @@ export default function OrganizationDashboard() {
   const metrics = dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, livesTouched: 0 };
 
   return (
-    <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#ffffff' }} data-testid="organization-dashboard">
+    <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }} data-testid="organization-dashboard">
       {/* Offline Banner */}
       <OfflineBanner />
       
@@ -1054,8 +1053,6 @@ export default function OrganizationDashboard() {
         }
       `}</style>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />
 
       {/* Footer - Hidden on Mobile */}
       <div className="hidden md:block">

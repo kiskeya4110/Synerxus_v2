@@ -146,7 +146,7 @@ export default function OrganizationDashboard() {
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
       {/* Welcome Banner */}
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 0' }}>
+      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '8px 0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: 0 }}>
             Welcome Back, {organizationProfile?.organizationName || 'Organization'}
@@ -155,7 +155,7 @@ export default function OrganizationDashboard() {
       </div>
 
       {/* Main Content */}
-      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }}>
         {/* Filters Section */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

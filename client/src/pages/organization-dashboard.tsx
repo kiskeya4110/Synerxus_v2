@@ -179,7 +179,7 @@ export default function OrganizationDashboard() {
   const metrics = dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, livesTouched: 0 };
 
   return (
-    <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }} data-testid="organization-dashboard">
+    <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#ffffff' }} data-testid="organization-dashboard">
       {/* Offline Banner */}
       <OfflineBanner />
       
@@ -196,11 +196,15 @@ export default function OrganizationDashboard() {
       </div>
 
       {/* Mobile Dashboard Header */}
-      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0, marginBottom: '4px' }}>
+      <div className="md:hidden" style={{ 
+        padding: '16px', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+        borderBottom: 'none'
+      }}>
+        <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#ffffff', margin: 0, marginBottom: '4px' }}>
           Organization Dashboard
         </h1>
-        <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.9)', margin: 0 }}>
           Welcome to {organization?.name || organizationProfile?.organizationName || 'Synerxus'} - volunteers organization.
         </p>
       </div>

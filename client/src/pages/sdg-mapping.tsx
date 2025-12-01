@@ -1110,6 +1110,15 @@ export default function SDGMapping() {
       </div>
       
       {/* Mobile Metrics Grid */}
+      <div className="md:hidden" style={{ 
+        padding: '16px', 
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+        paddingBottom: '0'
+      }}>
+        <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#ffffff', margin: '0 0 16px 0' }}>
+          SDG Impact
+        </h2>
+      </div>
       <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
       
       {/* Footer - Hidden on Mobile */}

@@ -164,6 +164,12 @@ export default function App() {
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
           <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
           <Route path="/project-portfolio" component={ProjectPortfolio} />
+          <Route path="/projects" component={Projects} />
+          <Route path="/projects/:id" component={ProjectDetail} />
+          <Route path="/projects/:id/edit" component={ProjectEdit} />
+          <Route path="/volunteers" component={Volunteers} />
+          <Route path="/sdg-mapping" component={SDGMapping} />
+          <Route path="/impact-visualization" component={ImpactVisualization} />
           <Route component={LayoutRoute} />
         </Router>
       </OnboardingProvider>
@@ -193,12 +199,10 @@ function LayoutRoute() {
       <Route path="/applications" component={Applications} />
       <Route path="/my-applications" component={MyApplications} />
       <Route path="/organizations" component={Organizations} />
-      <Route path="/volunteers" component={Volunteers} />
       <Route path="/calendar" component={Calendar} />
       <Route path="/impact-report/:volunteerId?" component={ImpactReport} />
       <Route path="/organization-impact-report/:organizationId?" component={OrganizationImpactReport} />
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
-      <Route path="/impact-visualization" component={ImpactVisualization} />
       <Route path="/impact-storytelling" component={ImpactStorytellingPage} />
       <Route path="/assignments" component={Assignments} />
       <Route path="/matched-volunteers" component={MatchedVolunteers} />
@@ -206,7 +210,6 @@ function LayoutRoute() {
       <Route path="/achievements" component={Achievements} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
-      <Route path="/sdg-mapping" component={SDGMapping} />
     </Layout>
   );
 }

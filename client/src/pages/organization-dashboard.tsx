@@ -3,13 +3,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { 
-  FolderOpen, Clock, Target, Users, Menu, X, Plus, 
+  FolderOpen, Clock, Target, Users, Plus,
   ChevronDown, AlertTriangle, CheckSquare, TrendingUp, 
-  Lightbulb, MapPin, BarChart3, FileText, UserPlus
+  Lightbulb, MapPin, UserPlus, BarChart3
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from "recharts";
-import { getSDGName } from "@shared/sdg-goals";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { getSDGName, SDG_GOALS } from "@shared/sdg-goals";
+import OrganizationHeader from "@/components/layout/organization-header";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -49,15 +50,6 @@ interface DashboardData {
   };
 }
 
-const NAV_TABS = [
-  { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-  { id: 'projects', label: 'Projects', icon: FolderOpen },
-  { id: 'sdgs', label: 'SDGs', icon: Target },
-  { id: 'volunteers', label: 'Volunteers', icon: Users },
-  { id: 'reports', label: 'Reports', icon: FileText },
-  { id: 'create', label: '+Create', icon: Plus },
-];
-
 const TIME_PERIODS = [
   { value: 'all', label: 'All Time' },
   { value: '7d', label: 'Last 7 Days' },
@@ -67,13 +59,10 @@ const TIME_PERIODS = [
 ];
 
 export default function OrganizationDashboard() {
-  const { user } = useAuth();
   const [, navigate] = useLocation();
   const userType = localStorage.getItem('userType');
   const userId = localStorage.getItem('currentUserId');
 
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [projectFilter, setProjectFilter] = useState('all');
   const [timePeriod, setTimePeriod] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -101,23 +90,6 @@ export default function OrganizationDashboard() {
     },
     enabled: !!userId,
   });
-
-  const handleTabClick = (tabId: string) => {
-    setMobileMenuOpen(false);
-    if (tabId === 'create') {
-      setShowCreateModal(true);
-    } else if (tabId === 'dashboard') {
-      setActiveTab('dashboard');
-    } else if (tabId === 'projects') {
-      navigate('/projects');
-    } else if (tabId === 'volunteers') {
-      navigate('/volunteers');
-    } else if (tabId === 'reports') {
-      navigate('/impact-visualization');
-    } else if (tabId === 'sdgs') {
-      setActiveTab('sdgs');
-    }
-  };
 
   const handleQuickAction = (actionId: string) => {
     if (actionId === 'create-project') {
@@ -147,119 +119,8 @@ export default function OrganizationDashboard() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }} data-testid="organization-dashboard">
-      {/* Dark Green Top Ribbon */}
-      <div style={{ backgroundColor: '#166534', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
-        {/* Top Navigation Bar */}
-        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
-          {/* Left: Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', backgroundColor: 'white', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#166534' }}>S</span>
-            </div>
-            <span style={{ fontSize: '20px', fontWeight: 'bold', color: 'white', display: 'block' }} data-testid="logo-text">SYNERXUS</span>
-          </div>
-
-          {/* Center: Desktop Tabs */}
-          <div style={{ display: 'flex', gap: '8px' }} className="desktop-nav">
-            {NAV_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                data-testid={`nav-tab-${tab.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  backgroundColor: activeTab === tab.id ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s',
-                }}
-              >
-                <tab.icon size={16} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Right: Profile & Mobile Menu */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <button
-              onClick={() => navigate('/settings')}
-              data-testid="profile-button"
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-              }}
-            >
-              {(user as any)?.avatar ? (
-                <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-              ) : (
-                <Users size={18} />
-              )}
-            </button>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="mobile-menu-btn"
-              data-testid="mobile-menu-toggle"
-              style={{
-                display: 'none',
-                padding: '8px',
-                backgroundColor: 'transparent',
-                border: 'none',
-                color: 'white',
-                cursor: 'pointer',
-              }}
-            >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </nav>
-
-        {/* Mobile Menu Dropdown */}
-        {mobileMenuOpen && (
-          <div className="mobile-menu" style={{ backgroundColor: '#14532d', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.1)' }} data-testid="mobile-menu">
-            {NAV_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => handleTabClick(tab.id)}
-                data-testid={`mobile-nav-${tab.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  width: '100%',
-                  padding: '12px 16px',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  color: 'white',
-                  fontSize: '16px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                }}
-              >
-                <tab.icon size={20} />
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Reusable Organization Header Component */}
+      <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
       {/* Main Content */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
@@ -353,32 +214,106 @@ export default function OrganizationDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="middle-section">
           {/* Left Column: SDG Distribution + Map */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* SDG Impact Distribution */}
+            {/* SDG Impact Distribution - Interactive Pie Chart */}
             <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>SDG Impact Distribution</h3>
-              <div style={{ height: '200px' }}>
+              <div style={{ height: '280px' }}>
                 {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dashboardData.sdgDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="goal" tick={{ fontSize: 11 }} tickFormatter={(v) => `SDG ${v}`} />
-                      <YAxis tick={{ fontSize: 11 }} />
+                    <PieChart>
+                      <Pie
+                        data={dashboardData.sdgDistribution.map(item => ({
+                          ...item,
+                          name: `SDG ${item.goal}`,
+                          fullName: getSDGName(item.goal),
+                          color: SDG_GOALS[item.goal]?.color || '#166534'
+                        }))}
+                        cx="50%"
+                        cy="45%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={2}
+                        dataKey="hours"
+                        nameKey="name"
+                        label={({ goal, percent }) => percent > 0.05 ? `SDG ${goal}` : ''}
+                        labelLine={false}
+                      >
+                        {dashboardData.sdgDistribution.map((entry) => (
+                          <Cell 
+                            key={`cell-${entry.goal}`} 
+                            fill={SDG_GOALS[entry.goal]?.color || '#166534'}
+                            stroke="white"
+                            strokeWidth={2}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        ))}
+                      </Pie>
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
+                            const sdgInfo = SDG_GOALS[data.goal];
                             return (
-                              <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-                                <p style={{ fontWeight: '600', marginBottom: '4px' }}>SDG {data.goal}: {getSDGName(data.goal)}</p>
-                                <p style={{ fontSize: '13px', color: '#6b7280' }}>{data.hours} hours • {data.projects} projects</p>
+                              <div style={{ 
+                                backgroundColor: 'white', 
+                                padding: '16px', 
+                                borderRadius: '12px', 
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                                border: `3px solid ${sdgInfo?.color || '#166534'}`,
+                                maxWidth: '280px'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                  <div style={{ 
+                                    width: '24px', 
+                                    height: '24px', 
+                                    borderRadius: '4px', 
+                                    backgroundColor: sdgInfo?.color || '#166534',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold'
+                                  }}>
+                                    {data.goal}
+                                  </div>
+                                  <p style={{ fontWeight: '700', fontSize: '15px', color: '#111827' }}>
+                                    {sdgInfo?.name || `SDG ${data.goal}`}
+                                  </p>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px', lineHeight: '1.4' }}>
+                                  {sdgInfo?.description}
+                                </p>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <p style={{ fontSize: '18px', fontWeight: 'bold', color: sdgInfo?.color || '#166534' }}>{data.hours}</p>
+                                    <p style={{ fontSize: '11px', color: '#6b7280' }}>Hours</p>
+                                  </div>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <p style={{ fontSize: '18px', fontWeight: 'bold', color: sdgInfo?.color || '#166534' }}>{data.projects}</p>
+                                    <p style={{ fontSize: '11px', color: '#6b7280' }}>Projects</p>
+                                  </div>
+                                  <div style={{ textAlign: 'center' }}>
+                                    <p style={{ fontSize: '18px', fontWeight: 'bold', color: sdgInfo?.color || '#166534' }}>{data.volunteers || 0}</p>
+                                    <p style={{ fontSize: '11px', color: '#6b7280' }}>Volunteers</p>
+                                  </div>
+                                </div>
                               </div>
                             );
                           }
                           return null;
                         }}
                       />
-                      <Bar dataKey="hours" fill="#166534" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                      <Legend 
+                        layout="horizontal" 
+                        verticalAlign="bottom" 
+                        align="center"
+                        wrapperStyle={{ paddingTop: '16px' }}
+                        formatter={(value, entry: any) => (
+                          <span style={{ color: '#374151', fontSize: '11px' }}>{value}</span>
+                        )}
+                      />
+                    </PieChart>
                   </ResponsiveContainer>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
@@ -742,19 +677,6 @@ export default function OrganizationDashboard() {
         @media (max-width: 1024px) {
           .middle-section, .bottom-section, .below-fold {
             grid-template-columns: 1fr !important;
-          }
-        }
-        @media (max-width: 768px) {
-          .desktop-nav {
-            display: none !important;
-          }
-          .mobile-menu-btn {
-            display: block !important;
-          }
-        }
-        @media (min-width: 769px) {
-          .mobile-menu {
-            display: none !important;
           }
         }
       `}</style>

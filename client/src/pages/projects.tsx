@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
 import { ProjectListCard } from "@/components/projects/project-list-card";
+import OrganizationHeader from "@/components/layout/organization-header";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
 interface ProjectWithDetails extends Project {
@@ -142,9 +143,12 @@ export default function Projects() {
 
   // Volunteers can only view projects, not edit them
   const canManageProjects = currentUser?.userType === 'organization';
+  const isOrganization = currentUser?.userType === 'organization';
 
   return (
     <>
+      {isOrganization && <OrganizationHeader activeTab="projects" />}
+      <div className={isOrganization ? "max-w-[1400px] mx-auto p-6" : ""}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
         <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>
@@ -310,6 +314,7 @@ export default function Projects() {
           <CreateProjectDialog organizationId={currentUser.organizationId} />
         </Card>
       )}
+      </div>
     </>
   );
 }

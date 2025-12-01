@@ -14,7 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 
@@ -715,8 +715,8 @@ export default function Volunteers() {
       </Dialog>
       </div>
       
-      {/* Mobile Bottom Navigation - Organization Only */}
-      {isOrganization && <MobileBottomNav activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />}
+      {/* Mobile Metrics Grid - Organization Only */}
+      {isOrganization && <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />}
       
       {/* Footer - Hidden on Mobile */}
       <div className="hidden md:block">

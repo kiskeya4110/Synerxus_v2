@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
 import OrganizationHeader from "@/components/layout/organization-header";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
@@ -1109,8 +1109,8 @@ export default function SDGMapping() {
         </Dialog>
       </div>
       
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
+      {/* Mobile Metrics Grid */}
+      <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
       
       {/* Footer - Hidden on Mobile */}
       <div className="hidden md:block">

@@ -11,7 +11,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { getSDGName, SDG_GOALS } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
@@ -196,7 +196,7 @@ export default function OrganizationDashboard() {
       </div>
 
       {/* Mobile Dashboard Header */}
-      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white' }}>
+      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb' }}>
         <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0, marginBottom: '4px' }}>
           Organization Dashboard
         </h1>
@@ -205,8 +205,8 @@ export default function OrganizationDashboard() {
         </p>
       </div>
 
-      {/* Mobile Bottom Metrics - Shows at bottom */}
-      {metrics && <MobileBottomNav activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />}
+      {/* Mobile Metrics Grid - 2x2 at top */}
+      {metrics && <MobileMetricsGrid activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />}
 
       {/* Main Content */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }} className="md:p-6">
@@ -1053,8 +1053,6 @@ export default function OrganizationDashboard() {
         }
       `}</style>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />
 
       {/* Footer - Hidden on Mobile */}
       <div className="hidden md:block">

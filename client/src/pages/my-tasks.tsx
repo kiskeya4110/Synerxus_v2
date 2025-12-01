@@ -80,12 +80,19 @@ export default function MyTasks() {
 
   // Fetch all projects to get details (fallback for enrichment)
   const { data: allProjects = [] } = useQuery<Project[]>({
-    queryKey: ["/api/projects"],
+    queryKey: ["/api/projects", { organizationId: currentUser?.organizationId, userId: currentUser?.id }],
     queryFn: async () => {
-      // Projects endpoint requires filters, but we'll try without to get what we can
-      const response = await fetch("/api/projects");
-      return response.ok ? response.json() : [];
-    }
+      // Projects endpoint requires userId or organizationId filter
+      if (currentUser?.userType === 'organization' && currentUser?.organizationId) {
+        const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
+        return response.ok ? response.json() : [];
+      } else if (currentUser?.id) {
+        const response = await fetch(`/api/projects?userId=${currentUser.id}`);
+        return response.ok ? response.json() : [];
+      }
+      return [];
+    },
+    enabled: !!currentUser
   });
 
   // Fetch all organizations to enrich project data

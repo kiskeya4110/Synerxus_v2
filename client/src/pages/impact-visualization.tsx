@@ -43,7 +43,12 @@ ChartJS.register(
 );
 
 
-export default function ImpactVisualization() {
+interface ImpactVisualizationProps {
+  embedded?: boolean;
+  params?: Record<string, string>;
+}
+
+export default function ImpactVisualization({ embedded = false }: ImpactVisualizationProps) {
   const { toast } = useToast();
   const userType = localStorage.getItem('userType');
   const [, navigate] = useLocation();
@@ -1034,8 +1039,8 @@ export default function ImpactVisualization() {
       </Dialog>
       </div>
       
-      {/* Footer */}
-      <Footer />
+      {/* Footer - only show when not embedded */}
+      {!embedded && <Footer />}
     </div>
   );
 }

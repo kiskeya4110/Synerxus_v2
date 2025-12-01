@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
 import OrganizationHeader from "@/components/layout/organization-header";
-import Footer from "@/components/layout/footer";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
 import MyTasksPage from "./my-tasks";
@@ -758,14 +757,11 @@ export default function MyWork() {
 
           <TabsContent value="impact" className="mt-2">
             <div className="w-full overflow-x-hidden">
-              <ImpactVisualization />
+              <ImpactVisualization embedded />
             </div>
           </TabsContent>
         </Tabs>
       )}
-      
-      {/* Footer - only for organization users (volunteers get footer from Layout) */}
-      {isOrganizationManager && <Footer />}
     </div>
   );
 }

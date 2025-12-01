@@ -170,7 +170,7 @@ export default function App() {
           <Route path="/projects/:id/edit" component={ProjectEdit} />
           <Route path="/volunteers" component={Volunteers} />
           <Route path="/sdg-mapping" component={SDGMapping} />
-          <Route path="/impact-visualization" component={ImpactVisualization} />
+          <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>
           <Route component={LayoutRoute} />
         </Router>
       </OnboardingProvider>

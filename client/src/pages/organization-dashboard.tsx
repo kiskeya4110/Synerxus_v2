@@ -1094,7 +1094,7 @@ export default function OrganizationDashboard() {
 }
 
 function MetricCard({ icon, label, value, color, testId, onClick }: { icon: React.ReactNode; label: string; value: number; color: string; testId: string; onClick?: () => void }) {
-  const [isHovered, setIsHovered] = React.useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   return (
     <button
       type="button"

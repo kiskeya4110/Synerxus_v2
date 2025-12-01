@@ -68,7 +68,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const currentTab = NAV_TABS.find(tab => tab.path === location)?.id || activeTab;
 
   return (
-    <div style={{ backgroundColor: '#166534', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
+    <div style={{ backgroundColor: '#008ae6', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Left: Logo + Brand Name + Navigation Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>

@@ -41,8 +41,8 @@ export const ProjectListCard = memo(function ProjectListCard({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <CollapsibleTrigger asChild>
+              <div className="flex items-center gap-3 mb-2 flex-wrap md:flex-nowrap">
+                <CollapsibleTrigger asChild className="hidden md:inline-flex">
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0" data-testid={`button-toggle-project-${project.id}`}>
                     {isExpanded ? (
                       <ChevronDown className="h-4 w-4" />
@@ -51,12 +51,12 @@ export const ProjectListCard = memo(function ProjectListCard({
                     )}
                   </Button>
                 </CollapsibleTrigger>
-                <Link href={`/projects/${project.id}`}>
-                  <CardTitle className="text-xl hover:text-primary cursor-pointer transition-colors" data-testid={`title-project-${project.id}`}>
+                <Link href={`/projects/${project.id}`} className="flex-1 min-w-0">
+                  <CardTitle className="text-lg md:text-xl hover:text-primary hover:underline cursor-pointer transition-all active:scale-95 md:active:scale-100 break-words" data-testid={`title-project-${project.id}`}>
                     {project.name}
                   </CardTitle>
                 </Link>
-                <StatusBadge status={project.status} />
+                <StatusBadge status={project.status} className="flex-shrink-0" />
               </div>
               {project.description && (
                 <p className="text-sm text-gray-600 dark:text-gray-400 ml-11">{project.description}</p>

@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { TrendingUp, Users, DollarSign, Globe, CheckCircle, ArrowLeft, Download, Zap, AlertCircle, Target } from "lucide-react";
 import { useState } from "react";
+import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
 
 interface ComplianceCalculation {
   engagementScore: number;
@@ -511,9 +512,10 @@ export function CSRImpactReporting() {
 
             <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px", marginTop: "32px" }}>SDG Alignment</h3>
             <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "1px solid #e5e7eb", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {impactData?.sdgMetrics?.slice(0, 9).map((sdg: any) => (
+              {impactData?.sdgMetrics?.sort((a: any, b: any) => a.goal - b.goal).slice(0, 9).map((sdg: any) => (
                 <div key={sdg.goal} style={{ padding: "12px", backgroundColor: "#f3f4f6", borderRadius: "8px", border: "1px solid #e5e7eb" }}>
-                  <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>SDG {sdg.goal}</div>
+                  <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px", fontWeight: "600" }}>SDG {sdg.goal}: {getSDGName(sdg.goal)}</div>
+                  <div style={{ fontSize: "10px", color: "#9ca3af", marginBottom: "6px" }}>{getSDGFullName(sdg.goal)}</div>
                   <div style={{ fontSize: "16px", fontWeight: "bold", color: "#1e3a8a", marginBottom: "2px" }}>{sdg.hours}h</div>
                   <div style={{ fontSize: "11px", color: "#059669", fontWeight: "600" }}>{sdg.percentage}%</div>
                 </div>

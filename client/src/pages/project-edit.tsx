@@ -16,6 +16,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 const projectEditSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -153,10 +154,25 @@ export default function ProjectEdit() {
 
   const aiTrackingEnabled = form.watch("aiTrackingEnabled");
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me"],
+    queryFn: async () => {
+      const response = await fetch("/api/users/me");
+      if (!response.ok) return null;
+      return response.json();
+    },
+  });
+
+  const isOrganization = currentUser?.userType === 'organization';
+
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+    <>
+      {/* Organization Header */}
+      {isOrganization && <OrganizationHeader activeTab="projects" />}
+
+      <div className="container mx-auto p-4 sm:p-6 space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
         <Button
           variant="ghost"
           size="sm"
@@ -361,6 +377,7 @@ export default function ProjectEdit() {
           </Form>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

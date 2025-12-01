@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -190,8 +191,13 @@ export default function ProjectDetail() {
     }
   };
 
+  const isOrganization = currentUser?.userType === 'organization';
+
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 pb-20 md:pb-0">
+      {/* Organization Header */}
+      {isOrganization && <OrganizationHeader activeTab="projects" />}
+
       {/* Mobile Header */}
       <div className="sticky top-0 z-10 bg-blue-600 text-white px-4 py-3 flex items-center justify-between md:hidden">
         <Link href="/projects">

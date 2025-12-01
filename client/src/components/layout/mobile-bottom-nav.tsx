@@ -34,22 +34,11 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
 
   return (
     <>
-      <div className="md:hidden" style={{ height: '80px' }} />
+      <div className="h-20 md:hidden" />
       <nav
-        className="md:hidden"
+        className="fixed bottom-0 left-0 right-0 h-20 flex items-center justify-around px-2 pb-[env(safe-area-inset-bottom,0px)] z-[1000] md:hidden"
         style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '80px',
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
-          padding: '0 8px',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          zIndex: 1000,
           boxShadow: '0 -4px 20px rgba(102, 126, 234, 0.3)',
         }}
         data-testid="mobile-bottom-nav"

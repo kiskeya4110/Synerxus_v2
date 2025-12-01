@@ -1060,47 +1060,76 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
           )}
 
           {type === 'sdgs' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '16px' }}>
               {data.length === 0 ? (
-                <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No SDG data</p>
+                <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px', gridColumn: '1/-1' }}>No SDG data</p>
               ) : (
-                data.map((sdg: any) => (
-                  <button 
-                    key={sdg.goal} 
-                    onClick={() => {
-                      navigate('/sdg-mapping');
-                      onClose();
-                    }}
-                    style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: `2px solid ${SDG_GOALS[sdg.goal]?.color || color}20`, cursor: 'pointer', transition: 'all 0.2s', textAlign: 'left' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${SDG_GOALS[sdg.goal]?.color || color}10`}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '4px', backgroundColor: SDG_GOALS[sdg.goal]?.color || color, color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '12px' }}>
-                          {sdg.goal}
+                data.map((sdg: any) => {
+                  const sdgColor = SDG_GOALS[sdg.goal]?.color || color;
+                  return (
+                    <button 
+                      key={sdg.goal} 
+                      onClick={() => {
+                        navigate('/sdg-mapping');
+                        onClose();
+                      }}
+                      style={{ 
+                        padding: '16px', 
+                        backgroundColor: 'white', 
+                        borderRadius: '12px', 
+                        border: `2px solid ${sdgColor}`, 
+                        cursor: 'pointer', 
+                        transition: 'all 0.2s',
+                        textAlign: 'center',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = `${sdgColor}08`;
+                        e.currentTarget.style.boxShadow = `0 8px 16px ${sdgColor}20`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{ 
+                        width: '80px', 
+                        height: '80px', 
+                        borderRadius: '8px', 
+                        backgroundColor: sdgColor, 
+                        color: 'white', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        fontWeight: 'bold',
+                        fontSize: '32px',
+                        flexShrink: 0
+                      }}>
+                        {sdg.goal}
+                      </div>
+                      <div style={{ width: '100%' }}>
+                        <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: '0 0 8px 0' }}>{getSDGName(sdg.goal)}</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '4px' }}>
+                          <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 'bold', color: sdgColor, margin: '0' }}>{sdg.hours}</p>
+                            <p style={{ fontSize: '10px', margin: '2px 0 0 0' }}>Hours</p>
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 'bold', color: sdgColor, margin: '0' }}>{sdg.projects}</p>
+                            <p style={{ fontSize: '10px', margin: '2px 0 0 0' }}>Projects</p>
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 'bold', color: sdgColor, margin: '0' }}>{sdg.volunteers || 0}</p>
+                            <p style={{ fontSize: '10px', margin: '2px 0 0 0' }}>Volunteers</p>
+                          </div>
                         </div>
-                        <div>
-                          <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{getSDGName(sdg.goal)}</p>
-                        </div>
                       </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '16px', fontWeight: 'bold', color: SDG_GOALS[sdg.goal]?.color || color }}>{sdg.hours}</p>
-                        <p style={{ fontSize: '11px', color: '#6b7280' }}>Hours</p>
-                      </div>
-                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '16px', fontWeight: 'bold', color: SDG_GOALS[sdg.goal]?.color || color }}>{sdg.projects}</p>
-                        <p style={{ fontSize: '11px', color: '#6b7280' }}>Projects</p>
-                      </div>
-                      <div style={{ backgroundColor: 'white', padding: '8px', borderRadius: '4px', textAlign: 'center' }}>
-                        <p style={{ fontSize: '16px', fontWeight: 'bold', color: SDG_GOALS[sdg.goal]?.color || color }}>{sdg.volunteers || 0}</p>
-                        <p style={{ fontSize: '11px', color: '#6b7280' }}>Volunteers</p>
-                      </div>
-                    </div>
-                  </button>
-                ))
+                    </button>
+                  );
+                })
               )}
             </div>
           )}

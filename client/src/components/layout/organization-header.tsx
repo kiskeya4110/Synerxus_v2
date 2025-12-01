@@ -88,8 +88,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             <span style={{ color: 'white', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>SYNERXUS</span>
           </button>
 
-          {/* Navigation Tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {/* Navigation Tabs - Hidden on Mobile */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} className="hidden md:flex">
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}

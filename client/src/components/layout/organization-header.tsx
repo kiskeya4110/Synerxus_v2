@@ -85,7 +85,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
               alt="Synerxus Logo" 
               style={{ height: '32px', width: 'auto' }}
             />
-            <span style={{ color: 'white', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>SYNERXUS</span>
+            <div style={{ display: 'flex', gap: '0', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>
+              <span style={{ color: '#001a4d' }}>SYNER</span>
+              <span style={{ color: '#FFB84D' }}>XUS</span>
+            </div>
           </button>
 
           {/* Navigation Tabs - Hidden on Mobile */}

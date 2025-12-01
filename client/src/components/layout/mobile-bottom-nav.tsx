@@ -86,14 +86,14 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 backgroundColor: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                color: active ? 'rgba(255, 255, 255, 0.75)' : 'rgba(255, 255, 255, 0.45)',
+                color: active ? '#ffffff' : 'rgba(255, 255, 255, 0.85)',
                 transition: 'all 0.3s ease',
                 minWidth: '70px',
                 borderRadius: '14px',
                 transform: active ? 'scale(1.08)' : 'scale(1)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.075)';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
                 e.currentTarget.style.transform = 'scale(1.12)';
               }}
               onMouseLeave={(e) => {
@@ -105,15 +105,15 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 style={{
                   padding: '12px',
                   borderRadius: '14px',
-                  backgroundColor: active ? 'rgba(255, 255, 255, 0.26)' : 'rgba(255, 255, 255, 0.06)',
+                  backgroundColor: active ? 'rgba(255, 255, 255, 0.45)' : 'rgba(255, 255, 255, 0.2)',
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: active ? '0 4px 12px rgba(255, 255, 255, 0.15)' : 'none',
+                  boxShadow: active ? '0 4px 12px rgba(255, 255, 255, 0.3)' : 'none',
                 }}
               >
-                <item.icon size={28} strokeWidth={2.2} style={{ color: 'rgba(255, 255, 255, 0.75)' }} />
+                <item.icon size={28} strokeWidth={2.2} style={{ color: '#ffffff' }} />
               </div>
               <span style={{ fontSize: '12px', fontWeight: active ? '700' : '600', letterSpacing: '0.3px' }}>
                 {item.label}

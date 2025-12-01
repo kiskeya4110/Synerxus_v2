@@ -265,29 +265,33 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Mobile Impact Over Time Chart */}
+        {/* Mobile Impact Over Time Chart - BarChart Style */}
         <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>Impact Over Time</h3>
           <div style={{ height: '200px' }}>
             {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dashboardData.impactOverTime}>
-                  <defs>
-                    <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#667eea" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="peopleGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f093fb" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#f093fb" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis hide />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="hours" stroke="#667eea" strokeWidth={2} fill="url(#hoursGradient)" />
-                  <Area type="monotone" dataKey="peopleImpacted" stroke="#f093fb" strokeWidth={2} fill="url(#peopleGradient)" />
-                </AreaChart>
+                <BarChart data={dashboardData.impactOverTime}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} tickFormatter={(v) => v.split('-')[1]} />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                            <p style={{ fontWeight: '600', marginBottom: '4px', fontSize: '12px' }}>{label}</p>
+                            <p style={{ fontSize: '12px', color: '#667eea' }}>Hours: {payload[0]?.value}</p>
+                            <p style={{ fontSize: '12px', color: '#f093fb' }}>People: {payload[1]?.value}</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="hours" fill="#667eea" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="peopleImpacted" fill="#f093fb" radius={[4, 4, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             ) : (
               <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
@@ -689,44 +693,53 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Bottom Section (2/5): SDG Distribution | AI Insights - Desktop Only */}
+        {/* Bottom Section (2/5): Impact Over Time | AI Insights - Desktop Only */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="bottom-section hidden md:grid">
-          {/* Left: SDG Distribution BarChart */}
+          {/* Left: Impact Over Time Chart */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Target size={18} style={{ color: '#7c3aed' }} />
-              SDG Distribution
+              <TrendingUp size={18} style={{ color: '#166534' }} />
+              Impact Over Time
             </h3>
             <div style={{ height: '250px' }}>
-              {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
+              {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dashboardData.sdgDistribution.slice(0, 10)}>
+                  <AreaChart data={dashboardData.impactOverTime}>
+                    <defs>
+                      <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#166534" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#166534" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="peopleGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#1e40af" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#1e40af" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="goal" tick={{ fontSize: 11 }} label={{ value: 'SDG Goal', position: 'insideBottomRight', offset: -5 }} />
-                    <YAxis tick={{ fontSize: 11 }} label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
+                    <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip
-                      content={({ active, payload }) => {
+                      content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
-                          const data = payload[0].payload;
-                          const sdgInfo = SDG_GOALS[data.goal];
                           return (
-                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: `2px solid ${sdgInfo?.color || '#7c3aed'}` }}>
-                              <p style={{ fontWeight: '600', marginBottom: '4px' }}>{sdgInfo?.name || `SDG ${data.goal}`}</p>
-                              <p style={{ fontSize: '13px', color: '#666' }}>Hours: {data.hours}</p>
-                              <p style={{ fontSize: '13px', color: '#666' }}>Projects: {data.projects}</p>
-                              <p style={{ fontSize: '13px', color: '#666' }}>Volunteers: {data.volunteers || 0}</p>
+                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+                              <p style={{ fontWeight: '600', marginBottom: '4px' }}>{label}</p>
+                              <p style={{ fontSize: '13px', color: '#166534' }}>Hours: {payload[0]?.value}</p>
+                              <p style={{ fontSize: '13px', color: '#1e40af' }}>People Impacted: {payload[1]?.value}</p>
                             </div>
                           );
                         }
                         return null;
                       }}
                     />
-                    <Bar dataKey="hours" fill="#7c3aed" radius={[8, 8, 0, 0]} />
-                  </BarChart>
+                    <Legend />
+                    <Area type="monotone" dataKey="hours" stroke="#166534" fill="url(#hoursGradient)" strokeWidth={2} name="Hours" />
+                    <Area type="monotone" dataKey="peopleImpacted" stroke="#1e40af" fill="url(#peopleGradient)" strokeWidth={2} name="People Impacted" />
+                  </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
-                  No SDG data available
+                  No impact data available
                 </div>
               )}
             </div>

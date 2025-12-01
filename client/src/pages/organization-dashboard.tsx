@@ -67,6 +67,7 @@ export default function OrganizationDashboard() {
   const [timePeriod, setTimePeriod] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | null>(null);
+  const [hoveredSDG, setHoveredSDG] = useState<number | null>(null);
 
   if (userType !== 'organization') {
     if (userType === 'volunteer') {
@@ -251,8 +252,13 @@ export default function OrganizationDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* SDG Impact Distribution - Interactive Pie Chart */}
             <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>SDG Impact Distribution</h3>
-              <div style={{ height: '280px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>SDG Impact Distribution</h3>
+                <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: '500' }}>
+                  Total: {dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0} hours
+                </span>
+              </div>
+              <div style={{ height: '320px' }}>
                 {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -264,22 +270,33 @@ export default function OrganizationDashboard() {
                           color: SDG_GOALS[item.goal]?.color || '#166534'
                         }))}
                         cx="50%"
-                        cy="45%"
-                        innerRadius={50}
-                        outerRadius={90}
+                        cy="40%"
+                        innerRadius={55}
+                        outerRadius={95}
                         paddingAngle={2}
                         dataKey="hours"
                         nameKey="name"
-                        label={({ goal, percent }) => percent > 0.05 ? `SDG ${goal}` : ''}
+                        label={({ goal, hours, payload }) => {
+                          const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                          const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
+                          const percent = ((hoursNum / total) * 100).toFixed(0);
+                          return parseInt(percent) > 4 ? `${percent}%` : '';
+                        }}
                         labelLine={false}
                       >
                         {dashboardData.sdgDistribution.map((entry) => (
                           <Cell 
                             key={`cell-${entry.goal}`} 
                             fill={SDG_GOALS[entry.goal]?.color || '#166534'}
-                            stroke="white"
-                            strokeWidth={2}
-                            style={{ cursor: 'pointer' }}
+                            stroke={hoveredSDG === entry.goal ? '#111827' : 'white'}
+                            strokeWidth={hoveredSDG === entry.goal ? 3 : 2}
+                            style={{ 
+                              cursor: 'pointer',
+                              filter: hoveredSDG === entry.goal ? 'brightness(1.1)' : 'brightness(1)',
+                              transition: 'all 0.2s ease-in-out'
+                            }}
+                            onMouseEnter={() => setHoveredSDG(entry.goal)}
+                            onMouseLeave={() => setHoveredSDG(null)}
                           />
                         ))}
                       </Pie>
@@ -288,49 +305,52 @@ export default function OrganizationDashboard() {
                           if (active && payload && payload.length) {
                             const data = payload[0].payload;
                             const sdgInfo = SDG_GOALS[data.goal];
+                            const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                            const percent = ((data.hours / total) * 100).toFixed(1);
                             return (
                               <div style={{ 
                                 backgroundColor: 'white', 
-                                padding: '16px', 
-                                borderRadius: '12px', 
-                                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                                border: `3px solid ${sdgInfo?.color || '#166534'}`,
-                                maxWidth: '280px'
+                                padding: '14px', 
+                                borderRadius: '10px', 
+                                boxShadow: '0 10px 28px rgba(0,0,0,0.15)',
+                                border: `2px solid ${sdgInfo?.color || '#166534'}',`
                               }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
                                   <div style={{ 
-                                    width: '24px', 
-                                    height: '24px', 
-                                    borderRadius: '4px', 
+                                    width: '28px', 
+                                    height: '28px', 
+                                    borderRadius: '6px', 
                                     backgroundColor: sdgInfo?.color || '#166534',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: 'white',
-                                    fontSize: '12px',
+                                    fontSize: '13px',
                                     fontWeight: 'bold'
                                   }}>
                                     {data.goal}
                                   </div>
-                                  <p style={{ fontWeight: '700', fontSize: '15px', color: '#111827' }}>
-                                    {sdgInfo?.name || `SDG ${data.goal}`}
-                                  </p>
+                                  <div>
+                                    <p style={{ fontWeight: '700', fontSize: '14px', color: '#111827', margin: '0' }}>
+                                      {sdgInfo?.name || `SDG ${data.goal}`}
+                                    </p>
+                                    <p style={{ fontSize: '11px', color: '#7c8299', margin: '2px 0 0 0' }}>
+                                      {percent}% of total impact
+                                    </p>
+                                  </div>
                                 </div>
-                                <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '12px', lineHeight: '1.4' }}>
-                                  {sdgInfo?.description}
-                                </p>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', paddingTop: '8px', borderTop: '1px solid #e5e7eb' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', paddingTop: '10px', borderTop: '1px solid #e5e7eb' }}>
                                   <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '18px', fontWeight: 'bold', color: sdgInfo?.color || '#166534' }}>{data.hours}</p>
-                                    <p style={{ fontSize: '11px', color: '#6b7280' }}>Hours</p>
+                                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.hours}</p>
+                                    <p style={{ fontSize: '10px', color: '#9ca3af', margin: '4px 0 0 0' }}>Hours</p>
                                   </div>
                                   <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '18px', fontWeight: 'bold', color: sdgInfo?.color || '#166534' }}>{data.projects}</p>
-                                    <p style={{ fontSize: '11px', color: '#6b7280' }}>Projects</p>
+                                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.projects}</p>
+                                    <p style={{ fontSize: '10px', color: '#9ca3af', margin: '4px 0 0 0' }}>Projects</p>
                                   </div>
                                   <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '18px', fontWeight: 'bold', color: sdgInfo?.color || '#166534' }}>{data.volunteers || 0}</p>
-                                    <p style={{ fontSize: '11px', color: '#6b7280' }}>Volunteers</p>
+                                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.volunteers || 0}</p>
+                                    <p style={{ fontSize: '10px', color: '#9ca3af', margin: '4px 0 0 0' }}>Volunteers</p>
                                   </div>
                                 </div>
                               </div>
@@ -340,13 +360,28 @@ export default function OrganizationDashboard() {
                         }}
                       />
                       <Legend 
-                        layout="horizontal" 
-                        verticalAlign="bottom" 
-                        align="center"
-                        wrapperStyle={{ paddingTop: '16px' }}
-                        formatter={(value, entry: any) => (
-                          <span style={{ color: '#374151', fontSize: '11px' }}>{value}</span>
-                        )}
+                        layout="vertical" 
+                        verticalAlign="middle"
+                        align="right"
+                        wrapperStyle={{ paddingLeft: '20px' }}
+                        formatter={(value, entry: any) => {
+                          const sdg = entry.payload;
+                          return (
+                            <span 
+                              style={{ 
+                                color: hoveredSDG === sdg.goal ? '#111827' : '#6b7280',
+                                fontSize: '12px',
+                                fontWeight: hoveredSDG === sdg.goal ? '600' : '400',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                              }}
+                              onMouseEnter={() => setHoveredSDG(sdg.goal)}
+                              onMouseLeave={() => setHoveredSDG(null)}
+                            >
+                              SDG {sdg.goal} - {sdg.hours}h
+                            </span>
+                          );
+                        }}
                       />
                     </PieChart>
                   </ResponsiveContainer>

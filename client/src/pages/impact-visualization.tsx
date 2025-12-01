@@ -504,9 +504,9 @@ export default function ImpactVisualization() {
     volunteerActivities.length > 0;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }}>
       <OrganizationHeader activeTab="reports" />
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Page Header with Action Buttons */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

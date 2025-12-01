@@ -157,6 +157,6 @@ export default function Organizations() {
           <p className="text-gray-500 dark:text-gray-400">No organizations found</p>
         </Card>
       )}
-    </>
+    </div>
   );
 }

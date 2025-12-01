@@ -184,7 +184,7 @@ export default function Volunteers() {
   return (
     <>
       {isOrganization && <OrganizationHeader activeTab="volunteers" />}
-      <div className={isOrganization ? "max-w-[1400px] mx-auto p-6" : ""}>
+      <div className={isOrganization ? "max-h-screen overflow-y-auto max-w-[1400px] mx-auto p-6" : "max-h-screen overflow-y-auto"}>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-2">Volunteers</h1>

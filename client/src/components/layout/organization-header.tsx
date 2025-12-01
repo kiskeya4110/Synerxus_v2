@@ -89,7 +89,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
           </button>
 
           {/* Navigation Tabs - Hidden on Mobile */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }} className="hidden md:flex">
+          <div style={{ alignItems: 'center', gap: '4px' }} className="hidden md:flex md:gap-1">
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}

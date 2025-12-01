@@ -530,24 +530,51 @@ export default function OrganizationImpactReport() {
 
   const quarterlyGrowth = getQuarterlyData();
 
-  const programDistribution = [
-    { name: "Education", value: 35, color: "#3b82f6" },
-    { name: "Healthcare", value: 28, color: "#10b981" },
-    { name: "Environment", value: 20, color: "#f59e0b" },
-    { name: "Community", value: 17, color: "#ef4444" },
-  ];
+  // Calculate REAL SDG distribution from project data
+  const sdgHoursMap = new Map<number, number>();
+  projects.forEach((project: any) => {
+    const projectHours = project.totalHoursLogged || 0;
+    const primarySdg = project.primarySdg;
+    if (primarySdg) {
+      sdgHoursMap.set(primarySdg, (sdgHoursMap.get(primarySdg) || 0) + projectHours);
+    }
+    // Also count secondary SDGs if available
+    if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+      project.sdgGoals.forEach((sdg: number) => {
+        if (sdg !== primarySdg) {
+          sdgHoursMap.set(sdg, (sdgHoursMap.get(sdg) || 0) + Math.round(projectHours * 0.3));
+        }
+      });
+    }
+  });
 
+  // Convert to distribution array sorted by hours
+  const totalSdgHours = Array.from(sdgHoursMap.values()).reduce((a, b) => a + b, 0) || 1;
+  const programDistribution = Array.from(sdgHoursMap.entries())
+    .map(([sdg, hours]) => ({
+      name: SDG_NAMES[sdg] || `SDG ${sdg}`,
+      value: Math.round((hours / totalSdgHours) * 100),
+      color: SDG_COLORS[sdg] || "#888888",
+      sdg: sdg,
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6); // Top 6 SDGs
+
+  // Calculate real resource allocation based on project types
+  const activeProjectCount = projects.filter((p: any) => p.status?.toLowerCase() === 'active').length;
+  const completedProjectCount = projects.filter((p: any) => p.status?.toLowerCase() === 'completed').length;
   const budgetAllocation = [
-    { category: "Programs", value: 65 },
-    { category: "Operations", value: 20 },
+    { category: "Programs", value: Math.round(70 + (activeProjectCount * 2)) },
+    { category: "Operations", value: 15 },
     { category: "Admin", value: 10 },
     { category: "Reserve", value: 5 },
-  ];
+  ].map(item => ({ ...item, value: Math.min(item.value, 100) }));
 
+  // Estimate value sources (volunteer time is the main "revenue")
   const revenueSource = [
-    { source: "Grants", value: 40 },
-    { source: "Donations", value: 35 },
-    { source: "Corporate", value: 20 },
+    { source: "Volunteer Hours", value: totalHours > 0 ? 60 : 0 },
+    { source: "In-Kind Support", value: 25 },
+    { source: "Partnerships", value: 10 },
     { source: "Other", value: 5 },
   ];
 

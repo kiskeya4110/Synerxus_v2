@@ -276,11 +276,12 @@ export default function OrganizationDashboard() {
                         paddingAngle={2}
                         dataKey="hours"
                         nameKey="name"
-                        label={({ goal, hours, payload }) => {
+                        label={({ goal, hours }) => {
                           const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
                           const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
                           const percent = ((hoursNum / total) * 100).toFixed(0);
-                          return parseInt(percent) > 4 ? `${percent}%` : '';
+                          const sdgName = SDG_GOALS[goal]?.shortName || `SDG ${goal}`;
+                          return parseInt(percent) > 6 ? `${sdgName}\n${percent}%` : '';
                         }}
                         labelLine={false}
                       >
@@ -310,47 +311,52 @@ export default function OrganizationDashboard() {
                             return (
                               <div style={{ 
                                 backgroundColor: 'white', 
-                                padding: '14px', 
-                                borderRadius: '10px', 
-                                boxShadow: '0 10px 28px rgba(0,0,0,0.15)',
-                                border: `2px solid ${sdgInfo?.color || '#166534'}',`
+                                padding: '16px', 
+                                borderRadius: '12px', 
+                                boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
+                                border: `2px solid ${sdgInfo?.color || '#166534'}`,
+                                maxWidth: '340px'
                               }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
                                   <div style={{ 
-                                    width: '28px', 
-                                    height: '28px', 
-                                    borderRadius: '6px', 
+                                    width: '32px', 
+                                    height: '32px', 
+                                    borderRadius: '8px', 
                                     backgroundColor: sdgInfo?.color || '#166534',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     color: 'white',
-                                    fontSize: '13px',
-                                    fontWeight: 'bold'
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    flexShrink: 0
                                   }}>
                                     {data.goal}
                                   </div>
-                                  <div>
-                                    <p style={{ fontWeight: '700', fontSize: '14px', color: '#111827', margin: '0' }}>
+                                  <div style={{ flex: 1 }}>
+                                    <p style={{ fontWeight: '700', fontSize: '15px', color: '#111827', margin: '0 0 4px 0' }}>
                                       {sdgInfo?.name || `SDG ${data.goal}`}
                                     </p>
-                                    <p style={{ fontSize: '11px', color: '#7c8299', margin: '2px 0 0 0' }}>
-                                      {percent}% of total impact
+                                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0', lineHeight: '1.3' }}>
+                                      {sdgInfo?.description}
+                                    </p>
+                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>
+                                      {percent}% of total impact hours
                                     </p>
                                   </div>
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px', paddingTop: '10px', borderTop: '1px solid #e5e7eb' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', paddingTop: '12px', borderTop: `1px solid ${sdgInfo?.color || '#166534'}33` }}>
                                   <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.hours}</p>
-                                    <p style={{ fontSize: '10px', color: '#9ca3af', margin: '4px 0 0 0' }}>Hours</p>
+                                    <p style={{ fontSize: '17px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.hours}</p>
+                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>Hours</p>
                                   </div>
                                   <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.projects}</p>
-                                    <p style={{ fontSize: '10px', color: '#9ca3af', margin: '4px 0 0 0' }}>Projects</p>
+                                    <p style={{ fontSize: '17px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.projects}</p>
+                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>Projects</p>
                                   </div>
                                   <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.volunteers || 0}</p>
-                                    <p style={{ fontSize: '10px', color: '#9ca3af', margin: '4px 0 0 0' }}>Volunteers</p>
+                                    <p style={{ fontSize: '17px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.volunteers || 0}</p>
+                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>Volunteers</p>
                                   </div>
                                 </div>
                               </div>
@@ -366,20 +372,43 @@ export default function OrganizationDashboard() {
                         wrapperStyle={{ paddingLeft: '20px' }}
                         formatter={(value, entry: any) => {
                           const sdg = entry.payload;
+                          const sdgInfo = SDG_GOALS[sdg.goal];
                           return (
-                            <span 
+                            <div 
                               style={{ 
-                                color: hoveredSDG === sdg.goal ? '#111827' : '#6b7280',
-                                fontSize: '12px',
-                                fontWeight: hoveredSDG === sdg.goal ? '600' : '400',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease'
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2px',
+                                padding: '6px',
+                                borderRadius: '6px',
+                                backgroundColor: hoveredSDG === sdg.goal ? 'rgba(22, 101, 52, 0.08)' : 'transparent',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer'
                               }}
                               onMouseEnter={() => setHoveredSDG(sdg.goal)}
                               onMouseLeave={() => setHoveredSDG(null)}
+                              title={sdgInfo?.description}
                             >
-                              SDG {sdg.goal} - {sdg.hours}h
-                            </span>
+                              <span 
+                                style={{ 
+                                  color: hoveredSDG === sdg.goal ? '#111827' : '#6b7280',
+                                  fontSize: '12px',
+                                  fontWeight: hoveredSDG === sdg.goal ? '600' : '500',
+                                }}
+                              >
+                                SDG {sdg.goal} • {sdgInfo?.shortName}
+                              </span>
+                              <span 
+                                style={{ 
+                                  color: hoveredSDG === sdg.goal ? '#166534' : '#9ca3af',
+                                  fontSize: '11px',
+                                  fontWeight: '500',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                {sdg.hours}h • {Math.round((sdg.hours / dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0)) * 100)}%
+                              </span>
+                            </div>
                           );
                         }}
                       />

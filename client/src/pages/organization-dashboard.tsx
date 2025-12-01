@@ -165,7 +165,7 @@ export default function OrganizationDashboard() {
   const metrics = dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, livesTouched: 0 };
 
   return (
-    <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }} data-testid="organization-dashboard">
+    <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }} data-testid="organization-dashboard">
       {/* Reusable Organization Header Component */}
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 

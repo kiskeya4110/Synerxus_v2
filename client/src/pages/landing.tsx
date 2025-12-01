@@ -121,6 +121,13 @@ function getRandomFact(category: 'volunteers' | 'ngos' | 'csr'): string {
   return facts[Math.floor(Math.random() * facts.length)];
 }
 
+// Prevent scrolling beyond page content
+if (typeof window !== 'undefined') {
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'auto';
+  document.body.style.maxHeight = '100vh';
+}
+
 interface WorldMapHeaderProps {
   selectedCountry: string | null;
   setSelectedCountry: (country: string | null) => void;

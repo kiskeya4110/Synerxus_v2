@@ -258,49 +258,51 @@ export default function OrganizationDashboard() {
                   Total: {dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0} hours
                 </span>
               </div>
-              <div style={{ height: '320px' }}>
+              <div style={{ height: '360px', display: 'flex', flexDirection: 'column' }}>
                 {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={dashboardData.sdgDistribution.map(item => ({
-                          ...item,
-                          name: `SDG ${item.goal}`,
-                          fullName: getSDGName(item.goal),
-                          color: SDG_GOALS[item.goal]?.color || '#166534'
-                        }))}
-                        cx="50%"
-                        cy="40%"
-                        innerRadius={55}
-                        outerRadius={95}
-                        paddingAngle={2}
-                        dataKey="hours"
-                        nameKey="name"
-                        label={({ goal, hours }) => {
-                          const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                          const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
-                          const percent = ((hoursNum / total) * 100).toFixed(0);
-                          const sdgName = SDG_GOALS[goal]?.shortName || `SDG ${goal}`;
-                          return parseInt(percent) > 6 ? `${sdgName}\n${percent}%` : '';
-                        }}
-                        labelLine={false}
-                      >
-                        {dashboardData.sdgDistribution.map((entry) => (
-                          <Cell 
-                            key={`cell-${entry.goal}`} 
-                            fill={SDG_GOALS[entry.goal]?.color || '#166534'}
-                            stroke={hoveredSDG === entry.goal ? '#111827' : 'white'}
-                            strokeWidth={hoveredSDG === entry.goal ? 3 : 2}
-                            style={{ 
-                              cursor: 'pointer',
-                              filter: hoveredSDG === entry.goal ? 'brightness(1.1)' : 'brightness(1)',
-                              transition: 'all 0.2s ease-in-out'
+                  <>
+                    <div style={{ flex: 1, minHeight: 0 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={dashboardData.sdgDistribution.map(item => ({
+                              ...item,
+                              name: `SDG ${item.goal}`,
+                              fullName: getSDGName(item.goal),
+                              color: SDG_GOALS[item.goal]?.color || '#166534'
+                            }))}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={50}
+                            outerRadius={85}
+                            paddingAngle={2}
+                            dataKey="hours"
+                            nameKey="name"
+                            label={({ goal, hours }) => {
+                              const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                              const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
+                              const percent = ((hoursNum / total) * 100).toFixed(0);
+                              const sdgName = SDG_GOALS[goal]?.shortName || `SDG ${goal}`;
+                              return parseInt(percent) > 6 ? `${sdgName}\n${percent}%` : '';
                             }}
-                            onMouseEnter={() => setHoveredSDG(entry.goal)}
-                            onMouseLeave={() => setHoveredSDG(null)}
-                          />
-                        ))}
-                      </Pie>
+                            labelLine={false}
+                          >
+                            {dashboardData.sdgDistribution.map((entry) => (
+                              <Cell 
+                                key={`cell-${entry.goal}`} 
+                                fill={SDG_GOALS[entry.goal]?.color || '#166534'}
+                                stroke={hoveredSDG === entry.goal ? '#111827' : 'white'}
+                                strokeWidth={hoveredSDG === entry.goal ? 3 : 2}
+                                style={{ 
+                                  cursor: 'pointer',
+                                  filter: hoveredSDG === entry.goal ? 'brightness(1.1)' : 'brightness(1)',
+                                  transition: 'all 0.2s ease-in-out'
+                                }}
+                                onMouseEnter={() => setHoveredSDG(entry.goal)}
+                                onMouseLeave={() => setHoveredSDG(null)}
+                              />
+                            ))}
+                          </Pie>
                       <Tooltip
                         content={({ active, payload }) => {
                           if (active && payload && payload.length) {
@@ -365,55 +367,43 @@ export default function OrganizationDashboard() {
                           return null;
                         }}
                       />
-                      <Legend 
-                        layout="vertical" 
-                        verticalAlign="middle"
-                        align="right"
-                        wrapperStyle={{ paddingLeft: '20px' }}
-                        formatter={(value, entry: any) => {
-                          const sdg = entry.payload;
-                          const sdgInfo = SDG_GOALS[sdg.goal];
-                          return (
-                            <div 
-                              style={{ 
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '2px',
-                                padding: '6px',
-                                borderRadius: '6px',
-                                backgroundColor: hoveredSDG === sdg.goal ? 'rgba(22, 101, 52, 0.08)' : 'transparent',
-                                transition: 'all 0.2s ease',
-                                cursor: 'pointer'
-                              }}
-                              onMouseEnter={() => setHoveredSDG(sdg.goal)}
-                              onMouseLeave={() => setHoveredSDG(null)}
-                              title={sdgInfo?.description}
-                            >
-                              <span 
-                                style={{ 
-                                  color: hoveredSDG === sdg.goal ? '#111827' : '#6b7280',
-                                  fontSize: '12px',
-                                  fontWeight: hoveredSDG === sdg.goal ? '600' : '500',
-                                }}
-                              >
-                                SDG {sdg.goal} • {sdgInfo?.shortName}
-                              </span>
-                              <span 
-                                style={{ 
-                                  color: hoveredSDG === sdg.goal ? '#166534' : '#9ca3af',
-                                  fontSize: '11px',
-                                  fontWeight: '500',
-                                  transition: 'all 0.2s ease'
-                                }}
-                              >
-                                {sdg.hours}h • {Math.round((sdg.hours / dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0)) * 100)}%
-                              </span>
-                            </div>
-                          );
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
+                          <Legend 
+                            layout="horizontal" 
+                            verticalAlign="bottom"
+                            height={36}
+                            wrapperStyle={{ paddingTop: '12px', overflow: 'visible' }}
+                            formatter={(value, entry: any) => {
+                              const sdg = entry.payload;
+                              const sdgInfo = SDG_GOALS[sdg.goal];
+                              const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                              const percent = Math.round((sdg.hours / total) * 100);
+                              return (
+                                <span 
+                                  style={{ 
+                                    color: hoveredSDG === sdg.goal ? '#166534' : '#6b7280',
+                                    fontSize: '11px',
+                                    fontWeight: hoveredSDG === sdg.goal ? '600' : '500',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'all 0.2s ease',
+                                    marginRight: '4px',
+                                    padding: '4px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: hoveredSDG === sdg.goal ? 'rgba(22, 101, 52, 0.08)' : 'transparent'
+                                  }}
+                                  onMouseEnter={() => setHoveredSDG(sdg.goal)}
+                                  onMouseLeave={() => setHoveredSDG(null)}
+                                  title={sdgInfo?.description}
+                                >
+                                  SDG {sdg.goal} • {percent}%
+                                </span>
+                              );
+                            }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
                     No SDG data available
@@ -1171,6 +1161,90 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
 
 function getCoordinatesFromLocation(location: string): { lat: number; lng: number } | null {
   const locationCoords: Record<string, { lat: number; lng: number }> = {
+    // African Countries (centers)
+    'zambia': { lat: -13.1939, lng: 27.8493 },
+    'kenya': { lat: -0.0236, lng: 37.9062 },
+    'nigeria': { lat: 9.0765, lng: 7.3986 },
+    'south africa': { lat: -30.5595, lng: 22.9375 },
+    'democratic republic of congo': { lat: -4.0383, lng: 21.7587 },
+    'uganda': { lat: 1.3733, lng: 32.2903 },
+    'tanzania': { lat: -6.3690, lng: 34.8888 },
+    'ethiopia': { lat: 9.1450, lng: 40.4897 },
+    'ghana': { lat: 7.3697, lng: -5.6789 },
+    'cameroon': { lat: 3.8480, lng: 11.5021 },
+    'egypt': { lat: 26.8206, lng: 30.8025 },
+    'morocco': { lat: 31.7917, lng: -7.0926 },
+    'algeria': { lat: 28.0339, lng: 1.6596 },
+    'rwanda': { lat: -1.9536, lng: 29.8739 },
+    'malawi': { lat: -13.2543, lng: 34.3015 },
+    'mozambique': { lat: -18.6657, lng: 35.5296 },
+    'zimbabwe': { lat: -19.0154, lng: 29.1549 },
+    'botswana': { lat: -22.3285, lng: 24.6849 },
+    'lesotho': { lat: -29.6100, lng: 28.2336 },
+    'guinea': { lat: 9.9456, lng: -9.6966 },
+    'sierra leone': { lat: 8.4606, lng: -11.7799 },
+    'liberia': { lat: 6.4281, lng: -9.4295 },
+    'ivory coast': { lat: 7.5400, lng: -5.5471 },
+    'senegal': { lat: 14.4974, lng: -14.4524 },
+    
+    // European Countries
+    'united kingdom': { lat: 55.3781, lng: -3.4360 },
+    'france': { lat: 46.2276, lng: 2.2137 },
+    'germany': { lat: 51.1657, lng: 10.4515 },
+    'spain': { lat: 40.4637, lng: -3.7492 },
+    'italy': { lat: 41.8719, lng: 12.5674 },
+    'netherlands': { lat: 52.1326, lng: 5.2913 },
+    'belgium': { lat: 50.5039, lng: 4.4699 },
+    'austria': { lat: 47.5162, lng: 14.5501 },
+    'czech republic': { lat: 49.8175, lng: 15.4730 },
+    'poland': { lat: 51.9194, lng: 19.1451 },
+    'greece': { lat: 39.0742, lng: 21.8243 },
+    'portugal': { lat: 39.3999, lng: -8.2245 },
+    'switzerland': { lat: 46.8182, lng: 8.2275 },
+    'sweden': { lat: 60.1282, lng: 18.6435 },
+    'norway': { lat: 60.4720, lng: 8.4689 },
+    
+    // Asian Countries
+    'india': { lat: 20.5937, lng: 78.9629 },
+    'japan': { lat: 36.2048, lng: 138.2529 },
+    'china': { lat: 35.8617, lng: 104.1954 },
+    'thailand': { lat: 15.8700, lng: 100.9925 },
+    'vietnam': { lat: 14.0583, lng: 108.2772 },
+    'philippines': { lat: 12.8797, lng: 121.7740 },
+    'indonesia': { lat: -0.7893, lng: 113.9213 },
+    'malaysia': { lat: 4.2105, lng: 101.6964 },
+    'singapore': { lat: 1.3521, lng: 103.8198 },
+    'pakistan': { lat: 30.3753, lng: 69.3451 },
+    'bangladesh': { lat: 23.6850, lng: 90.3563 },
+    'south korea': { lat: 35.9078, lng: 127.7669 },
+    'myanmar': { lat: 21.9162, lng: 95.9560 },
+    'cambodia': { lat: 12.5657, lng: 104.9910 },
+    'laos': { lat: 19.8523, lng: 102.4955 },
+    'sri lanka': { lat: 7.8731, lng: 80.7718 },
+    
+    // Americas - Countries
+    'united states': { lat: 37.0902, lng: -95.7129 },
+    'canada': { lat: 56.1304, lng: -106.3468 },
+    'mexico': { lat: 23.6345, lng: -102.5528 },
+    'brazil': { lat: -14.2350, lng: -51.9253 },
+    'argentina': { lat: -38.4161, lng: -63.6167 },
+    'chile': { lat: -35.6751, lng: -71.5430 },
+    'colombia': { lat: 4.5709, lng: -74.2973 },
+    'peru': { lat: -9.1900, lng: -75.0152 },
+    'venezuela': { lat: 6.4238, lng: -66.5897 },
+    'ecuador': { lat: -1.8312, lng: -78.1834 },
+    'bolivia': { lat: -16.2902, lng: -63.5887 },
+    'paraguay': { lat: -23.4425, lng: -58.4438 },
+    'uruguay': { lat: -32.5228, lng: -55.7658 },
+    'costa rica': { lat: 9.7489, lng: -83.7534 },
+    'panama': { lat: 8.7832, lng: -80.7744 },
+    
+    // Oceania Countries
+    'australia': { lat: -25.2744, lng: 133.7751 },
+    'new zealand': { lat: -40.9006, lng: 174.8860 },
+    'fiji': { lat: -17.7134, lng: 178.0650 },
+    'samoa': { lat: -13.7590, lng: -172.1046 },
+    
     // US Cities
     'new york': { lat: 40.7128, lng: -74.006 },
     'los angeles': { lat: 34.0522, lng: -118.2437 },
@@ -1187,7 +1261,7 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'portland': { lat: 45.5152, lng: -122.6784 },
     'dallas': { lat: 32.7767, lng: -96.797 },
     
-    // Africa
+    // African Cities
     'nairobi': { lat: -1.2921, lng: 36.8219 },
     'lagos': { lat: 6.5244, lng: 3.3792 },
     'cape town': { lat: -33.9249, lng: 18.4241 },
@@ -1195,8 +1269,11 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'cairo': { lat: 30.0444, lng: 31.2357 },
     'kinshasa': { lat: -4.3276, lng: 15.3136 },
     'accra': { lat: 5.6037, lng: -0.187 },
+    'lusaka': { lat: -15.3875, lng: 28.2833 },
+    'harare': { lat: -17.8252, lng: 31.0335 },
+    'dar es salaam': { lat: -6.8000, lng: 39.2833 },
     
-    // Europe
+    // European Cities
     'london': { lat: 51.5074, lng: -0.1278 },
     'paris': { lat: 48.8566, lng: 2.3522 },
     'berlin': { lat: 52.52, lng: 13.405 },
@@ -1208,21 +1285,20 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'prague': { lat: 50.0755, lng: 14.4378 },
     'warsaw': { lat: 52.2297, lng: 21.0122 },
     
-    // Asia
+    // Asian Cities
     'tokyo': { lat: 35.6762, lng: 139.6503 },
     'mumbai': { lat: 19.076, lng: 72.8777 },
     'delhi': { lat: 28.7041, lng: 77.1025 },
     'bangkok': { lat: 13.7563, lng: 100.5018 },
-    'singapore': { lat: 1.3521, lng: 103.8198 },
-    'hongkong': { lat: 22.3193, lng: 114.1694 },
     'shanghai': { lat: 31.2304, lng: 121.4737 },
     'beijing': { lat: 39.9042, lng: 116.4074 },
     'seoul': { lat: 37.5665, lng: 126.978 },
     'manila': { lat: 14.5995, lng: 120.9842 },
     'jakarta': { lat: -6.2088, lng: 106.8456 },
     'karachi': { lat: 24.8607, lng: 67.0011 },
+    'hongkong': { lat: 22.3193, lng: 114.1694 },
     
-    // South America
+    // South American Cities
     'sao paulo': { lat: -23.5505, lng: -46.6333 },
     'buenos aires': { lat: -34.6037, lng: -58.3816 },
     'lima': { lat: -12.0464, lng: -77.0428 },
@@ -1230,21 +1306,12 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'santiago': { lat: -33.4489, lng: -70.6693 },
     'mexico city': { lat: 19.4326, lng: -99.1332 },
     
-    // Oceania
+    // Oceania Cities
     'sydney': { lat: -33.8688, lng: 151.2093 },
     'melbourne': { lat: -37.8136, lng: 144.9631 },
     'auckland': { lat: -37.0742, lng: 174.885 },
-    'fiji': { lat: -17.7134, lng: 178.0650 },
     
-    // Special cases
-    'united states': { lat: 38, lng: -97 },
-    'usa': { lat: 38, lng: -97 },
-    'india': { lat: 20, lng: 78 },
-    'africa': { lat: -8.7832, lng: 34.5085 },
-    'europe': { lat: 54.5260, lng: 15.2551 },
-    'asia': { lat: 34.0479, lng: 100.6197 },
-    'south america': { lat: -8.7832, lng: -55.4915 },
-    'caribbean': { lat: 15, lng: -75 },
+    // Special cases (remote/online)
     'remote': { lat: 20, lng: 0 },
     'online': { lat: 20, lng: 0 },
     'virtual': { lat: 20, lng: 0 },
@@ -1253,14 +1320,26 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
 
   const locationLower = location.toLowerCase().trim();
   
-  // Exact matches first
+  // Exact matches first (highest priority)
   if (locationCoords[locationLower]) {
     return locationCoords[locationLower];
   }
   
-  // Partial matches (checks if location contains any key)
+  // Check for countries (longer strings first to match full country names)
+  const countryPatterns = [
+    'united states', 'united kingdom', 'south africa', 'south korea', 'sri lanka',
+    'democratic republic of congo', 'ivory coast', 'sierra leone', 'new zealand'
+  ];
+  
+  for (const country of countryPatterns) {
+    if (locationLower.includes(country) && locationCoords[country]) {
+      return locationCoords[country];
+    }
+  }
+  
+  // Partial matches (checks if location contains any key) - skip regional matches
   for (const [key, coords] of Object.entries(locationCoords)) {
-    if (locationLower.includes(key)) {
+    if (locationLower.includes(key) && !['africa', 'europe', 'asia', 'south america', 'caribbean'].includes(key)) {
       return coords;
     }
   }

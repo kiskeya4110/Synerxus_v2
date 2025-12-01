@@ -11,6 +11,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { getSDGName, SDG_GOALS } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
 import sdg2 from "@assets/E_SDG_PRINT-02_1762550174896.jpg";
 import sdg3 from "@assets/E_SDG_PRINT-03_1762550174898.jpg";
@@ -914,6 +915,9 @@ export default function OrganizationDashboard() {
           }
         }
       `}</style>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

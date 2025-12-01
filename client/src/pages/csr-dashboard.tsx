@@ -20,6 +20,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import EmployeeEngagementTab from "./employee-engagement-tab";
+import Footer from "@/components/layout/footer";
 
 interface SDGEmployee {
   name: string;
@@ -3497,6 +3498,9 @@ export default function CSRDashboard() {
             </div>
           </div>
         )}
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

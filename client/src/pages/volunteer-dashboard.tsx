@@ -29,6 +29,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import Footer from "@/components/layout/footer";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
 }
@@ -1645,6 +1646,9 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

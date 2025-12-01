@@ -10,12 +10,25 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 
+interface ITask {
+  id: number;
+  title: string;
+  description?: string;
+  status: string;
+  priority?: string;
+  dueDate?: string;
+  estimatedHours?: number;
+  assignee?: string;
+  project?: string;
+  [key: string]: any;
+}
+
 export default function Tasks() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
 
-  const { data: tasks = [], isLoading } = useQuery({ 
+  const { data: tasks = [], isLoading } = useQuery<ITask[]>({ 
     queryKey: ["/api/tasks"] 
   });
 
@@ -23,7 +36,7 @@ export default function Tasks() {
     queryKey: ["/api/projects"] 
   });
 
-  const filteredTasks = tasks.filter((task: any) => {
+  const filteredTasks = (tasks as ITask[]).filter((task: ITask) => {
     const matchesSearch = task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          task.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || task.status?.toLowerCase() === statusFilter;
@@ -101,7 +114,7 @@ export default function Tasks() {
 
           {/* Tasks List */}
           <div className="space-y-3">
-            {filteredTasks.map((task) => (
+            {filteredTasks.map((task: ITask) => (
               <Card key={task.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -128,13 +141,13 @@ export default function Tasks() {
                           {task.description}
                         </p>
                         <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                          <span>Due: {new Date(task.dueDate).toLocaleDateString()}</span>
+                          <span>Due: {new Date(task.dueDate || '').toLocaleDateString()}</span>
                           <span>Est. {task.estimatedHours}h</span>
                           {task.assignee && (
                             <div className="flex items-center gap-1">
                               <Avatar className="h-5 w-5">
                                 <AvatarFallback className="text-xs">
-                                  {task.assignee.split(' ').map(n => n[0]).join('')}
+                                  {task.assignee.split(' ').map((n: string) => n[0]).join('')}
                                 </AvatarFallback>
                               </Avatar>
                               <Link href="/volunteers" className="hover:text-primary">

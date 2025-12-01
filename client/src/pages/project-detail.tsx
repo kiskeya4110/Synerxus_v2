@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
 
 const SDG_COLORS: { [key: number]: string } = {
@@ -192,6 +194,52 @@ export default function ProjectDetail() {
   };
 
   const isOrganization = currentUser?.userType === 'organization';
+  const { toast } = useToast();
+
+  // Mutation to update lives touched
+  const updateLivesTouchedMutation = useMutation({
+    mutationFn: async (livesTouched: number) => {
+      return apiRequest("PATCH", `/api/projects/${projectId}`, { livesTouched });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      toast({ title: "Lives touched updated", description: "The impact metric has been saved." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update lives touched", variant: "destructive" });
+    }
+  });
+
+  const updateLivesTouched = (value: number) => {
+    updateLivesTouchedMutation.mutate(value);
+  };
+
+  // Mutation to delete task
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      return apiRequest("DELETE", `/api/tasks/${taskId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({ title: "Task deleted", description: "The task has been removed." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete task", variant: "destructive" });
+    }
+  });
+
+  const handleDeleteTask = (taskId: number) => {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      deleteTaskMutation.mutate(taskId);
+    }
+  };
+
+  const handleEditTask = (taskId: number) => {
+    if (isOrganization) {
+      // Placeholder for edit modal - can be expanded later
+      toast({ title: "Task edit", description: "Task editing feature coming soon" });
+    }
+  };
 
   return (
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 pb-20 md:pb-0">
@@ -509,10 +557,47 @@ export default function ProjectDetail() {
             )}
           </TabsContent>
 
-          <TabsContent value="programs" className="mt-6">
+          <TabsContent value="programs" className="mt-6 space-y-6">
+            {/* Lives Touched Section (for organizations) */}
+            {isOrganization && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Lives Touched</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground mb-2">Total lives impacted by this project</p>
+                      <input
+                        type="number"
+                        value={project?.livesTouched || 0}
+                        onChange={(e) => {
+                          const newValue = parseInt(e.target.value) || 0;
+                          updateLivesTouched(newValue);
+                        }}
+                        className="w-full px-4 py-2 border rounded-lg"
+                        placeholder="Enter number of lives touched"
+                        data-testid="input-lives-touched"
+                      />
+                    </div>
+                    <div className="text-3xl font-bold text-primary">
+                      {project?.livesTouched || 0}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Project Tasks */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Project Tasks</CardTitle>
+                {isOrganization && (
+                  <Button size="sm" className="gap-2" data-testid="button-add-task">
+                    <Plus className="h-4 w-4" />
+                    Add Task
+                  </Button>
+                )}
               </CardHeader>
               <CardContent>
                 {projectTasks.length === 0 ? (
@@ -522,16 +607,36 @@ export default function ProjectDetail() {
                     {projectTasks.map((task: any) => (
                       <div
                         key={task.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                         data-testid={`task-item-${task.id}`}
+                        onClick={() => isOrganization && handleEditTask(task.id)}
                       >
                         <div className="flex-1">
                           <h4 className="font-medium">{task.title}</h4>
                           {task.description && (
                             <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
                           )}
+                          <div className="text-xs text-muted-foreground mt-2">
+                            {task.estimatedHours && <span>Est. {task.estimatedHours}h • </span>}
+                            Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}
+                          </div>
                         </div>
-                        <StatusBadge status={task.status} />
+                        <div className="flex items-center gap-3">
+                          {isOrganization && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTask(task.id);
+                              }}
+                              data-testid={`button-delete-task-${task.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          )}
+                          <StatusBadge status={task.status} />
+                        </div>
                       </div>
                     ))}
                   </div>

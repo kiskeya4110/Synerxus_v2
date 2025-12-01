@@ -92,14 +92,25 @@ export default function OrganizationDashboard() {
     enabled: !!userId,
   });
 
-  const { data: organizationProfile } = useQuery({
-    queryKey: ['/api/intake/organization-profile', userId],
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/users/me', userId],
     queryFn: async () => {
-      const response = await fetch(`/api/intake/organization-profile?userId=${userId}`);
+      const response = await fetch(`/api/users/me?userId=${userId}`);
       if (!response.ok) return null;
       return response.json();
     },
     enabled: !!userId,
+  });
+
+  const { data: organizationProfile } = useQuery({
+    queryKey: ['/api/intake/organization-profile', currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/intake/organization-profile?organizationId=${currentUser.organizationId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
   });
 
   const handleQuickAction = (actionId: string) => {

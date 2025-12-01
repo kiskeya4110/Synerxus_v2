@@ -1094,29 +1094,33 @@ export default function OrganizationDashboard() {
 }
 
 function MetricCard({ icon, label, value, color, testId, onClick }: { icon: React.ReactNode; label: string; value: number; color: string; testId: string; onClick?: () => void }) {
+  const [isHovered, setIsHovered] = React.useState(false);
   return (
     <button
       type="button"
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       aria-label={`${label}: ${value.toLocaleString()}`}
       className="metric-card-btn"
       style={{
-        backgroundColor: 'white',
+        backgroundColor: isHovered ? `${color}05` : 'white',
         borderRadius: '12px',
         padding: '16px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        boxShadow: isHovered ? `0 8px 16px rgba(0,0,0,0.12)` : '0 1px 3px rgba(0,0,0,0.1)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '8px',
-        border: `2px solid ${color}20`,
+        border: `2px solid ${color}${isHovered ? '40' : '20'}`,
         cursor: 'pointer',
-        transition: 'transform 0.15s, box-shadow 0.15s',
+        transition: 'all 0.2s ease-in-out',
         width: '100%',
         height: '140px',
         textAlign: 'center',
         minHeight: 'auto',
+        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
       }}
       data-testid={testId}
     >

@@ -286,12 +286,15 @@ export default function ApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Applications</h1>
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-32 w-full" />
-          ))}
+      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+        {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
+        <div className="p-6">
+          <h1 className="text-3xl font-bold mb-6">Applications</h1>
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-32 w-full" />
+            ))}
+          </div>
         </div>
       </div>
     );

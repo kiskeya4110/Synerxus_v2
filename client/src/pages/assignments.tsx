@@ -147,23 +147,29 @@ export default function Assignments() {
   // Handle unauthenticated users - only check after query completes
   if (!userLoading && !currentUser) {
     return (
-      <div className="container mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Authentication Required</AlertTitle>
-          <AlertDescription>
-            Please log in to view your project assignments.
-          </AlertDescription>
-        </Alert>
+      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+        {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+        <div className="container mx-auto p-6">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Authentication Required</AlertTitle>
+            <AlertDescription>
+              Please log in to view your project assignments.
+            </AlertDescription>
+          </Alert>
+        </div>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Loading assignments...</p>
+      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+        {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Loading assignments...</p>
+          </div>
         </div>
       </div>
     );

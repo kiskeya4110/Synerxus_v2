@@ -1,11 +1,9 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
 import { 
-  FolderOpen, Users, Menu, X, Plus, 
+  FolderOpen, Users, Plus, 
   Target, BarChart3, FileText, Bell, Settings
 } from "lucide-react";
-import synerxusLogo from "@assets/image_1764559495133.png";
 
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
@@ -13,7 +11,7 @@ const NAV_TABS = [
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
   { id: 'reports', label: 'Reports', icon: FileText, path: '/impact-visualization' },
-  { id: 'create', label: '+Create', icon: Plus, path: null },
+  { id: 'create', label: 'Create', icon: Plus, path: null },
 ];
 
 interface OrganizationHeaderProps {
@@ -24,10 +22,8 @@ interface OrganizationHeaderProps {
 export default function OrganizationHeader({ activeTab = 'dashboard', onCreateClick }: OrganizationHeaderProps) {
   const { user } = useAuth();
   const [location, navigate] = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleTabClick = (tab: typeof NAV_TABS[0]) => {
-    setMobileMenuOpen(false);
     if (tab.id === 'create') {
       onCreateClick?.();
     } else if (tab.path) {
@@ -40,19 +36,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   return (
     <div style={{ backgroundColor: '#166534', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Left: Logo + Navigation Tabs */}
+        {/* Left: Navigation Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-          {/* Logo */}
-          <img 
-            src={synerxusLogo} 
-            alt="SYNERXUS - Connect. Manage. Impact Globally." 
-            style={{ height: '40px', objectFit: 'contain', cursor: 'pointer' }}
-            onClick={() => navigate('/organization-dashboard')}
-            data-testid="logo-image"
-          />
-
-          {/* Desktop Navigation Tabs - Right next to logo */}
-          <div style={{ display: 'flex', gap: '4px' }} className="desktop-nav">
+          {/* Navigation Tabs */}
+          <div style={{ display: 'flex', gap: '4px' }}>
             {NAV_TABS.map((tab) => (
               <button
                 key={tab.id}
@@ -91,7 +78,7 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
           </div>
         </div>
 
-        {/* Right: Notifications, Settings, Profile & Mobile Menu */}
+        {/* Right: Notifications, Settings, Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Notifications Button */}
           <button
@@ -164,72 +151,10 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             )}
           </button>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="mobile-menu-btn"
-            data-testid="mobile-menu-toggle"
-            style={{
-              display: 'none',
-              padding: '8px',
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: 'white',
-              cursor: 'pointer',
-            }}
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
       </nav>
 
-      {/* Mobile Menu Dropdown */}
-      {mobileMenuOpen && (
-        <div className="mobile-menu" style={{ backgroundColor: '#14532d', padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.1)' }} data-testid="mobile-menu">
-          {NAV_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab)}
-              data-testid={`mobile-nav-${tab.id}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                width: '100%',
-                padding: '12px 16px',
-                backgroundColor: currentTab === tab.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-                border: 'none',
-                borderRadius: '8px',
-                color: 'white',
-                fontSize: '16px',
-                textAlign: 'left',
-                cursor: 'pointer',
-                marginBottom: '4px',
-              }}
-            >
-              <tab.icon size={20} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
 
-      {/* Responsive Styles */}
-      <style>{`
-        @media (max-width: 900px) {
-          .desktop-nav {
-            display: none !important;
-          }
-          .mobile-menu-btn {
-            display: block !important;
-          }
-        }
-        @media (min-width: 901px) {
-          .mobile-menu {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }

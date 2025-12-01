@@ -6,11 +6,14 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Users, Calendar, Briefcase, Plus, AlertCircle } from "lucide-react";
 import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
+import OrganizationHeader from "@/components/layout/organization-header";
 import type { Opportunity, User } from "@shared/schema";
 
 export default function Opportunities() {
   const [, navigate] = useLocation();
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
+  const isOrganizationUser = userType === 'organization';
 
   // Fetch current user to get organization ID
   const { data: currentUser } = useQuery<User>({
@@ -52,15 +55,17 @@ export default function Opportunities() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Volunteer Opportunities</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage and post volunteer opportunities
-          </p>
-        </div>
-        {currentUser?.organizationId && (
+    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
+      <div className={isOrganizationUser ? "p-6" : "p-6"}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Volunteer Opportunities</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Manage and post volunteer opportunities
+            </p>
+          </div>
+          {currentUser?.organizationId && (
           <div className="flex gap-2">
             <Button
               data-testid="button-post-core"
@@ -186,6 +191,7 @@ export default function Opportunities() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

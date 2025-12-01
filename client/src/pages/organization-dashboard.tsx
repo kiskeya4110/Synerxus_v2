@@ -209,35 +209,6 @@ export default function OrganizationDashboard() {
       {/* Mobile Metrics Grid - 2x2 at top */}
       {metrics && <MobileMetricsGrid activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />}
 
-      {/* Mobile Impact Over Time Chart - Moved to top */}
-      <div className="md:hidden" style={{ padding: '16px', backgroundColor: '#f9fafb' }}>
-        <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>Impact Over Time</h3>
-          <div style={{ height: '160px' }}>
-            {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dashboardData.impactOverTime}>
-                  <defs>
-                    <linearGradient id="mobileGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#667eea" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="month" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                  <YAxis hide />
-                  <Tooltip />
-                  <Area type="monotone" dataKey="hours" stroke="#667eea" strokeWidth={2} fill="url(#mobileGradient)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
-                No data available
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }} className="md:p-6">
         {/* Filters Section - Desktop Only */}
@@ -291,6 +262,38 @@ export default function OrganizationDashboard() {
                 <option key={period.value} value={period.value}>{period.label}</option>
               ))}
             </select>
+          </div>
+        </div>
+
+        {/* Mobile Impact Over Time Chart */}
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>Impact Over Time</h3>
+          <div style={{ height: '200px' }}>
+            {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dashboardData.impactOverTime}>
+                  <defs>
+                    <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#667eea" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="peopleGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f093fb" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#f093fb" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis hide />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="hours" stroke="#667eea" strokeWidth={2} fill="url(#hoursGradient)" />
+                  <Area type="monotone" dataKey="peopleImpacted" stroke="#f093fb" strokeWidth={2} fill="url(#peopleGradient)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                No data available
+              </div>
+            )}
           </div>
         </div>
 

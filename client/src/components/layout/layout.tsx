@@ -62,7 +62,7 @@ export default function Layout({ children }: LayoutProps) {
       <Header />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background scroll-container hide-scrollbar">
+        <main className="flex-1 overflow-x-hidden bg-background scroll-container hide-scrollbar">
           <div className="safe-area-x px-3 sm:px-4 md:px-6 pt-[72px] md:pt-20 pb-20 md:pb-6">
             <div className="max-w-7xl mx-auto">
               {children}

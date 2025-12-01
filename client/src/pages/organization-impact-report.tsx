@@ -135,15 +135,20 @@ export default function OrganizationImpactReport() {
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const chartRefs = useRef<Record<string, React.RefObject<any>>>({});
 
+  // Get the current userId from localStorage for cache key
+  const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
+
   // Call ALL hooks unconditionally at the top - this is required by React
   const { data: currentUser, isLoading: userLoading } = useQuery<User>({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", storedUserId],
     queryFn: async () => {
       const id = localStorage.getItem("currentUserId");
       const url = id ? `/api/users/me?userId=${id}` : "/api/users/me";
       const response = await fetch(url);
       return response.ok ? response.json() : null;
     },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const { data: organization } = useQuery<any>({
@@ -158,14 +163,18 @@ export default function OrganizationImpactReport() {
     enabled: !!currentUser?.organizationId,
   });
 
-  const { data: volunteers = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteers"],
+  // Fetch organization's project assignments for volunteer info
+  const { data: projectAssignments = [] } = useQuery<any[]>({
+    queryKey: ["/api/project-assignments", "org", currentUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch("/api/volunteers");
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch("/api/project-assignments");
       return response.ok ? response.json() : [];
     },
+    enabled: !!currentUser?.organizationId,
   });
 
+  // Fetch all users (needed for volunteer names in impact leader)
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
     queryFn: async () => {
@@ -184,6 +193,8 @@ export default function OrganizationImpactReport() {
       return response.ok ? response.json() : [];
     },
     enabled: !!currentUser?.organizationId,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const { data: volunteerActivities = [] } = useQuery<any[]>({
@@ -215,15 +226,17 @@ export default function OrganizationImpactReport() {
       "/api/dashboard/summary",
       "organization",
       currentUser?.organizationId,
+      storedUserId,
     ],
     queryFn: async () => {
       if (!currentUser?.organizationId) return null;
-      // Use userId (org manager) to fetch org data, backend will route based on userType
-      const userId = isOrganizationManager ? currentUser.id : currentUser.id;
+      const userId = currentUser.id;
       const response = await fetch(`/api/dashboard/summary?userId=${userId}`);
       return response.ok ? response.json() : null;
     },
     enabled: !!currentUser?.id && !!currentUser?.organizationId,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   // Redirect users without organization context away from organization pages

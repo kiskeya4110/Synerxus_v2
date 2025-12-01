@@ -265,45 +265,47 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Mobile Impact Over Time Chart - BarChart Style - SDG Highlighted */}
+        {/* Mobile SDG Distribution PieChart */}
         <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>
-            Impact Over Time
-            {organizationProfile?.sdgGoals && organizationProfile.sdgGoals.length > 0 && (
-              <span style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginLeft: '8px' }}>
-                ({organizationProfile.sdgGoals.slice(0, 2).map((g: number) => getSDGName(g)).join(', ')})
-              </span>
-            )}
-          </h3>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>SDG Distribution</h3>
           <div style={{ height: '200px' }}>
-            {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
+            {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dashboardData.impactOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" tick={{ fontSize: 10 }} tickFormatter={(v) => v.split('-')[1]} />
-                  <YAxis tick={{ fontSize: 10 }} />
+                <PieChart>
+                  <Pie
+                    data={dashboardData.sdgDistribution}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ goal, hours }) => `SDG ${goal}: ${hours}h`}
+                    outerRadius={60}
+                    fill="#8884d8"
+                    dataKey="hours"
+                  >
+                    {dashboardData.sdgDistribution.map((entry: any) => (
+                      <Cell key={`cell-${entry.goal}`} fill={getSDGColor(entry.goal)} />
+                    ))}
+                  </Pie>
                   <Tooltip
-                    content={({ active, payload, label }) => {
+                    content={({ active, payload }) => {
                       if (active && payload && payload.length) {
-                        const sdgColor = organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#667eea';
+                        const data = payload[0].payload;
+                        const sdgInfo = SDG_GOALS[data.goal];
                         return (
-                          <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '8px', boxShadow: `0 4px 12px rgba(0,0,0,0.15)`, borderTop: `3px solid ${sdgColor}` }}>
-                            <p style={{ fontWeight: '600', marginBottom: '4px', fontSize: '12px' }}>{label}</p>
-                            <p style={{ fontSize: '12px', color: sdgColor }}>Hours: {payload[0]?.value}</p>
-                            <p style={{ fontSize: '12px', color: organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#f093fb' }}>People: {payload[1]?.value}</p>
+                          <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: `2px solid ${getSDGColor(data.goal)}` }}>
+                            <p style={{ fontWeight: '600', marginBottom: '4px', fontSize: '12px', color: getSDGColor(data.goal) }}>{sdgInfo?.name || `SDG ${data.goal}`}</p>
+                            <p style={{ fontSize: '12px', color: '#666' }}>Hours: {data.hours}</p>
                           </div>
                         );
                       }
                       return null;
                     }}
                   />
-                  <Bar dataKey="hours" fill={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#667eea'} radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="peopleImpacted" fill={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#f093fb'} radius={[4, 4, 0, 0]} />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             ) : (
               <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
-                No data available
+                No SDG data available
               </div>
             )}
           </div>
@@ -701,54 +703,60 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Bottom Section (2/5): SDG Distribution PieChart | AI Insights - Desktop Only */}
+        {/* Bottom Section (2/5): Impact Over Time | AI Insights - Desktop Only */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="bottom-section hidden md:grid">
-          {/* Left: SDG Distribution PieChart */}
+          {/* Left: Impact Over Time Chart - SDG Highlighted */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Target size={18} style={{ color: '#7c3aed' }} />
-              SDG Distribution
+              <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
+              Impact Over Time
+              {organizationProfile?.sdgGoals && organizationProfile.sdgGoals.length > 0 && (
+                <span style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginLeft: '4px' }}>
+                  ({organizationProfile.sdgGoals.slice(0, 2).map((g: number) => getSDGName(g)).join(', ')})
+                </span>
+              )}
             </h3>
             <div style={{ height: '250px' }}>
-              {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
+              {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={dashboardData.sdgDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ goal, hours }) => `SDG ${goal}: ${hours}h`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="hours"
-                    >
-                      {dashboardData.sdgDistribution.map((entry: any) => (
-                        <Cell key={`cell-${entry.goal}`} fill={getSDGColor(entry.goal)} />
-                      ))}
-                    </Pie>
+                  <AreaChart data={dashboardData.impactOverTime}>
+                    <defs>
+                      <linearGradient id="desktopHoursGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="desktopPeopleGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
+                    <YAxis tick={{ fontSize: 11 }} />
                     <Tooltip
-                      content={({ active, payload }) => {
+                      content={({ active, payload, label }) => {
                         if (active && payload && payload.length) {
-                          const data = payload[0].payload;
-                          const sdgInfo = SDG_GOALS[data.goal];
+                          const sdgColor1 = organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534';
+                          const sdgColor2 = organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af';
                           return (
-                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: `2px solid ${getSDGColor(data.goal)}` }}>
-                              <p style={{ fontWeight: '600', marginBottom: '4px', color: getSDGColor(data.goal) }}>{sdgInfo?.name || `SDG ${data.goal}`}</p>
-                              <p style={{ fontSize: '13px', color: '#666' }}>Hours: {data.hours}</p>
-                              <p style={{ fontSize: '13px', color: '#666' }}>Projects: {data.projects}</p>
-                              <p style={{ fontSize: '13px', color: '#666' }}>Volunteers: {data.volunteers || 0}</p>
+                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderTop: `3px solid ${sdgColor1}` }}>
+                              <p style={{ fontWeight: '600', marginBottom: '4px' }}>{label}</p>
+                              <p style={{ fontSize: '13px', color: sdgColor1 }}>Hours: {payload[0]?.value}</p>
+                              <p style={{ fontSize: '13px', color: sdgColor2 }}>People Impacted: {payload[1]?.value}</p>
                             </div>
                           );
                         }
                         return null;
                       }}
                     />
-                  </PieChart>
+                    <Legend />
+                    <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#desktopHoursGradient)" strokeWidth={2} name="Hours" />
+                    <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#desktopPeopleGradient)" strokeWidth={2} name="People Impacted" />
+                  </AreaChart>
                 </ResponsiveContainer>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
-                  No SDG data available
+                  No impact data available
                 </div>
               )}
             </div>

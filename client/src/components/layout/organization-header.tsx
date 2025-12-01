@@ -4,6 +4,7 @@ import {
   FolderOpen, Users, Plus, 
   Target, BarChart3, FileText, Bell, Settings
 } from "lucide-react";
+import synerxusLogo from "@assets/image_1764559495133.png";
 
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
@@ -36,8 +37,17 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   return (
     <div style={{ backgroundColor: '#166534', padding: '0', position: 'sticky', top: 0, zIndex: 50 }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Left: Navigation Tabs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        {/* Left: Logo + Navigation Tabs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Logo */}
+          <img 
+            src={synerxusLogo} 
+            alt="SYNERXUS - Connect. Manage. Impact Globally." 
+            style={{ height: '40px', objectFit: 'contain', cursor: 'pointer' }}
+            onClick={() => navigate('/organization-dashboard')}
+            data-testid="logo-image"
+          />
+
           {/* Navigation Tabs */}
           <div style={{ display: 'flex', gap: '4px' }}>
             {NAV_TABS.map((tab) => (

@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useLocation as useWouterLocation } from "@tanstack/react-query";
 import { BarChart, Share2, Download, Twitter, Linkedin, Facebook, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,9 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BeforeAfterComparison from "@/components/impact/before-after-comparison";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
 import { useToast } from "@/hooks/use-toast";
+import OrganizationHeader from "@/components/layout/organization-header";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,10 +44,17 @@ ChartJS.register(
 
 export default function ImpactVisualization() {
   const { toast } = useToast();
+  const userType = localStorage.getItem('userType');
+  const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("before-after");
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
   const [selectedProjectIdForStories, setSelectedProjectIdForStories] = useState<string>("all");
   const contentRef = useRef<HTMLDivElement>(null);
+
+  // Redirect non-organizations
+  if (userType !== 'organization') {
+    return null;
+  }
 
   // Get current user to filter their projects
   const userId = localStorage.getItem('currentUserId');

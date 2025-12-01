@@ -594,25 +594,62 @@ export default function MyWork() {
       )}
 
       {isOrganizationManager ? (
-        <div className="px-6 py-4 text-center">
-          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-8">
-            <BarChart3 className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-3" />
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Organization Impact Reports
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
-              Create comprehensive impact reports with organization-wide KPIs, volunteer statistics, and project achievements
-            </p>
-            <Link href={`/organization-impact-report/${currentUser?.organizationId}`}>
-              <Button className="gap-2">
-                <BarChart3 className="h-4 w-4" />
-                View Full Impact Report
-              </Button>
-            </Link>
+        <div className="px-6 py-4">
+          {/* Projects List Section */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">Organization Projects</h2>
+              {currentUser?.organizationId && (
+                <CreateProjectDialog organizationId={currentUser.organizationId} />
+              )}
+            </div>
+            <div className="space-y-4">
+              {orgProjects.length > 0 ? (
+                orgProjects.map((project: Project) => {
+                  const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
+                  const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
+                  const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
+                  
+                  return (
+                    <ProjectListCard
+                      key={project.id}
+                      project={project}
+                      tasks={projectTasks}
+                      metrics={{
+                        volunteers: orgVolunteers.length,
+                        totalCommitted: projectTasks.length,
+                        totalCompleted: completedTasks
+                      }}
+                      progress={project.completionPercentage ?? progress}
+                      isExpanded={expandedProjects.has(project.id)}
+                      onToggle={() => {
+                        setExpandedProjects(prev => {
+                          const newSet = new Set(prev);
+                          if (newSet.has(project.id)) {
+                            newSet.delete(project.id);
+                          } else {
+                            newSet.add(project.id);
+                          }
+                          return newSet;
+                        });
+                      }}
+                      canManageProjects={true}
+                    />
+                  );
+                })
+              ) : (
+                <Card className="p-8 text-center">
+                  <p className="text-gray-500 mb-4">No projects yet. Create your first project to get started!</p>
+                  {currentUser?.organizationId && (
+                    <CreateProjectDialog organizationId={currentUser.organizationId} />
+                  )}
+                </Card>
+              )}
+            </div>
           </div>
-          
-          {/* Organization Tabs: Tasks, Impact */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-4 mt-6">
+
+          {/* Tasks and Impact Tabs */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pb-4">
             <TabsList className="grid w-full max-w-lg grid-cols-2 mb-4 sm:mb-6">
               <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
                 <ListTodo className="h-4 w-4" />
@@ -634,7 +671,7 @@ export default function MyWork() {
             {/* Impact Tab Content */}
             <TabsContent value="impact" className="mt-2">
               <div className="w-full overflow-x-hidden">
-                <ImpactVisualization />
+                <ImpactVisualization embedded />
               </div>
             </TabsContent>
           </Tabs>

@@ -512,9 +512,9 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   return (
     <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }}>
       {!embedded && <OrganizationHeader activeTab="reports" />}
-      <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className={`${!embedded ? 'p-6 max-w-7xl mx-auto space-y-6' : 'space-y-6'}`}>
       {/* Page Header with Action Buttons */}
-      <div className="mb-6">
+      <div className={`mb-6 ${!embedded ? '' : 'px-6'}`}>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold">Impact Visualization</h1>

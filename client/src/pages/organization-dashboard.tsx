@@ -139,6 +139,17 @@ export default function OrganizationDashboard() {
     enabled: !!currentUser?.organizationId,
   });
 
+  const { data: organization } = useQuery({
+    queryKey: ['/api/organizations', currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/organizations/${currentUser.organizationId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
   const handleQuickAction = (actionId: string) => {
     if (actionId === 'create-project') {
       navigate('/projects?create=true');
@@ -174,7 +185,7 @@ export default function OrganizationDashboard() {
       <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '8px 0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: 0 }}>
-            Welcome Back, {organizationProfile?.organizationName || 'Organization'}
+            Welcome Back, {organization?.name || organizationProfile?.organizationName || 'Organization'}
           </h1>
         </div>
       </div>

@@ -4,10 +4,16 @@
 Synerxus is an AI-powered platform that connects global volunteers with opportunities and helps organizations track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhancing global collaboration. Its core purpose is "Intelligent connections for sustainable development worldwide."
 
 ## Recent Changes (December 1, 2025)
+- **Combined Projects + My Work Navigation**: Consolidated "Projects" and "My Work" tabs into a single "Projects" tab in the organization navigation bar to free up space
+  - Organization users now see: Dashboard, Projects, SDGs, Volunteers, Reports, +Create (6 tabs instead of 7)
+  - The "Projects" tab (/my-work) now contains 3 sub-tabs: Projects, Tasks, Impact
+  - Projects sub-tab shows project list with search, create project dialog, and expandable ProjectListCards
+  - Page title changes to "Projects" for organization users, "My Work" for volunteers
+  - Footer conditionally rendered only for organization users (volunteers get footer from Layout)
 - **Complete Organization Dashboard Redesign**: Built a new dedicated organization dashboard with comprehensive features:
   - **API Endpoint**: New `/api/organization/dashboard` aggregates key metrics, SDG distribution, project locations, alerts, impact over time, and AI-generated insights with project and time period filtering
   - **Dark Green Theme**: Navigation ribbon uses #166534 (forest green) for organization branding
-  - **Responsive Navigation**: Desktop tabs (Dashboard, Projects, SDGs, Volunteers, Reports, +Create) collapse into hamburger menu on mobile
+  - **Responsive Navigation**: Desktop tabs collapse into hamburger menu on mobile
   - **Key Metrics Cards**: Active Projects, Total Volunteer Hours, SDGs Addressed, Lives Touched
   - **SDG Impact Distribution**: Bar chart showing volunteer hours contribution by SDG
   - **Project Locations Map**: Interactive Leaflet map with project markers

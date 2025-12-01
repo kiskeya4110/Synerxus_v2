@@ -5,16 +5,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon } from "lucide-react";
+import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import type { User, Task, ProjectAssignment } from "@shared/schema";
+import { Input } from "@/components/ui/input";
+import type { User, Task, ProjectAssignment, Project, Opportunity } from "@shared/schema";
 import OrganizationHeader from "@/components/layout/organization-header";
 import Footer from "@/components/layout/footer";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
 import MyTasksPage from "./my-tasks";
 import ImpactVisualization from "./impact-visualization";
+import { ProjectListCard } from "@/components/projects/project-list-card";
+import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
@@ -22,22 +25,26 @@ export default function MyWork() {
     // Restore from sessionStorage first, then URL hash, then default
     if (typeof window !== 'undefined') {
       const stored = sessionStorage.getItem('mywork-active-tab');
-      if (stored && ['applications', 'assignments', 'tasks', 'impact'].includes(stored)) {
+      if (stored && ['projects', 'applications', 'assignments', 'tasks', 'impact'].includes(stored)) {
         return stored;
       }
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'applications' || hash === 'assignments' || hash === 'tasks' || hash === 'impact') {
+      if (['projects', 'applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
         return hash;
       }
     }
-    return 'applications';
+    return 'projects'; // Default to projects for org users, will be overridden for volunteers
   });
+  
+  // State for projects tab
+  const [projectSearchTerm, setProjectSearchTerm] = useState("");
+  const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
   
   // Initialize tab from URL hash on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
-      if (hash === 'applications' || hash === 'assignments' || hash === 'tasks' || hash === 'impact') {
+      if (['projects', 'applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
         setActiveTab(hash);
       }
     }
@@ -159,6 +166,21 @@ export default function MyWork() {
       return response.json();
     },
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization'
+  });
+
+  // Fetch all tasks for organization
+  const { data: orgTasks = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks", { organizationId: currentUser?.organizationId }],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch(`/api/tasks`);
+      if (!response.ok) return [];
+      const allTasks = await response.json();
+      // Filter tasks by organization's projects
+      const orgProjectIds = new Set(orgProjects.map((p: Project) => p.id));
+      return allTasks.filter((t: Task) => orgProjectIds.has(t.projectId ?? 0));
+    },
+    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization' && orgProjects.length > 0
   });
 
   // Fetch AI-matched opportunities for personalized recommendations
@@ -369,13 +391,13 @@ export default function MyWork() {
 
   return (
     <div className="h-screen overflow-y-auto">
-      {isOrganizationManager && <OrganizationHeader activeTab="my-work" />}
+      {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
       <div className="p-6 pb-4 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Work</h1>
+          <h1 className="text-3xl font-bold">{isOrganizationManager ? "Projects" : "My Work"}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             {isOrganizationManager 
-              ? "Manage your organization's volunteers and projects" 
+              ? "Manage your organization's projects, tasks, and impact" 
               : "Manage your applications, assignments, and tasks in one place"
             }
           </p>
@@ -590,46 +612,110 @@ export default function MyWork() {
             </Link>
           </div>
           
-          <div className="mt-8 px-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-left px-2">Your Organization KPIs</h3>
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              {/* Total Volunteers */}
-              <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20" data-testid="kpi-total-volunteers">
-                <CardContent className="pt-4">
-                  <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Total Volunteers</p>
-                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-2">{orgVolunteers.length}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Active contributors</p>
-                </CardContent>
-              </Card>
+          {/* Organization Tabs: Projects, Tasks, Impact */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-4 mt-6">
+            <TabsList className="grid w-full max-w-lg grid-cols-3 mb-4 sm:mb-6">
+              <TabsTrigger value="projects" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-projects">
+                <FolderOpen className="h-4 w-4" />
+                <span>Projects</span>
+              </TabsTrigger>
+              <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
+                <ListTodo className="h-4 w-4" />
+                <span>Tasks</span>
+              </TabsTrigger>
+              <TabsTrigger value="impact" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-impact">
+                <TrendingUp className="h-4 w-4" />
+                <span>Impact</span>
+              </TabsTrigger>
+            </TabsList>
 
-              {/* Active Projects */}
-              <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20" data-testid="kpi-active-projects">
-                <CardContent className="pt-4">
-                  <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">Active Projects</p>
-                  <p className="text-3xl font-bold text-green-600 dark:text-green-400 mt-2">{orgTotalProjects}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Ongoing initiatives</p>
-                </CardContent>
-              </Card>
+            {/* Projects Tab Content */}
+            <TabsContent value="projects" className="mt-2">
+              <div className="w-full overflow-x-hidden">
+                {/* Search and Create Project */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search projects..."
+                      value={projectSearchTerm}
+                      onChange={(e) => setProjectSearchTerm(e.target.value)}
+                      className="pl-10"
+                      data-testid="input-project-search"
+                    />
+                  </div>
+                  {currentUser?.organizationId && (
+                    <CreateProjectDialog organizationId={currentUser.organizationId} />
+                  )}
+                </div>
 
-              {/* Total Volunteer Hours */}
-              <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20" data-testid="kpi-total-hours">
-                <CardContent className="pt-4">
-                  <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Total Hours</p>
-                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400 mt-2">{Math.round(orgTotalHours)}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Volunteer hours logged</p>
-                </CardContent>
-              </Card>
+                {/* Project List */}
+                <div className="space-y-4">
+                  {orgProjects
+                    .filter((project: Project) => 
+                      project.name?.toLowerCase().includes(projectSearchTerm.toLowerCase()) ||
+                      project.description?.toLowerCase().includes(projectSearchTerm.toLowerCase())
+                    )
+                    .map((project: Project) => {
+                      const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
+                      const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
+                      const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
+                      
+                      return (
+                        <ProjectListCard
+                          key={project.id}
+                          project={project}
+                          tasks={projectTasks}
+                          metrics={{
+                            volunteers: orgVolunteers.length,
+                            totalCommitted: projectTasks.length,
+                            totalCompleted: completedTasks
+                          }}
+                          progress={project.completionPercentage ?? progress}
+                          isExpanded={expandedProjects.has(project.id)}
+                          onToggle={() => {
+                            setExpandedProjects(prev => {
+                              const newSet = new Set(prev);
+                              if (newSet.has(project.id)) {
+                                newSet.delete(project.id);
+                              } else {
+                                newSet.add(project.id);
+                              }
+                              return newSet;
+                            });
+                          }}
+                          canManageProjects={true}
+                        />
+                      );
+                    })
+                  }
+                  {orgProjects.length === 0 && (
+                    <Card className="p-8 text-center">
+                      <p className="text-gray-500 mb-4">No projects yet. Create your first project to get started!</p>
+                      {currentUser?.organizationId && (
+                        <CreateProjectDialog organizationId={currentUser.organizationId} />
+                      )}
+                    </Card>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
 
-              {/* Completed Projects */}
-              <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20" data-testid="kpi-completed-projects">
-                <CardContent className="pt-4">
-                  <p className="text-xs font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide">Completed Projects</p>
-                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400 mt-2">{orgCompletedProjects}</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Projects finished</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+            {/* Tasks Tab Content */}
+            <TabsContent value="tasks" className="mt-2">
+              <div className="w-full overflow-x-hidden">
+                <MyTasksPage />
+              </div>
+            </TabsContent>
+
+            {/* Impact Tab Content */}
+            <TabsContent value="impact" className="mt-2">
+              <div className="w-full overflow-x-hidden">
+                <ImpactVisualization />
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       ) : (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-20 md:pb-4">

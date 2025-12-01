@@ -2660,65 +2660,64 @@ export default function OrganizationImpactReport() {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Print Styles - Comprehensive for unified document */}
-      <style>{`
-        @media print {
-          body { margin: 0; padding: 0; }
-          * { page-break-inside: avoid; }
+        {/* Print Styles - Comprehensive for unified document */}
+        <style>{`
+          @media print {
+            body { margin: 0; padding: 0; }
+            * { page-break-inside: avoid; }
 
-          /* Hide UI elements */
-          .print\\:hidden { display: none !important; }
+            /* Hide UI elements */
+            .print\\:hidden { display: none !important; }
 
-          /* Report card styling */
-          .print\\:shadow-none { box-shadow: none !important; }
-          .print\\:border-black { border-color: black !important; }
+            /* Report card styling */
+            .print\\:shadow-none { box-shadow: none !important; }
+            .print\\:border-black { border-color: black !important; }
 
-          /* Spacing */
-          .print\\:p-4 { padding: 1rem !important; }
-          .print\\:mb-4 { margin-bottom: 1rem !important; }
-          .print\\:pb-3 { padding-bottom: 0.75rem !important; }
-          .print\\:gap-4 { gap: 1rem !important; }
-          .print\\:mb-3 { margin-bottom: 0.75rem !important; }
-          .print\\:p-1.5 { padding: 0.375rem !important; }
-          .print\\:space-y-1.5 > * + * { margin-top: 0.375rem !important; }
+            /* Spacing */
+            .print\\:p-4 { padding: 1rem !important; }
+            .print\\:mb-4 { margin-bottom: 1rem !important; }
+            .print\\:pb-3 { padding-bottom: 0.75rem !important; }
+            .print\\:gap-4 { gap: 1rem !important; }
+            .print\\:mb-3 { margin-bottom: 0.75rem !important; }
+            .print\\:p-1.5 { padding: 0.375rem !important; }
+            .print\\:space-y-1.5 > * + * { margin-top: 0.375rem !important; }
 
-          /* Typography */
-          .print\\:text-2xl { font-size: 1.5rem !important; }
-          .print\\:text-xs { font-size: 0.75rem !important; }
-          .print\\:text-sm { font-size: 0.875rem !important; }
-          .print\\:text-lg { font-size: 1.125rem !important; }
+            /* Typography */
+            .print\\:text-2xl { font-size: 1.5rem !important; }
+            .print\\:text-xs { font-size: 0.75rem !important; }
+            .print\\:text-sm { font-size: 0.875rem !important; }
+            .print\\:text-lg { font-size: 1.125rem !important; }
 
-          /* Transforms */
-          .print\\:scale-75 { transform: scale(0.75) !important; }
+            /* Transforms */
+            .print\\:scale-75 { transform: scale(0.75) !important; }
 
-          /* Page break rules for sections */
-          .print\\:page-break-before { page-break-before: always !important; }
-          .print\\:page-break-inside-avoid { page-break-inside: avoid !important; }
+            /* Page break rules for sections */
+            .print\\:page-break-before { page-break-before: always !important; }
+            .print\\:page-break-inside-avoid { page-break-inside: avoid !important; }
 
-          /* Prevent orphans/widows for readability */
-          h1, h2, h3, h4, h5, h6 { page-break-after: avoid; page-break-inside: avoid; }
+            /* Prevent orphans/widows for readability */
+            h1, h2, h3, h4, h5, h6 { page-break-after: avoid; page-break-inside: avoid; }
 
-          /* Keep cards together */
-          [role="tabpanel"] { page-break-inside: avoid; }
+            /* Keep cards together */
+            [role="tabpanel"] { page-break-inside: avoid; }
 
-          /* Grid adjustments for print */
-          .grid { page-break-inside: avoid; }
+            /* Grid adjustments for print */
+            .grid { page-break-inside: avoid; }
 
-          /* Charts should stay together */
-          canvas { page-break-inside: avoid; }
+            /* Charts should stay together */
+            canvas { page-break-inside: avoid; }
 
-          /* Proper line height for readability */
-          body { line-height: 1.5; }
+            /* Proper line height for readability */
+            body { line-height: 1.5; }
 
-          /* Margin management */
-          body { margin: 0.5in; }
+            /* Margin management */
+            body { margin: 0.5in; }
 
-          /* Prevent color loss in grayscale */
-          * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
-        }
-      `}</style>
+            /* Prevent color loss in grayscale */
+            * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+          }
+        `}</style>
       </div>
     </div>
   );

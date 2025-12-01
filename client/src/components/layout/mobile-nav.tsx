@@ -1,10 +1,12 @@
-import { Home, Search, BarChart3, User, Briefcase, Users, Calendar, ClipboardList } from "lucide-react";
+import { Home, Search, BarChart3, User, Briefcase, Users, Calendar, ClipboardList, Menu, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 
 export default function MobileNav() {
   const [location] = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery({
@@ -38,38 +40,57 @@ export default function MobileNav() {
   const navItems = isOrganization ? organizationNavItems : volunteerNavItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-200/50 dark:border-gray-700/50 md:hidden z-50 safe-area-bottom shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-      <div className="flex justify-around items-center h-16 px-2 max-w-lg mx-auto">
-        {navItems.map(({ href, icon: Icon, label, testId }) => {
-          const isActive = location === href || (href === "/dashboard" && location === "/");
-          return (
-            <Link key={href} href={href}>
-              <button
-                className={cn(
-                  "relative flex flex-col items-center justify-center min-w-[64px] h-14 gap-0.5 transition-all duration-200 rounded-xl active:scale-95",
-                  isActive
-                    ? "text-blue-600 dark:text-blue-400"
-                    : "text-gray-500 dark:text-gray-400 active:text-gray-700 dark:active:text-gray-300"
-                )}
-                data-testid={testId}
-                title={label}
-              >
-                {isActive && (
-                  <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
-                )}
-                <Icon className={cn(
-                  "h-5 w-5 transition-transform duration-200",
-                  isActive && "scale-110"
-                )} strokeWidth={isActive ? 2.5 : 2} />
-                <span className={cn(
-                  "text-[10px] font-medium transition-all duration-200",
-                  isActive && "font-semibold"
-                )}>{label}</span>
-              </button>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <>
+      {/* Hamburger Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="md:hidden fixed top-20 right-4 z-40 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        data-testid="mobile-menu-button"
+        aria-label="Toggle menu"
+      >
+        {isOpen ? (
+          <X className="w-6 h-6" />
+        ) : (
+          <Menu className="w-6 h-6" />
+        )}
+      </button>
+
+      {/* Mobile Menu */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="md:hidden fixed inset-0 bg-black/50 z-30 top-20"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Menu Panel */}
+          <nav className="md:hidden fixed top-20 right-0 w-64 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 shadow-lg z-40 max-h-[calc(100vh-80px)] overflow-y-auto">
+            <div className="flex flex-col">
+              {navItems.map(({ href, icon: Icon, label, testId }) => {
+                const isActive = location === href || (href === "/dashboard" && location === "/");
+                return (
+                  <Link key={href} href={href}>
+                    <button
+                      className={cn(
+                        "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-4",
+                        isActive
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400"
+                          : "text-gray-700 dark:text-gray-200 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                      )}
+                      onClick={() => setIsOpen(false)}
+                      data-testid={testId}
+                    >
+                      <Icon className="w-5 h-5 flex-shrink-0" />
+                      <span className="font-medium">{label}</span>
+                    </button>
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+        </>
+      )}
+    </>
   );
 }

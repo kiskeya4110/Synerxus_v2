@@ -247,43 +247,93 @@ export default function OrganizationDashboard() {
         </div>
 
         {/* Key Metrics Section (Top 1/5) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-          <MetricCard
-            icon={<FolderOpen size={24} />}
-            label="Active Projects"
-            value={metrics.activeProjects}
-            color="#166534"
-            testId="metric-active-projects"
-            onClick={() => setActiveModal('projects')}
-          />
-          <MetricCard
-            icon={<Clock size={24} />}
-            label="Total Volunteer Hours"
-            value={metrics.totalHours}
-            color="#1e40af"
-            testId="metric-total-hours"
-            onClick={() => setActiveModal('hours')}
-          />
-          <MetricCard
-            icon={<Target size={24} />}
-            label="SDGs Addressed"
-            value={metrics.sdgsAddressed}
-            color="#7c3aed"
-            testId="metric-sdgs"
-            onClick={() => setActiveModal('sdgs')}
-          />
-          <MetricCard
-            icon={<Users size={24} />}
-            label="Lives Touched"
-            value={metrics.livesTouched}
-            color="#dc2626"
-            testId="metric-lives"
-            onClick={() => {
-              setActiveModal('lives');
-              // Sort projects by lives touched
-              dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
-            }}
-          />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px', marginBottom: '24px' }} className="md:grid-cols-4">
+          <div style={{ display: 'none' }} className="md:block">
+            <MetricCard
+              icon={<FolderOpen size={24} />}
+              label="Active Projects"
+              value={metrics.activeProjects}
+              color="#166534"
+              testId="metric-active-projects"
+              onClick={() => setActiveModal('projects')}
+            />
+          </div>
+          <div style={{ display: 'none' }} className="md:block">
+            <MetricCard
+              icon={<Clock size={24} />}
+              label="Total Volunteer Hours"
+              value={metrics.totalHours}
+              color="#1e40af"
+              testId="metric-total-hours"
+              onClick={() => setActiveModal('hours')}
+            />
+          </div>
+          <div style={{ display: 'none' }} className="md:block">
+            <MetricCard
+              icon={<Target size={24} />}
+              label="SDGs Addressed"
+              value={metrics.sdgsAddressed}
+              color="#7c3aed"
+              testId="metric-sdgs"
+              onClick={() => setActiveModal('sdgs')}
+            />
+          </div>
+          <div style={{ display: 'none' }} className="md:block">
+            <MetricCard
+              icon={<Users size={24} />}
+              label="Lives Touched"
+              value={metrics.livesTouched}
+              color="#dc2626"
+              testId="metric-lives"
+              onClick={() => {
+                setActiveModal('lives');
+                dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
+              }}
+            />
+          </div>
+          <div className="md:hidden">
+            <MetricCard
+              icon={<FolderOpen size={24} />}
+              label="Active Projects"
+              value={metrics.activeProjects}
+              color="#166534"
+              testId="metric-active-projects"
+              onClick={() => setActiveModal('projects')}
+            />
+          </div>
+          <div className="md:hidden">
+            <MetricCard
+              icon={<Users size={24} />}
+              label="Lives Touched"
+              value={metrics.livesTouched}
+              color="#dc2626"
+              testId="metric-lives"
+              onClick={() => {
+                setActiveModal('lives');
+                dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
+              }}
+            />
+          </div>
+          <div className="md:hidden">
+            <MetricCard
+              icon={<Clock size={24} />}
+              label="Total Volunteer Hours"
+              value={metrics.totalHours}
+              color="#1e40af"
+              testId="metric-total-hours"
+              onClick={() => setActiveModal('hours')}
+            />
+          </div>
+          <div className="md:hidden">
+            <MetricCard
+              icon={<Target size={24} />}
+              label="SDGs Addressed"
+              value={metrics.sdgsAddressed}
+              color="#7c3aed"
+              testId="metric-sdgs"
+              onClick={() => setActiveModal('sdgs')}
+            />
+          </div>
         </div>
 
         {/* Middle Section (2/5): SDG + Map | Alerts */}

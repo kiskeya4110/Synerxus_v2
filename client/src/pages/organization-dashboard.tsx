@@ -316,7 +316,6 @@ export default function OrganizationDashboard() {
                               return `${sdgName} ${percent}%`;
                             }}
                             labelLine={true}
-                            labelPosition="outside"
                           >
                             {dashboardData.sdgDistribution.map((entry) => (
                               <Cell 

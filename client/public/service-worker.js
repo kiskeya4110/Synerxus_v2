@@ -44,6 +44,27 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // Skip API requests - let them go directly to network
+  if (event.request.url.includes('/api/')) {
+    return;
+  }
+
+  // Skip WebSocket and HMR requests in development
+  if (event.request.url.includes('/@vite') || 
+      event.request.url.includes('/__vite') ||
+      event.request.url.includes('.hot-update.') ||
+      event.request.url.includes('node_modules')) {
+    return;
+  }
+
+  // Only cache static assets (html, css, js, images)
+  const isStaticAsset = /\.(html|css|js|png|jpg|jpeg|gif|svg|ico|woff2?)$/.test(event.request.url) ||
+                        event.request.url.endsWith('/');
+
+  if (!isStaticAsset) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then(response => {
@@ -61,15 +82,17 @@ self.addEventListener('fetch', event => {
         return response;
       })
       .catch(() => {
-        // Return cached version if available
+        // Return cached version if available, otherwise let it fail naturally
         return caches.match(event.request).then(cachedResponse => {
-          return cachedResponse || new Response('Offline - Content not available', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: new Headers({
-              'Content-Type': 'text/plain'
-            })
-          });
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // For navigation requests, return the cached index.html
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+          // Let other requests fail naturally instead of showing offline message
+          return new Response('', { status: 408 });
         });
       })
   );

@@ -62,11 +62,6 @@ export default function Header() {
     enabled: !!userId
   });
 
-  // Hide header for organization users
-  if (currentUser?.userType === 'organization') {
-    return null;
-  }
-
   // Fetch organization profile if user is organization
   const { data: organizationProfile } = useQuery({
     queryKey: ["/api/profile/organization", currentUser?.id],
@@ -102,6 +97,11 @@ export default function Header() {
     enabled: !!userId,
     refetchInterval: 60000 // Refetch every minute
   });
+
+  // Hide header for organization users
+  if (currentUser?.userType === 'organization') {
+    return null;
+  }
 
   const unreadCount = notifications.filter((n: any) => !n.read).length;
 

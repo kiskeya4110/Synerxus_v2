@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import OrganizationHeader from "@/components/layout/organization-header";
 import {
   Select,
   SelectContent,
@@ -186,11 +187,13 @@ export default function OrganizationImpactReport() {
   });
 
   const { data: volunteerActivities = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteer-activities"],
+    queryKey: ["/api/volunteer-activities", currentUser?.organizationId],
     queryFn: async () => {
-      const response = await fetch("/api/volunteer-activities");
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch(`/api/volunteer-activities?organizationId=${currentUser.organizationId}`);
       return response.ok ? response.json() : [];
     },
+    enabled: !!currentUser?.organizationId,
   });
 
   // Access control: Both org managers and volunteers can view organization reports
@@ -692,7 +695,9 @@ export default function OrganizationImpactReport() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
+      <OrganizationHeader activeTab="reports" />
+      <div className="p-4 md:p-8">
       {/* UN SDG Wheel Watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-5 dark:opacity-3 flex items-center justify-center" style={{ zIndex: 0 }}>
         <div className="text-9xl" title="UN Sustainable Development Goals">
@@ -2715,6 +2720,8 @@ export default function OrganizationImpactReport() {
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
         }
       `}</style>
+      </div>
+      </div>
     </div>
   );
 }

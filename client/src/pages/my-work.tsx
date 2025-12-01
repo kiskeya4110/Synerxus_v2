@@ -24,15 +24,15 @@ export default function MyWork() {
     // Restore from sessionStorage first, then URL hash, then default
     if (typeof window !== 'undefined') {
       const stored = sessionStorage.getItem('mywork-active-tab');
-      if (stored && ['tasks', 'applications', 'assignments', 'impact'].includes(stored)) {
+      if (stored && ['applications', 'assignments', 'tasks', 'impact'].includes(stored)) {
         return stored;
       }
       const hash = window.location.hash.replace('#', '');
-      if (['tasks', 'applications', 'assignments', 'impact'].includes(hash)) {
+      if (['applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
         return hash;
       }
     }
-    return 'tasks'; // Default to tasks for org users, applications for volunteers
+    return 'applications'; // Default to applications for all users
   });
   
   // State for projects tab
@@ -43,7 +43,7 @@ export default function MyWork() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
-      if (['tasks', 'applications', 'assignments', 'impact'].includes(hash)) {
+      if (['applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
         setActiveTab(hash);
       }
     }
@@ -648,33 +648,11 @@ export default function MyWork() {
             </div>
           </div>
 
-          {/* Tasks and Impact Tabs */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full pb-4">
-            <TabsList className="grid w-full max-w-lg grid-cols-2 mb-4 sm:mb-6">
-              <TabsTrigger value="tasks" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-tasks">
-                <ListTodo className="h-4 w-4" />
-                <span>Tasks</span>
-              </TabsTrigger>
-              <TabsTrigger value="impact" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-impact">
-                <TrendingUp className="h-4 w-4" />
-                <span>Impact</span>
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Tasks Tab Content */}
-            <TabsContent value="tasks" className="mt-2">
-              <div className="w-full overflow-x-hidden">
-                <MyTasksPage />
-              </div>
-            </TabsContent>
-
-            {/* Impact Tab Content */}
-            <TabsContent value="impact" className="mt-2">
-              <div className="w-full overflow-x-hidden">
-                <ImpactVisualization embedded />
-              </div>
-            </TabsContent>
-          </Tabs>
+          {/* Tasks Only - Impact is on Reports tab */}
+          <div className="pb-4">
+            <h3 className="text-lg font-semibold mb-4">Tasks</h3>
+            <MyTasksPage />
+          </div>
         </div>
       ) : (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full px-2 sm:px-6 pb-20 md:pb-4">

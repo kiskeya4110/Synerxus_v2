@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
+import OrganizationHeader from "@/components/layout/organization-header";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -425,68 +426,73 @@ export default function SDGMapping() {
   if (sdgData.length === 0) {
     return (
       <>
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Connect volunteer activities to Sustainable Development Goals and track impact
-          </p>
-        </div>
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <BarChart className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No SDGs Selected</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-4">
-              Please select your organization's primary SDG focus areas in Settings to view SDG mapping and impact tracking.
+        <OrganizationHeader activeTab="sdgs" />
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+          <div className="mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Connect volunteer activities to Sustainable Development Goals and track impact
             </p>
-            <Link href="/organization-profile">
-              <Button>Go to Settings</Button>
-            </Link>
-          </CardContent>
-        </Card>
+          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <BarChart className="h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No SDGs Selected</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-4">
+                Please select your organization's primary SDG focus areas in Settings to view SDG mapping and impact tracking.
+              </p>
+              <Link href="/organization-profile">
+                <Button>Go to Settings</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
       </>
     );
   }
   
   return (
     <>
-      {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          Connect volunteer activities to Sustainable Development Goals and track impact
-        </p>
-      </div>
+      <OrganizationHeader activeTab="sdgs" />
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+        {/* Page Header */}
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+            Connect volunteer activities to Sustainable Development Goals and track impact
+          </p>
+        </div>
 
-      {/* Project Filter */}
-      {organizationProjects.length > 1 && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <Filter className="h-5 w-5 text-gray-500" />
-              <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Filter by Project</label>
-                <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
-                  <SelectTrigger className="w-full sm:w-80" data-testid="select-project-filter">
-                    <SelectValue placeholder="Select project to filter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
-                    {organizationProjects.map((project: any) => (
-                      <SelectItem key={project.id} value={project.id.toString()}>
-                        {project.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+        {/* Project Filter */}
+        {organizationProjects.length > 1 && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <Filter className="h-5 w-5 text-gray-500" />
+                <div className="flex-1">
+                  <label className="text-sm font-medium mb-2 block">Filter by Project</label>
+                  <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
+                    <SelectTrigger className="w-full sm:w-80" data-testid="select-project-filter">
+                      <SelectValue placeholder="Select project to filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
+                      {organizationProjects.map((project: any) => (
+                        <SelectItem key={project.id} value={project.id.toString()}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      
-      {/* Spider Web Chart - SDG Comparison */}
-      {radarChartData && (
-        <Card className="mb-6">
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Spider Web Chart - SDG Comparison */}
+        {radarChartData && (
+          <Card className="mb-6">
           <CardHeader>
             <CardTitle>SDG Focus vs. Project Distribution</CardTitle>
             <CardDescription>
@@ -1070,33 +1076,34 @@ export default function SDGMapping() {
         </Card>
       )}
       
-      {/* Statistics Detail Dialog */}
-      <Dialog open={statsDialogOpen} onOpenChange={setStatsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{statsDialogData?.title}</DialogTitle>
-            <DialogDescription>
-              Detailed breakdown of {statsDialogData?.title.toLowerCase()}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 mt-4">
-            {statsDialogData?.items.map((item: any, index: number) => (
-              <div
-                key={index}
-                className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-              >
-                <span className="font-medium text-sm">{item.label}</span>
-                <span className="text-sm text-gray-600 dark:text-gray-400">{item.value}</span>
-              </div>
-            ))}
-            {statsDialogData?.items.length === 0 && (
-              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                No data available
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+        {/* Statistics Detail Dialog */}
+        <Dialog open={statsDialogOpen} onOpenChange={setStatsDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{statsDialogData?.title}</DialogTitle>
+              <DialogDescription>
+                Detailed breakdown of {statsDialogData?.title.toLowerCase()}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2 mt-4">
+              {statsDialogData?.items.map((item: any, index: number) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                >
+                  <span className="font-medium text-sm">{item.label}</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">{item.value}</span>
+                </div>
+              ))}
+              {statsDialogData?.items.length === 0 && (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  No data available
+                </p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </>
   );
 }

@@ -10,11 +10,11 @@ import { useQuery } from "@tanstack/react-query";
 export default function Organizations() {
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: organizations = [], isLoading } = useQuery({ 
+  const { data: organizations = [] as any[], isLoading } = useQuery({ 
     queryKey: ["/api/organizations"] 
   });
 
-  const { data: projects = [] } = useQuery({
+  const { data: projects = [] as any[] } = useQuery({
     queryKey: ["/api/projects"]
   });
 
@@ -24,9 +24,9 @@ export default function Organizations() {
   );
 
   return (
-    <>
+    <div className="max-h-screen overflow-y-auto">
       {/* Page Header */}
-      <div className="mb-4 sm:mb-6">
+      <div className="p-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-2">Organizations</h1>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Partner organizations and their volunteer initiatives
@@ -81,8 +81,8 @@ export default function Organizations() {
       </div>
 
       {/* Organizations Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {filteredOrganizations.map((org) => (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 px-6">
+        {filteredOrganizations.map((org: any) => (
           <Card key={org.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <div className="flex items-start gap-4">
@@ -122,7 +122,7 @@ export default function Organizations() {
 
                 <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
                   <div className="text-center">
-                    <Link href="/projects">
+                    <Link href="/projects" className="text-center">
                       <p className="text-lg font-bold text-primary cursor-pointer hover:underline">
                         {projects.filter((p: any) => p.organizationId === org.id).length}
                       </p>

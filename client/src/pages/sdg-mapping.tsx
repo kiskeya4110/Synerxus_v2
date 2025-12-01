@@ -452,9 +452,9 @@ export default function SDGMapping() {
   }
   
   return (
-    <>
+    <div className="max-h-screen overflow-y-auto">
       <OrganizationHeader activeTab="sdgs" />
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 24px' }}>
         {/* Page Header */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>

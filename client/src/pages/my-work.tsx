@@ -9,6 +9,7 @@ import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Shar
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import type { User, Task, ProjectAssignment } from "@shared/schema";
+import OrganizationHeader from "@/components/layout/organization-header";
 import MyApplicationsPage from "./my-applications";
 import AssignmentsPage from "./assignments";
 import MyTasksPage from "./my-tasks";

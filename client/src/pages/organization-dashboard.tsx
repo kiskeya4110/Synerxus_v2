@@ -11,6 +11,8 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { getSDGName, SDG_GOALS } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
 import sdg2 from "@assets/E_SDG_PRINT-02_1762550174896.jpg";
@@ -178,11 +180,14 @@ export default function OrganizationDashboard() {
 
   return (
     <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }} data-testid="organization-dashboard">
+      {/* Offline Banner */}
+      <OfflineBanner />
+      
       {/* Reusable Organization Header Component */}
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
-      {/* Welcome Banner */}
-      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '8px 0' }}>
+      {/* Welcome Banner - Desktop Only */}
+      <div className="hidden md:block" style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '8px 0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: 0 }}>
             Welcome Back, {organization?.name || organizationProfile?.organizationName || 'Organization'}
@@ -190,10 +195,20 @@ export default function OrganizationDashboard() {
         </div>
       </div>
 
+      {/* Mobile Dashboard Header */}
+      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0, marginBottom: '4px' }}>
+          Organization Dashboard
+        </h1>
+        <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
+          Welcome to {organization?.name || organizationProfile?.organizationName || 'Synerxus'} - volunteers organization.
+        </p>
+      </div>
+
       {/* Main Content */}
-      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }}>
-        {/* Filters Section */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
+      <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }} className="md:p-6">
+        {/* Filters Section - Desktop Only */}
+        <div className="hidden md:flex" style={{ flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>Project:</label>
             <select
@@ -246,98 +261,184 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Key Metrics Section (Top 1/5) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '24px' }} className="md:grid-cols-4 md:gap-4">
-          <div style={{ display: 'none' }} className="md:block">
-            <MetricCard
-              icon={<FolderOpen size={24} />}
-              label="Active Projects"
-              value={metrics.activeProjects}
-              color="#166534"
-              testId="metric-active-projects"
-              onClick={() => setActiveModal('projects')}
-            />
-          </div>
-          <div style={{ display: 'none' }} className="md:block">
-            <MetricCard
-              icon={<Clock size={24} />}
-              label="Total Volunteer Hours"
-              value={metrics.totalHours}
-              color="#1e40af"
-              testId="metric-total-hours"
-              onClick={() => setActiveModal('hours')}
-            />
-          </div>
-          <div style={{ display: 'none' }} className="md:block">
-            <MetricCard
-              icon={<Target size={24} />}
-              label="SDGs Addressed"
-              value={metrics.sdgsAddressed}
-              color="#7c3aed"
-              testId="metric-sdgs"
-              onClick={() => setActiveModal('sdgs')}
-            />
-          </div>
-          <div style={{ display: 'none' }} className="md:block">
-            <MetricCard
-              icon={<Users size={24} />}
-              label="Lives Touched"
-              value={metrics.livesTouched}
-              color="#dc2626"
-              testId="metric-lives"
-              onClick={() => {
-                setActiveModal('lives');
-                dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
-              }}
-            />
-          </div>
-          <div className="md:hidden">
-            <MetricCard
-              icon={<FolderOpen size={24} />}
-              label="Active Projects"
-              value={metrics.activeProjects}
-              color="#166534"
-              testId="metric-active-projects"
-              onClick={() => setActiveModal('projects')}
-            />
-          </div>
-          <div className="md:hidden">
-            <MetricCard
-              icon={<Users size={24} />}
-              label="Lives Touched"
-              value={metrics.livesTouched}
-              color="#dc2626"
-              testId="metric-lives"
-              onClick={() => {
-                setActiveModal('lives');
-                dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
-              }}
-            />
-          </div>
-          <div className="md:hidden">
-            <MetricCard
-              icon={<Clock size={24} />}
-              label="Total Volunteer Hours"
-              value={metrics.totalHours}
-              color="#1e40af"
-              testId="metric-total-hours"
-              onClick={() => setActiveModal('hours')}
-            />
-          </div>
-          <div className="md:hidden">
-            <MetricCard
-              icon={<Target size={24} />}
-              label="SDGs Addressed"
-              value={metrics.sdgsAddressed}
-              color="#7c3aed"
-              testId="metric-sdgs"
-              onClick={() => setActiveModal('sdgs')}
-            />
+        {/* Mobile Metrics Section - Stacked Cards */}
+        <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+          <MobileMetricCard
+            icon={<Users size={20} />}
+            label="Total Volunteers"
+            value={metrics.livesTouched}
+            color="#667eea"
+            testId="mobile-metric-volunteers"
+            onClick={() => setActiveModal('lives')}
+          />
+          <MobileMetricCard
+            icon={<FolderOpen size={20} />}
+            label="Active Projects"
+            value={metrics.activeProjects}
+            color="#764ba2"
+            testId="mobile-metric-projects"
+            onClick={() => setActiveModal('projects')}
+          />
+          <MobileMetricCard
+            icon={<Clock size={20} />}
+            label="Hours Contributed"
+            value={metrics.totalHours}
+            color="#f093fb"
+            testId="mobile-metric-hours"
+            onClick={() => setActiveModal('hours')}
+          />
+        </div>
+
+        {/* Mobile Chart Section */}
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <div style={{ height: '160px' }}>
+            {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dashboardData.impactOverTime}>
+                  <defs>
+                    <linearGradient id="mobileGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#667eea" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                  <YAxis hide />
+                  <Tooltip />
+                  <Area type="monotone" dataKey="hours" stroke="#667eea" strokeWidth={2} fill="url(#mobileGradient)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
+                No data available
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Middle Section (2/5): SDG + Map | Alerts */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="middle-section">
+        {/* Mobile Quick Actions */}
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>Quick Actions</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+            <button
+              onClick={() => navigate('/my-work?create=true')}
+              style={{
+                padding: '12px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#374151',
+              }}
+              data-testid="quick-action-create-project"
+            >
+              <Plus size={18} style={{ color: '#667eea' }} />
+              New Project
+            </button>
+            <button
+              onClick={() => navigate('/volunteers?invite=true')}
+              style={{
+                padding: '12px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#374151',
+              }}
+              data-testid="quick-action-invite-volunteer"
+            >
+              <UserPlus size={18} style={{ color: '#764ba2' }} />
+              Invite Volunteer
+            </button>
+            <button
+              onClick={() => navigate('/tasks?create=true')}
+              style={{
+                padding: '12px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#374151',
+              }}
+              data-testid="quick-action-create-task"
+            >
+              <CheckSquare size={18} style={{ color: '#f093fb' }} />
+              Create Task
+            </button>
+            <button
+              onClick={() => navigate('/impact-visualization')}
+              style={{
+                padding: '12px',
+                backgroundColor: '#f3f4f6',
+                border: 'none',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                color: '#374151',
+              }}
+              data-testid="quick-action-view-reports"
+            >
+              <BarChart3 size={18} style={{ color: '#10b981' }} />
+              View Reports
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Key Metrics Section */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+          <MetricCard
+            icon={<FolderOpen size={24} />}
+            label="Active Projects"
+            value={metrics.activeProjects}
+            color="#166534"
+            testId="metric-active-projects"
+            onClick={() => setActiveModal('projects')}
+          />
+          <MetricCard
+            icon={<Clock size={24} />}
+            label="Total Volunteer Hours"
+            value={metrics.totalHours}
+            color="#1e40af"
+            testId="metric-total-hours"
+            onClick={() => setActiveModal('hours')}
+          />
+          <MetricCard
+            icon={<Target size={24} />}
+            label="SDGs Addressed"
+            value={metrics.sdgsAddressed}
+            color="#7c3aed"
+            testId="metric-sdgs"
+            onClick={() => setActiveModal('sdgs')}
+          />
+          <MetricCard
+            icon={<Users size={24} />}
+            label="Lives Touched"
+            value={metrics.livesTouched}
+            color="#dc2626"
+            testId="metric-lives"
+            onClick={() => {
+              setActiveModal('lives');
+              dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
+            }}
+          />
+        </div>
+
+        {/* Middle Section (2/5): SDG + Map | Alerts - Desktop Only */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
           {/* Left Column: SDG Distribution + Map */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* SDG Impact Distribution - Interactive Pie Chart */}
@@ -977,8 +1078,13 @@ export default function OrganizationDashboard() {
         }
       `}</style>
 
-      {/* Footer */}
-      <Footer />
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav onCreateClick={() => setShowCreateModal(true)} />
+
+      {/* Footer - Hidden on Mobile */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 }
@@ -1016,6 +1122,69 @@ function MetricCard({ icon, label, value, color, testId, onClick }: { icon: Reac
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
         <p style={{ fontSize: '24px', fontWeight: 'bold', color, margin: 0 }}>{value.toLocaleString()}</p>
         <p style={{ fontSize: '12px', color: '#6b7280', margin: 0, lineHeight: '1.2' }}>{label}</p>
+      </div>
+    </button>
+  );
+}
+
+function MobileMetricCard({ icon, label, value, color, testId, onClick }: { icon: React.ReactNode; label: string; value: number; color: string; testId: string; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${label}: ${value.toLocaleString()}`}
+      style={{
+        backgroundColor: 'white',
+        borderRadius: '16px',
+        padding: '16px 20px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        border: 'none',
+        cursor: 'pointer',
+        width: '100%',
+      }}
+      data-testid={testId}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ 
+          width: '40px', 
+          height: '40px', 
+          borderRadius: '12px', 
+          background: `linear-gradient(135deg, ${color}20 0%, ${color}10 100%)`,
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          color: color 
+        }}>
+          {icon}
+        </div>
+        <div style={{ textAlign: 'left' }}>
+          <p style={{ fontSize: '11px', color: '#9ca3af', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
+          <p style={{ fontSize: '28px', fontWeight: '700', color: '#1f2937', margin: 0, lineHeight: '1.1' }}>{value.toLocaleString()}</p>
+        </div>
+      </div>
+      <div style={{ 
+        width: '60px', 
+        height: '40px', 
+        display: 'flex', 
+        alignItems: 'flex-end', 
+        gap: '2px',
+        padding: '4px'
+      }}>
+        {[0.4, 0.7, 0.5, 0.9, 0.6, 0.8].map((h, i) => (
+          <div
+            key={i}
+            style={{
+              flex: 1,
+              height: `${h * 100}%`,
+              backgroundColor: color,
+              opacity: 0.3 + (i * 0.1),
+              borderRadius: '2px',
+            }}
+          />
+        ))}
       </div>
     </button>
   );

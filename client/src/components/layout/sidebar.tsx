@@ -173,17 +173,6 @@ export default function Sidebar() {
         </nav>
       </aside>
 
-      {/* Mobile menu button */}
-      {isMobile && !sidebarOpen && (
-        <button 
-          className="fixed md:bottom-6 bottom-20 right-6 p-4 min-h-[56px] min-w-[56px] bg-primary text-white rounded-full shadow-lg z-50 lg:hidden flex items-center justify-center hover:bg-primary/90 transition-colors active:scale-95"
-          onClick={() => setSidebarOpen(true)}
-          aria-label="Open menu"
-          data-testid="mobile-menu-button"
-        >
-          <LayoutList className="w-7 h-7" />
-        </button>
-      )}
     </>
   );
 }

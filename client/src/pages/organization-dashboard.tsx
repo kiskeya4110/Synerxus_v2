@@ -92,6 +92,16 @@ export default function OrganizationDashboard() {
     enabled: !!userId,
   });
 
+  const { data: organizationProfile } = useQuery({
+    queryKey: ['/api/intake/organization-profile', userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/intake/organization-profile?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+
   const handleQuickAction = (actionId: string) => {
     if (actionId === 'create-project') {
       navigate('/projects?create=true');
@@ -122,6 +132,15 @@ export default function OrganizationDashboard() {
     <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }} data-testid="organization-dashboard">
       {/* Reusable Organization Header Component */}
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
+
+      {/* Welcome Banner */}
+      <div style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 0' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: 0 }}>
+            Welcome Back, {organizationProfile?.organizationName || 'Organization'}
+          </h1>
+        </div>
+      </div>
 
       {/* Main Content */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px' }}>

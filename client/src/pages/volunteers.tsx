@@ -155,8 +155,11 @@ export default function Volunteers() {
     if (!skills) return [];
     
     // Handle case where skills is a single object { name: "Healthcare", proficiency: 85 }
-    if (typeof skills === 'object' && !Array.isArray(skills) && skills.name) {
-      return [skills.name];
+    if (typeof skills === 'object' && !Array.isArray(skills)) {
+      if (skills.name) return [skills.name];
+      if (skills.skill) return [skills.skill];
+      if (typeof skills === 'string') return [skills];
+      return [];
     }
     
     // Handle case where skills might be a string (single skill)
@@ -169,6 +172,7 @@ export default function Volunteers() {
     if (!Array.isArray(skills)) return [];
     
     return skills.map((skill: any) => {
+      // Handle string format: "Healthcare (85%)" or "Healthcare"
       if (typeof skill === 'string') {
         const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
         if (match) {
@@ -176,9 +180,17 @@ export default function Volunteers() {
         }
         return skill.trim();
       }
-      if (skill && typeof skill === 'object' && skill.name) {
-        // Handle object format: { name: "Healthcare", proficiency: 85 }
-        return skill.name;
+      
+      // Handle object formats
+      if (skill && typeof skill === 'object') {
+        // Try various object property names
+        if (skill.name) return skill.name;
+        if (skill.skill) return skill.skill;
+        if (skill.skillName) return skill.skillName;
+        if (skill.title) return skill.title;
+        // If it's just a plain object, try to stringify it as last resort
+        const str = JSON.stringify(skill);
+        if (str && str !== '{}') return str;
       }
       return '';
     }).filter(Boolean);
@@ -466,7 +478,7 @@ export default function Volunteers() {
 
       {/* Profile Dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 w-full mx-auto md:mx-0">
           {volunteerProfile ? (
             <div className="space-y-0">
               {/* Header Section with Gradient Background */}

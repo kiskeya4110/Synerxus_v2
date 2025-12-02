@@ -150,10 +150,28 @@ export default function Volunteers() {
     setSelectedProjectId("");
   };
 
+  // Helper to parse skills from database format ("Skill Name (75%)") to just skill name
+  const parseSkillNames = (skills: any): string[] => {
+    if (!skills || !Array.isArray(skills)) return [];
+    return skills.map((skill: string) => {
+      if (typeof skill === 'string') {
+        const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
+        if (match) {
+          return match[1].trim();
+        }
+        return skill;
+      }
+      return '';
+    }).filter(Boolean);
+  };
+
   const volunteersWithStats = useMemo(() => {
     // For organizations, the stats are already included from the backend
     if (isOrganization) {
-      return volunteers;
+      return volunteers.map((volunteer: any) => ({
+        ...volunteer,
+        skills: parseSkillNames(volunteer.skills),
+      }));
     }
     
     // For admin/other users, calculate stats from activities
@@ -165,7 +183,7 @@ export default function Volunteers() {
         ...volunteer,
         hours: totalHours,
         tasksCompleted: activities.length,
-        skills: volunteer.skills || [],
+        skills: parseSkillNames(volunteer.skills),
       };
     });
   }, [volunteers, volunteerActivities, isOrganization]);

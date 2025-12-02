@@ -154,49 +154,53 @@ export default function Volunteers() {
   const parseSkillNames = (skills: any): string[] => {
     if (!skills) return [];
     
-    // Handle case where skills is a single object { name: "Healthcare", proficiency: 85 }
-    if (typeof skills === 'object' && !Array.isArray(skills)) {
-      if (skills.name && typeof skills.name === 'string') return [skills.name];
-      if (skills.skill && typeof skills.skill === 'string') return [skills.skill];
-      if (skills.skillName && typeof skills.skillName === 'string') return [skills.skillName];
-      if (skills.title && typeof skills.title === 'string') return [skills.title];
-      return [];
-    }
+    // Handle null/undefined
+    if (skills === null || skills === undefined) return [];
     
-    // Handle case where skills might be a string (single skill)
+    // Handle string
     if (typeof skills === 'string') {
+      if (skills === '[object Object]') return [];
       const match = skills.match(/^(.+?)\s*\((\d+)%\)$/);
       return [match ? match[1].trim() : skills].filter(Boolean);
+    }
+    
+    // Handle single object { name: "Healthcare", proficiency: 85 }
+    if (typeof skills === 'object' && !Array.isArray(skills)) {
+      // Extract name from object
+      const name = skills.name || skills.skill || skills.skillName || skills.title;
+      if (name && typeof name === 'string') {
+        return [name.trim()].filter(Boolean);
+      }
+      // If object has no recognizable skill name property, return empty
+      return [];
     }
     
     // Handle array of skills
     if (!Array.isArray(skills)) return [];
     
-    return skills.map((skill: any) => {
-      // Handle string format: "Healthcare (85%)" or "Healthcare"
-      if (typeof skill === 'string') {
-        const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
-        if (match) {
-          return match[1].trim();
+    return skills
+      .map((skill: any) => {
+        if (!skill) return '';
+        
+        // String format: "Healthcare (85%)" or "Healthcare"
+        if (typeof skill === 'string') {
+          if (skill === '[object Object]') return '';
+          const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
+          return (match ? match[1] : skill).trim();
         }
-        return skill.trim();
-      }
-      
-      // Handle object formats
-      if (skill && typeof skill === 'object') {
-        // Try various object property names with type checking
-        if (skill.name && typeof skill.name === 'string') return skill.name.trim();
-        if (skill.skill && typeof skill.skill === 'string') return skill.skill.trim();
-        if (skill.skillName && typeof skill.skillName === 'string') return skill.skillName.trim();
-        if (skill.title && typeof skill.title === 'string') return skill.title.trim();
-        // If it has a toString method that's not the default Object one, use it
-        if (skill.toString && skill.toString !== Object.prototype.toString) {
-          const str = skill.toString();
-          if (str && str !== '[object Object]') return str;
+        
+        // Object format
+        if (typeof skill === 'object') {
+          const name = skill.name || skill.skill || skill.skillName || skill.title;
+          if (name && typeof name === 'string') {
+            return name.trim();
+          }
+          return '';
         }
-      }
-      return '';
-    }).filter(Boolean);
+        
+        return '';
+      })
+      .filter((s: string) => s.length > 0);
   };
 
   const volunteersWithStats = useMemo(() => {

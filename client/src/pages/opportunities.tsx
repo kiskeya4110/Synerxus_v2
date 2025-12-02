@@ -15,6 +15,12 @@ export default function Opportunities() {
   const userType = localStorage.getItem('userType');
   const isOrganizationUser = userType === 'organization';
 
+  // Organizations cannot see opportunities page
+  if (isOrganizationUser) {
+    navigate('/organization-dashboard');
+    return null;
+  }
+
   // Fetch current user to get organization ID
   const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/users/me", userId],

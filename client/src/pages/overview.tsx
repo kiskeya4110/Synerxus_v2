@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useState } from "react";
-import { Trophy, Target, TrendingUp, Users, Clock, FolderOpen, Award, ChevronRight, Check } from "lucide-react";
+import { Trophy, Target, TrendingUp, Users, Clock, FolderOpen, Award, ChevronRight, Check, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";

@@ -189,11 +189,31 @@ export default function OrganizationDashboard() {
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
       {/* Welcome Banner - Desktop Only */}
-      <div className="hidden md:block" style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '8px 0' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px' }}>
+      <div className="hidden md:block" style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 0' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: 0 }}>
             Welcome Back, {organization?.name || organizationProfile?.organizationName || 'Organization'}
           </h1>
+          <button
+            onClick={() => navigate('/overview')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#166534',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+            data-testid="button-overview"
+          >
+            <Lightbulb size={18} />
+            Unlock Your Team's Potential
+          </button>
         </div>
       </div>
 
@@ -261,6 +281,30 @@ export default function OrganizationDashboard() {
             >
               {TIME_PERIODS.map((period) => (
                 <option key={period.value} value={period.value}>{period.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>SDG Filter:</label>
+            <select
+              data-testid="filter-sdg"
+              style={{
+                padding: '8px 32px 8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '8px',
+                backgroundColor: 'white',
+                fontSize: '14px',
+                cursor: 'pointer',
+                appearance: 'none',
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 10px center',
+              }}
+            >
+              <option value="">All SDGs</option>
+              {Array.from({ length: 17 }, (_, i) => i + 1).map((sdg) => (
+                <option key={sdg} value={sdg.toString()}>SDG {sdg}</option>
               ))}
             </select>
           </div>

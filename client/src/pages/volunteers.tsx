@@ -399,7 +399,7 @@ export default function Volunteers() {
                         <span className="text-slate-700 dark:text-slate-300 font-medium">Completion</span>
                       </div>
                       <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-semibold">
-                        {volunteer.projectCount > 0 ? Math.round((volunteer.tasksCompleted / Math.max(1, volunteer.projectCount)) * 100) : 0}%
+                        {volunteer.projectCount > 0 ? Math.min(100, Math.round((volunteer.tasksCompleted / Math.max(1, volunteer.projectCount)) * 100)) : 0}%
                       </Badge>
                     </div>
                   )}

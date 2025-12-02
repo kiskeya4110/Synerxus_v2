@@ -153,25 +153,21 @@ export default function Volunteers() {
   // Helper to parse skills from database format ("Skill Name (75%)") to just skill name
   const parseSkillNames = (skills: any): string[] => {
     if (!skills) return [];
-    
-    // Handle null/undefined
     if (skills === null || skills === undefined) return [];
     
     // Handle string
     if (typeof skills === 'string') {
-      if (skills === '[object Object]') return [];
+      if (skills === '[object Object]' || skills.length === 0) return [];
       const match = skills.match(/^(.+?)\s*\((\d+)%\)$/);
-      return [match ? match[1].trim() : skills].filter(Boolean);
+      return [match ? match[1].trim() : skills].filter((s: string) => s && s.length > 0);
     }
     
     // Handle single object { name: "Healthcare", proficiency: 85 }
     if (typeof skills === 'object' && !Array.isArray(skills)) {
-      // Extract name from object
       const name = skills.name || skills.skill || skills.skillName || skills.title;
-      if (name && typeof name === 'string') {
-        return [name.trim()].filter(Boolean);
+      if (name && typeof name === 'string' && name.trim().length > 0) {
+        return [name.trim()];
       }
-      // If object has no recognizable skill name property, return empty
       return [];
     }
     
@@ -179,28 +175,27 @@ export default function Volunteers() {
     if (!Array.isArray(skills)) return [];
     
     return skills
+      .filter((skill: any) => skill !== null && skill !== undefined && skill !== '')
       .map((skill: any) => {
-        if (!skill) return '';
-        
         // String format: "Healthcare (85%)" or "Healthcare"
         if (typeof skill === 'string') {
-          if (skill === '[object Object]') return '';
+          if (skill === '[object Object]' || skill.length === 0) return null;
           const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
-          return (match ? match[1] : skill).trim();
+          const result = (match ? match[1] : skill).trim();
+          return result.length > 0 ? result : null;
         }
         
-        // Object format
-        if (typeof skill === 'object') {
+        // Object format { name: "skill", ... }
+        if (skill && typeof skill === 'object') {
           const name = skill.name || skill.skill || skill.skillName || skill.title;
-          if (name && typeof name === 'string') {
+          if (name && typeof name === 'string' && name.trim().length > 0) {
             return name.trim();
           }
-          return '';
         }
         
-        return '';
+        return null;
       })
-      .filter((s: string) => s.length > 0);
+      .filter((s: any): s is string => s !== null && s !== '' && typeof s === 'string');
   };
 
   const volunteersWithStats = useMemo(() => {

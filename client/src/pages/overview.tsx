@@ -50,13 +50,13 @@ export default function Overview() {
   });
 
   const { data: dashboardData } = useQuery<any>({
-    queryKey: ["/api/organization/dashboard", currentUser?.organizationId],
+    queryKey: ["/api/organization/dashboard", userId],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return null;
-      const response = await fetch(`/api/organization/dashboard?organizationId=${currentUser.organizationId}`);
+      if (!userId) return null;
+      const response = await fetch(`/api/organization/dashboard?userId=${userId}`);
       return response.ok ? response.json() : null;
     },
-    enabled: !!currentUser?.organizationId
+    enabled: !!userId
   });
 
   const { data: orgProfile } = useQuery<any>({

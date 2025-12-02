@@ -245,7 +245,7 @@ export default function Overview() {
               Your SDG Contributions
             </h2>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px', marginBottom: '16px' }}>
               {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
                 const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
                 const isActive = organizationSDGs.includes(sdgNum) || (contribution && contribution.hours > 0);
@@ -317,10 +317,48 @@ export default function Overview() {
                 );
               })}
             </div>
+
+            {/* SDG Metrics Compilation */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '12px',
+              padding: '16px',
+              backgroundColor: '#f9fafb',
+              borderRadius: '12px',
+              marginBottom: '12px',
+            }}>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>SDGs Addressed</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#22c55e' }}>{metrics.sdgsAddressed}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>Active Contributors</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#3b82f6' }}>
+                  {sdgContributions.filter((c: any) => c.hours > 0).length}
+                </p>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>Top SDG Goal</p>
+                <p style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
+                  {sdgContributions.length > 0 
+                    ? `SDG ${sdgContributions.reduce((max: any, curr: any) => 
+                        (curr.hours > max.hours ? curr : max)).goal}`
+                    : 'N/A'
+                  }
+                </p>
+              </div>
+              <div>
+                <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>Total SDG Hours</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#f59e0b' }}>
+                  {sdgContributions.reduce((sum: number, c: any) => sum + (c.hours || 0), 0)}
+                </p>
+              </div>
+            </div>
             
             <Button
               onClick={() => navigate('/sdg-mapping')}
-              className="w-full mt-4"
+              className="w-full"
               style={{
                 backgroundColor: '#22c55e',
                 color: 'white',

@@ -361,11 +361,19 @@ export default function Volunteers() {
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Skills</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {volunteer.skills.map((skill: string, idx: number) => (
-                        <Badge key={`${volunteer.id}-skill-${idx}`} className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 text-slate-700 dark:text-slate-200 border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
-                          {skill}
-                        </Badge>
-                      ))}
+                      {volunteer.skills.map((skill: any, idx: number) => {
+                        let skillText = '';
+                        if (typeof skill === 'string') {
+                          skillText = skill;
+                        } else if (skill && typeof skill === 'object') {
+                          skillText = skill.name || skill.skill || skill.skillName || JSON.stringify(skill);
+                        }
+                        return skillText ? (
+                          <Badge key={`${volunteer.id}-skill-${idx}`} className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 text-slate-700 dark:text-slate-200 border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
+                            {skillText}
+                          </Badge>
+                        ) : null;
+                      })}
                     </div>
                   </div>
                 )}
@@ -478,9 +486,9 @@ export default function Volunteers() {
 
       {/* Profile Dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>
-        <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 w-full mx-auto md:mx-0">
+        <DialogContent className="max-w-4xl h-[90vh] overflow-hidden p-0 w-[95vw] md:w-full flex flex-col">
           {volunteerProfile ? (
-            <div className="space-y-0">
+            <div className="space-y-0 overflow-y-auto flex-1 flex flex-col">
               {/* Header Section with Gradient Background */}
               <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white px-8 py-8 rounded-t-lg">
                 <div className="flex items-start justify-between gap-4 mb-6">

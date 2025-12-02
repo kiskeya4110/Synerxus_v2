@@ -182,32 +182,32 @@ export default function Projects() {
               </p>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-2 gap-1 md:gap-4">
                 <Link href="/post-core-opportunity">
-                  <div className="p-2 md:p-4 border-2 border-primary/20 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer" data-testid="link-post-core-opportunity">
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg flex-shrink-0">
-                        <Briefcase className="h-4 md:h-5 w-4 md:w-5 text-primary" />
+                  <div className="p-1.5 md:p-4 border-2 border-primary/20 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer" data-testid="link-post-core-opportunity">
+                    <div className="flex items-start gap-1.5 md:gap-3">
+                      <div className="p-1 md:p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                        <Briefcase className="h-3.5 md:h-5 w-3.5 md:w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm md:text-base">Core Opportunity</h3>
-                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-2 md:line-clamp-none">
-                          For skilled, ongoing, or project-based roles. Detailed posts for best skill & purpose matching.
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-0.5 text-xs md:text-base">Core Opportunity</h3>
+                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-1 md:line-clamp-none">
+                          For skilled roles
                         </p>
                       </div>
                     </div>
                   </div>
                 </Link>
                 <Link href="/post-urgent-opportunity">
-                  <div className="p-2 md:p-4 border-2 border-amber-500/20 rounded-lg hover:border-amber-500/40 hover:bg-amber-500/5 transition-all cursor-pointer" data-testid="link-post-urgent-opportunity">
-                    <div className="flex items-start gap-2 md:gap-3">
-                      <div className="p-1.5 md:p-2 bg-amber-500/10 rounded-lg flex-shrink-0">
-                        <AlertCircle className="h-4 md:h-5 w-4 md:w-5 text-amber-600" />
+                  <div className="p-1.5 md:p-4 border-2 border-amber-500/20 rounded-lg hover:border-amber-500/40 hover:bg-amber-500/5 transition-all cursor-pointer" data-testid="link-post-urgent-opportunity">
+                    <div className="flex items-start gap-1.5 md:gap-3">
+                      <div className="p-1 md:p-2 bg-amber-500/10 rounded-lg flex-shrink-0">
+                        <AlertCircle className="h-3.5 md:h-5 w-3.5 md:w-5 text-amber-600" />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1 text-sm md:text-base">Urgent Need / Event</h3>
-                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-2 md:line-clamp-none">
-                          For time-sensitive events like fundraisers, community drives, or disaster response.
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-0.5 text-xs md:text-base">Urgent Need</h3>
+                        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-1 md:line-clamp-none">
+                          Time-sensitive events
                         </p>
                       </div>
                     </div>

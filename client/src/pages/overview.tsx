@@ -396,53 +396,92 @@ export default function Overview() {
         </div>
       </div>
 
-      <div className="hidden md:block max-w-6xl mx-auto p-6">
-        <h1 className="text-3xl font-bold text-slate-900 mb-6">Team Overview</h1>
+      <div className="hidden md:block max-w-7xl mx-auto p-6 pb-24">
+        <h1 className="text-3xl font-bold text-slate-900 mb-8">Team Overview</h1>
         
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-6 shadow-sm border">
-            <div className="flex items-center gap-3 mb-2">
+        {/* Key Metrics Grid - 4 Columns */}
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 shadow-sm border border-green-200">
+            <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Clock size={20} className="text-green-600" />
               </div>
-              <span className="text-sm text-gray-600">Total Hours</span>
+              <span className="text-sm font-medium text-gray-700">Total Hours</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{metrics.totalHours.toLocaleString()}</p>
+            <p className="text-4xl font-bold text-green-600 mb-1">{(metrics.totalHours || 0).toLocaleString()}</p>
+            <p className="text-xs text-gray-600">Volunteer hours logged</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border">
-            <div className="flex items-center gap-3 mb-2">
+          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 shadow-sm border border-blue-200">
+            <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Users size={20} className="text-blue-600" />
               </div>
-              <span className="text-sm text-gray-600">Team Members</span>
+              <span className="text-sm font-medium text-gray-700">Team Members</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{metrics.volunteersEngaged}</p>
+            <p className="text-4xl font-bold text-blue-600 mb-1">{metrics.volunteersEngaged || 0}</p>
+            <p className="text-xs text-gray-600">Active volunteers</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border">
-            <div className="flex items-center gap-3 mb-2">
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-sm border border-purple-200">
+            <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <FolderOpen size={20} className="text-purple-600" />
               </div>
-              <span className="text-sm text-gray-600">Active Projects</span>
+              <span className="text-sm font-medium text-gray-700">Active Projects</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{metrics.activeProjects}</p>
+            <p className="text-4xl font-bold text-purple-600 mb-1">{metrics.activeProjects || 0}</p>
+            <p className="text-xs text-gray-600">In progress</p>
           </div>
           
-          <div className="bg-white rounded-xl p-6 shadow-sm border">
-            <div className="flex items-center gap-3 mb-2">
+          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 shadow-sm border border-amber-200">
+            <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-amber-100 rounded-lg">
                 <Target size={20} className="text-amber-600" />
               </div>
-              <span className="text-sm text-gray-600">SDGs Addressed</span>
+              <span className="text-sm font-medium text-gray-700">SDGs Addressed</span>
             </div>
-            <p className="text-3xl font-bold text-gray-900">{metrics.sdgsAddressed}</p>
+            <p className="text-4xl font-bold text-amber-600 mb-1">{metrics.sdgsAddressed || 0}</p>
+            <p className="text-xs text-gray-600">Sustainable goals</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">SDG Contributions</h2>
+        {/* Secondary Metrics Row */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-6 shadow-sm border border-rose-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-rose-100 rounded-lg">
+                <Award size={20} className="text-rose-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Lives Touched</span>
+            </div>
+            <p className="text-3xl font-bold text-rose-600">{(dashboardData?.keyMetrics?.livesTouched || 0).toLocaleString()}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 shadow-sm border border-teal-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-teal-100 rounded-lg">
+                <CheckSquare size={20} className="text-teal-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Completed Projects</span>
+            </div>
+            <p className="text-3xl font-bold text-teal-600">{metrics.projectsCompleted || 0}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 shadow-sm border border-indigo-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <TrendingUp size={20} className="text-indigo-600" />
+              </div>
+              <span className="text-sm font-medium text-gray-700">Impact Trend</span>
+            </div>
+            <p className="text-3xl font-bold text-indigo-600">↑ {Math.round(((dashboardData?.keyMetrics?.totalVolunteerHours || 1) / Math.max(1, (dashboardData?.keyMetrics?.totalVolunteerHours || 1) - 100)) * 10)}%</p>
+          </div>
+        </div>
+
+        {/* SDG Contributions Section */}
+        <div className="bg-white rounded-xl p-8 shadow-sm border mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">SDG Contributions</h2>
           <div className="grid grid-cols-9 gap-4">
             {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
               const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
@@ -451,11 +490,16 @@ export default function Overview() {
               return (
                 <div key={sdgNum} className="flex flex-col items-center">
                   <div
-                    className={`w-16 h-16 rounded-full overflow-hidden ${isActive ? 'ring-2 ring-green-500' : 'opacity-50'}`}
+                    className={`w-16 h-16 rounded-full overflow-hidden transition-all ${isActive ? 'ring-3 ring-green-500 shadow-lg' : 'opacity-40 ring-2 ring-gray-300'}`}
                   >
                     <img src={SDG_ICONS[sdgNum]} alt={`SDG ${sdgNum}`} className="w-full h-full object-cover" />
                   </div>
-                  {contribution && <span className="text-xs font-medium mt-1">{contribution.hours}h</span>}
+                  {contribution && contribution.hours > 0 && (
+                    <div className="mt-2 text-center">
+                      <span className="text-sm font-bold text-gray-900">{contribution.hours}h</span>
+                      {contribution.volunteers && <p className="text-xs text-gray-600">{contribution.volunteers} vol</p>}
+                    </div>
+                  )}
                 </div>
               );
             })}

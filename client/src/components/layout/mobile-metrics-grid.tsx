@@ -21,8 +21,8 @@ export default function MobileMetricsGrid({
   ];
 
   return (
-    <div className="md:hidden" style={{ padding: '16px', backgroundColor: '#f9fafb' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+    <div className="md:hidden" style={{ padding: '10px', backgroundColor: '#f9fafb' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
@@ -30,32 +30,32 @@ export default function MobileMetricsGrid({
               key={index}
               style={{
                 backgroundColor: 'white',
-                borderRadius: '12px',
-                padding: '16px',
+                borderRadius: '8px',
+                padding: '8px 6px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '4px',
                 border: `1px solid ${metric.color}20`,
               }}
             >
               <div
                 style={{
-                  padding: '8px',
-                  borderRadius: '8px',
+                  padding: '4px',
+                  borderRadius: '6px',
                   backgroundColor: `${metric.color}15`,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icon size={20} style={{ color: metric.color, strokeWidth: 2.2 }} />
+                <Icon size={14} style={{ color: metric.color, strokeWidth: 2.2 }} />
               </div>
-              <div style={{ fontSize: '18px', fontWeight: '700', color: '#1f2937' }}>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: '#1f2937' }}>
                 {metric.value}
               </div>
-              <div style={{ fontSize: '11px', color: '#6b7280', fontWeight: '500', textAlign: 'center', lineHeight: '1.2' }}>
+              <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: '500', textAlign: 'center', lineHeight: '1.1' }}>
                 {metric.label}
               </div>
             </div>

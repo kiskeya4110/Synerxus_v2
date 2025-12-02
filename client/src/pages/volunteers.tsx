@@ -156,9 +156,10 @@ export default function Volunteers() {
     
     // Handle case where skills is a single object { name: "Healthcare", proficiency: 85 }
     if (typeof skills === 'object' && !Array.isArray(skills)) {
-      if (skills.name) return [skills.name];
-      if (skills.skill) return [skills.skill];
-      if (typeof skills === 'string') return [skills];
+      if (skills.name && typeof skills.name === 'string') return [skills.name];
+      if (skills.skill && typeof skills.skill === 'string') return [skills.skill];
+      if (skills.skillName && typeof skills.skillName === 'string') return [skills.skillName];
+      if (skills.title && typeof skills.title === 'string') return [skills.title];
       return [];
     }
     
@@ -183,14 +184,16 @@ export default function Volunteers() {
       
       // Handle object formats
       if (skill && typeof skill === 'object') {
-        // Try various object property names
-        if (skill.name) return skill.name;
-        if (skill.skill) return skill.skill;
-        if (skill.skillName) return skill.skillName;
-        if (skill.title) return skill.title;
-        // If it's just a plain object, try to stringify it as last resort
-        const str = JSON.stringify(skill);
-        if (str && str !== '{}') return str;
+        // Try various object property names with type checking
+        if (skill.name && typeof skill.name === 'string') return skill.name.trim();
+        if (skill.skill && typeof skill.skill === 'string') return skill.skill.trim();
+        if (skill.skillName && typeof skill.skillName === 'string') return skill.skillName.trim();
+        if (skill.title && typeof skill.title === 'string') return skill.title.trim();
+        // If it has a toString method that's not the default Object one, use it
+        if (skill.toString && skill.toString !== Object.prototype.toString) {
+          const str = skill.toString();
+          if (str && str !== '[object Object]') return str;
+        }
       }
       return '';
     }).filter(Boolean);
@@ -361,16 +364,10 @@ export default function Volunteers() {
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Skills</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {volunteer.skills.map((skill: any, idx: number) => {
-                        let skillText = '';
-                        if (typeof skill === 'string') {
-                          skillText = skill;
-                        } else if (skill && typeof skill === 'object') {
-                          skillText = skill.name || skill.skill || skill.skillName || JSON.stringify(skill);
-                        }
-                        return skillText ? (
+                      {volunteer.skills.map((skill: string, idx: number) => {
+                        return String(skill).trim() ? (
                           <Badge key={`${volunteer.id}-skill-${idx}`} className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 text-slate-700 dark:text-slate-200 border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
-                            {skillText}
+                            {String(skill).trim()}
                           </Badge>
                         ) : null;
                       })}

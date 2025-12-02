@@ -152,14 +152,28 @@ export default function Volunteers() {
 
   // Helper to parse skills from database format ("Skill Name (75%)") to just skill name
   const parseSkillNames = (skills: any): string[] => {
-    if (!skills || !Array.isArray(skills)) return [];
-    return skills.map((skill: string) => {
+    if (!skills) return [];
+    
+    // Handle case where skills might be a string (single skill)
+    if (typeof skills === 'string') {
+      const match = skills.match(/^(.+?)\s*\((\d+)%\)$/);
+      return [match ? match[1].trim() : skills].filter(Boolean);
+    }
+    
+    // Handle array of skills
+    if (!Array.isArray(skills)) return [];
+    
+    return skills.map((skill: any) => {
       if (typeof skill === 'string') {
         const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
         if (match) {
           return match[1].trim();
         }
-        return skill;
+        return skill.trim();
+      }
+      if (skill && typeof skill === 'object' && skill.name) {
+        // Handle object format: { name: "Healthcare", proficiency: 85 }
+        return skill.name;
       }
       return '';
     }).filter(Boolean);

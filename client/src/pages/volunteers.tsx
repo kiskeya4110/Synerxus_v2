@@ -154,6 +154,11 @@ export default function Volunteers() {
   const parseSkillNames = (skills: any): string[] => {
     if (!skills) return [];
     
+    // Handle case where skills is a single object { name: "Healthcare", proficiency: 85 }
+    if (typeof skills === 'object' && !Array.isArray(skills) && skills.name) {
+      return [skills.name];
+    }
+    
     // Handle case where skills might be a string (single skill)
     if (typeof skills === 'string') {
       const match = skills.match(/^(.+?)\s*\((\d+)%\)$/);

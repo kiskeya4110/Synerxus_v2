@@ -320,83 +320,87 @@ export default function OrganizationDashboard() {
         </div>
 
         {/* Mobile Quick Actions */}
-        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>Quick Actions</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '8px', paddingLeft: '4px' }}>Quick Actions</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
             <button
               onClick={() => navigate('/my-work?create=true')}
               style={{
-                padding: '12px',
+                padding: '8px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '4px',
                 cursor: 'pointer',
-                fontSize: '13px',
+                fontSize: '10px',
                 color: '#374151',
               }}
               data-testid="quick-action-create-project"
             >
-              <Plus size={18} style={{ color: '#667eea' }} />
+              <Plus size={14} style={{ color: '#667eea' }} />
               New Project
             </button>
             <button
               onClick={() => navigate('/volunteers?invite=true')}
               style={{
-                padding: '12px',
+                padding: '8px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '4px',
                 cursor: 'pointer',
-                fontSize: '13px',
+                fontSize: '10px',
                 color: '#374151',
               }}
               data-testid="quick-action-invite-volunteer"
             >
-              <UserPlus size={18} style={{ color: '#764ba2' }} />
-              Invite Volunteer
+              <UserPlus size={14} style={{ color: '#764ba2' }} />
+              Invite Vol
             </button>
             <button
               onClick={() => navigate('/tasks?create=true')}
               style={{
-                padding: '12px',
+                padding: '8px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '4px',
                 cursor: 'pointer',
-                fontSize: '13px',
+                fontSize: '10px',
                 color: '#374151',
               }}
               data-testid="quick-action-create-task"
             >
-              <CheckSquare size={18} style={{ color: '#f093fb' }} />
+              <CheckSquare size={14} style={{ color: '#f093fb' }} />
               Create Task
             </button>
             <button
               onClick={() => navigate('/impact-visualization')}
               style={{
-                padding: '12px',
+                padding: '8px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '8px',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '4px',
                 cursor: 'pointer',
-                fontSize: '13px',
+                fontSize: '10px',
                 color: '#374151',
               }}
               data-testid="quick-action-view-reports"
             >
-              <BarChart3 size={18} style={{ color: '#10b981' }} />
+              <BarChart3 size={14} style={{ color: '#10b981' }} />
               View Reports
             </button>
           </div>

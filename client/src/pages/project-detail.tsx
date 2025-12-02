@@ -225,35 +225,12 @@ export default function ProjectDetail() {
   };
 
   const isOrganization = currentUser?.userType === 'organization';
-    mutationFn: async (livesTouched: number) => {
-      return apiRequest("PATCH", `/api/projects/${projectId}`, { livesTouched });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
-      toast({ title: "Lives touched updated", description: "The impact metric has been saved." });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update lives touched", variant: "destructive" });
-    }
-  });
+  const canEditProject = currentUser?.userType === 'organization' && 
+                        project?.organizationId === currentUser?.organizationId;
 
   const updateLivesTouched = (value: number) => {
     updateLivesTouchedMutation.mutate(value);
   };
-
-  // Mutation to delete task
-  const deleteTaskMutation = useMutation({
-    mutationFn: async (taskId: number) => {
-      return apiRequest("DELETE", `/api/tasks/${taskId}`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      toast({ title: "Task deleted", description: "The task has been removed." });
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to delete task", variant: "destructive" });
-    }
-  });
 
   const handleDeleteTask = (taskId: number) => {
     if (window.confirm("Are you sure you want to delete this task?")) {
@@ -263,7 +240,6 @@ export default function ProjectDetail() {
 
   const handleEditTask = (taskId: number) => {
     if (isOrganization) {
-      // Placeholder for edit modal - can be expanded later
       toast({ title: "Task edit", description: "Task editing feature coming soon" });
     }
   };

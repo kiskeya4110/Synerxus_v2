@@ -1,10 +1,10 @@
 import { useLocation } from "wouter";
-import { Home, FolderOpen, Plus, Users, Target } from "lucide-react";
+import { Home, FolderOpen, LayoutGrid, Users, Target } from "lucide-react";
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: Home, path: '/organization-dashboard' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
-  { id: 'create', label: 'Create', icon: Plus, path: null, isCenter: true },
+  { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview', isCenter: true },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
 ];
@@ -17,9 +17,7 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
   const [location, navigate] = useLocation();
 
   const handleNavClick = (item: typeof NAV_ITEMS[0]) => {
-    if (item.id === 'create') {
-      onCreateClick?.();
-    } else if (item.path) {
+    if (item.path) {
       navigate(item.path);
     }
   };
@@ -67,7 +65,7 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                   transition: 'transform 0.2s, box-shadow 0.2s',
                 }}
               >
-                <Plus size={28} style={{ color: '#764ba2' }} />
+                <item.icon size={28} style={{ color: '#764ba2' }} />
               </button>
             );
           }

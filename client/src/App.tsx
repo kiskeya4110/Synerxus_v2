@@ -45,6 +45,7 @@ import { CSRImpactReporting } from "@/pages/csr-impact-reporting";
 import ProjectPortfolio from "@/pages/project-portfolio";
 import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
 import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
+import Overview from "@/pages/overview";
 import NotFound from "@/pages/not-found";
 
 function RootRedirectRoute() {
@@ -163,6 +164,7 @@ export default function App() {
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
+          <Route path="/overview" component={Overview} />
           <Route path="/organization-my-work" component={MyWork} />
           <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
           <Route path="/project-portfolio" component={ProjectPortfolio} />

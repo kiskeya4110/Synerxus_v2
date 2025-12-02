@@ -182,10 +182,16 @@ export default function Volunteers() {
   const volunteersWithStats = useMemo(() => {
     // For organizations, the stats are already included from the backend
     if (isOrganization) {
-      return volunteers.map((volunteer: any) => ({
-        ...volunteer,
-        skills: parseSkillNames(volunteer.skills),
-      }));
+      return volunteers.map((volunteer: any) => {
+        const parsedSkills = parseSkillNames(volunteer.skills);
+        if (volunteer.displayName && (!parsedSkills || parsedSkills.length === 0) && volunteer.skills) {
+          console.log(`${volunteer.displayName} skills:`, volunteer.skills, "parsed:", parsedSkills);
+        }
+        return {
+          ...volunteer,
+          skills: parsedSkills,
+        };
+      });
     }
     
     // For admin/other users, calculate stats from activities

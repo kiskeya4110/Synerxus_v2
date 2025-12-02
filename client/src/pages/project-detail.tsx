@@ -77,6 +77,7 @@ export default function ProjectDetail() {
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
 
+  // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
   const { data: currentUser } = useQuery<DBUser>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -114,10 +115,38 @@ export default function ProjectDetail() {
   const { data: users = [] } = useQuery<DBUser[]>({
     queryKey: ["/api/users"],
   });
-  
-  const canEditProject = currentUser?.userType === 'organization' && 
-                        project?.organizationId === currentUser?.organizationId;
 
+  const { toast } = useToast();
+
+  // Mutation to update lives touched
+  const updateLivesTouchedMutation = useMutation({
+    mutationFn: async (livesTouched: number) => {
+      return apiRequest("PATCH", `/api/projects/${projectId}`, { livesTouched });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      toast({ title: "Lives touched updated", description: "The impact metric has been saved." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update lives touched", variant: "destructive" });
+    }
+  });
+
+  // Mutation to delete task
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: number) => {
+      return apiRequest("DELETE", `/api/tasks/${taskId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      toast({ title: "Task deleted", description: "The task has been removed." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete task", variant: "destructive" });
+    }
+  });
+
+  // NOW we can do conditional early returns after all hooks
   if (!projectId) {
     return (
       <div className="container mx-auto p-6">
@@ -166,6 +195,7 @@ export default function ProjectDetail() {
     );
   }
 
+  // Safe to use after hooks
   const projectTasks = tasks.filter((t: any) => t.projectId === projectId);
   const projectActivities = volunteerActivities.filter((a: any) => a.projectId === projectId);
   const projectImpact = projectImpacts.filter((i: any) => i.projectId === projectId);
@@ -195,10 +225,6 @@ export default function ProjectDetail() {
   };
 
   const isOrganization = currentUser?.userType === 'organization';
-  const { toast } = useToast();
-
-  // Mutation to update lives touched
-  const updateLivesTouchedMutation = useMutation({
     mutationFn: async (livesTouched: number) => {
       return apiRequest("PATCH", `/api/projects/${projectId}`, { livesTouched });
     },

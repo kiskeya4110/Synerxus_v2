@@ -198,43 +198,43 @@ export default function Volunteers() {
         </p>
       </div>
 
-      {/* Stats Cards - 3 Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      {/* Stats Cards - 3 Column Layout Mobile */}
+      <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-4 mb-6">
         {/* Total Volunteers */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardContent className="pt-6">
+        <Card className="hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer">
+          <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 mb-4">
-                <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              <div className="p-2 md:p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30 mb-2 md:mb-4">
+                <Users className="h-4 md:h-6 w-4 md:w-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.length}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Total Volunteers</p>
+              <p className="text-xl md:text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.length}</p>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 md:mt-2">Volunteers</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Total Hours */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardContent className="pt-6">
+        <Card className="hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer">
+          <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/30 mb-4">
-                <Clock className="h-6 w-6 text-green-600 dark:text-green-400" />
+              <div className="p-2 md:p-3 rounded-lg bg-green-50 dark:bg-green-900/30 mb-2 md:mb-4">
+                <Clock className="h-4 md:h-6 w-4 md:w-6 text-green-600 dark:text-green-400" />
               </div>
-              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0)}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Total Hours</p>
+              <p className="text-xl md:text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0)}</p>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 md:mt-2">Hours</p>
             </div>
           </CardContent>
         </Card>
 
         {/* Tasks Completed */}
-        <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-          <CardContent className="pt-6">
+        <Card className="hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer">
+          <CardContent className="p-3 md:p-6 pt-3 md:pt-6">
             <div className="flex flex-col items-center text-center">
-              <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30 mb-4">
-                <CheckSquare className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 md:p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30 mb-2 md:mb-4">
+                <CheckSquare className="h-4 md:h-6 w-4 md:w-6 text-orange-600 dark:text-orange-400" />
               </div>
-              <p className="text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0)}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Tasks Completed</p>
+              <p className="text-xl md:text-3xl font-bold text-primary">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0)}</p>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mt-1 md:mt-2">Tasks</p>
             </div>
           </CardContent>
         </Card>
@@ -275,36 +275,39 @@ export default function Volunteers() {
       {/* Volunteers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {filteredVolunteers.map((volunteer: any) => (
-          <Card key={volunteer.id} className="hover:shadow-lg transition-shadow relative">
-            <CardHeader className="pb-3">
+          <Card key={volunteer.id} className="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group">
+            {/* Gradient Background Overlay */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 group-hover:h-2 transition-all duration-300" />
+            
+            <CardHeader className="pb-3 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
               {isOrganization && volunteer.projectCount > 0 && (
                 <div className="absolute top-3 right-3">
-                  <Badge variant="secondary" className="gap-1">
+                  <Badge className="gap-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white shadow-lg">
                     <Briefcase className="h-3 w-3" />
                     {volunteer.projectCount} Project{volunteer.projectCount !== 1 ? 's' : ''}
                   </Badge>
                 </div>
               )}
               <div className="flex items-center gap-3 mb-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-primary text-white">
+                <Avatar className="h-14 w-14 ring-2 ring-purple-200 dark:ring-purple-700 shadow-md">
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
                     {volunteer.displayName?.split(' ').map((n: string) => n[0]).join('') || volunteer.email?.[0] || '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-lg truncate">{volunteer.displayName || 'Unnamed Volunteer'}</CardTitle>
-                  <CardDescription className="text-xs truncate">{volunteer.email || 'No email'}</CardDescription>
+                  <CardTitle className="text-lg truncate text-slate-900 dark:text-white">{volunteer.displayName || 'Unnamed Volunteer'}</CardTitle>
+                  <CardDescription className="text-xs truncate text-slate-600 dark:text-slate-400">{volunteer.email || 'No email'}</CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <div className="space-y-3">
                 {volunteer.skills && volunteer.skills.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Skills</p>
-                    <div className="flex flex-wrap gap-1">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Skills</p>
+                    <div className="flex flex-wrap gap-1.5">
                       {volunteer.skills.map((skill: string) => (
-                        <Badge key={skill} variant="outline" className="text-xs">
+                        <Badge key={skill} className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 text-slate-700 dark:text-slate-200 border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
                           {skill}
                         </Badge>
                       ))}
@@ -312,43 +315,43 @@ export default function Volunteers() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-2 gap-3 pt-4 pb-4 border-t border-b border-slate-200 dark:border-slate-700 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 rounded-lg px-3 py-3">
                   <div className="text-center">
-                    <p className="text-lg font-bold text-primary">{volunteer.hours || 0}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Hours</p>
+                    <p className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">{volunteer.hours || 0}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Hours</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-bold text-primary">{volunteer.tasksCompleted || 0}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Tasks</p>
+                    <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent">{volunteer.tasksCompleted || 0}</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Tasks</p>
                   </div>
                 </div>
 
                 {/* Work Entry & Status Insights */}
-                <div className="space-y-2 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="space-y-2.5 pt-2">
                   {/* Completion Rate */}
                   {volunteer.projectCount > 0 && (
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-sm bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        <span className="text-gray-600 dark:text-gray-400">Completion Rate</span>
+                        <TrendingUp className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">Completion</span>
                       </div>
-                      <Badge className="bg-blue-100 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300">
+                      <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-xs font-semibold">
                         {volunteer.projectCount > 0 ? Math.round((volunteer.tasksCompleted / Math.max(1, volunteer.projectCount)) * 100) : 0}%
                       </Badge>
                     </div>
                   )}
 
                   {/* Active Status */}
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-700 p-2 rounded-lg">
                     <div className="flex items-center gap-2">
-                      <div className={`h-2 w-2 rounded-full ${volunteer.hours > 0 ? 'bg-green-500' : 'bg-gray-400'}`} />
-                      <span className="text-gray-600 dark:text-gray-400">Status</span>
+                      <div className={`h-2.5 w-2.5 rounded-full shadow-md ${volunteer.hours > 0 ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-gray-400 to-gray-500'}`} />
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">Status</span>
                     </div>
                     <Badge 
-                      className={volunteer.hours > 0 
-                        ? "bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-300" 
-                        : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300"
-                      }
+                      className={`text-xs font-semibold ${volunteer.hours > 0 
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white" 
+                        : "bg-gradient-to-r from-gray-400 to-gray-500 text-white"
+                      }`}
                     >
                       {volunteer.hours > 0 ? 'Active' : 'Inactive'}
                     </Badge>
@@ -356,29 +359,28 @@ export default function Volunteers() {
 
                   {/* Engagement Level */}
                   {volunteer.hours > 0 && (
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-sm bg-orange-50 dark:bg-orange-900/20 p-2 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                        <span className="text-gray-600 dark:text-gray-400">Engagement</span>
+                        <Zap className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+                        <span className="text-slate-700 dark:text-slate-300 font-medium">Engagement</span>
                       </div>
-                      <Badge className={
+                      <Badge className={`text-xs font-semibold ${
                         volunteer.hours >= 50 
-                          ? "bg-orange-100 text-orange-900 dark:bg-orange-900/30 dark:text-orange-300"
+                          ? "bg-gradient-to-r from-orange-500 to-red-500 text-white"
                           : volunteer.hours >= 20
-                          ? "bg-yellow-100 text-yellow-900 dark:bg-yellow-900/30 dark:text-yellow-300"
-                          : "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-300"
-                      }>
+                          ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white"
+                          : "bg-gradient-to-r from-gray-400 to-gray-500 text-white"
+                      }`}>
                         {volunteer.hours >= 50 ? 'High' : volunteer.hours >= 20 ? 'Medium' : 'Low'}
                       </Badge>
                     </div>
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 pt-2">
                   <Button 
-                    variant="outline" 
                     size="sm" 
-                    className="flex-1 min-h-[44px]"
+                    className="flex-1 min-h-[40px] bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                     onClick={() => openProfileDialog(volunteer.id)}
                     data-testid={`button-view-profile-${volunteer.id}`}
                   >
@@ -386,9 +388,8 @@ export default function Volunteers() {
                     View Profile
                   </Button>
                   <Button 
-                    variant="outline" 
                     size="sm" 
-                    className="flex-1 min-h-[44px]"
+                    className="flex-1 min-h-[40px] bg-gradient-to-r from-slate-300 to-slate-400 hover:from-slate-400 hover:to-slate-500 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 text-slate-900 dark:text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                     onClick={() => {
                       setSelectedVolunteer(volunteer);
                       setShowContactModal(true);

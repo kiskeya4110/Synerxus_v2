@@ -324,8 +324,8 @@ export default function Volunteers() {
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Skills</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {volunteer.skills.map((skill: string) => (
-                        <Badge key={skill} className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 text-slate-700 dark:text-slate-200 border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
+                      {volunteer.skills.map((skill: string, idx: number) => (
+                        <Badge key={`${volunteer.id}-skill-${idx}`} className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-900/40 dark:to-purple-900/40 text-slate-700 dark:text-slate-200 border border-blue-200 dark:border-blue-800 hover:shadow-md transition-shadow">
                           {skill}
                         </Badge>
                       ))}

@@ -65,11 +65,13 @@ export default function Overview() {
   });
 
   const metrics = {
-    totalHours: dashboardData?.keyMetrics?.totalVolunteerHours || 0,
-    volunteersEngaged: dashboardData?.keyMetrics?.volunteersEngaged || 0,
-    projectsCompleted: dashboardData?.projects?.filter((p: any) => p.status === 'Completed').length || 0,
+    totalHours: dashboardData?.keyMetrics?.totalHours || 0,
+    volunteersEngaged: dashboardData?.keyMetrics?.activeVolunteers || 0,
+    projectsCompleted: dashboardData?.projects?.filter((p: any) => p.status === 'Completed' || p.status?.toLowerCase() === 'completed').length || 0,
     activeProjects: dashboardData?.keyMetrics?.activeProjects || 0,
     sdgsAddressed: dashboardData?.keyMetrics?.sdgsAddressed || 0,
+    livesTouched: dashboardData?.keyMetrics?.livesTouched || 0,
+    completedProjects: dashboardData?.projects?.filter((p: any) => p.status === 'Completed' || p.status?.toLowerCase() === 'completed').length || 0,
   };
 
   const sdgContributions = dashboardData?.sdgDistribution || [];

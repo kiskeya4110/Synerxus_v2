@@ -147,7 +147,7 @@ export default function Assignments() {
   // Handle unauthenticated users - only check after query completes
   if (!userLoading && !currentUser) {
     return (
-      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
         {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
         <div className="container mx-auto p-6">
           <Alert variant="destructive">
@@ -164,7 +164,7 @@ export default function Assignments() {
 
   if (isLoading) {
     return (
-      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
         {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
         <div className="container mx-auto p-6">
           <div className="flex items-center justify-center py-12">
@@ -176,7 +176,7 @@ export default function Assignments() {
   }
 
   return (
-    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+    <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
       <div className={isOrganizationUser ? "p-6 space-y-6" : "container mx-auto p-6 space-y-6"}>
         <div>

@@ -163,7 +163,7 @@ export default function Calendar() {
   };
 
   return (
-    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+    <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
       <div className={isOrganizationUser ? "p-6 space-y-6" : "space-y-6"}>
         {/* Header */}

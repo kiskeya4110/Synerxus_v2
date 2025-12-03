@@ -560,7 +560,7 @@ export default function Landing() {
   const isLoggedIn = !!currentUser?.id;
 
   return (
-    <div className="h-screen overflow-y-auto bg-slate-50 scroll-container">
+    <div className="min-h-screen bg-slate-50">
       {/* Navigation - PWA optimized with glass effect */}
       <nav className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl safe-area-top shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
@@ -790,31 +790,51 @@ export default function Landing() {
             <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-8 sm:mb-10 max-w-2xl mx-auto">
               Join thousands making measurable impact across all 17 SDGs worldwide.
             </p>
-            
-            {/* Main CTA Button */}
-            <div className="mb-8">
-              <Link href={isLoggedIn ? "/dashboard" : "/volunteer-intake"}>
-                <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
-                  {isLoggedIn ? "My Dashboard" : "Join Now"}
-                </Button>
+
+            {/* How It Works - 1 Row, 3 Columns */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 max-w-4xl mx-auto mb-10">
+              <Link href={isLoggedIn ? "/volunteer-profile-settings" : "/volunteer-intake"} className="group">
+                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-blue-200 hover:border-blue-500 transition-all hover:shadow-xl h-full">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
+                    1
+                  </div>
+                  <h3 className="font-bold text-blue-900 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Create Profile</h3>
+                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
+                    Set up your volunteer profile with skills and interests
+                  </p>
+                </div>
+              </Link>
+              
+              <Link href={isLoggedIn ? "/discover-opportunities" : "/login"} className="group">
+                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-amber-200 hover:border-amber-500 transition-all hover:shadow-xl h-full">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
+                    2
+                  </div>
+                  <h3 className="font-bold text-amber-600 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Match to Projects</h3>
+                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
+                    Get AI-matched to opportunities aligned with your SDGs
+                  </p>
+                </div>
+              </Link>
+              
+              <Link href={isLoggedIn ? "/dashboard" : "/login"} className="group">
+                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-green-200 hover:border-green-500 transition-all hover:shadow-xl h-full">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
+                    3
+                  </div>
+                  <h3 className="font-bold text-green-600 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Make Impact</h3>
+                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
+                    Track your contributions and measure global outcomes
+                  </p>
+                </div>
               </Link>
             </div>
-
-            {/* Secondary CTA Options - 1 + 3 columns on mobile, 3 columns on desktop */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto">
-              <Link href="/discover-opportunities" className="w-full">
-                <Button variant="outline" className="w-full min-h-[44px] bg-white text-blue-900 border-2 border-blue-900 hover:bg-blue-50 font-semibold text-sm sm:text-base rounded-lg">
-                  Explore Opportunities
-                </Button>
-              </Link>
-              <Link href="/organizations" className="w-full">
-                <Button variant="outline" className="w-full min-h-[44px] bg-white text-amber-600 border-2 border-amber-600 hover:bg-amber-50 font-semibold text-sm sm:text-base rounded-lg">
-                  Find Organizations
-                </Button>
-              </Link>
-              <Link href="/sdg-mapping" className="w-full">
-                <Button variant="outline" className="w-full min-h-[44px] bg-white text-slate-900 border-2 border-slate-900 hover:bg-slate-100 font-semibold text-sm sm:text-base rounded-lg">
-                  Explore SDGs
+            
+            {/* Main CTA Button */}
+            <div>
+              <Link href={isLoggedIn ? "/dashboard" : "/volunteer-intake"}>
+                <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
+                  {isLoggedIn ? "My Dashboard" : "Get Started Now"}
                 </Button>
               </Link>
             </div>

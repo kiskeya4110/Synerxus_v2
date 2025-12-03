@@ -286,7 +286,7 @@ export default function ApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
         {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
         <div className="p-6">
           <h1 className="text-3xl font-bold mb-6">Applications</h1>
@@ -301,7 +301,7 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+    <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
       {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
       <div className={isOrganizationUser ? "p-6" : "p-6"}>
         <div className="mb-6">

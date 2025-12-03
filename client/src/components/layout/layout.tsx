@@ -58,12 +58,12 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background scroll-container">
-          <div className="safe-area-x px-3 sm:px-4 md:px-6 pt-[72px] md:pt-20 pb-6">
+        <main className="flex-1 overflow-x-hidden bg-background">
+          <div className="safe-area-x px-3 sm:px-4 md:px-6 pt-[72px] md:pt-20 pb-24">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>

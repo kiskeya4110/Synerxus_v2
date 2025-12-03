@@ -364,13 +364,14 @@ export default function OrganizationDashboard() {
         </div>
 
         {/* Mobile Quick Actions */}
-        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '12px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', position: 'relative', zIndex: 10 }}>
           <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '8px', paddingLeft: '4px' }}>Quick Actions</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
             <button
               onClick={() => navigate('/my-work?create=true')}
+              onTouchEnd={(e) => { e.preventDefault(); navigate('/my-work?create=true'); }}
               style={{
-                padding: '8px 4px',
+                padding: '12px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
                 borderRadius: '8px',
@@ -381,16 +382,20 @@ export default function OrganizationDashboard() {
                 cursor: 'pointer',
                 fontSize: '10px',
                 color: '#374151',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'rgba(102, 126, 234, 0.3)',
+                minHeight: '60px',
               }}
               data-testid="quick-action-create-project"
             >
-              <Plus size={14} style={{ color: '#667eea' }} />
+              <Plus size={16} style={{ color: '#667eea' }} />
               New Project
             </button>
             <button
               onClick={() => navigate('/volunteers?invite=true')}
+              onTouchEnd={(e) => { e.preventDefault(); navigate('/volunteers?invite=true'); }}
               style={{
-                padding: '8px 4px',
+                padding: '12px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
                 borderRadius: '8px',
@@ -401,16 +406,20 @@ export default function OrganizationDashboard() {
                 cursor: 'pointer',
                 fontSize: '10px',
                 color: '#374151',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'rgba(118, 75, 162, 0.3)',
+                minHeight: '60px',
               }}
               data-testid="quick-action-invite-volunteer"
             >
-              <UserPlus size={14} style={{ color: '#764ba2' }} />
+              <UserPlus size={16} style={{ color: '#764ba2' }} />
               Invite Vol
             </button>
             <button
               onClick={() => navigate('/tasks?create=true')}
+              onTouchEnd={(e) => { e.preventDefault(); navigate('/tasks?create=true'); }}
               style={{
-                padding: '8px 4px',
+                padding: '12px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
                 borderRadius: '8px',
@@ -421,16 +430,20 @@ export default function OrganizationDashboard() {
                 cursor: 'pointer',
                 fontSize: '10px',
                 color: '#374151',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'rgba(240, 147, 251, 0.3)',
+                minHeight: '60px',
               }}
               data-testid="quick-action-create-task"
             >
-              <CheckSquare size={14} style={{ color: '#f093fb' }} />
+              <CheckSquare size={16} style={{ color: '#f093fb' }} />
               Create Task
             </button>
             <button
               onClick={() => navigate('/impact-visualization')}
+              onTouchEnd={(e) => { e.preventDefault(); navigate('/impact-visualization'); }}
               style={{
-                padding: '8px 4px',
+                padding: '12px 4px',
                 backgroundColor: '#f3f4f6',
                 border: 'none',
                 borderRadius: '8px',
@@ -441,10 +454,13 @@ export default function OrganizationDashboard() {
                 cursor: 'pointer',
                 fontSize: '10px',
                 color: '#374151',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'rgba(16, 185, 129, 0.3)',
+                minHeight: '60px',
               }}
               data-testid="quick-action-view-reports"
             >
-              <BarChart3 size={14} style={{ color: '#10b981' }} />
+              <BarChart3 size={16} style={{ color: '#10b981' }} />
               View Reports
             </button>
           </div>
@@ -675,8 +691,9 @@ export default function OrganizationDashboard() {
               </h3>
               <button
                 onClick={() => navigate('/tasks')}
+                onTouchEnd={(e) => { e.preventDefault(); navigate('/tasks'); }}
                 data-testid="view-all-tasks"
-                style={{ fontSize: '12px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}
+                style={{ fontSize: '12px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '8px 12px', touchAction: 'manipulation' }}
               >
                 View All →
               </button>
@@ -699,6 +716,18 @@ export default function OrganizationDashboard() {
                         navigate('/tasks');
                       }
                     }}
+                    onTouchEnd={(e) => {
+                      e.preventDefault();
+                      if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
+                        navigate('/tasks');
+                      } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
+                        navigate('/projects');
+                      } else if (alert.type === 'volunteer') {
+                        navigate('/volunteers');
+                      } else {
+                        navigate('/tasks');
+                      }
+                    }}
                     style={{
                       padding: '12px',
                       borderRadius: '8px',
@@ -709,6 +738,7 @@ export default function OrganizationDashboard() {
                       cursor: 'pointer',
                       transition: 'transform 0.15s, box-shadow 0.15s',
                       width: '100%',
+                      touchAction: 'manipulation',
                     }}
                     data-testid={`alert-${alert.id}`}
                   >
@@ -734,6 +764,7 @@ export default function OrganizationDashboard() {
                     type="button"
                     className="task-btn"
                     onClick={() => navigate(`/tasks?id=${task.id}`)}
+                    onTouchEnd={(e) => { e.preventDefault(); navigate(`/tasks?id=${task.id}`); }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -747,6 +778,7 @@ export default function OrganizationDashboard() {
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'background-color 0.15s',
+                      touchAction: 'manipulation',
                     }}
                     data-testid={`task-${task.id}`}
                   >
@@ -852,15 +884,16 @@ export default function OrganizationDashboard() {
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Active Projects</h3>
               <button
                 onClick={() => navigate('/projects')}
+                onTouchEnd={(e) => { e.preventDefault(); navigate('/projects'); }}
                 data-testid="view-all-projects"
-                style={{ fontSize: '13px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500' }}
+                style={{ fontSize: '13px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '8px 12px', touchAction: 'manipulation' }}
               >
                 View All →
               </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {dashboardData?.projects?.slice(0, 5).map((project) => (
-                <div
+                <button
                   key={project.id}
                   style={{
                     display: 'flex',
@@ -870,8 +903,13 @@ export default function OrganizationDashboard() {
                     borderRadius: '8px',
                     backgroundColor: '#f9fafb',
                     cursor: 'pointer',
+                    width: '100%',
+                    border: 'none',
+                    textAlign: 'left',
+                    touchAction: 'manipulation',
                   }}
                   onClick={() => navigate(`/projects/${project.id}`)}
+                  onTouchEnd={(e) => { e.preventDefault(); navigate(`/projects/${project.id}`); }}
                   data-testid={`project-item-${project.id}`}
                 >
                   <div>
@@ -892,7 +930,7 @@ export default function OrganizationDashboard() {
                     </span>
                     <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>{project.completionPercentage}% complete</p>
                   </div>
-                </div>
+                </button>
               ))}
               {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
                 <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
@@ -900,15 +938,17 @@ export default function OrganizationDashboard() {
                   <p>No projects yet</p>
                   <button
                     onClick={() => navigate('/projects?create=true')}
+                    onTouchEnd={(e) => { e.preventDefault(); navigate('/projects?create=true'); }}
                     style={{
                       marginTop: '12px',
-                      padding: '8px 16px',
+                      padding: '12px 20px',
                       backgroundColor: '#166534',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
                       fontSize: '14px',
                       cursor: 'pointer',
+                      touchAction: 'manipulation',
                     }}
                   >
                     Create First Project
@@ -1153,6 +1193,7 @@ function MetricCard({ icon, label, value, color, testId, onClick }: { icon: Reac
     <button
       type="button"
       onClick={onClick}
+      onTouchEnd={(e) => { if (onClick) { e.preventDefault(); onClick(); } }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       aria-label={`${label}: ${value.toLocaleString()}`}
@@ -1175,6 +1216,7 @@ function MetricCard({ icon, label, value, color, testId, onClick }: { icon: Reac
         textAlign: 'center',
         minHeight: 'auto',
         transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+        touchAction: 'manipulation',
       }}
       data-testid={testId}
     >
@@ -1194,6 +1236,7 @@ function MobileMetricCard({ icon, label, value, color, testId, onClick }: { icon
     <button
       type="button"
       onClick={onClick}
+      onTouchEnd={(e) => { if (onClick) { e.preventDefault(); onClick(); } }}
       aria-label={`${label}: ${value.toLocaleString()}`}
       style={{
         backgroundColor: 'white',
@@ -1206,6 +1249,7 @@ function MobileMetricCard({ icon, label, value, color, testId, onClick }: { icon
         border: 'none',
         cursor: 'pointer',
         width: '100%',
+        touchAction: 'manipulation',
       }}
       data-testid={testId}
     >
@@ -1256,6 +1300,7 @@ function QuickActionButton({ icon, label, onClick, testId }: { icon: React.React
   return (
     <button
       onClick={onClick}
+      onTouchEnd={(e) => { e.preventDefault(); onClick(); }}
       data-testid={testId}
       style={{
         display: 'flex',
@@ -1271,6 +1316,8 @@ function QuickActionButton({ icon, label, onClick, testId }: { icon: React.React
         fontSize: '14px',
         color: '#374151',
         transition: 'background-color 0.2s',
+        touchAction: 'manipulation',
+        WebkitTapHighlightColor: 'rgba(22, 101, 52, 0.2)',
       }}
     >
       <span style={{ color: '#166534' }}>{icon}</span>

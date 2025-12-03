@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import Footer from "@/components/layout/footer";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import type { User } from "@shared/schema";
 
@@ -509,6 +510,7 @@ export default function Overview() {
         </div>
       </div>
 
+      <Footer />
       <MobileBottomNav />
     </div>
   );

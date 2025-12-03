@@ -228,7 +228,16 @@ export default function OrganizationDashboard() {
       </div>
 
       {/* Mobile Metrics Grid - 2x2 at top */}
-      {metrics && <MobileMetricsGrid activeProjects={metrics.activeProjects} totalHours={metrics.totalHours} sdgsAddressed={metrics.sdgsAddressed} livesTouched={metrics.livesTouched} />}
+      {metrics && <MobileMetricsGrid 
+        activeProjects={metrics.activeProjects} 
+        totalHours={metrics.totalHours} 
+        sdgsAddressed={metrics.sdgsAddressed} 
+        livesTouched={metrics.livesTouched}
+        onActiveProjectsClick={() => setActiveModal('projects')}
+        onTotalHoursClick={() => setActiveModal('hours')}
+        onSdgsClick={() => setActiveModal('sdgs')}
+        onLivesTouchedClick={() => setActiveModal('lives')}
+      />}
 
       {/* Main Content */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }} className="md:p-6">
@@ -322,15 +331,32 @@ export default function OrganizationDashboard() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ goal, hours }) => {
+                    label={({ cx, cy, midAngle, outerRadius, goal, hours, index }) => {
                       const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
                       const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
-                      const percent = ((hoursNum / total) * 100).toFixed(0);
+                      const percent = (hoursNum / total) * 100;
+                      if (percent < 10) return null;
+                      const RADIAN = Math.PI / 180;
+                      const radius = outerRadius + 20 + (index % 2) * 12;
+                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
                       const sdgInfo = SDG_GOALS[goal];
                       const sdgName = sdgInfo?.shortName || `SDG ${goal}`;
-                      return `${sdgName}: ${percent}%`;
+                      return (
+                        <text 
+                          x={x} 
+                          y={y} 
+                          fill={sdgInfo?.color || '#166534'}
+                          textAnchor={x > cx ? 'start' : 'end'} 
+                          dominantBaseline="central"
+                          style={{ fontSize: '9px', fontWeight: '600' }}
+                        >
+                          {`${sdgName} ${percent.toFixed(0)}%`}
+                        </text>
+                      );
                     }}
                     outerRadius={60}
+                    paddingAngle={3}
                     fill="#8884d8"
                     dataKey="hours"
                   >
@@ -351,6 +377,15 @@ export default function OrganizationDashboard() {
                         );
                       }
                       return null;
+                    }}
+                  />
+                  <Legend 
+                    layout="horizontal" 
+                    verticalAlign="bottom" 
+                    wrapperStyle={{ fontSize: '8px', paddingTop: '8px' }}
+                    formatter={(value, entry: any) => {
+                      const sdg = entry.payload;
+                      return <span style={{ color: '#6b7280', fontSize: '8px' }}>SDG {sdg.goal}</span>;
                     }}
                   />
                 </PieChart>
@@ -534,19 +569,34 @@ export default function OrganizationDashboard() {
                             cy="50%"
                             innerRadius={50}
                             outerRadius={85}
-                            paddingAngle={2}
+                            paddingAngle={3}
                             dataKey="hours"
                             nameKey="name"
-                            label={({ goal, hours }) => {
+                            labelLine={false}
+                            label={({ cx, cy, midAngle, outerRadius, goal, hours, index }) => {
                               const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
                               const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
-                              const percent = ((hoursNum / total) * 100).toFixed(0);
+                              const percent = (hoursNum / total) * 100;
+                              if (percent < 8) return null;
+                              const RADIAN = Math.PI / 180;
+                              const radius = outerRadius + 30 + (index % 2) * 15;
+                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
                               const sdgInfo = SDG_GOALS[goal];
                               const sdgName = sdgInfo?.shortName || `SDG ${goal}`;
-                              // Show label for all segments with readable size
-                              return `${sdgName} ${percent}%`;
+                              return (
+                                <text 
+                                  x={x} 
+                                  y={y} 
+                                  fill={sdgInfo?.color || '#166534'}
+                                  textAnchor={x > cx ? 'start' : 'end'} 
+                                  dominantBaseline="central"
+                                  style={{ fontSize: '11px', fontWeight: '600' }}
+                                >
+                                  {`${sdgName} ${percent.toFixed(0)}%`}
+                                </text>
+                              );
                             }}
-                            labelLine={true}
                           >
                             {dashboardData.sdgDistribution.map((entry) => (
                               <Cell 

@@ -5,19 +5,27 @@ interface MobileMetricsGridProps {
   totalHours?: number;
   sdgsAddressed?: number;
   livesTouched?: number;
+  onActiveProjectsClick?: () => void;
+  onTotalHoursClick?: () => void;
+  onSdgsClick?: () => void;
+  onLivesTouchedClick?: () => void;
 }
 
 export default function MobileMetricsGrid({ 
   activeProjects = 0, 
   totalHours = 0, 
   sdgsAddressed = 0, 
-  livesTouched = 0 
+  livesTouched = 0,
+  onActiveProjectsClick,
+  onTotalHoursClick,
+  onSdgsClick,
+  onLivesTouchedClick,
 }: MobileMetricsGridProps) {
   const metrics = [
-    { label: "Active Projects", value: activeProjects, icon: FolderOpen, color: "#667eea" },
-    { label: "Total Hours", value: totalHours, icon: Clock, color: "#764ba2" },
-    { label: "SDGs Addressed", value: sdgsAddressed, icon: Target, color: "#f093fb" },
-    { label: "Lives Touched", value: livesTouched, icon: Users, color: "#667eea" },
+    { label: "Active Projects", value: activeProjects, icon: FolderOpen, color: "#667eea", onClick: onActiveProjectsClick, testId: "mobile-metric-projects" },
+    { label: "Total Hours", value: totalHours, icon: Clock, color: "#764ba2", onClick: onTotalHoursClick, testId: "mobile-metric-hours" },
+    { label: "SDGs Addressed", value: sdgsAddressed, icon: Target, color: "#f093fb", onClick: onSdgsClick, testId: "mobile-metric-sdgs" },
+    { label: "Lives Touched", value: livesTouched, icon: Users, color: "#667eea", onClick: onLivesTouchedClick, testId: "mobile-metric-lives" },
   ];
 
   return (
@@ -26,8 +34,13 @@ export default function MobileMetricsGrid({
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           return (
-            <div
+            <button
               key={index}
+              type="button"
+              onClick={metric.onClick}
+              onTouchEnd={(e) => { if (metric.onClick) { e.preventDefault(); metric.onClick(); } }}
+              aria-label={`${metric.label}: ${metric.value}`}
+              data-testid={metric.testId}
               style={{
                 backgroundColor: 'white',
                 borderRadius: '8px',
@@ -38,6 +51,10 @@ export default function MobileMetricsGrid({
                 alignItems: 'center',
                 gap: '4px',
                 border: `1px solid ${metric.color}20`,
+                cursor: 'pointer',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: `${metric.color}30`,
+                minHeight: '70px',
               }}
             >
               <div
@@ -58,7 +75,7 @@ export default function MobileMetricsGrid({
               <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: '500', textAlign: 'center', lineHeight: '1.1' }}>
                 {metric.label}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

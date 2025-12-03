@@ -202,7 +202,7 @@ export default function Overview() {
           </div>
         </div>
 
-        <div style={{ padding: '20px 0' }} className="mx-4 sm:mx-6">
+        <div style={{ padding: '20px 16px', paddingLeft: '16px', paddingRight: '16px' }} className="sm:px-6">
           <div
             style={{
               display: 'grid',

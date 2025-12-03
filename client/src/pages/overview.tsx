@@ -202,7 +202,7 @@ export default function Overview() {
           </div>
         </div>
 
-        <div style={{ padding: '20px 0' }}>
+        <div style={{ padding: '20px 24px' }}>
           <div
             style={{
               display: 'grid',

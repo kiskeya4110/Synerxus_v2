@@ -332,7 +332,7 @@ export default function OrganizationDashboard() {
                   left: '50%',
                   transform: 'translate(-50%, -60%)',
                   textAlign: 'center',
-                  zIndex: 1000,
+                  zIndex: 0,
                   pointerEvents: 'none'
                 }}>
                   <div style={{ fontSize: '28px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
@@ -566,7 +566,7 @@ export default function OrganizationDashboard() {
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
                       textAlign: 'center',
-                      zIndex: 1000,
+                      zIndex: 0,
                       pointerEvents: 'none'
                     }}>
                       <div style={{ fontSize: '48px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>

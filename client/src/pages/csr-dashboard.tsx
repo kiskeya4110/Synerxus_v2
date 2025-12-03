@@ -21,6 +21,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import EmployeeEngagementTab from "./employee-engagement-tab";
 import Footer from "@/components/layout/footer";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 
 interface SDGEmployee {
   name: string;
@@ -3501,6 +3502,9 @@ export default function CSRDashboard() {
 
       {/* Footer */}
       <Footer />
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

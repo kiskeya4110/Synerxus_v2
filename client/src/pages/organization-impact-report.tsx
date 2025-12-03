@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OrganizationHeader from "@/components/layout/organization-header";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import {
   Select,
   SelectContent,
@@ -2655,6 +2656,9 @@ export default function OrganizationImpactReport() {
           }
         `}</style>
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

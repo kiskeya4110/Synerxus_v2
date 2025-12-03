@@ -16,6 +16,7 @@ import {
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
 import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -779,6 +780,9 @@ export default function Profile() {
           </Card>
         )}
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

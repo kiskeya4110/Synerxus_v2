@@ -13,6 +13,7 @@ import type { User, Task, ProjectAssignment } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 declare const html2pdf: { (): { set(options: any): { from(element: HTMLElement): { save(): void } } } };
 import {
   Chart as ChartJS,
@@ -1949,6 +1950,9 @@ export default function ImpactReport() {
           }
         }
       `}</style>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

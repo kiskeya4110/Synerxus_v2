@@ -5,6 +5,7 @@ import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCir
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import Footer from "@/components/layout/footer";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 
 interface PortfolioProject {
   id: number;
@@ -731,6 +732,9 @@ export default function ProjectPortfolio() {
       
       {/* Footer */}
       <Footer />
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

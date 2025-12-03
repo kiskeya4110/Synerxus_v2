@@ -777,6 +777,6 @@ export default function MyTasks() {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

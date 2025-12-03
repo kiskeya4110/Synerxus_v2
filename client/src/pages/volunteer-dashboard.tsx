@@ -922,7 +922,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="h-screen overflow-y-auto space-y-4 md:space-y-6 px-4 md:px-6">
+    <div className="h-screen overflow-y-auto space-y-4 md:space-y-6 px-4 md:px-12">
       {/* Header - Mobile optimized */}
       <div className="space-y-3 md:space-y-6">
         <div className="flex items-center justify-between">

@@ -3,6 +3,16 @@
 ## Overview
 Synerxus is an AI-powered platform that connects global volunteers with opportunities and helps organizations track, measure, and visualize their impact. It links activities to humanitarian outcomes and Sustainable Development Goals (SDGs), providing data-driven insights for impact assessment, storytelling, and enhancing global collaboration. Its core purpose is "Intelligent connections for sustainable development worldwide."
 
+## Recent Changes (December 3, 2025)
+- **Volunteer Profile Data Transformation Fix**: Fixed critical data transformation issues that prevented volunteer profile data from being properly saved and used in the matching algorithm:
+  - **Skills Data**: Settings and intake forms now correctly transform skills from `{name, proficiency}` objects to:
+    - `skills`: array of strings (skill names only) for database storage
+    - `skillRatings`: object `{skillName: proficiency}` for matching algorithm proficiency scoring
+  - **SDG Mapping**: Fixed `sdgGoals` → `preferredSdgs` mapping in both volunteer-profile-settings.tsx and volunteer-intake.tsx
+  - **parseSkillsFromDb Enhancement**: Updated function in both pages to handle legacy format ("Skill Name (75%)") and new format (skill names + separate skillRatings object)
+  - **Matching Algorithm Integration**: Skills proficiencies now properly flow to matching algorithm which uses weighted scoring (Skills 35% weight)
+  - **Additional Fields**: Settings mutation now includes professionalTitle, linkedinProfile, languages, employerId, departmentName, jobTitleAtCompany, and matchingPriorities
+
 ## Recent Changes (December 1, 2025)
 - **Combined Projects + My Work Navigation**: Consolidated "Projects" and "My Work" tabs into a single "Projects" tab in the organization navigation bar to free up space
   - Organization users now see: Dashboard, Projects, SDGs, Volunteers, Reports, +Create (6 tabs instead of 7)

@@ -302,7 +302,7 @@ export default function MyTasks() {
   }
 
   return (
-    <>
+    <div className="px-4 sm:px-6 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">My Tasks</h1>
         <p className="text-gray-600">Track your volunteer assignments and progress</p>

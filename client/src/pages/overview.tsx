@@ -91,9 +91,8 @@ export default function Overview() {
   return (
     <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
       <OrganizationHeader activeTab="overview" />
-      <div className="px-4 sm:px-6">
       
-      <div className="md:hidden">
+      <div className="md:hidden mx-4 sm:mx-6">
         <div
           style={{
             background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%)',
@@ -203,7 +202,7 @@ export default function Overview() {
           </div>
         </div>
 
-        <div style={{ padding: '20px 16px' }}>
+        <div style={{ padding: '20px 0' }} className="mx-4 sm:mx-6">
           <div
             style={{
               display: 'grid',
@@ -532,7 +531,6 @@ export default function Overview() {
             })}
           </div>
         </div>
-      </div>
       </div>
 
       {/* Footer and Navigation */}

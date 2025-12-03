@@ -202,7 +202,7 @@ export default function Overview() {
           </div>
         </div>
 
-        <div style={{ padding: '20px 0' }} className="mx-4 sm:mx-6">
+        <div style={{ padding: '20px 0' }}>
           <div
             style={{
               display: 'grid',
@@ -410,7 +410,7 @@ export default function Overview() {
             </div>
           </div>
 
-          <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginLeft: '-16px', marginRight: '-16px', paddingLeft: '16px', paddingRight: '16px' }}>
+          <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <Button
               onClick={() => navigate('/impact-visualization')}
               variant="outline"

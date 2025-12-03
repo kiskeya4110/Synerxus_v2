@@ -246,7 +246,7 @@ export default function ProjectDetail() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
+    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 overflow-y-auto pb-24 md:pb-0">
       {isOrganization && <OrganizationHeader activeTab="projects" />}
 
       {/* Hero Section */}
@@ -331,7 +331,7 @@ export default function ProjectDetail() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
         
         {/* Key Metrics Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">

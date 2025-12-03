@@ -206,17 +206,20 @@ type FormData = z.infer<typeof formSchema>;
 type AvailabilitySlot = z.infer<typeof availabilitySlotSchema>;
 type SkillProficiency = z.infer<typeof skillProficiencySchema>;
 
-// Parse skills from database format "Skill Name (75%)" to {name, proficiency}
-const parseSkillsFromDb = (skills: any): SkillProficiency[] => {
+// Parse skills from database format - handles both old and new formats
+// Old format: "Skill Name (75%)" embedded in skills array
+// New format: skills array of strings + skillRatings object {skillName: proficiency}
+const parseSkillsFromDb = (skills: any, skillRatings?: Record<string, number>): SkillProficiency[] => {
   if (!skills || !Array.isArray(skills)) return [];
   return skills.map((skill: string) => {
-    // Handle format like "Teaching (89%)"
+    // Handle old format like "Teaching (89%)"
     const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
     if (match) {
       return { name: match[1].trim(), proficiency: parseInt(match[2], 10) };
     }
-    // Handle plain string format without proficiency
-    return { name: skill, proficiency: 50 }; // Default proficiency for legacy data
+    // Handle new format: look up proficiency from skillRatings object
+    const proficiency = skillRatings?.[skill] ?? 50; // Default 50% if not found
+    return { name: skill, proficiency };
   });
 };
 
@@ -911,7 +914,7 @@ export default function VolunteerProfileSettings() {
         employerId: existingProfile.employerId || "",
         departmentName: existingProfile.departmentName || "",
         jobTitleAtCompany: existingProfile.jobTitleAtCompany || "",
-        skills: parseSkillsFromDb(existingProfile.skills),
+        skills: parseSkillsFromDb(existingProfile.skills, existingProfile.skillRatings as Record<string, number>),
         interests: existingProfile.interests || [],
         location: existingProfile.location || "",
         sdgGoals: existingProfile.preferredSdgs || [],
@@ -992,7 +995,7 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: profileData.yearsOfExperience || "",
         linkedinProfile: profileData.linkedinProfile || "",
         languages: profileData.languages || [],
-        skills: parseSkillsFromDb(profileData.skills),
+        skills: parseSkillsFromDb(profileData.skills, profileData.skillRatings as Record<string, number>),
         interests: profileData.interests || [],
         location: profileData.location || "",
         sdgGoals: profileData.preferredSdgs || [],
@@ -1064,23 +1067,46 @@ export default function VolunteerProfileSettings() {
       );
 
       // Transform form data to match volunteer profile API
+      // Convert skills array of {name, proficiency} objects to:
+      // - skills: array of strings (skill names only) for database storage
+      // - skillRatings: object {skillName: proficiency} for matching algorithm
+      const skillsArray = data.skills.map((s: { name: string; proficiency: number }) => s.name);
+      const skillRatingsObj: Record<string, number> = {};
+      data.skills.forEach((s: { name: string; proficiency: number }) => {
+        skillRatingsObj[s.name] = s.proficiency;
+      });
+
       const profileData = {
         volunteerName: data.name,
-        skills: data.skills,
+        skills: skillsArray, // Array of skill names (strings)
+        skillRatings: skillRatingsObj, // Object {skillName: proficiency} for matching
         interests: data.interests,
         location: data.location,
         yearsOfExperience: data.yearsOfExperience,
-        sdgGoals: data.sdgGoals,
+        professionalTitle: data.professionalTitle,
+        linkedinProfile: data.linkedinProfile,
+        languages: data.languages,
+        employerId: data.employerId ? parseInt(data.employerId) : null,
+        departmentName: data.departmentName,
+        jobTitleAtCompany: data.jobTitleAtCompany,
+        preferredSdgs: data.sdgGoals, // Map sdgGoals to preferredSdgs for backend
         weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
         availability: data.availability,
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
         preferredWorkStyle: data.preferredWorkStyle,
+        matchingPriorities: data.matchingPriorities,
         profilePhotoUrl: profilePhotoUrl,
       };
 
       console.log(
-        `[Settings Mutation] Submitting weeklyAvailability: ${profileData.weeklyAvailability} for user ${targetUserId}`,
+        `[Settings Mutation] Submitting profile data for user ${targetUserId}:`,
+        {
+          weeklyAvailability: profileData.weeklyAvailability,
+          skills: profileData.skills,
+          skillRatings: profileData.skillRatings,
+          preferredSdgs: profileData.preferredSdgs,
+        }
       );
 
       // Add timeout protection - 15 seconds max

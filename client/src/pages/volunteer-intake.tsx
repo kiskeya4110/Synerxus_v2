@@ -179,15 +179,20 @@ export default function VolunteerIntake() {
   const existingProfile = profileResponse?.volunteerProfile;
   const profileUser = profileResponse?.user;
 
-  // Helper to parse skills from database format ("Skill Name (75%)") to form format ({ name, proficiency })
-  const parseSkillsFromDb = (skills: any): SkillProficiency[] => {
+  // Parse skills from database format - handles both old and new formats
+  // Old format: "Skill Name (75%)" embedded in skills array
+  // New format: skills array of strings + skillRatings object {skillName: proficiency}
+  const parseSkillsFromDb = (skills: any, skillRatings?: Record<string, number>): SkillProficiency[] => {
     if (!skills || !Array.isArray(skills)) return [];
     return skills.map((skill: string) => {
+      // Handle old format like "Teaching (89%)"
       const match = skill.match(/^(.+?)\s*\((\d+)%\)$/);
       if (match) {
         return { name: match[1].trim(), proficiency: parseInt(match[2], 10) };
       }
-      return { name: skill, proficiency: 50 }; // Default proficiency for legacy data
+      // Handle new format: look up proficiency from skillRatings object
+      const proficiency = skillRatings?.[skill] ?? 50; // Default 50% if not found
+      return { name: skill, proficiency };
     });
   };
 
@@ -222,7 +227,7 @@ export default function VolunteerIntake() {
         form.reset({
           email: user?.email || currentUser?.email || "",
           name: profile.volunteerName || user?.displayName || "",
-          skills: parseSkillsFromDb(profile.skills),
+          skills: parseSkillsFromDb(profile.skills, profile.skillRatings as Record<string, number>),
           interests: profile.interests || [],
           location: profile.location || "",
           sdgGoals: profile.preferredSdgs || [],
@@ -258,18 +263,27 @@ export default function VolunteerIntake() {
       if (!currentUser?.id) throw new Error("User not authenticated");
       
       // Transform form data to match volunteer profile API
+      // Convert skills array of {name, proficiency} objects to:
+      // - skills: array of strings (skill names only) for database storage
+      // - skillRatings: object {skillName: proficiency} for matching algorithm
+      const skillsArray = data.skills.map((s: { name: string; proficiency: number }) => s.name);
+      const skillRatingsObj: Record<string, number> = {};
+      data.skills.forEach((s: { name: string; proficiency: number }) => {
+        skillRatingsObj[s.name] = s.proficiency;
+      });
+
       const profileData = {
         volunteerName: data.name,
-        skills: data.skills.map((s) => `${s.name} (${s.proficiency}%)`), // Convert to display format for storage
+        skills: skillsArray, // Array of skill names (strings)
+        skillRatings: skillRatingsObj, // Object {skillName: proficiency} for matching
         interests: data.interests,
         location: data.location,
-        sdgGoals: data.sdgGoals,
+        preferredSdgs: data.sdgGoals, // Map sdgGoals to preferredSdgs for backend
         weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
         availability: data.availability,
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
-        preferredWorkStyle: "", // Will be set through settings page
-        skillProficiency: data.skills, // Send full proficiency objects for matching algorithm
+        preferredWorkStyle: "remote", // Default to remote
         profilePhotoUrl, // Include profile photo URL
         onboardingCompleted: true, // Always mark as completed when form is submitted
       };

@@ -559,7 +559,7 @@ export default function ImpactReport() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-3 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-2 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header with Back Button */}
         <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2">
@@ -574,28 +574,28 @@ export default function ImpactReport() {
             <span className="md:hidden">Back</span>
           </Button>
           
-          <div className="flex gap-2 flex-wrap justify-between md:justify-end w-full md:w-auto">
-            {/* View Mode Toggle */}
-            <div className="flex gap-1 bg-gray-200 dark:bg-gray-700 rounded-lg p-1 print:hidden">
+          <div className="flex gap-1.5 md:gap-2 flex-wrap justify-end w-full md:w-auto">
+            {/* View Mode Toggle - Compact on mobile */}
+            <div className="flex gap-0.5 bg-gray-200 dark:bg-gray-700 rounded-lg p-0.5 md:p-1 print:hidden">
               <Button
                 variant={viewMode === "tabs" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("tabs")}
-                className="h-8 px-2 md:px-3 text-xs md:text-sm"
+                className="h-7 md:h-8 px-1.5 md:px-3 text-[10px] md:text-sm"
                 data-testid="view-mode-tabs"
               >
-                <Layout className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Tabs</span>
+                <Layout className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <span className="ml-0.5 md:ml-1">Tabs</span>
               </Button>
               <Button
                 variant={viewMode === "single" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("single")}
-                className="h-8 px-2 md:px-3 text-xs md:text-sm"
+                className="h-7 md:h-8 px-1.5 md:px-3 text-[10px] md:text-sm"
                 data-testid="view-mode-single"
               >
-                <Rows3 className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Single</span>
+                <Rows3 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <span className="ml-0.5 md:ml-1">All</span>
               </Button>
             </div>
 
@@ -603,54 +603,52 @@ export default function ImpactReport() {
               variant="outline"
               size="sm"
               onClick={handleDownloadPDF}
-              className="print:hidden text-xs md:text-sm whitespace-nowrap"
+              className="print:hidden text-[10px] md:text-sm whitespace-nowrap h-7 md:h-8 px-1.5 md:px-3"
               data-testid="button-download-pdf"
             >
-              <Download className="h-4 w-4 mr-1" />
-              <span className="hidden md:inline">Download PDF</span>
-              <span className="md:hidden">PDF</span>
+              <Download className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="ml-0.5 md:ml-1">PDF</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={handlePrintClick}
-              className="print:hidden text-xs md:text-sm"
+              className="print:hidden text-[10px] md:text-sm h-7 md:h-8 px-1.5 md:px-3"
               data-testid="button-print"
             >
-              <Printer className="h-4 w-4 mr-1" />
-              <span className="hidden md:inline">Print</span>
-              <span className="md:hidden">Print</span>
+              <Printer className="h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="ml-0.5 md:ml-1 hidden sm:inline">Print</span>
             </Button>
-            <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1 print:hidden">
+            <div className="flex gap-0.5 bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5 md:p-1 print:hidden">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleShareSocial('twitter')}
-                className="h-8 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
+                className="h-7 md:h-8 px-1.5 md:px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
                 data-testid="button-share-twitter"
                 title="Share on Twitter"
               >
-                <Twitter className="h-4 w-4" />
+                <Twitter className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleShareSocial('linkedin')}
-                className="h-8 px-2 hover:bg-blue-200 dark:hover:bg-blue-800"
+                className="h-7 md:h-8 px-1.5 md:px-2 hover:bg-blue-200 dark:hover:bg-blue-800"
                 data-testid="button-share-linkedin"
                 title="Share on LinkedIn"
               >
-                <Linkedin className="h-4 w-4" />
+                <Linkedin className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleShareSocial('facebook')}
-                className="h-8 px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
+                className="h-7 md:h-8 px-1.5 md:px-2 hover:bg-blue-100 dark:hover:bg-blue-900"
                 data-testid="button-share-facebook"
                 title="Share on Facebook"
               >
-                <Facebook className="h-4 w-4" />
+                <Facebook className="h-3.5 w-3.5 md:h-4 md:w-4" />
               </Button>
             </div>
           </div>
@@ -658,7 +656,7 @@ export default function ImpactReport() {
 
         {/* Main Impact Report Card */}
         <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black">
-          <CardContent className="p-4 md:p-6 lg:p-8 print:p-4">
+          <CardContent className="p-3 md:p-6 lg:p-8 print:p-4">
             {/* Header Section - Split Layout */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 md:mb-8 pb-4 md:pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3 print:gap-4">
               {/* Left: Volunteer Info & Logo */}
@@ -744,102 +742,102 @@ export default function ImpactReport() {
             {/* View Mode Conditional: Tabs vs Single Page */}
             {viewMode === "tabs" ? (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 mb-4 md:mb-6 print:hidden">
-                <TabsTrigger value="overview" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
-                  <Target className="h-4 w-4" />
-                  <span className="hidden sm:inline">Overview</span>
+              <TabsList className="grid w-full grid-cols-4 gap-0.5 md:gap-1 mb-4 md:mb-6 print:hidden h-auto p-1">
+                <TabsTrigger value="overview" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
+                  <Target className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+                  <span className="leading-tight">Overview</span>
                 </TabsTrigger>
-                <TabsTrigger value="engagement" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
-                  <Users className="h-4 w-4" />
-                  <span className="hidden sm:inline">Engagement</span>
+                <TabsTrigger value="engagement" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
+                  <Users className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+                  <span className="leading-tight">Engage</span>
                 </TabsTrigger>
-                <TabsTrigger value="impact" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="hidden sm:inline">Impact</span>
+                <TabsTrigger value="impact" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
+                  <TrendingUp className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+                  <span className="leading-tight">Impact</span>
                 </TabsTrigger>
-                <TabsTrigger value="analytics" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm px-2 md:px-4">
-                  <BarChart3 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Analytics</span>
+                <TabsTrigger value="analytics" className="flex flex-col md:flex-row items-center gap-0.5 md:gap-2 text-[9px] md:text-sm px-1 md:px-4 py-1.5 md:py-2 min-h-[52px] md:min-h-0">
+                  <BarChart3 className="h-4 w-4 md:h-4 md:w-4 flex-shrink-0" />
+                  <span className="leading-tight">Stats</span>
                 </TabsTrigger>
               </TabsList>
 
               {/* Overview Tab */}
-              <TabsContent value="overview" className="space-y-4 md:space-y-6">
+              <TabsContent value="overview" className="space-y-3 md:space-y-6">
                 {/* Enhanced KPI Buttons in responsive grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 lg:gap-4 print:gap-2">
-                  <div className="impact-report-section bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
-                    <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">Hours Logged</p>
-                    <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">{Math.round(filteredTotalHours)}h</p>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Activities:</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-3 lg:gap-4 print:gap-2">
+                  <div className="impact-report-section bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
+                    <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-1 md:mb-2">Hours</p>
+                    <p className="text-xl md:text-2xl font-bold text-blue-900 dark:text-blue-100 mb-1 md:mb-2">{Math.round(filteredTotalHours)}h</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Acts:</span>
                         <span className="font-bold text-blue-600 dark:text-blue-400">{filteredActivities.length}</span>
                       </div>
                       {filteredActivities.length > 0 && (
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">Avg/Activity:</span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">{(filteredTotalHours / filteredActivities.length).toFixed(1)}h</span>
                         </div>
                       )}
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Monthly Avg:</span>
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Mo.Avg:</span>
                         <span className="font-bold text-blue-600 dark:text-blue-400">{avgMonthlyHours}h</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="impact-report-section bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
-                    <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">Tasks Completed</p>
-                    <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">{filteredTasksCompleted}/{tasks.length}</p>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Completion:</span>
+                  <div className="impact-report-section bg-green-50 dark:bg-green-900 p-2.5 md:p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
+                    <p className="text-[10px] md:text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-1 md:mb-2">Tasks</p>
+                    <p className="text-xl md:text-2xl font-bold text-green-900 dark:text-green-100 mb-1 md:mb-2">{filteredTasksCompleted}/{tasks.length}</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Done:</span>
                         <span className="font-bold text-green-600 dark:text-green-400">{tasks.length > 0 ? Math.round((filteredTasksCompleted / tasks.length) * 100) : 0}%</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Total Tasks:</span>
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Total:</span>
                         <span className="font-bold text-green-600 dark:text-green-400">{tasks.length}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Pending:</span>
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Left:</span>
                         <span className="font-bold text-green-600 dark:text-green-400">{tasks.length - filteredTasksCompleted}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
-                    <p className="text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-2">Active Projects</p>
-                    <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">{filteredActiveProjects}</p>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-xs">
+                  <div className="bg-purple-50 dark:bg-purple-900 p-2.5 md:p-4 rounded-lg border border-purple-200 dark:border-purple-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                    <p className="text-[10px] md:text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-1 md:mb-2">Projects</p>
+                    <p className="text-xl md:text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1 md:mb-2">{filteredActiveProjects}</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
                         <span className="text-gray-600 dark:text-gray-400">Total:</span>
                         <span className="font-bold text-purple-600 dark:text-purple-400">{assignmentsCount}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Completion Avg:</span>
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Comp:</span>
                         <span className="font-bold text-purple-600 dark:text-purple-400">{assignmentsCount > 0 ? Math.round((filteredActiveProjects / assignmentsCount) * 100) : 0}%</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Assignments:</span>
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Assign:</span>
                         <span className="font-bold text-purple-600 dark:text-purple-400">{assignmentsCount}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
-                    <p className="text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-2">Skills & SDGs</p>
-                    <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">{allSkills.length}</p>
-                    <div className="space-y-1.5">
-                      <div className="flex justify-between items-center text-xs">
+                  <div className="bg-orange-50 dark:bg-orange-900 p-2.5 md:p-4 rounded-lg border border-orange-200 dark:border-orange-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                    <p className="text-[10px] md:text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-1 md:mb-2">Skills</p>
+                    <p className="text-xl md:text-2xl font-bold text-orange-900 dark:text-orange-100 mb-1 md:mb-2">{allSkills.length}</p>
+                    <div className="space-y-1">
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
                         <span className="text-gray-600 dark:text-gray-400">Skills:</span>
                         <span className="font-bold text-orange-600 dark:text-orange-400">{allSkills.length}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">SDG Goals:</span>
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">SDGs:</span>
                         <span className="font-bold text-orange-600 dark:text-orange-400">{sdgs.length}</span>
                       </div>
-                      <div className="flex justify-between items-center text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Impact Score:</span>
+                      <div className="flex justify-between items-center text-[10px] md:text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">Score:</span>
                         <span className="font-bold text-orange-600 dark:text-orange-400">{filteredImpactScore}/100</span>
                       </div>
                     </div>

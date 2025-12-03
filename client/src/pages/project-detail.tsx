@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,13 +9,13 @@ import { Progress } from "@/components/ui/progress";
 import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
 import Footer from "@/components/layout/footer";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -40,6 +40,22 @@ interface Project {
   organizationId?: number;
   status: string;
   completionPercentage?: number;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  sdgGoals?: number[];
+  primarySdg?: number;
+  requiredSkills?: string[];
+  optionalSkills?: string[];
+  ongoingHoursPerWeek?: number;
+  projectTotalHours?: number;
+  totalHoursLogged?: number;
+  livesTouched?: number;
+  aiTrackingEnabled?: boolean;
+  engagementType?: string;
+  commitmentType?: string;
+  experienceLevel?: string;
+  goals?: any;
   [key: string]: any;
 }
 
@@ -47,6 +63,10 @@ interface Task {
   id: number;
   projectId: number;
   status: string;
+  title?: string;
+  description?: string;
+  estimatedHours?: number;
+  dueDate?: string;
   [key: string]: any;
 }
 
@@ -69,6 +89,8 @@ interface DBUser {
   id: number;
   userType?: string;
   organizationId?: number;
+  displayName?: string;
+  avatar?: string;
   [key: string]: any;
 }
 
@@ -77,7 +99,6 @@ export default function ProjectDetail() {
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
 
-  // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
   const { data: currentUser } = useQuery<DBUser>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -100,15 +121,15 @@ export default function ProjectDetail() {
     enabled: !!projectId,
   });
 
-  const { data: tasks = [], isLoading: loadingTasks } = useQuery<Task[]>({
+  const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
-  const { data: volunteerActivities = [], isLoading: loadingActivities } = useQuery<VolunteerActivity[]>({
+  const { data: volunteerActivities = [] } = useQuery<VolunteerActivity[]>({
     queryKey: ["/api/volunteer-activities"],
   });
 
-  const { data: projectImpacts = [], isLoading: loadingImpacts } = useQuery<ProjectImpact[]>({
+  const { data: projectImpacts = [] } = useQuery<ProjectImpact[]>({
     queryKey: ["/api/project-impacts"],
   });
 
@@ -118,7 +139,6 @@ export default function ProjectDetail() {
 
   const { toast } = useToast();
 
-  // Mutation to update lives touched
   const updateLivesTouchedMutation = useMutation({
     mutationFn: async (livesTouched: number) => {
       return apiRequest("PATCH", `/api/projects/${projectId}`, { livesTouched });
@@ -132,7 +152,6 @@ export default function ProjectDetail() {
     }
   });
 
-  // Mutation to delete task
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: number) => {
       return apiRequest("DELETE", `/api/tasks/${taskId}`, {});
@@ -146,7 +165,6 @@ export default function ProjectDetail() {
     }
   });
 
-  // NOW we can do conditional early returns after all hooks
   if (!projectId) {
     return (
       <div className="container mx-auto p-6">
@@ -161,17 +179,21 @@ export default function ProjectDetail() {
 
   if (loadingProject) {
     return (
-      <div className="w-full min-h-screen bg-white dark:bg-slate-900">
-        <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+      <div className="w-full min-h-screen bg-slate-50">
+        <div className="sticky top-0 z-10 bg-white border-b">
           <div className="px-4 py-3 flex items-center justify-between">
             <Skeleton className="h-8 w-32" />
             <Skeleton className="h-8 w-8" />
           </div>
         </div>
         <div className="p-4 space-y-4">
-          <Skeleton className="h-64 w-full rounded-lg" />
-          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-8 w-3/4" />
           <Skeleton className="h-20 w-full" />
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+          </div>
         </div>
       </div>
     );
@@ -195,34 +217,19 @@ export default function ProjectDetail() {
     );
   }
 
-  // Safe to use after hooks
-  const projectTasks = tasks.filter((t: any) => t.projectId === projectId);
-  const projectActivities = volunteerActivities.filter((a: any) => a.projectId === projectId);
-  const projectImpact = projectImpacts.filter((i: any) => i.projectId === projectId);
+  const projectTasks = tasks.filter((t) => t.projectId === projectId);
+  const projectActivities = volunteerActivities.filter((a) => a.projectId === projectId);
+  const projectImpact = projectImpacts.filter((i) => i.projectId === projectId);
 
-  const completedTasks = projectTasks.filter((t: any) => t.status === "Completed").length;
-  const totalHours = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-  const uniqueVolunteers = new Set(projectActivities.map((a: any) => a.userId)).size;
-  const totalImpact = projectImpact.reduce((sum: number, i: any) => sum + (i.value || 0), 0);
+  const completedTasks = projectTasks.filter((t) => t.status === "Completed").length;
+  const inProgressTasks = projectTasks.filter((t) => t.status === "In Progress").length;
+  const pendingTasks = projectTasks.filter((t) => t.status === "Pending" || t.status === "Not Started").length;
+  const totalHours = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const uniqueVolunteers = new Set(projectActivities.map((a) => a.userId)).size;
+  const totalImpact = projectImpact.reduce((sum, i) => sum + (i.value || 0), 0);
 
   const completionPercentage = project.completionPercentage ?? 
     (projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Planning":
-        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-400";
-      case "In Progress":
-      case "Active":
-        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400";
-      case "Completed":
-        return "bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400";
-      case "On Hold":
-        return "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-400";
-      default:
-        return "bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-400";
-    }
-  };
 
   const isOrganization = currentUser?.userType === 'organization';
   const canEditProject = currentUser?.userType === 'organization' && 
@@ -238,407 +245,315 @@ export default function ProjectDetail() {
     }
   };
 
-  const handleEditTask = (taskId: number) => {
-    if (isOrganization) {
-      toast({ title: "Task edit", description: "Task editing feature coming soon" });
-    }
-  };
-
   return (
-    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 pb-20 md:pb-0">
-      {/* Organization Header */}
+    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
       {isOrganization && <OrganizationHeader activeTab="projects" />}
 
-      {/* Mobile Header */}
-      <div className="sticky top-0 z-10 bg-blue-600 text-white px-4 py-3 flex items-center justify-between md:hidden">
-        <Link href="/projects">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 -ml-2" data-testid="button-back-to-projects">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
-        <h1 className="text-base font-semibold" data-testid="text-project-title">Project Detail</h1>
-        <div className="w-10" />
-      </div>
-
-      {/* Offline Badge for mobile */}
-      <div className="md:hidden px-4 pt-3 pb-0">
-        <Badge className="bg-amber-500 text-white w-full justify-center">
-          <AlertCircle className="h-3 w-3 mr-1" />
-          Offline Mode: Data may be outdated
-        </Badge>
-      </div>
-
-      {/* Desktop Header */}
-      <div className="hidden md:flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-        <div className="flex items-center gap-4">
-          <Link href="/projects">
-            <Button variant="ghost" size="sm" data-testid="button-back-to-projects">
+      {/* Hero Section */}
+      <div 
+        className="relative w-full"
+        style={{
+          background: project.primarySdg 
+            ? `linear-gradient(135deg, ${SDG_COLORS[project.primarySdg]}dd 0%, ${SDG_COLORS[project.primarySdg]}99 50%, #1a0a2e 100%)`
+            : 'linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 100%)'
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-4 py-6 md:py-10">
+          {/* Back Button */}
+          <Link href="/my-work">
+            <Button variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 mb-4" data-testid="button-back-to-projects">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
+              Back to Projects
             </Button>
           </Link>
-          <div>
-            <h1 className="text-3xl font-bold" data-testid="text-project-title">{project.name}</h1>
-            <p className="text-muted-foreground mt-1">Project Details & Progress</p>
-          </div>
-        </div>
-        {canEditProject && (
-          <Link href={`/projects/${projectId}/edit`}>
-            <Button className="gap-2" data-testid="button-edit-project-detail">
-              <Edit className="h-4 w-4" />
-              Edit Project
-            </Button>
-          </Link>
-        )}
-      </div>
 
-      {/* Mobile Card Layout */}
-      <div className="md:hidden p-4 space-y-4">
-        {/* Hero Card with Image */}
-        <Card className="overflow-hidden">
-          <div className="aspect-video bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-            <Target className="h-12 w-12 text-white opacity-50" />
-          </div>
-          
-          {/* Status & Match Badge */}
-          <CardContent className="p-4 space-y-3">
-            <div className="flex items-start justify-between gap-2">
-              <StatusBadge status={project.status} />
-              {project.aiTrackingEnabled && (
-                <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900/30">
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                  AI Tracking
-                </Badge>
-              )}
-            </div>
-
-            {/* Title */}
-            <div>
-              <h2 className="text-xl font-bold">{project.name}</h2>
-              <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
-            </div>
-
-            {/* Key Info */}
-            <div className="space-y-2 py-3 border-t border-b border-slate-200 dark:border-slate-700">
-              {project.ongoingHoursPerWeek && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>{project.ongoingHoursPerWeek} hours/week (Flexible)</span>
-                </div>
-              )}
-              {project.location && (
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{project.location}</span>
-                </div>
-              )}
-            </div>
-
-            {/* SDG Goals - Compact */}
-            {project.sdgGoals && project.sdgGoals.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-1">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-xs font-semibold text-muted-foreground">SDG Goals</p>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {[...project.sdgGoals].slice(0, 4).map((sdg: number) => (
-                    <div
-                      key={sdg}
-                      className="px-2 py-1 rounded text-white text-xs font-medium"
-                      style={{ backgroundColor: SDG_COLORS[sdg] }}
-                    >
-                      #{sdg}
-                    </div>
-                  ))}
-                  {project.sdgGoals.length > 4 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{project.sdgGoals.length - 4}
-                    </Badge>
-                  )}
-                </div>
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="flex-1">
+              {/* Status & Badges */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <StatusBadge status={project.status} />
+                {project.aiTrackingEnabled && (
+                  <Badge className="bg-purple-500/20 text-purple-100 border-purple-400/30">
+                    <Zap className="h-3 w-3 mr-1" />
+                    AI Tracking
+                  </Badge>
+                )}
+                {project.engagementType && (
+                  <Badge className="bg-white/20 text-white border-white/30">
+                    {project.engagementType}
+                  </Badge>
+                )}
               </div>
+
+              {/* Title */}
+              <h1 className="text-2xl md:text-4xl font-bold text-white mb-2" data-testid="text-project-title">
+                {project.name}
+              </h1>
+
+              {/* Location & Dates */}
+              <div className="flex flex-wrap items-center gap-4 text-white/80 text-sm">
+                {project.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    <span>{project.location}</span>
+                  </div>
+                )}
+                {project.startDate && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(new Date(project.startDate), "MMM d, yyyy")}</span>
+                    {project.endDate && <span> - {format(new Date(project.endDate), "MMM d, yyyy")}</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Edit Button */}
+            {canEditProject && (
+              <Link href={`/projects/${projectId}/edit`}>
+                <Button className="bg-white text-slate-900 hover:bg-white/90 gap-2" data-testid="button-edit-project-detail">
+                  <Edit className="h-4 w-4" />
+                  Edit Project
+                </Button>
+              </Link>
             )}
+          </div>
 
-            {/* CTA Buttons */}
-            <div className="pt-3 space-y-2">
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold h-12 text-base" data-testid="button-apply-project">
-                Apply for Project
-              </Button>
-              <Button variant="outline" className="w-full h-10">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
+          {/* Progress Bar in Hero */}
+          <div className="mt-6 bg-white/10 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-white/80 text-sm font-medium">Project Completion</span>
+              <span className="text-white text-2xl font-bold">{completionPercentage}%</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Tasks Preview */}
-        {projectTasks.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Expected Tasks ({projectTasks.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {projectTasks.slice(0, 3).map((task: any) => (
-                  <div key={task.id} className="flex items-center justify-between p-2 text-sm border-b border-slate-100 dark:border-slate-800 last:border-0">
-                    <span className="truncate flex-1">{task.title}</span>
-                    <StatusBadge status={task.status} />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <Card>
-            <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{uniqueVolunteers}</div>
-              <div className="text-xs text-muted-foreground mt-1">Volunteers</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3 text-center">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{totalHours}</div>
-              <div className="text-xs text-muted-foreground mt-1">Hours</div>
-            </CardContent>
-          </Card>
+            <Progress value={completionPercentage} className="h-3 bg-white/20" />
+          </div>
         </div>
       </div>
 
-      {/* Desktop Full Layout */}
-      <div className="hidden md:block container mx-auto p-6 space-y-6">
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="programs">Programs</TabsTrigger>
-            <TabsTrigger value="operations">Operations</TabsTrigger>
-            <TabsTrigger value="financials">Financials</TabsTrigger>
-            <TabsTrigger value="impact">Impact</TabsTrigger>
-          </TabsList>
+      {/* Main Content */}
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
+        
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/20">
+                  <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{uniqueVolunteers}</div>
+                  <div className="text-xs text-blue-600/80 dark:text-blue-400/80">Volunteers</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          <TabsContent value="overview" className="mt-6 space-y-6">
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 border-green-200 dark:border-green-700">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/20">
+                  <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-700 dark:text-green-300">{totalHours}</div>
+                  <div className="text-xs text-green-600/80 dark:text-green-400/80">Hours Logged</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-500/20">
+                  <CheckCircle2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">{completedTasks}/{projectTasks.length}</div>
+                  <div className="text-xs text-purple-600/80 dark:text-purple-400/80">Tasks Done</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20 border-orange-200 dark:border-orange-700">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/20">
+                  <Heart className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">{project.livesTouched || 0}</div>
+                  <div className="text-xs text-orange-600/80 dark:text-orange-400/80">Lives Touched</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Description Card */}
             <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <StatusBadge status={project.status} />
-                      {project.aiTrackingEnabled && (
-                        <Badge variant="outline" className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400">
-                          <TrendingUp className="h-3 w-3 mr-1" />
-                          AI Tracking
-                        </Badge>
-                      )}
-                    </div>
-                    
-                    <p className="text-base text-muted-foreground">{project.description}</p>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {project.location && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{project.location}</span>
-                        </div>
-                      )}
-                      {project.startDate && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span>{format(new Date(project.startDate), "MMM d, yyyy")}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="lg:w-64 space-y-3">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Briefcase className="h-5 w-5 text-slate-500" />
+                  About This Project
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground leading-relaxed">
+                  {project.description || "No description provided for this project."}
+                </p>
+                
+                {/* Project Details Grid */}
+                <div className="grid grid-cols-2 gap-4 mt-6 pt-4 border-t">
+                  {project.ongoingHoursPerWeek && (
                     <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium">Completion</span>
-                        <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-500">{completionPercentage}%</span>
-                      </div>
-                      <CompletionProgress value={completionPercentage} className="h-3" />
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Time Commitment</div>
+                      <div className="font-medium">{project.ongoingHoursPerWeek} hrs/week</div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 text-center pt-3 border-t">
-                      <div>
-                        <div className="text-2xl font-bold text-primary">{completedTasks}</div>
-                        <div className="text-xs text-muted-foreground">Completed</div>
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold">{projectTasks.length}</div>
-                        <div className="text-xs text-muted-foreground">Total Tasks</div>
-                      </div>
+                  )}
+                  {project.commitmentType && (
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Commitment Type</div>
+                      <div className="font-medium capitalize">{project.commitmentType}</div>
                     </div>
-                  </div>
+                  )}
+                  {project.experienceLevel && (
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Experience Level</div>
+                      <div className="font-medium capitalize">{project.experienceLevel}</div>
+                    </div>
+                  )}
+                  {project.projectTotalHours && (
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Project Hours</div>
+                      <div className="font-medium">{project.projectTotalHours} hrs</div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/30">
-                      <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{uniqueVolunteers}</div>
-                      <div className="text-sm text-muted-foreground">Volunteers</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-green-50 dark:bg-green-900/30">
-                      <Clock className="h-6 w-6 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{totalHours}</div>
-                      <div className="text-sm text-muted-foreground">Total Hours</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30">
-                      <CheckCircle2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{completedTasks}</div>
-                      <div className="text-sm text-muted-foreground">Tasks Done</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/30">
-                      <Target className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{totalImpact}</div>
-                      <div className="text-sm text-muted-foreground">Impact Score</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
+            {/* SDG Goals Card */}
             {project.sdgGoals && project.sdgGoals.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    All Sustainable Development Goals
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Target className="h-5 w-5 text-slate-500" />
+                    Sustainable Development Goals
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[...project.sdgGoals].sort((a, b) => a - b).map((sdg: number) => (
                       <div
                         key={sdg}
-                        className="flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium"
+                        className="flex items-center gap-3 p-3 rounded-lg text-white"
                         style={{ backgroundColor: SDG_COLORS[sdg] }}
                       >
-                        <span className="font-bold">#{sdg}</span>
-                        <span className="text-sm">{SDG_NAMES[sdg]}</span>
+                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-lg">
+                          {sdg}
+                        </div>
+                        <div>
+                          <div className="font-semibold">{SDG_NAMES[sdg]}</div>
+                          {project.primarySdg === sdg && (
+                            <div className="text-xs opacity-80">Primary Goal</div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
 
-          <TabsContent value="programs" className="mt-6 space-y-6">
-            {/* Lives Touched Section (for organizations) */}
-            {isOrganization && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Lives Touched</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground mb-2">Total lives impacted by this project</p>
-                      <input
-                        type="number"
-                        value={project?.livesTouched || 0}
-                        onChange={(e) => {
-                          const newValue = parseInt(e.target.value) || 0;
-                          updateLivesTouched(newValue);
-                        }}
-                        className="w-full px-4 py-2 border rounded-lg"
-                        placeholder="Enter number of lives touched"
-                        data-testid="input-lives-touched"
-                      />
-                    </div>
-                    <div className="text-3xl font-bold text-primary">
-                      {project?.livesTouched || 0}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Project Tasks */}
+            {/* Tasks Card */}
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Project Tasks</CardTitle>
-                {isOrganization && (
-                  <Button size="sm" className="gap-2" data-testid="button-add-task">
-                    <Plus className="h-4 w-4" />
-                    Add Task
-                  </Button>
-                )}
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CheckCircle2 className="h-5 w-5 text-slate-500" />
+                    Project Tasks
+                  </CardTitle>
+                  {isOrganization && (
+                    <Button size="sm" className="gap-1" data-testid="button-add-task">
+                      <Plus className="h-4 w-4" />
+                      Add Task
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
+                {/* Task Summary */}
+                <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-green-600">{completedTasks}</div>
+                    <div className="text-xs text-muted-foreground">Completed</div>
+                  </div>
+                  <div className="text-center border-x">
+                    <div className="text-xl font-bold text-blue-600">{inProgressTasks}</div>
+                    <div className="text-xs text-muted-foreground">In Progress</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-slate-500">{pendingTasks}</div>
+                    <div className="text-xs text-muted-foreground">Pending</div>
+                  </div>
+                </div>
+
                 {projectTasks.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No tasks yet</p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>No tasks created yet</p>
+                    {isOrganization && <p className="text-sm mt-1">Click "Add Task" to create one</p>}
+                  </div>
                 ) : (
-                  <div className="space-y-3">
-                    {projectTasks.map((task: any) => (
+                  <div className="space-y-2">
+                    {projectTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                         data-testid={`task-item-${task.id}`}
-                        onClick={() => isOrganization && handleEditTask(task.id)}
                       >
-                        <div className="flex-1">
-                          <h4 className="font-medium">{task.title}</h4>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium truncate">{task.title}</h4>
+                          </div>
                           {task.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{task.description}</p>
+                            <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{task.description}</p>
                           )}
-                          <div className="text-xs text-muted-foreground mt-2">
-                            {task.estimatedHours && <span>Est. {task.estimatedHours}h • </span>}
-                            Due: {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No date'}
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-2">
+                            {task.estimatedHours && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {task.estimatedHours}h
+                              </span>
+                            )}
+                            {task.dueDate && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(task.dueDate), "MMM d")}
+                              </span>
+                            )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 ml-3">
+                          <StatusBadge status={task.status} />
                           {isOrganization && (
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteTask(task.id);
-                              }}
+                              onClick={() => handleDeleteTask(task.id)}
                               data-testid={`button-delete-task-${task.id}`}
                             >
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
                           )}
-                          <StatusBadge status={task.status} />
                         </div>
                       </div>
                     ))}
@@ -646,31 +561,38 @@ export default function ProjectDetail() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="operations" className="mt-6">
+            {/* Team Members Card */}
             <Card>
-              <CardHeader>
-                <CardTitle>Team Members ({uniqueVolunteers})</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Users className="h-5 w-5 text-slate-500" />
+                  Team Members ({uniqueVolunteers})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {uniqueVolunteers === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No volunteers yet</p>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>No volunteers assigned yet</p>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from(new Set(projectActivities.map((a: any) => a.userId))).map((userId: any) => {
-                      const user = users.find((u: any) => u.id === userId);
-                      const userActivities = projectActivities.filter((a: any) => a.userId === userId);
-                      const userHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {Array.from(new Set(projectActivities.map((a) => a.userId))).map((odUserId) => {
+                      const user = users.find((u) => u.id === odUserId);
+                      const userActivities = projectActivities.filter((a) => a.userId === odUserId);
+                      const userHours = userActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
                       
                       return (
-                        <div key={userId} className="flex items-center gap-3 p-4 border rounded-lg">
-                          <Avatar className="h-12 w-12">
+                        <div key={odUserId} className="flex items-center gap-3 p-3 border rounded-lg">
+                          <Avatar className="h-10 w-10">
                             <AvatarImage src={user?.avatar} />
-                            <AvatarFallback>{user?.displayName?.[0] || "V"}</AvatarFallback>
+                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
+                              {user?.displayName?.[0] || "V"}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{user?.displayName || `Volunteer #${userId}`}</p>
+                            <p className="font-medium truncate">{user?.displayName || `Volunteer #${odUserId}`}</p>
                             <p className="text-sm text-muted-foreground">{userHours} hours logged</p>
                           </div>
                         </div>
@@ -680,47 +602,161 @@ export default function ProjectDetail() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          </div>
 
-          <TabsContent value="financials" className="mt-6">
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            
+            {/* Skills Required Card */}
+            {(project.requiredSkills?.length || project.optionalSkills?.length) && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Award className="h-5 w-5 text-slate-500" />
+                    Skills
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {project.requiredSkills && project.requiredSkills.length > 0 && (
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Required</div>
+                      <div className="flex flex-wrap gap-2">
+                        {project.requiredSkills.map((skill, idx) => (
+                          <Badge key={idx} className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {project.optionalSkills && project.optionalSkills.length > 0 && (
+                    <div>
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Optional</div>
+                      <div className="flex flex-wrap gap-2">
+                        {project.optionalSkills.map((skill, idx) => (
+                          <Badge key={idx} variant="outline">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Impact Metrics Card */}
             <Card>
-              <CardHeader>
-                <CardTitle>Financial Summary</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart3 className="h-5 w-5 text-slate-500" />
+                  Impact Metrics
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2 p-4 border rounded-lg">
-                    <p className="text-sm text-muted-foreground">Total Hours</p>
-                    <p className="text-3xl font-bold">{totalHours}</p>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg">
+                  <div className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-1">Lives Touched</div>
+                  <div className="text-3xl font-bold text-orange-700 dark:text-orange-300">{project.livesTouched || 0}</div>
+                  {isOrganization && (
+                    <input
+                      type="number"
+                      value={project.livesTouched || 0}
+                      onChange={(e) => updateLivesTouched(parseInt(e.target.value) || 0)}
+                      className="mt-2 w-full px-3 py-1.5 text-sm border rounded-md"
+                      placeholder="Update lives touched"
+                      data-testid="input-lives-touched"
+                    />
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+                    <div className="text-xl font-bold">{totalHours}</div>
+                    <div className="text-xs text-muted-foreground">Total Hours</div>
                   </div>
-                  <div className="space-y-2 p-4 border rounded-lg">
-                    <p className="text-sm text-muted-foreground">Active Volunteers</p>
-                    <p className="text-3xl font-bold">{uniqueVolunteers}</p>
-                  </div>
-                  <div className="space-y-2 p-4 border rounded-lg">
-                    <p className="text-sm text-muted-foreground">Tasks Completed</p>
-                    <p className="text-3xl font-bold">{completedTasks}/{projectTasks.length}</p>
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
+                    <div className="text-xl font-bold">{totalImpact}</div>
+                    <div className="text-xs text-muted-foreground">Impact Score</div>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="impact" className="mt-6">
+            {/* Quick Actions Card */}
             <Card>
-              <CardHeader>
-                <CardTitle>Impact Metrics</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Quick Actions</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">Total Impact Score: <span className="text-2xl font-bold text-primary">{totalImpact}</span></p>
+              <CardContent className="space-y-2">
+                <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-share-project">
+                  <Share2 className="h-4 w-4" />
+                  Share Project
+                </Button>
+                {!isOrganization && (
+                  <Button className="w-full justify-start gap-2 bg-green-600 hover:bg-green-700 text-white" data-testid="button-apply-project">
+                    <Plus className="h-4 w-4" />
+                    Apply to Volunteer
+                  </Button>
+                )}
+                {canEditProject && (
+                  <Link href={`/projects/${projectId}/edit`} className="block">
+                    <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-edit-project-sidebar">
+                      <Edit className="h-4 w-4" />
+                      Edit Project
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+
+            {/* Project Info Card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Globe className="h-5 w-5 text-slate-500" />
+                  Project Info
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <StatusBadge status={project.status} />
+                </div>
+                {project.startDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Start Date</span>
+                    <span className="font-medium">{format(new Date(project.startDate), "MMM d, yyyy")}</span>
+                  </div>
+                )}
+                {project.endDate && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">End Date</span>
+                    <span className="font-medium">{format(new Date(project.endDate), "MMM d, yyyy")}</span>
+                  </div>
+                )}
+                {project.location && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Location</span>
+                    <span className="font-medium">{project.location}</span>
+                  </div>
+                )}
+                {project.engagementType && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Engagement</span>
+                    <span className="font-medium capitalize">{project.engagementType}</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
-      
+
       {/* Footer */}
       <Footer />
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

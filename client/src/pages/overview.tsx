@@ -400,6 +400,29 @@ export default function Overview() {
       </div>
 
       <div className="hidden md:block max-w-7xl mx-auto p-6 pb-24">
+        {/* Top Navigation Button */}
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={() => navigate('/my-work')}
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+            style={{
+              backgroundColor: '#f3f4f6',
+              color: '#374151',
+              border: '1px solid #d1d5db',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#e5e7eb';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+            }}
+            data-testid="button-projects"
+          >
+            Projects
+          </button>
+        </div>
+        
         <h1 className="text-3xl font-bold text-slate-900 mb-8">Team Overview</h1>
         
         {/* Key Metrics Grid - 4 Columns */}

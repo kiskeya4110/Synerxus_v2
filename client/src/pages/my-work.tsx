@@ -405,6 +405,50 @@ export default function MyWork() {
     <div className="h-screen overflow-y-auto">
       {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
+      {/* Top Navigation Buttons for Organization Managers */}
+      {isOrganizationManager && (
+        <div className="p-4 px-6 flex gap-2 items-center justify-start border-b">
+          <button
+            onClick={() => setLocation('/overview')}
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+            style={{
+              backgroundColor: '#f3f4f6',
+              color: '#374151',
+              border: '1px solid #d1d5db',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#e5e7eb';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+            }}
+            data-testid="button-team-overview"
+          >
+            Team Overview
+          </button>
+          <button
+            onClick={() => setLocation('/my-tasks')}
+            className="px-4 py-2 rounded-lg font-medium text-sm transition-all"
+            style={{
+              backgroundColor: '#f3f4f6',
+              color: '#374151',
+              border: '1px solid #d1d5db',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#e5e7eb';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#f3f4f6';
+            }}
+            data-testid="button-my-tasks"
+          >
+            My Tasks
+          </button>
+        </div>
+      )}
+      
       <div className="p-6 pb-4 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">{isOrganizationManager ? "Projects" : "My Work"}</h1>

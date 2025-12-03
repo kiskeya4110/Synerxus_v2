@@ -410,7 +410,7 @@ export default function Overview() {
             </div>
           </div>
 
-          <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginLeft: '-16px', marginRight: '-16px', paddingLeft: '16px', paddingRight: '16px' }}>
             <Button
               onClick={() => navigate('/impact-visualization')}
               variant="outline"

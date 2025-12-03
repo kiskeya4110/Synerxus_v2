@@ -1065,38 +1065,32 @@ export default function OrganizationImpactReport() {
                 </TabsList>
 
                 {/* Overview Tab */}
-                <TabsContent value="overview" className="space-y-6">
-                  {/* Overview buttons in 1 row x 5 columns - fixed layout for single report view */}
-                  <div className="grid grid-cols-5 gap-4">
-                    <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">
-                        Team Members
+                <TabsContent value="overview" className="space-y-4 md:space-y-6">
+                  {/* Overview buttons - responsive grid for mobile */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-1 md:mb-2">
+                        Team
                       </p>
-                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+                      <p className="text-xl md:text-2xl font-bold text-blue-900 dark:text-blue-100 mb-1 md:mb-2">
                         {totalTeam}
                       </p>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Volunteers:
-                          </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Vol:</span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">
                             {activeVolunteers.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Managers:
-                          </span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Mgr:</span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">
                             {projectManagers}
                           </span>
                         </div>
                         {activeVolunteers > 0 && (
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Avg/Vol:
-                            </span>
+                          <div className="flex justify-between items-center text-[10px] md:text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-blue-600 dark:text-blue-400">
                               {(totalHours / activeVolunteers).toFixed(1)}h
                             </span>
@@ -1105,102 +1099,63 @@ export default function OrganizationImpactReport() {
                       </div>
                     </div>
 
-                    <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                      <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">
-                        Total Hours Logged
+                    <div className="bg-green-50 dark:bg-green-900 p-2.5 md:p-4 rounded-lg border border-green-200 dark:border-green-700">
+                      <p className="text-[10px] md:text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-1 md:mb-2">
+                        Hours
                       </p>
-                      <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">
+                      <p className="text-xl md:text-2xl font-bold text-green-900 dark:text-green-100 mb-1 md:mb-2">
                         {Math.round(totalHours)}h
                       </p>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Activities:
-                          </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Acts:</span>
                           <span className="font-bold text-green-600 dark:text-green-400">
                             {filteredActivities.length}
                           </span>
                         </div>
                         {filteredActivities.length > 0 && (
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Avg/Activity:
-                            </span>
+                          <div className="flex justify-between items-center text-[10px] md:text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-green-600 dark:text-green-400">
-                              {(totalHours / filteredActivities.length).toFixed(
-                                1,
-                              )}
-                              h
+                              {(totalHours / filteredActivities.length).toFixed(1)}h
                             </span>
                           </div>
                         )}
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Peak:
-                          </span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Filter:</span>
                           <span className="font-bold text-green-600 dark:text-green-400">
-                            {timeFilter === "all"
-                              ? "All Time"
-                              : timeFilter === "month"
-                                ? "This Mo."
-                                : "Period"}
+                            {timeFilter === "all" ? "All" : timeFilter === "month" ? "Mo." : "Q"}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                      <p className="text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-2">
-                        Projects Managed
+                    <div className="bg-purple-50 dark:bg-purple-900 p-2.5 md:p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                      <p className="text-[10px] md:text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-1 md:mb-2">
+                        Projects
                       </p>
-                      <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">
+                      <p className="text-xl md:text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1 md:mb-2">
                         {totalProjects.toLocaleString()}
                       </p>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1">
                         {projects.length > 0 && (
                           <>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Active:
-                              </span>
+                            <div className="flex justify-between items-center text-[10px] md:text-xs">
+                              <span className="text-gray-600 dark:text-gray-400">Act:</span>
                               <span className="font-bold text-purple-600 dark:text-purple-400">
-                                {
-                                  projects.filter(
-                                    (p) =>
-                                      p.status?.toLowerCase() === "active" ||
-                                      p.status?.toLowerCase() === "in progress",
-                                  ).length
-                                }
+                                {projects.filter((p) => p.status?.toLowerCase() === "active" || p.status?.toLowerCase() === "in progress").length}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Completed:
-                              </span>
+                            <div className="flex justify-between items-center text-[10px] md:text-xs">
+                              <span className="text-gray-600 dark:text-gray-400">Done:</span>
                               <span className="font-bold text-purple-600 dark:text-purple-400">
-                                {
-                                  projects.filter(
-                                    (p) =>
-                                      p.status?.toLowerCase() === "completed",
-                                  ).length
-                                }
+                                {projects.filter((p) => p.status?.toLowerCase() === "completed").length}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Avg %:
-                              </span>
+                            <div className="flex justify-between items-center text-[10px] md:text-xs">
+                              <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                               <span className="font-bold text-purple-600 dark:text-purple-400">
-                                {projects.length > 0
-                                  ? Math.round(
-                                      projects.reduce(
-                                        (sum, p) =>
-                                          sum + (p.completionPercentage || 0),
-                                        0,
-                                      ) / projects.length,
-                                    )
-                                  : 0}
-                                %
+                                {projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.completionPercentage || 0), 0) / projects.length) : 0}%
                               </span>
                             </div>
                           </>
@@ -1208,85 +1163,74 @@ export default function OrganizationImpactReport() {
                       </div>
                     </div>
 
-                    <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                      <p className="text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-2">
-                        Avg Hours per Vol
+                    <div className="bg-orange-50 dark:bg-orange-900 p-2.5 md:p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                      <p className="text-[10px] md:text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-1 md:mb-2">
+                        Beneficiaries
                       </p>
-                      <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">
-                        {activeVolunteers > 0
-                          ? (totalHours / activeVolunteers).toFixed(1)
-                          : 0}
-                        h
+                      <p className="text-xl md:text-2xl font-bold text-orange-900 dark:text-orange-100 mb-1 md:mb-2">
+                        {beneficiariesServed.toLocaleString()}
                       </p>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Total Vol:
-                          </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Lives:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
-                            {activeVolunteers.toLocaleString()}
+                            {(beneficiariesServed * 1.2).toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Total Hours:
-                          </span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Rate:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
-                            {Math.round(totalHours)}
+                            {beneficiariesServed > 0 ? "95%" : "0%"}
                           </span>
                         </div>
-                        {activeVolunteers > 0 && leaderData && (
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Top Vol:
-                            </span>
-                            <span className="font-bold text-orange-600 dark:text-orange-400">
-                              {Math.round(leaderData.hours)}h
-                            </span>
-                          </div>
-                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-red-50 dark:bg-red-900 p-2.5 md:p-4 rounded-lg border border-red-200 dark:border-red-700">
+                      <p className="text-[10px] md:text-xs text-red-600 dark:text-red-400 uppercase font-semibold mb-1 md:mb-2">
+                        Impact
+                      </p>
+                      <p className="text-xl md:text-2xl font-bold text-red-900 dark:text-red-100 mb-1 md:mb-2">
+                        {isOrganizationManager ? dashboardData?.impactScore || organizationImpactScore : organizationImpactScore}/100
+                      </p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Rating:</span>
+                          <span className="font-bold text-red-600 dark:text-red-400">
+                            {organizationImpactScore >= 75 ? "A+" : organizationImpactScore >= 60 ? "A" : "B+"}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                          <span className="font-bold text-red-600 dark:text-red-400">Active</span>
+                        </div>
                       </div>
                     </div>
 
                     {leaderData && (
-                      <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-700">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">
-                            ⭐ Impact Leader
+                      <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 p-2.5 md:p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 col-span-2 md:col-span-1">
+                        <div className="flex items-center justify-between mb-1 md:mb-3">
+                          <p className="text-[10px] md:text-xs text-yellow-600 dark:text-yellow-400 uppercase font-semibold">
+                            ⭐ Leader
                           </p>
-                          <Badge className="bg-yellow-600 text-white text-xs px-2 py-1">
-                            Top Volunteer
+                          <Badge className="bg-yellow-600 text-white text-[9px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1">
+                            Top Vol
                           </Badge>
                         </div>
-                        <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 mb-2">
+                        <p className="text-base md:text-2xl font-bold text-yellow-900 dark:text-yellow-100 mb-1 md:mb-2 truncate">
                           {leaderData.name}
                         </p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Hours:
-                            </span>
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center text-[10px] md:text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Hrs:</span>
                             <span className="font-bold text-yellow-600 dark:text-yellow-400">
                               {Math.round(leaderData.hours)}h
                             </span>
                           </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Activities:
-                            </span>
+                          <div className="flex justify-between items-center text-[10px] md:text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Acts:</span>
                             <span className="font-bold text-yellow-600 dark:text-yellow-400">
                               {leaderData.activities}
-                            </span>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Avg/Activity:
-                            </span>
-                            <span className="font-bold text-yellow-600 dark:text-yellow-400">
-                              {(
-                                leaderData.hours / leaderData.activities
-                              ).toFixed(1)}
-                              h
                             </span>
                           </div>
                         </div>
@@ -1871,40 +1815,34 @@ export default function OrganizationImpactReport() {
               </Tabs>
             ) : (
               // Single Page View - Render all tabs sequentially with identical styling
-              <div className="space-y-8">
+              <div className="space-y-6 md:space-y-8">
                 {/* OVERVIEW SECTION */}
-                <div className="space-y-6">
-                  {/* Full-width KPIs matching tab view - 5 columns */}
-                  <div className="grid grid-cols-5 gap-4">
-                    <div className="bg-blue-50 dark:bg-blue-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
-                      <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-2">
-                        Team Members
+                <div className="space-y-4 md:space-y-6">
+                  {/* Responsive KPIs grid - 2 cols mobile, 3 cols tablet, 5 cols desktop */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
+                    <div className="bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+                      <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-1 md:mb-2">
+                        Team
                       </p>
-                      <p className="text-2xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+                      <p className="text-xl md:text-2xl font-bold text-blue-900 dark:text-blue-100 mb-1 md:mb-2">
                         {totalTeam}
                       </p>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Volunteers:
-                          </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Vol:</span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">
                             {activeVolunteers.toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Managers:
-                          </span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Mgr:</span>
                           <span className="font-bold text-blue-600 dark:text-blue-400">
                             {projectManagers}
                           </span>
                         </div>
                         {activeVolunteers > 0 && (
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Avg/Vol:
-                            </span>
+                          <div className="flex justify-between items-center text-[10px] md:text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-blue-600 dark:text-blue-400">
                               {(totalHours / activeVolunteers).toFixed(1)}h
                             </span>
@@ -1913,104 +1851,63 @@ export default function OrganizationImpactReport() {
                       </div>
                     </div>
 
-                    <div className="bg-green-50 dark:bg-green-900 p-4 rounded-lg border border-green-200 dark:border-green-700">
-                      <p className="text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-2">
-                        Total Hours Logged
+                    <div className="bg-green-50 dark:bg-green-900 p-2.5 md:p-4 rounded-lg border border-green-200 dark:border-green-700">
+                      <p className="text-[10px] md:text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-1 md:mb-2">
+                        Hours
                       </p>
-                      <p className="text-2xl font-bold text-green-900 dark:text-green-100 mb-2">
+                      <p className="text-xl md:text-2xl font-bold text-green-900 dark:text-green-100 mb-1 md:mb-2">
                         {Math.round(totalHours)}h
                       </p>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Activities:
-                          </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Acts:</span>
                           <span className="font-bold text-green-600 dark:text-green-400">
                             {filteredActivities.length}
                           </span>
                         </div>
                         {filteredActivities.length > 0 && (
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
-                              Avg/Activity:
-                            </span>
+                          <div className="flex justify-between items-center text-[10px] md:text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                             <span className="font-bold text-green-600 dark:text-green-400">
-                              {(totalHours / filteredActivities.length).toFixed(
-                                1,
-                              )}
-                              h
+                              {(totalHours / filteredActivities.length).toFixed(1)}h
                             </span>
                           </div>
                         )}
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Filter:
-                          </span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Filter:</span>
                           <span className="font-bold text-green-600 dark:text-green-400">
-                            {timeFilter === "all"
-                              ? "All Time"
-                              : timeFilter === "month"
-                                ? "This Mo."
-                                : timeFilter === "quarter"
-                                  ? "This Q"
-                                  : "This Yr"}
+                            {timeFilter === "all" ? "All" : timeFilter === "month" ? "Mo." : "Q"}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="bg-purple-50 dark:bg-purple-900 p-4 rounded-lg border border-purple-200 dark:border-purple-700">
-                      <p className="text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-2">
-                        Projects Managed
+                    <div className="bg-purple-50 dark:bg-purple-900 p-2.5 md:p-4 rounded-lg border border-purple-200 dark:border-purple-700">
+                      <p className="text-[10px] md:text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-1 md:mb-2">
+                        Projects
                       </p>
-                      <p className="text-2xl font-bold text-purple-900 dark:text-purple-100 mb-2">
+                      <p className="text-xl md:text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1 md:mb-2">
                         {totalProjects.toLocaleString()}
                       </p>
-                      <div className="space-y-1.5">
+                      <div className="space-y-1">
                         {projects.length > 0 && (
                           <>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Active:
-                              </span>
+                            <div className="flex justify-between items-center text-[10px] md:text-xs">
+                              <span className="text-gray-600 dark:text-gray-400">Act:</span>
                               <span className="font-bold text-purple-600 dark:text-purple-400">
-                                {
-                                  projects.filter(
-                                    (p) =>
-                                      p.status?.toLowerCase() === "active" ||
-                                      p.status?.toLowerCase() === "in progress",
-                                  ).length
-                                }
+                                {projects.filter((p) => p.status?.toLowerCase() === "active" || p.status?.toLowerCase() === "in progress").length}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Completed:
-                              </span>
+                            <div className="flex justify-between items-center text-[10px] md:text-xs">
+                              <span className="text-gray-600 dark:text-gray-400">Done:</span>
                               <span className="font-bold text-purple-600 dark:text-purple-400">
-                                {
-                                  projects.filter(
-                                    (p) =>
-                                      p.status?.toLowerCase() === "completed",
-                                  ).length
-                                }
+                                {projects.filter((p) => p.status?.toLowerCase() === "completed").length}
                               </span>
                             </div>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                Avg %:
-                              </span>
+                            <div className="flex justify-between items-center text-[10px] md:text-xs">
+                              <span className="text-gray-600 dark:text-gray-400">Avg:</span>
                               <span className="font-bold text-purple-600 dark:text-purple-400">
-                                {projects.length > 0
-                                  ? Math.round(
-                                      projects.reduce(
-                                        (sum, p) =>
-                                          sum + (p.completionPercentage || 0),
-                                        0,
-                                      ) / projects.length,
-                                    )
-                                  : 0}
-                                %
+                                {projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.completionPercentage || 0), 0) / projects.length) : 0}%
                               </span>
                             </div>
                           </>
@@ -2018,26 +1915,22 @@ export default function OrganizationImpactReport() {
                       </div>
                     </div>
 
-                    <div className="bg-orange-50 dark:bg-orange-900 p-4 rounded-lg border border-orange-200 dark:border-orange-700">
-                      <p className="text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-2">
-                        Beneficiaries Served
+                    <div className="bg-orange-50 dark:bg-orange-900 p-2.5 md:p-4 rounded-lg border border-orange-200 dark:border-orange-700">
+                      <p className="text-[10px] md:text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-1 md:mb-2">
+                        Beneficiaries
                       </p>
-                      <p className="text-2xl font-bold text-orange-900 dark:text-orange-100 mb-2">
+                      <p className="text-xl md:text-2xl font-bold text-orange-900 dark:text-orange-100 mb-1 md:mb-2">
                         {beneficiariesServed.toLocaleString()}
                       </p>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Est. Lives:
-                          </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Lives:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
                             {(beneficiariesServed * 1.2).toLocaleString()}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Reach Rate:
-                          </span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Rate:</span>
                           <span className="font-bold text-orange-600 dark:text-orange-400">
                             {beneficiariesServed > 0 ? "95%" : "0%"}
                           </span>
@@ -2045,40 +1938,23 @@ export default function OrganizationImpactReport() {
                       </div>
                     </div>
 
-                    <div className="bg-red-50 dark:bg-red-900 p-4 rounded-lg border border-red-200 dark:border-red-700">
-                      <p className="text-xs text-red-600 dark:text-red-400 uppercase font-semibold mb-2">
-                        Impact Score
+                    <div className="bg-red-50 dark:bg-red-900 p-2.5 md:p-4 rounded-lg border border-red-200 dark:border-red-700">
+                      <p className="text-[10px] md:text-xs text-red-600 dark:text-red-400 uppercase font-semibold mb-1 md:mb-2">
+                        Impact
                       </p>
-                      <p className="text-2xl font-bold text-red-900 dark:text-red-100 mb-2">
-                        {isOrganizationManager
-                          ? dashboardData?.impactScore ||
-                            organizationImpactScore
-                          : organizationImpactScore}
-                        /100
+                      <p className="text-xl md:text-2xl font-bold text-red-900 dark:text-red-100 mb-1 md:mb-2">
+                        {isOrganizationManager ? dashboardData?.impactScore || organizationImpactScore : organizationImpactScore}/100
                       </p>
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Rating:
-                          </span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Rating:</span>
                           <span className="font-bold text-red-600 dark:text-red-400">
-                            {isOrganizationManager
-                              ? dashboardData?.impactScore ||
-                                organizationImpactScore
-                              : organizationImpactScore >= 75
-                                ? "A+"
-                                : organizationImpactScore >= 60
-                                  ? "A"
-                                  : "B+"}
+                            {organizationImpactScore >= 75 ? "A+" : organizationImpactScore >= 60 ? "A" : "B+"}
                           </span>
                         </div>
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">
-                            Status:
-                          </span>
-                          <span className="font-bold text-red-600 dark:text-red-400">
-                            Active
-                          </span>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Status:</span>
+                          <span className="font-bold text-red-600 dark:text-red-400">Active</span>
                         </div>
                       </div>
                     </div>

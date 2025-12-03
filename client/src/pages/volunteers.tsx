@@ -246,7 +246,7 @@ export default function Volunteers() {
     <>
       {isOrganization && <OfflineBanner />}
       {isOrganization && <OrganizationHeader activeTab="volunteers" />}
-      <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6" : "h-screen overflow-y-auto"}>
+      <div className={isOrganization ? "h-screen overflow-y-auto pb-24 max-w-[1400px] mx-auto p-6" : "h-screen overflow-y-auto pb-24"}>
       {/* Page Header */}
       <div className="mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl font-bold mb-2">Volunteers</h1>
@@ -782,10 +782,8 @@ export default function Volunteers() {
       {/* Mobile Bottom Navigation - Organization Only */}
       {isOrganization && <MobileBottomNav />}
       
-      {/* Footer - Hidden on Mobile */}
-      <div className="hidden md:block">
-        <Footer />
-      </div>
+      {/* Footer */}
+      <Footer />
     </>
   );
 }

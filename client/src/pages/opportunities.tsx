@@ -47,7 +47,7 @@ export default function Opportunities() {
 
   if (isLoading) {
     return (
-      <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
+      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
         {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
@@ -64,7 +64,7 @@ export default function Opportunities() {
   }
 
   return (
-    <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
+    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
       {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
       <div className={isOrganizationUser ? "p-6" : "p-6"}>
         <div className="flex items-center justify-between mb-6">

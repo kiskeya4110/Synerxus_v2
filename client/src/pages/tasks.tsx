@@ -67,7 +67,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className={isOrganizationUser ? "min-h-screen pb-24" : ""}>
+    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
       <div className={isOrganizationUser ? "p-6" : ""}>
         {/* Page Header */}

@@ -402,7 +402,7 @@ export default function MyWork() {
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
 
   return (
-    <div className="min-h-screen pb-24">
+    <div className="h-screen overflow-y-auto">
       {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
       <div className="p-6 pb-4 flex items-start justify-between">

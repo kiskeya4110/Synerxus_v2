@@ -89,7 +89,7 @@ export default function Overview() {
   const challengeProgress = Math.min(78, Math.round((metrics.totalHours / 500) * 100));
 
   return (
-    <div className="min-h-screen bg-slate-100" style={{ paddingBottom: '180px' }}>
+    <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
       <OrganizationHeader activeTab="overview" />
       
       <div className="md:hidden">

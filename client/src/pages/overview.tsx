@@ -92,7 +92,7 @@ export default function Overview() {
     <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
       <OrganizationHeader activeTab="overview" />
       
-      <div className="md:hidden mx-4 sm:mx-6">
+      <div className="md:hidden" style={{ paddingLeft: '16px', paddingRight: '16px' }}>
         <div
           style={{
             background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%)',

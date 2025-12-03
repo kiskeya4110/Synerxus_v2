@@ -510,6 +510,7 @@ export default function Overview() {
         </div>
       </div>
 
+      {/* Footer and Navigation */}
       <Footer />
       <MobileBottomNav />
     </div>

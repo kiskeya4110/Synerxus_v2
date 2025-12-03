@@ -659,7 +659,7 @@ export default function Landing() {
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <WorldMapHeader selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry} />
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto">
           <button
             onClick={() => setSelectedCountry("community")}
             onMouseEnter={() => setVolunteerFact(getRandomFact('volunteers'))}
@@ -781,20 +781,43 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* CTA Text */}
+          {/* CTA Section */}
           <div className="text-center mt-12 sm:mt-16 md:mt-20 pt-8 sm:pt-12 border-t border-slate-200 px-4 relative z-20">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3 sm:mb-4">
               <span className="text-blue-900">From Local Service</span><br />
               <span className="text-amber-600">to Global Legacy</span>
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-8 sm:mb-10 max-w-2xl mx-auto">
               Join thousands making measurable impact across all 17 SDGs worldwide.
             </p>
-            <Link href={isLoggedIn ? "/dashboard" : "/volunteer-intake"}>
-              <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
-                {isLoggedIn ? "My Dashboard" : "Join Now"}
-              </Button>
-            </Link>
+            
+            {/* Main CTA Button */}
+            <div className="mb-8">
+              <Link href={isLoggedIn ? "/dashboard" : "/volunteer-intake"}>
+                <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
+                  {isLoggedIn ? "My Dashboard" : "Join Now"}
+                </Button>
+              </Link>
+            </div>
+
+            {/* Secondary CTA Options - 1 + 3 columns on mobile, 3 columns on desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 max-w-2xl mx-auto">
+              <Link href="/discover-opportunities" className="w-full">
+                <Button variant="outline" className="w-full min-h-[44px] bg-white text-blue-900 border-2 border-blue-900 hover:bg-blue-50 font-semibold text-sm sm:text-base rounded-lg">
+                  Explore Opportunities
+                </Button>
+              </Link>
+              <Link href="/organizations" className="w-full">
+                <Button variant="outline" className="w-full min-h-[44px] bg-white text-amber-600 border-2 border-amber-600 hover:bg-amber-50 font-semibold text-sm sm:text-base rounded-lg">
+                  Find Organizations
+                </Button>
+              </Link>
+              <Link href="/sdg-mapping" className="w-full">
+                <Button variant="outline" className="w-full min-h-[44px] bg-white text-slate-900 border-2 border-slate-900 hover:bg-slate-100 font-semibold text-sm sm:text-base rounded-lg">
+                  Explore SDGs
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

@@ -1138,13 +1138,11 @@ export default function OrganizationDashboard() {
       `}</style>
 
 
+      {/* Footer */}
+      <Footer />
+
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav onCreateClick={() => setShowCreateModal(true)} />
-
-      {/* Footer - Hidden on Mobile */}
-      <div className="hidden md:block">
-        <Footer />
-      </div>
     </div>
   );
 }

@@ -373,6 +373,43 @@ export default function Overview() {
             </Button>
           </div>
 
+          {/* AI Insights Panel */}
+          <div style={{
+            marginTop: '16px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '16px',
+            padding: '16px',
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'start', gap: '12px', marginBottom: '12px' }}>
+              <div style={{ fontSize: '24px' }}>✨</div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>AI Impact Insights</h3>
+                <p style={{ fontSize: '12px', opacity: 0.95, lineHeight: '1.4', marginBottom: '8px' }}>
+                  {sdgContributions.length > 0 
+                    ? `You're making a significant impact on ${metrics.sdgsAddressed} goals! Your focus on SDG ${sdgContributions.reduce((max: any, curr: any) => (curr.hours > max.hours ? curr : max)).goal} is strong with ${Math.round(sdgContributions.reduce((max: any, curr: any) => (curr.hours > max.hours ? curr : max)).hours)} hours contributed.`
+                    : 'Start contributing to SDGs to unlock personalized insights about your impact.'
+                  }
+                </p>
+                <Button
+                  onClick={() => navigate('/impact-report')}
+                  size="sm"
+                  style={{
+                    backgroundColor: 'white',
+                    color: '#667eea',
+                    fontWeight: '600',
+                    borderRadius: '8px',
+                  }}
+                  className="hover:shadow-lg transition-all"
+                  data-testid="button-ai-insights"
+                >
+                  View Analysis <ChevronRight size={14} />
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <Button
               onClick={() => navigate('/impact-visualization')}

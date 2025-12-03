@@ -348,14 +348,13 @@ const PersonalInfoSection = ({
           <FormControl>
             <Input
               {...field}
-              readOnly
-              disabled
-              className="bg-muted"
+              type="email"
+              placeholder="your.email@example.com"
               data-testid="input-volunteer-email"
             />
           </FormControl>
           <FormDescription>
-            This email is linked to your account
+            You can change your email address here
           </FormDescription>
           <FormMessage />
         </FormItem>
@@ -1077,6 +1076,7 @@ export default function VolunteerProfileSettings() {
       });
 
       const profileData = {
+        email: data.email, // Add email to profile update
         volunteerName: data.name,
         skills: skillsArray, // Array of skill names (strings)
         skillRatings: skillRatingsObj, // Object {skillName: proficiency} for matching

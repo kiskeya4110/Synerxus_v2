@@ -9,6 +9,7 @@ interface ProfileUpdateData {
   bio?: string;
   displayName?: string;
   skills?: string[];
+  email?: string;
   
   // Volunteer profile fields
   location?: string;
@@ -51,6 +52,7 @@ export async function updateVolunteerProfileWithUser(
     if (profileData.bio !== undefined) userUpdates.bio = profileData.bio;
     if (profileData.displayName !== undefined) userUpdates.displayName = profileData.displayName;
     if (profileData.skills !== undefined) userUpdates.skills = profileData.skills;
+    if (profileData.email !== undefined) userUpdates.email = profileData.email;
     
     if (Object.keys(userUpdates).length > 0) {
       const [updatedUser] = await tx

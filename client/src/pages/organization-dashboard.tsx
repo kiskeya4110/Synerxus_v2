@@ -319,77 +319,81 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Mobile SDG Distribution PieChart */}
+        {/* Mobile SDG Distribution Doughnut Chart */}
         <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>SDG Distribution</h3>
-          <div style={{ height: '200px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px', textAlign: 'center' }}>SDG Impact Distribution</h3>
+          <div style={{ height: '280px', position: 'relative' }}>
             {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={dashboardData.sdgDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ cx, cy, midAngle, outerRadius, goal, hours, index }) => {
-                      const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                      const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
-                      const percent = (hoursNum / total) * 100;
-                      if (percent < 10) return null;
-                      const RADIAN = Math.PI / 180;
-                      const radius = outerRadius + 20 + (index % 2) * 12;
-                      const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                      const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                      const sdgInfo = SDG_GOALS[goal];
-                      const sdgName = sdgInfo?.shortName || `SDG ${goal}`;
-                      return (
-                        <text 
-                          x={x} 
-                          y={y} 
-                          fill={sdgInfo?.color || '#166534'}
-                          textAnchor={x > cx ? 'start' : 'end'} 
-                          dominantBaseline="central"
-                          style={{ fontSize: '9px', fontWeight: '600' }}
-                        >
-                          {`${sdgName} ${percent.toFixed(0)}%`}
-                        </text>
-                      );
-                    }}
-                    outerRadius={60}
-                    paddingAngle={3}
-                    fill="#8884d8"
-                    dataKey="hours"
-                  >
-                    {dashboardData.sdgDistribution.map((entry: any) => (
-                      <Cell key={`cell-${entry.goal}`} fill={getSDGColor(entry.goal)} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        const sdgInfo = SDG_GOALS[data.goal];
-                        return (
-                          <div style={{ backgroundColor: 'white', padding: '10px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: `2px solid ${getSDGColor(data.goal)}` }}>
-                            <p style={{ fontWeight: '600', marginBottom: '4px', fontSize: '12px', color: getSDGColor(data.goal) }}>{sdgInfo?.name || `SDG ${data.goal}`}</p>
-                            <p style={{ fontSize: '12px', color: '#666' }}>Hours: {data.hours}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Legend 
-                    layout="horizontal" 
-                    verticalAlign="bottom" 
-                    wrapperStyle={{ fontSize: '8px', paddingTop: '8px' }}
-                    formatter={(value, entry: any) => {
-                      const sdg = entry.payload;
-                      return <span style={{ color: '#6b7280', fontSize: '8px' }}>SDG {sdg.goal}</span>;
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              <>
+                {/* Center Label - Average Completion */}
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -60%)',
+                  textAlign: 'center',
+                  zIndex: 10,
+                  pointerEvents: 'none'
+                }}>
+                  <div style={{ fontSize: '28px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
+                    {dashboardData.projects && dashboardData.projects.length > 0 
+                      ? Math.round(dashboardData.projects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / dashboardData.projects.length)
+                      : 0}%
+                  </div>
+                  <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: '500', marginTop: '2px' }}>
+                    Avg Completion
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dashboardData.sdgDistribution}
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={50}
+                      outerRadius={85}
+                      paddingAngle={2}
+                      fill="#8884d8"
+                      dataKey="hours"
+                      stroke="white"
+                      strokeWidth={2}
+                    >
+                      {dashboardData.sdgDistribution.map((entry: any) => (
+                        <Cell key={`cell-${entry.goal}`} fill={getSDGColor(entry.goal)} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          const sdgInfo = SDG_GOALS[data.goal];
+                          const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                          const percent = ((data.hours / total) * 100).toFixed(1);
+                          return (
+                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '10px', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', border: `2px solid ${getSDGColor(data.goal)}` }}>
+                              <p style={{ fontWeight: '700', marginBottom: '6px', fontSize: '13px', color: getSDGColor(data.goal) }}>{sdgInfo?.name || `SDG ${data.goal}`}</p>
+                              <p style={{ fontSize: '12px', color: '#374151', margin: '2px 0' }}><strong>{data.hours}</strong> hours ({percent}%)</p>
+                              <p style={{ fontSize: '11px', color: '#6b7280', margin: '2px 0' }}>{data.projects} projects • {data.volunteers || 0} volunteers</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend 
+                      layout="horizontal" 
+                      verticalAlign="bottom"
+                      wrapperStyle={{ fontSize: '9px', paddingTop: '4px' }}
+                      formatter={(value, entry: any) => {
+                        const sdg = entry.payload;
+                        const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                        const percent = Math.round((sdg.hours / total) * 100);
+                        return <span style={{ color: '#374151', fontSize: '9px', fontWeight: '500' }}>SDG {sdg.goal} ({percent}%)</span>;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </>
             ) : (
               <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
                 No SDG data available
@@ -544,176 +548,174 @@ export default function OrganizationDashboard() {
         <div className="hidden md:grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
           {/* Left Column: SDG Distribution + Map */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* SDG Impact Distribution - Interactive Pie Chart */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>SDG Impact Distribution</h3>
-                <span style={{ fontSize: '12px', color: '#9ca3af', fontWeight: '500' }}>
-                  Total: {dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0} hours
+            {/* SDG Impact Distribution - Doughnut Chart with Average Completion */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>SDG Impact Distribution</h3>
+                <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500', backgroundColor: '#f3f4f6', padding: '6px 12px', borderRadius: '20px' }}>
+                  {dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0} total hours
                 </span>
               </div>
-              <div style={{ height: '360px', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ height: '420px', position: 'relative' }}>
                 {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
                   <>
-                    <div style={{ flex: 1, minHeight: 0 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={dashboardData.sdgDistribution.map(item => ({
-                              ...item,
-                              name: `SDG ${item.goal}`,
-                              fullName: getSDGName(item.goal),
-                              color: SDG_GOALS[item.goal]?.color || '#166534'
-                            }))}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={50}
-                            outerRadius={85}
-                            paddingAngle={3}
-                            dataKey="hours"
-                            nameKey="name"
-                            labelLine={false}
-                            label={({ cx, cy, midAngle, outerRadius, goal, hours, index }) => {
-                              const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                              const hoursNum = typeof hours === 'string' ? parseInt(hours) : hours;
-                              const percent = (hoursNum / total) * 100;
-                              if (percent < 8) return null;
-                              const RADIAN = Math.PI / 180;
-                              const radius = outerRadius + 30 + (index % 2) * 15;
-                              const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                              const y = cy + radius * Math.sin(-midAngle * RADIAN);
-                              const sdgInfo = SDG_GOALS[goal];
-                              const sdgName = sdgInfo?.shortName || `SDG ${goal}`;
-                              return (
-                                <text 
-                                  x={x} 
-                                  y={y} 
-                                  fill={sdgInfo?.color || '#166534'}
-                                  textAnchor={x > cx ? 'start' : 'end'} 
-                                  dominantBaseline="central"
-                                  style={{ fontSize: '11px', fontWeight: '600' }}
-                                >
-                                  {`${sdgName} ${percent.toFixed(0)}%`}
-                                </text>
-                              );
-                            }}
-                          >
-                            {dashboardData.sdgDistribution.map((entry) => (
-                              <Cell 
-                                key={`cell-${entry.goal}`} 
-                                fill={SDG_GOALS[entry.goal]?.color || '#166534'}
-                                stroke={hoveredSDG === entry.goal ? '#111827' : 'white'}
-                                strokeWidth={hoveredSDG === entry.goal ? 3 : 2}
-                                style={{ 
-                                  cursor: 'pointer',
-                                  filter: hoveredSDG === entry.goal ? 'brightness(1.1)' : 'brightness(1)',
-                                  transition: 'all 0.2s ease-in-out'
-                                }}
-                                onMouseEnter={() => setHoveredSDG(entry.goal)}
-                                onMouseLeave={() => setHoveredSDG(null)}
-                              />
-                            ))}
-                          </Pie>
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            const sdgInfo = SDG_GOALS[data.goal];
-                            const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                            const percent = ((data.hours / total) * 100).toFixed(1);
-                            return (
-                              <div style={{ 
-                                backgroundColor: 'white', 
-                                padding: '16px', 
-                                borderRadius: '12px', 
-                                boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
-                                border: `2px solid ${sdgInfo?.color || '#166534'}`,
-                                maxWidth: '340px'
-                              }}>
-                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                                  <div style={{ 
-                                    width: '32px', 
-                                    height: '32px', 
-                                    borderRadius: '8px', 
-                                    backgroundColor: sdgInfo?.color || '#166534',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    fontWeight: 'bold',
-                                    flexShrink: 0
-                                  }}>
-                                    {data.goal}
-                                  </div>
-                                  <div style={{ flex: 1 }}>
-                                    <p style={{ fontWeight: '700', fontSize: '15px', color: '#111827', margin: '0 0 4px 0' }}>
-                                      {sdgInfo?.name || `SDG ${data.goal}`}
-                                    </p>
-                                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '0', lineHeight: '1.3' }}>
-                                      {sdgInfo?.description}
-                                    </p>
-                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>
-                                      {percent}% of total impact hours
-                                    </p>
-                                  </div>
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', paddingTop: '12px', borderTop: `1px solid ${sdgInfo?.color || '#166534'}33` }}>
-                                  <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '17px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.hours}</p>
-                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>Hours</p>
-                                  </div>
-                                  <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '17px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.projects}</p>
-                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>Projects</p>
-                                  </div>
-                                  <div style={{ textAlign: 'center' }}>
-                                    <p style={{ fontSize: '17px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.volunteers || 0}</p>
-                                    <p style={{ fontSize: '11px', color: '#9ca3af', margin: '6px 0 0 0', fontWeight: '500' }}>Volunteers</p>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                          <Legend 
-                            layout="horizontal" 
-                            verticalAlign="bottom"
-                            height={36}
-                            wrapperStyle={{ paddingTop: '12px', overflow: 'visible' }}
-                            formatter={(value, entry: any) => {
-                              const sdg = entry.payload;
-                              const sdgInfo = SDG_GOALS[sdg.goal];
-                              const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                              const percent = Math.round((sdg.hours / total) * 100);
-                              return (
-                                <span 
-                                  style={{ 
-                                    color: hoveredSDG === sdg.goal ? '#166534' : '#6b7280',
-                                    fontSize: '11px',
-                                    fontWeight: hoveredSDG === sdg.goal ? '600' : '500',
-                                    cursor: 'pointer',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'all 0.2s ease',
-                                    marginRight: '4px',
-                                    padding: '4px 6px',
-                                    borderRadius: '4px',
-                                    backgroundColor: hoveredSDG === sdg.goal ? 'rgba(22, 101, 52, 0.08)' : 'transparent'
-                                  }}
-                                  onMouseEnter={() => setHoveredSDG(sdg.goal)}
-                                  onMouseLeave={() => setHoveredSDG(null)}
-                                  title={sdgInfo?.description}
-                                >
-                                  SDG {sdg.goal} • {percent}%
-                                </span>
-                              );
-                            }}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
+                    {/* Center Label - Average Completion */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '42%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: 'center',
+                      zIndex: 10,
+                      pointerEvents: 'none'
+                    }}>
+                      <div style={{ fontSize: '48px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
+                        {dashboardData.projects && dashboardData.projects.length > 0 
+                          ? Math.round(dashboardData.projects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / dashboardData.projects.length)
+                          : 0}%
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500', marginTop: '4px' }}>
+                        Avg Completion
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
+                        across {dashboardData.projects?.length || 0} projects
+                      </div>
                     </div>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={dashboardData.sdgDistribution.map(item => ({
+                            ...item,
+                            name: `SDG ${item.goal}`,
+                            fullName: getSDGName(item.goal),
+                            color: SDG_GOALS[item.goal]?.color || '#166534'
+                          }))}
+                          cx="50%"
+                          cy="42%"
+                          innerRadius={80}
+                          outerRadius={140}
+                          paddingAngle={2}
+                          dataKey="hours"
+                          nameKey="name"
+                          stroke="white"
+                          strokeWidth={3}
+                        >
+                          {dashboardData.sdgDistribution.map((entry) => (
+                            <Cell 
+                              key={`cell-${entry.goal}`} 
+                              fill={SDG_GOALS[entry.goal]?.color || '#166534'}
+                              stroke={hoveredSDG === entry.goal ? '#111827' : 'white'}
+                              strokeWidth={hoveredSDG === entry.goal ? 4 : 3}
+                              style={{ 
+                                cursor: 'pointer',
+                                filter: hoveredSDG === entry.goal ? 'brightness(1.1) drop-shadow(0 4px 8px rgba(0,0,0,0.2))' : 'brightness(1)',
+                                transition: 'all 0.2s ease-in-out'
+                              }}
+                              onMouseEnter={() => setHoveredSDG(entry.goal)}
+                              onMouseLeave={() => setHoveredSDG(null)}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              const sdgInfo = SDG_GOALS[data.goal];
+                              const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                              const percent = ((data.hours / total) * 100).toFixed(1);
+                              return (
+                                <div style={{ 
+                                  backgroundColor: 'white', 
+                                  padding: '16px', 
+                                  borderRadius: '12px', 
+                                  boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
+                                  border: `3px solid ${sdgInfo?.color || '#166534'}`,
+                                  maxWidth: '340px'
+                                }}>
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+                                    <div style={{ 
+                                      width: '40px', 
+                                      height: '40px', 
+                                      borderRadius: '10px', 
+                                      backgroundColor: sdgInfo?.color || '#166534',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      color: 'white',
+                                      fontSize: '16px',
+                                      fontWeight: 'bold',
+                                      flexShrink: 0
+                                    }}>
+                                      {data.goal}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                      <p style={{ fontWeight: '700', fontSize: '16px', color: '#111827', margin: '0 0 4px 0' }}>
+                                        {sdgInfo?.name || `SDG ${data.goal}`}
+                                      </p>
+                                      <p style={{ fontSize: '12px', color: '#6b7280', margin: '0', lineHeight: '1.4' }}>
+                                        {sdgInfo?.description}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', paddingTop: '12px', borderTop: `2px solid ${sdgInfo?.color || '#166534'}22` }}>
+                                    <div style={{ textAlign: 'center' }}>
+                                      <p style={{ fontSize: '20px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.hours}</p>
+                                      <p style={{ fontSize: '11px', color: '#9ca3af', margin: '4px 0 0 0', fontWeight: '500' }}>Hours</p>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                      <p style={{ fontSize: '20px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.projects}</p>
+                                      <p style={{ fontSize: '11px', color: '#9ca3af', margin: '4px 0 0 0', fontWeight: '500' }}>Projects</p>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                      <p style={{ fontSize: '20px', fontWeight: 'bold', color: sdgInfo?.color || '#166534', margin: '0' }}>{data.volunteers || 0}</p>
+                                      <p style={{ fontSize: '11px', color: '#9ca3af', margin: '4px 0 0 0', fontWeight: '500' }}>Volunteers</p>
+                                    </div>
+                                  </div>
+                                  <div style={{ marginTop: '10px', textAlign: 'center', padding: '8px', backgroundColor: `${sdgInfo?.color || '#166534'}11`, borderRadius: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: '600', color: sdgInfo?.color || '#166534' }}>{percent}% of total impact</span>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
+                        <Legend 
+                          layout="horizontal" 
+                          verticalAlign="bottom"
+                          height={50}
+                          wrapperStyle={{ paddingTop: '16px', overflow: 'visible' }}
+                          formatter={(value, entry: any) => {
+                            const sdg = entry.payload;
+                            const sdgInfo = SDG_GOALS[sdg.goal];
+                            const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
+                            const percent = Math.round((sdg.hours / total) * 100);
+                            return (
+                              <span 
+                                style={{ 
+                                  color: hoveredSDG === sdg.goal ? '#111827' : '#4b5563',
+                                  fontSize: '12px',
+                                  fontWeight: hoveredSDG === sdg.goal ? '700' : '500',
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap',
+                                  transition: 'all 0.2s ease',
+                                  marginRight: '4px',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  backgroundColor: hoveredSDG === sdg.goal ? `${sdgInfo?.color || '#166534'}15` : 'transparent',
+                                  border: hoveredSDG === sdg.goal ? `1px solid ${sdgInfo?.color || '#166534'}40` : '1px solid transparent'
+                                }}
+                                onMouseEnter={() => setHoveredSDG(sdg.goal)}
+                                onMouseLeave={() => setHoveredSDG(null)}
+                                title={sdgInfo?.description}
+                              >
+                                SDG {sdg.goal} • {percent}%
+                              </span>
+                            );
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>

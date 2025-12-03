@@ -39,8 +39,8 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
       <nav
         className="fixed bottom-0 left-0 right-0 h-14 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)] z-[1000] md:hidden"
         style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-          boxShadow: '0 -2px 12px rgba(102, 126, 234, 0.25)',
+          background: 'linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 75%, #d35400 100%)',
+          boxShadow: '0 -2px 16px rgba(26, 10, 46, 0.4)',
         }}
         data-testid="mobile-bottom-nav"
       >
@@ -58,19 +58,19 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                   height: '36px',
                   borderRadius: '50%',
                   background: active 
-                    ? 'linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%)'
+                    ? 'linear-gradient(135deg, #ff9f43 0%, #d35400 100%)'
                     : 'rgba(255, 255, 255, 0.25)',
                   border: 'none',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: active ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none',
+                  boxShadow: active ? '0 2px 10px rgba(211, 84, 0, 0.4)' : 'none',
                   transform: 'translateY(-6px)',
                   transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
                 }}
               >
-                <item.icon size={18} style={{ color: active ? '#764ba2' : '#ffffff' }} />
+                <item.icon size={18} style={{ color: '#ffffff' }} />
               </button>
             );
           }

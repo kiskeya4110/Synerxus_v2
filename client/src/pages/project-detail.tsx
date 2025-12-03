@@ -246,7 +246,8 @@ export default function ProjectDetail() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 overflow-y-auto pb-24 md:pb-0">
+    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 overflow-y-auto overflow-x-hidden">
+      <div className="min-h-full pb-24 md:pb-0">
       {isOrganization && <OrganizationHeader activeTab="projects" />}
 
       {/* Hero Section */}
@@ -757,6 +758,7 @@ export default function ProjectDetail() {
       
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
+      </div>
     </div>
   );
 }

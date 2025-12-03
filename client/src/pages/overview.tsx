@@ -91,6 +91,7 @@ export default function Overview() {
   return (
     <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
       <OrganizationHeader activeTab="overview" />
+      <div className="px-4 sm:px-6">
       
       <div className="md:hidden">
         <div
@@ -531,6 +532,7 @@ export default function Overview() {
             })}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Footer and Navigation */}

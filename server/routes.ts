@@ -1632,6 +1632,266 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // === Conversation Thread Routes ===
+  
+  // Get all conversation threads for an organization
+  app.get("/api/conversation-threads/organization/:organizationId", async (req, res) => {
+    try {
+      const organizationId = parseInt(req.params.organizationId);
+      if (isNaN(organizationId)) {
+        return res.status(400).json({ message: "organizationId must be a valid number" });
+      }
+      
+      const threads = await storage.listConversationThreadsByOrganization(organizationId);
+      
+      // Enrich threads with volunteer names
+      const enrichedThreads = await Promise.all(threads.map(async (thread) => {
+        const volunteer = await storage.getUser(thread.volunteerId);
+        let project = null;
+        if (thread.projectId) {
+          project = await storage.getProject(thread.projectId);
+        }
+        return {
+          ...thread,
+          volunteerName: volunteer?.displayName || volunteer?.username || 'Unknown Volunteer',
+          volunteerAvatar: volunteer?.avatar,
+          projectName: project?.name || null
+        };
+      }));
+      
+      res.json(enrichedThreads);
+    } catch (err) {
+      console.error("Error fetching organization threads:", err);
+      res.status(500).json({ message: "Failed to fetch conversation threads" });
+    }
+  });
+  
+  // Get all conversation threads for a volunteer
+  app.get("/api/conversation-threads/volunteer/:volunteerId", async (req, res) => {
+    try {
+      const volunteerId = parseInt(req.params.volunteerId);
+      if (isNaN(volunteerId)) {
+        return res.status(400).json({ message: "volunteerId must be a valid number" });
+      }
+      
+      const threads = await storage.listConversationThreadsByVolunteer(volunteerId);
+      
+      // Enrich threads with organization names
+      const enrichedThreads = await Promise.all(threads.map(async (thread) => {
+        const organization = await storage.getOrganization(thread.organizationId);
+        let project = null;
+        if (thread.projectId) {
+          project = await storage.getProject(thread.projectId);
+        }
+        return {
+          ...thread,
+          organizationName: organization?.name || 'Unknown Organization',
+          organizationLogo: organization?.logo,
+          projectName: project?.name || null
+        };
+      }));
+      
+      res.json(enrichedThreads);
+    } catch (err) {
+      console.error("Error fetching volunteer threads:", err);
+      res.status(500).json({ message: "Failed to fetch conversation threads" });
+    }
+  });
+  
+  // Get messages in a thread
+  app.get("/api/conversation-threads/:threadId/messages", async (req, res) => {
+    try {
+      const threadId = parseInt(req.params.threadId);
+      if (isNaN(threadId)) {
+        return res.status(400).json({ message: "threadId must be a valid number" });
+      }
+      
+      const thread = await storage.getConversationThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: "Thread not found" });
+      }
+      
+      const messages = await storage.listMessagesByThread(threadId);
+      
+      // Enrich messages with sender names
+      const enrichedMessages = await Promise.all(messages.map(async (msg) => {
+        const sender = await storage.getUser(msg.senderId);
+        return {
+          ...msg,
+          senderName: sender?.displayName || sender?.username || 'Unknown',
+          senderAvatar: sender?.avatar
+        };
+      }));
+      
+      res.json({
+        thread,
+        messages: enrichedMessages
+      });
+    } catch (err) {
+      console.error("Error fetching thread messages:", err);
+      res.status(500).json({ message: "Failed to fetch thread messages" });
+    }
+  });
+  
+  // Create a new conversation thread
+  app.post("/api/conversation-threads", async (req, res) => {
+    try {
+      const { organizationId, volunteerId, topic, projectId, initialMessage } = req.body;
+      
+      if (!organizationId || !volunteerId || !topic) {
+        return res.status(400).json({ message: "organizationId, volunteerId, and topic are required" });
+      }
+      
+      // Check if a thread already exists with the same topic
+      const existingThread = await storage.getConversationThreadBetween(
+        parseInt(organizationId),
+        parseInt(volunteerId),
+        topic
+      );
+      
+      if (existingThread) {
+        return res.status(409).json({ 
+          message: "A conversation thread with this topic already exists",
+          thread: existingThread
+        });
+      }
+      
+      // Create the thread
+      const thread = await storage.createConversationThread({
+        organizationId: parseInt(organizationId),
+        volunteerId: parseInt(volunteerId),
+        topic,
+        projectId: projectId ? parseInt(projectId) : null,
+        status: 'active',
+        lastMessageAt: new Date()
+      });
+      
+      // If initial message provided, create it
+      if (initialMessage) {
+        const orgUser = await storage.getUserByOrganizationId(parseInt(organizationId));
+        if (orgUser) {
+          const message = await storage.createMessage({
+            senderId: orgUser.id,
+            receiverId: parseInt(volunteerId),
+            content: initialMessage,
+            messageType: 'outreach',
+            threadId: thread.id
+          });
+          
+          // Create notification for the volunteer
+          await storage.createNotification({
+            userId: parseInt(volunteerId),
+            type: 'message',
+            title: 'New Message',
+            message: `You have a new message about "${topic}"`,
+            relatedEntityType: 'thread',
+            relatedEntityId: thread.id
+          });
+          
+          broadcastUpdate("message_created", message);
+        }
+      }
+      
+      broadcastUpdate("thread_created", thread);
+      res.status(201).json(thread);
+    } catch (err) {
+      console.error("Error creating conversation thread:", err);
+      res.status(500).json({ message: "Failed to create conversation thread" });
+    }
+  });
+  
+  // Send a message in a thread
+  app.post("/api/conversation-threads/:threadId/messages", async (req, res) => {
+    try {
+      const threadId = parseInt(req.params.threadId);
+      const { senderId, content, messageType = 'text' } = req.body;
+      
+      if (isNaN(threadId)) {
+        return res.status(400).json({ message: "threadId must be a valid number" });
+      }
+      
+      if (!senderId || !content) {
+        return res.status(400).json({ message: "senderId and content are required" });
+      }
+      
+      const thread = await storage.getConversationThread(threadId);
+      if (!thread) {
+        return res.status(404).json({ message: "Thread not found" });
+      }
+      
+      // Determine receiver (the other party in the thread)
+      const receiverId = parseInt(senderId) === thread.volunteerId 
+        ? (await storage.getUserByOrganizationId(thread.organizationId))?.id 
+        : thread.volunteerId;
+      
+      if (!receiverId) {
+        return res.status(400).json({ message: "Could not determine message recipient" });
+      }
+      
+      // Create the message
+      const message = await storage.createMessage({
+        senderId: parseInt(senderId),
+        receiverId,
+        content,
+        messageType,
+        threadId
+      });
+      
+      // Update thread's lastMessageAt
+      await storage.updateConversationThread(threadId, {
+        lastMessageAt: new Date()
+      });
+      
+      // Create notification
+      await storage.createNotification({
+        userId: receiverId,
+        type: 'message',
+        title: 'New Message',
+        message: `New message in "${thread.topic}"`,
+        relatedEntityType: 'thread',
+        relatedEntityId: threadId
+      });
+      
+      // Enrich message with sender info
+      const sender = await storage.getUser(parseInt(senderId));
+      const enrichedMessage = {
+        ...message,
+        senderName: sender?.displayName || sender?.username || 'Unknown',
+        senderAvatar: sender?.avatar
+      };
+      
+      broadcastUpdate("message_created", enrichedMessage);
+      res.status(201).json(enrichedMessage);
+    } catch (err) {
+      console.error("Error sending message:", err);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+  
+  // Update thread status (archive, close, etc.)
+  app.patch("/api/conversation-threads/:threadId", async (req, res) => {
+    try {
+      const threadId = parseInt(req.params.threadId);
+      const { status } = req.body;
+      
+      if (isNaN(threadId)) {
+        return res.status(400).json({ message: "threadId must be a valid number" });
+      }
+      
+      const updatedThread = await storage.updateConversationThread(threadId, { status });
+      
+      if (!updatedThread) {
+        return res.status(404).json({ message: "Thread not found" });
+      }
+      
+      broadcastUpdate("thread_updated", updatedThread);
+      res.json(updatedThread);
+    } catch (err) {
+      console.error("Error updating thread:", err);
+      res.status(500).json({ message: "Failed to update thread" });
+    }
+  });
+
   // === Opportunities Routes ===
   // Note: More specific routes must come before parameterized routes
   

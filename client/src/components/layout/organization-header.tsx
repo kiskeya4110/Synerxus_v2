@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
-  FolderOpen, Users, Plus, 
+  FolderOpen, Users, Plus, MessageSquare,
   Target, BarChart3, FileText, Bell, Settings, CheckSquare, LogOut, User
 } from "lucide-react";
 import {
@@ -19,7 +19,7 @@ const NAV_TABS = [
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
-  { id: 'reports', label: 'Reports', icon: FileText, path: '/impact-visualization' },
+  { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/organization-messages' },
   { id: 'create', label: 'Create', icon: Plus, path: null },
 ];
 

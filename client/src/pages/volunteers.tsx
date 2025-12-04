@@ -475,8 +475,12 @@ export default function Volunteers() {
       {currentUser && isOrganization && (
         <ContactVolunteerModal
           open={showContactModal}
-          onOpenChange={setShowContactModal}
+          onOpenChange={(open) => {
+            setShowContactModal(open);
+            if (!open) setSelectedVolunteer(null);
+          }}
           organizationUserId={currentUser.id}
+          preSelectedVolunteer={selectedVolunteer}
         />
       )}
 

@@ -31,6 +31,7 @@ interface ContactVolunteerModalProps {
   onOpenChange: (open: boolean) => void;
   organizationUserId: number;
   organizationId?: number;
+  preSelectedVolunteer?: { id: number; displayName?: string; email?: string } | null;
 }
 
 // Client-side form validation schema extending insertMessageSchema
@@ -49,6 +50,7 @@ export default function ContactVolunteerModal({
   onOpenChange,
   organizationUserId,
   organizationId,
+  preSelectedVolunteer,
 }: ContactVolunteerModalProps) {
   const { toast } = useToast();
 
@@ -57,7 +59,7 @@ export default function ContactVolunteerModal({
     resolver: zodResolver(formSchema),
     defaultValues: {
       senderId: organizationUserId,
-      receiverId: 0,
+      receiverId: preSelectedVolunteer?.id || 0,
       content: "",
       subject: "",
       messageType: "general",
@@ -65,6 +67,11 @@ export default function ContactVolunteerModal({
       read: false,
     },
   });
+
+  // Update form when preSelectedVolunteer changes
+  if (preSelectedVolunteer?.id && form.getValues("receiverId") !== preSelectedVolunteer.id) {
+    form.setValue("receiverId", preSelectedVolunteer.id);
+  }
 
   // Fetch current user to get organizationId if not provided
   const { data: currentUser } = useQuery<any>({
@@ -96,15 +103,46 @@ export default function ContactVolunteerModal({
     enabled: open,
   });
 
+  // Fetch AI-matched volunteers for this organization
+  const { data: matchedVolunteers = [] } = useQuery<any[]>({
+    queryKey: ["/api/matchable-volunteers", orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const response = await fetch(`/api/matchable-volunteers?organizationId=${orgId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open && !!orgId,
+  });
+
   // Filter to only volunteers assigned to organization's projects
   const organizationProjects = allProjects.filter((p: any) => p.organizationId === orgId);
   const assignedVolunteerIds = new Set(projectAssignments.filter((pa: any) => 
     organizationProjects.some((p: any) => p.id === pa.projectId)
   ).map((pa: any) => pa.volunteerId));
 
-  const volunteers = allUsers.filter((u: any) => 
+  // Create categories for dropdown
+  const assignedVolunteers = allUsers.filter((u: any) => 
     u.userType === "volunteer" && assignedVolunteerIds.has(u.id)
   );
+
+  // AI-matched volunteers that aren't already assigned
+  const suggestedVolunteers = matchedVolunteers
+    .filter((mv: any) => !assignedVolunteerIds.has(mv.id || mv.volunteerId))
+    .map((mv: any) => ({
+      id: mv.id || mv.volunteerId,
+      displayName: mv.displayName || mv.volunteerName,
+      email: mv.email,
+      avatar: mv.avatar,
+      matchScore: mv.matchScore,
+      isSuggested: true
+    }));
+
+  // Combined list for legacy compatibility
+  const volunteers = [
+    ...assignedVolunteers.map((v: any) => ({ ...v, isAssigned: true })),
+    ...suggestedVolunteers
+  ];
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -201,7 +239,7 @@ export default function ContactVolunteerModal({
         <DialogHeader>
           <DialogTitle>Contact Volunteer</DialogTitle>
           <DialogDescription>
-            Send a message to volunteers working on your projects
+            Send a message to volunteers on your team or AI-suggested matches
           </DialogDescription>
         </DialogHeader>
 
@@ -224,22 +262,58 @@ export default function ContactVolunteerModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {volunteers.map((volunteer) => (
-                        <SelectItem key={volunteer.id} value={volunteer.id.toString()}>
-                          <div className="flex items-center gap-2">
-                            <UserAvatar
-                              src={volunteer.avatar}
-                              name={volunteer.displayName}
-                              email={volunteer.email}
-                              className="h-6 w-6"
-                            />
-                            <span>{volunteer.displayName || volunteer.email}</span>
+                      {/* Assigned volunteers section */}
+                      {assignedVolunteers.length > 0 && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                            Your Team
                           </div>
-                        </SelectItem>
-                      ))}
+                          {assignedVolunteers.map((volunteer: any) => (
+                            <SelectItem key={`assigned-${volunteer.id}`} value={volunteer.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <UserAvatar
+                                  src={volunteer.avatar}
+                                  name={volunteer.displayName}
+                                  email={volunteer.email}
+                                  className="h-6 w-6"
+                                />
+                                <span>{volunteer.displayName || volunteer.email}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                      
+                      {/* AI-suggested volunteers section */}
+                      {suggestedVolunteers.length > 0 && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 mt-1">
+                            AI-Suggested Matches
+                          </div>
+                          {suggestedVolunteers.map((volunteer: any) => (
+                            <SelectItem key={`suggested-${volunteer.id}`} value={volunteer.id.toString()}>
+                              <div className="flex items-center gap-2">
+                                <UserAvatar
+                                  src={volunteer.avatar}
+                                  name={volunteer.displayName}
+                                  email={volunteer.email}
+                                  className="h-6 w-6"
+                                />
+                                <span>{volunteer.displayName || volunteer.email}</span>
+                                {volunteer.matchScore && (
+                                  <span className="ml-auto text-xs text-purple-600 font-medium">
+                                    {Math.round(volunteer.matchScore)}% match
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
+                      
                       {volunteers.length === 0 && (
                         <SelectItem value="none" disabled>
-                          No volunteers assigned to your projects
+                          No volunteers available to contact
                         </SelectItem>
                       )}
                     </SelectContent>

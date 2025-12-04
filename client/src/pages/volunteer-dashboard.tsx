@@ -984,7 +984,7 @@ export default function Dashboard() {
       <div id="dashboard-content" className="space-y-6">
 
       {/* Mobile Quick Actions - Grid 4 columns on mobile */}
-      <div className="md:hidden">
+      <div className="md:hidden mt-4">
         <div className="grid grid-cols-4 gap-1">
           <Link href="/log-activity" className="w-full aspect-square">
             <Button variant="outline" size="sm" className="w-full h-full px-1.5 text-xs rounded-lg bg-blue-50 border-blue-200 text-blue-700 active:scale-95 transition-transform flex flex-col items-center justify-center gap-0.5">

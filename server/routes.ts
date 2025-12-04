@@ -411,6 +411,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get public stats for all organizations (used by volunteers browsing organizations)
+  app.get("/api/organizations/public-stats", async (req, res) => {
+    try {
+      const organizations = await storage.listOrganizations();
+      const allProjects = await storage.listProjects();
+      const allOpportunities = await storage.listOpportunities();
+      const allProjectAssignments = await storage.listProjectAssignments();
+      const allActivities = await storage.listVolunteerActivities();
+      const allImpacts = await storage.listProjectImpacts();
+      const matchableOrgs = await storage.listMatchableOrganizations();
+
+      const orgStats = organizations.map((org) => {
+        // Projects for this organization
+        const orgProjects = allProjects.filter((p) => p.organizationId === org.id);
+        const orgProjectIds = new Set(orgProjects.map((p) => p.id));
+        
+        // Volunteers assigned to this org's projects
+        const orgAssignments = allProjectAssignments.filter((pa) => orgProjectIds.has(pa.projectId!));
+        const uniqueVolunteerIds = new Set(orgAssignments.map((pa) => pa.volunteerId));
+        
+        // Opportunities for this organization
+        const orgOpportunities = allOpportunities.filter((o) => o.organizationId === org.id);
+        const activeOpportunities = orgOpportunities.filter((o) => o.status === 'open' || o.status === 'active');
+        
+        // Completed projects
+        const completedProjects = orgProjects.filter((p) => p.status === 'completed' || p.completionPercentage === 100);
+        
+        // Total hours contributed
+        const orgActivities = allActivities.filter((a) => a.projectId && orgProjectIds.has(a.projectId));
+        const totalHours = orgActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+        
+        // Total people impacted
+        const orgImpacts = allImpacts.filter((i) => i.projectId && orgProjectIds.has(i.projectId));
+        const totalPeopleImpacted = orgImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+        
+        // Calculate impact score (0-100) based on activity, projects, and outcomes
+        let impactScore = 0;
+        const projectWeight = Math.min(orgProjects.length * 10, 30); // Up to 30 points for projects
+        const volunteerWeight = Math.min(uniqueVolunteerIds.size * 5, 20); // Up to 20 points for volunteers
+        const hoursWeight = Math.min(totalHours * 0.5, 25); // Up to 25 points for hours
+        const impactWeight = Math.min(totalPeopleImpacted * 0.01, 25); // Up to 25 points for impact
+        impactScore = Math.round(projectWeight + volunteerWeight + hoursWeight + impactWeight);
+        impactScore = Math.min(impactScore, 100); // Cap at 100
+        
+        // Get matchable org profile data for SDG focus (match by id string, name, or email)
+        const profile = matchableOrgs.find((m) => 
+          m.id === String(org.id) || 
+          m.name?.toLowerCase() === org.name?.toLowerCase() ||
+          m.email === org.contactEmail
+        );
+
+        return {
+          id: org.id,
+          name: org.name,
+          description: org.description,
+          logo: org.logo,
+          website: org.website,
+          contactEmail: org.contactEmail,
+          stats: {
+            projectCount: orgProjects.length,
+            volunteerCount: uniqueVolunteerIds.size,
+            activeOpportunities: activeOpportunities.length,
+            completedProjects: completedProjects.length,
+            totalHours,
+            totalPeopleImpacted,
+            impactScore
+          },
+          profile: profile ? {
+            location: profile.location,
+            sdgFocus: profile.sdgFocus,
+            mission: profile.mission
+          } : null
+        };
+      });
+
+      res.json(orgStats);
+    } catch (err) {
+      console.error("Error fetching organization public stats:", err);
+      res.status(500).json({ message: "Failed to fetch organization stats" });
+    }
+  });
+
   app.get("/api/organizations/:id", async (req, res) => {
     try {
       const orgId = parseInt(req.params.id);

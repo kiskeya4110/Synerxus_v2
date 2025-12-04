@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Search, Globe, Mail, Phone, Building2, Star, Users, FolderOpen, MessageSquare, MapPin, Target, TrendingUp, CheckCircle, Clock, X } from "lucide-react";
+import { Plus, Search, Globe, Mail, Phone, Building2, Star, Users, FolderOpen, MessageSquare, MapPin, Target, TrendingUp, CheckCircle, Clock, X, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,15 +20,31 @@ interface OrganizationStats {
   volunteerCount: number;
   completedProjects: number;
   totalHours: number;
-  avgRating: number;
+  totalPeopleImpacted: number;
+  impactScore: number;
   activeOpportunities: number;
+}
+
+interface OrganizationWithStats {
+  id: number;
+  name: string;
+  description: string;
+  logo: string;
+  website: string;
+  contactEmail: string;
+  stats: OrganizationStats;
+  profile: {
+    location: string;
+    sdgFocus: number[];
+    mission: string;
+  } | null;
 }
 
 export default function Organizations() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOrg, setSelectedOrg] = useState<any>(null);
+  const [selectedOrg, setSelectedOrg] = useState<OrganizationWithStats | null>(null);
   const [showContactDialog, setShowContactDialog] = useState(false);
-  const [contactOrg, setContactOrg] = useState<any>(null);
+  const [contactOrg, setContactOrg] = useState<OrganizationWithStats | null>(null);
   const [messageTopic, setMessageTopic] = useState("");
   const [messageContent, setMessageContent] = useState("");
   const [, navigate] = useLocation();
@@ -37,24 +53,9 @@ export default function Organizations() {
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType');
 
-  const { data: organizations = [], isLoading } = useQuery<any[]>({ 
-    queryKey: ["/api/organizations"] 
-  });
-
-  const { data: projects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects"]
-  });
-
-  const { data: volunteers = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteers"]
-  });
-
-  const { data: opportunities = [] } = useQuery<any[]>({
-    queryKey: ["/api/opportunities"]
-  });
-
-  const { data: matchableOrgs = [] } = useQuery<any[]>({
-    queryKey: ["/api/matchable-organizations"]
+  // Fetch organizations with real stats from the new endpoint
+  const { data: organizationsWithStats = [], isLoading } = useQuery<OrganizationWithStats[]>({ 
+    queryKey: ["/api/organizations/public-stats"] 
   });
 
   const createConversationMutation = useMutation({
@@ -87,26 +88,7 @@ export default function Organizations() {
     }
   });
 
-  const getOrgStats = (orgId: number): OrganizationStats => {
-    const orgProjects = projects.filter((p: any) => p.organizationId === orgId);
-    const orgVolunteers = volunteers.filter((v: any) => v.organizationId === orgId);
-    const orgOpportunities = opportunities.filter((o: any) => o.organizationId === orgId);
-    
-    return {
-      projectCount: orgProjects.length,
-      volunteerCount: orgVolunteers.length,
-      completedProjects: orgProjects.filter((p: any) => p.status === 'completed').length,
-      totalHours: orgProjects.reduce((sum: number, p: any) => sum + (p.hoursContributed || 0), 0),
-      avgRating: 4.5,
-      activeOpportunities: orgOpportunities.filter((o: any) => o.status === 'open').length
-    };
-  };
-
-  const getOrgProfile = (orgId: number) => {
-    return matchableOrgs.find((m: any) => m.organizationId === orgId);
-  };
-
-  const handleContactClick = (org: any) => {
+  const handleContactClick = (org: OrganizationWithStats) => {
     if (!userId) {
       toast({
         title: "Login Required",
@@ -128,6 +110,7 @@ export default function Organizations() {
       });
       return;
     }
+    if (!contactOrg) return;
     createConversationMutation.mutate({
       organizationId: contactOrg.id,
       topic: messageTopic,
@@ -135,13 +118,14 @@ export default function Organizations() {
     });
   };
 
-  const filteredOrganizations = organizations.filter((org: any) => 
+  const filteredOrganizations = organizationsWithStats.filter((org) => 
     org.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     org.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalVolunteers = volunteers.length;
-  const activeProjectsCount = projects.filter((p: any) => p.status === 'active').length;
+  // Calculate totals from the fetched data
+  const totalVolunteers = organizationsWithStats.reduce((sum, org) => sum + org.stats.volunteerCount, 0);
+  const activeProjectsCount = organizationsWithStats.reduce((sum, org) => sum + org.stats.projectCount, 0);
 
   return (
     <div className="h-screen overflow-y-auto">
@@ -158,7 +142,7 @@ export default function Organizations() {
             <div className="text-center">
               <Building2 className="h-6 w-6 mx-auto mb-2 text-primary" />
               <p className="text-3xl font-bold text-primary" data-testid="stat-org-count">
-                {isLoading ? "..." : organizations.length}
+                {isLoading ? "..." : organizationsWithStats.length}
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Organizations</p>
             </div>
@@ -202,11 +186,7 @@ export default function Organizations() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 px-6 pb-6">
-        {filteredOrganizations.map((org: any) => {
-          const stats = getOrgStats(org.id);
-          const profile = getOrgProfile(org.id);
-          
-          return (
+        {filteredOrganizations.map((org) => (
             <Card key={org.id} className="hover:shadow-lg transition-shadow" data-testid={`org-card-${org.id}`}>
               <CardHeader>
                 <div className="flex items-start gap-4">
@@ -226,29 +206,32 @@ export default function Organizations() {
                         >
                           {org.name}
                         </CardTitle>
-                        {profile?.location && (
+                        {org.profile?.location && (
                           <div className="flex items-center gap-1 text-sm text-gray-500">
                             <MapPin className="h-3 w-3" />
-                            <span>{profile.location}</span>
+                            <span>{org.profile.location}</span>
                           </div>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm font-medium">{stats.avgRating.toFixed(1)}</span>
+                      <div 
+                        className="flex items-center gap-1 px-2 py-1 rounded-full cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
+                        title="Impact Score - based on projects, volunteers, hours, and people impacted"
+                      >
+                        <Zap className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-bold text-purple-600">{org.stats.impactScore}</span>
                       </div>
                     </div>
                     <CardDescription className="text-sm line-clamp-2 mt-2">
-                      {org.description || profile?.mission}
+                      {org.description || org.profile?.mission}
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {profile?.sdgFocus && profile.sdgFocus.length > 0 && (
+                  {org.profile?.sdgFocus && org.profile.sdgFocus.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {profile.sdgFocus.slice(0, 4).map((sdg: number) => (
+                      {org.profile.sdgFocus.slice(0, 4).map((sdg: number) => (
                         <Badge 
                           key={sdg} 
                           variant="outline" 
@@ -260,9 +243,9 @@ export default function Organizations() {
                           SDG {sdg}
                         </Badge>
                       ))}
-                      {profile.sdgFocus.length > 4 && (
+                      {org.profile.sdgFocus.length > 4 && (
                         <Badge variant="outline" className="text-xs">
-                          +{profile.sdgFocus.length - 4} more
+                          +{org.profile.sdgFocus.length - 4} more
                         </Badge>
                       )}
                     </div>
@@ -299,7 +282,7 @@ export default function Organizations() {
                       className="text-center hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-md transition-colors"
                       data-testid={`stat-projects-${org.id}`}
                     >
-                      <p className="text-lg font-bold text-primary">{stats.projectCount}</p>
+                      <p className="text-lg font-bold text-primary">{org.stats.projectCount}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Projects</p>
                     </button>
                     <button 
@@ -307,7 +290,7 @@ export default function Organizations() {
                       className="text-center hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-md transition-colors"
                       data-testid={`stat-volunteers-${org.id}`}
                     >
-                      <p className="text-lg font-bold text-blue-600">{stats.volunteerCount}</p>
+                      <p className="text-lg font-bold text-blue-600">{org.stats.volunteerCount}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Volunteers</p>
                     </button>
                     <button 
@@ -315,11 +298,11 @@ export default function Organizations() {
                       className="text-center hover:bg-gray-50 dark:hover:bg-gray-800 p-2 rounded-md transition-colors"
                       data-testid={`stat-opportunities-${org.id}`}
                     >
-                      <p className="text-lg font-bold text-green-600">{stats.activeOpportunities}</p>
+                      <p className="text-lg font-bold text-green-600">{org.stats.activeOpportunities}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Open Roles</p>
                     </button>
                     <div className="text-center p-2">
-                      <p className="text-lg font-bold text-purple-600">{stats.completedProjects}</p>
+                      <p className="text-lg font-bold text-purple-600">{org.stats.completedProjects}</p>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Completed</p>
                     </div>
                   </div>
@@ -347,8 +330,7 @@ export default function Organizations() {
                 </div>
               </CardContent>
             </Card>
-          );
-        })}
+        ))}
       </div>
 
       {filteredOrganizations.length === 0 && (
@@ -423,16 +405,19 @@ export default function Organizations() {
                   </Avatar>
                   <div className="flex-1">
                     <DialogTitle className="text-xl">{selectedOrg.name}</DialogTitle>
-                    {getOrgProfile(selectedOrg.id)?.location && (
+                    {selectedOrg.profile?.location && (
                       <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                         <MapPin className="h-4 w-4" />
-                        {getOrgProfile(selectedOrg.id)?.location}
+                        {selectedOrg.profile.location}
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded">
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                    <span className="text-sm font-medium">{getOrgStats(selectedOrg.id).avgRating.toFixed(1)}</span>
+                  <div 
+                    className="flex items-center gap-1 bg-purple-50 px-3 py-1 rounded-full"
+                    title="Impact Score"
+                  >
+                    <Zap className="h-4 w-4 text-purple-600" />
+                    <span className="text-sm font-bold text-purple-600">{selectedOrg.stats.impactScore}</span>
                   </div>
                 </div>
               </DialogHeader>
@@ -440,7 +425,7 @@ export default function Organizations() {
               <Tabs defaultValue="about" className="mt-4">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="about">About</TabsTrigger>
-                  <TabsTrigger value="projects">Projects</TabsTrigger>
+                  <TabsTrigger value="stats">Stats</TabsTrigger>
                   <TabsTrigger value="impact">Impact</TabsTrigger>
                 </TabsList>
                 
@@ -448,15 +433,15 @@ export default function Organizations() {
                   <div>
                     <h4 className="font-medium mb-2">Mission</h4>
                     <p className="text-sm text-gray-600">
-                      {getOrgProfile(selectedOrg.id)?.mission || selectedOrg.description || "No mission statement available."}
+                      {selectedOrg.profile?.mission || selectedOrg.description || "No mission statement available."}
                     </p>
                   </div>
                   
-                  {getOrgProfile(selectedOrg.id)?.sdgFocus && (
+                  {selectedOrg.profile?.sdgFocus && selectedOrg.profile.sdgFocus.length > 0 && (
                     <div>
                       <h4 className="font-medium mb-2">SDG Focus Areas</h4>
                       <div className="flex flex-wrap gap-2">
-                        {getOrgProfile(selectedOrg.id)?.sdgFocus.map((sdg: number) => (
+                        {selectedOrg.profile.sdgFocus.map((sdg: number) => (
                           <Badge 
                             key={sdg}
                             className="cursor-pointer"
@@ -465,17 +450,6 @@ export default function Organizations() {
                           >
                             SDG {sdg}: {getSDGName(sdg)}
                           </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {getOrgProfile(selectedOrg.id)?.needs && (
-                    <div>
-                      <h4 className="font-medium mb-2">Volunteer Needs</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {getOrgProfile(selectedOrg.id)?.needs.map((need: string, i: number) => (
-                          <Badge key={i} variant="outline">{need}</Badge>
                         ))}
                       </div>
                     </div>
@@ -505,71 +479,87 @@ export default function Organizations() {
                   </div>
                 </TabsContent>
                 
-                <TabsContent value="projects" className="space-y-4 mt-4">
-                  {projects.filter((p: any) => p.organizationId === selectedOrg.id).length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <FolderOpen className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                      <p>No projects yet</p>
-                    </div>
-                  ) : (
-                    projects.filter((p: any) => p.organizationId === selectedOrg.id).map((project: any) => (
-                      <Card 
-                        key={project.id} 
-                        className="cursor-pointer hover:shadow-md transition-shadow"
-                        onClick={() => navigate(`/projects/${project.id}`)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h4 className="font-medium">{project.name}</h4>
-                              <p className="text-sm text-gray-500 line-clamp-1">{project.description}</p>
-                            </div>
-                            <Badge variant={project.status === 'active' ? 'default' : 'secondary'}>
-                              {project.status}
-                            </Badge>
-                          </div>
-                          {project.completionPercentage !== undefined && (
-                            <div className="mt-3">
-                              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                                <span>Progress</span>
-                                <span>{project.completionPercentage}%</span>
-                              </div>
-                              <Progress value={project.completionPercentage} className="h-2" />
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))
-                  )}
+                <TabsContent value="stats" className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card>
+                      <CardContent className="pt-4 text-center">
+                        <FolderOpen className="h-6 w-6 mx-auto mb-2 text-primary" />
+                        <p className="text-2xl font-bold text-primary">{selectedOrg.stats.projectCount}</p>
+                        <p className="text-sm text-gray-500">Total Projects</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 text-center">
+                        <Users className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+                        <p className="text-2xl font-bold text-blue-600">{selectedOrg.stats.volunteerCount}</p>
+                        <p className="text-sm text-gray-500">Volunteers</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 text-center">
+                        <Target className="h-6 w-6 mx-auto mb-2 text-green-600" />
+                        <p className="text-2xl font-bold text-green-600">{selectedOrg.stats.activeOpportunities}</p>
+                        <p className="text-sm text-gray-500">Open Opportunities</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="pt-4 text-center">
+                        <CheckCircle className="h-6 w-6 mx-auto mb-2 text-purple-600" />
+                        <p className="text-2xl font-bold text-purple-600">{selectedOrg.stats.completedProjects}</p>
+                        <p className="text-sm text-gray-500">Completed</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Total Volunteer Hours</span>
+                        <span className="text-lg font-bold text-primary">{selectedOrg.stats.totalHours}</span>
+                      </div>
+                      <Progress value={Math.min(selectedOrg.stats.totalHours / 10, 100)} className="h-2" />
+                    </CardContent>
+                  </Card>
                 </TabsContent>
                 
                 <TabsContent value="impact" className="space-y-4 mt-4">
+                  <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+                    <CardContent className="pt-6 text-center">
+                      <Zap className="h-12 w-12 mx-auto mb-4 text-purple-600" />
+                      <p className="text-4xl font-bold text-purple-600">{selectedOrg.stats.impactScore}</p>
+                      <p className="text-lg font-medium mt-2">Global Impact Score</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Based on projects, volunteers, hours contributed, and community impact
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <Card>
                       <CardContent className="p-4 text-center">
                         <FolderOpen className="h-8 w-8 mx-auto mb-2 text-primary" />
-                        <p className="text-2xl font-bold">{getOrgStats(selectedOrg.id).projectCount}</p>
+                        <p className="text-2xl font-bold">{selectedOrg.stats.projectCount}</p>
                         <p className="text-sm text-gray-500">Total Projects</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
                         <Users className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                        <p className="text-2xl font-bold">{getOrgStats(selectedOrg.id).volunteerCount}</p>
+                        <p className="text-2xl font-bold">{selectedOrg.stats.volunteerCount}</p>
                         <p className="text-sm text-gray-500">Volunteers</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
                         <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                        <p className="text-2xl font-bold">{getOrgStats(selectedOrg.id).completedProjects}</p>
+                        <p className="text-2xl font-bold">{selectedOrg.stats.completedProjects}</p>
                         <p className="text-sm text-gray-500">Completed</p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardContent className="p-4 text-center">
                         <Clock className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                        <p className="text-2xl font-bold">{getOrgStats(selectedOrg.id).totalHours}</p>
+                        <p className="text-2xl font-bold">{selectedOrg.stats.totalHours}</p>
                         <p className="text-sm text-gray-500">Hours Contributed</p>
                       </CardContent>
                     </Card>

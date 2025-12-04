@@ -1826,6 +1826,11 @@ export default function CSRDashboard() {
               </div>
             </div>
           )}
+          
+          {/* Footer inside main content for scrolling */}
+          <div style={{ marginTop: "48px" }}>
+            <Footer />
+          </div>
         </main>
       </div>
 
@@ -3502,9 +3507,6 @@ export default function CSRDashboard() {
           </div>
         )}
 
-      {/* Footer */}
-      <Footer />
-      
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
     </div>

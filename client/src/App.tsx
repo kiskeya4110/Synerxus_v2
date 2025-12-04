@@ -46,6 +46,8 @@ import ProjectPortfolio from "@/pages/project-portfolio";
 import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
 import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
 import Overview from "@/pages/overview";
+import OrganizationMessages from "@/pages/organization-messages";
+import VolunteerMessages from "@/pages/volunteer-messages";
 import NotFound from "@/pages/not-found";
 
 function RootRedirectRoute() {
@@ -174,6 +176,7 @@ export default function App() {
           <Route path="/volunteers" component={Volunteers} />
           <Route path="/sdg-mapping" component={SDGMapping} />
           <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>
+          <Route path="/organization-messages" component={OrganizationMessages} />
           <Route component={LayoutRoute} />
         </Router>
       </OnboardingProvider>
@@ -210,6 +213,7 @@ function LayoutRoute() {
       <Route path="/achievements" component={Achievements} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
+      <Route path="/volunteer-messages" component={VolunteerMessages} />
     </Layout>
   );
 }

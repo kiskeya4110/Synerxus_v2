@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 
 interface ITask {
   id: number;
@@ -67,7 +68,7 @@ export default function Tasks() {
   };
 
   return (
-    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+    <div className={isOrganizationUser ? "min-h-screen overflow-y-auto" : ""} style={{ paddingBottom: isOrganizationUser ? '180px' : '0' }}>
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
       <div className={isOrganizationUser ? "p-6" : ""}>
         {/* Page Header */}
@@ -181,6 +182,9 @@ export default function Tasks() {
         </TabsContent>
       </Tabs>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

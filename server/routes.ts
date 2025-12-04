@@ -5942,31 +5942,38 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           })
         : partnerEngagement;
 
-      // Apply date filtering to volunteer activities (only if dates provided)
+      // Get sponsored project IDs (for ROI tracking only)
       const partnerProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId).filter(Boolean));
-      const filteredVolunteerActivities = shouldFilterByDate
-        ? volunteerActivities.filter((a: any) => {
-            if (!partnerProjectIds.has(a.projectId)) return false;
-            const activityDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
-            return activityDate >= startDate && activityDate <= endDate;
-          })
-        : volunteerActivities.filter((a: any) => partnerProjectIds.has(a.projectId));
 
-      // Get employee user IDs (users with employer_id matching this partner) for accurate filtering
+      // Get employee user IDs (users with employer_id matching this partner)
       const employeeUserIds = new Set(
         volunteerProfiles
           .filter((vp: any) => vp.employerId === userPartner.id)
           .map((vp: any) => vp.userId)
       );
       
-      // Calculate KPIs from REAL volunteer_activities logged by employees (not stale employee_engagement)
-      const employeeActivitiesOnSponsoredProjects = filteredVolunteerActivities.filter((a: any) => 
+      // Get ALL volunteer activities by employees (regardless of which project - tracks full employee engagement)
+      const allEmployeeActivities = volunteerActivities.filter((a: any) => 
         employeeUserIds.has(a.userId)
       );
       
+      // Apply date filtering to employee activities (only if dates provided)
+      const filteredEmployeeActivities = shouldFilterByDate
+        ? allEmployeeActivities.filter((a: any) => {
+            const activityDate = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            return activityDate >= startDate && activityDate <= endDate;
+          })
+        : allEmployeeActivities;
+
+      // Also track sponsored project activities for ROI calculations
+      const employeeActivitiesOnSponsoredProjects = filteredEmployeeActivities.filter((a: any) => 
+        partnerProjectIds.has(a.projectId)
+      );
+      
+      // Calculate KPIs from ALL employee volunteer activities (not just sponsored projects)
       const totalPartners = 1; // Their own company
-      const activeEmployees = new Set(employeeActivitiesOnSponsoredProjects.map((a: any) => a.userId)).size;
-      const totalHours = employeeActivitiesOnSponsoredProjects.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+      const activeEmployees = new Set(filteredEmployeeActivities.map((a: any) => a.userId)).size;
+      const totalHours = filteredEmployeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
       
       const totalRoi = partnerBudgets.reduce((sum: number, b: any) => sum + (b.actualRoi || 0), 0);
       const projectsCompleted = partnerBudgets.filter((b: any) => b.actualRoi && b.actualRoi > 0).length;
@@ -5982,17 +5989,20 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         }
       }
 
-      // Top employees leaderboard from REAL volunteer activities
+      // Top employees leaderboard from ALL volunteer activities (not just sponsored)
       const employeeHoursByUser = Array.from(employeeUserIds).map((userId: any) => {
-        const userActivities = employeeActivitiesOnSponsoredProjects.filter((a: any) => a.userId === userId);
+        const userActivities = filteredEmployeeActivities.filter((a: any) => a.userId === userId);
         const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
         const totalUserHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        // Get unique projects the employee worked on
+        const projectsWorked = [...new Set(userActivities.map((a: any) => a.projectId))];
         return {
           userId,
           employeeName: profile?.volunteerName || `Employee ${userId}`,
           hours: totalUserHours,
           points: Math.round(totalUserHours * 10), // 10 points per hour
-          projectId: userActivities[0]?.projectId || null
+          projectId: userActivities[0]?.projectId || null,
+          projectsCount: projectsWorked.length
         };
       }).filter(e => e.hours > 0);
       
@@ -6007,11 +6017,13 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           projectId: emp.projectId
         }));
 
-      // Get sidebar data: projects and employees (with date filtering)
-      const sidebarProjects = partnerBudgets.slice(0, 5).map((b: any) => ({
-        id: b.id,
-        projectName: b.projectName || 'Project',
-        status: b.status || 'active'
+      // Get sidebar data: projects employees actually worked on
+      const employeeProjectIds = [...new Set(filteredEmployeeActivities.map((a: any) => a.projectId))];
+      const employeeProjects = projects.filter((p: any) => employeeProjectIds.includes(p.id));
+      const sidebarProjects = employeeProjects.slice(0, 5).map((p: any) => ({
+        id: p.id,
+        projectName: p.name || 'Project',
+        status: p.status || 'active'
       }));
 
       // Get all unique employees for this organization from REAL activity data
@@ -6256,25 +6268,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         dateRange: { startDate: startDateStr || 'all-time', endDate: endDateStr || 'all-time' },
         // CSR Dashboard KPI Breakdown - EMPLOYEE METRICS ONLY (excludes non-employee volunteers)
         kpiBreakdown: (() => {
-          // Get employee user IDs (users with employer_id matching this partner)
-          const employeeUserIds = new Set(
-            volunteerProfiles
-              .filter((vp: any) => vp.employerId === userPartner.id)
-              .map((vp: any) => vp.userId)
-          );
+          // Using already-calculated employee data from ALL volunteer activities (not just sponsored)
+          const employeeActivities = filteredEmployeeActivities;
+          const employeeHours = totalHours;
+          const kpiActiveEmployees = activeEmployees;
           
-          // Calculate REAL employee hours from volunteer_activities (not stale employee_engagement)
-          const employeeActivities = filteredVolunteerActivities.filter((a: any) => 
-            employeeUserIds.has(a.userId)
-          );
-          const employeeHours = employeeActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-          const activeEmployees = new Set(employeeActivities.map((a: any) => a.userId)).size;
-          
-          // Calculate per-project metrics from REAL activity data
-          const projectsWithEmployeeEngagement = partnerBudgets.filter((b: any) => {
-            const activityCount = employeeActivities.filter((a: any) => a.projectId === b.projectId).length;
-            return activityCount > 0;
-          });
+          // Calculate per-project metrics from REAL activity data (all projects employees worked on)
+          const projectsWorkedOn = [...new Set(employeeActivities.map((a: any) => a.projectId))];
+          const projectsWithEmployeeEngagement = projectsWorkedOn.map(pid => ({ projectId: pid }));
           
           // Calculate economic value at $35/hour standard rate (EMPLOYEE HOURS ONLY)
           const economicValue = employeeHours * 35;

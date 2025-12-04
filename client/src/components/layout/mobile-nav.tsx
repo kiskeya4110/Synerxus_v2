@@ -1,4 +1,4 @@
-import { Home, Search, BarChart3, User, Briefcase, Users, Calendar, ClipboardList, Menu, X } from "lucide-react";
+import { Home, Search, BarChart3, User, Briefcase, Users, Calendar, ClipboardList, Menu, X, FileText, MessageSquare, Settings } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -31,10 +31,12 @@ export default function MobileNav() {
   ];
 
   const organizationNavItems = [
-    { href: "/dashboard", icon: Home, label: "Home", testId: "nav-dashboard" },
-    { href: "/projects", icon: Briefcase, label: "Projects", testId: "nav-projects" },
+    { href: "/organization-dashboard", icon: Home, label: "Home", testId: "nav-dashboard" },
+    { href: "/applications", icon: FileText, label: "Applications", testId: "nav-applications" },
+    { href: "/my-work", icon: Briefcase, label: "Projects", testId: "nav-projects" },
     { href: "/volunteers", icon: Users, label: "Volunteers", testId: "nav-volunteers" },
-    { href: "/profile", icon: User, label: "Profile", testId: "nav-profile" },
+    { href: "/organization-messages", icon: MessageSquare, label: "Messages", testId: "nav-messages" },
+    { href: "/organization-profile-settings", icon: Settings, label: "Settings", testId: "nav-settings" },
   ];
 
   const navItems = isOrganization ? organizationNavItems : volunteerNavItems;

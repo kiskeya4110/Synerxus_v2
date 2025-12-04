@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { 
   FolderOpen, Users, Plus, MessageSquare,
-  Target, BarChart3, FileText, Bell, Settings, CheckSquare, LogOut, User, Menu, X
+  Target, BarChart3, FileText, Bell, Settings, CheckSquare, LogOut, User
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -14,12 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
-
-const MOBILE_MENU_ITEMS = [
-  { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },
-  { id: 'messages', label: 'Messages', icon: MessageSquare, path: '/organization-messages' },
-  { id: 'settings', label: 'Settings', icon: Settings, path: '/organization-profile-settings' },
-];
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
   { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },
@@ -40,7 +34,6 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleTabClick = (tab: typeof NAV_TABS[0]) => {
     if (tab.id === 'create') {
@@ -139,30 +132,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
           </div>
         </div>
 
-        {/* Right: Hamburger Menu (Mobile), Notifications, Settings, Profile */}
+        {/* Right: Notifications, Settings, Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Hamburger Menu Button - Mobile Only */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            data-testid="hamburger-menu-button"
-            className="md:hidden"
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '8px',
-              backgroundColor: isMobileMenuOpen ? 'rgba(255,255,255,0.2)' : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              transition: 'background-color 0.2s',
-            }}
-          >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-
           {/* Notifications Button */}
           <button
             onClick={() => navigate('/notifications')}
@@ -266,57 +237,6 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
         </div>
       </nav>
-
-      {/* Mobile Menu Dropdown - Visible when hamburger is clicked */}
-      {isMobileMenuOpen && (
-        <div 
-          className="md:hidden"
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            background: 'linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 75%, #d35400 100%)',
-            borderTop: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-            zIndex: 49,
-            padding: '12px 16px',
-          }}
-          data-testid="mobile-menu-panel"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            {MOBILE_MENU_ITEMS.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => {
-                  navigate(item.path);
-                  setIsMobileMenuOpen(false);
-                }}
-                data-testid={`mobile-menu-${item.id}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '14px 16px',
-                  backgroundColor: location === item.path ? 'rgba(255,255,255,0.15)' : 'transparent',
-                  border: 'none',
-                  borderRadius: '10px',
-                  color: 'white',
-                  fontSize: '15px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  width: '100%',
-                  transition: 'background-color 0.2s',
-                }}
-              >
-                <item.icon size={20} style={{ opacity: 0.9 }} />
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
     </div>
   );

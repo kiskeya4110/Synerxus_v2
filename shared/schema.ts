@@ -460,6 +460,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   interests: text("interests").array(),
   experience: jsonb("experience"), // Array of experience objects
   education: jsonb("education"), // Array of education objects
+  category: text("category"), // healthcare, education, environment, etc. - for interest matching
   preferredCauses: text("preferred_causes").array(),
   weeklyAvailability: integer("weekly_availability"), // hours per week
   availability: jsonb("availability"), // Schedule: [{day, startTime, endTime}]

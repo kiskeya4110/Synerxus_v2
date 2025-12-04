@@ -144,23 +144,35 @@ export default function ContactVolunteerModal({
     ...suggestedVolunteers
   ];
 
-  // Send message mutation
+  // Send message via conversation thread (creates new thread with initial message)
   const sendMessageMutation = useMutation({
     mutationFn: async (data: FormData) => {
-      const response = await fetch("/api/messages", {
+      // Use the conversation thread system for proper threading
+      const response = await fetch("/api/conversation-threads", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          organizationId: orgId,
+          volunteerId: data.receiverId,
+          topic: data.subject || "General Inquiry",
+          projectId: data.projectId,
+          initialMessage: data.content
+        }),
         headers: { "Content-Type": "application/json" },
       });
-      if (!response.ok) throw new Error("Failed to send message");
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to send message");
+      }
       return response.json();
     },
     onSuccess: () => {
       toast({
         title: "Message sent",
-        description: "Your message has been sent successfully",
+        description: "Your message has been sent. View the conversation in Messages.",
       });
+      // Invalidate both legacy messages and conversation threads
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/conversation-threads"] });
       form.reset();
       onOpenChange(false);
     },

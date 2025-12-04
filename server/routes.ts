@@ -6129,14 +6129,15 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         })
         .filter((p: any) => p !== null);
 
-      // Organization-wide SDG contribution tracking from REAL employee volunteer activities
+      // Organization-wide SDG contribution tracking from ALL employee volunteer activities
+      // This ensures SDG alignment updates dynamically as KPIs and metrics change
       const orgwideSDGMetrics: Record<number, any> = {};
       const partnerPrimarySdgs = userPartner.primarySdgs || [];
       const challengeSdgs = partnerChallenges.map((c: any) => c.sdgGoal).filter(Boolean);
       const defaultSdgs = partnerPrimarySdgs.length > 0 ? partnerPrimarySdgs : challengeSdgs;
       
-      // Use real employee activities instead of stale employee_engagement records
-      employeeActivitiesOnSponsoredProjects.forEach((activity: any) => {
+      // Use ALL employee activities (not just sponsored projects) for comprehensive SDG tracking
+      filteredEmployeeActivities.forEach((activity: any) => {
         if (activity.projectId) {
           const project = projects.find((p: any) => p.id === activity.projectId);
           const profile = volunteerProfiles.find((vp: any) => vp.userId === activity.userId);

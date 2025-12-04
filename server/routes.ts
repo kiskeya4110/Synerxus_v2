@@ -421,6 +421,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allActivities = await storage.listVolunteerActivities();
       const allImpacts = await storage.listProjectImpacts();
       const matchableOrgs = await storage.listMatchableOrganizations();
+      const allTasks = await storage.listTasks();
 
       const orgStats = organizations.map((org) => {
         // Projects for this organization
@@ -446,14 +447,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const orgImpacts = allImpacts.filter((i) => i.projectId && orgProjectIds.has(i.projectId));
         const totalPeopleImpacted = orgImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
         
-        // Calculate impact score (0-100) based on activity, projects, and outcomes
-        let impactScore = 0;
-        const projectWeight = Math.min(orgProjects.length * 10, 30); // Up to 30 points for projects
-        const volunteerWeight = Math.min(uniqueVolunteerIds.size * 5, 20); // Up to 20 points for volunteers
-        const hoursWeight = Math.min(totalHours * 0.5, 25); // Up to 25 points for hours
-        const impactWeight = Math.min(totalPeopleImpacted * 0.01, 25); // Up to 25 points for impact
-        impactScore = Math.round(projectWeight + volunteerWeight + hoursWeight + impactWeight);
-        impactScore = Math.min(impactScore, 100); // Cap at 100
+        // Calculate task metrics
+        const orgTasks = allTasks.filter((t) => t.projectId && orgProjectIds.has(t.projectId));
+        const completedTasks = orgTasks.filter((t) => t.status?.toLowerCase() === 'completed').length;
+        const totalTasks = orgTasks.length;
+        
+        // Get unique SDGs across all projects
+        const uniqueSDGs = new Set<number>();
+        orgProjects.forEach((project) => {
+          if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+            project.sdgGoals.forEach((goal: number) => uniqueSDGs.add(goal));
+          }
+        });
+        
+        // Calculate Impact Score - ALIGNED with organization dashboard formula
+        // This ensures consistency between public-stats and the global impact report
+        const hoursScore = Math.min((totalHours / 100) * 100, 100);
+        const peopleScore = Math.min((totalPeopleImpacted / 100) * 100, 100);
+        const tasksScore = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+        const sdgScore = (uniqueSDGs.size / 17) * 100;
+        const engagementScore = Math.min((uniqueVolunteerIds.size / 10) * 100, 100);
+        
+        // Weighted formula: Hours 35%, People 30%, Tasks 20%, SDG 10%, Engagement 5%
+        const impactScore = Math.round(
+          hoursScore * 0.35 +
+          peopleScore * 0.30 +
+          tasksScore * 0.20 +
+          sdgScore * 0.10 +
+          engagementScore * 0.05
+        );
         
         // Get matchable org profile data for SDG focus (match by id string, name, or email)
         const profile = matchableOrgs.find((m) => 

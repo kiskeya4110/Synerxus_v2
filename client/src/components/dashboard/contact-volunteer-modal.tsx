@@ -138,8 +138,21 @@ export default function ContactVolunteerModal({
       isSuggested: true
     }));
 
-  // Combined list for legacy compatibility
+  // Include preSelectedVolunteer if provided and not already in the lists
+  const preSelectedInList = preSelectedVolunteer && (
+    assignedVolunteers.some((v: any) => v.id === preSelectedVolunteer.id) ||
+    suggestedVolunteers.some((v: any) => v.id === preSelectedVolunteer.id)
+  );
+  
+  // Combined list with preSelectedVolunteer prioritized at top
   const volunteers = [
+    // Add preSelectedVolunteer first if not already in the other lists
+    ...(preSelectedVolunteer && !preSelectedInList ? [{
+      id: preSelectedVolunteer.id,
+      displayName: preSelectedVolunteer.displayName,
+      email: preSelectedVolunteer.email,
+      isPreSelected: true,
+    }] : []),
     ...assignedVolunteers.map((v: any) => ({ ...v, isAssigned: true })),
     ...suggestedVolunteers
   ];
@@ -274,6 +287,25 @@ export default function ContactVolunteerModal({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      {/* Pre-selected volunteer section */}
+                      {preSelectedVolunteer && !preSelectedInList && (
+                        <>
+                          <div className="px-2 py-1.5 text-xs font-semibold text-purple-600 bg-purple-50">
+                            Selected Volunteer
+                          </div>
+                          <SelectItem key={`preselected-${preSelectedVolunteer.id}`} value={preSelectedVolunteer.id.toString()}>
+                            <div className="flex items-center gap-2">
+                              <UserAvatar
+                                name={preSelectedVolunteer.displayName}
+                                email={preSelectedVolunteer.email}
+                                className="h-6 w-6"
+                              />
+                              <span className="font-medium">{preSelectedVolunteer.displayName || preSelectedVolunteer.email}</span>
+                            </div>
+                          </SelectItem>
+                        </>
+                      )}
+                      
                       {/* Assigned volunteers section */}
                       {assignedVolunteers.length > 0 && (
                         <>

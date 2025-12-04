@@ -548,16 +548,22 @@ export default function Landing() {
   const [ngoFact, setNgoFact] = useState(() => getRandomFact('ngos'));
   const [csrFact, setCsrFact] = useState(() => getRandomFact('csr'));
   
-  // Fetch current user to check if logged in
+  // Check localStorage for current user ID to determine login status
+  const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
+  
+  // Only fetch user if there's a stored user ID (actually logged in)
   const { data: currentUser } = useQuery<any>({
-    queryKey: ["/api/users/me"],
+    queryKey: ["/api/users/me", storedUserId],
     queryFn: async () => {
-      const response = await fetch("/api/users/me");
+      if (!storedUserId) return null;
+      const response = await fetch(`/api/users/me?userId=${storedUserId}`);
       return response.ok ? response.json() : null;
     },
+    enabled: !!storedUserId,
   });
   
-  const isLoggedIn = !!currentUser?.id;
+  // User is only logged in if they have a stored user ID AND the user data was fetched
+  const isLoggedIn = !!storedUserId && !!currentUser?.id;
 
   return (
     <div className="h-screen overflow-y-auto bg-slate-50">

@@ -573,7 +573,7 @@ export default function Volunteers() {
                 {/* Skills Section with Percentages */}
                 {volunteerProfile.volunteerProfile?.skills && volunteerProfile.volunteerProfile.skills.length > 0 && (
                   <div className="bg-indigo-50 dark:bg-indigo-950/20 rounded-lg p-6 border border-indigo-200 dark:border-indigo-800">
-                    <h4 className="font-semibold text-lg mb-4 text-indigo-900 dark:text-indigo-100">Your Skills</h4>
+                    <h4 className="font-semibold text-lg mb-4 text-indigo-900 dark:text-indigo-100">Skills</h4>
                     <div className="flex flex-wrap gap-2">
                       {volunteerProfile.volunteerProfile.skills.map((skill: string, index: number) => {
                         // Generate a pseudo-random percentage based on skill name for demonstration

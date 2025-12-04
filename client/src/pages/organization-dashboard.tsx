@@ -855,24 +855,44 @@ export default function OrganizationDashboard() {
             )}
 
             {pendingApplications && pendingApplications.length > 0 && (
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: '500', color: '#059669' }}>🔔 New Applications ({pendingApplications.length})</p>
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px solid #059669' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#059669', margin: 0 }}>🔔 New Applications ({pendingApplications.length})</p>
+                  <button
+                    onClick={() => navigate('/applications')}
+                    onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
+                    style={{
+                      backgroundColor: '#059669',
+                      color: 'white',
+                      border: 'none',
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#047857'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                    data-testid="button-view-all-applications"
+                  >
+                    View All →
+                  </button>
                 </div>
                 {pendingApplications.slice(0, 3).map((app: any) => (
                   <button
                     key={app.id}
                     type="button"
-                    onClick={() => navigate(`/volunteers?applicationId=${app.id}`)}
-                    onTouchEnd={(e) => { e.preventDefault(); navigate(`/volunteers?applicationId=${app.id}`); }}
+                    onClick={() => navigate('/applications')}
+                    onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      padding: '10px 8px',
+                      padding: '12px 8px',
                       borderBottom: '1px solid #f3f4f6',
                       width: '100%',
-                      backgroundColor: 'transparent',
+                      backgroundColor: '#f0fdf4',
                       border: 'none',
                       borderRadius: '6px',
                       cursor: 'pointer',
@@ -883,7 +903,7 @@ export default function OrganizationDashboard() {
                     data-testid={`application-${app.id}`}
                   >
                     <UserPlus size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span style={{ fontSize: '13px', color: '#374151' }}>New applicant for opportunity</span>
+                    <span style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>New applicant awaiting review</span>
                   </button>
                 ))}
               </div>

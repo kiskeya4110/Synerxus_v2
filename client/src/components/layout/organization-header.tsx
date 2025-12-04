@@ -16,6 +16,7 @@ import {
 import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
+  { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },

@@ -297,7 +297,7 @@ export default function CSRDashboard() {
           style={{ height: "64px", backgroundColor: "#1e3a8a", flexShrink: 0 }}
         />
         <div
-          style={{ display: "flex", flex: 1, minHeight: "calc(100vh - 64px)" }}
+          style={{ display: "flex", flex: 1 }}
         >
           <div
             style={{ width: "20%", backgroundColor: "#1e3a8a", flexShrink: 0 }}
@@ -307,7 +307,6 @@ export default function CSRDashboard() {
               width: "80%",
               backgroundColor: "#f9fafb",
               padding: "32px",
-              overflowY: "auto",
             }}
           >
             <div
@@ -356,6 +355,7 @@ export default function CSRDashboard() {
   );
 
   // Build SDG chart data from real metrics - only include SDGs with actual hours
+  // Sort numerically by SDG goal number (1-17)
   const sdgChartData = sdgMetrics
     .filter((metric) => metric.totalHours > 0) // Only show SDGs with real hours
     .map((metric) => {
@@ -374,17 +374,56 @@ export default function CSRDashboard() {
         projects: metric.projectsContributed,
       };
     })
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 8);
+    .sort((a, b) => a.goal - b.goal);
 
-  // Default SDG data if none exists - using proper shortNames
+  // Default SDG data if none exists - sorted numerically by goal number
   const defaultSdgData = [
+    {
+      name: getSDGName(1),
+      fullName: getSDGFullName(1),
+      value: 18,
+      color: getSDGColor(1),
+      goal: 1,
+      hours: 0,
+      employees: 0,
+      projects: 0,
+    },
+    {
+      name: getSDGName(3),
+      fullName: getSDGFullName(3),
+      value: 18,
+      color: getSDGColor(3),
+      goal: 3,
+      hours: 0,
+      employees: 0,
+      projects: 0,
+    },
     {
       name: getSDGName(4),
       fullName: getSDGFullName(4),
       value: 19,
       color: getSDGColor(4),
       goal: 4,
+      hours: 0,
+      employees: 0,
+      projects: 0,
+    },
+    {
+      name: getSDGName(5),
+      fullName: getSDGFullName(5),
+      value: 22,
+      color: getSDGColor(5),
+      goal: 5,
+      hours: 0,
+      employees: 0,
+      projects: 0,
+    },
+    {
+      name: getSDGName(10),
+      fullName: getSDGFullName(10),
+      value: 22,
+      color: getSDGColor(10),
+      goal: 10,
       hours: 0,
       employees: 0,
       projects: 0,
@@ -405,46 +444,6 @@ export default function CSRDashboard() {
       value: 18,
       color: getSDGColor(15),
       goal: 15,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(3),
-      fullName: getSDGFullName(3),
-      value: 18,
-      color: getSDGColor(3),
-      goal: 3,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(1),
-      fullName: getSDGFullName(1),
-      value: 18,
-      color: getSDGColor(1),
-      goal: 1,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(10),
-      fullName: getSDGFullName(10),
-      value: 22,
-      color: getSDGColor(10),
-      goal: 10,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(5),
-      fullName: getSDGFullName(5),
-      value: 22,
-      color: getSDGColor(5),
-      goal: 5,
       hours: 0,
       employees: 0,
       projects: 0,
@@ -564,7 +563,7 @@ export default function CSRDashboard() {
       </header>
 
       <div
-        style={{ display: "flex", flex: 1, minHeight: "calc(100vh - 64px)" }}
+        style={{ display: "flex", flex: 1 }}
       >
         {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
         <aside
@@ -757,7 +756,6 @@ export default function CSRDashboard() {
             width: "80%",
             padding: "24px",
             backgroundColor: "#f9fafb",
-            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
             gap: "24px",

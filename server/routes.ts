@@ -6091,10 +6091,15 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         return null;
       };
       
-      const projectLocations = partnerBudgets
-        .map((budget: any, idx: number) => {
-          // Use REAL activity data instead of stale employee_engagement
-          const activitiesForProject = employeeActivitiesOnSponsoredProjects.filter((a: any) => a.projectId === budget.projectId);
+      // Build project locations from ALL employee activities (not just sponsored projects)
+      // This ensures the geographic map updates dynamically based on where employees are working
+      const allEmployeeProjectIds = Array.from(new Set(filteredEmployeeActivities.map((a: any) => a.projectId)));
+      const sponsoredProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId));
+      
+      const projectLocations = allEmployeeProjectIds
+        .map((projectId: any, idx: number) => {
+          // Get all activities for this project from ALL employee activities
+          const activitiesForProject = filteredEmployeeActivities.filter((a: any) => a.projectId === projectId);
           const totalHoursForProject = activitiesForProject.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
           const employeeCountForProject = new Set(activitiesForProject.map((a: any) => a.userId)).size;
           
@@ -6104,7 +6109,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           }
           
           // Get the actual project from database to access its location
-          const project = projects.find((p: any) => p.id === budget.projectId);
+          const project = projects.find((p: any) => p.id === projectId);
           const projectLocation = project?.location || '';
           
           // Geocode the actual project location
@@ -6112,19 +6117,29 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           
           if (!geoResult) {
             // If we can't geocode, skip this project from the map
-            console.log(`CSR Map: Could not geocode location "${projectLocation}" for project ${budget.projectId}`);
+            console.log(`CSR Map: Could not geocode location "${projectLocation}" for project ${projectId}`);
             return null;
           }
           
+          // Determine project status: completed, active (sponsored), or community (non-sponsored)
+          const isSponsored = sponsoredProjectIds.has(projectId);
+          const budget = partnerBudgets.find((b: any) => b.projectId === projectId);
+          let status = 'active'; // Default to active for non-sponsored community projects
+          if (isSponsored && budget) {
+            status = budget.status === 'completed' ? 'completed' : 'sponsored';
+          } else if (project?.status === 'completed') {
+            status = 'completed';
+          }
+          
           return {
-            id: budget.projectId,
-            name: project?.name || budget.projectName || `Project ${idx + 1}`,
+            id: projectId,
+            name: project?.name || `Project ${idx + 1}`,
             lat: geoResult.lat,
             lng: geoResult.lng,
             region: geoResult.region,
             employees: employeeCountForProject,
             hours: totalHoursForProject,
-            status: budget.status === 'completed' ? 'completed' : budget.status === 'active' ? 'active' : 'sponsored'
+            status: status
           };
         })
         .filter((p: any) => p !== null);

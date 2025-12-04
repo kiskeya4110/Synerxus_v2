@@ -17,6 +17,7 @@ import {
   applications,
   savedOpportunities,
   rejectedOpportunities,
+  conversationThreads,
   messages,
   notifications,
   userDataAuditLogs,
@@ -66,6 +67,8 @@ import {
   type InsertSavedOpportunity,
   type RejectedOpportunity,
   type InsertRejectedOpportunity,
+  type ConversationThread,
+  type InsertConversationThread,
   type Message,
   type InsertMessage,
   type Notification,
@@ -250,6 +253,14 @@ export interface IStorage {
   deleteCalendarEvent(id: number): Promise<boolean>;
   listCalendarEvents(): Promise<CalendarEvent[]>;
 
+  // Conversation Thread operations
+  getConversationThread(id: number): Promise<ConversationThread | undefined>;
+  createConversationThread(thread: InsertConversationThread): Promise<ConversationThread>;
+  updateConversationThread(id: number, thread: Partial<InsertConversationThread>): Promise<ConversationThread | undefined>;
+  listConversationThreadsByOrganization(organizationId: number): Promise<ConversationThread[]>;
+  listConversationThreadsByVolunteer(volunteerId: number): Promise<ConversationThread[]>;
+  getConversationThreadBetween(organizationId: number, volunteerId: number, topic?: string): Promise<ConversationThread | undefined>;
+  
   // Message operations
   getMessage(id: number): Promise<Message | undefined>;
   createMessage(message: InsertMessage): Promise<Message>;
@@ -257,6 +268,7 @@ export interface IStorage {
   listMessages(): Promise<Message[]>;
   listMessagesBySender(senderId: number): Promise<Message[]>;
   listMessagesByReceiver(receiverId: number): Promise<Message[]>;
+  listMessagesByThread(threadId: number): Promise<Message[]>;
   listConversation(userId1: number, userId2: number): Promise<Message[]>;
   markMessageAsRead(id: number): Promise<Message | undefined>;
 
@@ -996,6 +1008,63 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(calendarEvents);
   }
 
+  // Conversation Thread operations
+  async getConversationThread(id: number): Promise<ConversationThread | undefined> {
+    const [result] = await db.select().from(conversationThreads).where(eq(conversationThreads.id, id));
+    return result || undefined;
+  }
+
+  async createConversationThread(thread: InsertConversationThread): Promise<ConversationThread> {
+    const [newThread] = await db.insert(conversationThreads).values(thread).returning();
+    return newThread;
+  }
+
+  async updateConversationThread(id: number, thread: Partial<InsertConversationThread>): Promise<ConversationThread | undefined> {
+    const [result] = await db.update(conversationThreads).set(thread).where(eq(conversationThreads.id, id)).returning();
+    return result || undefined;
+  }
+
+  async listConversationThreadsByOrganization(organizationId: number): Promise<ConversationThread[]> {
+    const { desc } = await import("drizzle-orm");
+    return await db
+      .select()
+      .from(conversationThreads)
+      .where(eq(conversationThreads.organizationId, organizationId))
+      .orderBy(desc(conversationThreads.lastMessageAt));
+  }
+
+  async listConversationThreadsByVolunteer(volunteerId: number): Promise<ConversationThread[]> {
+    const { desc } = await import("drizzle-orm");
+    return await db
+      .select()
+      .from(conversationThreads)
+      .where(eq(conversationThreads.volunteerId, volunteerId))
+      .orderBy(desc(conversationThreads.lastMessageAt));
+  }
+
+  async getConversationThreadBetween(organizationId: number, volunteerId: number, topic?: string): Promise<ConversationThread | undefined> {
+    let query = db.select().from(conversationThreads).where(
+      and(
+        eq(conversationThreads.organizationId, organizationId),
+        eq(conversationThreads.volunteerId, volunteerId)
+      )
+    );
+    
+    if (topic) {
+      const [result] = await db.select().from(conversationThreads).where(
+        and(
+          eq(conversationThreads.organizationId, organizationId),
+          eq(conversationThreads.volunteerId, volunteerId),
+          eq(conversationThreads.topic, topic)
+        )
+      );
+      return result || undefined;
+    }
+    
+    const results = await query;
+    return results[0] || undefined;
+  }
+
   // Message operations
   async getMessage(id: number): Promise<Message | undefined> {
     const [result] = await db.select().from(messages).where(eq(messages.id, id));
@@ -1022,6 +1091,14 @@ export class DatabaseStorage implements IStorage {
 
   async listMessagesByReceiver(receiverId: number): Promise<Message[]> {
     return await db.select().from(messages).where(eq(messages.receiverId, receiverId));
+  }
+
+  async listMessagesByThread(threadId: number): Promise<Message[]> {
+    return await db
+      .select()
+      .from(messages)
+      .where(eq(messages.threadId, threadId))
+      .orderBy(asc(messages.createdAt));
   }
 
   async listConversation(userId1: number, userId2: number): Promise<Message[]> {

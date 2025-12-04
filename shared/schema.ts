@@ -606,11 +606,25 @@ export const notifications = pgTable("notifications", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Conversation Threads - Group messages by topic for organized communication
+export const conversationThreads = pgTable("conversation_threads", {
+  id: serial("id").primaryKey(),
+  organizationId: integer("organization_id").references(() => organizations.id).notNull(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  topic: text("topic").notNull(), // Subject/topic of the conversation thread
+  projectId: integer("project_id").references(() => projects.id), // Optional project context
+  status: text("status").notNull().default("active"), // active, archived, closed
+  lastMessageAt: timestamp("last_message_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Messages - Communication between organizations and volunteers
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
   senderId: integer("sender_id").references(() => users.id).notNull(),
   receiverId: integer("receiver_id").references(() => users.id).notNull(),
+  threadId: integer("thread_id").references(() => conversationThreads.id), // Link to conversation thread
   subject: text("subject"),
   content: text("content").notNull(),
   projectId: integer("project_id").references(() => projects.id), // Optional project context
@@ -771,6 +785,12 @@ export const insertMatchSchema = createInsertSchema(matches).omit({
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
+export const insertConversationThreadSchema = createInsertSchema(conversationThreads).omit({
   id: true,
   createdAt: true,
   updatedAt: true
@@ -999,6 +1019,9 @@ export type InsertMatch = z.infer<typeof insertMatchSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type ConversationThread = typeof conversationThreads.$inferSelect;
+export type InsertConversationThread = z.infer<typeof insertConversationThreadSchema>;
 
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;

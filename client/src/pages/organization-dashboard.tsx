@@ -154,6 +154,19 @@ export default function OrganizationDashboard() {
     enabled: !!currentUser?.organizationId,
   });
 
+  // Fetch pending applications for the organization
+  const { data: pendingApplications } = useQuery({
+    queryKey: ['/api/applications', currentUser?.organizationId, 'pending'],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch(`/api/applications?organizationId=${currentUser.organizationId}`);
+      if (!response.ok) return [];
+      const allApplications = await response.json();
+      return allApplications.filter((app: any) => app.status === 'pending');
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
   const handleQuickAction = (actionId: string) => {
     if (actionId === 'create-project') {
       navigate('/projects?create=true');
@@ -836,6 +849,41 @@ export default function OrganizationDashboard() {
                   >
                     <CheckSquare size={14} style={{ color: '#9ca3af', flexShrink: 0 }} />
                     <span style={{ fontSize: '13px', color: '#374151' }}>{task.title}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {pendingApplications && pendingApplications.length > 0 && (
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '500', color: '#059669' }}>🔔 New Applications ({pendingApplications.length})</p>
+                </div>
+                {pendingApplications.slice(0, 3).map((app: any) => (
+                  <button
+                    key={app.id}
+                    type="button"
+                    onClick={() => navigate(`/volunteers?applicationId=${app.id}`)}
+                    onTouchEnd={(e) => { e.preventDefault(); navigate(`/volunteers?applicationId=${app.id}`); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 8px',
+                      borderBottom: '1px solid #f3f4f6',
+                      width: '100%',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'background-color 0.15s',
+                      touchAction: 'manipulation',
+                    }}
+                    data-testid={`application-${app.id}`}
+                  >
+                    <UserPlus size={14} style={{ color: '#059669', flexShrink: 0 }} />
+                    <span style={{ fontSize: '13px', color: '#374151' }}>New applicant for opportunity</span>
                   </button>
                 ))}
               </div>

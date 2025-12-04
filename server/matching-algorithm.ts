@@ -656,6 +656,44 @@ export function findTopVolunteers(
   return scoredVolunteers;
 }
 
+/**
+ * Derive category from SDG goals for interest matching
+ * Maps SDG numbers to categories like healthcare, education, environment, etc.
+ */
+export function deriveCategoryFromSDGs(sdgGoals: number[] | null | undefined, primarySdg?: number | null): string | null {
+  const sdgToCategory: Record<number, string> = {
+    1: "poverty",
+    2: "hunger",
+    3: "healthcare",
+    4: "education",
+    5: "gender equality",
+    6: "clean water",
+    7: "energy",
+    8: "economy",
+    9: "industry",
+    10: "inequality",
+    11: "cities",
+    12: "sustainability",
+    13: "climate",
+    14: "ocean",
+    15: "environment",
+    16: "peace",
+    17: "partnership",
+  };
+
+  // Use primarySdg first if available
+  if (primarySdg && sdgToCategory[primarySdg]) {
+    return sdgToCategory[primarySdg];
+  }
+
+  // Otherwise use first SDG goal
+  if (sdgGoals && sdgGoals.length > 0 && sdgToCategory[sdgGoals[0]]) {
+    return sdgToCategory[sdgGoals[0]];
+  }
+
+  return null;
+}
+
 // Potential Improvements
 /**
  * 1. Parameterization: Allow dynamic adjustment of weights based on feedback.

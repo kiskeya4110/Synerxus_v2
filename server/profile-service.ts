@@ -2,6 +2,7 @@ import { db } from "./db";
 import { users, volunteerProfiles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import type { VolunteerProfile, InsertVolunteerProfile } from "@shared/schema";
+import { deriveCategoryFromSDGs } from "./matching-algorithm";
 
 interface ProfileUpdateData {
   // User table fields
@@ -86,6 +87,11 @@ export async function updateVolunteerProfileWithUser(
     }
     if (profileData.preferredSdgs !== undefined) {
       profileUpdates.preferredSdgs = profileData.preferredSdgs || [];
+      // Auto-populate category from SDGs for interest matching
+      const derivedCategory = deriveCategoryFromSDGs(profileData.preferredSdgs);
+      if (derivedCategory) {
+        (profileUpdates as any).category = derivedCategory;
+      }
     }
     if (profileData.skillRatings !== undefined) {
       profileUpdates.skillRatings = profileData.skillRatings;
@@ -150,6 +156,9 @@ export async function updateVolunteerProfileWithUser(
       }
     } else {
       // Create new profile with all volunteer data (matching intake form structure)
+      // Derive category from SDGs for interest matching
+      const derivedCategory = deriveCategoryFromSDGs(profileData.preferredSdgs || []);
+      
       const newProfileData: InsertVolunteerProfile = {
         userId,
         skills: profileData.skills || [],
@@ -157,6 +166,7 @@ export async function updateVolunteerProfileWithUser(
         location: profileData.location || null,
         preferredSdgs: profileData.preferredSdgs || [],
         skillRatings: profileData.skillRatings || {},
+        category: derivedCategory || undefined,
         weeklyAvailability: profileData.weeklyAvailability,
         availability: profileData.availability,
         preferredWorkStyle: profileData.preferredWorkStyle,

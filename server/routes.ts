@@ -26,7 +26,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
-import { calculateMatchScore, findTopMatches, findTopVolunteers } from "./matching-algorithm";
+import { calculateMatchScore, findTopMatches, findTopVolunteers, deriveCategoryFromSDGs } from "./matching-algorithm";
 import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization, getVisibleProjectIdsForVolunteer } from "./dashboard-service";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import { updateVolunteerProfileWithUser } from "./profile-service";
@@ -1822,6 +1822,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Verify ownership: payload organizationId must match user's organizationId
       if (opportunityData.organizationId !== user.organizationId) {
         return res.status(403).json({ message: "Resource not owned by your organization" });
+      }
+      
+      // Auto-populate category from SDGs if not provided (for interest matching)
+      if (!opportunityData.category && (opportunityData.sdgGoals || opportunityData.primarySdg)) {
+        const derivedCategory = deriveCategoryFromSDGs(
+          opportunityData.sdgGoals as number[] | null,
+          opportunityData.primarySdg as number | null
+        );
+        if (derivedCategory) {
+          (opportunityData as any).category = derivedCategory;
+        }
       }
       
       const opportunity = await storage.createOpportunity(opportunityData);

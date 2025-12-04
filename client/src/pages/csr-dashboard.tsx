@@ -460,6 +460,7 @@ export default function CSRDashboard() {
         flexDirection: "column",
         minHeight: "100vh",
         backgroundColor: "#ffffff",
+        overflow: "auto",
       }}
     >
       {/* Top Header Bar - Dark Navy with Blue Ribbon */}
@@ -563,7 +564,7 @@ export default function CSRDashboard() {
       </header>
 
       <div
-        style={{ display: "flex", flex: 1 }}
+        style={{ display: "flex", flex: 1, minHeight: 0 }}
       >
         {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
         <aside
@@ -573,6 +574,7 @@ export default function CSRDashboard() {
             color: "white",
             padding: "24px",
             flexShrink: 0,
+            overflowY: "auto",
           }}
         >
           <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -759,6 +761,8 @@ export default function CSRDashboard() {
             display: "flex",
             flexDirection: "column",
             gap: "24px",
+            overflowY: "auto",
+            paddingBottom: "48px",
           }}
         >
           {selectedMainTab === "engagement" && (

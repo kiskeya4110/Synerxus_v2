@@ -236,6 +236,7 @@ export default function ProjectPortfolio() {
         flexDirection: "column",
         minHeight: "100vh",
         backgroundColor: "#ffffff",
+        overflow: "auto",
       }}
     >
       {/* Top Header Bar - Dark Navy with Blue Ribbon */}

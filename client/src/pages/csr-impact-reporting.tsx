@@ -308,7 +308,7 @@ export function CSRImpactReporting() {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#f9fafb" }}>
+    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#f9fafb", overflow: "auto" }}>
       {/* Header */}
       <header style={{ backgroundColor: "#1e3a8a", color: "white", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>

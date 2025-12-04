@@ -66,22 +66,24 @@ export default function Header() {
   const { data: organizationProfile } = useQuery({
     queryKey: ["/api/profile/organization", currentUser?.id],
     queryFn: async () => {
-      const response = await fetch('/api/profile/organization');
+      if (!currentUser?.id) return null;
+      const response = await fetch(`/api/profile/organization?userId=${currentUser.id}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: currentUser?.userType === 'organization'
+    enabled: !!currentUser?.id && currentUser?.userType === 'organization'
   });
 
   // Fetch volunteer profile if user is volunteer
   const { data: volunteerProfile } = useQuery({
     queryKey: ["/api/intake/volunteer-profile", currentUser?.id],
     queryFn: async () => {
-      const response = await fetch('/api/intake/volunteer-profile');
+      if (!currentUser?.id) return null;
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${currentUser.id}`);
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: currentUser?.userType === 'volunteer'
+    enabled: !!currentUser?.id && currentUser?.userType === 'volunteer'
   });
 
   // Fetch real notifications from API

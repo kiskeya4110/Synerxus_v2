@@ -94,6 +94,7 @@ export default function OrganizationDashboard() {
 
   const [projectFilter, setProjectFilter] = useState('all');
   const [timePeriod, setTimePeriod] = useState('all');
+  const [sdgFilter, setSdgFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | null>(null);
   const [hoveredSDG, setHoveredSDG] = useState<number | null>(null);
@@ -110,11 +111,12 @@ export default function OrganizationDashboard() {
   }
 
   const { data: dashboardData, isLoading } = useQuery<DashboardData>({
-    queryKey: ['/api/organization/dashboard', userId, projectFilter, timePeriod],
+    queryKey: ['/api/organization/dashboard', userId, projectFilter, timePeriod, sdgFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ userId: userId || '' });
       if (projectFilter !== 'all') params.append('projectId', projectFilter);
       if (timePeriod !== 'all') params.append('timePeriod', timePeriod);
+      if (sdgFilter) params.append('sdgGoal', sdgFilter);
       const response = await fetch(`/api/organization/dashboard?${params}`);
       if (!response.ok) throw new Error('Failed to fetch dashboard data');
       return response.json();
@@ -310,6 +312,8 @@ export default function OrganizationDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>SDG Filter:</label>
             <select
+              value={sdgFilter}
+              onChange={(e) => setSdgFilter(e.target.value)}
               data-testid="filter-sdg"
               style={{
                 padding: '8px 32px 8px 12px',

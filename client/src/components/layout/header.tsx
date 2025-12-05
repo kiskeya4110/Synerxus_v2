@@ -187,12 +187,12 @@ export default function Header() {
   return (
     <header className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-700/50 fixed top-0 left-0 right-0 z-40 w-full safe-area-top shadow-sm">
       <div className="flex items-center justify-between h-14 md:h-16 px-3 md:px-4 gap-2 md:gap-4 min-w-0 max-w-7xl mx-auto">
-        {/* Hamburger Menu - Toggle Sidebar (hidden on mobile) */}
+        {/* Hamburger Menu - Toggle Sidebar (always visible) */}
         <Button 
           variant="ghost" 
           size="icon" 
           onClick={toggleSidebar}
-          className="text-gray-500 dark:text-gray-400 focus:outline-none flex-shrink-0 hidden md:flex"
+          className="text-gray-500 dark:text-gray-400 focus:outline-none flex-shrink-0 flex"
           data-testid="button-hamburger-menu"
           title="Toggle menu"
         >

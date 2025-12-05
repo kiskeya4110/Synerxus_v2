@@ -20,6 +20,16 @@ The platform includes a rebranded landing page with an interactive SDG wheel, a 
 ### System Design Choices
 Authentication is managed via Firebase Auth with Google OAuth. Client-server communication uses RESTful APIs, WebSockets, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon. PWA implementation includes a web app manifest, a service worker for offline support with network-first caching, and meta tags for iOS/Android mobile web app support, enabling installation on devices.
 
+### Performance Optimizations (December 2025)
+**CSR Dashboard Optimization**: Implemented O(1) lookup maps to replace O(n) array.find() calls throughout data aggregation:
+- **projectsMap** and **profilesMap**: Eliminated repeated project and profile lookups in SDG metrics and geographic map calculations
+- **budgetsMap**: Replaced budget lookups for project status determination
+- **activitiesByProject**: Pre-computed activity grouping by project to avoid repeated filtering
+- **employeeDetailsBySDGAndUser** and **projectDetailsBySDGAndProject**: Replaced nested .find() calls with map-based lookups for employee and project detail tracking
+- **Result**: Reduced algorithm complexity from O(n²) to O(n), eliminating cascading nested loops
+
+**Geographic Impact Map Update**: Enhanced to display ALL employee volunteer project locations (not just sponsored projects), dynamically updated as new volunteer activities are logged, with smart status indicators (active/sponsored/completed).
+
 ## External Dependencies
 
 -   **Authentication & User Management**: Firebase Auth, Firebase Firestore, Firebase Storage

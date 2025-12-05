@@ -6017,6 +6017,10 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           projectId: emp.projectId
         }));
 
+      // BUILD LOOKUP MAPS EARLY FOR USE IN GEOGRAPHIC MAP AND SDG METRICS (PERFORMANCE OPTIMIZATION)
+      const projectsMap = new Map(projects.map((p: any) => [p.id, p]));
+      const profilesMap = new Map(volunteerProfiles.map((vp: any) => [vp.userId, vp]));
+      
       // Get sidebar data: projects employees actually worked on
       const employeeProjectIds = [...new Set(filteredEmployeeActivities.map((a: any) => a.projectId))];
       const employeeProjects = projects.filter((p: any) => employeeProjectIds.includes(p.id));
@@ -6095,11 +6099,21 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // This ensures the geographic map updates dynamically based on where employees are working
       const allEmployeeProjectIds = Array.from(new Set(filteredEmployeeActivities.map((a: any) => a.projectId)));
       const sponsoredProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId));
+      const budgetsMap = new Map(partnerBudgets.map((b: any) => [b.projectId, b]));
+      
+      // Cache activity counts by project for O(1) access
+      const activitiesByProject: Record<string, any[]> = {};
+      filteredEmployeeActivities.forEach((a: any) => {
+        if (!activitiesByProject[a.projectId]) {
+          activitiesByProject[a.projectId] = [];
+        }
+        activitiesByProject[a.projectId].push(a);
+      });
       
       const projectLocations = allEmployeeProjectIds
         .map((projectId: any, idx: number) => {
-          // Get all activities for this project from ALL employee activities
-          const activitiesForProject = filteredEmployeeActivities.filter((a: any) => a.projectId === projectId);
+          // Get cached activities for this project
+          const activitiesForProject = activitiesByProject[projectId] || [];
           const totalHoursForProject = activitiesForProject.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
           const employeeCountForProject = new Set(activitiesForProject.map((a: any) => a.userId)).size;
           
@@ -6108,8 +6122,8 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
             return null;
           }
           
-          // Get the actual project from database to access its location
-          const project = projects.find((p: any) => p.id === projectId);
+          // Get the actual project from map
+          const project = projectsMap.get(projectId);
           const projectLocation = project?.location || '';
           
           // Geocode the actual project location
@@ -6123,7 +6137,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           
           // Determine project status: completed, active (sponsored), or community (non-sponsored)
           const isSponsored = sponsoredProjectIds.has(projectId);
-          const budget = partnerBudgets.find((b: any) => b.projectId === projectId);
+          const budget = budgetsMap.get(projectId);
           let status = 'active'; // Default to active for non-sponsored community projects
           if (isSponsored && budget) {
             status = budget.status === 'completed' ? 'completed' : 'sponsored';
@@ -6151,11 +6165,15 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       const challengeSdgs = partnerChallenges.map((c: any) => c.sdgGoal).filter(Boolean);
       const defaultSdgs = partnerPrimarySdgs.length > 0 ? partnerPrimarySdgs : challengeSdgs;
       
+      // Track employee details by SDG and user for O(1) lookups
+      const employeeDetailsBySDGAndUser: Record<number, Record<number, any>> = {};
+      const projectDetailsBySDGAndProject: Record<number, Record<number, any>> = {};
+      
       // Use ALL employee activities (not just sponsored projects) for comprehensive SDG tracking
       filteredEmployeeActivities.forEach((activity: any) => {
         if (activity.projectId) {
-          const project = projects.find((p: any) => p.id === activity.projectId);
-          const profile = volunteerProfiles.find((vp: any) => vp.userId === activity.userId);
+          const project = projectsMap.get(activity.projectId);
+          const profile = profilesMap.get(activity.userId);
           // Use project SDG if available, otherwise use partner's primary SDGs or challenge SDGs
           const sdgToUse = project?.primarySdg || defaultSdgs[0] || 3; // Default to SDG 3 if none set
           
@@ -6169,38 +6187,41 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
                 employeeDetails: [],
                 projectDetails: []
               };
+              employeeDetailsBySDGAndUser[sdgToUse] = {};
+              projectDetailsBySDGAndProject[sdgToUse] = {};
             }
             orgwideSDGMetrics[sdgToUse].totalHours += activity.hours || 0;
             orgwideSDGMetrics[sdgToUse].employeeCount.add(activity.userId);
             orgwideSDGMetrics[sdgToUse].projectCount.add(activity.projectId);
             
-            // Track employee details for this SDG
-            const existingEmployee = orgwideSDGMetrics[sdgToUse].employeeDetails.find(
-              (e: any) => e.userId === activity.userId
-            );
-            if (existingEmployee) {
-              existingEmployee.hours += activity.hours || 0;
-            } else {
-              orgwideSDGMetrics[sdgToUse].employeeDetails.push({
+            // Track employee details for this SDG using map for O(1) lookup
+            if (!employeeDetailsBySDGAndUser[sdgToUse][activity.userId]) {
+              const employeeDetail = {
                 name: profile?.volunteerName || `Employee ${activity.userId}`,
                 email: profile?.volunteerName || '',
                 userId: activity.userId,
                 hours: activity.hours || 0,
                 projectId: activity.projectId,
                 projectName: project?.name || 'Project'
-              });
+              };
+              employeeDetailsBySDGAndUser[sdgToUse][activity.userId] = employeeDetail;
+              orgwideSDGMetrics[sdgToUse].employeeDetails.push(employeeDetail);
+            } else {
+              employeeDetailsBySDGAndUser[sdgToUse][activity.userId].hours += activity.hours || 0;
             }
             
-            // Track project details
-            if (!orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === activity.projectId)) {
-              orgwideSDGMetrics[sdgToUse].projectDetails.push({
+            // Track project details using map for O(1) lookup
+            if (!projectDetailsBySDGAndProject[sdgToUse][activity.projectId]) {
+              const projectDetail = {
                 id: activity.projectId,
                 name: project?.name || 'Project',
-                hours: 0
-              });
+                hours: activity.hours || 0
+              };
+              projectDetailsBySDGAndProject[sdgToUse][activity.projectId] = projectDetail;
+              orgwideSDGMetrics[sdgToUse].projectDetails.push(projectDetail);
+            } else {
+              projectDetailsBySDGAndProject[sdgToUse][activity.projectId].hours += activity.hours || 0;
             }
-            const projDetail = orgwideSDGMetrics[sdgToUse].projectDetails.find((p: any) => p.id === activity.projectId);
-            if (projDetail) projDetail.hours += activity.hours || 0;
           }
         }
       });

@@ -1,38 +1,50 @@
 // Service Worker registration with update handling
 export function registerServiceWorker() {
+  // Only register in production - skip in development
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker
-        .register('/service-worker.js')
-        .then(registration => {
-          console.log('Service Worker registered:', registration);
+      // Add a small delay to ensure page is fully loaded
+      setTimeout(() => {
+        navigator.serviceWorker
+          .register('/service-worker.js', { scope: '/' })
+          .then(registration => {
+            console.log('Service Worker registered:', registration);
 
-          // Check for updates periodically
-          setInterval(() => {
-            registration.update();
-          }, 60000); // Check every minute
-
-          // Listen for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (
-                  newWorker.state === 'installed' &&
-                  navigator.serviceWorker.controller
-                ) {
-                  // New service worker is ready
-                  console.log('New service worker available, update ready');
-                  // Optionally notify the user
-                  notifyUserOfUpdate();
-                }
+            // Check for updates periodically
+            const updateInterval = setInterval(() => {
+              registration.update().catch(err => {
+                console.warn('Failed to check for SW updates:', err);
               });
-            }
+            }, 60000); // Check every minute
+
+            // Listen for updates
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (
+                    newWorker.state === 'installed' &&
+                    navigator.serviceWorker.controller
+                  ) {
+                    // New service worker is ready
+                    console.log('New service worker available, update ready');
+                    // Optionally notify the user
+                    notifyUserOfUpdate();
+                  }
+                });
+              }
+            });
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+              clearInterval(updateInterval);
+            });
+          })
+          .catch(error => {
+            console.warn('Service Worker registration failed:', error?.message || error);
+            // Silently fail - service worker is optional
           });
-        })
-        .catch(error => {
-          console.log('Service Worker registration failed:', error);
-        });
+      }, 1000);
 
       // Listen for messages from service worker
       navigator.serviceWorker.addEventListener('message', event => {

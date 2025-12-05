@@ -566,7 +566,7 @@ export default function Landing() {
   const isLoggedIn = !!storedUserId && !!currentUser?.id;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="h-screen bg-slate-50 flex flex-col overflow-y-auto">
       {/* Navigation - PWA optimized with glass effect */}
       <nav className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl safe-area-top shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
@@ -589,7 +589,7 @@ export default function Landing() {
                 </Link>
                 <Link href="/volunteer-intake" className="w-full sm:w-auto">
                   <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-join-nav">
-                    Join
+                    Log In
                   </Button>
                 </Link>
               </>
@@ -622,7 +622,7 @@ export default function Landing() {
                 <>
                   <Link href="/volunteer-intake" className="w-full sm:w-auto">
                     <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-hero">
-                      Join
+                      Log In
                     </Button>
                   </Link>
                   <Link href="/login" className="w-full sm:w-auto">

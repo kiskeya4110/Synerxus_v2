@@ -109,14 +109,14 @@ export default function OrganizationMessages() {
   });
 
   const { data: volunteers = [], isLoading: loadingVolunteers, error: volunteersError } = useQuery({
-    queryKey: ["/api/organizations", organizationId, "volunteers"],
+    queryKey: ["/api/organizations", organizationId, "volunteers", userId],
     queryFn: async () => {
-      if (!organizationId) return [];
-      const response = await fetch(`/api/organizations/${organizationId}/volunteers`);
+      if (!organizationId || !userId) return [];
+      const response = await fetch(`/api/organizations/${organizationId}/volunteers?userId=${userId}`);
       if (!response.ok) throw new Error("Failed to fetch volunteers");
       return response.json();
     },
-    enabled: showNewConversation && !!organizationId,
+    enabled: showNewConversation && !!organizationId && !!userId,
   });
 
   const sendMessageMutation = useMutation({

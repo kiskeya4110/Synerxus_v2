@@ -49,7 +49,6 @@ export default function OrganizationMessages() {
   const { toast } = useToast();
   const userType = localStorage.getItem('userType');
   const userId = localStorage.getItem('currentUserId');
-  const organizationId = localStorage.getItem('organizationId');
   
   const [selectedThread, setSelectedThread] = useState<ConversationThread | null>(null);
   const [messageContent, setMessageContent] = useState("");
@@ -59,6 +58,19 @@ export default function OrganizationMessages() {
   const [newVolunteerId, setNewVolunteerId] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Fetch current user to get actual organization data
+  const { data: currentUser } = useQuery({
+    queryKey: ['/api/users/me'],
+    queryFn: async () => {
+      const response = await fetch('/api/users/me');
+      if (!response.ok) throw new Error('Failed to fetch user');
+      return response.json();
+    },
+    enabled: !!userId
+  });
+
+  const organizationId = currentUser?.organizationId || currentUser?.id;
 
   useEffect(() => {
     if (userType !== 'organization') {
@@ -87,12 +99,23 @@ export default function OrganizationMessages() {
     enabled: !!selectedThread
   });
 
-  const { data: volunteers = [] } = useQuery({
+  const { data: volunteers = [], isLoading: loadingVolunteers, error: volunteersError } = useQuery({
     queryKey: ['/api/organizations', organizationId, 'volunteers'],
     queryFn: async () => {
+      if (!organizationId) {
+        console.error('No organizationId available');
+        return [];
+      }
+      console.log('Fetching volunteers for organizationId:', organizationId);
       const response = await fetch(`/api/organizations/${organizationId}/volunteers`);
-      if (!response.ok) throw new Error('Failed to fetch volunteers');
-      return response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch volunteers:', response.status, errorText);
+        throw new Error('Failed to fetch volunteers');
+      }
+      const data = await response.json();
+      console.log('Volunteers fetched:', data);
+      return data;
     },
     enabled: showNewConversation && !!organizationId
   });
@@ -203,9 +226,18 @@ export default function OrganizationMessages() {
               <div className="space-y-4 mt-4">
                 <div>
                   <label className="text-sm font-medium">Select Volunteer</label>
-                  {(volunteers as any[]).length === 0 ? (
+                  {loadingVolunteers ? (
                     <div className="w-full mt-1 px-3 py-2 border rounded-md bg-gray-50 text-gray-500 text-sm">
-                      No connected volunteers. Add volunteers to projects to start conversations.
+                      Loading volunteers...
+                    </div>
+                  ) : volunteersError ? (
+                    <div className="w-full mt-1 px-3 py-2 border rounded-md bg-red-50 text-red-600 text-sm">
+                      Error loading volunteers. Please try again.
+                    </div>
+                  ) : (volunteers as any[]).length === 0 ? (
+                    <div className="w-full mt-1 px-3 py-2 border rounded-md bg-yellow-50 text-yellow-700 text-sm">
+                      <p className="font-medium">No volunteers assigned to projects</p>
+                      <p className="text-xs mt-1">Volunteers need to be assigned to your projects before you can message them.</p>
                     </div>
                   ) : (
                     <select

@@ -68,6 +68,7 @@ export default function OrganizationMessages() {
   const [newVolunteerId, setNewVolunteerId] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const { data: currentUser } = useQuery({
     queryKey: ["/api/users/me"],
@@ -160,8 +161,9 @@ export default function OrganizationMessages() {
   });
 
   useEffect(() => {
-    if (threadMessages?.messages?.length) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (threadMessages?.messages?.length && messagesContainerRef.current) {
+      // Scroll within the container only, not the whole page
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [threadMessages?.messages]);
 
@@ -341,7 +343,7 @@ export default function OrganizationMessages() {
                   </CardHeader>
 
                   {/* Messages Area */}
-                  <div className="overflow-y-auto p-4" style={{ height: '350px' }}>
+                  <div ref={messagesContainerRef} className="overflow-y-auto p-4" style={{ height: '350px' }}>
                     {loadingMessages ? (
                       <div className="text-center text-gray-500">Loading messages...</div>
                     ) : (

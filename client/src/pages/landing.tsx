@@ -599,7 +599,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 lg:py-28">
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 lg:py-28" data-testid="section-hero">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
           {/* Left Content */}
           <div className="flex flex-col justify-center order-2 md:order-1">
@@ -651,6 +651,69 @@ export default function Landing() {
             <p className="text-xs sm:text-sm italic text-slate-600 text-center leading-relaxed px-2" data-testid="text-kofi-annan-quote">
               "Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family." — Kofi Annan
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center pt-8 sm:pt-12 px-4 relative z-20">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3 sm:mb-4">
+              <span className="text-blue-900">From Local Service</span><br />
+              <span className="text-amber-600">to Global Legacy</span>
+            </h2>
+            <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-8 sm:mb-10 max-w-2xl mx-auto">
+              Join thousands making measurable impact across all 17 SDGs worldwide.
+            </p>
+
+            {/* How It Works - 1 Row, 3 Columns */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 max-w-4xl mx-auto mb-10">
+              <Link href={isLoggedIn ? "/volunteer-profile-settings" : "/volunteer-intake"} className="group">
+                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-blue-200 hover:border-blue-500 transition-all hover:shadow-xl h-full">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
+                    1
+                  </div>
+                  <h3 className="font-bold text-blue-900 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Create Profile</h3>
+                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
+                    Set up your volunteer profile with skills and interests
+                  </p>
+                </div>
+              </Link>
+              
+              <Link href={isLoggedIn ? "/discover-opportunities" : "/login"} className="group">
+                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-amber-200 hover:border-amber-500 transition-all hover:shadow-xl h-full">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
+                    2
+                  </div>
+                  <h3 className="font-bold text-amber-600 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Match to Projects</h3>
+                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
+                    Get AI-matched to opportunities aligned with your SDGs
+                  </p>
+                </div>
+              </Link>
+              
+              <Link href={isLoggedIn ? "/dashboard" : "/login"} className="group">
+                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-green-200 hover:border-green-500 transition-all hover:shadow-xl h-full">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
+                    3
+                  </div>
+                  <h3 className="font-bold text-green-600 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Make Impact</h3>
+                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
+                    Track your contributions and measure global outcomes
+                  </p>
+                </div>
+              </Link>
+            </div>
+            
+            {/* Main CTA Button */}
+            <div>
+              <Link href={isLoggedIn ? "/dashboard" : "/volunteer-intake"}>
+                <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
+                  {isLoggedIn ? "My Dashboard" : "Get Started Now"}
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -784,65 +847,6 @@ export default function Landing() {
                   <li>• Volunteer action is critical to closing the gap</li>
                 </ul>
               </div>
-            </div>
-          </div>
-
-          {/* CTA Section */}
-          <div className="text-center mt-12 sm:mt-16 md:mt-20 pt-8 sm:pt-12 border-t border-slate-200 px-4 relative z-20">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3 sm:mb-4">
-              <span className="text-blue-900">From Local Service</span><br />
-              <span className="text-amber-600">to Global Legacy</span>
-            </h2>
-            <p className="text-sm sm:text-base md:text-lg text-slate-600 mb-8 sm:mb-10 max-w-2xl mx-auto">
-              Join thousands making measurable impact across all 17 SDGs worldwide.
-            </p>
-
-            {/* How It Works - 1 Row, 3 Columns */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6 max-w-4xl mx-auto mb-10">
-              <Link href={isLoggedIn ? "/volunteer-profile-settings" : "/volunteer-intake"} className="group">
-                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-blue-200 hover:border-blue-500 transition-all hover:shadow-xl h-full">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
-                    1
-                  </div>
-                  <h3 className="font-bold text-blue-900 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Create Profile</h3>
-                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
-                    Set up your volunteer profile with skills and interests
-                  </p>
-                </div>
-              </Link>
-              
-              <Link href={isLoggedIn ? "/discover-opportunities" : "/login"} className="group">
-                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-amber-200 hover:border-amber-500 transition-all hover:shadow-xl h-full">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-amber-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
-                    2
-                  </div>
-                  <h3 className="font-bold text-amber-600 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Match to Projects</h3>
-                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
-                    Get AI-matched to opportunities aligned with your SDGs
-                  </p>
-                </div>
-              </Link>
-              
-              <Link href={isLoggedIn ? "/dashboard" : "/login"} className="group">
-                <div className="bg-white rounded-xl p-3 sm:p-5 md:p-6 shadow-lg border-2 border-green-200 hover:border-green-500 transition-all hover:shadow-xl h-full">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm sm:text-lg md:text-xl mx-auto mb-2 sm:mb-3">
-                    3
-                  </div>
-                  <h3 className="font-bold text-green-600 text-xs sm:text-sm md:text-base mb-1 sm:mb-2">Make Impact</h3>
-                  <p className="text-slate-600 text-[10px] sm:text-xs md:text-sm leading-relaxed hidden sm:block">
-                    Track your contributions and measure global outcomes
-                  </p>
-                </div>
-              </Link>
-            </div>
-            
-            {/* Main CTA Button */}
-            <div>
-              <Link href={isLoggedIn ? "/dashboard" : "/volunteer-intake"}>
-                <Button size="lg" className="gap-2 min-h-[48px] bg-blue-900 hover:bg-blue-950 text-white font-semibold px-8 rounded-xl relative z-30">
-                  {isLoggedIn ? "My Dashboard" : "Get Started Now"}
-                </Button>
-              </Link>
             </div>
           </div>
         </div>

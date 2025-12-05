@@ -1473,7 +1473,7 @@ export default function OrganizationImpactReport() {
                               {
                                 label: "Resource Units",
                                 data: resourceAllocation,
-                                backgroundColor: "#f59e0b",
+                                backgroundColor: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"],
                               },
                             ],
                           }}

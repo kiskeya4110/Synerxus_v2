@@ -69,14 +69,14 @@ export default function VolunteerMessages() {
   });
 
   const { data: threadMessages, isLoading: loadingMessages, refetch: refetchMessages } = useQuery({
-    queryKey: ['/api/conversation-threads', selectedThread?.id, 'messages'],
+    queryKey: ['/api/conversation-threads', selectedThread?.id, 'messages', userId],
     queryFn: async () => {
-      if (!selectedThread) return { thread: null, messages: [] };
-      const response = await fetch(`/api/conversation-threads/${selectedThread.id}/messages`);
+      if (!selectedThread || !userId) return { thread: null, messages: [] };
+      const response = await fetch(`/api/conversation-threads/${selectedThread.id}/messages?userId=${userId}`);
       if (!response.ok) throw new Error('Failed to fetch messages');
       return response.json();
     },
-    enabled: !!selectedThread
+    enabled: !!selectedThread && !!userId
   });
 
   const sendMessageMutation = useMutation({

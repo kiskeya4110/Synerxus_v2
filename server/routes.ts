@@ -1802,17 +1802,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Get messages in a thread
+  // Get messages in a thread (protected - only participants can access)
   app.get("/api/conversation-threads/:threadId/messages", async (req, res) => {
     try {
       const threadId = parseInt(req.params.threadId);
+      const userIdParam = req.query.userId as string;
+      
       if (isNaN(threadId)) {
         return res.status(400).json({ message: "threadId must be a valid number" });
+      }
+      
+      if (!userIdParam) {
+        return res.status(400).json({ message: "userId query parameter is required for authorization" });
+      }
+      
+      const requestingUserId = parseInt(userIdParam);
+      if (isNaN(requestingUserId)) {
+        return res.status(400).json({ message: "userId must be a valid number" });
       }
       
       const thread = await storage.getConversationThread(threadId);
       if (!thread) {
         return res.status(404).json({ message: "Thread not found" });
+      }
+      
+      // Authorization check: User must be either the volunteer in the thread OR belong to the organization
+      const requestingUser = await storage.getUser(requestingUserId);
+      if (!requestingUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      const isVolunteerInThread = thread.volunteerId === requestingUserId;
+      const isOrganizationMember = requestingUser.organizationId === thread.organizationId;
+      
+      if (!isVolunteerInThread && !isOrganizationMember) {
+        return res.status(403).json({ message: "Access denied. You are not authorized to view messages in this thread." });
       }
       
       const messages = await storage.listMessagesByThread(threadId);
@@ -1904,7 +1928,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Send a message in a thread
+  // Send a message in a thread (protected - only participants can send)
   app.post("/api/conversation-threads/:threadId/messages", async (req, res) => {
     try {
       const threadId = parseInt(req.params.threadId);
@@ -1921,6 +1945,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const thread = await storage.getConversationThread(threadId);
       if (!thread) {
         return res.status(404).json({ message: "Thread not found" });
+      }
+      
+      // Authorization check: Sender must be either the volunteer in the thread OR belong to the organization
+      const senderUser = await storage.getUser(parseInt(senderId));
+      if (!senderUser) {
+        return res.status(401).json({ message: "Sender not found" });
+      }
+      
+      const isVolunteerInThread = thread.volunteerId === parseInt(senderId);
+      const isOrganizationMember = senderUser.organizationId === thread.organizationId;
+      
+      if (!isVolunteerInThread && !isOrganizationMember) {
+        return res.status(403).json({ message: "Access denied. You are not authorized to send messages in this thread." });
       }
       
       // Determine receiver (the other party in the thread)

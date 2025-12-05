@@ -3609,6 +3609,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Organization Dashboard Route (Dedicated) ===
   app.get("/api/organization/dashboard", async (req, res) => {
     try {
+      // Cache dashboard data for 30 seconds to improve performance
+      res.set('Cache-Control', 'private, max-age=30');
+      
       const userId = req.query.userId as string | undefined;
       const projectFilter = req.query.projectId as string | undefined;
       const timePeriod = req.query.timePeriod as string | undefined;

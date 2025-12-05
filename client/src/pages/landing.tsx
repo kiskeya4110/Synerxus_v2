@@ -585,11 +585,11 @@ export default function Landing() {
             ) : (
               <>
                 <Link href="/login" className="w-full sm:w-auto">
-                  <Button variant="ghost" size="sm" className="w-full sm:w-auto whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-sign-up-nav">Sign Up</Button>
+                  <Button variant="ghost" size="sm" className="w-full sm:w-auto whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-login-nav">Log In</Button>
                 </Link>
                 <Link href="/volunteer-intake" className="w-full sm:w-auto">
-                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-join-nav">
-                    Log In
+                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-sign-up-nav">
+                    Sign Up
                   </Button>
                 </Link>
               </>
@@ -608,7 +608,12 @@ export default function Landing() {
               <span className="text-amber-600">Impact Globally.</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">
-              Implementing the SDGs and reaching the nexus of impact takes collective action. Our platform helps you join the effort, track outcomes, and manage projects.
+              🌍 Turn Service Into Verified Impact
+              Synerxus unites volunteers, nonprofits, and CSR teams on one platform—transforming effort into evidence.
+              Ditch the spreadsheets. Track every hour, outcome, and SDG contribution in real time.
+              Automate reporting. Align with global goals.
+              Show stakeholders the true value of your mission.
+
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-fit">
@@ -620,12 +625,12 @@ export default function Landing() {
                 </Link>
               ) : (
                 <>
-                  <Link href="/volunteer-intake" className="w-full sm:w-auto">
-                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-hero">
+                  <Link href="/login" className="w-full sm:w-auto">
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-login-hero">
                       Log In
                     </Button>
                   </Link>
-                  <Link href="/login" className="w-full sm:w-auto">
+                  <Link href="/volunteer-intake" className="w-full sm:w-auto">
                     <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-600/25" data-testid="button-sign-up-hero">
                       Sign Up
                     </Button>

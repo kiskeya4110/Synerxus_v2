@@ -202,17 +202,18 @@ export default function OrganizationMessages() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <OrganizationHeader activeTab="messages" />
       
-      <div className="max-w-7xl mx-auto p-4 md:p-6 pb-96">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Messages</h1>
-            <p className="text-gray-600">Communicate with volunteers on your projects</p>
-          </div>
-          
-          <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto p-4 md:p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Messages</h1>
+              <p className="text-gray-600">Communicate with volunteers on your projects</p>
+            </div>
+            
+            <Dialog open={showNewConversation} onOpenChange={setShowNewConversation}>
             <DialogTrigger asChild>
               <Button data-testid="button-new-conversation">
                 <Plus className="h-4 w-4 mr-2" />
@@ -289,9 +290,9 @@ export default function OrganizationMessages() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Conversation List */}
-          <Card className="lg:col-span-1 flex flex-col max-h-96 lg:max-h-screen lg:max-h-[calc(100vh-180px)]">
+          <Card className="lg:col-span-1">
             <CardHeader className="pb-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -304,63 +305,61 @@ export default function OrganizationMessages() {
                 />
               </div>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full w-full">
-                {loadingThreads ? (
-                  <div className="p-4 text-center text-gray-500">Loading...</div>
-                ) : filteredThreads.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-                    <p>No conversations yet</p>
-                    <p className="text-sm">Start a new conversation to connect with volunteers</p>
-                  </div>
-                ) : (
-                  filteredThreads.map((thread) => (
-                    <div
-                      key={thread.id}
-                      onClick={() => setSelectedThread(thread)}
-                      className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
-                        selectedThread?.id === thread.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                      }`}
-                      data-testid={`thread-item-${thread.id}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={thread.volunteerAvatar} />
-                          <AvatarFallback>
-                            {thread.volunteerName?.charAt(0) || 'V'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium text-gray-900 truncate">
-                              {thread.volunteerName}
-                            </p>
-                            <span className="text-xs text-gray-500">
-                              {formatDistanceToNow(new Date(thread.lastMessageAt), { addSuffix: true })}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 truncate">{thread.topic}</p>
-                          {thread.projectName && (
-                            <Badge variant="outline" className="mt-1 text-xs">
-                              <FolderOpen className="h-3 w-3 mr-1" />
-                              {thread.projectName}
-                            </Badge>
-                          )}
+            <CardContent className="p-0 max-h-80 overflow-y-auto">
+              {loadingThreads ? (
+                <div className="p-4 text-center text-gray-500">Loading...</div>
+              ) : filteredThreads.length === 0 ? (
+                <div className="p-4 text-center text-gray-500">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>No conversations yet</p>
+                  <p className="text-sm">Start a new conversation to connect with volunteers</p>
+                </div>
+              ) : (
+                filteredThreads.map((thread) => (
+                  <div
+                    key={thread.id}
+                    onClick={() => setSelectedThread(thread)}
+                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${
+                      selectedThread?.id === thread.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    }`}
+                    data-testid={`thread-item-${thread.id}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={thread.volunteerAvatar} />
+                        <AvatarFallback>
+                          {thread.volunteerName?.charAt(0) || 'V'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-gray-900 truncate">
+                            {thread.volunteerName}
+                          </p>
+                          <span className="text-xs text-gray-500">
+                            {formatDistanceToNow(new Date(thread.lastMessageAt), { addSuffix: true })}
+                          </span>
                         </div>
+                        <p className="text-sm text-gray-600 truncate">{thread.topic}</p>
+                        {thread.projectName && (
+                          <Badge variant="outline" className="mt-1 text-xs">
+                            <FolderOpen className="h-3 w-3 mr-1" />
+                            {thread.projectName}
+                          </Badge>
+                        )}
                       </div>
                     </div>
-                  ))
-                )}
-              </ScrollArea>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
 
           {/* Message Thread */}
-          <Card className="lg:col-span-2 flex flex-col max-h-96 lg:max-h-screen lg:max-h-[calc(100vh-180px)]">
+          <Card className="lg:col-span-2">
             {selectedThread ? (
               <>
-                <CardHeader className="border-b pb-3 shrink-0">
+                <CardHeader className="border-b pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Button 
@@ -387,8 +386,7 @@ export default function OrganizationMessages() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
-                  <ScrollArea className="h-full p-4">
+                <CardContent className="p-4 max-h-80 overflow-y-auto">
                     {loadingMessages ? (
                       <div className="text-center text-gray-500">Loading messages...</div>
                     ) : (
@@ -418,7 +416,6 @@ export default function OrganizationMessages() {
                         <div ref={messagesEndRef} />
                       </div>
                     )}
-                  </ScrollArea>
                 </CardContent>
                 <div className="p-4 border-t">
                   <div className="flex gap-2">
@@ -440,17 +437,16 @@ export default function OrganizationMessages() {
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                <div className="text-center">
-                  <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">Select a conversation</p>
-                  <p className="text-sm">Choose from your existing conversations or start a new one</p>
-                </div>
+              <div className="p-8 text-center text-gray-500">
+                <MessageSquare className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium">Select a conversation</p>
+                <p className="text-sm">Choose from your existing conversations or start a new one</p>
               </div>
             )}
           </Card>
         </div>
-      </div>
+        </div>
+      </main>
       
       <Footer />
     </div>

@@ -24,7 +24,7 @@ export async function getVisibleProjectIdsForVolunteer(
 
   // OPTIMIZATION: Query only this volunteer's assignments instead of all assignments (N+1 fix)
   const volunteerAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
-  
+
   // Filter for accepted assignments only (active, completed, on-hold)
   volunteerAssignments.forEach(pa => {
     const status = pa.status?.toLowerCase() || '';
@@ -115,7 +115,7 @@ function buildMonthlyImpactSeries(
   // Build cumulative growth series
   let cumulativeHours = 0;
   let cumulativePeople = 0;
-  
+
   const impactGrowthSeries = monthlyImpactData.map(monthData => {
     cumulativeHours += monthData.hours;
     cumulativePeople += monthData.peopleImpacted;
@@ -193,11 +193,11 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
 
     // Get all opportunities
     const opportunities = await storage.listOpportunities();
-    
+
     // Get all organizations to enrich opportunities with organization names
     const allOrganizations = await storage.listOrganizations();
     const organizationMap = new Map(allOrganizations.map(org => [org.id, org]));
-    
+
     // Combine user and profile for matching algorithm
     const volunteerWithProfile = { ...volunteer, profile: volunteerProfile };
 
@@ -206,7 +206,7 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
       .map((opportunity: Opportunity) => {
         const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
         const organization = organizationMap.get(opportunity.organizationId);
-        
+
         return {
           ...opportunity,
           organizationName: organization?.name || "Unknown Organization",
@@ -263,7 +263,7 @@ export async function getDashboardDataForOrganization(userId: number) {
 
     // Filter impacts to only organization's projects
     const organizationImpacts = allImpacts.filter(i => i.projectId && organizationProjectIds.has(i.projectId));
-    
+
     // Identify metrics that represent people/beneficiaries
     // Check unit, category, or name for people-related keywords
     const peopleMetricIds = new Set(
@@ -281,7 +281,7 @@ export async function getDashboardDataForOrganization(userId: number) {
           const serviceKeywords = [
             'meal', 'service', 'healthcare', 'education', 'training'
           ];
-          
+
           return peopleKeywords.some(keyword => 
             unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
           ) || serviceKeywords.some(keyword => 
@@ -364,7 +364,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       const projectVolunteerIds = organizationAssignments
         .filter(pa => pa.projectId === project.id)
         .map(pa => pa.volunteerId);
-      
+
       const assignedVolunteers = organizationVolunteers
         .filter(v => projectVolunteerIds.includes(v.id))
         .map(v => ({
@@ -395,7 +395,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       const volunteerActivities = organizationActivities.filter(a => a.userId === volunteer.id);
       const totalHours = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
       const activityCount = volunteerActivities.length;
-      
+
       // Get projects this volunteer is assigned to
       const assignedProjectIds = organizationAssignments
         .filter(pa => pa.volunteerId === volunteer.id)
@@ -551,10 +551,10 @@ export async function getDashboardDataForOrganization(userId: number) {
       const beneficiaries = monthImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
       const completedTasks = monthTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
       const totalTasks = monthTasks.length;
-      
+
       // Count unique volunteers (filter out null userIds)
       const volunteers = new Set(monthActivities.map(a => a.userId).filter((id): id is number => id !== null)).size;
-      
+
       // Count unique SDGs from projects with activities this month
       const monthProjectIds = new Set(monthActivities.map(a => a.projectId).filter((id): id is number => id !== null));
       const sdgs = new Set<number>();
@@ -563,7 +563,7 @@ export async function getDashboardDataForOrganization(userId: number) {
           p.sdgGoals.forEach(sdg => sdgs.add(sdg));
         }
       });
-      
+
       return {
         month: monthKey,
         hours,
@@ -602,10 +602,10 @@ export async function getDashboardDataForOrganization(userId: number) {
     const projectHoursMap = new Map<number, { projectId: number; projectName: string; organizationName: string; hours: number }>();
     organizationActivities.forEach(activity => {
       if (!activity.projectId) return;
-      
+
       const project = organizationProjects.find(p => p.id === activity.projectId);
       if (!project) return;
-      
+
       if (!projectHoursMap.has(activity.projectId)) {
         projectHoursMap.set(activity.projectId, {
           projectId: activity.projectId,
@@ -614,11 +614,11 @@ export async function getDashboardDataForOrganization(userId: number) {
           hours: 0
         });
       }
-      
+
       const entry = projectHoursMap.get(activity.projectId)!;
       entry.hours += activity.hours;
     });
-    
+
     const projectHours = Array.from(projectHoursMap.values()).sort((a, b) => b.hours - a.hours);
 
     // Calculate real monthly impact data (hours and peopleImpacted) for Impact Over Time chart
@@ -629,9 +629,9 @@ export async function getDashboardDataForOrganization(userId: number) {
         const impactMonthKey = `${impactDate.getFullYear()}-${String(impactDate.getMonth() + 1).padStart(2, '0')}`;
         return impactMonthKey === metrics.month;
       });
-      
+
       const peopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
-      
+
       return {
         month: metrics.month,
         hours: metrics.hours,
@@ -645,7 +645,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     const impactGrowthSeries = monthlyImpactData.map(monthData => {
       cumulativeHours += monthData.hours;
       cumulativePeople += monthData.peopleImpacted;
-      
+
       return {
         month: monthData.month,
         cumulativeHours,
@@ -660,7 +660,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       // Extract project name from target if it's a task completion
       let projectName = '';
       let organizationName = user.displayName || user.username || 'Unknown Organization';
-      
+
       if (activity.type === 'hours_logged' || activity.type === 'volunteer_assigned') {
         projectName = activity.target;
       } else if (activity.type === 'task_completed') {
@@ -668,7 +668,7 @@ export async function getDashboardDataForOrganization(userId: number) {
         const match = activity.target.match(/in (.+)$/);
         projectName = match ? match[1] : '';
       }
-      
+
       return {
         ...activity,
         projectName,
@@ -678,33 +678,37 @@ export async function getDashboardDataForOrganization(userId: number) {
 
     // Calculate impact by SDG from real project and activity data
     const impactBySDGMap = new Map<number, { sdgGoal: number; hours: number; projects: number; peopleImpacted: number }>();
-    
+
     organizationProjects.forEach(project => {
       if (!project.sdgGoals || !Array.isArray(project.sdgGoals)) return;
-      
+
       project.sdgGoals.forEach(sdgGoal => {
-        if (!impactBySDGMap.has(sdgGoal)) {
-          impactBySDGMap.set(sdgGoal, {
-            sdgGoal,
-            hours: 0,
-            projects: 0,
-            peopleImpacted: 0,
-          });
+        if (sdgGoal >= 1 && sdgGoal <= 17) {
+          const sdgIndex = sdgGoal - 1;
+
+          if (!impactBySDGMap.has(sdgGoal)) {
+            impactBySDGMap.set(sdgGoal, {
+              sdgGoal,
+              hours: 0,
+              projects: 0,
+              peopleImpacted: 0,
+            });
+          }
+
+          const sdgData = impactBySDGMap.get(sdgGoal)!;
+          sdgData.projects += 1;
+
+          // Add hours from activities on this project
+          const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
+          sdgData.hours += projectActivities.reduce((sum, a) => sum + a.hours, 0);
+
+          // Add people impacted from impacts on this project using helper
+          const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
+          sdgData.peopleImpacted += calculatePeopleImpacted(projectImpacts, peopleMetricIds);
         }
-        
-        const sdgData = impactBySDGMap.get(sdgGoal)!;
-        sdgData.projects += 1;
-        
-        // Add hours from activities on this project
-        const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
-        sdgData.hours += projectActivities.reduce((sum, a) => sum + a.hours, 0);
-        
-        // Add people impacted from impacts on this project using helper
-        const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
-        sdgData.peopleImpacted += calculatePeopleImpacted(projectImpacts, peopleMetricIds);
       });
     });
-    
+
     const impactBySDG = Array.from(impactBySDGMap.values()).sort((a, b) => b.hours - a.hours);
 
     return {
@@ -779,11 +783,11 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     // Excludes declined and pending assignments, includes only accepted assignments (active/completed/on-hold)
     const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userId, false, matchThreshold);
     const assignedProjects = allProjects.filter(p => visibleProjectIds.has(p.id));
-    
+
     // Get volunteer's project assignments (excluding declined and pending)
     const volunteerAssignments = allProjectAssignments.filter(pa => {
       if (pa.volunteerId !== userId) return false;
-      
+
       // Normalize status to handle database inconsistencies
       const status = pa.status?.toLowerCase() || '';
       return status !== 'declined' && status !== 'pending';
@@ -791,7 +795,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Filter activities to only this volunteer's
     const volunteerActivities = allActivities.filter(a => a.userId === userId);
-    
+
     // Filter impacts to all impacts from projects where volunteer has accepted assignments
     // This ensures volunteer's Impact Over Time graphs match organization view for shared projects
     // Removed strict assignment window filtering to align with organization dashboard behavior
@@ -931,7 +935,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const unit = (metric.unit || '').toLowerCase();
       const category = (metric.category || '').toLowerCase();
       const name = (metric.name || '').toLowerCase();
-      
+
       // Expanded keywords to capture more human-impact metrics
       const peopleKeywords = [
         'people', 'person', 'beneficiar', 'student', 'child', 'children',
@@ -941,13 +945,13 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const serviceKeywords = [
         'meal', 'service', 'healthcare', 'education', 'training'
       ];
-      
+
       const isPeopleMetric = peopleKeywords.some(keyword => 
         unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
       ) || serviceKeywords.some(keyword => 
         unit.includes(keyword) || category.includes(keyword) || name.includes(keyword)
       );
-      
+
       if (isPeopleMetric) {
         peopleMetricIds.add(metric.id);
       }
@@ -1004,8 +1008,8 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const monthMatchScore = monthApplications.length > 0
         ? (monthAcceptedApps / monthApplications.length) * 100
         : 0;
-      
-      // Debug monthly impact scores
+
+      // Debug logging for people impacted calculation
       if (monthPeopleImpacted > 0) {
         console.log(`[Dashboard] Monthly impact for ${monthKey}:`, {
           monthKey,
@@ -1036,7 +1040,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
 
     // Now calculate people impacted and recalculate impact score with people as a major driver
     const totalPeopleImpacted = calculatePeopleImpacted(volunteerImpacts, peopleMetricIds);
-    
+
     // Debug logging for people impacted calculation
     console.log(`[Dashboard Impact Score] Volunteer ${userId}:`, {
       peopleMetricIds: Array.from(peopleMetricIds),
@@ -1044,9 +1048,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       impactCount: volunteerImpacts.length,
       allMetricsCount: allImpactMetrics.length,
     });
-    
+
     const peopleScore = Math.min((totalPeopleImpacted / 100) * 100, 100);
-    
+
     // Recalculate impact score with updated weights: Hours 35%, People 30%, Tasks 20%, SDG 10%, Match 5%
     impactScore = Math.round(
       hoursScore * 0.35 +
@@ -1056,7 +1060,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       matchScore * 0.05
     );
 
-    // Compute real monthly hours and people impacted using shared utility
+    // Compute real monthly impact data (hours and people impacted) using shared utility
     const monthlyImpactSeries = buildMonthlyImpactSeries(
       months,
       volunteerActivities,
@@ -1155,7 +1159,7 @@ export async function getSDGContributionsForOrganization(userId: number) {
         project.sdgGoals.forEach(sdgGoal => {
           if (sdgGoal >= 1 && sdgGoal <= 17) {
             const sdgIndex = sdgGoal - 1;
-            
+
             // Add project to this SDG
             sdgContributions[sdgIndex].projects.add(project.id);
 

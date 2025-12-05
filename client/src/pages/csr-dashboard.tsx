@@ -259,7 +259,7 @@ export default function CSRDashboard() {
           </CardHeader>
           <CardContent>
             <p style={{ color: "#6b7280", marginBottom: "16px" }}>
-              {error.message}
+              {error instanceof Error ? error.message : "An error occurred"}
             </p>
             <button
               onClick={() => navigate("/dashboard")}

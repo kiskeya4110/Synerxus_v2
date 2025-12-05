@@ -342,11 +342,11 @@ export default function OrganizationProfile() {
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error changing password:", error);
       toast({
         title: "Error changing password",
-        description: error.message || "Please check your current password and try again.",
+        description: error instanceof Error ? error.message : "Please check your current password and try again.",
         variant: "destructive",
       });
     } finally {

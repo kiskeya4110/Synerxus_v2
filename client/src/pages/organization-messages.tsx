@@ -205,7 +205,7 @@ export default function OrganizationMessages() {
     <div className="min-h-screen bg-gray-50">
       <OrganizationHeader activeTab="messages" />
       
-      <div className="max-w-7xl mx-auto p-4 md:p-6">
+      <div className="max-w-7xl mx-auto p-4 md:p-6 pb-96">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900" data-testid="text-page-title">Messages</h1>
@@ -289,9 +289,9 @@ export default function OrganizationMessages() {
           </Dialog>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-220px)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-0">
           {/* Conversation List */}
-          <Card className="lg:col-span-1 flex flex-col">
+          <Card className="lg:col-span-1 flex flex-col max-h-96 lg:max-h-screen lg:max-h-[calc(100vh-180px)]">
             <CardHeader className="pb-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -305,7 +305,7 @@ export default function OrganizationMessages() {
               </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full">
+              <ScrollArea className="h-full w-full">
                 {loadingThreads ? (
                   <div className="p-4 text-center text-gray-500">Loading...</div>
                 ) : filteredThreads.length === 0 ? (
@@ -357,10 +357,10 @@ export default function OrganizationMessages() {
           </Card>
 
           {/* Message Thread */}
-          <Card className="lg:col-span-2 flex flex-col">
+          <Card className="lg:col-span-2 flex flex-col max-h-96 lg:max-h-screen lg:max-h-[calc(100vh-180px)]">
             {selectedThread ? (
               <>
-                <CardHeader className="border-b pb-3">
+                <CardHeader className="border-b pb-3 shrink-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Button 
@@ -387,8 +387,8 @@ export default function OrganizationMessages() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="flex-1 overflow-hidden p-0">
-                  <ScrollArea className="h-[calc(100%-80px)] p-4">
+                <CardContent className="flex-1 overflow-hidden p-0 min-h-0">
+                  <ScrollArea className="h-full p-4">
                     {loadingMessages ? (
                       <div className="text-center text-gray-500">Loading messages...</div>
                     ) : (

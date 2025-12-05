@@ -88,8 +88,13 @@ export default function OrganizationMessages() {
   });
 
   const { data: volunteers = [] } = useQuery({
-    queryKey: ['/api/volunteers'],
-    enabled: showNewConversation
+    queryKey: ['/api/organizations', organizationId, 'volunteers'],
+    queryFn: async () => {
+      const response = await fetch(`/api/organizations/${organizationId}/volunteers`);
+      if (!response.ok) throw new Error('Failed to fetch volunteers');
+      return response.json();
+    },
+    enabled: showNewConversation && !!organizationId
   });
 
   const sendMessageMutation = useMutation({
@@ -198,19 +203,25 @@ export default function OrganizationMessages() {
               <div className="space-y-4 mt-4">
                 <div>
                   <label className="text-sm font-medium">Select Volunteer</label>
-                  <select
-                    value={newVolunteerId}
-                    onChange={(e) => setNewVolunteerId(e.target.value)}
-                    className="w-full mt-1 px-3 py-2 border rounded-md"
-                    data-testid="select-volunteer"
-                  >
-                    <option value="">Choose a volunteer...</option>
-                    {(volunteers as any[]).map((v: any) => (
-                      <option key={v.id} value={v.userId || v.id}>
-                        {v.volunteerName || v.displayName || v.username}
-                      </option>
-                    ))}
-                  </select>
+                  {(volunteers as any[]).length === 0 ? (
+                    <div className="w-full mt-1 px-3 py-2 border rounded-md bg-gray-50 text-gray-500 text-sm">
+                      No connected volunteers. Add volunteers to projects to start conversations.
+                    </div>
+                  ) : (
+                    <select
+                      value={newVolunteerId}
+                      onChange={(e) => setNewVolunteerId(e.target.value)}
+                      className="w-full mt-1 px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      data-testid="select-volunteer"
+                    >
+                      <option value="">Choose a volunteer...</option>
+                      {(volunteers as any[]).map((v: any) => (
+                        <option key={v.id} value={v.id}>
+                          {v.displayName || v.volunteerName || v.username || `Volunteer ${v.id}`}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="text-sm font-medium">Topic</label>

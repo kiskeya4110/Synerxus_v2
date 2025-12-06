@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign, Briefcase, Settings, Home } from "lucide-react";
+import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign, Briefcase, Settings, Home, BarChart3, Users, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import Logo from "@/components/ui/logo";
 
 interface PortfolioProject {
   id: number;
@@ -67,7 +68,7 @@ export default function ProjectPortfolio() {
 
   // Get corporation name and admin info
   const companyName = "Your Company";
-  const adminName = user?.displayName || "Admin";
+  const adminName = user?.displayName || user?.email?.split('@')[0] || "Admin";
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -258,25 +259,10 @@ export default function ProjectPortfolio() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "8px",
             minWidth: "fit-content",
           }}
         >
-          <span
-            style={{ fontSize: "24px", fontWeight: "bold", color: "#f97316" }}
-          >
-            ✦
-          </span>
-          <span
-            style={{
-              fontSize: "18px",
-              fontWeight: "600",
-              letterSpacing: "0.025em",
-              color: "#ffffff",
-            }}
-          >
-            synerxus
-          </span>
+          <Logo size="sm" showIcon={true} className="invert" />
         </div>
 
         {/* Center: Project Portfolio Title with Company Name */}
@@ -340,7 +326,7 @@ export default function ProjectPortfolio() {
       </header>
 
       <div
-        style={{ display: "flex", flex: 1, minHeight: "calc(100vh - 64px)" }}
+        style={{ display: "flex", flex: 1 }}
       >
         {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
         <aside
@@ -350,6 +336,7 @@ export default function ProjectPortfolio() {
             color: "white",
             padding: "24px",
             flexShrink: 0,
+            overflowY: "auto",
           }}
         >
           <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -382,6 +369,34 @@ export default function ProjectPortfolio() {
               <span>Dashboard</span>
             </button>
             <button
+              onClick={() => navigate("/csr-impact-reporting")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                backgroundColor: "transparent",
+                color: "#d1d5db",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
+              }}
+            >
+              <BarChart3 style={{ width: "20px", height: "20px" }} />
+              <span>Impact Reporting</span>
+            </button>
+            <button
               style={{
                 width: "100%",
                 display: "flex",
@@ -401,6 +416,35 @@ export default function ProjectPortfolio() {
               <span>Project Portfolio</span>
             </button>
             <button
+              onClick={() => navigate("/csr-reports-exports")}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                backgroundColor: "transparent",
+                color: "#d1d5db",
+                border: "none",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#1f2937";
+                e.currentTarget.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "transparent";
+                e.currentTarget.style.color = "#d1d5db";
+              }}
+            >
+              <FileText style={{ width: "20px", height: "20px" }} />
+              <span>Reports & Exports</span>
+            </button>
+            <button
+              onClick={() => navigate("/corporate-partner-profile-settings")}
               style={{
                 width: "100%",
                 display: "flex",
@@ -440,6 +484,8 @@ export default function ProjectPortfolio() {
             display: "flex",
             flexDirection: "column",
             gap: "24px",
+            paddingBottom: "100px",
+            minHeight: "100vh",
           }}
         >
 

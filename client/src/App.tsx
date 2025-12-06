@@ -43,8 +43,10 @@ import VolunteerDashboard from "@/pages/volunteer-dashboard";
 import OrganizationDashboard from "@/pages/organization-dashboard";
 import { CSRImpactReporting } from "@/pages/csr-impact-reporting";
 import ProjectPortfolio from "@/pages/project-portfolio";
+import CSRReportsExports from "@/pages/csr-reports-exports";
 import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
 import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
+import TeamOverview from "@/pages/team-overview";
 import Overview from "@/pages/overview";
 import OrganizationMessages from "@/pages/organization-messages";
 import VolunteerMessages from "@/pages/volunteer-messages";
@@ -164,12 +166,14 @@ export default function App() {
           <Route path="/landing" component={Landing} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/csr-dashboard" component={CSRDashboard} />
+          <Route path="/team-overview" component={TeamOverview} />
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/organization-dashboard" component={OrganizationDashboard} />
           <Route path="/overview" component={Overview} />
           <Route path="/organization-my-work" component={MyWork} />
           <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
           <Route path="/project-portfolio" component={ProjectPortfolio} />
+          <Route path="/csr-reports-exports" component={CSRReportsExports} />
           <Route path="/projects" component={Projects} />
           <Route path="/projects/:id" component={ProjectDetail} />
           <Route path="/projects/:id/edit" component={ProjectEdit} />

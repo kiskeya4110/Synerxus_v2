@@ -59,7 +59,7 @@ export default function Tasks() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string | undefined) => {
     switch (priority) {
       case "high": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
       case "medium": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";

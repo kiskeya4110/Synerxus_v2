@@ -54,7 +54,7 @@ export default function Layout({ children }: LayoutProps) {
   }, [location, loading, user, isCompleted, startOnboarding]);
 
   // These routes have their own layout, skip the wrapper
-  const standaloneRoutes = ["/", "/login", "/organization-messages", "/landing", "/csr-dashboard", "/volunteer-dashboard", "/organization-dashboard", "/overview", "/csr-impact-reporting", "/project-portfolio", "/projects", "/volunteers", "/sdg-mapping", "/impact-visualization"];
+  const standaloneRoutes = ["/", "/login", "/organization-messages", "/landing", "/csr-dashboard", "/volunteer-dashboard", "/organization-dashboard", "/overview", "/csr-impact-reporting", "/project-portfolio", "/csr-reports-exports", "/projects", "/volunteers", "/sdg-mapping", "/impact-visualization"];
   
   if (standaloneRoutes.some(route => location === route || location.startsWith(route + "/"))) {
     return <>{children}</>;

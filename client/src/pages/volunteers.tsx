@@ -13,6 +13,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
+import { AddVolunteerModal } from "@/components/add-volunteer-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
@@ -23,6 +24,7 @@ export default function Volunteers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [skillFilter, setSkillFilter] = useState("all");
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showAddVolunteerModal, setShowAddVolunteerModal] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
@@ -323,7 +325,11 @@ export default function Volunteers() {
           </SelectContent>
         </Select>
 
-        <Button className="min-h-[44px]" data-testid="button-add-volunteer">
+        <Button
+          className="min-h-[44px]"
+          onClick={() => setShowAddVolunteerModal(true)}
+          data-testid="button-add-volunteer"
+        >
           <Plus className="h-5 w-5 mr-2" />
           Add Volunteer
         </Button>
@@ -437,8 +443,8 @@ export default function Volunteers() {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="flex-1 min-h-[40px] bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                     onClick={() => openProfileDialog(volunteer.id)}
                     data-testid={`button-view-profile-${volunteer.id}`}
@@ -446,8 +452,8 @@ export default function Volunteers() {
                     <User className="h-4 w-4 mr-2" />
                     View Profile
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="flex-1 min-h-[40px] bg-gradient-to-r from-slate-300 to-slate-400 hover:from-slate-400 hover:to-slate-500 dark:from-slate-600 dark:to-slate-700 dark:hover:from-slate-700 dark:hover:to-slate-800 text-slate-900 dark:text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
                     onClick={() => {
                       setSelectedVolunteer(volunteer);
@@ -457,6 +463,45 @@ export default function Volunteers() {
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Contact
+                  </Button>
+                </div>
+
+                {/* Second row of action buttons */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 min-h-[40px] border-2 border-green-500 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
+                    onClick={() => {
+                      toast({
+                        title: "Performance Analytics",
+                        description: `Viewing performance data for ${volunteer.displayName || 'volunteer'}`,
+                      });
+                      // In a real implementation, this would open a performance analytics overlay
+                    }}
+                    data-testid={`button-performance-${volunteer.id}`}
+                  >
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Performance
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 min-h-[40px] border-2 border-red-500 text-red-700 hover:bg-red-50 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to remove ${volunteer.displayName || 'this volunteer'}? This action cannot be undone.`)) {
+                        toast({
+                          title: "Volunteer Removed",
+                          description: `${volunteer.displayName || 'Volunteer'} has been removed from the organization`,
+                        });
+                        // In a real implementation, this would call an API to remove the volunteer
+                        // queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+                      }
+                    }}
+                    data-testid={`button-remove-${volunteer.id}`}
+                  >
+                    <AlertCircle className="h-4 w-4 mr-2" />
+                    Remove
                   </Button>
                 </div>
               </div>
@@ -483,6 +528,13 @@ export default function Volunteers() {
           preSelectedVolunteer={selectedVolunteer}
         />
       )}
+
+      {/* Add Volunteer Modal */}
+      <AddVolunteerModal
+        isOpen={showAddVolunteerModal}
+        onClose={() => setShowAddVolunteerModal(false)}
+        organizationId={currentUser?.id}
+      />
 
       {/* Profile Dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>

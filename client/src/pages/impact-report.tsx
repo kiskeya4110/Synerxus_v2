@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook } from "lucide-react";
-import type { User, Task, ProjectAssignment } from "@shared/schema";
+import type { User, Task, ProjectAssignment, Organization } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
@@ -225,7 +225,7 @@ export default function ImpactReport() {
   });
 
   // Fetch organizations
-  const { data: organizations = [] } = useQuery<User[]>({
+  const { data: organizations = [] } = useQuery<Organization[]>({
     queryKey: ["/api/organizations"],
     queryFn: async () => {
       const response = await fetch("/api/organizations");
@@ -669,7 +669,7 @@ export default function ImpactReport() {
                       <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">
                         <img
                           src={currentUser.avatar}
-                          alt={currentUser.displayName}
+                          alt={currentUser.displayName || undefined}
                           className="h-12 w-12 rounded-full object-cover print:h-8 print:w-8"
                           onError={() => {
                             setAvatarError(true);

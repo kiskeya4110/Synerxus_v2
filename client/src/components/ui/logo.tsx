@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
@@ -9,6 +10,7 @@ interface LogoProps {
   onClick?: () => void;
   isButton?: boolean;
   showMotto?: boolean;
+  clickable?: boolean; // New prop to make logo clickable by default
 }
 
 export default function Logo({
@@ -18,7 +20,9 @@ export default function Logo({
   onClick,
   isButton = false,
   showMotto = false,
+  clickable = true, // Default to clickable
 }: LogoProps) {
+  const [, navigate] = useLocation();
   const [imageError, setImageError] = useState(false);
 
   const sizes = {
@@ -82,11 +86,32 @@ export default function Logo({
     </div>
   );
 
-  if (isButton && onClick) {
+  // Handle click - custom onClick or navigate to dashboard
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else if (clickable) {
+      const userType = localStorage.getItem('userType');
+      if (userType === 'corporate-partner') {
+        navigate('/csr-dashboard');
+      } else if (userType === 'organization') {
+        navigate('/organization-dashboard');
+      } else {
+        navigate('/volunteer-dashboard');
+      }
+    }
+  };
+
+  // If clickable or is a button, render as button
+  if (clickable || isButton) {
     return (
-      <button 
-        onClick={onClick}
-        className={cn("inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity", className)}
+      <button
+        onClick={handleClick}
+        className={cn(
+          "inline-flex items-center gap-2 cursor-pointer transition-all duration-200",
+          "hover:scale-105 active:scale-95",
+          className
+        )}
         data-testid="button-logo"
       >
         {content}

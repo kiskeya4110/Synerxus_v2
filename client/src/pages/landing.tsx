@@ -409,31 +409,35 @@ const RealTimeStatsBanner = () => {
   const stats = data?.stats || DEFAULT_STATS;
 
   return (
-    <section className="bg-gradient-to-r from-blue-900/5 to-amber-600/5 py-2 sm:py-4 md:py-6 border-y border-slate-200 w-full">
-      <div className="w-full">
-        <h3 className="text-center text-xs sm:text-sm font-semibold text-slate-700 mb-2 sm:mb-3 px-2 line-clamp-1">
-          Real-Time Impact Metrics
-        </h3>
-        <div className="relative overflow-hidden w-full h-auto">
-          <div className="animate-scroll flex whitespace-nowrap gap-6 sm:gap-8">
+    <section className="bg-gradient-to-r from-blue-900/20 via-blue-600/15 to-amber-600/20 py-6 sm:py-8 md:py-10 border-y-2 border-blue-900/30 w-full overflow-hidden shadow-lg">
+      <h3 className="text-center text-base sm:text-lg md:text-xl font-bold text-blue-900 mb-4 sm:mb-5 uppercase tracking-wide px-4 sm:px-6 drop-shadow-sm">
+        📊 Live Impact Dashboard
+      </h3>
+      <div className="relative overflow-hidden w-full bg-gradient-to-r from-white/70 via-blue-50/80 to-white/70 py-4 shadow-inner">
+        <div className="animate-scroll flex whitespace-nowrap gap-10 sm:gap-16 will-change-transform px-6">
             {isLoading ? (
               // Show placeholder while loading
               [...DEFAULT_STATS, ...DEFAULT_STATS].map((stat, index) => (
-                <div key={index} className="px-2 sm:px-4 py-1 sm:py-2 flex-shrink-0 h-auto">
-                  <p className="text-xs sm:text-base text-slate-700 font-medium line-clamp-1">{stat}</p>
+                <div
+                  key={index}
+                  className="px-5 sm:px-7 py-3 flex-shrink-0 bg-white rounded-xl shadow-md border-2 border-blue-200 hover:scale-105 transition-transform duration-300"
+                >
+                  <p className="text-sm sm:text-base md:text-lg text-blue-900 font-bold">{stat}</p>
                 </div>
               ))
             ) : (
               // Show real stats
               [...stats, ...stats].map((stat, index) => (
-                <div key={index} className="px-2 sm:px-4 py-1 sm:py-2 flex-shrink-0 h-auto">
-                  <p className="text-xs sm:text-base text-slate-700 font-medium line-clamp-1">{stat}</p>
+                <div
+                  key={index}
+                  className="px-5 sm:px-7 py-3 flex-shrink-0 bg-white rounded-xl shadow-lg border-2 border-blue-300 hover:scale-110 hover:shadow-xl transition-all duration-300 hover:border-amber-500"
+                >
+                  <p className="text-sm sm:text-base md:text-lg text-blue-900 font-bold">{stat}</p>
                 </div>
               ))
             )}
           </div>
         </div>
-      </div>
     </section>
   );
 };
@@ -608,11 +612,8 @@ export default function Landing() {
               <span className="text-amber-600">Impact Globally.</span>
             </h1>
             <p className="text-base sm:text-lg md:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">
-              🌍 Turn Service Into Verified Impact
-              Synerxus unites volunteers, nonprofits, and CSR teams on one platform—transforming effort into evidence.
-              Ditch the spreadsheets. Track every hour, outcome, and SDG contribution in real time.
-              Automate reporting. Align with global goals.
-              Show stakeholders the true value of your mission.
+              Every volunteer. Every hour. Every action. Measured, amplified, and transformed into lasting global change. Join the movement that's rewriting humanity's story—one act of kindness at a time.
+              From local communities to global movements—see the undeniable proof that together, we're creating a better tomorrow.
 
             </p>
 
@@ -816,9 +817,9 @@ export default function Landing() {
                 <div className="w-56 sm:w-64 md:w-72 lg:w-80 h-56 sm:h-64 md:h-72 lg:h-80 bg-gradient-to-r from-blue-900/3 to-amber-600/3 rounded-full blur-2xl"></div>
               </div>
               
-              {/* SDG Wheel */}
-              <div className="relative z-10 w-full flex items-center justify-center px-2 py-4">
-                <SDGCircularWheel />
+              {/* SDG Wheel - 150% larger for better visibility */}
+              <div className="relative z-10 w-full flex items-center justify-center px-2 py-4 scale-150 md:scale-125 lg:scale-150">
+                <SDGCircularWheel scale={1.0} />
               </div>
             </div>
 

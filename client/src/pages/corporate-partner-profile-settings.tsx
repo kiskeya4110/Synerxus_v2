@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { Building2, Check } from "lucide-react";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
+import { Label } from "@/components/ui/label";
 
 const corporatePartnerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
@@ -91,6 +93,7 @@ export default function CorporatePartnerProfileSettings() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [selectedSdgs, setSelectedSdgs] = useState<number[]>([]);
+  const [logoUrl, setLogoUrl] = useState("");
 
   const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery<{ id: number; displayName?: string; userType?: string }>({
@@ -164,6 +167,9 @@ export default function CorporatePartnerProfileSettings() {
         vtoTrackingEnabled: partnerProfile.vtoTrackingEnabled ?? true,
       });
       setSelectedSdgs(partnerProfile.primarySdgs || []);
+      if (partnerProfile.logo) {
+        setLogoUrl(partnerProfile.logo);
+      }
     }
   }, [partnerProfile, form]);
 
@@ -172,7 +178,8 @@ export default function CorporatePartnerProfileSettings() {
       const sdgsToSave = selectedSdgs.length > 0 ? selectedSdgs : (partnerProfile?.primarySdgs || []);
       const payload = {
         ...data,
-        primarySdgs: sdgsToSave
+        primarySdgs: sdgsToSave,
+        logo: logoUrl
       };
 
       // If profile exists, update it; otherwise create new one
@@ -279,7 +286,21 @@ export default function CorporatePartnerProfileSettings() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold">Company Information</h3>
-                  
+
+                  {currentUser?.id && (
+                    <div className="mb-6">
+                      <Label className="mb-3 block">Company Logo</Label>
+                      <ProfilePictureUpload
+                        currentPhotoUrl={logoUrl}
+                        onPhotoChange={setLogoUrl}
+                        userId={currentUser.id.toString()}
+                        userType="organization"
+                        type="logo"
+                        label="Company Logo"
+                      />
+                    </div>
+                  )}
+
                   <FormField
                     control={form.control}
                     name="companyName"
@@ -299,8 +320,8 @@ export default function CorporatePartnerProfileSettings() {
                     name="industryType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Industry</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>Industry *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select your industry" />
@@ -314,6 +335,7 @@ export default function CorporatePartnerProfileSettings() {
                             ))}
                           </SelectContent>
                         </Select>
+                        <FormDescription>This field is required for industry reporting</FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

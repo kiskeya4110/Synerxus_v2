@@ -20,7 +20,7 @@ import { Check, Clock, Send, Activity, TrendingUp, Zap, BarChart3 } from "lucide
 const activityFormSchema = z.object({
   projectId: z.string().min(1, "Please select a project"),
   taskId: z.string().optional(),
-  hours: z.string().min(1, "Please enter hours spent").transform(Number),
+  hours: z.coerce.number().min(0.1, "Please enter hours spent"),
   date: z.string().min(1, "Please enter a date"),
   description: z.string().min(5, "Please enter a description"),
   skillsApplied: z.string().min(1, "Please enter skills applied"),
@@ -30,7 +30,7 @@ const activityFormSchema = z.object({
 const impactFormSchema = z.object({
   projectId: z.string().min(1, "Please select a project"),
   metricId: z.string().min(1, "Please select a metric"),
-  value: z.string().min(1, "Please enter a value").transform(Number),
+  value: z.coerce.number().min(0.1, "Please enter a value"),
   date: z.string().min(1, "Please enter a date"),
   notes: z.string().min(5, "Please enter notes"),
   outcomeType: z.string().default("individual"), // individual, shared, system
@@ -129,7 +129,7 @@ export default function MobileDataCollection() {
     defaultValues: {
       projectId: "",
       taskId: "",
-      hours: "0",
+      hours: 0,
       date: new Date().toISOString().split('T')[0],
       description: "",
       skillsApplied: "",
@@ -143,7 +143,7 @@ export default function MobileDataCollection() {
     defaultValues: {
       projectId: "",
       metricId: "",
-      value: "0",
+      value: 0,
       date: new Date().toISOString().split('T')[0],
       notes: "",
       outcomeType: "individual",

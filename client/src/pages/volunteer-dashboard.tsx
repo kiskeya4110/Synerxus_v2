@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
+import { PageTransition } from "@/components/ui/page-transition";
+import { StaggerContainer, StaggerItem } from "@/components/ui/animated-container";
 import ImpactChart from "@/components/dashboard/impact-chart";
 import SDGChart from "@/components/dashboard/sdg-chart";
 import ImpactStreak from "@/components/dashboard/impact-streak";
@@ -922,7 +924,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="h-screen overflow-y-auto space-y-4 md:space-y-6 px-4 md:px-24">
+    <PageTransition>
+      <div className="h-screen overflow-y-auto space-y-4 md:space-y-6 px-4 md:px-24">
       {/* Header - Mobile optimized */}
       <div className="space-y-3 md:space-y-6">
         <div className="flex items-center justify-between">
@@ -1023,10 +1026,11 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards - Gradient backgrounds for PWA look */}
-      <div className="grid grid-cols-3 md:grid-cols-5 gap-1">
+      <StaggerContainer className="grid grid-cols-3 md:grid-cols-5 gap-1">
         {dashboardType === "volunteer" ? (
           <>
-            <StatsCard
+            <StaggerItem>
+              <StatsCard
               title="Hours Logged"
               value={kpis.hours}
               icon={<Clock className="h-6 w-6" />}
@@ -1034,8 +1038,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700"
               data-testid="kpi-hours"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="Tasks"
               value={kpis.tasks}
               icon={<CheckSquare className="h-6 w-6" />}
@@ -1043,8 +1049,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-amber-500 to-amber-600 dark:from-amber-600 dark:to-amber-700"
               data-testid="kpi-tasks"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="Projects"
               value={kpis.activeProjects}
               icon={<Target className="h-6 w-6" />}
@@ -1052,8 +1060,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700"
               data-testid="kpi-projects"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="Skills"
               value={kpis.skills}
               icon={<Briefcase className="h-6 w-6" />}
@@ -1061,8 +1071,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700"
               data-testid="kpi-skills"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="Lives Touched"
               value={kpis.livesTouched}
               icon={<Globe className="h-6 w-6" />}
@@ -1070,11 +1082,13 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600"
               data-testid="kpi-lives-touched"
-            />
+              />
+            </StaggerItem>
           </>
         ) : (
           <>
-            <StatsCard
+            <StaggerItem>
+              <StatsCard
               title="Active Volunteers"
               value={kpis.volunteers}
               icon={<Users className="h-6 w-6" />}
@@ -1082,8 +1096,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-purple-500 to-purple-600 dark:from-purple-600 dark:to-purple-700"
               data-testid="kpi-volunteers"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="Active Projects"
               value={kpis.activeProjects}
               icon={<Building2 className="h-6 w-6" />}
@@ -1091,8 +1107,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-green-500 to-green-600 dark:from-green-600 dark:to-green-700"
               data-testid="kpi-projects"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="Total Hours"
               value={kpis.hours}
               icon={<Clock className="h-6 w-6" />}
@@ -1100,8 +1118,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700"
               data-testid="kpi-hours"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="SDGs Addressed"
               value={kpis.sdgs}
               icon={<Globe className="h-6 w-6" />}
@@ -1109,8 +1129,10 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-cyan-500 to-cyan-600 dark:from-cyan-600 dark:to-cyan-700"
               data-testid="kpi-sdgs"
-            />
-            <StatsCard
+              />
+            </StaggerItem>
+            <StaggerItem>
+              <StatsCard
               title="Lives Touched"
               value={kpis.livesTouched}
               icon={<Globe className="h-6 w-6" />}
@@ -1118,10 +1140,11 @@ export default function Dashboard() {
               compact={true}
               gradient="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600"
               data-testid="kpi-lives-touched"
-            />
+              />
+            </StaggerItem>
           </>
         )}
-      </div>
+      </StaggerContainer>
 
       {/* Lives Touched Project Breakdown - Shows beneficiaries per project */}
       {(dashboardType === "volunteer" || dashboardType === "organization") && (() => {
@@ -1646,10 +1669,11 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       </div>
-      
+
       {/* Footer */}
       <Footer />
-    </div>
+      </div>
+    </PageTransition>
   );
 }
 

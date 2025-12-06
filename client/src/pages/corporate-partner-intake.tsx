@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
 import { ArrowRight, ArrowLeft, Check, Building2 } from "lucide-react";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 
 const corporatePartnerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
@@ -94,6 +95,7 @@ export default function CorporatePartnerIntake() {
   const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [selectedSdgs, setSelectedSdgs] = useState<number[]>([]);
+  const [logoUrl, setLogoUrl] = useState("");
 
   const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery<{ id: number; displayName?: string }>({
@@ -132,7 +134,8 @@ export default function CorporatePartnerIntake() {
         body: JSON.stringify({
           userId: userId ? parseInt(userId) : undefined,
           ...data,
-          primarySdgs: selectedSdgs
+          primarySdgs: selectedSdgs,
+          logo: logoUrl
         })
       });
       if (!response.ok) throw new Error('Failed to create CSR partner profile');
@@ -200,7 +203,20 @@ export default function CorporatePartnerIntake() {
                 {step === 1 && (
                   <div className="space-y-6">
                     <h3 className="text-lg font-semibold">Company Information</h3>
-                    
+
+                    {currentUser?.id && (
+                      <div className="mb-6">
+                        <ProfilePictureUpload
+                          currentPhotoUrl={logoUrl}
+                          onPhotoChange={setLogoUrl}
+                          userId={currentUser.id.toString()}
+                          userType="organization"
+                          type="logo"
+                          label="Company Logo"
+                        />
+                      </div>
+                    )}
+
                     <FormField
                       control={form.control}
                       name="companyName"

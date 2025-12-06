@@ -1,16 +1,18 @@
-const CACHE_NAME = 'synerxus-v1';
+const CACHE_NAME = 'synerxus-cache-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/favicon.svg',
   '/manifest.json'
 ];
 
 // Install event - cache essential files
 self.addEventListener('install', event => {
+  console.log('[Service Worker] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(urlsToCache).catch(() => {
+      console.log('[Service Worker] Caching app shell');
+      return cache.addAll(urlsToCache).catch(error => {
+        console.error('[Service Worker] Cache failed:', error);
         // Ignore errors for offline install
       });
     })
@@ -20,12 +22,16 @@ self.addEventListener('install', event => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
+  console.log('[Service Worker] Activating...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames
           .filter(cacheName => cacheName !== CACHE_NAME)
-          .map(cacheName => caches.delete(cacheName))
+          .map(cacheName => {
+            console.log('[Service Worker] Removing old cache:', cacheName);
+            return caches.delete(cacheName);
+          })
       );
     })
   );

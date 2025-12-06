@@ -358,6 +358,8 @@ export default function OrganizationIntake() {
                     onPhotoChange={setProfilePhotoUrl}
                     userId={currentUser?.id?.toString() || ""}
                     userType="organization"
+                    type="logo"
+                    label="Organization Logo"
                   />
                   <FormField
                     control={form.control}

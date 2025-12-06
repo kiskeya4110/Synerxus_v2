@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Badge } from "@/components/ui/badge";
 import { BellIcon, Clock, User, Target, FolderKanban, Building2 } from "lucide-react";
 import { Link } from "wouter";
+import { StaggerContainer, StaggerItem } from "@/components/ui/animated-container";
 
 export interface Activity {
   id: string;
@@ -53,14 +54,14 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
           </div>
         ) : (
           <>
-            <div className="space-y-2">
+            <StaggerContainer className="space-y-2">
               {activities.map((activity) => (
-                <div 
-                  key={activity.id}
-                  onClick={() => setSelectedActivity(activity)}
-                  className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-1 px-1 py-1 rounded transition-colors cursor-pointer"
-                  data-testid={`activity-item-${activity.id}`}
-                >
+                <StaggerItem key={activity.id}>
+                  <div
+                    onClick={() => setSelectedActivity(activity)}
+                    className="flex hover:bg-gray-50 dark:hover:bg-gray-700/50 -mx-1 px-1 py-1 rounded transition-all duration-200 cursor-pointer hover:scale-[1.01]"
+                    data-testid={`activity-item-${activity.id}`}
+                  >
                   <div className="flex-shrink-0 mr-2">
                     {activity.isSystem ? (
                       <div className="h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
@@ -84,8 +85,9 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.time}</p>
                   </div>
                 </div>
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerContainer>
             <div className="mt-3 text-center">
               <Link href="/dashboard" className="text-xs text-primary-600 dark:text-primary-400 hover:underline cursor-pointer inline-block" data-testid="link-view-all-activity">
                 View all activity

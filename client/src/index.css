@@ -46,7 +46,7 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* Smooth scrolling for all scrollable elements */
@@ -858,4 +858,14 @@ html, body {
 
 .animate-spin-slow {
   animation: spinSlow 20s linear infinite;
+}
+
+/* Hide scrollbar for mobile PWA */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

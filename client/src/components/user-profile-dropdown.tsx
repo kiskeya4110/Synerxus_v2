@@ -9,7 +9,7 @@ interface UserProfileDropdownProps {
 }
 
 export function UserProfileDropdown({ className = "" }: UserProfileDropdownProps) {
-  const { user, logOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [, navigate] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,7 +55,7 @@ export function UserProfileDropdown({ className = "" }: UserProfileDropdownProps
 
   const handleLogout = async () => {
     setIsOpen(false);
-    await logOut();
+    await signOut();
     navigate('/landing');
   };
 

@@ -32,6 +32,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Footer from "@/components/layout/footer";
+import MobilePWAView from "@/components/volunteer/mobile-pwa-view";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
 }
@@ -921,6 +922,14 @@ export default function Dashboard() {
         <Skeleton className="h-96" />
       </div>
     );
+  }
+
+  // Mobile PWA View for Volunteers
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const isVolunteer = dashboardType === 'volunteer';
+
+  if (isMobile && isVolunteer && userId && currentUser) {
+    return <MobilePWAView userId={userId} user={currentUser} dashboardData={dashboardData} />;
   }
 
   return (

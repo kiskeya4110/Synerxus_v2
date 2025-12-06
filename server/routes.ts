@@ -3256,14 +3256,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid volunteer ID" });
       }
 
-      let activities = [];
-      let projectAssignments = [];
+      let activities: any[] = [];
+      let projectAssignments: any[] = [];
 
       // Safely fetch volunteer activities
       try {
-        activities = await db.query.volunteerActivities.findMany({
-          where: (fields, { eq }) => eq(fields.userId, volunteerId),
-        });
+        activities = await storage.listVolunteerActivitiesByUser(volunteerId);
         console.log(`[Performance API] Found ${activities.length} activities for volunteer ${volunteerId}`);
       } catch (error) {
         console.error(`[Performance API] Error fetching activities:`, error);
@@ -3272,12 +3270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Safely fetch volunteer projects
       try {
-        projectAssignments = await db.query.projectAssignments.findMany({
-          where: (fields, { eq }) => eq(fields.volunteerId, volunteerId),
-          with: {
-            project: true,
-          },
-        });
+        projectAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
         console.log(`[Performance API] Found ${projectAssignments.length} project assignments for volunteer ${volunteerId}`);
       } catch (error) {
         console.error(`[Performance API] Error fetching project assignments:`, error);
@@ -3401,14 +3394,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const performanceScore = Math.round(hoursScore + completionScore + consistencyScore + impactScore);
 
         // Get total volunteers count for ranking
-        const allVolunteers = await db.query.users.findMany({
-          where: (fields, { eq }) => eq(fields.userType, 'volunteer'),
-        });
+        const allUsers = await storage.listUsers();
+        const allVolunteers = allUsers.filter((u: any) => u.userType === 'volunteer');
 
         // Calculate rank (simplified - based on total hours)
-        const allActivities = await db.query.volunteerActivities.findMany();
+        const allActivities = await storage.listVolunteerActivities();
         const volunteerHours = new Map();
-        allActivities.forEach(activity => {
+        allActivities.forEach((activity: any) => {
           const current = volunteerHours.get(activity.userId) || 0;
           volunteerHours.set(activity.userId, current + (activity.hours || 0));
         });
@@ -7377,7 +7369,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   <!-- Header with Company Logo -->
   <div class="header">
     <div class="header-content">
-      ${userPartner.logo ? `<img src="${userPartner.logo}" alt="${userPartner.companyName}" class="company-logo" />` : `<div style="font-size:24px;font-weight:700;">${userPartner.companyName}</div>`}
+      ${(userPartner as any).logo ? `<img src="${(userPartner as any).logo}" alt="${userPartner.companyName}" class="company-logo" />` : `<div style="font-size:24px;font-weight:700;">${userPartner.companyName}</div>`}
       <div class="report-title">
         <h1>${reportTitle}</h1>
         <p>${reportTimeline} Report | ${impactData.reportPeriod}</p>

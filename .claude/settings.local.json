@@ -10,7 +10,9 @@
       "Bash(lsof:*)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(xargs kill:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

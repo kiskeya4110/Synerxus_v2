@@ -154,6 +154,8 @@ const formSchema = insertVolunteerSchema
       .optional()
       .or(z.literal("")),
     languages: z.array(z.string()).optional(),
+    // Experience level for matching
+    experienceLevel: z.enum(["entry-level", "intermediate", "expert"]).optional(),
     // Employer linking
     employerId: z.string().optional(),
     departmentName: z.string().optional(),
@@ -403,39 +405,73 @@ const PersonalInfoSection = ({
       )}
     />
 
-    <FormField
-      control={form.control}
-      name="yearsOfExperience"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4" />
-            Years of Experience
-          </FormLabel>
-          <Select
-            onValueChange={field.onChange}
-            defaultValue={field.value || ""}
-          >
-            <FormControl>
-              <SelectTrigger data-testid="select-years-of-experience">
-                <SelectValue placeholder="Select your experience level" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectItem value="0-1">0-1 years</SelectItem>
-              <SelectItem value="1-2">1-2 years</SelectItem>
-              <SelectItem value="3-5">3-5 years</SelectItem>
-              <SelectItem value="5-10">5-10 years</SelectItem>
-              <SelectItem value="10+">10+ years</SelectItem>
-            </SelectContent>
-          </Select>
-          <FormDescription>
-            Select your total years of professional experience
-          </FormDescription>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <FormField
+        control={form.control}
+        name="yearsOfExperience"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Briefcase className="h-4 w-4" />
+              Years of Experience
+            </FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={field.value || ""}
+            >
+              <FormControl>
+                <SelectTrigger data-testid="select-years-of-experience">
+                  <SelectValue placeholder="Select your experience level" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="0-1">0-1 years</SelectItem>
+                <SelectItem value="1-2">1-2 years</SelectItem>
+                <SelectItem value="3-5">3-5 years</SelectItem>
+                <SelectItem value="5-10">5-10 years</SelectItem>
+                <SelectItem value="10+">10+ years</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormDescription>
+              Select your total years of professional experience
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="experienceLevel"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2">
+              <Award className="h-4 w-4" />
+              Skill Proficiency Level
+            </FormLabel>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={field.value || ""}
+            >
+              <FormControl>
+                <SelectTrigger data-testid="select-experience-level">
+                  <SelectValue placeholder="Select proficiency level" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="entry-level">Entry-level (Learning)</SelectItem>
+                <SelectItem value="intermediate">Intermediate (Practiced)</SelectItem>
+                <SelectItem value="expert">Expert (Mastered)</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormDescription>
+              Your typical skill proficiency level for matching with opportunities
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    </div>
   </>
 );
 

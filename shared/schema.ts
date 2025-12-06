@@ -482,6 +482,8 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   employerId: integer("employer_id").references(() => csrPartners.id), // Link to CSR partner company
   departmentName: text("department_name"), // Department at employer company
   jobTitleAtCompany: text("job_title_at_company"), // Job title at employer
+  // Experience level for opportunity matching
+  experienceLevel: text("experience_level"), // entry-level, intermediate, expert
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

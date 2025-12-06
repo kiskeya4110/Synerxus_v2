@@ -603,37 +603,90 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 lg:py-28" data-testid="section-hero">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center">
-          {/* Left Content */}
-          <div className="flex flex-col justify-center order-2 md:order-1">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-4 sm:mb-6 leading-tight" data-testid="text-hero-title">
-              <span className="text-blue-900">Connect. Manage.</span><br />
-              <span className="text-amber-600">Impact Globally.</span>
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">
-              Every volunteer. Every hour. Every action. Measured, amplified, and transformed into lasting global change. Join the movement that's rewriting humanity's story—one act of kindness at a time.
-              From local communities to global movements—see the undeniable proof that together, we're creating a better tomorrow.
+      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 lg:py-28 relative overflow-hidden" data-testid="section-hero">
+        {/* Animated Background Elements - Floating SDG Icons */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.15]">
+          {/* Animated Floating Items */}
+          <div className="absolute top-10 left-20 text-6xl opacity-50 animate-float" style={{ animationDelay: "0s" }}>🎯</div>
+          <div className="absolute top-40 right-32 text-5xl opacity-40 animate-float-slow" style={{ animationDelay: "1s" }}>💧</div>
+          <div className="absolute bottom-32 left-40 text-5xl opacity-45 animate-float" style={{ animationDelay: "2s" }}>🌍</div>
+          <div className="absolute top-60 right-60 text-4xl opacity-35 animate-float-slow" style={{ animationDelay: "0.5s" }}>📚</div>
+          <div className="absolute bottom-60 right-20 text-5xl opacity-40 animate-float" style={{ animationDelay: "1.5s" }}>❤️</div>
+          <div className="absolute top-32 left-60 text-4xl opacity-50 animate-float-slow" style={{ animationDelay: "3s" }}>⚡</div>
+          <div className="absolute bottom-40 left-20 text-5xl opacity-45 animate-float" style={{ animationDelay: "2.5s" }}>🌳</div>
+          <div className="absolute top-20 right-40 text-4xl opacity-35 animate-float-slow" style={{ animationDelay: "1.2s" }}>🏭</div>
+          <div className="absolute bottom-20 right-60 text-5xl opacity-40 animate-float" style={{ animationDelay: "0.8s" }}>🤝</div>
+          <div className="absolute top-1/2 left-10 text-4xl opacity-30 animate-float-slow" style={{ animationDelay: "2.2s" }}>♻️</div>
 
+          {/* Large Faint Globe Background */}
+          <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[600px] h-[600px] opacity-70">
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-green-500 blur-3xl"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-blue-300/30"></div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center relative z-10">
+          {/* Left Content - Text with Globe */}
+          <div className="flex flex-col justify-center order-2 md:order-1">
+            {/* Header with Small Rotating Globe in front */}
+            <div className="flex items-start gap-3 sm:gap-4 mb-4 sm:mb-6">
+              {/* Small Rotating Globe */}
+              <div className="relative flex-shrink-0 mt-2">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-blue-600 to-green-500 shadow-2xl animate-spin-slow relative overflow-hidden">
+                  {/* Globe continents effect */}
+                  <div className="absolute inset-0 opacity-40">
+                    <div className="absolute top-1/4 left-1/4 w-5 h-4 bg-green-700 rounded-full blur-sm"></div>
+                    <div className="absolute bottom-1/3 right-1/4 w-4 h-5 bg-green-700 rounded-full blur-sm"></div>
+                    <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-green-700 rounded-full blur-sm"></div>
+                  </div>
+                  {/* Shine effect */}
+                  <div className="absolute top-1 left-1 w-3 h-3 bg-white rounded-full opacity-40 blur-sm"></div>
+                </div>
+                {/* Orbit ring */}
+                <div className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-pulse"></div>
+              </div>
+
+              {/* Header Text */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight flex-1" data-testid="text-hero-title">
+                <span className="text-blue-900">Bridge Action to Impact,</span><br />
+                <span className="text-amber-600">Globally</span>
+              </h1>
+            </div>
+            <p className="text-base sm:text-lg md:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">
+              Synerxus transforms volunteer action into measurable global impact.
             </p>
+            <ul className="text-sm sm:text-base md:text-lg text-slate-700 mb-6 sm:mb-10 space-y-3 leading-relaxed font-medium">
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Unify nonprofits, volunteers, and CSR teams on one platform.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Track outcomes in real time, align with SDGs, and automate reporting.</span>
+              </li>
+              <li className="flex items-start">
+                <span className="mr-2">•</span>
+                <span>Show stakeholders the true value of service—without the spreadsheets.</span>
+              </li>
+            </ul>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-fit">
               {isLoggedIn ? (
                 <Link href="/dashboard" className="w-full sm:w-auto">
-                  <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-my-dashboard-hero">
+                  <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-bold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-my-dashboard-hero">
                     My Dashboard
                   </Button>
                 </Link>
               ) : (
                 <>
-                  <Link href="/login" className="w-full sm:w-auto">
-                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-login-hero">
-                      Log In
+                  <Link href="/volunteer-intake" className="w-full sm:w-auto">
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-bold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-orange-600/25" data-testid="button-join-hero">
+                      Join
                     </Button>
                   </Link>
-                  <Link href="/volunteer-intake" className="w-full sm:w-auto">
-                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-semibold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-600/25" data-testid="button-sign-up-hero">
-                      Sign Up
+                  <Link href="/login" className="w-full sm:w-auto">
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-bold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-sign-in-hero">
+                      Sign In
                     </Button>
                   </Link>
                 </>

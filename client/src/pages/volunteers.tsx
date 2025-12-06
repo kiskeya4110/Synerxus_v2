@@ -14,6 +14,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import { AddVolunteerModal } from "@/components/add-volunteer-modal";
+import { VolunteerPerformanceModal } from "@/components/volunteer-performance-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
@@ -25,7 +26,9 @@ export default function Volunteers() {
   const [skillFilter, setSkillFilter] = useState("all");
   const [showContactModal, setShowContactModal] = useState(false);
   const [showAddVolunteerModal, setShowAddVolunteerModal] = useState(false);
+  const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<any>(null);
+  const [performanceVolunteer, setPerformanceVolunteer] = useState<{ id: number; name: string } | null>(null);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
@@ -473,13 +476,34 @@ export default function Volunteers() {
                     variant="outline"
                     className="flex-1 min-h-[40px] border-2 border-green-500 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
                     onClick={() => {
-                      toast({
-                        title: "Performance Analytics",
-                        description: `Viewing performance data for ${volunteer.displayName || 'volunteer'}`,
+                      console.log('[Performance Button] Volunteer data:', {
+                        id: volunteer.id,
+                        userId: volunteer.userId,
+                        name: volunteer.displayName,
+                        email: volunteer.email,
+                        fullVolunteer: volunteer
                       });
-                      // In a real implementation, this would open a performance analytics overlay
+
+                      // Use userId if id is not available
+                      const volId = volunteer.id || volunteer.userId;
+
+                      if (!volId) {
+                        toast({
+                          title: "Error",
+                          description: "Volunteer ID is missing. Cannot load performance data.",
+                          variant: "destructive",
+                        });
+                        console.error('[Performance Button] No ID found for volunteer:', volunteer);
+                        return;
+                      }
+
+                      setPerformanceVolunteer({
+                        id: volId,
+                        name: volunteer.displayName || volunteer.email || 'Volunteer'
+                      });
+                      setShowPerformanceModal(true);
                     }}
-                    data-testid={`button-performance-${volunteer.id}`}
+                    data-testid={`button-performance-${volunteer.id || volunteer.userId}`}
                   >
                     <TrendingUp className="h-4 w-4 mr-2" />
                     Performance
@@ -535,6 +559,19 @@ export default function Volunteers() {
         onClose={() => setShowAddVolunteerModal(false)}
         organizationId={currentUser?.id}
       />
+
+      {/* Performance Analytics Modal */}
+      {performanceVolunteer && (
+        <VolunteerPerformanceModal
+          isOpen={showPerformanceModal}
+          onClose={() => {
+            setShowPerformanceModal(false);
+            setPerformanceVolunteer(null);
+          }}
+          volunteerId={performanceVolunteer.id}
+          volunteerName={performanceVolunteer.name}
+        />
+      )}
 
       {/* Profile Dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={closeProfileDialog}>

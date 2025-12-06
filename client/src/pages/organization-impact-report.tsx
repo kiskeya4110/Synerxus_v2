@@ -49,7 +49,7 @@ import type { User } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import sdgWheelWatermark from "@assets/SDG Wheel_1764206872571.webp";
+import { SDGCircularWheel } from "@/components/sdg/sdg-circular-wheel";
 interface Html2PdfInstance {
   set(options: Record<string, any>): {
     from(element: HTMLElement): { save(): void };
@@ -883,13 +883,9 @@ export default function OrganizationImpactReport() {
           id="org-impact-report-content"
           className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black relative overflow-hidden"
         >
-          {/* SDG Wheel Watermark */}
-          <div className="absolute inset-0 pointer-events-none opacity-5 flex items-center justify-center">
-            <img
-              src={sdgWheelWatermark}
-              alt="UN SDG Wheel"
-              className="w-full h-full object-contain max-w-5xl max-h-5xl"
-            />
+          {/* SDG Wheel Watermark - Crisp Vector Version */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.08] flex items-center justify-center scale-150">
+            <SDGCircularWheel scale={2.5} />
           </div>
           <CardContent className="p-8 print:p-4 relative z-10">
             {/* Header Section - Split Layout */}

@@ -589,13 +589,12 @@ export default function CSRDashboard() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        minHeight: "100vh",
         backgroundColor: "#ffffff",
-        overflow: "hidden",
       }}
     >
       {/* Top Header Bar - Gradient Theme */}
-      <div style={{ borderTop: "8px solid var(--color-primary)", width: "100%" }} />
+      <div style={{ borderTop: "8px solid var(--color-primary)", width: "100%", position: "sticky", top: 0, zIndex: 50 }} />
       <header
         style={{
           background: "var(--gradient-header)",
@@ -607,6 +606,9 @@ export default function CSRDashboard() {
           flexShrink: 0,
           height: "64px",
           boxShadow: "var(--shadow-md)",
+          position: "sticky",
+          top: "8px",
+          zIndex: 50,
         }}
       >
         {/* Left: Synerxus Logo */}
@@ -663,7 +665,7 @@ export default function CSRDashboard() {
       </header>
 
       <div
-        style={{ display: "flex", flex: 1, minHeight: 0, overflow: "hidden" }}
+        style={{ display: "flex", flex: 1, minHeight: "calc(100vh - 72px)" }}
       >
         {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
         <aside
@@ -675,7 +677,10 @@ export default function CSRDashboard() {
             padding: "24px",
             flexShrink: 0,
             overflowY: "auto",
-            height: "100%",
+            position: "sticky",
+            top: "80px",
+            alignSelf: "flex-start",
+            maxHeight: "calc(100vh - 80px)",
             borderRight: "1px solid rgba(255, 255, 255, 0.1)",
           }}
         >

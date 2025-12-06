@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import Logo from "@/components/ui/logo";
 import {
   Home,
   BarChart3,
@@ -366,13 +367,12 @@ export default function CSRReportsExports() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#ffffff", overflow: "auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#ffffff", overflow: "hidden" }}>
       {/* Top Header Bar */}
       <div style={{ borderTop: "8px solid #0f172a", width: "100%" }} />
       <header style={{ backgroundColor: "#111827", color: "white", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, height: "64px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: "fit-content" }}>
-          <span style={{ fontSize: "24px", fontWeight: "bold", color: "#f97316" }}>✦</span>
-          <span style={{ fontSize: "18px", fontWeight: "600", letterSpacing: "0.025em", color: "#ffffff" }}>synerxus</span>
+        <div style={{ display: "flex", alignItems: "center", minWidth: "fit-content" }}>
+          <Logo size="sm" showIcon={true} className="invert" />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, justifyContent: "center" }}>
           <span style={{ fontSize: "16px", fontWeight: "600", color: "#ffffff" }}>Reports & Exports</span>
@@ -389,7 +389,7 @@ export default function CSRReportsExports() {
         </div>
       </header>
 
-      <div style={{ display: "flex", flex: 1, minHeight: "calc(100vh - 72px)" }}>
+      <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         {/* Left Sidebar */}
         <aside style={{ width: "20%", backgroundColor: "#111827", color: "white", padding: "24px", flexShrink: 0 }}>
           <nav style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
@@ -444,7 +444,7 @@ export default function CSRReportsExports() {
         </aside>
 
         {/* Main Content */}
-        <main style={{ width: "80%", padding: "32px", backgroundColor: "#f9fafb", overflowY: "auto", display: "flex", flexDirection: "column", gap: "24px" }}>
+        <main style={{ width: "80%", padding: "32px", backgroundColor: "#f9fafb", overflowY: "auto", display: "flex", flexDirection: "column", gap: "24px", flex: 1 }}>
           {/* Page Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>

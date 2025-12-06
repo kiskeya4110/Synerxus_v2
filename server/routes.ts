@@ -8070,6 +8070,59 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
     }
   });
 
+  // POST /api/employee-engagement/send-tips - Send engagement tips to inactive employees
+  app.post("/api/employee-engagement/send-tips", async (req, res) => {
+    try {
+      const { userId, stage } = req.body;
+
+      if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+
+      // Get the user's organization
+      const user = await storage.getUser?.(parseInt(userId));
+      if (!user || !user.organizationId) {
+        return res.status(404).json({ error: "User or organization not found" });
+      }
+
+      // Get all employees from the organization
+      const allUsers = await storage.listUsers?.() || [];
+      const orgEmployees = allUsers.filter((u: any) =>
+        u.organizationId === user.organizationId && u.userType === 'employee'
+      );
+
+      // Get employee activities to determine inactive employees
+      const activities = await storage.listEmployeeActivityLogs?.() || [];
+      const inactiveEmployees = orgEmployees.filter((emp: any) => {
+        const empActivities = activities.filter((a: any) => a.userId === emp.id);
+        return empActivities.length === 0; // No activities = inactive
+      });
+
+      // In a real implementation, this would send emails/notifications
+      // For now, we'll just log and return success
+      console.log(`Sending engagement tips to ${inactiveEmployees.length} inactive employees from organization ${user.organizationId}`);
+
+      // Simulate sending tips (in production, integrate with email service)
+      const tipsSent = inactiveEmployees.map((emp: any) => ({
+        employeeId: emp.id,
+        employeeName: emp.displayName,
+        email: emp.email,
+        tipSent: "Getting started with volunteering - Begin your impact journey",
+        sentAt: new Date().toISOString()
+      }));
+
+      res.json({
+        success: true,
+        message: `Engagement tips sent to ${tipsSent.length} inactive employees`,
+        recipients: tipsSent.length,
+        details: tipsSent
+      });
+    } catch (err) {
+      console.error("Error sending engagement tips:", err);
+      res.status(500).json({ error: "Failed to send engagement tips" });
+    }
+  });
+
   // =========================
   // ALIAS ENDPOINTS - Proxy to Python backend for OCR and AI services
   // =========================

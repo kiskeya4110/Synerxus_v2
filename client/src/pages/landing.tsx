@@ -353,49 +353,6 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
         </DialogContent>
       </Dialog>
 
-      {/* Steps Below Map */}
-      <div className="mt-12 sm:mt-16 max-w-5xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 text-center mb-8 sm:mb-12">
-          Get Involved and See Your Impact
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          <Link href="/login">
-            <button className="w-full text-center hover:opacity-80 transition-opacity p-4 sm:p-6">
-              <div className="inline-flex items-center justify-center w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-amber-500 text-white font-bold text-lg sm:text-xl mb-3 sm:mb-4">
-                1
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-3">Create Profile</h3>
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                Sign up, get verified, connect with NGOs worldwide and volunteer.
-              </p>
-            </button>
-          </Link>
-
-          <Link href="/login">
-            <button className="w-full text-center hover:opacity-80 transition-opacity p-4 sm:p-6">
-              <div className="inline-flex items-center justify-center w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-amber-500 text-white font-bold text-lg sm:text-xl mb-3 sm:mb-4">
-                2
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-3">Match to Project</h3>
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                Activate your skills, volunteer, collaborate with global partners.
-              </p>
-            </button>
-          </Link>
-
-          <Link href="/login">
-            <button className="w-full text-center hover:opacity-80 transition-opacity p-4 sm:p-6">
-              <div className="inline-flex items-center justify-center w-12 sm:w-14 h-12 sm:h-14 rounded-full bg-amber-500 text-white font-bold text-lg sm:text-xl mb-3 sm:mb-4">
-                3
-              </div>
-              <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-3">Track Impact SDGs</h3>
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-                Measure and manage the positive changes you create.
-              </p>
-            </button>
-          </Link>
-        </div>
-      </div>
     </div>
   );
 };

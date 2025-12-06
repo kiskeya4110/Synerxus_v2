@@ -589,8 +589,9 @@ export default function CSRDashboard() {
       style={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        height: "100vh",
         backgroundColor: "#ffffff",
+        overflow: "hidden",
       }}
     >
       {/* Top Header Bar - Gradient Theme */}
@@ -665,7 +666,7 @@ export default function CSRDashboard() {
       </header>
 
       <div
-        style={{ display: "flex", flex: 1, minHeight: "calc(100vh - 72px)" }}
+        style={{ display: "flex", flex: 1, overflow: "hidden" }}
       >
         {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
         <aside
@@ -677,10 +678,6 @@ export default function CSRDashboard() {
             padding: "24px",
             flexShrink: 0,
             overflowY: "auto",
-            position: "sticky",
-            top: "80px",
-            alignSelf: "flex-start",
-            maxHeight: "calc(100vh - 80px)",
             borderRight: "1px solid rgba(255, 255, 255, 0.1)",
           }}
         >
@@ -872,7 +869,7 @@ export default function CSRDashboard() {
             overflowY: "auto",
             overflowX: "hidden",
             paddingBottom: "48px",
-            height: "100%",
+            flex: 1,
           }}
         >
           {selectedMainTab === "engagement" && (
@@ -1580,8 +1577,8 @@ export default function CSRDashboard() {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
-                        fontSize: "12px",
+                        gap: "12px",
+                        fontSize: "11px",
                         color: "#6b7280",
                       }}
                     >
@@ -1592,15 +1589,7 @@ export default function CSRDashboard() {
                           gap: "4px",
                         }}
                       >
-                        <span
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: "#22c55e",
-                          }}
-                        ></span>
-                        Active
+                        ⏱️ Hours Logged
                       </span>
                       <span
                         style={{
@@ -1609,15 +1598,16 @@ export default function CSRDashboard() {
                           gap: "4px",
                         }}
                       >
-                        <span
-                          style={{
-                            width: "8px",
-                            height: "8px",
-                            borderRadius: "50%",
-                            backgroundColor: "#3b82f6",
-                          }}
-                        ></span>
-                        Committed
+                        👥 Volunteers
+                      </span>
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        📁 Projects
                       </span>
                     </div>
                   </div>
@@ -1703,11 +1693,13 @@ export default function CSRDashboard() {
                           margin: 0,
                         }}
                       >
-                        {sdgMetrics.reduce(
-                          (sum: number, m: any) =>
-                            sum + (m.uniqueEmployees || 0),
-                          0,
-                        )}
+                        {new Set(
+                          sdgMetrics
+                            .filter((m: any) => m.totalHours > 0)
+                            .flatMap((m: any) =>
+                              (m.employees || []).map((emp: any) => emp.email)
+                            )
+                        ).size}
                       </p>
                       <p
                         style={{
@@ -1906,25 +1898,36 @@ export default function CSRDashboard() {
                       }}
                     >
                       {(() => {
-                        const totalHours = sdgMetrics.reduce(
+                        const activeSDGs = sdgMetrics.filter((m: any) => m.totalHours > 0);
+                        const totalHours = activeSDGs.reduce(
                           (sum: number, m: any) => sum + (m.totalHours || 0),
                           0,
                         );
-                        const totalVolunteers = sdgMetrics.reduce(
-                          (sum: number, m: any) =>
-                            sum + (m.uniqueEmployees || 0),
-                          0,
-                        );
-                        const topSDG = sdgMetrics[0];
+                        // Get unique volunteers across all SDGs (not summing duplicates)
+                        const uniqueVolunteers = new Set(
+                          activeSDGs.flatMap((m: any) =>
+                            (m.employees || []).map((emp: any) => emp.email)
+                          )
+                        ).size;
+                        const topSDG = activeSDGs.sort((a: any, b: any) => b.totalHours - a.totalHours)[0];
+                        const committedCount = committedSDGs.length;
+                        const activeCount = activeSDGs.length;
 
-                        if (totalHours === 0) {
-                          return "Start tracking contributions to unlock impact insights.";
+                        if (totalHours === 0 && committedCount === 0) {
+                          return "Set SDG commitments in Settings and start tracking contributions to unlock AI-powered insights.";
                         }
 
-                        if (topSDG) {
-                          return `Leading with ${getSDGName(topSDG.sdg)} (${topSDG.totalHours} hrs). ${totalVolunteers} volunteers across ${sdgMetrics.length} SDGs.`;
+                        if (totalHours === 0 && committedCount > 0) {
+                          return `You've committed to ${committedCount} SDG${committedCount > 1 ? 's' : ''}. Start logging volunteer hours to see your impact alignment!`;
                         }
-                        return `${totalVolunteers} volunteers contributing ${totalHours} hours across global goals.`;
+
+                        if (topSDG && uniqueVolunteers > 0) {
+                          const alignmentStatus = committedSDGs.includes(topSDG.sdg)
+                            ? "✓ On track"
+                            : "⚠️ Not in commitments";
+                          return `${alignmentStatus}: Top focus is ${getSDGName(topSDG.sdg)} with ${topSDG.totalHours} hrs from ${uniqueVolunteers} volunteer${uniqueVolunteers > 1 ? 's' : ''} across ${activeCount} SDG${activeCount > 1 ? 's' : ''}.`;
+                        }
+                        return `${uniqueVolunteers} volunteer${uniqueVolunteers > 1 ? 's' : ''} contributing ${totalHours} hours across ${activeCount} SDG${activeCount > 1 ? 's' : ''}.`;
                       })()}
                     </p>
                   </div>
@@ -4041,6 +4044,32 @@ export default function CSRDashboard() {
                 </button>
                 {selectedFunnelStage === 1 && (
                   <button
+                    onClick={async () => {
+                      // Send engagement tips to inactive employees
+                      const confirmed = window.confirm(
+                        "Send engagement tips to all inactive employees? This will send personalized tips to help them get started with volunteering."
+                      );
+                      if (confirmed) {
+                        try {
+                          const response = await fetch("/api/employee-engagement/send-tips", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              userId,
+                              stage: "inactive",
+                            }),
+                          });
+                          if (response.ok) {
+                            alert("✅ Engagement tips sent successfully to inactive employees!");
+                            setShowFunnelModal(false);
+                          } else {
+                            alert("❌ Failed to send engagement tips. Please try again.");
+                          }
+                        } catch (error) {
+                          alert("❌ Error sending engagement tips. Please try again.");
+                        }
+                      }
+                    }}
                     style={{
                       padding: "8px 16px",
                       border: "none",
@@ -4050,8 +4079,12 @@ export default function CSRDashboard() {
                       cursor: "pointer",
                       fontSize: "14px",
                       fontWeight: "500",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
                     }}
                   >
+                    <Send style={{ width: "16px", height: "16px" }} />
                     Send Engagement Tips
                   </button>
                 )}

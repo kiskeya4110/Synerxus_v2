@@ -235,9 +235,9 @@ export default function ProjectPortfolio() {
       style={{
         display: "flex",
         flexDirection: "column",
-        minHeight: "100vh",
+        height: "100vh",
         backgroundColor: "#ffffff",
-        overflow: "auto",
+        overflow: "hidden",
       }}
     >
       {/* Top Header Bar - Dark Navy with Blue Ribbon */}
@@ -326,7 +326,7 @@ export default function ProjectPortfolio() {
       </header>
 
       <div
-        style={{ display: "flex", flex: 1 }}
+        style={{ display: "flex", flex: 1, overflow: "hidden" }}
       >
         {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
         <aside
@@ -485,7 +485,7 @@ export default function ProjectPortfolio() {
             flexDirection: "column",
             gap: "24px",
             paddingBottom: "100px",
-            minHeight: "100vh",
+            flex: 1,
           }}
         >
 

@@ -5,6 +5,7 @@ import { TrendingUp, Users, DollarSign, Globe, CheckCircle, ArrowLeft, Download,
 import { useState } from "react";
 import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
 import Footer from "@/components/layout/footer";
+import Logo from "@/components/ui/logo";
 
 interface ComplianceCalculation {
   engagementScore: number;
@@ -308,14 +309,14 @@ export function CSRImpactReporting() {
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh", backgroundColor: "#f9fafb", overflow: "auto" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#f9fafb", overflow: "hidden" }}>
       {/* Header */}
       <header style={{ backgroundColor: "#1e3a8a", color: "white", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <button onClick={() => navigate("/csr-dashboard")} style={{ background: "none", border: "none", cursor: "pointer", color: "white", padding: "4px" }}>
             <ArrowLeft style={{ width: "20px", height: "20px" }} />
           </button>
-          <span style={{ fontSize: "24px", fontWeight: "bold", color: "#f97316" }}>✦</span>
+          <Logo size="sm" showIcon={true} className="invert" />
           <span style={{ fontSize: "18px", fontWeight: "600" }}>CSR Impact Reporting</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>

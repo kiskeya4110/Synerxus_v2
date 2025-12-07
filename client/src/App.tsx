@@ -39,6 +39,7 @@ import Achievements from "@/pages/achievements";
 import Leaderboard from "@/pages/leaderboard";
 import OrganizationLeaderboard from "@/pages/organization-leaderboard";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
+import DiscoverOpportunitiesPWA from "@/pages/discover-opportunities-pwa";
 import SDGMapping from "@/pages/sdg-mapping";
 import CSRDashboard from "@/pages/csr-dashboard";
 import VolunteerDashboard from "@/pages/volunteer-dashboard";
@@ -205,6 +206,7 @@ function LayoutRoute() {
       <Route path="/corporate-partner-intake" component={CorporatePartnerIntake} />
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
+      <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
       <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
       <Route path="/opportunities/:id" component={OpportunityDetail} />
       <Route path="/applications" component={Applications} />

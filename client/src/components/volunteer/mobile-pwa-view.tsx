@@ -348,6 +348,15 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   );
                 })}
               </div>
+
+              {/* Discover More Button */}
+              <Button
+                onClick={() => navigate('/discover-opportunities/pwa')}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-5 h-5" />
+                Discover More Opportunities
+              </Button>
             </div>
           </div>
         )}

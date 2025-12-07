@@ -33,6 +33,7 @@ import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
+import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
 interface SDGEmployee {
   name: string;
@@ -594,34 +595,59 @@ export default function CSRDashboard() {
         overflow: "hidden",
       }}
     >
-      {/* Top Header Bar - Gradient Theme */}
-      <div style={{ borderTop: "8px solid var(--color-primary)", width: "100%", position: "sticky", top: 0, zIndex: 50 }} />
+      {/* Top Header Bar - Gradient Theme matching Organization Dashboard */}
       <header
         style={{
-          background: "var(--gradient-header)",
+          background: "linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 75%, #d35400 100%)",
           color: "white",
-          padding: "16px 32px",
+          padding: "12px 24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexShrink: 0,
           height: "64px",
-          boxShadow: "var(--shadow-md)",
+          boxShadow: "0 2px 16px rgba(26, 10, 46, 0.4)",
           position: "sticky",
-          top: "8px",
+          top: 0,
           zIndex: 50,
         }}
       >
-        {/* Left: Synerxus Logo */}
-        <div
+        {/* Left: Synerxus Logo - Clickable to Landing Page */}
+        <button
+          onClick={() => navigate("/landing")}
           style={{
             display: "flex",
             alignItems: "center",
-            minWidth: "fit-content",
+            gap: "8px",
+            paddingRight: "16px",
+            borderRight: "1px solid rgba(255,255,255,0.2)",
+            backgroundColor: "transparent",
+            border: "none",
+            cursor: "pointer",
+            transition: "opacity 0.2s",
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+          title="Go to landing page"
         >
-          <Logo size="sm" showIcon={true} className="invert" />
-        </div>
+          <img
+            src={logoUrl}
+            alt="Synerxus Logo"
+            style={{ height: "32px", width: "auto" }}
+          />
+          <div
+            style={{
+              display: "flex",
+              gap: "0",
+              fontWeight: "700",
+              fontSize: "16px",
+              letterSpacing: "0.5px",
+            }}
+          >
+            <span style={{ color: "#ffffff" }}>SYNER</span>
+            <span style={{ color: "#FFB84D" }}>XUS</span>
+          </div>
+        </button>
 
         {/* Center: CSR Dashboard Title with Company Name */}
         <div

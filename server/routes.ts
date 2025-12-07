@@ -35,6 +35,27 @@ import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest 
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
 
+// ===== ROUTER MODULE IMPORTS =====
+import { usersRouter, setBroadcastFn as setUsersBroadcast } from "./routes/users.router";
+import { organizationsRouter, setBroadcastFn as setOrganizationsBroadcast } from "./routes/organizations.router";
+import { projectsRouter, setBroadcastFn as setProjectsBroadcast } from "./routes/projects.router";
+import { tasksRouter, setBroadcastFn as setTasksBroadcast } from "./routes/tasks.router";
+import { opportunitiesRouter, setBroadcastFn as setOpportunitiesBroadcast } from "./routes/opportunities.router";
+import { applicationsRouter, setBroadcastFn as setApplicationsBroadcast } from "./routes/applications.router";
+import { messagesRouter, setBroadcastFn as setMessagesBroadcast } from "./routes/messages.router";
+import { calendarRouter, setBroadcastFn as setCalendarBroadcast } from "./routes/calendar.router";
+import { volunteersRouter, setBroadcastFn as setVolunteersBroadcast } from "./routes/volunteers.router";
+import { projectAssignmentsRouter, setBroadcastFn as setProjectAssignmentsBroadcast } from "./routes/project-assignments.router";
+import { matchmakerRouter } from "./routes/matchmaker.router";
+import { dashboardRouter } from "./routes/dashboard.router";
+import { profileRouter } from "./routes/profile.router";
+import { csrRouter } from "./routes/csr.router";
+import { activitiesRouter, setBroadcastFn as setActivitiesBroadcast } from "./routes/activities.router";
+import { gamificationRouter } from "./routes/gamification.router";
+import { adminRouter } from "./routes/admin.router";
+import { storageRouter } from "./routes/storage.router";
+import { miscRouter } from "./routes/misc.router";
+
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
 /**
  * Detects duplicate impacts within a time window (±6 hours)
@@ -254,6 +275,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   };
+
+  // ===== MOUNT MODULAR ROUTERS =====
+  // Set up broadcast functions for routers that need real-time updates
+  setUsersBroadcast(broadcastUpdate);
+  setOrganizationsBroadcast(broadcastUpdate);
+  setProjectsBroadcast(broadcastUpdate);
+  setTasksBroadcast(broadcastUpdate);
+  setOpportunitiesBroadcast(broadcastUpdate);
+  setApplicationsBroadcast(broadcastUpdate);
+  setMessagesBroadcast(broadcastUpdate);
+  setCalendarBroadcast(broadcastUpdate);
+  setVolunteersBroadcast(broadcastUpdate);
+  setProjectAssignmentsBroadcast(broadcastUpdate);
+  setActivitiesBroadcast(broadcastUpdate);
+
+  // Mount modular routers (Phases 1-6: resource-specific paths, Phase 7: at /api level)
+  // Phases 1-6 routers: mounted at resource-specific paths
+  app.use("/api/users", usersRouter);
+  app.use("/api/organizations", organizationsRouter);
+  app.use("/api/projects", projectsRouter);
+  app.use("/api/tasks", tasksRouter);
+  app.use("/api/opportunities", opportunitiesRouter);
+  app.use("/api/applications", applicationsRouter);
+  app.use("/api", messagesRouter); // Handles /messages and /conversation-threads
+  app.use("/api/calendar-events", calendarRouter);
+  app.use("/api", volunteersRouter); // Handles /volunteers, /matchable-organizations, /matches
+  app.use("/api/project-assignments", projectAssignmentsRouter);
+  app.use("/api/matchmaker", matchmakerRouter);
+  app.use("/api", dashboardRouter); // Handles /dashboard and /organization/dashboard
+  app.use("/api", profileRouter); // Handles /profile and /intake
+  // Phase 7 routers: mounted at /api level with full paths in router definitions
+  app.use("/api", csrRouter); // Handles /csr/*, /employee-engagement/*, /volunteer-employers
+  app.use("/api", activitiesRouter); // Handles /volunteer-activities, /impact-metrics, /project-impacts
+  app.use("/api", gamificationRouter); // Handles /leaderboard*, /user-badges, /volunteer-spotlight, etc.
+  app.use("/api", adminRouter); // Handles /users/me (DELETE), /user-validation, /generate-impact-report, /email-digest
+  app.use("/api", storageRouter); // Handles /upload, /storage/:filePath
+  app.use("/api", miscRouter); // Handles /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
+
+  // ===== LEGACY ROUTES (To be deprecated) =====
+  // The routes below are still defined inline but are now handled by the modular routers above.
+  // They are kept for reference during migration but should not be actively used.
+  // TODO: Remove these routes once migration is verified complete.
 
   // API Routes
   // === User Routes ===

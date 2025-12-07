@@ -313,7 +313,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
-          <span className="font-bold text-base">Synerxus</span>
+          <span className="font-bold text-base bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+            SYNERXUS
+          </span>
         </button>
         <div className="flex items-center gap-2 relative">
           <button
@@ -351,6 +353,16 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   >
                     <Compass className="w-4 h-4" />
                     <span>Discover Opportunities</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate('/log-activity');
+                      setShowMenu(false);
+                    }}
+                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                  >
+                    <Clock className="w-4 h-4" />
+                    <span>Log Activity</span>
                   </button>
                   <div className="border-t border-gray-700 my-1"></div>
                   <button

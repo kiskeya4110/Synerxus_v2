@@ -36,6 +36,7 @@ import Assignments from "@/pages/assignments";
 import MatchedVolunteers from "@/pages/matched-volunteers";
 import EmailDigests from "@/pages/email-digests";
 import Achievements from "@/pages/achievements";
+import LogActivity from "@/pages/log-activity";
 import Leaderboard from "@/pages/leaderboard";
 import OrganizationLeaderboard from "@/pages/organization-leaderboard";
 import DiscoverOpportunities from "@/pages/discover-opportunities";
@@ -200,6 +201,7 @@ function LayoutRoute() {
       <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
       <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
       <Route path="/my-work" component={MyWork} />
+      <Route path="/log-activity" component={LogActivity} />
       <Route path="/tasks" component={Tasks} />
       <Route path="/volunteer-intake" component={VolunteerIntake} />
       <Route path="/organization-intake" component={OrganizationIntake} />

@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus } from "lucide-react";
+import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,9 +20,13 @@ import MyTasksPage from "./my-tasks";
 import ImpactVisualization from "./impact-visualization";
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import { CreateProjectDialog } from "@/components/projects/project-dialogs";
+import { useIsMobile } from "@/hooks/use-mobile";
+import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
+  const isMobile = useIsMobile();
+  const [showMenu, setShowMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(() => {
     // Restore from sessionStorage first, then URL hash, then default
     if (typeof window !== 'undefined') {
@@ -37,7 +41,7 @@ export default function MyWork() {
     }
     return 'applications'; // Default to applications for all users
   });
-  
+
   // State for projects tab
   const [projectSearchTerm, setProjectSearchTerm] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
@@ -402,7 +406,135 @@ export default function MyWork() {
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
 
   return (
-    <div className="h-screen overflow-y-auto">
+    <div className={`h-screen overflow-y-auto ${!isOrganizationManager && isMobile ? 'bg-[#1a1a2e] max-w-[428px] mx-auto' : ''}`}>
+      {/* PWA Header for Volunteers on Mobile */}
+      {!isOrganizationManager && isMobile && (
+        <header className="bg-[#16213e] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
+            <span className="font-bold text-base bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+              SYNERXUS
+            </span>
+          </button>
+          <div className="flex items-center gap-2 relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="p-2 hover:bg-white/10 rounded-full"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+
+            {/* Floating Menu */}
+            {showMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowMenu(false)}
+                />
+                <div className="absolute top-12 right-0 bg-[#16213e] border border-gray-700 rounded-lg shadow-xl w-56 z-50">
+                  <div className="py-2">
+                    <button
+                      onClick={() => {
+                        setLocation('/dashboard');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <Home className="w-4 h-4" />
+                      <span>Dashboard</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLocation('/discover-opportunities');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <Compass className="w-4 h-4" />
+                      <span>Discover Opportunities</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLocation('/log-activity');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <Clock className="w-4 h-4" />
+                      <span>Log Activity</span>
+                    </button>
+                    <div className="border-t border-gray-700 my-1"></div>
+                    <button
+                      onClick={() => {
+                        setLocation('/volunteer-profile-settings');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Profile Settings</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLocation('/volunteer-messages');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Messages</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLocation('/achievements');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <Award className="w-4 h-4" />
+                      <span>Achievements</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <Bell className="w-4 h-4" />
+                      <span>Notifications</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                      <span>Help & Support</span>
+                    </button>
+                    <div className="border-t border-gray-700 my-1"></div>
+                    <button
+                      onClick={() => {
+                        localStorage.clear();
+                        setLocation('/login');
+                        setShowMenu(false);
+                      }}
+                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-red-400"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </header>
+      )}
+
       {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
       {/* Top Navigation Buttons for Organization Managers */}
@@ -768,9 +900,53 @@ export default function MyWork() {
       
       {/* Mobile Metrics Grid - Organization Only */}
       {isOrganizationManager && <MobileMetricsGrid activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} livesTouched={dashboardData?.livesTouched || 0} />}
-      
+
       {/* Mobile Bottom Navigation - Organization Only */}
       {isOrganizationManager && <MobileBottomNav />}
+
+      {/* PWA Bottom Navigation for Volunteers on Mobile */}
+      {!isOrganizationManager && isMobile && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+          <div className="flex justify-around items-center">
+            {[
+              { id: 'dashboard', icon: Home, label: 'Home', path: '/dashboard' },
+              { id: 'applications', icon: Briefcase, label: 'Apps', path: '/my-work#applications' },
+              { id: 'assignments', icon: FolderKanban, label: 'Assign', path: '/my-work#assignments' },
+              { id: 'impacts', icon: BarChart3, label: 'Impact', path: '/my-work#impact' },
+              { id: 'profile', icon: UserIcon, label: 'Profile', path: '/volunteer-profile-settings' },
+            ].map((tab) => {
+              const isActive = tab.id === 'applications' && activeTab === 'applications' ||
+                               tab.id === 'assignments' && activeTab === 'assignments' ||
+                               tab.id === 'impacts' && activeTab === 'impact' ||
+                               (tab.path === '/dashboard' && window.location.pathname === '/dashboard') ||
+                               (tab.path === '/volunteer-profile-settings' && window.location.pathname === '/volunteer-profile-settings');
+
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    if (tab.id === 'applications' || tab.id === 'assignments' || tab.id === 'impacts') {
+                      const tabValue = tab.id === 'impacts' ? 'impact' : tab.id;
+                      handleTabChange(tabValue);
+                    } else {
+                      setLocation(tab.path);
+                    }
+                  }}
+                  className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
+                    isActive
+                      ? 'text-emerald-400'
+                      : 'text-gray-400 hover:text-gray-200'
+                  }`}
+                  data-testid={`nav-${tab.id}`}
+                >
+                  <tab.icon className="w-5 h-5 mb-1" />
+                  <span className="text-[10px] font-medium">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

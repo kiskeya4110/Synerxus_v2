@@ -19,6 +19,7 @@ import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-moda
 import { VolunteerInsightsSection } from "@/components/dashboard/volunteer-insights";
 import ImpactStorytelling from "@/components/impact/impact-storytelling";
 import OrganizationNav from "@/components/layout/organization-nav";
+import VolunteerNav from "@/components/layout/volunteer-nav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -934,6 +935,9 @@ export default function Dashboard() {
 
   return (
     <PageTransition>
+      {/* Volunteer Navigation - Only shown in web view */}
+      <VolunteerNav />
+
       <div className="h-screen overflow-y-auto space-y-4 md:space-y-6 px-4 md:px-24">
       {/* Header - Mobile optimized */}
       <div className="space-y-3 md:space-y-6">

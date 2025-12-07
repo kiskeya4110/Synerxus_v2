@@ -58,14 +58,17 @@ export default function LogActivity() {
     queryKey: ["/api/projects"],
     queryFn: async () => {
       const response = await fetch("/api/projects");
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
   // Get assigned projects
-  const assignedProjects = projects.filter(project =>
-    projectAssignments.some((assignment: any) => assignment.projectId === project.id)
-  );
+  const assignedProjects = Array.isArray(projects) && Array.isArray(projectAssignments)
+    ? projects.filter(project =>
+        projectAssignments.some((assignment: any) => assignment.projectId === project.id)
+      )
+    : [];
 
   // Log activity mutation
   const logActivityMutation = useMutation({

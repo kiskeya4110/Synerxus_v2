@@ -33,13 +33,13 @@ export default function VolunteerNav() {
     enabled: !!userId
   });
 
-  // Only show for volunteers
+  // Only show for volunteers on desktop (hide on mobile for PWA)
   if (currentUser?.userType !== 'volunteer') {
     return null;
   }
 
   return (
-    <nav className="sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+    <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           {/* Nav Items */}

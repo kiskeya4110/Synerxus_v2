@@ -4,6 +4,7 @@ import Header from "./header";
 import Sidebar from "./sidebar";
 import MobileNav from "./mobile-nav";
 import VolunteerNav from "./volunteer-nav";
+import VolunteerBottomNav from "./volunteer-bottom-nav";
 import Footer from "./footer";
 import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
@@ -68,8 +69,8 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background">
-          <div className="safe-area-x px-3 sm:px-4 md:px-6 pt-[72px] md:pt-20 pb-24">
-            <div className="max-w-7xl mx-auto">
+          <div className="safe-area-x px-3 sm:px-4 md:px-6 pt-[72px] md:pt-20 pb-24 md:pb-24">
+            <div className="max-w-7xl mx-auto pb-20 md:pb-0">
               {children}
             </div>
           </div>
@@ -77,6 +78,7 @@ export default function Layout({ children }: LayoutProps) {
         </main>
       </div>
       <MobileNav />
+      <VolunteerBottomNav />
       <OnboardingGuide />
     </div>
   );

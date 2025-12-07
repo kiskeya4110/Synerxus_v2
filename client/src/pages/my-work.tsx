@@ -903,50 +903,6 @@ export default function MyWork() {
 
       {/* Mobile Bottom Navigation - Organization Only */}
       {isOrganizationManager && <MobileBottomNav />}
-
-      {/* PWA Bottom Navigation for Volunteers on Mobile */}
-      {!isOrganizationManager && isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
-          <div className="flex justify-around items-center">
-            {[
-              { id: 'dashboard', icon: Home, label: 'Home', path: '/dashboard' },
-              { id: 'applications', icon: Briefcase, label: 'Apps', path: '/my-work#applications' },
-              { id: 'assignments', icon: FolderKanban, label: 'Assign', path: '/my-work#assignments' },
-              { id: 'impacts', icon: BarChart3, label: 'Impact', path: '/my-work#impact' },
-              { id: 'profile', icon: UserIcon, label: 'Profile', path: '/volunteer-profile-settings' },
-            ].map((tab) => {
-              const isActive = tab.id === 'applications' && activeTab === 'applications' ||
-                               tab.id === 'assignments' && activeTab === 'assignments' ||
-                               tab.id === 'impacts' && activeTab === 'impact' ||
-                               (tab.path === '/dashboard' && window.location.pathname === '/dashboard') ||
-                               (tab.path === '/volunteer-profile-settings' && window.location.pathname === '/volunteer-profile-settings');
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    if (tab.id === 'applications' || tab.id === 'assignments' || tab.id === 'impacts') {
-                      const tabValue = tab.id === 'impacts' ? 'impact' : tab.id;
-                      handleTabChange(tabValue);
-                    } else {
-                      setLocation(tab.path);
-                    }
-                  }}
-                  className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
-                    isActive
-                      ? 'text-emerald-400'
-                      : 'text-gray-400 hover:text-gray-200'
-                  }`}
-                  data-testid={`nav-${tab.id}`}
-                >
-                  <tab.icon className="w-5 h-5 mb-1" />
-                  <span className="text-[10px] font-medium">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-      )}
     </div>
   );
 }

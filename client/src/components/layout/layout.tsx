@@ -56,7 +56,8 @@ export default function Layout({ children }: LayoutProps) {
   }, [location, loading, user, isCompleted, startOnboarding]);
 
   // These routes have their own layout, skip the wrapper
-  const standaloneRoutes = ["/", "/login", "/organization-messages", "/landing", "/csr-dashboard", "/volunteer-dashboard", "/organization-dashboard", "/overview", "/csr-impact-reporting", "/project-portfolio", "/csr-reports-exports", "/projects", "/volunteers", "/sdg-mapping", "/impact-visualization"];
+  // PWA mobile routes are included to prevent double navigation
+  const standaloneRoutes = ["/", "/login", "/organization-messages", "/landing", "/csr-dashboard", "/volunteer-dashboard", "/organization-dashboard", "/overview", "/csr-impact-reporting", "/project-portfolio", "/csr-reports-exports", "/projects", "/volunteers", "/sdg-mapping", "/impact-visualization", "/my-work", "/my-applications", "/assignments", "/my-tasks", "/log-activity", "/discover-opportunities", "/volunteer-profile-settings", "/volunteer-messages", "/achievements"];
   
   if (standaloneRoutes.some(route => location === route || location.startsWith(route + "/"))) {
     return <>{children}</>;

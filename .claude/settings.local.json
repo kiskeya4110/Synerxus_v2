@@ -16,7 +16,8 @@
       "Bash(mkdir:*)",
       "Bash(echo:*)",
       "Bash(npx tsc:*)",
-      "Bash(npm run check:tsc:*)"
+      "Bash(npm run check:tsc:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

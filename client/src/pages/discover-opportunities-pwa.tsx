@@ -145,7 +145,7 @@ export default function DiscoverOpportunitiesPWA() {
       {/* Top App Bar */}
       <header className="bg-[#16213e] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/volunteer-dashboard')}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -454,11 +454,33 @@ export default function DiscoverOpportunitiesPWA() {
       {/* Application Dialog */}
       {selectedOpportunity && (
         <ApplicationDialog
-          opportunity={selectedOpportunity}
+          opportunity={selectedOpportunity as any}
           open={applicationDialogOpen}
           onOpenChange={setApplicationDialogOpen}
         />
       )}
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+        <div className="flex justify-around items-center">
+          {[
+            { path: '/volunteer-dashboard', icon: Home, label: 'Home' },
+            { path: '/discover-opportunities/pwa', icon: Briefcase, label: 'Projects' },
+            { path: '/volunteer-dashboard', icon: Sparkles, label: 'Potential' },
+            { path: '/volunteer-dashboard', icon: BarChart3, label: 'Impacts' },
+            { path: '/volunteer-profile-settings', icon: User, label: 'Profile' },
+          ].map((tab) => (
+            <button
+              key={tab.path}
+              onClick={() => navigate(tab.path)}
+              className="flex flex-col items-center justify-center px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-colors"
+            >
+              <tab.icon className="w-5 h-5 text-gray-400" />
+              <span className="text-[10px] text-gray-400 mt-0.5">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

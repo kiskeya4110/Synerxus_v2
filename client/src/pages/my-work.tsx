@@ -222,9 +222,9 @@ export default function MyWork() {
   };
 
   // Use backend-calculated hours for consistency with dashboard
-  const totalHoursLogged = currentUser?.userType === 'volunteer' && dashboardData?.totalHours !== undefined 
-    ? dashboardData.totalHours 
-    : volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const totalHoursLogged = currentUser?.userType === 'volunteer' && dashboardData?.totalHours !== undefined
+    ? dashboardData.totalHours
+    : (Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0) : 0);
   const totalHoursCommitted = projectAssignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
   const hoursProgressPercentage = totalHoursCommitted > 0 
     ? Math.round((totalHoursLogged / totalHoursCommitted) * 100)
@@ -260,10 +260,10 @@ export default function MyWork() {
   };
 
   const weekStart = getWeekStart();
-  const weeklyHoursLogged = volunteerActivities.reduce((sum, a) => {
+  const weeklyHoursLogged = Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => {
     const activityDate = new Date(a.date);
     return activityDate >= weekStart ? sum + (a.hours || 0) : sum;
-  }, 0);
+  }, 0) : 0;
 
   const weeklyCapacityUsedPercentage = weeklyCapacity > 0 
     ? Math.round((weeklyHoursLogged / weeklyCapacity) * 100)

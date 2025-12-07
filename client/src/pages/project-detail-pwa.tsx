@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useRoute, Link } from "wouter";
-import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award } from "lucide-react";
+import { useRoute, Link, useLocation } from "wouter";
+import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ const SDG_NAMES: { [key: number]: string } = {
 
 export default function ProjectDetailPWA() {
   const [, params] = useRoute("/projects/:id/pwa");
+  const [, navigate] = useLocation();
   const projectId = params?.id ? parseInt(params.id) : null;
 
   const { data: project, isLoading } = useQuery<any>({
@@ -42,6 +43,22 @@ export default function ProjectDetailPWA() {
   const { data: tasks = [] } = useQuery<any[]>({
     queryKey: ["/api/tasks"],
   });
+
+  // Fetch applications to check if user has already applied
+  const { data: applications = [] } = useQuery({
+    queryKey: ['/api/applications'],
+    queryFn: async () => {
+      const response = await fetch('/api/applications');
+      if (!response.ok) return [];
+      return response.json();
+    }
+  });
+
+  // Check if user has applied for this project
+  const userId = localStorage.getItem('currentUserId');
+  const hasApplied = applications.some((app: any) =>
+    app.projectId === projectId && app.userId === parseInt(userId || '0')
+  );
 
   const { toast } = useToast();
 
@@ -211,16 +228,42 @@ export default function ProjectDetailPWA() {
 
             {/* Apply Button */}
             <Button
-              onClick={() => applyMutation.mutate()}
-              disabled={applyMutation.isPending}
-              className="w-full bg-gradient-to-r from-emerald-400 to-blue-500 hover:from-emerald-500 hover:to-blue-600 text-white font-semibold py-3 rounded-lg"
+              onClick={() => !hasApplied && applyMutation.mutate()}
+              disabled={applyMutation.isPending || hasApplied}
+              className={`w-full ${
+                hasApplied
+                  ? 'bg-gray-600 hover:bg-gray-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-emerald-400 to-blue-500 hover:from-emerald-500 hover:to-blue-600'
+              } text-white font-semibold py-3 rounded-lg`}
               data-testid="button-apply-project"
             >
-              {applyMutation.isPending ? "Applying..." : "Apply for Project"}
+              {hasApplied ? "Already Applied" : applyMutation.isPending ? "Applying..." : "Apply for Project"}
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+        <div className="flex justify-around items-center">
+          {[
+            { path: '/volunteer-dashboard', icon: Home, label: 'Home' },
+            { path: '/discover-opportunities/pwa', icon: Briefcase, label: 'Projects' },
+            { path: '/volunteer-dashboard', icon: Sparkles, label: 'Potential' },
+            { path: '/volunteer-dashboard', icon: BarChart3, label: 'Impacts' },
+            { path: '/volunteer-profile-settings', icon: User, label: 'Profile' },
+          ].map((tab) => (
+            <button
+              key={tab.path}
+              onClick={() => navigate(tab.path)}
+              className="flex flex-col items-center justify-center px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-colors"
+            >
+              <tab.icon className="w-5 h-5 text-gray-400" />
+              <span className="text-[10px] text-gray-400 mt-0.5">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

@@ -34,6 +34,22 @@ export default function OpportunityDetailPWA() {
     enabled: !!opportunityId,
   });
 
+  // Fetch applications to check if user has already applied
+  const { data: applications = [] } = useQuery({
+    queryKey: ['/api/applications'],
+    queryFn: async () => {
+      const response = await fetch('/api/applications');
+      if (!response.ok) return [];
+      return response.json();
+    }
+  });
+
+  // Check if user has applied for this opportunity
+  const userId = localStorage.getItem('currentUserId');
+  const hasApplied = applications.some((app: any) =>
+    app.opportunityId === opportunityId && app.userId === parseInt(userId || '0')
+  );
+
   const { toast } = useToast();
 
   const applyMutation = useMutation({
@@ -201,12 +217,16 @@ export default function OpportunityDetailPWA() {
 
             {/* Apply Button */}
             <Button
-              onClick={() => applyMutation.mutate()}
-              disabled={applyMutation.isPending}
-              className="w-full bg-gradient-to-r from-emerald-400 to-blue-500 hover:from-emerald-500 hover:to-blue-600 text-white font-semibold py-3 rounded-lg"
+              onClick={() => !hasApplied && applyMutation.mutate()}
+              disabled={applyMutation.isPending || hasApplied}
+              className={`w-full ${
+                hasApplied
+                  ? 'bg-gray-600 hover:bg-gray-600 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-emerald-400 to-blue-500 hover:from-emerald-500 hover:to-blue-600'
+              } text-white font-semibold py-3 rounded-lg`}
               data-testid="button-apply-opportunity"
             >
-              {applyMutation.isPending ? "Applying..." : "Apply for Opportunity"}
+              {hasApplied ? "Already Applied" : applyMutation.isPending ? "Applying..." : "Apply for Opportunity"}
             </Button>
           </CardContent>
         </Card>

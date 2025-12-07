@@ -280,7 +280,7 @@ export default function MyTasks() {
   };
 
   // Calculate real hours from volunteer activities
-  const totalHoursLogged = volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const totalHoursLogged = Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0) : 0;
   const totalHoursCommitted = projectAssignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
   const progressPercentage = totalHoursCommitted > 0 
     ? Math.round((totalHoursLogged / totalHoursCommitted) * 100)

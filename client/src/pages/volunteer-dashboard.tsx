@@ -992,6 +992,97 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Personal Profile Section - Only for Volunteers */}
+      {dashboardType === "volunteer" && dashboardData?.volunteerProfile && (
+        <Card className="bg-gradient-to-r from-amber-50 via-green-50 to-blue-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 border-2 border-amber-200 dark:border-gray-700 shadow-md">
+          <CardContent className="p-4 md:p-6" style={{ minHeight: '12.5vh' }}>
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full">
+              {/* Left: Profile Picture (1/4) */}
+              <div className="w-full md:w-1/4 flex items-center justify-center md:justify-start">
+                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-amber-400 shadow-lg">
+                  <AvatarImage
+                    src={dashboardData.volunteerProfile.profilePhotoUrl || currentUser?.profilePicture}
+                    alt={currentUser?.displayName || 'Volunteer'}
+                  />
+                  <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-500 text-white text-3xl md:text-4xl font-bold">
+                    {(currentUser?.displayName || currentUser?.name || 'V').charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+
+              {/* Right: Details (3/4) */}
+              <div className="w-full md:w-3/4 flex flex-col justify-center space-y-3">
+                {/* Skills */}
+                {dashboardData.volunteerProfile.skills && dashboardData.volunteerProfile.skills.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Award className="h-4 w-4 text-amber-600" />
+                      Skills
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {dashboardData.volunteerProfile.skills.slice(0, 6).map((skill: string, index: number) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-medium rounded-full shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {dashboardData.volunteerProfile.skills.length > 6 && (
+                        <span className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full">
+                          +{dashboardData.volunteerProfile.skills.length - 6} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Availability */}
+                <div className="flex items-center gap-6">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-green-600" />
+                      Availability
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {dashboardData.volunteerProfile.weeklyAvailability
+                        ? `${dashboardData.volunteerProfile.weeklyAvailability} hours/week`
+                        : 'Not specified'}
+                    </p>
+                  </div>
+
+                  {/* Professional Title */}
+                  {dashboardData.volunteerProfile.professionalTitle && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-blue-600" />
+                        Role
+                      </h3>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {dashboardData.volunteerProfile.professionalTitle}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Personal Statement / Motivations */}
+                {dashboardData.volunteerProfile.motivations && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-purple-600" />
+                      Why I Volunteer
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 italic">
+                      "{dashboardData.volunteerProfile.motivations}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Dashboard Content Wrapper for PDF Export */}
       <div id="dashboard-content" className="space-y-6">
 

@@ -358,6 +358,85 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               <h1 className="text-white text-xl font-bold">{user?.displayName || 'Volunteer'} Synergy Dashboard</h1>
             </div>
 
+            {/* Personal Profile Section */}
+            {dashboardData?.volunteerProfile && (
+              <div className="px-4">
+                <div className="bg-gradient-to-r from-amber-500/20 via-green-500/20 to-blue-500/20 backdrop-blur-sm rounded-xl p-4 border border-white/10 shadow-lg">
+                  <div className="flex gap-4">
+                    {/* Profile Picture (1/4) */}
+                    <div className="w-20 h-20 flex-shrink-0">
+                      <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-amber-400 shadow-lg">
+                        {dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture ? (
+                          <img
+                            src={dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture}
+                            alt={user?.displayName || 'Profile'}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-2xl font-bold">
+                            {(user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Details (3/4) */}
+                    <div className="flex-1 space-y-2 min-w-0">
+                      {/* Skills */}
+                      {dashboardData.volunteerProfile.skills && dashboardData.volunteerProfile.skills.length > 0 && (
+                        <div>
+                          <h3 className="text-xs font-semibold text-white/90 mb-1 flex items-center gap-1">
+                            <Award className="h-3 w-3 text-amber-400" />
+                            Skills
+                          </h3>
+                          <div className="flex flex-wrap gap-1">
+                            {dashboardData.volunteerProfile.skills.slice(0, 4).map((skill: string, index: number) => (
+                              <span
+                                key={index}
+                                className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-medium rounded-full"
+                              >
+                                {skill}
+                              </span>
+                            ))}
+                            {dashboardData.volunteerProfile.skills.length > 4 && (
+                              <span className="px-2 py-0.5 bg-white/20 text-white text-[10px] font-medium rounded-full">
+                                +{dashboardData.volunteerProfile.skills.length - 4}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Availability & Role */}
+                      <div className="flex items-center gap-3 text-[10px]">
+                        {dashboardData.volunteerProfile.weeklyAvailability && (
+                          <div className="flex items-center gap-1 text-white/80">
+                            <Clock className="h-3 w-3 text-green-400" />
+                            <span>{dashboardData.volunteerProfile.weeklyAvailability}h/wk</span>
+                          </div>
+                        )}
+                        {dashboardData.volunteerProfile.professionalTitle && (
+                          <div className="flex items-center gap-1 text-white/80 truncate">
+                            <Briefcase className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                            <span className="truncate">{dashboardData.volunteerProfile.professionalTitle}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Motivations */}
+                      {dashboardData.volunteerProfile.motivations && (
+                        <div>
+                          <p className="text-[10px] text-white/70 line-clamp-1 italic">
+                            "{dashboardData.volunteerProfile.motivations}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* KPI Cards - Single Row */}
             <div className="px-4 grid grid-cols-4 gap-2">
               <button

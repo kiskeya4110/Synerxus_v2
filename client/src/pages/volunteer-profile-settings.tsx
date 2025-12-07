@@ -908,6 +908,7 @@ export default function VolunteerProfileSettings() {
       yearsOfExperience: "",
       linkedinProfile: "",
       languages: [],
+      experienceLevel: undefined,
       employerId: "",
       departmentName: "",
       jobTitleAtCompany: "",
@@ -946,6 +947,7 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: existingProfile.yearsOfExperience || "",
         linkedinProfile: existingProfile.linkedinProfile || "",
         languages: existingProfile.languages || [],
+        experienceLevel: existingProfile.experienceLevel as "entry-level" | "intermediate" | "expert" | undefined,
         employerId: existingProfile.employerId || "",
         departmentName: existingProfile.departmentName || "",
         jobTitleAtCompany: existingProfile.jobTitleAtCompany || "",
@@ -981,6 +983,7 @@ export default function VolunteerProfileSettings() {
         yearsOfExperience: "",
         linkedinProfile: "",
         languages: [],
+        experienceLevel: undefined,
         skills: [],
         interests: [],
         location: "",
@@ -1132,6 +1135,7 @@ export default function VolunteerProfileSettings() {
         preferredCommitment: data.preferredCommitment,
         preferredWorkStyle: data.preferredWorkStyle,
         matchingPriorities: data.matchingPriorities,
+        experienceLevel: data.experienceLevel,
         profilePhotoUrl: profilePhotoUrl,
       };
 

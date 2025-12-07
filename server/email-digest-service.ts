@@ -1,9 +1,10 @@
 import { storage } from "./storage";
+import { logger } from "./logger";
 
 // Simple email transporter (can be replaced with actual email service)
 const transporter = {
   sendMail: async (options: any) => {
-    console.log(`[EMAIL] To: ${options.to}, Subject: ${options.subject}`);
+    logger.info(`[EMAIL] To: ${options.to}, Subject: ${options.subject}`);
     // In production, use actual email service like SendGrid, Mailgun, or nodemailer
     return { response: "Email queued (mock)" };
   }
@@ -151,7 +152,7 @@ async function getWeeklyDigestData(userId: number): Promise<WeeklyDigestData | n
       weeklyStreak
     };
   } catch (error) {
-    console.error(`Error generating digest for user ${userId}:`, error);
+    logger.error(`Error generating digest for user ${userId}`, error);
     return null;
   }
 }
@@ -291,7 +292,7 @@ async function sendWeeklyDigest(userId: number): Promise<boolean> {
   try {
     const digestData = await getWeeklyDigestData(userId);
     if (!digestData) {
-      console.warn(`Could not generate digest data for user ${userId}`);
+      logger.warn(`Could not generate digest data for user ${userId}`);
       return false;
     }
 
@@ -306,10 +307,10 @@ async function sendWeeklyDigest(userId: number): Promise<boolean> {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`[Digest] Weekly digest sent to ${digestData.email} (${digestData.totalHours}h, ${digestData.impactMetrics.length} impacts)`);
+    logger.info(`[Digest] Weekly digest sent to ${digestData.email} (${digestData.totalHours}h, ${digestData.impactMetrics.length} impacts)`);
     return true;
   } catch (error) {
-    console.error(`Error sending digest to user ${userId}:`, error);
+    logger.error(`Error sending digest to user ${userId}`, error);
     return false;
   }
 }
@@ -323,19 +324,18 @@ async function sendWeeklyDigestsToAll(): Promise<{ sent: number; failed: number 
     let sent = 0;
     let failed = 0;
 
-    console.log(`[Digest] Starting weekly digest send to ${volunteers.length} volunteers...`);
+    logger.info(`[Digest] Starting weekly digest send to ${volunteers.length} volunteers...`);
 
     for (const volunteer of volunteers) {
-      // Send digest to all volunteers (email preference can be added to schema later)
       const success = await sendWeeklyDigest(volunteer.id);
       if (success) sent++;
       else failed++;
     }
 
-    console.log(`[Digest] Weekly digests completed - Sent: ${sent}, Failed: ${failed}`);
+    logger.info(`[Digest] Weekly digests completed - Sent: ${sent}, Failed: ${failed}`);
     return { sent, failed };
   } catch (error) {
-    console.error('Error sending weekly digests:', error);
+    logger.error('Error sending weekly digests', error);
     return { sent: 0, failed: 0 };
   }
 }
@@ -478,10 +478,10 @@ async function sendOrganizationWeeklyDigest(organizationId: number): Promise<boo
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`[Digest] Organization digest sent to ${org.contactEmail}`);
+    logger.info(`[Digest] Organization digest sent to ${org.contactEmail}`);
     return true;
   } catch (error) {
-    console.error(`Error sending org digest for ${organizationId}:`, error);
+    logger.error(`Error sending org digest for ${organizationId}`, error);
     return false;
   }
 }

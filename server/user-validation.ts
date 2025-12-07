@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
+import { logger } from "./logger";
 
 export interface UserValidationResult {
   isValid: boolean;
@@ -42,9 +43,9 @@ export async function logUserDataChange(
       ipAddress: req?.ip || null,
       userAgent: req?.get("user-agent") || null
     });
-    console.log(`[Audit] ${action} on ${tableName} for user ${userId}${discrepancyType ? ` (${discrepancyType})` : ""}`);
+    logger.info(`[Audit] ${action} on ${tableName} for user ${userId}${discrepancyType ? ` (${discrepancyType})` : ""}`);
   } catch (err) {
-    console.error("Failed to log user data change:", err);
+    logger.error("Failed to log user data change", err);
   }
 }
 
@@ -132,7 +133,7 @@ export async function validateUserDataConsistency(userId: number): Promise<UserV
       discrepancies
     };
   } catch (err) {
-    console.error("Error validating user data consistency:", err);
+    logger.error("Error validating user data consistency", err);
     return {
       isValid: false,
       discrepancies: [{
@@ -249,7 +250,7 @@ export async function syncUserDisplayName(userId: number, newDisplayName: string
     
     return true;
   } catch (err) {
-    console.error("Error syncing user display name:", err);
+    logger.error("Error syncing user display name", err);
     return false;
   }
 }

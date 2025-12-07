@@ -5,6 +5,7 @@
 
 import { storage } from "./storage";
 import { sendWeeklyDigest, sendOrganizationWeeklyDigest } from "./email-digest-service";
+import { logger } from "./logger";
 
 // Track digest send attempts to prevent duplicates
 let lastSendAttempt: Record<number, Date> = {};
@@ -15,21 +16,20 @@ const MIN_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
  */
 export async function sendWeeklyDigestsToVolunteers(): Promise<void> {
   try {
-    console.log("[Scheduler] Starting weekly digest send to volunteers...");
-    
+    logger.info("Starting weekly digest send to volunteers...");
+
     const users = await storage.listUsers();
     const volunteers = users.filter(u => u.userType === 'volunteer');
-    
+
     let successCount = 0;
     let failCount = 0;
-    
+
     for (const volunteer of volunteers) {
       try {
-        // Check if volunteer has digest enabled and hasn't received one recently
         const profile = await storage.getVolunteerProfile(volunteer.id);
         const lastAttempt = lastSendAttempt[volunteer.id];
         const now = new Date();
-        
+
         if (profile?.emailDigestEnabled && (!lastAttempt || now.getTime() - lastAttempt.getTime() >= MIN_INTERVAL_MS)) {
           const sent = await sendWeeklyDigest(volunteer.id);
           if (sent) {
@@ -40,14 +40,14 @@ export async function sendWeeklyDigestsToVolunteers(): Promise<void> {
           }
         }
       } catch (err) {
-        console.error(`[Scheduler] Failed to send digest to volunteer ${volunteer.id}:`, err);
+        logger.error(`Failed to send digest to volunteer ${volunteer.id}`, err);
         failCount++;
       }
     }
-    
-    console.log(`[Scheduler] Volunteer digests: ${successCount} sent, ${failCount} failed`);
+
+    logger.info(`Volunteer digests: ${successCount} sent, ${failCount} failed`);
   } catch (err) {
-    console.error("[Scheduler] Error sending volunteer digests:", err);
+    logger.error("Error sending volunteer digests", err);
   }
 }
 
@@ -56,20 +56,19 @@ export async function sendWeeklyDigestsToVolunteers(): Promise<void> {
  */
 export async function sendWeeklyDigestsToOrganizations(): Promise<void> {
   try {
-    console.log("[Scheduler] Starting weekly digest send to organizations...");
-    
+    logger.info("Starting weekly digest send to organizations...");
+
     const organizations = await storage.listOrganizations();
-    
+
     let successCount = 0;
     let failCount = 0;
-    
+
     for (const org of organizations) {
       try {
-        // Check if organization has digest enabled and hasn't received one recently
         const profile = await storage.getOrganizationProfile(org.id);
         const lastAttempt = lastSendAttempt[org.id];
         const now = new Date();
-        
+
         if (profile?.emailDigestEnabled && (!lastAttempt || now.getTime() - lastAttempt.getTime() >= MIN_INTERVAL_MS)) {
           const sent = await sendOrganizationWeeklyDigest(org.id);
           if (sent) {
@@ -80,14 +79,14 @@ export async function sendWeeklyDigestsToOrganizations(): Promise<void> {
           }
         }
       } catch (err) {
-        console.error(`[Scheduler] Failed to send digest to organization ${org.id}:`, err);
+        logger.error(`Failed to send digest to organization ${org.id}`, err);
         failCount++;
       }
     }
-    
-    console.log(`[Scheduler] Organization digests: ${successCount} sent, ${failCount} failed`);
+
+    logger.info(`Organization digests: ${successCount} sent, ${failCount} failed`);
   } catch (err) {
-    console.error("[Scheduler] Error sending organization digests:", err);
+    logger.error("Error sending organization digests", err);
   }
 }
 
@@ -97,27 +96,23 @@ export async function sendWeeklyDigestsToOrganizations(): Promise<void> {
  */
 export function initializeDigestScheduler(): void {
   try {
-    // Calculate next Monday 9:00 AM UTC
     const now = new Date();
     const nextDigestDate = getNextMondayAt9AM();
     const timeUntilNextDigest = nextDigestDate.getTime() - now.getTime();
-    
-    console.log(`[Scheduler] Email digest scheduler initialized. Next digest: ${nextDigestDate.toISOString()}`);
-    
-    // Set up recurring weekly digest at Monday 9:00 AM UTC
+
+    logger.info(`Email digest scheduler initialized. Next digest: ${nextDigestDate.toISOString()}`);
+
     setTimeout(() => {
-      // Send digests
       sendWeeklyDigestsToVolunteers();
       sendWeeklyDigestsToOrganizations();
-      
-      // Schedule next week
+
       setInterval(() => {
         sendWeeklyDigestsToVolunteers();
         sendWeeklyDigestsToOrganizations();
-      }, 7 * 24 * 60 * 60 * 1000); // Every 7 days
+      }, 7 * 24 * 60 * 60 * 1000);
     }, timeUntilNextDigest);
   } catch (err) {
-    console.error("[Scheduler] Error initializing digest scheduler:", err);
+    logger.error("Error initializing digest scheduler", err);
   }
 }
 

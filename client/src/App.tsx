@@ -13,6 +13,7 @@ import MyWork from "@/pages/my-work";
 import Tasks from "@/pages/tasks";
 import Projects from "@/pages/projects";
 import ProjectDetail from "@/pages/project-detail";
+import ProjectDetailPWA from "@/pages/project-detail-pwa";
 import ProjectEdit from "@/pages/project-edit";
 import VolunteerIntake from "@/pages/volunteer-intake";
 import OrganizationIntake from "@/pages/organization-intake";
@@ -20,6 +21,7 @@ import OrganizationProfileSettings from "@/pages/organization-profile-settings";
 import VolunteerProfileSettings from "@/pages/volunteer-profile-settings";
 import Opportunities from "@/pages/opportunities";
 import OpportunityDetail from "@/pages/opportunity-detail";
+import OpportunityDetailPWA from "@/pages/opportunity-detail-pwa";
 import Applications from "@/pages/applications";
 import MyApplications from "@/pages/my-applications";
 import Organizations from "@/pages/organizations";
@@ -175,6 +177,7 @@ export default function App() {
           <Route path="/project-portfolio" component={ProjectPortfolio} />
           <Route path="/csr-reports-exports" component={CSRReportsExports} />
           <Route path="/projects" component={Projects} />
+          <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
           <Route path="/projects/:id" component={ProjectDetail} />
           <Route path="/projects/:id/edit" component={ProjectEdit} />
           <Route path="/volunteers" component={Volunteers} />
@@ -202,6 +205,7 @@ function LayoutRoute() {
       <Route path="/corporate-partner-intake" component={CorporatePartnerIntake} />
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
+      <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
       <Route path="/opportunities/:id" component={OpportunityDetail} />
       <Route path="/applications" component={Applications} />
       <Route path="/my-applications" component={MyApplications} />

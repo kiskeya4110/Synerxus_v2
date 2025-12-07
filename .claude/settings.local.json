@@ -12,7 +12,10 @@
       "Bash(pkill:*)",
       "Bash(npm run dev:*)",
       "Bash(xargs kill:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(mkdir:*)",
+      "Bash(echo:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

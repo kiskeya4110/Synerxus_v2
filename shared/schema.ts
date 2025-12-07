@@ -337,6 +337,7 @@ export const csrPartners = pgTable("csr_partners", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id).notNull(), // Corporate admin user who owns this partner
   companyName: text("company_name").notNull(),
+  logoUrl: text("logo_url"), // Company logo URL
   contactEmail: text("contact_email").notNull(),
   contactPhone: text("contact_phone"),
   industryType: text("industry_type"), // Technology, Finance, Healthcare, etc.
@@ -363,6 +364,25 @@ export const employeeEngagement = pgTable("employee_engagement", {
   completionStatus: text("completion_status").default("in-progress"), // in-progress, completed, pending
   certificateIssued: boolean("certificate_issued").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Uploaded Images - Store all uploaded images with metadata
+export const uploadedImages = pgTable("uploaded_images", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id), // User who uploaded
+  organizationId: integer("organization_id").references(() => organizations.id), // Organization if applicable
+  csrPartnerId: integer("csr_partner_id").references(() => csrPartners.id), // CSR partner if applicable
+  imageType: text("image_type").notNull(), // 'profile', 'logo', 'project_cover', 'spotlight'
+  fileName: text("file_name").notNull(), // Original filename
+  fileType: text("file_type").notNull(), // MIME type: image/png, image/jpeg
+  fileSize: integer("file_size").notNull(), // File size in bytes
+  width: integer("width"), // Image width in pixels
+  height: integer("height"), // Image height in pixels
+  url: text("url").notNull(), // Storage URL (can be data URL, cloud storage, or file system path)
+  thumbnailUrl: text("thumbnail_url"), // Optimized thumbnail URL
+  isOptimized: boolean("is_optimized").default(false), // Whether image has been optimized
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -492,6 +512,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
 export const organizationProfiles = pgTable("organization_profiles", {
   id: serial("id").primaryKey(),
   organizationId: integer("organization_id").references(() => organizations.id).notNull().unique(),
+  logoUrl: text("logo_url"), // Organization logo URL
   missionStatement: text("mission_statement"),
   focusAreas: text("focus_areas").array(),
   organizationType: text("organization_type"), // nonprofit, NGO, social enterprise, etc.
@@ -846,6 +867,12 @@ export const insertEmployeeEngagementSchema = createInsertSchema(employeeEngagem
   updatedAt: true
 });
 
+export const insertUploadedImageSchema = createInsertSchema(uploadedImages).omit({
+  id: true,
+  uploadedAt: true,
+  updatedAt: true
+});
+
 export const insertCSRChallengeSchema = createInsertSchema(csrChallenges).omit({
   id: true,
   createdAt: true,
@@ -1048,6 +1075,9 @@ export type InsertCSRPartner = z.infer<typeof insertCSRPartnerSchema>;
 
 export type EmployeeEngagement = typeof employeeEngagement.$inferSelect;
 export type InsertEmployeeEngagement = z.infer<typeof insertEmployeeEngagementSchema>;
+
+export type UploadedImage = typeof uploadedImages.$inferSelect;
+export type InsertUploadedImage = z.infer<typeof insertUploadedImageSchema>;
 
 export type CSRChallenge = typeof csrChallenges.$inferSelect;
 export type InsertCSRChallenge = z.infer<typeof insertCSRChallengeSchema>;

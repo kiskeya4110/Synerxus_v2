@@ -20,6 +20,16 @@ The platform includes a rebranded landing page with an interactive SDG wheel, a 
 ### System Design Choices
 Authentication is managed via Firebase Auth with Google OAuth. Client-server communication uses RESTful APIs, WebSockets, and React Query. Data processing involves client-side collection, Zod validation, Drizzle ORM for PostgreSQL, server-side aggregation, and client-side visualization. The frontend is deployed with Vite, the backend with Node.js and compiled TypeScript, and the production database uses Neon. PWA implementation includes a web app manifest, a service worker for offline support with network-first caching, and meta tags for iOS/Android mobile web app support, enabling installation on devices.
 
+### Mobile PWA Dashboard (December 2025)
+**Enhanced Volunteer Mobile Dashboard**: Complete redesign with dark theme matching the social platform aesthetic:
+- **Real KPI Cards**: Total Hours Logged (blue), Projects Completed (green), Skills Applied (orange), Lives Impacted (pink) - all with real data from web view
+- **Interactive Charts**: Impact Over Time (AreaChart with Recharts), SDG Distribution (PieChart)
+- **SDG Contribution Cards**: Visual display of SDGs contributed with color-coded cards
+- **Project Cards**: Status badges, completion progress bars, organization names, time commitment, all clickable to PWA detail view
+- **Potential Tab** (formerly Unlock): AI-powered insights showing growth opportunities, recommended focus areas, and path to badges
+- **Impacts Tab**: Global impact report with charts, SDG distribution, and full report navigation
+- **Bottom Navigation**: Home, Projects, Potential, Impacts, Profile with active state indicators
+
 ### Performance Optimizations (December 2025)
 **CSR Dashboard Optimization**: Implemented O(1) lookup maps to replace O(n) array.find() calls throughout data aggregation:
 - **projectsMap** and **profilesMap**: Eliminated repeated project and profile lookups in SDG metrics and geographic map calculations

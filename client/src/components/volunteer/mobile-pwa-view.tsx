@@ -69,14 +69,18 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
   // Calculate real KPIs from dashboard data
   const kpis = useMemo(() => {
-    const totalHours = dashboardData?.totalHours || 0;
-    const projectsCompleted = projects.filter((p: any) => p.completionPercentage >= 100 || p.status === 'Completed').length;
-    const totalProjects = projects.length;
-    const livesImpacted = dashboardData?.totalPeopleImpacted || projects.reduce((sum: number, p: any) => sum + (p.livesTouched || 0), 0);
-    const skills = volunteerProfile?.skills?.length || 0;
-    const allSdgs = projects.flatMap((p: any) => p.sdgGoals || []);
-    const sdgsContributed = Array.from(new Set(allSdgs)).length;
-    
+    const safeProjects = Array.isArray(projects) ? projects : [];
+    const totalHours = Number(dashboardData?.totalHours) || 0;
+    const projectsCompleted = safeProjects.filter((p: any) =>
+      (Number(p?.completionPercentage) >= 100) || p?.status === 'Completed'
+    ).length;
+    const totalProjects = safeProjects.length;
+    const livesImpacted = Number(dashboardData?.totalPeopleImpacted) ||
+      safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesTouched) || 0), 0);
+    const skills = Array.isArray(volunteerProfile?.skills) ? volunteerProfile.skills.length : 0;
+    const allSdgs = safeProjects.flatMap((p: any) => Array.isArray(p?.sdgGoals) ? p.sdgGoals : []);
+    const sdgsContributed = Array.from(new Set(allSdgs.filter(sdg => typeof sdg === 'number'))).length;
+
     return {
       totalHours,
       projectsCompleted,
@@ -91,27 +95,36 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const impactOverTimeData = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const currentMonth = new Date().getMonth();
-    
+
     return months.slice(0, currentMonth + 1).map((month, idx) => {
-      const monthActivities = volunteerActivities.filter((a: any) => {
-        const actDate = new Date(a.date || a.createdAt);
-        return actDate.getMonth() === idx;
+      const monthActivities = (volunteerActivities || []).filter((a: any) => {
+        if (!a?.date && !a?.createdAt) return false;
+        try {
+          const actDate = new Date(a.date || a.createdAt);
+          return actDate.getMonth() === idx && actDate.getFullYear() === new Date().getFullYear();
+        } catch {
+          return false;
+        }
       });
-      const hours = monthActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+      const hours = monthActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0);
       return {
         month,
-        hours: hours || Math.floor(Math.random() * 20) + 5,
-        impact: Math.floor(hours * 2.5) || Math.floor(Math.random() * 50) + 10
+        hours: hours,
+        impact: Math.floor(hours * 2.5)
       };
     });
   }, [volunteerActivities]);
 
   // SDG Distribution data
   const sdgDistribution = useMemo(() => {
+    const safeProjects = Array.isArray(projects) ? projects : [];
     const sdgCounts: { [key: number]: number } = {};
-    projects.forEach((p: any) => {
-      (p.sdgGoals || []).forEach((sdg: number) => {
-        sdgCounts[sdg] = (sdgCounts[sdg] || 0) + 1;
+    safeProjects.forEach((p: any) => {
+      const sdgGoals = Array.isArray(p?.sdgGoals) ? p.sdgGoals : [];
+      sdgGoals.forEach((sdg: number) => {
+        if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
+          sdgCounts[sdg] = (sdgCounts[sdg] || 0) + 1;
+        }
       });
     });
     return Object.entries(sdgCounts)
@@ -232,54 +245,66 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </button>
             </div>
 
-            {/* Lives Impacted Section */}
+            {/* Impact Metrics Section */}
             <div className="px-4">
-              <h2 className="text-white text-lg font-semibold mb-3">Lives Impacted</h2>
+              <h2 className="text-white text-lg font-semibold mb-3">Impact Metrics</h2>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-[#FF6B35] rounded-xl p-4 text-white">
                   <div className="text-sm mb-1">SDGs Contributed To</div>
                   <div className="text-4xl font-bold">{kpis.sdgsContributed}</div>
-                  <Search className="w-5 h-5 mt-2 opacity-70" />
+                  <Target className="w-5 h-5 mt-2 opacity-70" />
                 </div>
                 <div className="bg-[#4A90D9] rounded-xl p-4 text-white">
-                  <div className="text-sm mb-1">SDGs Contributed To</div>
-                  <div className="text-4xl font-bold">{kpis.sdgsContributed}</div>
-                  <Clock className="w-5 h-5 mt-2 opacity-70" />
+                  <div className="text-sm mb-1">Lives Impacted</div>
+                  <div className="text-4xl font-bold">{kpis.livesImpacted}+</div>
+                  <Heart className="w-5 h-5 mt-2 opacity-70" />
                 </div>
               </div>
             </div>
 
             {/* Impact Over Time Chart */}
-            <div className="px-4">
-              <h2 className="text-white text-lg font-semibold mb-3">Available Over Time</h2>
-              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-gray-400 text-sm">Available Output</span>
-                  <span className="text-emerald-400 text-xs px-2 py-1 bg-emerald-500/20 rounded">Realtime</span>
-                </div>
-                <div className="h-40">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={impactOverTimeData}>
-                      <defs>
-                        <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#4CAF50" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
-                      <YAxis stroke="#9CA3AF" fontSize={10} />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                        labelStyle={{ color: '#fff' }}
-                      />
-                      <Area type="monotone" dataKey="hours" stroke="#4CAF50" fillOpacity={1} fill="url(#colorHours)" strokeWidth={2} />
-                      <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={false} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+            {impactOverTimeData.length > 0 && (
+              <div className="px-4">
+                <h2 className="text-white text-lg font-semibold mb-3">Impact Over Time</h2>
+                <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-gray-400 text-sm">Volunteer Hours & Impact</span>
+                    <span className="text-emerald-400 text-xs px-2 py-1 bg-emerald-500/20 rounded">Live Data</span>
+                  </div>
+                  {impactOverTimeData.some(d => d.hours > 0) ? (
+                    <div className="h-40">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={impactOverTimeData}>
+                          <defs>
+                            <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#4CAF50" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
+                          <YAxis stroke="#9CA3AF" fontSize={10} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
+                            labelStyle={{ color: '#fff' }}
+                          />
+                          <Area type="monotone" dataKey="hours" stroke="#4CAF50" fillOpacity={1} fill="url(#colorHours)" strokeWidth={2} />
+                          <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={false} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="h-40 flex items-center justify-center text-gray-500">
+                      <div className="text-center">
+                        <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No activity data yet</p>
+                        <p className="text-xs mt-1">Start logging hours to see your impact</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Recommended Projects */}
             <div className="px-4">
@@ -555,58 +580,82 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             {/* SDG Distribution Chart */}
             <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
               <h3 className="text-white font-semibold mb-3">SDG Distribution</h3>
-              <div className="h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={sdgDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {sdgDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                      labelStyle={{ color: '#fff' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {sdgDistribution.map((sdg) => (
-                  <div key={sdg.sdg} className="flex items-center gap-1 text-xs text-gray-400">
-                    <div className="w-3 h-3 rounded" style={{ backgroundColor: sdg.color }}></div>
-                    <span>SDG {sdg.sdg}</span>
+              {sdgDistribution.length > 0 ? (
+                <>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={sdgDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={70}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {sdgDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
+                          labelStyle={{ color: '#fff' }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {sdgDistribution.map((sdg) => (
+                      <div key={sdg.sdg} className="flex items-center gap-1 text-xs text-gray-400">
+                        <div className="w-3 h-3 rounded" style={{ backgroundColor: sdg.color }}></div>
+                        <span>SDG {sdg.sdg}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="h-48 flex items-center justify-center text-gray-500">
+                  <div className="text-center">
+                    <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No SDG data yet</p>
+                    <p className="text-xs mt-1">Join projects to contribute to SDG goals</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Impact Timeline */}
-            <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-              <h3 className="text-white font-semibold mb-3">Impact Over Time</h3>
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={impactOverTimeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
-                    <YAxis stroke="#9CA3AF" fontSize={10} />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                      labelStyle={{ color: '#fff' }}
-                    />
-                    <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', strokeWidth: 2 }} />
-                    <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', strokeWidth: 2 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+            {impactOverTimeData.length > 0 && (
+              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+                <h3 className="text-white font-semibold mb-3">Impact Over Time</h3>
+                {impactOverTimeData.some(d => d.hours > 0) ? (
+                  <div className="h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={impactOverTimeData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
+                        <YAxis stroke="#9CA3AF" fontSize={10} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
+                          labelStyle={{ color: '#fff' }}
+                        />
+                        <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', strokeWidth: 2 }} />
+                        <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', strokeWidth: 2 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-40 flex items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No impact timeline yet</p>
+                      <p className="text-xs mt-1">Track your volunteer activities to see trends</p>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
+            )}
 
             <Button
               onClick={() => navigate(`/impact-report/${userId}`)}

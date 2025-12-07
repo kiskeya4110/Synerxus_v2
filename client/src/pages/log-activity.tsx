@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users } from "lucide-react";
 import { format } from "date-fns";
 import type { User } from "@shared/schema";
 import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
@@ -22,13 +23,21 @@ export default function LogActivity() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showMenu, setShowMenu] = useState(false);
+  const [activeTab, setActiveTab] = useState<"activity" | "impact">("activity");
 
-  // Form state
+  // Activity form state
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const [date, setDate] = useState<Date>(new Date());
   const [hours, setHours] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [activityType, setActivityType] = useState<string>("volunteering");
+
+  // Impact form state
+  const [impactProjectId, setImpactProjectId] = useState<string>("");
+  const [impactDate, setImpactDate] = useState<Date>(new Date());
+  const [peopleReached, setPeopleReached] = useState<string>("");
+  const [impactDescription, setImpactDescription] = useState<string>("");
+  const [impactCategory, setImpactCategory] = useState<string>("direct");
 
   // Fetch current user
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
@@ -107,6 +116,42 @@ export default function LogActivity() {
     },
   });
 
+  // Record impact mutation
+  const recordImpactMutation = useMutation({
+    mutationFn: async (impactData: any) => {
+      const response = await fetch("/api/impact-metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(impactData),
+      });
+      if (!response.ok) throw new Error("Failed to record impact");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/impact-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+
+      toast({
+        title: "Impact Recorded",
+        description: "Your impact has been recorded successfully.",
+      });
+
+      // Reset form
+      setImpactProjectId("");
+      setPeopleReached("");
+      setImpactDescription("");
+      setImpactCategory("direct");
+      setImpactDate(new Date());
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to record impact. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -129,6 +174,30 @@ export default function LogActivity() {
     };
 
     logActivityMutation.mutate(activityData);
+  };
+
+  const handleImpactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!impactProjectId || !peopleReached || !impactDate) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const impactData = {
+      projectId: parseInt(impactProjectId),
+      date: format(impactDate, "yyyy-MM-dd"),
+      peopleReached: parseInt(peopleReached),
+      description: impactDescription || null,
+      category: impactCategory,
+      reportedBy: currentUser?.id,
+    };
+
+    recordImpactMutation.mutate(impactData);
   };
 
   const isVolunteer = currentUser?.userType === 'volunteer';
@@ -283,11 +352,24 @@ export default function LogActivity() {
           <CardHeader>
             <CardTitle className={`flex items-center gap-2 ${isMobile && isVolunteer ? 'text-white' : ''}`}>
               <Clock className="w-6 h-6 text-emerald-400" />
-              Log Volunteer Activity
+              Log Activity & Record Impact
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "activity" | "impact")} className="w-full">
+              <TabsList className={`grid w-full grid-cols-2 ${isMobile && isVolunteer ? 'bg-[#1a1a2e]' : ''}`}>
+                <TabsTrigger value="activity" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500' : ''}>
+                  <Clock className="w-4 h-4 mr-2" />
+                  Log Activity
+                </TabsTrigger>
+                <TabsTrigger value="impact" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500' : ''}>
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Record Impact
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="activity" className="mt-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
               {/* Project Selection */}
               <div className="space-y-2">
                 <Label htmlFor="project" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
@@ -422,15 +504,160 @@ export default function LogActivity() {
                 )}
               </div>
             </form>
+          </TabsContent>
+
+          <TabsContent value="impact" className="mt-6">
+            <form onSubmit={handleImpactSubmit} className="space-y-6">
+              {/* Project Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="impact-project" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                  Project <span className="text-red-500">*</span>
+                </Label>
+                <Select value={impactProjectId} onValueChange={setImpactProjectId}>
+                  <SelectTrigger id="impact-project" className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                    {assignedProjects.length === 0 ? (
+                      <SelectItem value="none" disabled>No assigned projects</SelectItem>
+                    ) : (
+                      assignedProjects.map((project: any) => (
+                        <SelectItem key={project.id} value={project.id.toString()}>
+                          {project.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="impact-date" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                  Date <span className="text-red-500">*</span>
+                </Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`w-full justify-start text-left font-normal ${
+                        isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white hover:bg-[#1a1a2e]/80' : ''
+                      }`}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {impactDate ? format(impactDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={impactDate}
+                      onSelect={(newDate) => newDate && setImpactDate(newDate)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* People Reached */}
+              <div className="space-y-2">
+                <Label htmlFor="peopleReached" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                  People Reached <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="peopleReached"
+                  type="number"
+                  min="1"
+                  value={peopleReached}
+                  onChange={(e) => setPeopleReached(e.target.value)}
+                  placeholder="e.g., 50"
+                  className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white placeholder:text-gray-400' : ''}
+                />
+              </div>
+
+              {/* Impact Category */}
+              <div className="space-y-2">
+                <Label htmlFor="impactCategory" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                  Impact Category
+                </Label>
+                <Select value={impactCategory} onValueChange={setImpactCategory}>
+                  <SelectTrigger id="impactCategory" className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                    <SelectItem value="direct">Direct Impact</SelectItem>
+                    <SelectItem value="indirect">Indirect Impact</SelectItem>
+                    <SelectItem value="community">Community Impact</SelectItem>
+                    <SelectItem value="environmental">Environmental Impact</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="impactDescription" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                  Impact Description (Optional)
+                </Label>
+                <Textarea
+                  id="impactDescription"
+                  value={impactDescription}
+                  onChange={(e) => setImpactDescription(e.target.value)}
+                  placeholder="Describe the impact made..."
+                  rows={4}
+                  className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white placeholder:text-gray-400' : ''}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex gap-3">
+                <Button
+                  type="submit"
+                  disabled={recordImpactMutation.isPending || !impactProjectId || !peopleReached}
+                  className={`flex-1 ${
+                    isMobile && isVolunteer
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                      : ''
+                  }`}
+                >
+                  {recordImpactMutation.isPending ? (
+                    <>Recording...</>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Record Impact
+                    </>
+                  )}
+                </Button>
+                {(!isMobile || !isVolunteer) && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setLocation('/my-work')}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </form>
+          </TabsContent>
+        </Tabs>
           </CardContent>
         </Card>
 
-        {/* Success Message for PWA */}
-        {logActivityMutation.isSuccess && isMobile && isVolunteer && (
+        {/* Success Messages for PWA */}
+        {logActivityMutation.isSuccess && isMobile && isVolunteer && activeTab === "activity" && (
           <Card className="mt-4 bg-emerald-500/20 border-emerald-500">
             <CardContent className="pt-6 flex items-center gap-3 text-emerald-400">
               <CheckCircle className="w-5 h-5" />
               <span>Activity logged successfully!</span>
+            </CardContent>
+          </Card>
+        )}
+        {recordImpactMutation.isSuccess && isMobile && isVolunteer && activeTab === "impact" && (
+          <Card className="mt-4 bg-emerald-500/20 border-emerald-500">
+            <CardContent className="pt-6 flex items-center gap-3 text-emerald-400">
+              <CheckCircle className="w-5 h-5" />
+              <span>Impact recorded successfully!</span>
             </CardContent>
           </Card>
         )}

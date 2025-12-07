@@ -20,7 +20,9 @@ import {
   Area,
   PieChart,
   Pie,
-  Cell
+  Cell,
+  BarChart,
+  Bar
 } from "recharts";
 
 interface MobilePWAViewProps {
@@ -92,6 +94,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       .filter((sdg: any) => sdg !== null && sdg !== undefined && typeof sdg === 'number' && Number.isInteger(sdg) && sdg >= 1 && sdg <= 17);
     const sdgsContributed = Array.from(new Set(allSdgs)).length;
 
+    // Calculate pending applications from dashboardData
+    const pendingApplications = Array.isArray(dashboardData?.applications) 
+      ? dashboardData.applications.filter((app: any) => app?.status === 'Pending' || app?.status === 'pending').length
+      : 0;
+
     return {
       totalHours,
       projectsCompleted,
@@ -99,9 +106,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       totalProjects,
       livesImpacted,
       skills,
-      sdgsContributed
+      sdgsContributed,
+      pendingApplications
     };
   }, [dashboardData, projects, volunteerProfile]);
+
+  // Extract pending applications count for easy access
+  const pendingApplicationsCount = kpis.pendingApplications;
 
   // Impact Over Time data
   const impactOverTimeData = useMemo(() => {
@@ -817,131 +828,193 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
         {activeTab === 'impacts' && (
           <div className="space-y-4 p-4">
-            <h1 className="text-white text-xl font-bold flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-blue-400" />
-              Synergy Impact Report
-            </h1>
+            {/* Dashboard Title */}
+            <h1 className="text-white text-2xl font-bold">Dashboard</h1>
 
-            {/* Real Impact Summary */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 text-white">
-              <div className="flex items-center gap-2 mb-2">
-                <Zap className="w-5 h-5" />
-                <span className="font-semibold">Your Real Impact</span>
+            {/* Global Impact Snapshot - Green Gradient Card */}
+            <div className="bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-xl p-4 text-white shadow-lg">
+              <h2 className="text-lg font-semibold mb-3">Global Impact Snapshot</h2>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-5xl font-bold">{kpis.totalHours}</span>
+                <div className="flex-1">
+                  <span className="text-sm">Volunteer Hours Logged</span>
+                </div>
+                <Globe className="w-8 h-8 opacity-80" />
               </div>
-              <p className="text-sm opacity-90 mb-3">
-                Through {kpis.projectsCompleted} completed projects, you've made a tangible difference in {kpis.livesImpacted} lives across {kpis.sdgsContributed} UN Sustainable Development Goals.
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-white/20 rounded-lg p-2 text-center">
-                  <div className="text-lg font-bold">{kpis.totalHours}</div>
-                  <div className="text-xs opacity-90">Hours</div>
+              <div className="flex items-center gap-2 border-t border-white/30 pt-2 mt-2">
+                <Clock className="w-5 h-5 opacity-80" />
+                <span className="text-sm">Contributed to {kpis.sdgsContributed} SDGS</span>
+                <Globe className="w-5 h-5 opacity-80 ml-auto" />
+              </div>
+            </div>
+
+            {/* SDG Grid with Checkmarks */}
+            <div className="grid grid-cols-4 gap-2">
+              {sdgDistribution.slice(0, 8).map((sdg, idx) => (
+                <div
+                  key={`${sdg.sdg}-${idx}`}
+                  className="relative rounded-lg p-3 flex items-center justify-center aspect-square"
+                  style={{ backgroundColor: sdg.color }}
+                >
+                  <div className="text-white text-center">
+                    <div className="text-xs opacity-80 mb-1">SDG</div>
+                    <div className="text-2xl font-bold">{sdg.sdg}</div>
+                  </div>
+                  {/* Checkmark indicator */}
+                  <div className="absolute bottom-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  </div>
                 </div>
-                <div className="bg-white/20 rounded-lg p-2 text-center">
-                  <div className="text-lg font-bold">{kpis.projectsCompleted}</div>
-                  <div className="text-xs opacity-90">Projects</div>
+              ))}
+              {/* Fill empty slots if less than 8 SDGs */}
+              {Array.from({ length: Math.max(0, 8 - sdgDistribution.length) }).map((_, idx) => (
+                <div
+                  key={`empty-${idx}`}
+                  className="rounded-lg p-3 flex items-center justify-center aspect-square bg-gray-700/50 border border-gray-600"
+                >
+                  <div className="text-gray-500 text-center">
+                    <div className="text-xs mb-1">SDG</div>
+                    <div className="text-xl font-bold">?</div>
+                  </div>
                 </div>
-                <div className="bg-white/20 rounded-lg p-2 text-center">
-                  <div className="text-lg font-bold">{kpis.livesImpacted}+</div>
-                  <div className="text-xs opacity-90">Lives</div>
+              ))}
+            </div>
+
+            {/* Project Overview Section */}
+            <div>
+              <h2 className="text-white text-lg font-semibold mb-3">Project Overview</h2>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+                  <div className="text-gray-400 text-sm mb-1">Active Projects</div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-white text-4xl font-bold">{kpis.activeProjects}</span>
+                    <div className="flex-1">
+                      <Progress value={(kpis.activeProjects / Math.max(kpis.totalProjects, 1)) * 100} className="h-2 bg-gray-700" />
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+                  <div className="flex items-center gap-1 text-gray-400 text-sm mb-1">
+                    <span>Pending Applications</span>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 ml-auto"></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-white text-4xl font-bold">{pendingApplicationsCount}</span>
+                    <Clock className="w-6 h-6 text-gray-500 ml-auto" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Summary Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#4A90D9] rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">{kpis.totalHours}</div>
-                <div className="text-sm opacity-90">Total Hours</div>
-              </div>
-              <div className="bg-[#E91E63] rounded-xl p-4 text-white">
-                <div className="text-2xl font-bold">{kpis.livesImpacted}+</div>
-                <div className="text-sm opacity-90">Lives Touched</div>
-              </div>
-            </div>
-
-            {/* SDG Distribution Chart */}
-            <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-              <h3 className="text-white font-semibold mb-3">SDG Distribution</h3>
-              {sdgDistribution.length > 0 ? (
-                <>
-                  <div className="h-48">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={sdgDistribution}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={40}
-                          outerRadius={70}
-                          paddingAngle={2}
-                          dataKey="value"
-                        >
-                          {sdgDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                          labelStyle={{ color: '#fff' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {sdgDistribution.map((sdg) => (
-                      <div key={sdg.sdg} className="flex items-center gap-1 text-xs text-gray-400">
-                        <div className="w-3 h-3 rounded" style={{ backgroundColor: sdg.color }}></div>
-                        <span>SDG {sdg.sdg}</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="h-48 flex items-center justify-center text-gray-500">
-                  <div className="text-center">
-                    <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No SDG data yet</p>
-                    <p className="text-xs mt-1">Join projects to contribute to SDG goals</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Impact Timeline */}
-            {impactOverTimeData.length > 0 && (
+            {/* Your Top SDGs - Bar Chart */}
+            <div>
+              <h2 className="text-white text-lg font-semibold mb-3">Your Top SDGS</h2>
               <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                <h3 className="text-white font-semibold mb-3">Impact Over Time</h3>
-                {impactOverTimeData.some(d => d.hours > 0) ? (
-                  <div className="h-40">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={impactOverTimeData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
-                        <YAxis stroke="#9CA3AF" fontSize={10} />
-                        <Tooltip
-                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                          labelStyle={{ color: '#fff' }}
-                        />
-                        <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', strokeWidth: 2 }} />
-                        <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', strokeWidth: 2 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+                {sdgDistribution.length > 0 ? (
+                  <>
+                    <div className="h-32">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={sdgDistribution.slice(0, 4)} layout="horizontal">
+                          <XAxis type="category" dataKey="sdg" stroke="#9CA3AF" fontSize={10} tickFormatter={(val) => `SDG ${val}`} />
+                          <YAxis type="number" stroke="#9CA3AF" fontSize={10} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
+                            labelStyle={{ color: '#fff' }}
+                            formatter={(value: number, name: string) => [value, 'Projects']}
+                          />
+                          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                            {sdgDistribution.slice(0, 4).map((entry, index) => (
+                              <Cell key={`bar-${index}`} fill={entry.color} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    {/* Legend */}
+                    <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-gray-700">
+                      {sdgDistribution.slice(0, 4).map((sdg) => (
+                        <div key={sdg.sdg} className="flex items-center gap-2 text-xs">
+                          <div className="w-3 h-3 rounded" style={{ backgroundColor: sdg.color }}></div>
+                          <span className="text-gray-400">SDG {sdg.sdg} {sdg.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
-                  <div className="h-40 flex items-center justify-center text-gray-500">
+                  <div className="h-32 flex items-center justify-center text-gray-500">
                     <div className="text-center">
-                      <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No impact timeline yet</p>
-                      <p className="text-xs mt-1">Track your volunteer activities to see trends</p>
+                      <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No SDG data yet</p>
+                      <p className="text-xs mt-1">Join projects to contribute to SDGs</p>
                     </div>
                   </div>
                 )}
               </div>
-            )}
+            </div>
+
+            {/* Impact Timeline */}
+            <div>
+              <h2 className="text-white text-lg font-semibold mb-3">Impact Over Time</h2>
+              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+                {impactOverTimeData.some(d => d.hours > 0) ? (
+                  <>
+                    <div className="flex gap-4 mb-2 text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-0.5 bg-[#4CAF50]"></div>
+                        <span className="text-gray-400">Hours</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-0.5 bg-[#E91E63]"></div>
+                        <span className="text-gray-400">Lives Impacted</span>
+                      </div>
+                    </div>
+                    <div className="h-32">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={impactOverTimeData}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
+                          <YAxis stroke="#9CA3AF" fontSize={10} />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
+                            labelStyle={{ color: '#fff' }}
+                          />
+                          <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} />
+                          <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                ) : (
+                  <div className="h-32 flex items-center justify-center text-gray-500">
+                    <div className="text-center">
+                      <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No impact timeline yet</p>
+                      <p className="text-xs mt-1">Track activities to see trends</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* AI Insights Card */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5" />
+                <span className="font-semibold">AI Impact Insights</span>
+              </div>
+              <p className="text-sm opacity-90">
+                {kpis.totalHours > 50 
+                  ? `Outstanding! You're in the top 10% of volunteers with ${kpis.totalHours} hours. Your focus on ${sdgDistribution[0]?.name || 'sustainable development'} is making real change.`
+                  : kpis.totalHours > 20
+                  ? `Great progress! With ${kpis.totalHours} hours logged across ${kpis.sdgsContributed} SDGs, you're building momentum.`
+                  : `Welcome! Start your impact journey by joining projects aligned with your skills and interests.`
+                }
+              </p>
+            </div>
 
             <Button
               onClick={() => navigate(`/impact-report/${userId}`)}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3"
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3"
             >
               <FileText className="w-4 h-4 mr-2" />
               View Full Impact Report

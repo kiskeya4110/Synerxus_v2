@@ -250,9 +250,9 @@ export default function ImpactReport() {
     : null;
 
   // Calculate impact metrics - use backend dashboardData for totalHours to ensure consistency with dashboard
-  const totalHours = dashboardData?.totalHours !== undefined 
-    ? dashboardData.totalHours 
-    : volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+  const totalHours = dashboardData?.totalHours !== undefined
+    ? dashboardData.totalHours
+    : (Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0) : 0);
   const completedTasks = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
   const totalTasks = tasks.length;
   const activeProjects = dashboardData?.activeProjects !== undefined 

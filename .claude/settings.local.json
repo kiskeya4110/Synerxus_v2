@@ -17,7 +17,10 @@
       "Bash(echo:*)",
       "Bash(npx tsc:*)",
       "Bash(npm run check:tsc:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(npm run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

@@ -561,8 +561,8 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 lg:py-28 relative overflow-hidden" data-testid="section-hero">
-        {/* Animated Background Elements - Floating SDG Icons */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-[0.15]">
+        {/* Animated Background Elements - Floating SDG Icons - Hidden on mobile to prevent interference */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-0 md:opacity-[0.15]">
           {/* Animated Floating Items */}
           <div className="absolute top-10 left-20 text-6xl opacity-50 animate-float" style={{ animationDelay: "0s" }}>🎯</div>
           <div className="absolute top-40 right-32 text-5xl opacity-40 animate-float-slow" style={{ animationDelay: "1s" }}>💧</div>
@@ -826,9 +826,9 @@ export default function Landing() {
               <div className="absolute flex justify-center items-center pointer-events-none">
                 <div className="w-56 sm:w-64 md:w-72 lg:w-80 h-56 sm:h-64 md:h-72 lg:h-80 bg-gradient-to-r from-blue-900/3 to-amber-600/3 rounded-full blur-2xl"></div>
               </div>
-              
-              {/* SDG Wheel - 150% larger for better visibility */}
-              <div className="relative z-10 w-full flex items-center justify-center px-2 py-4 scale-150 md:scale-125 lg:scale-150">
+
+              {/* SDG Wheel - Optimized scaling to prevent mobile overlap */}
+              <div className="relative z-10 w-full flex items-center justify-center px-2 py-8 sm:py-12 scale-100 sm:scale-110 md:scale-125 lg:scale-150">
                 <SDGCircularWheel scale={1.0} />
               </div>
             </div>

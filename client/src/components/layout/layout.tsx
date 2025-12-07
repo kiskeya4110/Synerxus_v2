@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import Header from "./header";
 import Sidebar from "./sidebar";
 import MobileNav from "./mobile-nav";
+import VolunteerNav from "./volunteer-nav";
 import Footer from "./footer";
 import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
@@ -63,6 +64,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Header />
+      <VolunteerNav />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background">

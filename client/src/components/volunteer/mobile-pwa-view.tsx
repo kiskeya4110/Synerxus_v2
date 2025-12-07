@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, Compass, TrendingUp, MoreHorizontal, MoreVertical, Settings, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, LogOut, Bell, HelpCircle } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
@@ -7,6 +7,7 @@ import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 import {
   LineChart,
@@ -51,6 +52,8 @@ const SDG_NAMES: { [key: number]: string } = {
 
 export default function MobilePWAView({ userId, user, dashboardData }: MobilePWAViewProps) {
   const [, navigate] = useLocation();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showMenu, setShowMenu] = useState(false);
@@ -220,10 +223,86 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     }
   });
 
-  // Check if user has applied for a project
+  // Fetch project assignments
+  const { data: projectAssignments = [] } = useQuery({
+    queryKey: ['/api/project-assignments', userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/project-assignments?volunteerId=${userId}`);
+      if (!response.ok) return [];
+      return response.json();
+    }
+  });
+
+  // Check if user has applied for a project (check both applications and assignments)
   const hasApplied = (projectId: number) => {
-    return applications.some((app: any) => app.projectId === projectId && app.userId === parseInt(userId));
+    const hasApplication = applications.some((app: any) => app.projectId === projectId && app.userId === parseInt(userId));
+    const hasAssignment = projectAssignments.some((assignment: any) => assignment.projectId === projectId && assignment.volunteerId === parseInt(userId));
+    return hasApplication || hasAssignment;
   };
+
+  // Apply for project mutation
+  const applyMutation = useMutation({
+    mutationFn: async (projectId: number) => {
+      const response = await fetch('/api/project-assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          volunteerId: parseInt(userId),
+          role: 'Volunteer',
+          status: 'pending',
+          hoursCommitted: 0
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to apply for project');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data, projectId) => {
+      toast({
+        title: "Application Submitted!",
+        description: "Your application has been successfully submitted. The organization will review it soon.",
+      });
+      // Refetch applications to update the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/project-assignments'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Application Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Get personalized recommended projects
+  const recommendedProjects = useMemo(() => {
+    const safeProjects = Array.isArray(projects) ? projects : [];
+
+    // Filter out projects already applied to
+    const availableProjects = safeProjects.filter((project: any) => !hasApplied(project.id));
+
+    // Calculate match scores and sort by score
+    const projectsWithScores = availableProjects.map((project: any) => ({
+      ...project,
+      matchData: calculateMatchScore(project)
+    }));
+
+    // Sort by match score (highest first), then by creation date (newest first)
+    return projectsWithScores
+      .sort((a, b) => {
+        if (b.matchData.score !== a.matchData.score) {
+          return b.matchData.score - a.matchData.score;
+        }
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      })
+      .slice(0, 5); // Show top 5 matches
+  }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
     <div className="min-h-screen bg-[#1a1a2e] flex flex-col max-w-[428px] mx-auto">
@@ -558,8 +637,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             <div className="px-4">
               <h2 className="text-white text-lg font-semibold mb-3">Recommended Projects</h2>
               <div className="space-y-3">
-                {projects.slice(0, 5).map((project: any) => {
-                  const matchData = calculateMatchScore(project);
+                {recommendedProjects.map((project: any) => {
+                  const matchData = project.matchData;
                   const projectSDGs = project.sdgGoals || [];
                   const organization = project.organizationName || 'Synerxus Global NGO';
                   const completion = project.completionPercentage || 0;
@@ -645,12 +724,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/opportunities?projectId=${project.id}`);
+                              applyMutation.mutate(project.id);
                             }}
+                            disabled={applyMutation.isPending}
                             size="sm"
-                            className="flex-1 text-xs h-8 bg-emerald-600 hover:bg-emerald-700"
+                            className="flex-1 text-xs h-8 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
                           >
-                            Apply Now
+                            {applyMutation.isPending ? "Applying..." : "Apply Now"}
                           </Button>
                         )}
                         {hasApplied(project.id) && (

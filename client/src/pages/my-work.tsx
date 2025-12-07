@@ -46,14 +46,27 @@ export default function MyWork() {
   const [projectSearchTerm, setProjectSearchTerm] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
   
-  // Initialize tab from URL hash on mount
+  // Initialize tab from URL hash on mount and listen for hash changes
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace('#', '');
-      if (['applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
-        setActiveTab(hash);
+    const handleHashChange = () => {
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash.replace('#', '');
+        if (['applications', 'assignments', 'tasks', 'impact'].includes(hash)) {
+          setActiveTab(hash);
+          sessionStorage.setItem('mywork-active-tab', hash);
+        }
       }
-    }
+    };
+    
+    // Initial check
+    handleHashChange();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
   
   // Get the current userId from localStorage for cache key

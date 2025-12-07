@@ -26,7 +26,7 @@ export default function VolunteerBottomNav() {
   const navItems = [
     { id: 'dashboard', icon: Home, label: 'Home', path: '/dashboard' },
     { id: 'applications', icon: Briefcase, label: 'Apps', path: '/my-work#applications' },
-    { id: 'assignments', icon: FolderKanban, label: 'Assign', path: '/my-work#assignments' },
+    { id: 'assignments', icon: FolderKanban, label: 'Insights', path: '/my-work#assignments' },
     { id: 'impacts', icon: BarChart3, label: 'Impact', path: '/my-work#impact' },
     { id: 'profile', icon: User, label: 'Profile', path: '/volunteer-profile-settings' },
   ];

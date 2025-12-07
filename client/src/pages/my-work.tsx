@@ -225,7 +225,7 @@ export default function MyWork() {
   const totalHoursLogged = currentUser?.userType === 'volunteer' && dashboardData?.totalHours !== undefined
     ? dashboardData.totalHours
     : (Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0) : 0);
-  const totalHoursCommitted = projectAssignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
+  const totalHoursCommitted = Array.isArray(projectAssignments) ? projectAssignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0) : 0;
   const hoursProgressPercentage = totalHoursCommitted > 0 
     ? Math.round((totalHoursLogged / totalHoursCommitted) * 100)
     : 0;
@@ -239,7 +239,7 @@ export default function MyWork() {
   // Use backend-calculated project count for consistency with dashboard
   const activeProjectCount = currentUser?.userType === 'volunteer' && dashboardData?.activeProjects !== undefined
     ? dashboardData.activeProjects
-    : projectAssignments.filter(a => a.status === 'active').length;
+    : (Array.isArray(projectAssignments) ? projectAssignments.filter(a => a.status === 'active').length : 0);
 
   // Calculate weekly capacity usage
   const weeklyCapacity = volunteerProfile?.weeklyAvailability || 0;

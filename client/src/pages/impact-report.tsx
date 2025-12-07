@@ -183,7 +183,8 @@ export default function ImpactReport() {
     queryKey: ["/api/project-assignments", { volunteerId }],
     queryFn: async () => {
       const response = await fetch(`/api/project-assignments?volunteerId=${volunteerId}`);
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!volunteerId
   });
@@ -530,10 +531,12 @@ export default function ImpactReport() {
     projects: Math.floor(Math.random() * 4) + 1
   }));
 
-  const projectsBreakdown = projectAssignments.map((pa: any) => ({
-    name: pa.project?.name || 'Unknown',
-    value: Math.floor(Math.random() * 100) + 20
-  }));
+  const projectsBreakdown = Array.isArray(projectAssignments)
+    ? projectAssignments.map((pa: any) => ({
+        name: pa.project?.name || 'Unknown',
+        value: Math.floor(Math.random() * 100) + 20
+      }))
+    : [];
 
   // Show error if no volunteer ID is available
   if (!volunteerId) {

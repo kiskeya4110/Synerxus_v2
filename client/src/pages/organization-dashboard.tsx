@@ -2064,8 +2064,14 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'kinshasa': { lat: -4.3276, lng: 15.3136 },
     'accra': { lat: 5.6037, lng: -0.187 },
     'lusaka': { lat: -15.3875, lng: 28.2833 },
+    'ndola': { lat: -12.9587, lng: 28.6366 }, // Zambia
+    'kitwe': { lat: -12.8024, lng: 28.2132 }, // Zambia
     'harare': { lat: -17.8252, lng: 31.0335 },
+    'bulawayo': { lat: -20.1325, lng: 28.5848 }, // Zimbabwe
+    'bulowaya': { lat: -20.1325, lng: 28.5848 }, // Common misspelling
     'dar es salaam': { lat: -6.8000, lng: 39.2833 },
+    'kampala': { lat: 0.3476, lng: 32.5825 }, // Uganda
+    'addis ababa': { lat: 9.0054, lng: 38.7636 }, // Ethiopia
     
     // European Cities
     'london': { lat: 51.5074, lng: -0.1278 },
@@ -2088,9 +2094,27 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'beijing': { lat: 39.9042, lng: 116.4074 },
     'seoul': { lat: 37.5665, lng: 126.978 },
     'manila': { lat: 14.5995, lng: 120.9842 },
+    'manilla': { lat: 14.5995, lng: 120.9842 }, // Common misspelling
+    'tacloban': { lat: 11.2543, lng: 124.9602 }, // Philippines
+    'cebu': { lat: 10.3157, lng: 123.8854 }, // Philippines
+    'davao': { lat: 7.1907, lng: 125.4553 }, // Philippines
     'jakarta': { lat: -6.2088, lng: 106.8456 },
     'karachi': { lat: 24.8607, lng: 67.0011 },
     'hongkong': { lat: 22.3193, lng: 114.1694 },
+    'hong kong': { lat: 22.3193, lng: 114.1694 },
+    
+    // Central America & Caribbean Cities
+    'port-au-prince': { lat: 18.5944, lng: -72.3074 }, // Haiti
+    'gonaives': { lat: 19.4530, lng: -72.6868 }, // Haiti
+    'cap-haitien': { lat: 19.7578, lng: -72.2040 }, // Haiti
+    'santo domingo': { lat: 18.4861, lng: -69.9312 }, // Dominican Republic
+    'kingston': { lat: 17.9714, lng: -76.7936 }, // Jamaica
+    'havana': { lat: 23.1136, lng: -82.3666 }, // Cuba
+    'san juan': { lat: 18.4655, lng: -66.1057 }, // Puerto Rico
+    'guatemala city': { lat: 14.6349, lng: -90.5069 }, // Guatemala
+    'tegucigalpa': { lat: 14.0723, lng: -87.1921 }, // Honduras
+    'managua': { lat: 12.1364, lng: -86.2514 }, // Nicaragua
+    'san salvador': { lat: 13.6929, lng: -89.2182 }, // El Salvador
     
     // South American Cities
     'sao paulo': { lat: -23.5505, lng: -46.6333 },
@@ -2099,6 +2123,10 @@ function getCoordinatesFromLocation(location: string): { lat: number; lng: numbe
     'bogota': { lat: 4.7110, lng: -74.0721 },
     'santiago': { lat: -33.4489, lng: -70.6693 },
     'mexico city': { lat: 19.4326, lng: -99.1332 },
+    'rio de janeiro': { lat: -22.9068, lng: -43.1729 },
+    'caracas': { lat: 10.4806, lng: -66.9036 },
+    'medellin': { lat: 6.2442, lng: -75.5812 },
+    'quito': { lat: -0.1807, lng: -78.4678 },
     
     // Oceania Cities
     'sydney': { lat: -33.8688, lng: 151.2093 },

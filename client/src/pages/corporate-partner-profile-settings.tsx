@@ -18,6 +18,7 @@ import { Building2, Check, ChevronRight, Save } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import { Label } from "@/components/ui/label";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
+import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 
 const corporatePartnerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
@@ -645,6 +646,7 @@ export default function CorporatePartnerProfileSettings() {
                   >
                     {updatePartnerMutation.isPending ? "Saving..." : "Save Changes"}
                   </Button>
+                  <OnboardingTrigger variant="outline" showText={true} />
                 </div>
               </form>
             </Form>

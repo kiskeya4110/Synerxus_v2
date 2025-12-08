@@ -2,7 +2,8 @@ import { Route, Router, useLocation } from "wouter";
 import { useEffect } from "react";
 import { SidebarProvider } from "@/contexts/sidebar-context";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
-import { volunteerOnboardingSteps, organizationOnboardingSteps } from "@shared/onboarding-steps";
+import { volunteerOnboardingSteps, organizationOnboardingSteps, csrOnboardingSteps } from "@shared/onboarding-steps";
+import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/layout";
 import Landing from "@/pages/landing";
@@ -160,11 +161,16 @@ function RootRedirectRoute() {
 export default function App() {
   // Determine user type from localStorage to select appropriate onboarding steps
   const userType = localStorage.getItem('userType');
-  const steps = userType === 'organization' ? organizationOnboardingSteps : volunteerOnboardingSteps;
+  const steps = userType === 'corporate-partner' 
+    ? csrOnboardingSteps 
+    : userType === 'organization' 
+      ? organizationOnboardingSteps 
+      : volunteerOnboardingSteps;
 
   return (
     <SidebarProvider>
       <OnboardingProvider steps={steps}>
+        <OnboardingGuide />
         <Router>
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />

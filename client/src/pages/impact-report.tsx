@@ -239,14 +239,17 @@ export default function ImpactReport() {
     }
   });
 
+  // Ensure projectAssignments is always an array
+  const safeProjectAssignments = Array.isArray(projectAssignments) ? projectAssignments : [];
+
   // Get all unique organizations the volunteer has worked with
   const volunteerOrganizations = Array.from(
     new Set(
-      projectAssignments
+      safeProjectAssignments
         .map((pa: any) => pa.project?.organizationId)
         .filter((id: any) => id != null)
     )
-  ).map((orgId: number) => 
+  ).map((orgId: number) =>
     organizations.find((org: any) => org.id === orgId)
   ).filter((org: any) => org != null);
   
@@ -261,12 +264,12 @@ export default function ImpactReport() {
     : (Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0) : 0);
   const completedTasks = tasks.filter(t => t.status?.toLowerCase() === "completed").length;
   const totalTasks = tasks.length;
-  const activeProjects = dashboardData?.activeProjects !== undefined 
-    ? dashboardData.activeProjects 
-    : projectAssignments.filter(a => a.status === 'active').length;
+  const activeProjects = dashboardData?.activeProjects !== undefined
+    ? dashboardData.activeProjects
+    : safeProjectAssignments.filter(a => a.status === 'active').length;
   const allSkills = volunteerProfile?.skills || [];
   const sdgs = volunteerProfile?.preferredSdgs || [];
-  const assignmentsCount = projectAssignments.length;
+  const assignmentsCount = safeProjectAssignments.length;
 
   // Use optimized impact score from backend calculator (hours 35%, people 30%, tasks 20%, sdg 10%, match 5%)
   const totalImpactScore = dashboardData?.impactScore ?? 0;
@@ -426,7 +429,7 @@ export default function ImpactReport() {
   
   // Show ALL assigned projects in the KPI (not just those with filtered activities)
   // The time filter should affect hours, not the project count
-  const filteredActiveProjects = projectAssignments.filter(pa => 
+  const filteredActiveProjects = safeProjectAssignments.filter(pa =>
     pa.status === 'active' || pa.status === 'Active' || pa.status === 'In Progress'
   ).length;
   
@@ -536,12 +539,10 @@ export default function ImpactReport() {
     projects: Math.floor(Math.random() * 4) + 1
   }));
 
-  const projectsBreakdown = Array.isArray(projectAssignments)
-    ? projectAssignments.map((pa: any) => ({
-        name: pa.project?.name || 'Unknown',
-        value: Math.floor(Math.random() * 100) + 20
-      }))
-    : [];
+  const projectsBreakdown = safeProjectAssignments.map((pa: any) => ({
+    name: pa.project?.name || 'Unknown',
+    value: Math.floor(Math.random() * 100) + 20
+  }));
 
   // Show error if no volunteer ID is available
   if (!volunteerId) {

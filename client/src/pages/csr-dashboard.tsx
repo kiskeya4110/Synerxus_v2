@@ -143,6 +143,10 @@ export default function CSRDashboard() {
   const [selectedSDGFilters, setSelectedSDGFilters] = useState<number[]>([]);
   const [dateRange, setDateRange] = useState<"all" | "30d" | "90d" | "1y">("all");
 
+  // Map filters for geographic view
+  const [selectedMapRegion, setSelectedMapRegion] = useState<string>("all");
+  const [selectedMapStatus, setSelectedMapStatus] = useState<string>("all");
+
   // Engagement tips confirmation dialog
   const [showEngagementTipsDialog, setShowEngagementTipsDialog] = useState(false);
   const [isSendingTips, setIsSendingTips] = useState(false);
@@ -388,7 +392,7 @@ export default function CSRDashboard() {
     );
   }
 
-  const companyName = csrData?.partners?.[0]?.companyName || "Innovate Corp";
+  const companyName = csrData?.companyName || csrData?.partners?.[0]?.companyName || "Loading...";
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -535,10 +539,27 @@ export default function CSRDashboard() {
     ? sdgMetrics.filter(metric => selectedSDGFilters.includes(metric.sdg))
     : sdgMetrics;
 
-  const filteredProjectLocations = selectedSDGFilters.length > 0
-    ? safeFilter(csrData?.projectLocations, (project: any) =>
-        matchesSDGFilter(project.sdgGoals))
-    : safeArray(csrData?.projectLocations);
+  // Get unique regions from project locations for filter dropdown
+  const projectRegions = Array.from(new Set(
+    safeArray(csrData?.projectLocations).map((p: any) => p.region).filter(Boolean)
+  )).sort();
+
+  // Apply all filters to project locations (SDG + region + status)
+  const filteredProjectLocations = safeArray(csrData?.projectLocations).filter((project: any) => {
+    // SDG filter
+    if (selectedSDGFilters.length > 0 && !matchesSDGFilter(project.sdgGoals)) {
+      return false;
+    }
+    // Region filter
+    if (selectedMapRegion !== "all" && project.region !== selectedMapRegion) {
+      return false;
+    }
+    // Status filter
+    if (selectedMapStatus !== "all" && project.status !== selectedMapStatus) {
+      return false;
+    }
+    return true;
+  });
 
   // Recalculate KPIs based on filtered data
   const filteredTotalHours = filteredSDGMetrics.reduce(
@@ -932,84 +953,6 @@ export default function CSRDashboard() {
           )}
           {selectedMainTab === "overview" && (
             <div>
-              {/* Filters Bar */}
-              <div
-                style={{
-                  backgroundColor: "#f8fafc",
-                  padding: "16px 24px",
-                  borderRadius: "8px",
-                  marginBottom: "16px",
-                  border: "1px solid #e2e8f0",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "16px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#1e3a8a" }}>
-                    📊 Dashboard Filters:
-                  </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <label style={{ fontSize: "14px", color: "#374151", fontWeight: "500" }}>
-                      Time Period:
-                    </label>
-                    <select
-                      value={dateRange}
-                      onChange={(e) => setDateRange(e.target.value as "all" | "30d" | "90d" | "1y")}
-                      style={{
-                        padding: "8px 32px 8px 12px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "8px",
-                        backgroundColor: "white",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        appearance: "none",
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: "no-repeat",
-                        backgroundPosition: "right 10px center",
-                      }}
-                    >
-                      {TIME_PERIODS.map((period) => (
-                        <option key={period.value} value={period.value}>
-                          {period.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {selectedSDGFilters.length > 0 && (
-                    <div style={{ fontSize: "13px", color: "#6b7280", padding: "6px 12px", backgroundColor: "#dbeafe", borderRadius: "6px" }}>
-                      {selectedSDGFilters.length} SDG{selectedSDGFilters.length > 1 ? "s" : ""} selected
-                    </div>
-                  )}
-                </div>
-                {(selectedSDGFilters.length > 0 || dateRange !== "all") && (
-                  <button
-                    onClick={clearAllFilters}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "#ef4444",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "6px",
-                      fontSize: "13px",
-                      fontWeight: "500",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#dc2626";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "#ef4444";
-                    }}
-                  >
-                    Clear All Filters
-                  </button>
-                )}
-              </div>
-
               {/* Corporate SDG Commitments Section - Top Priority Display */}
               {committedSDGs.length > 0 ? (
                 <div
@@ -1083,6 +1026,33 @@ export default function CSRDashboard() {
                             Clear Filters ({selectedSDGFilters.length})
                           </button>
                         )}
+                        <button
+                          onClick={() => navigate("/corporate-partner-profile-settings")}
+                          style={{
+                            padding: "8px 16px",
+                            backgroundColor: "#1e3a8a",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontSize: "13px",
+                            fontWeight: "500",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#1e40af";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "#1e3a8a";
+                          }}
+                          data-testid="btn-manage-sdg-commitments"
+                        >
+                          <Settings style={{ width: "14px", height: "14px" }} />
+                          Manage Commitments
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1367,12 +1337,92 @@ export default function CSRDashboard() {
                 </div>
               )}
 
-              {/* KPI Cards Row - 4 cards in dark navy */}
+              {/* Filters Bar - Positioned after SDG Commitments for data filtering */}
+              <div
+                style={{
+                  backgroundColor: "#f8fafc",
+                  padding: "16px 24px",
+                  borderRadius: "8px",
+                  marginBottom: "16px",
+                  border: "1px solid #e2e8f0",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "16px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, flexWrap: "wrap" }}>
+                  <span style={{ fontSize: "14px", fontWeight: "600", color: "#1e3a8a" }}>
+                    📊 Dashboard Filters:
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <label style={{ fontSize: "14px", color: "#374151", fontWeight: "500" }}>
+                      Time Period:
+                    </label>
+                    <select
+                      value={dateRange}
+                      onChange={(e) => setDateRange(e.target.value as "all" | "30d" | "90d" | "1y")}
+                      style={{
+                        padding: "8px 32px 8px 12px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "8px",
+                        backgroundColor: "white",
+                        fontSize: "14px",
+                        cursor: "pointer",
+                        appearance: "none",
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "right 10px center",
+                      }}
+                      data-testid="select-time-period"
+                    >
+                      {TIME_PERIODS.map((period) => (
+                        <option key={period.value} value={period.value}>
+                          {period.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {selectedSDGFilters.length > 0 && (
+                    <div style={{ fontSize: "13px", color: "#6b7280", padding: "6px 12px", backgroundColor: "#dbeafe", borderRadius: "6px" }}>
+                      {selectedSDGFilters.length} SDG{selectedSDGFilters.length > 1 ? "s" : ""} selected
+                    </div>
+                  )}
+                </div>
+                {(selectedSDGFilters.length > 0 || dateRange !== "all") && (
+                  <button
+                    onClick={clearAllFilters}
+                    style={{
+                      padding: "8px 16px",
+                      backgroundColor: "#ef4444",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "6px",
+                      fontSize: "13px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#dc2626";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "#ef4444";
+                    }}
+                    data-testid="btn-clear-all-filters"
+                  >
+                    Clear All Filters
+                  </button>
+                )}
+              </div>
+
+              {/* KPI Cards Row - 5 cards in dark navy with verified real-time metrics */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(4, 1fr)",
-                  gap: "16px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                  gap: "12px",
                 }}
               >
                 <div
@@ -1547,12 +1597,12 @@ export default function CSRDashboard() {
                   >
                     SDG Score Delta
                   </p>
-                  <p style={{ fontSize: "30px", fontWeight: "bold" }}>
+                  <p style={{ fontSize: "28px", fontWeight: "bold" }}>
                     {(csrData?.sdgScoreDelta || 0) >= 0 ? "+" : ""}
                     {csrData?.sdgScoreDelta || 0}%{" "}
                     <span
                       style={{
-                        fontSize: "18px",
+                        fontSize: "14px",
                         fontWeight: "normal",
                         color: "#d1d5db",
                       }}
@@ -1561,13 +1611,57 @@ export default function CSRDashboard() {
                     </span>
                   </p>
                 </div>
+
+                {/* 5th KPI: Total Volunteers */}
+                <div
+                  onClick={() => setSelectedKPI("volunteers")}
+                  style={{
+                    backgroundColor: "#1e3a8a",
+                    color: "white",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    border:
+                      selectedKPI === "volunteers" ? "2px solid #f97316" : "none",
+                  }}
+                  onMouseOver={(e) => (
+                    (e.currentTarget.style.transform = "translateY(-4px)"),
+                    (e.currentTarget.style.boxShadow =
+                      "0 8px 12px -1px rgba(0, 0, 0, 0.2)")
+                  )}
+                  onMouseOut={(e) => (
+                    (e.currentTarget.style.transform = "translateY(0)"),
+                    (e.currentTarget.style.boxShadow =
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)")
+                  )}
+                  data-testid="kpi-volunteers"
+                >
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "#d1d5db",
+                      marginBottom: "8px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Total Volunteers
+                  </p>
+                  <p style={{ fontSize: "28px", fontWeight: "bold" }}>
+                    {(csrData as any)?.totalVolunteers || sdgMetrics.reduce((sum, m) => sum + (m.uniqueEmployees || 0), 0) || 0}
+                  </p>
+                  <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
+                    Active across all projects
+                  </p>
+                </div>
               </div>
 
-              {/* Analytics Grid - 2x2 layout */}
+              {/* Analytics Grid - 2x2 layout (responsive) */}
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
                   gap: "24px",
                   marginTop: "24px",
                 }}
@@ -1978,20 +2072,116 @@ export default function CSRDashboard() {
                   }}
                   data-testid="chart-geographic-impact"
                 >
-                  <h3
+                  <div
                     style={{
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      marginBottom: "12px",
                       display: "flex",
+                      justifyContent: "space-between",
                       alignItems: "center",
-                      gap: "6px",
+                      marginBottom: "12px",
+                      flexWrap: "wrap",
+                      gap: "8px",
                     }}
                   >
-                    <MapPin style={{ width: "16px", height: "16px" }} />
-                    Geographic Impact by Region
-                  </h3>
+                    <h3
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        color: "#111827",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        margin: 0,
+                      }}
+                    >
+                      <MapPin style={{ width: "16px", height: "16px" }} />
+                      Geographic Impact by Region
+                    </h3>
+                    {/* Map Filters */}
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      <select
+                        value={selectedMapRegion}
+                        onChange={(e) => setSelectedMapRegion(e.target.value)}
+                        style={{
+                          padding: "4px 8px",
+                          fontSize: "11px",
+                          borderRadius: "4px",
+                          border: "1px solid #d1d5db",
+                          backgroundColor: selectedMapRegion !== "all" ? "#dbeafe" : "white",
+                          color: "#374151",
+                          cursor: "pointer",
+                        }}
+                        data-testid="map-region-filter"
+                      >
+                        <option value="all">All Regions</option>
+                        {projectRegions.map((region: string) => (
+                          <option key={region} value={region}>{region}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={selectedMapStatus}
+                        onChange={(e) => setSelectedMapStatus(e.target.value)}
+                        style={{
+                          padding: "4px 8px",
+                          fontSize: "11px",
+                          borderRadius: "4px",
+                          border: "1px solid #d1d5db",
+                          backgroundColor: selectedMapStatus !== "all" ? "#dbeafe" : "white",
+                          color: "#374151",
+                          cursor: "pointer",
+                        }}
+                        data-testid="map-status-filter"
+                      >
+                        <option value="all">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="sponsored">Sponsored</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                      {(selectedMapRegion !== "all" || selectedMapStatus !== "all") && (
+                        <button
+                          onClick={() => {
+                            setSelectedMapRegion("all");
+                            setSelectedMapStatus("all");
+                          }}
+                          style={{
+                            padding: "4px 8px",
+                            fontSize: "10px",
+                            borderRadius: "4px",
+                            border: "none",
+                            backgroundColor: "#fee2e2",
+                            color: "#991b1b",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Clear Filters
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {/* Map Legend */}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      marginBottom: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                      <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1e3a8a" }} />
+                      <span>Active</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                      <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#f97316" }} />
+                      <span>Sponsored</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                      <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#22c55e" }} />
+                      <span>Completed</span>
+                    </div>
+                    <div style={{ marginLeft: "auto", fontSize: "10px", color: "#6b7280" }}>
+                      {filteredProjectLocations.length} project{filteredProjectLocations.length !== 1 ? "s" : ""} shown
+                    </div>
+                  </div>
                   <div
                     style={{
                       flex: 1,
@@ -1999,7 +2189,7 @@ export default function CSRDashboard() {
                       overflow: "hidden",
                       position: "relative",
                       backgroundColor: "#0f172a",
-                      minHeight: "300px",
+                      minHeight: "280px",
                     }}
                   >
                     {filteredProjectLocations.length > 0 ? (
@@ -2478,6 +2668,7 @@ export default function CSRDashboard() {
                 {selectedKPI === "employees" && "Employees Engaged"}
                 {selectedKPI === "projects" && "Projects Completed"}
                 {selectedKPI === "sdg" && "SDG Score Performance"}
+                {selectedKPI === "volunteers" && "Total Volunteers"}
               </h2>
               <button
                 onClick={() => setSelectedKPI(null)}
@@ -3003,6 +3194,109 @@ export default function CSRDashboard() {
                       </span>
                     </li>
                   </ul>
+                </div>
+              </div>
+            )}
+
+            {selectedKPI === "volunteers" && (
+              <div style={{ color: "#374151" }}>
+                <p
+                  style={{
+                    fontSize: "32px",
+                    fontWeight: "bold",
+                    color: "#1e3a8a",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {(csrData as any)?.totalVolunteers || sdgMetrics.reduce((sum, m) => sum + (m.uniqueEmployees || 0), 0) || 0} volunteers
+                </p>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    marginBottom: "16px",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  Total unique volunteers actively contributing to your CSR initiatives across all projects and SDG goals.
+                </p>
+                <div
+                  style={{
+                    backgroundColor: "#f3f4f6",
+                    padding: "16px",
+                    borderRadius: "8px",
+                    marginTop: "16px",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      color: "#6b7280",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Volunteer Distribution by SDG:
+                  </p>
+                  <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+                    {sdgMetrics
+                      .filter((m) => m.uniqueEmployees > 0)
+                      .sort((a, b) => b.uniqueEmployees - a.uniqueEmployees)
+                      .map((metric) => (
+                        <div
+                          key={metric.sdg}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "8px 0",
+                            borderBottom: "1px solid #e5e7eb",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <div
+                              style={{
+                                width: "24px",
+                                height: "24px",
+                                borderRadius: "4px",
+                                backgroundColor: getSDGColor(metric.sdg),
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "white",
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                              }}
+                            >
+                              {metric.sdg}
+                            </div>
+                            <span style={{ fontSize: "13px" }}>{getSDGName(metric.sdg)}</span>
+                          </div>
+                          <span style={{ fontWeight: "600", color: "#1e3a8a" }}>
+                            {metric.uniqueEmployees} volunteers
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    backgroundColor: "#dbeafe",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    marginTop: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <span style={{ fontSize: "18px" }}>📊</span>
+                  <span style={{ fontSize: "13px", color: "#1e40af" }}>
+                    <strong>Impact:</strong> Each volunteer contributes an average of{" "}
+                    {csrData?.activeEmployees && csrData?.totalHours
+                      ? Math.round(csrData.totalHours / csrData.activeEmployees)
+                      : 0}{" "}
+                    hours to your CSR goals.
+                  </span>
                 </div>
               </div>
             )}

@@ -90,15 +90,16 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     const livesImpacted = Number(dashboardData?.totalPeopleImpacted) ||
       safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesTouched) || 0), 0);
     const skills = Array.isArray(volunteerProfile?.skills) ? volunteerProfile.skills.length : 0;
-    // Only count unique, valid SDG numbers (1-17) from projects with actual SDG goals
-    const allSdgs = safeProjects
+
+    // SDG Impact: Only count unique SDGs from actual projects (not profile commitments)
+    const projectSdgs = safeProjects
       .filter((p: any) => p?.sdgGoals && Array.isArray(p.sdgGoals) && p.sdgGoals.length > 0)
       .flatMap((p: any) => p.sdgGoals)
       .filter((sdg: any) => sdg !== null && sdg !== undefined && typeof sdg === 'number' && Number.isInteger(sdg) && sdg >= 1 && sdg <= 17);
-    const sdgsContributed = Array.from(new Set(allSdgs)).length;
+    const sdgsContributed = Array.from(new Set(projectSdgs)).length;
 
     // Calculate pending applications from dashboardData
-    const pendingApplications = Array.isArray(dashboardData?.applications) 
+    const pendingApplications = Array.isArray(dashboardData?.applications)
       ? dashboardData.applications.filter((app: any) => app?.status === 'Pending' || app?.status === 'pending').length
       : 0;
 
@@ -145,6 +146,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const sdgDistribution = useMemo(() => {
     const safeProjects = Array.isArray(projects) ? projects : [];
     const sdgCounts: { [key: number]: number } = {};
+
+    // Count SDGs from actual projects only
     safeProjects.forEach((p: any) => {
       const sdgGoals = Array.isArray(p?.sdgGoals) ? p.sdgGoals : [];
       sdgGoals.forEach((sdg: number) => {
@@ -153,6 +156,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         }
       });
     });
+
     return Object.entries(sdgCounts)
       .map(([sdg, count]) => ({
         sdg: parseInt(sdg),
@@ -161,7 +165,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         color: SDG_COLORS[parseInt(sdg)] || '#6B7280'
       }))
       .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
+      .slice(0, 8); // Show up to 8 SDGs
   }, [projects]);
 
   // Calculate match score with reasons
@@ -572,22 +576,33 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             {sdgDistribution.length > 0 && (
               <div className="px-4">
                 <h2 className="text-white text-lg font-semibold mb-3">My SDG Contributions</h2>
-                <div className="flex flex-wrap gap-2 justify-center">
+                <div className="grid grid-cols-2 gap-3">
                   {sdgDistribution.map((sdg) => (
                     <button
                       key={sdg.sdg}
                       onClick={() => setShowSdgModal(sdg.sdg)}
-                      className="relative group hover:scale-110 transition-transform active:scale-95"
+                      className="bg-[#16213e] rounded-xl p-3 border border-gray-700 hover:border-emerald-500/50 transition-all active:scale-95 text-left"
                     >
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white/20 shadow-lg">
-                        <img
-                          src={getSDGIcon(sdg.sdg)}
-                          alt={`SDG ${sdg.sdg}`}
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="flex items-center gap-2 mb-2">
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                          style={{ backgroundColor: sdg.color }}
+                        >
+                          {sdg.sdg}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-white font-semibold text-xs truncate">{sdg.name}</div>
+                          <div className="text-gray-400 text-[10px]">{sdg.value} {sdg.value === 1 ? 'project' : 'projects'}</div>
+                        </div>
                       </div>
-                      <div className="absolute -top-1 -right-1 bg-emerald-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-[#1a1a2e]">
-                        {sdg.value}
+                      <div className="bg-gray-700/50 rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            backgroundColor: sdg.color,
+                            width: `${Math.min((sdg.value / Math.max(...sdgDistribution.map(s => s.value))) * 100, 100)}%`
+                          }}
+                        />
                       </div>
                     </button>
                   ))}
@@ -1194,8 +1209,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         )}
 
         {activeTab === 'profile' && (
-          <div className="p-4 space-y-4">
-            <div className="text-center py-6">
+          <div className="p-4 space-y-4 pb-24">
+            {/* Profile Header */}
+            <div className="text-center py-4">
               <Avatar className="w-20 h-20 mx-auto border-4 border-amber-400">
                 <AvatarImage src={user?.profilePicture} />
                 <AvatarFallback className="bg-[#16213e] text-white text-2xl">
@@ -1204,8 +1220,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </Avatar>
               <h2 className="text-white text-xl font-bold mt-3">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'}</h2>
               <p className="text-gray-400 text-sm">{user?.email}</p>
+              {volunteerProfile?.professional_title && (
+                <p className="text-emerald-400 text-sm mt-1">{volunteerProfile.professional_title}</p>
+              )}
             </div>
 
+            {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-3 text-center">
               <div className="bg-[#16213e] rounded-xl p-3 border border-gray-700">
                 <div className="text-xl font-bold text-white">{kpis.totalHours}</div>
@@ -1221,9 +1241,130 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </div>
             </div>
 
+            {/* Location & Availability */}
+            <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-400" />
+                Location & Availability
+              </h3>
+              <div className="space-y-2 text-sm">
+                {(volunteerProfile?.location || user?.location) && (
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <span>{volunteerProfile?.location || user?.location}</span>
+                  </div>
+                )}
+                {volunteerProfile?.weekly_availability && (
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <Clock className="w-4 h-4 text-gray-500" />
+                    <span>{volunteerProfile.weekly_availability} hours/week available</span>
+                  </div>
+                )}
+                {volunteerProfile?.preferred_work_style && (
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <Briefcase className="w-4 h-4 text-gray-500" />
+                    <span>{volunteerProfile.preferred_work_style === 'remote' ? 'Remote' : volunteerProfile.preferred_work_style === 'onsite' ? 'On-site' : 'Hybrid'}</span>
+                  </div>
+                )}
+                {volunteerProfile?.timezone && (
+                  <div className="flex items-center gap-2 text-gray-300">
+                    <Globe className="w-4 h-4 text-gray-500" />
+                    <span>{volunteerProfile.timezone}</span>
+                  </div>
+                )}
+                {!volunteerProfile?.location && !user?.location && !volunteerProfile?.weekly_availability && (
+                  <p className="text-gray-500 text-xs">Add your location and availability in settings</p>
+                )}
+              </div>
+            </div>
+
+            {/* Skills */}
+            <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <Award className="w-4 h-4 text-amber-400" />
+                Skills
+              </h3>
+              {volunteerProfile?.skills && volunteerProfile.skills.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {volunteerProfile.skills.map((skill: string, idx: number) => (
+                    <span key={idx} className="bg-amber-500/20 text-amber-300 px-3 py-1 rounded-full text-xs">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-xs">Add skills to your profile</p>
+              )}
+            </div>
+
+            {/* SDG Commitments */}
+            <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <Target className="w-4 h-4 text-pink-400" />
+                SDG Commitments
+              </h3>
+              {volunteerProfile?.preferred_sdgs && volunteerProfile.preferred_sdgs.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {volunteerProfile.preferred_sdgs.slice(0, 8).map((sdgNum: number) => (
+                    <div
+                      key={sdgNum}
+                      className="rounded-lg p-2 text-center"
+                      style={{ backgroundColor: SDG_COLORS[sdgNum] || '#6B7280' }}
+                    >
+                      <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
+                      <div className="text-white/80 text-[10px] leading-tight">{SDG_NAMES[sdgNum]?.split(' ').slice(0, 2).join(' ')}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : sdgDistribution.length > 0 ? (
+                <div className="grid grid-cols-4 gap-2">
+                  {sdgDistribution.slice(0, 4).map((sdg) => (
+                    <div
+                      key={sdg.sdg}
+                      className="rounded-lg p-2 text-center"
+                      style={{ backgroundColor: sdg.color }}
+                    >
+                      <div className="text-white font-bold text-sm">SDG {sdg.sdg}</div>
+                      <div className="text-white/80 text-[10px] leading-tight">{sdg.name?.split(' ').slice(0, 2).join(' ')}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-xs">Select SDGs you care about in settings</p>
+              )}
+            </div>
+
+            {/* Interests */}
+            {volunteerProfile?.interests && volunteerProfile.interests.length > 0 && (
+              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-red-400" />
+                  Interests
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {volunteerProfile.interests.map((interest: string, idx: number) => (
+                    <span key={idx} className="bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-xs">
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bio */}
+            {volunteerProfile?.bio && (
+              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
+                <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-blue-400" />
+                  About Me
+                </h3>
+                <p className="text-gray-300 text-sm">{volunteerProfile.bio}</p>
+              </div>
+            )}
+
             <Button
               onClick={() => navigate('/volunteer-profile-settings')}
-              className="w-full bg-[#16213e] border border-gray-700 text-white hover:bg-gray-800"
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3"
             >
               <Settings className="w-4 h-4 mr-2" />
               Edit Profile Settings
@@ -1373,40 +1514,75 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </button>
             </div>
             <div className="p-4">
-              <div className="mb-4">
-                <img
-                  src={getSDGIcon(showSdgModal)}
-                  alt={`SDG ${showSdgModal}`}
-                  className="w-full h-32 object-cover rounded-lg"
-                />
+              {/* SDG Header with smaller icon */}
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-lg" style={{ backgroundColor: SDG_COLORS[showSdgModal] + '20' }}>
+                <div
+                  className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
+                  style={{ backgroundColor: SDG_COLORS[showSdgModal] }}
+                >
+                  {showSdgModal}
+                </div>
+                <div className="flex-1">
+                  <div className="text-white font-semibold">{SDG_NAMES[showSdgModal]}</div>
+                  <div className="text-gray-400 text-xs">
+                    {projects.filter((p: any) => p.sdgGoals?.includes(showSdgModal)).length} projects contributing
+                  </div>
+                </div>
               </div>
-              <h3 className="text-white font-semibold mb-3">Projects Contributing to this SDG:</h3>
+
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-emerald-400" />
+                Your Contributing Projects
+              </h3>
               <div className="space-y-2">
                 {projects
                   .filter((p: any) => p.sdgGoals?.includes(showSdgModal))
                   .map((project: any) => (
                     <div
                       key={project.id}
-                      className="bg-[#1a1a2e] rounded-lg p-3 cursor-pointer hover:bg-[#1a1a2e]/70"
+                      className="bg-[#1a1a2e] rounded-lg p-3 cursor-pointer hover:bg-[#1a1a2e]/70 border border-gray-700"
                       onClick={() => {
                         setShowSdgModal(null);
                         navigate(`/projects/${project.id}/pwa`);
                       }}
                     >
-                      <div className="text-white font-medium text-sm">{project.name}</div>
-                      <div className="text-xs text-gray-400 mt-1">{project.organizationName}</div>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
+                      <div className="flex items-start justify-between mb-1">
+                        <div className="text-white font-medium text-sm flex-1">{project.name}</div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                          project.status === 'Active' ? 'bg-orange-500/20 text-orange-300' :
+                          project.status === 'Completed' ? 'bg-green-500/20 text-green-300' :
+                          'bg-gray-500/20 text-gray-300'
+                        }`}>
+                          {project.status || 'Active'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-400">{project.organizationName}</div>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          <span>{project.totalHoursLogged || 0} hrs logged</span>
+                          <span>{project.totalHoursLogged || 0} hrs</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Heart className="w-3 h-3" />
                           <span>{project.livesTouched || 0} lives</span>
                         </div>
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          <span>{project.volunteersCount || 0} volunteers</span>
+                        </div>
                       </div>
+                      {project.description && (
+                        <p className="text-gray-500 text-xs mt-2 line-clamp-2">{project.description}</p>
+                      )}
                     </div>
                   ))}
+                {projects.filter((p: any) => p.sdgGoals?.includes(showSdgModal)).length === 0 && (
+                  <div className="text-center py-6 text-gray-500">
+                    <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No projects yet for this SDG</p>
+                    <p className="text-xs mt-1">Join projects to contribute to SDG {showSdgModal}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

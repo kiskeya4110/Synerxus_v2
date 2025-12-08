@@ -400,12 +400,53 @@ const RealTimeStatsBanner = () => {
 };
 
 const VolunteerSpotlightSection = () => {
-  const { data, isLoading } = useQuery<{ spotlight: any }>({
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [displayData, setDisplayData] = useState<any>(null);
+
+  const { data, isLoading, refetch } = useQuery<{ spotlight: any }>({
     queryKey: ['/api/volunteer-spotlight'],
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    refetchInterval: 1000 * 60 * 10, // Refetch every 10 minutes to check for new spotlights
   });
 
   const spotlight = data?.spotlight;
+
+  // Update display data with transition effect
+  useEffect(() => {
+    if (spotlight && JSON.stringify(spotlight) !== JSON.stringify(displayData)) {
+      setIsTransitioning(true);
+      const timeout = setTimeout(() => {
+        setDisplayData(spotlight);
+        setIsTransitioning(false);
+      }, 300);
+      return () => clearTimeout(timeout);
+    } else if (spotlight && !displayData) {
+      setDisplayData(spotlight);
+    }
+  }, [spotlight]);
+
+  // Format impact message from stats
+  const getImpactMessage = (stats: any) => {
+    if (!stats) return "Making a difference every day!";
+    const hours = stats.thisWeekHours || 0;
+    const impacts = stats.thisWeekImpacts || 0;
+    if (hours > 0 && impacts > 0) {
+      return `${hours} hours volunteered across ${impacts} activities this week`;
+    } else if (hours > 0) {
+      return `${hours} hours volunteered this week`;
+    } else if (impacts > 0) {
+      return `${impacts} volunteer activities completed this week`;
+    }
+    return "Dedicated to making a positive impact";
+  };
+
+  // Get skills display
+  const getSkillsBadges = (profile: any) => {
+    const skills = profile?.skills || [];
+    return skills.slice(0, 3);
+  };
+
+  const current = displayData || spotlight;
 
   return (
     <section className="bg-gradient-to-br from-blue-50 via-slate-50 to-amber-50 py-12 sm:py-16 md:py-20 border-y border-slate-200">
@@ -422,33 +463,43 @@ const VolunteerSpotlightSection = () => {
           </div>
 
           {/* Spotlight Card */}
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-shadow duration-300">
-            {isLoading ? (
+          <div className={`bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200 hover:shadow-xl transition-all duration-300 ${isTransitioning ? 'opacity-50 scale-[0.99]' : 'opacity-100 scale-100'}`}>
+            {isLoading && !current ? (
               <div className="p-6 sm:p-8 space-y-4">
                 <Skeleton className="h-8 w-3/4" />
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
               </div>
-            ) : spotlight ? (
+            ) : current ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
                 {/* Spotlight Photo */}
                 <div className="md:col-span-1 bg-gradient-to-br from-blue-900/10 to-amber-600/10 flex items-center justify-center min-h-64 md:min-h-auto relative overflow-hidden">
-                  {spotlight.photoUrl ? (
+                  {current.user?.avatar ? (
                     <img
-                      src={spotlight.photoUrl}
-                      alt={spotlight.user.displayName}
+                      src={current.user.avatar}
+                      alt={current.user.displayName}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center space-y-3">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-900 to-amber-600 flex items-center justify-center">
-                        <span className="text-white text-3xl font-bold">
-                          {spotlight.user.displayName?.charAt(0).toUpperCase() || '✨'}
+                    <div className="flex flex-col items-center justify-center space-y-3 p-6">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-900 to-amber-600 flex items-center justify-center shadow-lg">
+                        <span className="text-white text-4xl font-bold">
+                          {current.user?.displayName?.charAt(0).toUpperCase() || '✨'}
                         </span>
                       </div>
-                      <p className="text-slate-600 font-semibold text-center px-4">
-                        {spotlight.user.displayName || 'Volunteer Hero'}
+                      <p className="text-slate-700 font-semibold text-center text-lg">
+                        {current.user?.displayName || 'Volunteer Hero'}
                       </p>
+                      {/* Skills badges */}
+                      {getSkillsBadges(current.profile).length > 0 && (
+                        <div className="flex flex-wrap gap-1 justify-center mt-2">
+                          {getSkillsBadges(current.profile).map((skill: string, idx: number) => (
+                            <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -457,11 +508,16 @@ const VolunteerSpotlightSection = () => {
                 <div className="md:col-span-2 p-6 sm:p-8 flex flex-col justify-between">
                   <div className="space-y-4 sm:space-y-6">
                     <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2">
-                        {spotlight.user.displayName || 'Featured Volunteer'}
-                      </h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-900">
+                          {current.user?.displayName || 'Featured Volunteer'}
+                        </h3>
+                        <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+                          This Week's Star
+                        </span>
+                      </div>
                       <p className="text-slate-600 leading-relaxed text-sm sm:text-base">
-                        {spotlight.story}
+                        {current.story || "Dedicated to making a positive impact in their community through volunteering."}
                       </p>
                     </div>
 
@@ -469,9 +525,21 @@ const VolunteerSpotlightSection = () => {
                     <div className="bg-gradient-to-r from-blue-50 to-amber-50 rounded-lg p-4 border border-blue-200">
                       <p className="text-sm font-semibold text-blue-900 mb-1">This Week's Impact</p>
                       <p className="text-base sm:text-lg font-bold text-blue-900">
-                        {spotlight.impact}
+                        {getImpactMessage(current.stats)}
                       </p>
                     </div>
+
+                    {/* Interests */}
+                    {current.profile?.interests && current.profile.interests.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        <span className="text-xs text-slate-500 font-medium">Interests:</span>
+                        {current.profile.interests.slice(0, 4).map((interest: string, idx: number) => (
+                          <span key={idx} className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                            {interest}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* CTA Button */}

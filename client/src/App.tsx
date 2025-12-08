@@ -56,6 +56,7 @@ import TeamOverview from "@/pages/team-overview";
 import Overview from "@/pages/overview";
 import OrganizationMessages from "@/pages/organization-messages";
 import VolunteerMessages from "@/pages/volunteer-messages";
+import VolunteerMessagesPWA from "@/pages/volunteer-messages-pwa";
 import NotFound from "@/pages/not-found";
 
 function RootRedirectRoute() {
@@ -234,6 +235,7 @@ function LayoutRoute() {
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
       <Route path="/volunteer-messages" component={VolunteerMessages} />
+      <Route path="/volunteer-messages/pwa" component={VolunteerMessagesPWA} />
     </Layout>
   );
 }

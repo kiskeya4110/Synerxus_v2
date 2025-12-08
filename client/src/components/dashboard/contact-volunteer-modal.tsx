@@ -87,10 +87,18 @@ export default function ContactVolunteerModal({
   const orgId = organizationId || currentUser?.organizationId;
 
   // Fetch only volunteers assigned to this organization's projects
-  const { data: projectAssignments = [] } = useQuery<any[]>({
+  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
     queryKey: ["/api/project-assignments"],
+    queryFn: async () => {
+      const response = await fetch("/api/project-assignments");
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
     enabled: open && !!orgId,
   });
+  // Ensure projectAssignments is always an array
+  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
 
   // Fetch all users and projects
   const { data: allUsers = [] } = useQuery<any[]>({

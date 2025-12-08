@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SDG_GOALS } from "@shared/sdg-goals";
+import ProjectChat from "@/components/project/project-chat";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -234,6 +235,16 @@ export default function OpportunityDetailPWA() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Opportunity Chat */}
+      {opportunity && opportunity.organizationId && opportunity.projectId && (
+        <ProjectChat
+          projectId={opportunity.projectId}
+          projectName={opportunity.title}
+          organizationId={opportunity.organizationId}
+          organizationName={opportunity.organizationName}
+        />
+      )}
     </div>
   );
 }

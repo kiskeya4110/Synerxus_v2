@@ -114,14 +114,17 @@ export default function MyWork() {
   });
 
   // Fetch volunteer's project assignments
-  const { data: projectAssignments = [] } = useQuery<any[]>({
+  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
     queryKey: ["/api/project-assignments", { volunteerId }],
     queryFn: async () => {
       const response = await fetch(`/api/project-assignments?volunteerId=${volunteerId}`);
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!volunteerId
   });
+  // Ensure projectAssignments is always an array
+  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
 
   // Fetch volunteer's activities for real-time hours tracking
   const { data: volunteerActivities = [] } = useQuery<any[]>({

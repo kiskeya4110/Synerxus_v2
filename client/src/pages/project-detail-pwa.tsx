@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
-import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SDG_GOALS } from "@shared/sdg-goals";
+import ProjectChat from "@/components/project/project-chat";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -245,6 +246,16 @@ export default function ProjectDetailPWA() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Project Chat */}
+      {project && project.organizationId && (
+        <ProjectChat
+          projectId={projectId!}
+          projectName={project.name}
+          organizationId={project.organizationId}
+          organizationName={project.organizationName}
+        />
+      )}
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">

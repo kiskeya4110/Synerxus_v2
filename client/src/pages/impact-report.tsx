@@ -184,7 +184,7 @@ export default function ImpactReport() {
   });
 
   // Fetch volunteer's project assignments
-  const { data: projectAssignments = [] } = useQuery<ProjectAssignment[]>({
+  const { data: projectAssignmentsRaw = [] } = useQuery<ProjectAssignment[]>({
     queryKey: ["/api/project-assignments", { volunteerId }],
     queryFn: async () => {
       const response = await fetch(`/api/project-assignments?volunteerId=${volunteerId}`);
@@ -193,6 +193,8 @@ export default function ImpactReport() {
     },
     enabled: !!volunteerId
   });
+  // Ensure projectAssignments is always an array
+  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
 
   // Fetch volunteer's activities
   const { data: volunteerActivities = [] } = useQuery<any[]>({  // Keep any[] as type varies

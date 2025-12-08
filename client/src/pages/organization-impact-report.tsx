@@ -165,15 +165,19 @@ export default function OrganizationImpactReport() {
   });
 
   // Fetch organization's project assignments for volunteer info
-  const { data: projectAssignments = [] } = useQuery<any[]>({
+  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
     queryKey: ["/api/project-assignments", "org", currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
       const response = await fetch("/api/project-assignments");
-      return response.ok ? response.json() : [];
+      if (!response.ok) return [];
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!currentUser?.organizationId,
   });
+  // Ensure projectAssignments is always an array
+  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
 
   // Fetch all users (needed for volunteer names in impact leader)
   const { data: users = [] } = useQuery<any[]>({

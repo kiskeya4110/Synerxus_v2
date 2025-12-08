@@ -240,8 +240,36 @@ messagesRouter.post("/conversation-threads", async (req: Request, res: Response)
     });
 
     if (initialMessage) {
+      // Determine who is the sender - could be volunteer or organization
+      const volunteer = await storage.getUser(parseInt(volunteerId));
       const orgUser = await storage.getUserByOrganizationId(parseInt(organizationId));
-      if (orgUser) {
+
+      // If the request has a senderId, use that to determine who is sending
+      const senderId = req.body.senderId ? parseInt(req.body.senderId) : null;
+      const isVolunteerSending = senderId === parseInt(volunteerId) || !senderId;
+
+      if (isVolunteerSending && volunteer && orgUser) {
+        // Volunteer is starting conversation
+        const message = await storage.createMessage({
+          senderId: parseInt(volunteerId),
+          receiverId: orgUser.id,
+          content: initialMessage,
+          messageType: 'inquiry',
+          threadId: thread.id
+        });
+
+        await storage.createNotification({
+          userId: orgUser.id,
+          type: 'message',
+          title: 'New Message',
+          message: `${volunteer.displayName || volunteer.username} sent you a message about "${topic}"`,
+          relatedEntityType: 'thread',
+          relatedEntityId: thread.id
+        });
+
+        broadcastUpdate("message_created", message);
+      } else if (orgUser) {
+        // Organization is starting conversation (outreach)
         const message = await storage.createMessage({
           senderId: orgUser.id,
           receiverId: parseInt(volunteerId),

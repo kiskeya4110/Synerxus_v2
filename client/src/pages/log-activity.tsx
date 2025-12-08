@@ -52,7 +52,7 @@ export default function LogActivity() {
   });
 
   // Fetch volunteer's project assignments (includes enriched project data)
-  const { data: projectAssignments = [] } = useQuery<any[]>({
+  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
     queryKey: ["/api/project-assignments", { volunteerId: currentUser?.id }],
     queryFn: async () => {
       if (!currentUser?.id) return [];
@@ -62,6 +62,8 @@ export default function LogActivity() {
     },
     enabled: !!currentUser?.id
   });
+  // Ensure projectAssignments is always an array
+  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
 
   // Fetch all projects as fallback
   const { data: allProjects = [] } = useQuery<any[]>({
@@ -73,24 +75,23 @@ export default function LogActivity() {
     },
   });
 
-  // Get assigned projects - prioritize projects from assignments (enriched data)
-  // Fall back to matching with all projects if assignment doesn't have project data
-  const assignedProjects = Array.isArray(projectAssignments)
-    ? projectAssignments
-        .filter((assignment: any) => assignment.projectId && assignment.status !== 'removed')
-        .map((assignment: any) => {
-          // Use enriched project from assignment if available
-          if (assignment.project) {
-            return assignment.project;
-          }
-          // Otherwise find from all projects
-          return allProjects.find((p: any) => p.id === assignment.projectId);
-        })
-        .filter(Boolean) // Remove any undefined entries
-        .filter((project: any, index: number, self: any[]) =>
-          // Remove duplicates by id
-          index === self.findIndex((p: any) => p.id === project.id)
-        )
+  // Get available projects - show all projects, prioritizing assigned ones
+  // Get assigned project IDs for reference
+  const assignedProjectIds = new Set(
+    projectAssignments
+      .filter((assignment: any) => assignment.projectId && assignment.status !== 'removed')
+      .map((assignment: any) => assignment.projectId)
+  );
+
+  // Use all projects as primary source, but include enriched data from assignments where available
+  const availableProjects = Array.isArray(allProjects)
+    ? allProjects.map((project: any) => {
+        // Check if we have enriched data from assignments
+        const assignmentWithData = projectAssignments.find(
+          (assignment: any) => assignment.projectId === project.id && assignment.project
+        );
+        return assignmentWithData?.project || project;
+      })
     : [];
 
   // Log activity mutation
@@ -217,7 +218,7 @@ export default function LogActivity() {
   const isVolunteer = currentUser?.userType === 'volunteer';
 
   return (
-    <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-[#1a1a2e] max-w-[428px] mx-auto pb-20' : 'bg-background'}`}>
+    <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-[#FDF8F3] max-w-[428px] mx-auto pb-24' : 'bg-background'}`}>
       {/* PWA Header for Volunteers on Mobile */}
       {isMobile && isVolunteer && (
         <header className="bg-[#16213e] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
@@ -291,7 +292,7 @@ export default function LogActivity() {
                     </button>
                     <button
                       onClick={() => {
-                        setLocation('/volunteer-messages');
+                        setLocation('/volunteer-messages/pwa');
                         setShowMenu(false);
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
@@ -363,21 +364,21 @@ export default function LogActivity() {
 
       {/* Main Content */}
       <div className={`${isMobile && isVolunteer ? 'px-4 py-6' : 'max-w-2xl mx-auto px-4 py-6'}`}>
-        <Card className={isMobile && isVolunteer ? 'bg-[#16213e] border-gray-700 text-white' : ''}>
+        <Card className={isMobile && isVolunteer ? 'bg-white border-amber-200/60 shadow-sm' : ''}>
           <CardHeader>
-            <CardTitle className={`flex items-center gap-2 ${isMobile && isVolunteer ? 'text-white' : ''}`}>
-              <Clock className="w-6 h-6 text-emerald-400" />
+            <CardTitle className={`flex items-center gap-2 ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
+              <Clock className="w-6 h-6 text-emerald-600" />
               Log Activity & Record Impact
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "activity" | "impact")} className="w-full">
-              <TabsList className={`grid w-full grid-cols-2 ${isMobile && isVolunteer ? 'bg-[#1a1a2e]' : ''}`}>
-                <TabsTrigger value="activity" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500' : ''}>
+              <TabsList className={`grid w-full grid-cols-2 ${isMobile && isVolunteer ? 'bg-slate-100' : ''}`}>
+                <TabsTrigger value="activity" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500 data-[state=active]:text-white' : ''}>
                   <Clock className="w-4 h-4 mr-2" />
                   Log Activity
                 </TabsTrigger>
-                <TabsTrigger value="impact" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500' : ''}>
+                <TabsTrigger value="impact" className={isMobile && isVolunteer ? 'data-[state=active]:bg-emerald-500 data-[state=active]:text-white' : ''}>
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Record Impact
                 </TabsTrigger>
@@ -387,22 +388,26 @@ export default function LogActivity() {
                 <form onSubmit={handleSubmit} className="space-y-6">
               {/* Project Selection */}
               <div className="space-y-2">
-                <Label htmlFor="project" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="project" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Project <span className="text-red-500">*</span>
                 </Label>
                 <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
-                  <SelectTrigger id="project" className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                  <SelectTrigger id="project" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
-                    {assignedProjects.length === 0 ? (
-                      <SelectItem value="none" disabled>No assigned projects</SelectItem>
+                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
+                    {availableProjects.length === 0 ? (
+                      <SelectItem value="none" disabled>Loading projects...</SelectItem>
                     ) : (
-                      assignedProjects.map((project: any) => (
-                        <SelectItem key={project.id} value={project.id.toString()}>
-                          {project.name}
-                        </SelectItem>
-                      ))
+                      availableProjects.map((project: any) => {
+                        const isAssigned = assignedProjectIds.has(project.id);
+                        const label = `${project.name}${isAssigned ? ' (Assigned)' : ''}`;
+                        return (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {label}
+                          </SelectItem>
+                        );
+                      })
                     )}
                   </SelectContent>
                 </Select>
@@ -410,7 +415,7 @@ export default function LogActivity() {
 
               {/* Date Selection */}
               <div className="space-y-2">
-                <Label htmlFor="date" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="date" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Date <span className="text-red-500">*</span>
                 </Label>
                 <Popover>
@@ -418,7 +423,7 @@ export default function LogActivity() {
                     <Button
                       variant="outline"
                       className={`w-full justify-start text-left font-normal ${
-                        isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white hover:bg-[#1a1a2e]/80' : ''
+                        isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100' : ''
                       }`}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -438,7 +443,7 @@ export default function LogActivity() {
 
               {/* Hours Input */}
               <div className="space-y-2">
-                <Label htmlFor="hours" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="hours" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Hours <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -450,20 +455,20 @@ export default function LogActivity() {
                   value={hours}
                   onChange={(e) => setHours(e.target.value)}
                   placeholder="e.g., 2.5"
-                  className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white placeholder:text-gray-400' : ''}
+                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
                 />
               </div>
 
               {/* Activity Type */}
               <div className="space-y-2">
-                <Label htmlFor="activityType" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="activityType" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Activity Type
                 </Label>
                 <Select value={activityType} onValueChange={setActivityType}>
-                  <SelectTrigger id="activityType" className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                  <SelectTrigger id="activityType" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
                     <SelectValue placeholder="Select activity type" />
                   </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
                     <SelectItem value="volunteering">Volunteering</SelectItem>
                     <SelectItem value="training">Training</SelectItem>
                     <SelectItem value="meeting">Meeting</SelectItem>
@@ -475,7 +480,7 @@ export default function LogActivity() {
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="description" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Description (Optional)
                 </Label>
                 <Textarea
@@ -484,7 +489,7 @@ export default function LogActivity() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe what you did..."
                   rows={4}
-                  className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white placeholder:text-gray-400' : ''}
+                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
                 />
               </div>
 
@@ -525,22 +530,26 @@ export default function LogActivity() {
             <form onSubmit={handleImpactSubmit} className="space-y-6">
               {/* Project Selection */}
               <div className="space-y-2">
-                <Label htmlFor="impact-project" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="impact-project" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Project <span className="text-red-500">*</span>
                 </Label>
                 <Select value={impactProjectId} onValueChange={setImpactProjectId}>
-                  <SelectTrigger id="impact-project" className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                  <SelectTrigger id="impact-project" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
-                    {assignedProjects.length === 0 ? (
-                      <SelectItem value="none" disabled>No assigned projects</SelectItem>
+                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
+                    {availableProjects.length === 0 ? (
+                      <SelectItem value="none" disabled>Loading projects...</SelectItem>
                     ) : (
-                      assignedProjects.map((project: any) => (
-                        <SelectItem key={project.id} value={project.id.toString()}>
-                          {project.name}
-                        </SelectItem>
-                      ))
+                      availableProjects.map((project: any) => {
+                        const isAssigned = assignedProjectIds.has(project.id);
+                        const label = `${project.name}${isAssigned ? ' (Assigned)' : ''}`;
+                        return (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {label}
+                          </SelectItem>
+                        );
+                      })
                     )}
                   </SelectContent>
                 </Select>
@@ -548,7 +557,7 @@ export default function LogActivity() {
 
               {/* Date Selection */}
               <div className="space-y-2">
-                <Label htmlFor="impact-date" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="impact-date" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Date <span className="text-red-500">*</span>
                 </Label>
                 <Popover>
@@ -556,7 +565,7 @@ export default function LogActivity() {
                     <Button
                       variant="outline"
                       className={`w-full justify-start text-left font-normal ${
-                        isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white hover:bg-[#1a1a2e]/80' : ''
+                        isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100' : ''
                       }`}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
@@ -577,11 +586,11 @@ export default function LogActivity() {
               {/* Lives Impacted */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="peopleReached" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                  <Label htmlFor="peopleReached" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                     Lives Impacted <span className="text-red-500">*</span>
                   </Label>
                   <div className="relative group">
-                    <HelpCircle className={`w-4 h-4 cursor-help ${isMobile && isVolunteer ? 'text-gray-400' : 'text-gray-500'}`} />
+                    <HelpCircle className={`w-4 h-4 cursor-help ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`} />
                     <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg z-50">
                       This number feeds into Attributable Impact Units (AIUs) calculation. AIU Unique counts each beneficiary once per reporting window and maps to SDG indicators.
                     </div>
@@ -594,23 +603,23 @@ export default function LogActivity() {
                   value={peopleReached}
                   onChange={(e) => setPeopleReached(e.target.value)}
                   placeholder="e.g., 50 people directly served"
-                  className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white placeholder:text-gray-400' : ''}
+                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
                 />
-                <p className={`text-xs ${isMobile && isVolunteer ? 'text-gray-400' : 'text-gray-500'}`}>
+                <p className={`text-xs ${isMobile && isVolunteer ? 'text-slate-500' : 'text-gray-500'}`}>
                   Enter the number of unique individuals you directly served or helped during this activity.
                 </p>
               </div>
 
               {/* Impact Category */}
               <div className="space-y-2">
-                <Label htmlFor="impactCategory" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="impactCategory" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Impact Category
                 </Label>
                 <Select value={impactCategory} onValueChange={setImpactCategory}>
-                  <SelectTrigger id="impactCategory" className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                  <SelectTrigger id="impactCategory" className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800' : ''}>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
-                  <SelectContent className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white' : ''}>
+                  <SelectContent className={isMobile && isVolunteer ? 'bg-white border-slate-200 text-slate-800' : ''}>
                     <SelectItem value="direct">Direct Impact</SelectItem>
                     <SelectItem value="indirect">Indirect Impact</SelectItem>
                     <SelectItem value="community">Community Impact</SelectItem>
@@ -621,7 +630,7 @@ export default function LogActivity() {
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="impactDescription" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                <Label htmlFor="impactDescription" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
                   Impact Description (Optional)
                 </Label>
                 <Textarea
@@ -630,7 +639,7 @@ export default function LogActivity() {
                   onChange={(e) => setImpactDescription(e.target.value)}
                   placeholder="Describe the impact made..."
                   rows={4}
-                  className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white placeholder:text-gray-400' : ''}
+                  className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
                 />
               </div>
 
@@ -688,6 +697,48 @@ export default function LogActivity() {
           </Card>
         )}
       </div>
+
+      {/* Bottom Navigation for PWA */}
+      {isMobile && isVolunteer && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+          <div className="flex justify-around items-center">
+            <button
+              onClick={() => setLocation('/volunteer-dashboard')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+            >
+              <Home className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Home</span>
+            </button>
+            <button
+              onClick={() => setLocation('/discover-opportunities/pwa')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+            >
+              <Compass className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Projects</span>
+            </button>
+            <button
+              className="flex flex-col items-center py-1 px-3 rounded-lg text-emerald-400"
+            >
+              <Clock className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Log</span>
+            </button>
+            <button
+              onClick={() => setLocation('/volunteer-dashboard')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+            >
+              <TrendingUp className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Impacts</span>
+            </button>
+            <button
+              onClick={() => setLocation('/volunteer-profile-settings')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+            >
+              <UserIcon className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Profile</span>
+            </button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

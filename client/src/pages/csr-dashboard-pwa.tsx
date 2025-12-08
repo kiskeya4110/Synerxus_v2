@@ -275,10 +275,10 @@ export default function CSRDashboardPWA() {
   // Loading state
   if (isLoading && !csrData) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-gray-400 text-sm">Loading Dashboard...</p>
+          <p className="text-amber-700 text-sm">Loading Dashboard...</p>
         </div>
       </div>
     );
@@ -287,11 +287,11 @@ export default function CSRDashboardPWA() {
   // Error state
   if (error && !csrData) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center p-4">
         <div className="text-center">
           <X className="w-12 h-12 text-red-400 mx-auto mb-3" />
-          <p className="text-white font-medium mb-2">Unable to Load</p>
-          <button onClick={() => refetch()} className="text-amber-400 text-sm">Try Again</button>
+          <p className="text-slate-800 font-medium mb-2">Unable to Load</p>
+          <button onClick={() => refetch()} className="text-amber-600 text-sm">Try Again</button>
         </div>
       </div>
     );
@@ -301,7 +301,7 @@ export default function CSRDashboardPWA() {
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="min-h-screen bg-[#FDF8F3] text-slate-800">
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">
@@ -584,15 +584,15 @@ export default function CSRDashboardPWA() {
             {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Impact Over Time */}
-              <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
+              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-white">Impact Over Time</h3>
+                  <h3 className="text-sm font-semibold text-slate-800">Impact Over Time</h3>
                   <div className="flex gap-3 text-[10px]">
-                    <span className="flex items-center gap-1 text-emerald-400">
-                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" /> Hours
+                    <span className="flex items-center gap-1 text-emerald-700">
+                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" /> Hours
                     </span>
-                    <span className="flex items-center gap-1 text-blue-400">
-                      <span className="w-1.5 h-1.5 bg-blue-400 rounded-full" /> Team
+                    <span className="flex items-center gap-1 text-blue-700">
+                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> Team
                     </span>
                   </div>
                 </div>
@@ -620,12 +620,12 @@ export default function CSRDashboardPWA() {
               </div>
 
               {/* SDG Distribution */}
-              <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
+              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-white">SDG Distribution</h3>
+                  <h3 className="text-sm font-semibold text-slate-800">SDG Distribution</h3>
                   <button
                     onClick={() => setActiveTab('sdgs')}
-                    className="text-[10px] text-amber-400 hover:underline"
+                    className="text-[10px] text-amber-700 hover:underline font-medium"
                   >
                     View All
                   </button>
@@ -653,32 +653,32 @@ export default function CSRDashboardPWA() {
             {/* Quick Actions + Leaderboard */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               {/* Leaderboard */}
-              <div className="lg:col-span-2 bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-                <h3 className="text-sm font-semibold text-white mb-3">Top Performers</h3>
+              <div className="lg:col-span-2 bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-800 mb-3">Top Performers</h3>
                 <div className="space-y-2">
                   {(csrData?.leaderboard || []).slice(0, 5).map((person, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-2 bg-slate-700/30 rounded-lg">
+                    <div key={idx} className="flex items-center gap-3 p-2 bg-amber-50/50 rounded-lg border border-amber-100/50">
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
                         idx === 0 ? 'bg-amber-500 text-black' :
                         idx === 1 ? 'bg-gray-400 text-black' :
                         idx === 2 ? 'bg-orange-600 text-white' :
-                        'bg-slate-600 text-white'
+                        'bg-slate-400 text-white'
                       }`}>
                         {idx + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white truncate">{person.employeeName}</p>
-                        <p className="text-[10px] text-gray-500">{person.points} pts</p>
+                        <p className="text-sm text-slate-800 truncate">{person.employeeName}</p>
+                        <p className="text-[10px] text-slate-500">{person.points} pts</p>
                       </div>
-                      <span className="text-sm font-semibold text-emerald-400">{person.hours}h</span>
+                      <span className="text-sm font-semibold text-emerald-600">{person.hours}h</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Quick Actions */}
-              <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-                <h3 className="text-sm font-semibold text-white mb-3">Quick Actions</h3>
+              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-800 mb-3">Quick Actions</h3>
                 <div className="space-y-2">
                   <ActionButton icon={Globe} label="Global Map" color="emerald" onClick={() => setShowMapModal(true)} />
                   <ActionButton icon={FileText} label="Generate Report" color="blue" onClick={() => navigate('/csr-reports-exports')} />
@@ -730,17 +730,17 @@ export default function CSRDashboardPWA() {
 // Quick Stat Component
 function QuickStat({ label, value, icon: Icon, color }: { label: string; value: number; icon: any; color: string }) {
   const colors: Record<string, string> = {
-    emerald: 'text-emerald-400',
-    blue: 'text-blue-400',
-    purple: 'text-purple-400',
-    amber: 'text-amber-400',
+    emerald: 'text-emerald-600',
+    blue: 'text-blue-600',
+    purple: 'text-purple-600',
+    amber: 'text-amber-600',
   };
 
   return (
-    <div className="bg-slate-800/60 rounded-lg p-2.5 text-center border border-slate-700/50">
+    <div className="bg-white rounded-lg p-2.5 text-center border border-amber-200/60 shadow-sm">
       <Icon className={`w-4 h-4 mx-auto mb-1 ${colors[color]}`} />
-      <p className="text-lg font-bold text-white">{value.toLocaleString()}</p>
-      <p className="text-[9px] text-gray-500 uppercase tracking-wide">{label}</p>
+      <p className="text-lg font-bold text-slate-800">{value.toLocaleString()}</p>
+      <p className="text-[9px] text-slate-500 uppercase tracking-wide">{label}</p>
     </div>
   );
 }
@@ -751,12 +751,12 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
   format?: 'number' | 'currency'; trend?: 'up' | 'down' | 'neutral';
 }) {
   const colors: Record<string, { bg: string; text: string; border: string }> = {
-    emerald: { bg: 'from-emerald-500/20 to-emerald-600/5', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-    blue: { bg: 'from-blue-500/20 to-blue-600/5', text: 'text-blue-400', border: 'border-blue-500/30' },
-    amber: { bg: 'from-amber-500/20 to-amber-600/5', text: 'text-amber-400', border: 'border-amber-500/30' },
-    purple: { bg: 'from-purple-500/20 to-purple-600/5', text: 'text-purple-400', border: 'border-purple-500/30' },
-    teal: { bg: 'from-teal-500/20 to-teal-600/5', text: 'text-teal-400', border: 'border-teal-500/30' },
-    rose: { bg: 'from-rose-500/20 to-rose-600/5', text: 'text-rose-400', border: 'border-rose-500/30' },
+    emerald: { bg: 'from-emerald-50 to-emerald-100/50', text: 'text-emerald-600', border: 'border-emerald-200' },
+    blue: { bg: 'from-blue-50 to-blue-100/50', text: 'text-blue-600', border: 'border-blue-200' },
+    amber: { bg: 'from-amber-50 to-amber-100/50', text: 'text-amber-600', border: 'border-amber-200' },
+    purple: { bg: 'from-purple-50 to-purple-100/50', text: 'text-purple-600', border: 'border-purple-200' },
+    teal: { bg: 'from-teal-50 to-teal-100/50', text: 'text-teal-600', border: 'border-teal-200' },
+    rose: { bg: 'from-rose-50 to-rose-100/50', text: 'text-rose-600', border: 'border-rose-200' },
   };
 
   const c = colors[color] || colors.blue;
@@ -765,19 +765,19 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
   return (
     <button
       onClick={onClick}
-      className={`bg-gradient-to-br ${c.bg} border ${c.border} rounded-xl p-3 min-w-[140px] text-left active:scale-95 transition-transform`}
+      className={`bg-gradient-to-br ${c.bg} border ${c.border} rounded-xl p-3 min-w-[140px] text-left active:scale-95 transition-transform shadow-sm`}
     >
       <div className="flex items-center justify-between mb-1">
         <Icon className={`w-4 h-4 ${c.text}`} />
         {trend && trend !== 'neutral' && (
-          <span className={trend === 'up' ? 'text-emerald-400' : 'text-red-400'}>
+          <span className={trend === 'up' ? 'text-emerald-600' : 'text-red-500'}>
             {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
           </span>
         )}
       </div>
-      <p className="text-xl font-bold text-white">{displayValue}</p>
-      <p className="text-[10px] text-gray-400 truncate">{title}</p>
-      <p className="text-[9px] text-gray-500 truncate">{subtitle}</p>
+      <p className="text-xl font-bold text-slate-800">{displayValue}</p>
+      <p className="text-[10px] text-slate-600 truncate">{title}</p>
+      <p className="text-[9px] text-slate-500 truncate">{subtitle}</p>
     </button>
   );
 }
@@ -785,10 +785,10 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
 // Action Button Component
 function ActionButton({ icon: Icon, label, color, onClick }: { icon: any; label: string; color: string; onClick: () => void }) {
   const colors: Record<string, string> = {
-    emerald: 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20',
-    blue: 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20',
-    purple: 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20',
-    amber: 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20',
+    emerald: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200',
+    blue: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
+    purple: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
+    amber: 'bg-amber-100 text-amber-700 hover:bg-amber-200',
   };
 
   return (
@@ -812,17 +812,17 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
     <div className="p-4 space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-teal-500/10 rounded-xl p-3 text-center border border-teal-500/30">
-          <p className="text-2xl font-bold text-teal-400">{activeSdgs.length}</p>
-          <p className="text-[10px] text-gray-400">Active SDGs</p>
+        <div className="bg-teal-50 rounded-xl p-3 text-center border border-teal-200 shadow-sm">
+          <p className="text-2xl font-bold text-teal-600">{activeSdgs.length}</p>
+          <p className="text-[10px] text-slate-500">Active SDGs</p>
         </div>
-        <div className="bg-emerald-500/10 rounded-xl p-3 text-center border border-emerald-500/30">
-          <p className="text-2xl font-bold text-emerald-400">{totalHours.toLocaleString()}</p>
-          <p className="text-[10px] text-gray-400">Total Hours</p>
+        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-200 shadow-sm">
+          <p className="text-2xl font-bold text-emerald-600">{totalHours.toLocaleString()}</p>
+          <p className="text-[10px] text-slate-500">Total Hours</p>
         </div>
-        <div className="bg-amber-500/10 rounded-xl p-3 text-center border border-amber-500/30">
-          <p className="text-2xl font-bold text-amber-400">{csrData?.sdgScoreDelta || 0}%</p>
-          <p className="text-[10px] text-gray-400">vs Quarter</p>
+        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-200 shadow-sm">
+          <p className="text-2xl font-bold text-amber-600">{csrData?.sdgScoreDelta || 0}%</p>
+          <p className="text-[10px] text-slate-500">vs Quarter</p>
         </div>
       </div>
 
@@ -853,8 +853,8 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
       </div>
 
       {/* Active SDGs List */}
-      <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-        <h3 className="text-sm font-semibold text-white mb-3">Progress by SDG</h3>
+      <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-800 mb-3">Progress by SDG</h3>
         <div className="space-y-3 max-h-64 overflow-y-auto">
           {activeSdgs.sort((a, b) => b.totalHours - a.totalHours).map(m => {
             const maxHours = Math.max(...activeSdgs.map(x => x.totalHours));
@@ -862,17 +862,17 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
             const color = SDG_COLORS[m.sdg];
 
             return (
-              <div key={m.sdg} className="cursor-pointer hover:bg-slate-700/30 rounded-lg p-2 transition-colors" onClick={() => onSelectSDG(m.sdg)}>
+              <div key={m.sdg} className="cursor-pointer hover:bg-amber-50/50 rounded-lg p-2 transition-colors" onClick={() => onSelectSDG(m.sdg)}>
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: color }}>
                       {m.sdg}
                     </div>
-                    <span className="text-sm text-white">{SDG_NAMES[m.sdg]}</span>
+                    <span className="text-sm text-slate-800">{SDG_NAMES[m.sdg]}</span>
                   </div>
                   <span className="text-sm font-semibold" style={{ color }}>{m.totalHours.toLocaleString()}h</span>
                 </div>
-                <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
                 </div>
               </div>
@@ -892,57 +892,57 @@ function ProjectsSection({ csrData, navigate, onOpenMap }: { csrData: CSRDashboa
     <div className="p-4 space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-purple-500/10 rounded-xl p-3 text-center border border-purple-500/30">
-          <p className="text-2xl font-bold text-purple-400">{csrData?.projectsCompleted || 0}</p>
-          <p className="text-[10px] text-gray-400">Total</p>
+        <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-200 shadow-sm">
+          <p className="text-2xl font-bold text-purple-600">{csrData?.projectsCompleted || 0}</p>
+          <p className="text-[10px] text-slate-500">Total</p>
         </div>
-        <div className="bg-emerald-500/10 rounded-xl p-3 text-center border border-emerald-500/30">
-          <p className="text-2xl font-bold text-emerald-400">{csrData?.kpiBreakdown?.projects?.activeProjects || 0}</p>
-          <p className="text-[10px] text-gray-400">Active</p>
+        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-200 shadow-sm">
+          <p className="text-2xl font-bold text-emerald-600">{csrData?.kpiBreakdown?.projects?.activeProjects || 0}</p>
+          <p className="text-[10px] text-slate-500">Active</p>
         </div>
-        <div className="bg-blue-500/10 rounded-xl p-3 text-center border border-blue-500/30">
-          <p className="text-2xl font-bold text-blue-400">{csrData?.kpiBreakdown?.projects?.regionsServed || 0}</p>
-          <p className="text-[10px] text-gray-400">Regions</p>
+        <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-200 shadow-sm">
+          <p className="text-2xl font-bold text-blue-600">{csrData?.kpiBreakdown?.projects?.regionsServed || 0}</p>
+          <p className="text-[10px] text-slate-500">Regions</p>
         </div>
-        <div className="bg-amber-500/10 rounded-xl p-3 text-center border border-amber-500/30">
-          <p className="text-2xl font-bold text-amber-400">${(csrData?.kpiBreakdown?.projects?.totalRoi || 0).toLocaleString()}</p>
-          <p className="text-[10px] text-gray-400">ROI</p>
+        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-200 shadow-sm">
+          <p className="text-2xl font-bold text-amber-600">${(csrData?.kpiBreakdown?.projects?.totalRoi || 0).toLocaleString()}</p>
+          <p className="text-[10px] text-slate-500">ROI</p>
         </div>
       </div>
 
       {/* Map Button */}
       <button
         onClick={onOpenMap}
-        className="w-full flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-xl border border-emerald-500/30 hover:from-emerald-500/30 hover:to-teal-500/30 transition-all"
+        className="w-full flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-xl border border-emerald-200 hover:from-emerald-200 hover:to-teal-200 transition-all shadow-sm"
       >
-        <Globe className="w-5 h-5 text-emerald-400" />
-        <span className="text-white font-medium">View Global Impact Map</span>
+        <Globe className="w-5 h-5 text-emerald-600" />
+        <span className="text-slate-800 font-medium">View Global Impact Map</span>
       </button>
 
       {/* Project List */}
-      <div className="bg-slate-800/60 rounded-xl border border-slate-700/50 overflow-hidden">
-        <div className="p-3 border-b border-slate-700 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">Project Locations</h3>
-          <button onClick={() => navigate('/projects')} className="text-[10px] text-amber-400">View All</button>
+      <div className="bg-white rounded-xl border border-amber-200/60 shadow-sm overflow-hidden">
+        <div className="p-3 border-b border-amber-100 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-slate-800">Project Locations</h3>
+          <button onClick={() => navigate('/projects')} className="text-[10px] text-amber-600">View All</button>
         </div>
-        <div className="divide-y divide-slate-700/50 max-h-72 overflow-y-auto">
+        <div className="divide-y divide-amber-100/50 max-h-72 overflow-y-auto">
           {projects.slice(0, 10).map((p, idx) => (
-            <div key={idx} className="flex items-center gap-3 p-3 hover:bg-slate-700/30 transition-colors">
+            <div key={idx} className="flex items-center gap-3 p-3 hover:bg-amber-50/50 transition-colors">
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                p.status === 'Active' || p.status === 'In Progress' ? 'bg-emerald-500/20 text-emerald-400' :
-                p.status === 'Completed' ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'
+                p.status === 'Active' || p.status === 'In Progress' ? 'bg-emerald-100 text-emerald-600' :
+                p.status === 'Completed' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
               }`}>
                 <MapPin className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-white truncate">{p.name}</p>
-                <p className="text-[10px] text-gray-500">{p.region} • {p.employees} employees</p>
+                <p className="text-sm text-slate-800 truncate">{p.name}</p>
+                <p className="text-[10px] text-slate-500">{p.region} • {p.employees} employees</p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-emerald-400">{p.hours}h</p>
+                <p className="text-sm font-semibold text-emerald-600">{p.hours}h</p>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded ${
-                  p.status === 'Active' || p.status === 'In Progress' ? 'bg-emerald-500/20 text-emerald-400' :
-                  p.status === 'Completed' ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400'
+                  p.status === 'Active' || p.status === 'In Progress' ? 'bg-emerald-100 text-emerald-600' :
+                  p.status === 'Completed' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-500'
                 }`}>
                   {p.status}
                 </span>
@@ -968,21 +968,21 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
     <div className="p-4 space-y-4">
       {/* Quick Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-slate-700/50">
-          <p className="text-xl font-bold text-emerald-400">{csrData?.totalHours?.toLocaleString() || 0}</p>
-          <p className="text-[10px] text-gray-400">Total Hours</p>
+        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
+          <p className="text-xl font-bold text-emerald-600">{csrData?.totalHours?.toLocaleString() || 0}</p>
+          <p className="text-[10px] text-slate-500">Total Hours</p>
         </div>
-        <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-slate-700/50">
-          <p className="text-xl font-bold text-amber-400">${((csrData?.totalHours || 0) * 35).toLocaleString()}</p>
-          <p className="text-[10px] text-gray-400">Value</p>
+        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
+          <p className="text-xl font-bold text-amber-600">${((csrData?.totalHours || 0) * 35).toLocaleString()}</p>
+          <p className="text-[10px] text-slate-500">Value</p>
         </div>
-        <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-slate-700/50">
-          <p className="text-xl font-bold text-blue-400">{csrData?.activeEmployees || 0}</p>
-          <p className="text-[10px] text-gray-400">Volunteers</p>
+        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
+          <p className="text-xl font-bold text-blue-600">{csrData?.activeEmployees || 0}</p>
+          <p className="text-[10px] text-slate-500">Volunteers</p>
         </div>
-        <div className="bg-slate-800/60 rounded-xl p-3 text-center border border-slate-700/50">
-          <p className="text-xl font-bold text-purple-400">{csrData?.projectsCompleted || 0}</p>
-          <p className="text-[10px] text-gray-400">Projects</p>
+        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
+          <p className="text-xl font-bold text-purple-600">{csrData?.projectsCompleted || 0}</p>
+          <p className="text-[10px] text-slate-500">Projects</p>
         </div>
       </div>
 
@@ -990,27 +990,27 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {reports.map(r => {
           const colors: Record<string, string> = {
-            emerald: 'bg-emerald-500/10 border-emerald-500/30',
-            blue: 'bg-blue-500/10 border-blue-500/30',
-            amber: 'bg-amber-500/10 border-amber-500/30',
-            purple: 'bg-purple-500/10 border-purple-500/30',
+            emerald: 'bg-emerald-50 border-emerald-200',
+            blue: 'bg-blue-50 border-blue-200',
+            amber: 'bg-amber-50 border-amber-200',
+            purple: 'bg-purple-50 border-purple-200',
           };
           const textColors: Record<string, string> = {
-            emerald: 'text-emerald-400',
-            blue: 'text-blue-400',
-            amber: 'text-amber-400',
-            purple: 'text-purple-400',
+            emerald: 'text-emerald-600',
+            blue: 'text-blue-600',
+            amber: 'text-amber-600',
+            purple: 'text-purple-600',
           };
 
           return (
             <button
               key={r.id}
               onClick={() => navigate(r.path)}
-              className={`${colors[r.color]} border rounded-xl p-4 text-left hover:scale-[1.02] transition-transform active:scale-95`}
+              className={`${colors[r.color]} border rounded-xl p-4 text-left hover:scale-[1.02] transition-transform active:scale-95 shadow-sm`}
             >
               <r.icon className={`w-6 h-6 ${textColors[r.color]} mb-2`} />
-              <p className="text-white font-medium">{r.title}</p>
-              <p className="text-xs text-gray-400">{r.desc}</p>
+              <p className="text-slate-800 font-medium">{r.title}</p>
+              <p className="text-xs text-slate-500">{r.desc}</p>
             </button>
           );
         })}
@@ -1031,11 +1031,11 @@ function InsightsSection({ aiInsights, csrData }: { aiInsights: any; csrData: CS
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl p-4 border border-purple-500/30">
-        <Sparkles className="w-5 h-5 text-purple-400" />
+      <div className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 border border-purple-200 shadow-sm">
+        <Sparkles className="w-5 h-5 text-purple-600" />
         <div>
-          <h2 className="text-white font-semibold">AI-Powered Insights</h2>
-          <p className="text-xs text-gray-400">Data-driven recommendations</p>
+          <h2 className="text-slate-800 font-semibold">AI-Powered Insights</h2>
+          <p className="text-xs text-slate-500">Data-driven recommendations</p>
         </div>
       </div>
 
@@ -1043,10 +1043,10 @@ function InsightsSection({ aiInsights, csrData }: { aiInsights: any; csrData: CS
       <div className="space-y-3">
         {insights.map((i: any) => {
           const colors: Record<string, { bg: string; icon: string }> = {
-            opportunity: { bg: 'bg-emerald-500/10 border-emerald-500/30', icon: 'text-emerald-400' },
-            recommendation: { bg: 'bg-blue-500/10 border-blue-500/30', icon: 'text-blue-400' },
-            insight: { bg: 'bg-purple-500/10 border-purple-500/30', icon: 'text-purple-400' },
-            optimization: { bg: 'bg-amber-500/10 border-amber-500/30', icon: 'text-amber-400' },
+            opportunity: { bg: 'bg-emerald-50 border-emerald-200', icon: 'text-emerald-600' },
+            recommendation: { bg: 'bg-blue-50 border-blue-200', icon: 'text-blue-600' },
+            insight: { bg: 'bg-purple-50 border-purple-200', icon: 'text-purple-600' },
+            optimization: { bg: 'bg-amber-50 border-amber-200', icon: 'text-amber-600' },
           };
           const c = colors[i.type] || colors.insight;
           const icons: Record<string, any> = {
@@ -1058,23 +1058,23 @@ function InsightsSection({ aiInsights, csrData }: { aiInsights: any; csrData: CS
           const Icon = icons[i.type] || Info;
 
           return (
-            <div key={i.id} className={`${c.bg} border rounded-xl p-4`}>
+            <div key={i.id} className={`${c.bg} border rounded-xl p-4 shadow-sm`}>
               <div className="flex items-start gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.bg}`}>
                   <Icon className={`w-4 h-4 ${c.icon}`} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-white font-medium text-sm">{i.title}</p>
+                    <p className="text-slate-800 font-medium text-sm">{i.title}</p>
                     <span className={`text-[9px] px-1.5 py-0.5 rounded ${
-                      i.priority === 'high' ? 'bg-red-500/20 text-red-400' :
-                      i.priority === 'medium' ? 'bg-amber-500/20 text-amber-400' :
-                      'bg-emerald-500/20 text-emerald-400'
+                      i.priority === 'high' ? 'bg-red-100 text-red-600' :
+                      i.priority === 'medium' ? 'bg-amber-100 text-amber-600' :
+                      'bg-emerald-100 text-emerald-600'
                     }`}>
                       {i.priority}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400">{i.desc}</p>
+                  <p className="text-xs text-slate-500">{i.desc}</p>
                 </div>
               </div>
             </div>
@@ -1083,18 +1083,18 @@ function InsightsSection({ aiInsights, csrData }: { aiInsights: any; csrData: CS
       </div>
 
       {/* Best Practices */}
-      <div className="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-        <h3 className="text-sm font-semibold text-white mb-3">Visualization Tips</h3>
+      <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+        <h3 className="text-sm font-semibold text-slate-800 mb-3">Visualization Tips</h3>
         <div className="grid grid-cols-3 gap-2">
           {[
             { icon: BarChart3, label: 'Bar Charts', desc: 'Compare SDGs' },
             { icon: Activity, label: 'Line Charts', desc: 'Track trends' },
             { icon: Globe, label: 'Maps', desc: 'Show locations' },
           ].map((t, idx) => (
-            <div key={idx} className="bg-slate-700/30 rounded-lg p-2 text-center">
-              <t.icon className="w-5 h-5 text-gray-400 mx-auto mb-1" />
-              <p className="text-[10px] text-white font-medium">{t.label}</p>
-              <p className="text-[8px] text-gray-500">{t.desc}</p>
+            <div key={idx} className="bg-amber-50/50 rounded-lg p-2 text-center border border-amber-100/50">
+              <t.icon className="w-5 h-5 text-slate-500 mx-auto mb-1" />
+              <p className="text-[10px] text-slate-800 font-medium">{t.label}</p>
+              <p className="text-[8px] text-slate-500">{t.desc}</p>
             </div>
           ))}
         </div>

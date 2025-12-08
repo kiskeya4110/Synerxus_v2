@@ -428,7 +428,7 @@ export default function Dashboard() {
         sdgs: dashboardData?.sdgsAddressed || 0,
         impactScore: dashboardData?.impactScore || 0,
         skills: dashboardData?.volunteerProfile?.skills?.length || 0,
-        livesTouched: dashboardData?.totalPeopleImpacted || 0,
+        aiuEarned: dashboardData?.totalAiuEarned || dashboardData?.totalPeopleImpacted * 0.1 || 0,
       };
     }
     
@@ -808,7 +808,7 @@ export default function Dashboard() {
           totalScore: value,
         };
         break;
-      case "Lives Touched":
+      case "AIUs Earned":
         // Use projectImpacts data (real beneficiary data) instead of activities
         const beneficiariesByProject = new Map<string, { projectName: string; beneficiaries: number; volunteerCount: number; volunteers: Set<number> }>();
         const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
@@ -846,7 +846,7 @@ export default function Dashboard() {
           data.volunteerCount = data.volunteers.size;
         });
         
-        const totalBeneficiaries = kpis.livesTouched;
+        const totalBeneficiaries = kpis.aiuEarned;
         const totalActivities = filteredData.activities.length;
         const totalHoursForImpact = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
         const beneficiariesPerHour = totalHoursForImpact > 0 ? Math.ceil(totalBeneficiaries / totalHoursForImpact) : "0";
@@ -890,7 +890,7 @@ export default function Dashboard() {
         
         
         detailData = {
-          title: "Lives Touched - Impact Breakdown",
+          title: "AIU Breakdown - Impact Details",
           items: items,
           totalScore: totalBeneficiaries,
         };
@@ -1176,13 +1176,13 @@ export default function Dashboard() {
             </StaggerItem>
             <StaggerItem>
               <StatsCard
-              title="Lives Touched"
-              value={kpis.livesTouched}
-              icon={<Globe className="h-6 w-6" />}
-              onClick={() => handleKPIClick("Lives Touched", kpis.livesTouched)}
+              title="AIUs Earned"
+              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(1) : kpis.aiuEarned || 0}
+              icon={<TrendingUp className="h-6 w-6" />}
+              onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
               compact={true}
-              gradient="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600"
-              data-testid="kpi-lives-touched"
+              gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
+              data-testid="kpi-aiu-earned"
               />
             </StaggerItem>
           </>
@@ -1234,20 +1234,20 @@ export default function Dashboard() {
             </StaggerItem>
             <StaggerItem>
               <StatsCard
-              title="Lives Touched"
-              value={kpis.livesTouched}
-              icon={<Globe className="h-6 w-6" />}
-              onClick={() => handleKPIClick("Lives Touched", kpis.livesTouched)}
+              title="AIUs Earned"
+              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(1) : kpis.aiuEarned || 0}
+              icon={<TrendingUp className="h-6 w-6" />}
+              onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
               compact={true}
-              gradient="bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-600 dark:to-pink-600"
-              data-testid="kpi-lives-touched"
+              gradient="bg-gradient-to-br from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600"
+              data-testid="kpi-aiu-earned"
               />
             </StaggerItem>
           </>
         )}
       </StaggerContainer>
 
-      {/* Lives Touched Project Breakdown - Shows beneficiaries per project */}
+      {/* AIU Project Breakdown - Shows impact per project */}
       {(dashboardType === "volunteer" || dashboardType === "organization") && (() => {
         const beneficiariesByProjectId = new Map<number, { projectName: string; beneficiaries: number }>();
         const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
@@ -1289,7 +1289,7 @@ export default function Dashboard() {
         return projectsArray.length > 0 ? (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle className="text-sm">Lives Touched - By Project</CardTitle>
+              <CardTitle className="text-sm">AIU Breakdown - By Project</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -1473,13 +1473,13 @@ export default function Dashboard() {
             <DialogDescription>
               {selectedKPI?.title.includes("Impact Score") 
                 ? "Your impact score breakdown across multiple dimensions"
-                : selectedKPI?.title.includes("Lives Touched")
+                : selectedKPI?.title.includes("AIU")
                 ? "Total beneficiaries reached and impact efficiency metrics"
                 : `Detailed breakdown of ${selectedKPI?.title.toLowerCase()}`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {/* Impact Score Breakdown - Only show for actual Impact Score, not Lives Touched */}
+            {/* Impact Score Breakdown - Only show for actual Impact Score, not AIU */}
             {selectedKPI?.totalScore !== undefined && selectedKPI?.title.includes("Impact Score") && (
               <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
                 <div className="flex items-center justify-between">
@@ -1544,7 +1544,7 @@ export default function Dashboard() {
                 );
               }
               
-              // Category Header (for Lives Touched sections)
+              // Category Header (for AIU sections)
               if (isCategory) {
                 return (
                   <div key={index} className="p-4 bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700 mt-4" data-testid={`kpi-item-${index}`}>
@@ -1559,7 +1559,7 @@ export default function Dashboard() {
                 );
               }
               
-              // Highlight Item (for Lives Touched key metrics)
+              // Highlight Item (for AIU key metrics)
               if (isHighlight) {
                 return (
                   <div key={index} className="p-4 border-2 border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20" data-testid={`kpi-item-${index}`}>
@@ -1579,7 +1579,7 @@ export default function Dashboard() {
                 );
               }
               
-              // Project Group Item (for Lives Touched projects)
+              // Project Group Item (for AIU projects)
               if (item.isProjectGroup && item.description) {
                 return (
                   <div key={index} className="p-4 border border-blue-200 dark:border-blue-700 rounded-lg bg-blue-50 dark:bg-blue-900/20 hover:shadow-md transition-shadow" data-testid={`kpi-item-${index}`}>

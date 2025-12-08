@@ -1042,21 +1042,24 @@ export default function VolunteerProfileSettings() {
 
       // Invalidate related queries in background (non-blocking)
       // These will update the server state but won't interfere with the form
+      const logCacheError = (err: unknown) => {
+        if (process.env.NODE_ENV === 'development') console.warn('Cache invalidation failed:', err);
+      };
       queryClient
         .invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] })
-        .catch(() => {});
+        .catch(logCacheError);
       queryClient
         .invalidateQueries({ queryKey: ["/api/volunteers"] })
-        .catch(() => {});
+        .catch(logCacheError);
       queryClient
         .invalidateQueries({ queryKey: ["/api/users/me"] })
-        .catch(() => {});
+        .catch(logCacheError);
       queryClient
         .invalidateQueries({ queryKey: ["/api/dashboard/summary"] })
-        .catch(() => {});
+        .catch(logCacheError);
       queryClient
         .invalidateQueries({ queryKey: ["/api/opportunities/matches"] })
-        .catch(() => {});
+        .catch(logCacheError);
 
       toast({
         title: `Profile ${existingProfile ? "updated" : "created"}!`,

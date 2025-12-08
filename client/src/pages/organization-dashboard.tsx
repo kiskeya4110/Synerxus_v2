@@ -1,12 +1,14 @@
 import React from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { 
+import {
   FolderOpen, Clock, Target, Users, Plus,
-  ChevronDown, AlertTriangle, CheckSquare, TrendingUp, 
-  Lightbulb, MapPin, UserPlus, BarChart3, X
+  ChevronDown, AlertTriangle, CheckSquare, TrendingUp,
+  Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical,
+  Bell, Settings, User, LogOut, FileText
 } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -60,7 +62,7 @@ interface DashboardData {
     totalProjects: number;
     totalHours: number;
     sdgsAddressed: number;
-    livesTouched: number;
+    aiuEarned: number; // Replaced livesTouched with AIU
     activeVolunteers: number;
   };
   sdgDistribution: Array<{ goal: number; hours: number; projects: number; volunteers: number }>;
@@ -89,6 +91,8 @@ const TIME_PERIODS = [
 
 export default function OrganizationDashboard() {
   const [, navigate] = useLocation();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
   const userType = localStorage.getItem('userType');
   const userId = localStorage.getItem('currentUserId');
 
@@ -96,8 +100,9 @@ export default function OrganizationDashboard() {
   const [timePeriod, setTimePeriod] = useState('all');
   const [sdgFilter, setSdgFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | null>(null);
+  const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | 'aiu' | null>(null);
   const [hoveredSDG, setHoveredSDG] = useState<number | null>(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   if (userType !== 'organization') {
     if (userType === 'volunteer') {
@@ -183,7 +188,7 @@ export default function OrganizationDashboard() {
 
   // Memoized computed values
   const metrics = useMemo(() =>
-    dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, livesTouched: 0, activeVolunteers: 0, totalProjects: 0 },
+    dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, aiuEarned: 0, activeVolunteers: 0, totalProjects: 0 },
     [dashboardData?.keyMetrics]
   );
 
@@ -258,14 +263,187 @@ export default function OrganizationDashboard() {
         </div>
       </div>
 
-      {/* Mobile Dashboard Header */}
-      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0, marginBottom: '4px' }}>
-          Organization Dashboard
-        </h1>
-        <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
-          Welcome to {organization?.name || organizationProfile?.organizationName || 'Synerxus'} - volunteers organization.
-        </p>
+      {/* Mobile Dashboard Header with Three-Dot Menu */}
+      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0, marginBottom: '4px' }}>
+            Organization Dashboard
+          </h1>
+          <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
+            Welcome to {organization?.name || organizationProfile?.organizationName || 'Synerxus'}
+          </p>
+        </div>
+        {/* Three-Dot Menu Button */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            data-testid="mobile-menu-trigger"
+            style={{
+              padding: '8px',
+              backgroundColor: showMobileMenu ? '#f3f4f6' : 'transparent',
+              border: 'none',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <MoreVertical size={20} color="#374151" />
+          </button>
+
+          {/* Mobile Dropdown Menu */}
+          {showMobileMenu && (
+            <>
+              {/* Backdrop */}
+              <div
+                onClick={() => setShowMobileMenu(false)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 40,
+                }}
+              />
+              {/* Menu */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '4px',
+                  backgroundColor: 'white',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+                  border: '1px solid #e5e7eb',
+                  minWidth: '200px',
+                  zIndex: 50,
+                  overflow: 'hidden',
+                }}
+              >
+                <button
+                  onClick={() => { navigate('/notifications'); setShowMobileMenu(false); }}
+                  data-testid="mobile-menu-notifications"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Bell size={18} color="#6b7280" />
+                  Notifications
+                </button>
+                <button
+                  onClick={() => { navigate('/applications'); setShowMobileMenu(false); }}
+                  data-testid="mobile-menu-applications"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    textAlign: 'left',
+                  }}
+                >
+                  <FileText size={18} color="#6b7280" />
+                  Applications
+                </button>
+                <button
+                  onClick={() => { navigate('/organization-profile-settings'); setShowMobileMenu(false); }}
+                  data-testid="mobile-menu-settings"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    textAlign: 'left',
+                  }}
+                >
+                  <Settings size={18} color="#6b7280" />
+                  Settings
+                </button>
+                <button
+                  onClick={() => { navigate('/profile'); setShowMobileMenu(false); }}
+                  data-testid="mobile-menu-profile"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid #f3f4f6',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '14px',
+                    color: '#374151',
+                    textAlign: 'left',
+                  }}
+                >
+                  <User size={18} color="#6b7280" />
+                  Profile
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await signOut();
+                      toast({
+                        title: "Signed out successfully",
+                        description: "You have been signed out of your account.",
+                      });
+                      setShowMobileMenu(false);
+                      navigate('/landing');
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to sign out. Please try again.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  data-testid="mobile-menu-logout"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    fontSize: '14px',
+                    color: '#dc2626',
+                    textAlign: 'left',
+                  }}
+                >
+                  <LogOut size={18} color="#dc2626" />
+                  Logout
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Mobile Metrics Grid - 2x2 at top */}
@@ -273,11 +451,11 @@ export default function OrganizationDashboard() {
         activeProjects={metrics.activeProjects} 
         totalHours={metrics.totalHours} 
         sdgsAddressed={metrics.sdgsAddressed} 
-        livesTouched={metrics.livesTouched}
+        aiuEarned={metrics.aiuEarned}
         onActiveProjectsClick={() => setActiveModal('projects')}
         onTotalHoursClick={() => setActiveModal('hours')}
         onSdgsClick={() => setActiveModal('sdgs')}
-        onLivesTouchedClick={() => setActiveModal('lives')}
+        onAiuClick={() => setActiveModal('aiu')}
       />}
 
       {/* Main Content */}
@@ -576,13 +754,12 @@ export default function OrganizationDashboard() {
           />
           <MetricCard
             icon={<Users size={24} />}
-            label="Lives Touched"
-            value={metrics.livesTouched}
-            color="#dc2626"
-            testId="metric-lives"
+            label="AIUs Earned"
+            value={typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}
+            color="#10b981"
+            testId="metric-aiu"
             onClick={() => {
-              setActiveModal('lives');
-              dashboardData?.projects?.sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0));
+              setActiveModal('aiu');
             }}
           />
         </div>
@@ -1260,13 +1437,13 @@ export default function OrganizationDashboard() {
         />
       )}
       
-      {activeModal === 'lives' && (
+      {activeModal === 'aiu' && (
         <MetricsModal
-          title="Lives Touched"
+          title="Attributable Impact Units (AIUs)"
           onClose={() => setActiveModal(null)}
-          type="lives"
-          data={dashboardData?.projects?.slice(0, 10).sort((a: any, b: any) => (b.livesTouched || 0) - (a.livesTouched || 0)) || []}
-          color="#dc2626"
+          type="aiu"
+          data={dashboardData?.projects?.slice(0, 10) || []}
+          color="#10b981"
         />
       )}
 
@@ -1337,8 +1514,9 @@ export default function OrganizationDashboard() {
   );
 }
 
-function MetricCard({ icon, label, value, color, testId, onClick }: { icon: React.ReactNode; label: string; value: number; color: string; testId: string; onClick?: () => void }) {
+function MetricCard({ icon, label, value, color, testId, onClick }: { icon: React.ReactNode; label: string; value: number | string; color: string; testId: string; onClick?: () => void }) {
   const [isHovered, setIsHovered] = useState(false);
+  const displayValue = typeof value === 'number' ? value.toLocaleString() : value;
   return (
     <button
       type="button"
@@ -1346,7 +1524,7 @@ function MetricCard({ icon, label, value, color, testId, onClick }: { icon: Reac
       onTouchEnd={(e) => { if (onClick) { e.preventDefault(); onClick(); } }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      aria-label={`${label}: ${value.toLocaleString()}`}
+      aria-label={`${label}: ${displayValue}`}
       className="metric-card-btn"
       style={{
         backgroundColor: isHovered ? `${color}05` : 'white',
@@ -1374,7 +1552,7 @@ function MetricCard({ icon, label, value, color, testId, onClick }: { icon: Reac
         {icon}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-        <p style={{ fontSize: '24px', fontWeight: 'bold', color, margin: 0 }}>{value.toLocaleString()}</p>
+        <p style={{ fontSize: '24px', fontWeight: 'bold', color, margin: 0 }}>{displayValue}</p>
         <p style={{ fontSize: '12px', color: '#6b7280', margin: 0, lineHeight: '1.2' }}>{label}</p>
       </div>
     </button>
@@ -1479,7 +1657,7 @@ function QuickActionButton({ icon, label, onClick, testId }: { icon: React.React
 interface MetricsModalProps {
   title: string;
   onClose: () => void;
-  type: 'projects' | 'hours' | 'sdgs' | 'lives';
+  type: 'projects' | 'hours' | 'sdgs' | 'lives' | 'aiu';
   data?: any[];
   totalHours?: number;
   volunteers?: any[];
@@ -1681,8 +1859,8 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                         <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{project.name}</h4>
                         <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Status: {project.status}</p>
                       </div>
-                      <span style={{ padding: '4px 12px', backgroundColor: color, color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', marginLeft: '8px' }}>
-                        {project.livesTouched || 0} lives
+                      <span style={{ padding: '4px 12px', backgroundColor: '#10b981', color: 'white', borderRadius: '12px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', marginLeft: '8px' }}>
+                        {(project.aiuEarned || 0).toFixed(1)} AIUs
                       </span>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginTop: '12px' }}>

@@ -107,7 +107,10 @@ export default function OpportunityDetailPWA() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="text-base font-semibold">Synerxus</h1>
+        <h1 className="text-base font-semibold">
+          <span style={{ color: '#ffffff' }}>SYNER</span>
+          <span style={{ color: '#FFB84D' }}>XUS</span>
+        </h1>
         <div className="w-10" />
       </div>
 

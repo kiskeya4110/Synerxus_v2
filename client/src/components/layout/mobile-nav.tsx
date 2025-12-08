@@ -21,6 +21,22 @@ export default function MobileNav() {
     enabled: !!userId
   });
 
+  // Routes that have their own complete navigation - don't show MobileNav here
+  const standaloneRoutes = [
+    '/volunteer-dashboard',
+    '/csr-dashboard',
+    '/csr-dashboard-pwa',
+    '/organization-dashboard',
+    '/discover-opportunities/pwa',
+    '/landing',
+    '/login',
+    '/'
+  ];
+
+  const isStandaloneRoute = standaloneRoutes.some(route =>
+    location === route || location.startsWith(route + '/') || (route !== '/' && location.startsWith(route))
+  );
+
   const isOrganization = currentUser?.userType === 'organization';
 
   const volunteerNavItems = [
@@ -40,6 +56,11 @@ export default function MobileNav() {
   ];
 
   const navItems = isOrganization ? organizationNavItems : volunteerNavItems;
+
+  // Don't render on standalone routes - use conditional rendering instead of early return
+  if (isStandaloneRoute) {
+    return null;
+  }
 
   return (
     <>

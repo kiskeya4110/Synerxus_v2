@@ -226,8 +226,9 @@ export default function LogActivity() {
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
-            <span className="font-bold text-base bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-              SYNERXUS
+            <span className="font-bold text-base">
+              <span style={{ color: '#ffffff' }}>SYNER</span>
+              <span style={{ color: '#FFB84D' }}>XUS</span>
             </span>
           </button>
           <div className="flex items-center gap-2 relative">
@@ -249,7 +250,7 @@ export default function LogActivity() {
                   <div className="py-2">
                     <button
                       onClick={() => {
-                        setLocation('/dashboard');
+                        setLocation('/volunteer-dashboard');
                         setShowMenu(false);
                       }}
                       className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
@@ -573,20 +574,31 @@ export default function LogActivity() {
                 </Popover>
               </div>
 
-              {/* People Reached */}
+              {/* Lives Impacted */}
               <div className="space-y-2">
-                <Label htmlFor="peopleReached" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
-                  People Reached <span className="text-red-500">*</span>
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="peopleReached" className={isMobile && isVolunteer ? 'text-gray-200' : ''}>
+                    Lives Impacted <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="relative group">
+                    <HelpCircle className={`w-4 h-4 cursor-help ${isMobile && isVolunteer ? 'text-gray-400' : 'text-gray-500'}`} />
+                    <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 p-2 bg-slate-800 text-white text-xs rounded-lg shadow-lg z-50">
+                      This number feeds into Attributable Impact Units (AIUs) calculation. AIU Unique counts each beneficiary once per reporting window and maps to SDG indicators.
+                    </div>
+                  </div>
+                </div>
                 <Input
                   id="peopleReached"
                   type="number"
                   min="1"
                   value={peopleReached}
                   onChange={(e) => setPeopleReached(e.target.value)}
-                  placeholder="e.g., 50"
+                  placeholder="e.g., 50 people directly served"
                   className={isMobile && isVolunteer ? 'bg-[#1a1a2e] border-gray-600 text-white placeholder:text-gray-400' : ''}
                 />
+                <p className={`text-xs ${isMobile && isVolunteer ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Enter the number of unique individuals you directly served or helped during this activity.
+                </p>
               </div>
 
               {/* Impact Category */}

@@ -11,7 +11,10 @@ export default function Footer() {
           {/* Brand & Links Section */}
           <div className="space-y-2">
             <div>
-              <h3 className="text-sm font-bold text-white mb-0.5">Synerxus</h3>
+              <h3 className="text-sm font-bold mb-0.5">
+              <span className="text-white">SYNER</span>
+              <span style={{ color: '#FFB84D' }}>XUS</span>
+            </h3>
               <p className="text-[11px] text-gray-400">
                 Connect. Manage. Impact Globally.
               </p>

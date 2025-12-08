@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { TrendingUp, Users, DollarSign, Globe, CheckCircle, ArrowLeft, Download, Zap, AlertCircle, Target } from "lucide-react";
-import { useState } from "react";
+import { TrendingUp, Users, DollarSign, Globe, CheckCircle, ArrowLeft, Download, Zap, AlertCircle, Target, Clock, FolderKanban, ChevronRight } from "lucide-react";
+import { useState, useEffect } from "react";
 import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
 import Footer from "@/components/layout/footer";
 import Logo from "@/components/ui/logo";
+import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 
 interface ComplianceCalculation {
   engagementScore: number;
@@ -117,8 +118,17 @@ export function CSRImpactReporting() {
   const [, navigate] = useLocation();
   const [selectedTab, setSelectedTab] = useState("executive");
   const [isExporting, setIsExporting] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const userId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   const { data: impactData, isLoading } = useQuery<ImpactData>({
     queryKey: ["/api/csr/impact-reporting", userId],
@@ -179,7 +189,7 @@ export function CSRImpactReporting() {
         ["", "", "", ""],
         ["IMPACT METRICS", "", "", ""],
         ["Direct Beneficiaries", impactData.impactMetrics.directBeneficiaries, "", ""],
-        ["Lives Touched", impactData.impactMetrics.estimatedLivesTouched, "", ""],
+        ["AIUs Earned", impactData.impactMetrics.estimatedLivesTouched, "", ""],
         ["", "", "", ""],
         ["FINANCIAL METRICS", "", "", ""],
         ["Volunteer Hour Value", `$${impactData.financialMetrics.volunteerHourValue.toLocaleString()}`, "", ""],
@@ -308,6 +318,134 @@ export function CSRImpactReporting() {
     </div>
   );
 
+  // Mobile PWA View
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex flex-col max-w-[428px] mx-auto">
+        <CSRMobileHeader title="Impact Report" companyName={companyName} showBackButton onBack={() => navigate('/csr-dashboard')} />
+
+        <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
+          {/* KPI Summary */}
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="bg-gradient-to-br from-blue-600/30 to-blue-800/30 rounded-lg p-3 border border-blue-500/30">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-blue-300" />
+                <span className="text-blue-300 text-[10px]">Total Hours</span>
+              </div>
+              <div className="text-white text-xl font-bold mt-1">{impactData?.engagementMetrics?.totalHours?.toLocaleString() || 0}</div>
+            </div>
+            <div className="bg-gradient-to-br from-emerald-600/30 to-emerald-800/30 rounded-lg p-3 border border-emerald-500/30">
+              <div className="flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-emerald-300" />
+                <span className="text-emerald-300 text-[10px]">Employees</span>
+              </div>
+              <div className="text-white text-xl font-bold mt-1">{impactData?.engagementMetrics?.activeEmployees || 0}</div>
+            </div>
+            <div className="bg-gradient-to-br from-purple-600/30 to-purple-800/30 rounded-lg p-3 border border-purple-500/30">
+              <div className="flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5 text-purple-300" />
+                <span className="text-purple-300 text-[10px]">AIUs Earned</span>
+              </div>
+              <div className="text-white text-xl font-bold mt-1">{impactData?.impactMetrics?.estimatedLivesTouched || 0}</div>
+            </div>
+            <div className="bg-gradient-to-br from-amber-600/30 to-amber-800/30 rounded-lg p-3 border border-amber-500/30">
+              <div className="flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-amber-300" />
+                <span className="text-amber-300 text-[10px]">ROI</span>
+              </div>
+              <div className="text-white text-xl font-bold mt-1">{impactData?.financialMetrics?.roi || 0}%</div>
+            </div>
+          </div>
+
+          {/* Compliance Scores */}
+          <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700 mb-3">
+            <h3 className="text-white text-sm font-semibold mb-2">Compliance Scores</h3>
+            <div className="space-y-2">
+              {[
+                { name: 'B-Corp', score: bCorpCalc.score, threshold: 80 },
+                { name: 'GRI', score: griScore, threshold: 70 },
+                { name: 'ISO 26000', score: isoScore, threshold: 75 },
+                { name: 'SASB', score: sasbScore, threshold: 75 },
+                { name: 'ESG Rating', score: esGRating, threshold: 75 },
+              ].map((item) => (
+                <div key={item.name} className="flex items-center gap-2">
+                  <div className="w-16 text-[10px] text-gray-400">{item.name}</div>
+                  <div className="flex-1 h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${item.score >= item.threshold ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                      style={{ width: `${Math.min(item.score, 100)}%` }}
+                    />
+                  </div>
+                  <div className={`text-xs font-bold ${item.score >= item.threshold ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {Math.round(item.score)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Benchmarks */}
+          <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700 mb-3">
+            <h3 className="text-white text-sm font-semibold mb-2">Key Metrics vs Benchmarks</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-[10px]">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left text-gray-400 pb-1.5 font-medium">Metric</th>
+                    <th className="text-right text-gray-400 pb-1.5 font-medium">Value</th>
+                    <th className="text-right text-gray-400 pb-1.5 font-medium">Benchmark</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-gray-700/50">
+                    <td className="py-1.5 text-gray-300">Participation</td>
+                    <td className="py-1.5 text-emerald-400 font-medium text-right">{impactData?.engagementMetrics?.participationRate || 0}%</td>
+                    <td className="py-1.5 text-gray-400 text-right">{impactData?.benchmarks?.participationRateBenchmark || 0}%</td>
+                  </tr>
+                  <tr className="border-b border-gray-700/50">
+                    <td className="py-1.5 text-gray-300">Avg Hours/Emp</td>
+                    <td className="py-1.5 text-blue-400 font-medium text-right">{impactData?.engagementMetrics?.avgHoursPerEmployee || 0}h</td>
+                    <td className="py-1.5 text-gray-400 text-right">{impactData?.benchmarks?.avgHoursPerEmployeeBenchmark || 0}h</td>
+                  </tr>
+                  <tr>
+                    <td className="py-1.5 text-gray-300">Cost/Beneficiary</td>
+                    <td className="py-1.5 text-amber-400 font-medium text-right">${impactData?.financialMetrics?.costPerBeneficiary || 0}</td>
+                    <td className="py-1.5 text-gray-400 text-right">${impactData?.benchmarks?.costPerBeneficiaryBenchmark || 0}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Export Buttons */}
+          <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+            <h3 className="text-white text-sm font-semibold mb-2">Export Report</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={exportToPDF}
+                disabled={isExporting}
+                className="flex-1 p-2.5 rounded-lg bg-blue-600 text-white text-xs font-medium flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Download className="w-3.5 h-3.5" />
+                PDF
+              </button>
+              <button
+                onClick={exportToCSV}
+                disabled={isExporting}
+                className="flex-1 p-2.5 rounded-lg bg-emerald-600 text-white text-xs font-medium flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <Download className="w-3.5 h-3.5" />
+                CSV
+              </button>
+            </div>
+          </div>
+        </main>
+
+        <CSRMobileNav activeTab="reports" />
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", backgroundColor: "#f9fafb", overflow: "hidden" }}>
       {/* Header */}
@@ -350,7 +488,7 @@ export function CSRImpactReporting() {
         <div style={{ marginBottom: "40px", display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px" }}>
           <KPICard label="Total Hours" value={impactData?.engagementMetrics.totalHours || 0} unit="hrs" icon="⏱️" color="#1e3a8a" />
           <KPICard label="Employees" value={impactData?.engagementMetrics.activeEmployees || 0} unit="active" icon="👥" color="#059669" />
-          <KPICard label="Lives Touched" value={impactData?.impactMetrics.estimatedLivesTouched || 0} unit="people" icon="❤️" color="#8b5cf6" />
+          <KPICard label="AIUs Earned" value={impactData?.impactMetrics.estimatedLivesTouched || 0} unit="impact" icon="📊" color="#8b5cf6" />
           <KPICard label="Economic Value" value={`$${Math.round((impactData?.financialMetrics.volunteerHourValue || 0) / 1000)}K`} unit="generated" icon="💰" color="#f59e0b" />
           <KPICard label="ROI" value={`${impactData?.financialMetrics.roi || 0}%`} unit="return" icon="📈" color="#059669" />
           <KPICard label="ESG Rating" value={Math.round(esGRating)} unit="/ 100" icon="✨" color="#f97316" />
@@ -437,7 +575,7 @@ export function CSRImpactReporting() {
               <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "2px solid #8b5cf6" }}>
                 <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#5b21b6", marginBottom: "16px" }}>Impact Efficiency</h3>
                 <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "12px", color: "#5b21b6", marginBottom: "4px" }}>Lives Touched</div>
+                  <div style={{ fontSize: "12px", color: "#5b21b6", marginBottom: "4px" }}>AIUs Earned</div>
                   <div style={{ fontSize: "32px", fontWeight: "bold", color: "#8b5cf6" }}>{impactData?.impactMetrics.estimatedLivesTouched || 0}</div>
                 </div>
                 <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: "12px" }}>

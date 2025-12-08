@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings } from "lucide-react";
+import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, MoreVertical, ClipboardList, Calendar, LogOut } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
@@ -59,6 +59,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [showKpiModal, setShowKpiModal] = useState<string | null>(null);
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -87,7 +88,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     ).length;
     const totalProjects = safeProjects.length;
     const livesImpacted = Number(dashboardData?.totalPeopleImpacted) ||
-      safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesTouched) || 0), 0);
+      safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesImpacted) || Number(p?.livesTouched) || 0), 0);
     const skills = Array.isArray(volunteerProfile?.skills) ? volunteerProfile.skills.length : 0;
 
     // SDG Impact: Only count unique SDGs from actual projects (not profile commitments)
@@ -316,11 +317,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
-          <span className="font-bold text-base bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-            SYNERXUS
+          <span className="font-bold text-base">
+            <span style={{ color: '#ffffff' }}>SYNER</span>
+            <span style={{ color: '#FFB84D' }}>XUS</span>
           </span>
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => navigate('/volunteer-messages')}
             className="p-2 hover:bg-white/10 rounded-full"
@@ -328,6 +330,78 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           >
             <MessageCircle className="w-5 h-5" />
           </button>
+
+          {/* Three-Dot Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 hover:bg-white/10 rounded-full"
+              data-testid="mobile-menu-trigger"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showMobileMenu && (
+              <>
+                {/* Backdrop to close menu */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowMobileMenu(false)}
+                />
+                <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a2e] border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
+                  <button
+                    onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <ClipboardList className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm">My Work</span>
+                  </button>
+                  <button
+                    onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <Clock className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm">Log Activity</span>
+                  </button>
+                  <button
+                    onClick={() => { navigate('/discover-opportunities'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <Search className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm">Find Opportunities</span>
+                  </button>
+                  <button
+                    onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4 text-green-400" />
+                    <span className="text-sm">Calendar</span>
+                  </button>
+                  <div className="border-t border-gray-700 my-1"></div>
+                  <button
+                    onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm">Settings</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('currentUserId');
+                      localStorage.removeItem('userType');
+                      navigate('/login');
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-sm">Logout</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -523,7 +597,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-0.5 bg-[#E91E63]"></div>
-                          <span className="text-gray-400">Lives Impacted</span>
+                          <span className="text-gray-400">AIUs Earned</span>
                         </div>
                       </div>
                       <div className="h-40">
@@ -755,8 +829,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       
                       <div className="flex items-center gap-3 text-xs text-gray-400">
                         <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          <span>{project.livesTouched || 0} lives</span>
+                          <TrendingUp className="w-3 h-3" />
+                          <span>{project.aiuEarned?.toFixed(1) || project.livesImpacted || 0} AIUs</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
@@ -1046,7 +1120,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#E91E63]"></div>
-                        <span className="text-gray-400">Lives Impacted</span>
+                        <span className="text-gray-400">AIUs Earned</span>
                       </div>
                     </div>
                     <div className="h-32">
@@ -1297,7 +1371,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="text-sm text-gray-300 space-y-2">
                       <div className="flex justify-between">
                         <span>Impact Generated:</span>
-                        <span className="text-emerald-400 font-semibold">{Math.floor(kpis.totalHours * 2.5)} lives touched</span>
+                        <span className="text-emerald-400 font-semibold">{(kpis.totalHours * 0.15).toFixed(1)} AIUs estimated</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Across Projects:</span>
@@ -1458,8 +1532,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           <span>{project.totalHoursLogged || 0} hrs</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Heart className="w-3 h-3" />
-                          <span>{project.livesTouched || 0} lives</span>
+                          <TrendingUp className="w-3 h-3" />
+                          <span>{project.aiuEarned?.toFixed(1) || project.livesImpacted || 0} AIUs</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Users className="w-3 h-3" />
@@ -1532,8 +1606,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                               <span>{project.totalHoursLogged || 0} hrs</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <Heart className="w-3 h-3" />
-                              <span>{project.livesTouched || 0} lives</span>
+                              <TrendingUp className="w-3 h-3" />
+                              <span>{project.aiuEarned?.toFixed(1) || project.livesImpacted || 0} AIUs</span>
                             </div>
                           </div>
                         </div>
@@ -1575,8 +1649,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       <span className="text-blue-400 font-semibold">{kpis.totalHours}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Lives Touched:</span>
-                      <span className="text-pink-400 font-semibold">{kpis.livesImpacted}</span>
+                      <span className="text-gray-400">AIUs Earned:</span>
+                      <span className="text-emerald-400 font-semibold">{typeof kpis.livesImpacted === 'number' ? kpis.livesImpacted.toFixed(1) : kpis.livesImpacted}</span>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -1658,13 +1732,16 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       )}
 
       {/* Bottom Navigation - Internal Tab Switching */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
         <div className="flex justify-around items-center">
           <button
+            type="button"
             onClick={() => setActiveTab('dashboard')}
+            onTouchEnd={(e) => { e.preventDefault(); setActiveTab('dashboard'); }}
             className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
               activeTab === 'dashboard' ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200'
             }`}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-home"
           >
             <Home className="w-5 h-5 mb-1" />
@@ -1672,10 +1749,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('projects')}
+            onTouchEnd={(e) => { e.preventDefault(); setActiveTab('projects'); }}
             className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
               activeTab === 'projects' ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200'
             }`}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-projects"
           >
             <Briefcase className="w-5 h-5 mb-1" />
@@ -1683,10 +1763,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('potential')}
+            onTouchEnd={(e) => { e.preventDefault(); setActiveTab('potential'); }}
             className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
               activeTab === 'potential' ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200'
             }`}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-insights"
           >
             <Lightbulb className="w-5 h-5 mb-1" />
@@ -1694,10 +1777,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('impacts')}
+            onTouchEnd={(e) => { e.preventDefault(); setActiveTab('impacts'); }}
             className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
               activeTab === 'impacts' ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200'
             }`}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-impact"
           >
             <BarChart3 className="w-5 h-5 mb-1" />
@@ -1705,10 +1791,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('profile')}
+            onTouchEnd={(e) => { e.preventDefault(); setActiveTab('profile'); }}
             className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
               activeTab === 'profile' ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200'
             }`}
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             data-testid="nav-profile"
           >
             <User className="w-5 h-5 mb-1" />

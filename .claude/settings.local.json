@@ -28,7 +28,9 @@
       "Bash(ls:*)",
       "Bash(npm i:*)",
       "Bash(sort:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(tree:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

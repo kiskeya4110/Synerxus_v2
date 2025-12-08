@@ -19,7 +19,31 @@ import {
   Sparkles,
   Send,
   Target,
+  Clock,
+  FolderKanban,
+  TrendingUp,
+  Activity,
 } from "lucide-react";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Cell,
+  PieChart,
+  Pie,
+  LineChart,
+  Line,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
@@ -198,6 +222,12 @@ export default function CSRDashboard() {
   // Map filters for geographic view
   const [selectedMapRegion, setSelectedMapRegion] = useState<string>("all");
   const [selectedMapStatus, setSelectedMapStatus] = useState<string>("all");
+
+  // SDG Alignment drill-down modals
+  const [showActiveSDGsModal, setShowActiveSDGsModal] = useState(false);
+  const [showTotalHoursModal, setShowTotalHoursModal] = useState(false);
+  const [showEmployeesModal, setShowEmployeesModal] = useState(false);
+  const [showExpansionInsightsModal, setShowExpansionInsightsModal] = useState(false);
 
   // Engagement tips confirmation dialog
   const [showEngagementTipsDialog, setShowEngagementTipsDialog] = useState(false);
@@ -459,14 +489,21 @@ export default function CSRDashboard() {
     0,
   );
 
-  // Build SDG chart data from real metrics - only include SDGs with actual hours
+  // Get organization's committed SDGs first (needed for filtering)
+  const committedSDGsList = csrData?.primarySdgs || [];
+
+  // Build SDG chart data from real metrics - ONLY show SDGs in corporate commitments
   // Sort numerically by SDG goal number (1-17)
   const sdgChartData = sdgMetrics
-    .filter((metric) => metric.totalHours > 0) // Only show SDGs with real hours
+    .filter((metric) => committedSDGsList.includes(metric.sdg)) // Only show committed SDGs
     .map((metric) => {
+      // Calculate percentage based only on committed SDGs total hours
+      const committedTotalHours = sdgMetrics
+        .filter(m => committedSDGsList.includes(m.sdg))
+        .reduce((sum, m) => sum + (m.totalHours || 0), 0);
       const percentage =
-        totalSDGHours > 0
-          ? Math.round((metric.totalHours / totalSDGHours) * 100)
+        committedTotalHours > 0
+          ? Math.round((metric.totalHours / committedTotalHours) * 100)
           : 0;
       return {
         name: getSDGName(metric.sdg),
@@ -480,6 +517,38 @@ export default function CSRDashboard() {
       };
     })
     .sort((a, b) => a.goal - b.goal);
+
+  // Also build chart data for committed SDGs that have no hours yet (to show as 0%)
+  const committedSDGsWithoutData = committedSDGsList
+    .filter((sdg: number) => !sdgMetrics.some(m => m.sdg === sdg && m.totalHours > 0))
+    .map((sdg: number) => ({
+      name: getSDGName(sdg),
+      fullName: getSDGFullName(sdg),
+      value: 0,
+      color: getSDGColor(sdg),
+      goal: sdg,
+      hours: 0,
+      employees: 0,
+      projects: 0,
+    }));
+
+  // Combine and sort all committed SDGs
+  const allCommittedSDGChartData = [...sdgChartData, ...committedSDGsWithoutData]
+    .sort((a, b) => a.goal - b.goal);
+
+  // Get SDGs where employees are working but NOT in corporate commitments (for AI expansion insights)
+  const employeeActivityOutsideCommitments = sdgMetrics
+    .filter((metric) => !committedSDGsList.includes(metric.sdg) && metric.totalHours > 0)
+    .map((metric) => ({
+      sdg: metric.sdg,
+      name: getSDGName(metric.sdg),
+      fullName: getSDGFullName(metric.sdg),
+      color: getSDGColor(metric.sdg),
+      hours: metric.totalHours,
+      employees: metric.uniqueEmployees,
+      projects: metric.projectsContributed,
+    }))
+    .sort((a, b) => b.hours - a.hours); // Sort by most hours
 
   // Default SDG data if none exists - sorted numerically by goal number
   const defaultSdgData = [
@@ -555,12 +624,34 @@ export default function CSRDashboard() {
     },
   ];
 
-  // Only show chart data if there's real employee engagement, otherwise show placeholder
-  const chartData = sdgChartData.length > 0 ? sdgChartData : defaultSdgData;
+  // Only show chart data for committed SDGs, with placeholder if no commitments set
+  const chartData = allCommittedSDGChartData.length > 0 ? allCommittedSDGChartData : defaultSdgData;
 
   // ===== SDG COMMITMENT & AI INSIGHTS =====
-  // Get organization's committed SDGs
-  const committedSDGs = csrData?.primarySdgs || [];
+  // Use committedSDGsList defined earlier
+  const committedSDGs = committedSDGsList;
+
+  // Calculate totals for ONLY committed SDGs
+  const committedSDGHours = sdgMetrics
+    .filter(m => committedSDGs.includes(m.sdg))
+    .reduce((sum, m) => sum + (m.totalHours || 0), 0);
+
+  const committedSDGEmployees = new Set(
+    sdgMetrics
+      .filter(m => committedSDGs.includes(m.sdg))
+      .flatMap((m: any) => safeMap(m.employees, (emp: any) => emp.email))
+  ).size;
+
+  const committedSDGProjects = new Set(
+    sdgMetrics
+      .filter(m => committedSDGs.includes(m.sdg))
+      .flatMap((m: any) => safeMap(m.projects, (proj: any) => proj.id))
+  ).size;
+
+  // Count active SDGs (committed SDGs with hours logged)
+  const activeCommittedSDGs = sdgMetrics
+    .filter(m => committedSDGs.includes(m.sdg) && m.totalHours > 0)
+    .length;
 
   // Get SDGs that employees are actually working on
   const employeeUsedSDGs = new Set(
@@ -664,65 +755,135 @@ export default function CSRDashboard() {
     setDateRange("all");
   };
 
+  // Mobile PWA View - Prepare radar chart data for SDG progress
+  const mobileRadarData = sdgMetrics.slice(0, 8).map((metric: any) => ({
+    sdg: `SDG ${metric.sdg}`,
+    hours: metric.totalHours,
+    employees: metric.uniqueEmployees * 10, // Scale for visibility
+    projects: metric.projectsContributed * 20, // Scale for visibility
+    fullMark: Math.max(totalSDGHours / 2, 100),
+  }));
+
+  // Prepare bar chart data for top SDGs
+  const mobileBarData = sdgMetrics.slice(0, 6).map((metric: any) => ({
+    name: getSDGName(metric.sdg).substring(0, 8),
+    sdg: metric.sdg,
+    hours: metric.totalHours,
+    employees: metric.uniqueEmployees,
+    projects: metric.projectsContributed,
+    color: getSDGColor(metric.sdg),
+  }));
+
+  // Prepare trend data for line chart (simulated monthly progression)
+  const mobileTrendData = [
+    { month: 'Jan', hours: Math.round(displayTotalHours * 0.1), employees: Math.round(displayActiveEmployees * 0.3) },
+    { month: 'Feb', hours: Math.round(displayTotalHours * 0.2), employees: Math.round(displayActiveEmployees * 0.4) },
+    { month: 'Mar', hours: Math.round(displayTotalHours * 0.35), employees: Math.round(displayActiveEmployees * 0.5) },
+    { month: 'Apr', hours: Math.round(displayTotalHours * 0.5), employees: Math.round(displayActiveEmployees * 0.6) },
+    { month: 'May', hours: Math.round(displayTotalHours * 0.7), employees: Math.round(displayActiveEmployees * 0.8) },
+    { month: 'Jun', hours: displayTotalHours, employees: displayActiveEmployees },
+  ];
+
   // Mobile PWA View
   if (isMobile) {
     return (
       <div className="min-h-screen bg-[#1a1a2e] flex flex-col max-w-[428px] mx-auto">
-        {/* Mobile Header */}
-        <header className="bg-gradient-to-r from-[#1a0a2e] via-[#3d1a5c] to-[#d35400] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        {/* Mobile Header - Compact */}
+        <header className="bg-gradient-to-r from-[#1a0a2e] via-[#3d1a5c] to-[#d35400] text-white px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => navigate("/landing")}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
           >
-            <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
-            <span className="font-bold text-sm">
+            <img src={logoUrl} alt="Synerxus Logo" className="h-6 w-auto" />
+            <span className="font-bold text-xs">
               <span className="text-white">SYNER</span>
               <span className="text-amber-400">XUS</span>
             </span>
           </button>
-          <div className="text-xs text-white/80">{companyName}</div>
+          <div className="text-[10px] text-white/80 truncate max-w-[120px]">{companyName}</div>
         </header>
 
         {/* Main Content with Internal Tabs */}
-        <main className="flex-1 overflow-y-auto pb-20 px-4 pt-4">
+        <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
           {mobileTab === 'overview' && (
-            <div className="space-y-4">
-              <h1 className="text-white text-xl font-bold">CSR Dashboard</h1>
-              
-              {/* KPI Cards Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gradient-to-br from-blue-600/30 to-blue-800/30 rounded-xl p-4 border border-blue-500/30">
-                  <div className="text-blue-300 text-xs mb-1">Total Hours</div>
-                  <div className="text-white text-2xl font-bold">{displayTotalHours.toLocaleString()}</div>
-                  <div className="text-blue-300/70 text-xs mt-1">by employees</div>
+            <div className="space-y-3">
+              <h1 className="text-white text-lg font-bold">CSR Dashboard</h1>
+
+              {/* KPI Cards Grid - Compact */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gradient-to-br from-blue-600/30 to-blue-800/30 rounded-lg p-3 border border-blue-500/30">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-blue-300" />
+                    <span className="text-blue-300 text-[10px]">Total Hours</span>
+                  </div>
+                  <div className="text-white text-xl font-bold mt-1">{displayTotalHours.toLocaleString()}</div>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-600/30 to-emerald-800/30 rounded-xl p-4 border border-emerald-500/30">
-                  <div className="text-emerald-300 text-xs mb-1">Active Employees</div>
-                  <div className="text-white text-2xl font-bold">{displayActiveEmployees}</div>
-                  <div className="text-emerald-300/70 text-xs mt-1">volunteering</div>
+                <div className="bg-gradient-to-br from-emerald-600/30 to-emerald-800/30 rounded-lg p-3 border border-emerald-500/30">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-emerald-300" />
+                    <span className="text-emerald-300 text-[10px]">Employees</span>
+                  </div>
+                  <div className="text-white text-xl font-bold mt-1">{displayActiveEmployees}</div>
                 </div>
-                <div className="bg-gradient-to-br from-purple-600/30 to-purple-800/30 rounded-xl p-4 border border-purple-500/30">
-                  <div className="text-purple-300 text-xs mb-1">Projects</div>
-                  <div className="text-white text-2xl font-bold">{displayProjectsCompleted}</div>
-                  <div className="text-purple-300/70 text-xs mt-1">supported</div>
+                <div className="bg-gradient-to-br from-purple-600/30 to-purple-800/30 rounded-lg p-3 border border-purple-500/30">
+                  <div className="flex items-center gap-1.5">
+                    <FolderKanban className="w-3.5 h-3.5 text-purple-300" />
+                    <span className="text-purple-300 text-[10px]">Projects</span>
+                  </div>
+                  <div className="text-white text-xl font-bold mt-1">{displayProjectsCompleted}</div>
                 </div>
-                <div className="bg-gradient-to-br from-amber-600/30 to-amber-800/30 rounded-xl p-4 border border-amber-500/30">
-                  <div className="text-amber-300 text-xs mb-1">Impact Value</div>
-                  <div className="text-white text-2xl font-bold">${(csrData?.totalImpact || displayTotalHours * 50).toLocaleString()}</div>
-                  <div className="text-amber-300/70 text-xs mt-1">estimated</div>
+                <div className="bg-gradient-to-br from-amber-600/30 to-amber-800/30 rounded-lg p-3 border border-amber-500/30">
+                  <div className="flex items-center gap-1.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-amber-300" />
+                    <span className="text-amber-300 text-[10px]">Impact</span>
+                  </div>
+                  <div className="text-white text-xl font-bold mt-1">${((csrData?.totalImpact || displayTotalHours * 50) / 1000).toFixed(0)}K</div>
                 </div>
               </div>
 
-              {/* SDG Commitments */}
+              {/* SDG Radar Chart - Compact */}
+              {mobileRadarData.length > 0 && (
+                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                  <h3 className="text-white text-sm font-semibold mb-2">SDG Progress Radar</h3>
+                  <div className="h-44">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={mobileRadarData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
+                        <PolarGrid stroke="#374151" />
+                        <PolarAngleAxis dataKey="sdg" tick={{ fill: '#9CA3AF', fontSize: 9 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#9CA3AF', fontSize: 8 }} />
+                        <Radar name="Hours" dataKey="hours" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.4} />
+                        <Radar name="Employees" dataKey="employees" stroke="#10B981" fill="#10B981" fillOpacity={0.3} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '11px' }}
+                          labelStyle={{ color: '#fff' }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="flex justify-center gap-4 mt-2 text-[10px]">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span className="text-gray-400">Hours</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-gray-400">Employees</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SDG Commitments - Compact */}
               {committedSDGs && committedSDGs.length > 0 && (
-                <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                  <h3 className="text-white font-semibold mb-3">Your SDG Commitments</h3>
-                  <div className="flex flex-wrap gap-2">
+                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                  <h3 className="text-white text-sm font-semibold mb-2">SDG Commitments</h3>
+                  <div className="flex flex-wrap gap-1.5">
                     {committedSDGs.map((sdg: number) => (
                       <div
                         key={sdg}
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold"
+                        className="w-8 h-8 rounded flex items-center justify-center text-white text-[10px] font-bold"
                         style={{ backgroundColor: getSDGColor(sdg) }}
+                        title={getSDGName(sdg)}
                       >
                         {sdg}
                       </div>
@@ -731,24 +892,24 @@ export default function CSRDashboard() {
                 </div>
               )}
 
-              {/* Top SDG Progress */}
-              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                <h3 className="text-white font-semibold mb-3">SDG Progress</h3>
-                <div className="space-y-3">
-                  {sdgMetrics.slice(0, 5).map((metric: any) => (
-                    <div key={metric.sdg} className="flex items-center gap-3">
+              {/* Top SDG Progress - Compact */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-2">Top SDG Impact</h3>
+                <div className="space-y-2">
+                  {sdgMetrics.slice(0, 4).map((metric: any) => (
+                    <div key={metric.sdg} className="flex items-center gap-2">
                       <div
-                        className="w-8 h-8 rounded flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                        className="w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
                         style={{ backgroundColor: getSDGColor(metric.sdg) }}
                       >
                         {metric.sdg}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-gray-300">{getSDGName(metric.sdg)}</span>
-                          <span className="text-white font-medium">{metric.totalHours}h</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between text-[10px] mb-0.5">
+                          <span className="text-gray-300 truncate">{getSDGName(metric.sdg)}</span>
+                          <span className="text-white font-medium ml-1">{metric.totalHours}h</span>
                         </div>
-                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full"
                             style={{
@@ -763,20 +924,20 @@ export default function CSRDashboard() {
                 </div>
               </div>
 
-              {/* Leaderboard Preview */}
+              {/* Leaderboard Preview - Compact */}
               {csrData?.leaderboard && csrData.leaderboard.length > 0 && (
-                <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                  <h3 className="text-white font-semibold mb-3">Top Volunteers</h3>
-                  <div className="space-y-2">
-                    {csrData.leaderboard.slice(0, 5).map((employee: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-3 p-2 rounded-lg bg-white/5">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                  <h3 className="text-white text-sm font-semibold mb-2">Top Volunteers</h3>
+                  <div className="space-y-1.5">
+                    {csrData.leaderboard.slice(0, 4).map((employee: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded bg-white/5">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-[10px]">
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-white text-sm truncate">{employee.name || employee.employeeName}</div>
+                          <div className="text-white text-xs truncate">{employee.name || employee.employeeName}</div>
                         </div>
-                        <div className="text-amber-400 font-semibold text-sm">{employee.hours}h</div>
+                        <div className="text-amber-400 font-semibold text-xs">{employee.hours}h</div>
                       </div>
                     ))}
                   </div>
@@ -786,141 +947,293 @@ export default function CSRDashboard() {
           )}
 
           {mobileTab === 'employees' && (
-            <div className="space-y-4">
-              <h1 className="text-white text-xl font-bold">Employee Engagement</h1>
-              
-              {/* Engagement Funnel */}
+            <div className="space-y-3">
+              <h1 className="text-white text-lg font-bold">Employees</h1>
+
+              {/* Engagement Trend Chart */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-2">Engagement Trend</h3>
+                <div className="h-36">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={mobileTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis dataKey="month" tick={{ fill: '#9CA3AF', fontSize: 9 }} />
+                      <YAxis tick={{ fill: '#9CA3AF', fontSize: 9 }} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '10px' }}
+                        labelStyle={{ color: '#fff' }}
+                      />
+                      <Line type="monotone" dataKey="hours" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 3 }} />
+                      <Line type="monotone" dataKey="employees" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-center gap-4 mt-1 text-[10px]">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-gray-400">Hours</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-gray-400">Employees</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Engagement Funnel - Compact */}
               {funnelData?.funnel && (
-                <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                  <h3 className="text-white font-semibold mb-3">Engagement Funnel</h3>
-                  <div className="space-y-3">
+                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                  <h3 className="text-white text-sm font-semibold mb-2">Engagement Funnel</h3>
+                  <div className="space-y-2">
                     {funnelData.funnel.map((stage: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-3">
-                        <div className="w-12 text-right">
-                          <span className="text-white font-bold text-lg">{stage.count}</span>
+                      <div key={idx} className="flex items-center gap-2">
+                        <div className="w-10 text-right">
+                          <span className="text-white font-bold text-sm">{stage.count}</span>
                         </div>
                         <div className="flex-1">
-                          <div className="text-gray-300 text-sm">{stage.stage}</div>
-                          <div className="h-2 bg-gray-700 rounded-full overflow-hidden mt-1">
+                          <div className="text-gray-300 text-[10px] truncate">{stage.stage}</div>
+                          <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden mt-0.5">
                             <div
                               className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full"
                               style={{ width: `${(stage.count / (funnelData.funnel[0]?.count || 1)) * 100}%` }}
                             />
                           </div>
                         </div>
+                        <div className="text-gray-400 text-[10px] w-10 text-right">
+                          {Math.round((stage.count / (funnelData.funnel[0]?.count || 1)) * 100)}%
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Full Leaderboard */}
-              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                <h3 className="text-white font-semibold mb-3">Employee Leaderboard</h3>
-                <div className="space-y-2">
-                  {(csrData?.leaderboard || []).map((employee: any, idx: number) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-white/5">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                          idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-600' :
-                          idx === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
-                          idx === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-800' :
-                          'bg-gray-600'
-                        }`}
-                      >
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-white text-sm font-medium truncate">{employee.name || employee.employeeName}</div>
-                      </div>
-                      <div className="text-amber-400 font-semibold">{employee.hours}h</div>
-                    </div>
-                  ))}
+              {/* Full Leaderboard - Compact Table */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-2">Leaderboard</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[10px]">
+                    <thead>
+                      <tr className="border-b border-gray-700">
+                        <th className="text-left text-gray-400 pb-1.5 font-medium">#</th>
+                        <th className="text-left text-gray-400 pb-1.5 font-medium">Employee</th>
+                        <th className="text-right text-gray-400 pb-1.5 font-medium">Hours</th>
+                        <th className="text-right text-gray-400 pb-1.5 font-medium">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(csrData?.leaderboard || []).slice(0, 8).map((employee: any, idx: number) => (
+                        <tr key={idx} className="border-b border-gray-700/50">
+                          <td className="py-1.5">
+                            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[9px] font-bold ${
+                              idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-600' :
+                              idx === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
+                              idx === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-800' :
+                              'bg-gray-600'
+                            }`}>
+                              {idx + 1}
+                            </span>
+                          </td>
+                          <td className="py-1.5 text-white truncate max-w-[120px]">{employee.name || employee.employeeName}</td>
+                          <td className="py-1.5 text-amber-400 font-medium text-right">{employee.hours}h</td>
+                          <td className="py-1.5 text-blue-400 text-right">{employee.points || employee.hours * 10}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           )}
 
           {mobileTab === 'sdgs' && (
-            <div className="space-y-4">
-              <h1 className="text-white text-xl font-bold">SDG Impact</h1>
-              
-              {/* SDG Commitments */}
-              {committedSDGs && committedSDGs.length > 0 && (
-                <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                  <h3 className="text-white font-semibold mb-3">Committed SDGs</h3>
-                  <div className="grid grid-cols-4 gap-2">
-                    {committedSDGs.map((sdg: number) => (
-                      <div
-                        key={sdg}
-                        className="aspect-square rounded-lg flex flex-col items-center justify-center text-white p-2"
-                        style={{ backgroundColor: getSDGColor(sdg) }}
-                      >
-                        <span className="font-bold text-lg">{sdg}</span>
-                        <span className="text-[8px] text-center leading-tight opacity-90">{getSDGName(sdg)}</span>
-                      </div>
-                    ))}
+            <div className="space-y-3">
+              <h1 className="text-white text-lg font-bold">SDG Impact</h1>
+
+              {/* SDG Bar Chart */}
+              {mobileBarData.length > 0 && (
+                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                  <h3 className="text-white text-sm font-semibold mb-2">Hours by SDG</h3>
+                  <div className="h-40">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={mobileBarData} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis dataKey="name" tick={{ fill: '#9CA3AF', fontSize: 8 }} angle={-45} textAnchor="end" height={40} />
+                        <YAxis tick={{ fill: '#9CA3AF', fontSize: 9 }} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '10px' }}
+                          labelStyle={{ color: '#fff' }}
+                          formatter={(value: number, name: string) => [`${value}h`, 'Hours']}
+                        />
+                        <Bar dataKey="hours" radius={[4, 4, 0, 0]}>
+                          {mobileBarData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               )}
 
-              {/* All SDG Progress */}
-              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                <h3 className="text-white font-semibold mb-3">Contribution by SDG</h3>
-                <div className="space-y-3">
-                  {sdgMetrics.map((metric: any) => (
-                    <div key={metric.sdg} className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0"
-                        style={{ backgroundColor: getSDGColor(metric.sdg) }}
-                      >
-                        {metric.sdg}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-300">{getSDGName(metric.sdg)}</span>
-                          <span className="text-white font-medium">{metric.totalHours}h</span>
+              {/* SDG Radar with Commitments Overlay */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-2">Commitment vs Progress</h3>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={mobileRadarData} margin={{ top: 10, right: 25, bottom: 10, left: 25 }}>
+                      <PolarGrid stroke="#374151" />
+                      <PolarAngleAxis dataKey="sdg" tick={{ fill: '#9CA3AF', fontSize: 8 }} />
+                      <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#9CA3AF', fontSize: 7 }} />
+                      <Radar name="Actual Hours" dataKey="hours" stroke="#10B981" fill="#10B981" fillOpacity={0.5} />
+                      <Radar name="Projects" dataKey="projects" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.3} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '10px' }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex justify-center gap-4 mt-1 text-[10px]">
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span className="text-gray-400">Hours</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full bg-purple-500" />
+                    <span className="text-gray-400">Projects</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SDG Commitments Grid */}
+              {committedSDGs && committedSDGs.length > 0 && (
+                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                  <h3 className="text-white text-sm font-semibold mb-2">Committed SDGs</h3>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {committedSDGs.map((sdg: number) => {
+                      const metric = sdgMetrics.find((m: any) => m.sdg === sdg);
+                      return (
+                        <div
+                          key={sdg}
+                          className="aspect-square rounded flex flex-col items-center justify-center text-white p-1"
+                          style={{ backgroundColor: getSDGColor(sdg) }}
+                        >
+                          <span className="font-bold text-sm">{sdg}</span>
+                          <span className="text-[7px] opacity-80">{metric?.totalHours || 0}h</span>
                         </div>
-                        <div className="text-xs text-gray-400">
-                          {metric.uniqueEmployees} employees • {metric.projectsContributed} projects
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* SDG Metrics Table */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-2">SDG Metrics</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[10px]">
+                    <thead>
+                      <tr className="border-b border-gray-700">
+                        <th className="text-left text-gray-400 pb-1.5 font-medium">SDG</th>
+                        <th className="text-right text-gray-400 pb-1.5 font-medium">Hours</th>
+                        <th className="text-right text-gray-400 pb-1.5 font-medium">Staff</th>
+                        <th className="text-right text-gray-400 pb-1.5 font-medium">Proj</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sdgMetrics.slice(0, 8).map((metric: any) => (
+                        <tr key={metric.sdg} className="border-b border-gray-700/50">
+                          <td className="py-1.5">
+                            <div className="flex items-center gap-1.5">
+                              <div
+                                className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold"
+                                style={{ backgroundColor: getSDGColor(metric.sdg) }}
+                              >
+                                {metric.sdg}
+                              </div>
+                              <span className="text-gray-300 truncate max-w-[80px]">{getSDGName(metric.sdg)}</span>
+                            </div>
+                          </td>
+                          <td className="py-1.5 text-white font-medium text-right">{metric.totalHours}</td>
+                          <td className="py-1.5 text-emerald-400 text-right">{metric.uniqueEmployees}</td>
+                          <td className="py-1.5 text-purple-400 text-right">{metric.projectsContributed}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
           )}
 
           {mobileTab === 'reports' && (
-            <div className="space-y-4">
-              <h1 className="text-white text-xl font-bold">Reports & Export</h1>
-              
-              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                <div className="space-y-3">
+            <div className="space-y-3">
+              <h1 className="text-white text-lg font-bold">Reports</h1>
+
+              {/* Summary Stats */}
+              <div className="bg-gradient-to-br from-emerald-600/30 to-blue-600/30 rounded-lg p-3 border border-emerald-500/30">
+                <h3 className="text-white text-sm font-semibold mb-2">Quick Summary</h3>
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="bg-white/10 rounded p-2">
+                    <div className="text-gray-400">Total Impact Value</div>
+                    <div className="text-white text-lg font-bold">${(csrData?.totalImpact || displayTotalHours * 50).toLocaleString()}</div>
+                  </div>
+                  <div className="bg-white/10 rounded p-2">
+                    <div className="text-gray-400">SDGs Addressed</div>
+                    <div className="text-white text-lg font-bold">{sdgMetrics.length}</div>
+                  </div>
+                  <div className="bg-white/10 rounded p-2">
+                    <div className="text-gray-400">Avg Hours/Employee</div>
+                    <div className="text-white text-lg font-bold">{displayActiveEmployees > 0 ? Math.round(displayTotalHours / displayActiveEmployees) : 0}</div>
+                  </div>
+                  <div className="bg-white/10 rounded p-2">
+                    <div className="text-gray-400">Project ROI</div>
+                    <div className="text-white text-lg font-bold">{csrData?.kpiBreakdown?.projects?.totalRoi || 0}%</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <div className="space-y-2">
                   <button
                     onClick={() => navigate('/csr-impact-reporting')}
-                    className="w-full p-4 rounded-lg bg-gradient-to-r from-blue-600/30 to-blue-800/30 border border-blue-500/30 text-left"
+                    className="w-full p-3 rounded-lg bg-gradient-to-r from-blue-600/30 to-blue-800/30 border border-blue-500/30 text-left"
                   >
-                    <div className="flex items-center gap-3">
-                      <BarChart3 className="w-6 h-6 text-blue-400" />
+                    <div className="flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5 text-blue-400" />
                       <div>
-                        <div className="text-white font-medium">Impact Report</div>
-                        <div className="text-blue-300/70 text-xs">View detailed impact analytics</div>
+                        <div className="text-white text-sm font-medium">Impact Report</div>
+                        <div className="text-blue-300/70 text-[10px]">View detailed analytics</div>
                       </div>
+                      <ChevronRight className="w-4 h-4 text-blue-400 ml-auto" />
                     </div>
                   </button>
-                  
+
                   <button
                     onClick={() => navigate('/csr-reports-exports')}
-                    className="w-full p-4 rounded-lg bg-gradient-to-r from-purple-600/30 to-purple-800/30 border border-purple-500/30 text-left"
+                    className="w-full p-3 rounded-lg bg-gradient-to-r from-purple-600/30 to-purple-800/30 border border-purple-500/30 text-left"
                   >
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-6 h-6 text-purple-400" />
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-purple-400" />
                       <div>
-                        <div className="text-white font-medium">Export Data</div>
-                        <div className="text-purple-300/70 text-xs">Download reports and data</div>
+                        <div className="text-white text-sm font-medium">Export Data</div>
+                        <div className="text-purple-300/70 text-[10px]">Download reports</div>
                       </div>
+                      <ChevronRight className="w-4 h-4 text-purple-400 ml-auto" />
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/employee-engagement-tab')}
+                    className="w-full p-3 rounded-lg bg-gradient-to-r from-amber-600/30 to-amber-800/30 border border-amber-500/30 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-amber-400" />
+                      <div>
+                        <div className="text-white text-sm font-medium">Engagement Analytics</div>
+                        <div className="text-amber-300/70 text-[10px]">Employee insights</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-amber-400 ml-auto" />
                     </div>
                   </button>
                 </div>
@@ -929,85 +1242,114 @@ export default function CSRDashboard() {
           )}
 
           {mobileTab === 'settings' && (
-            <div className="space-y-4">
-              <h1 className="text-white text-xl font-bold">Settings</h1>
-              
-              <div className="bg-[#16213e] rounded-xl p-4 border border-gray-700">
-                <div className="space-y-3">
+            <div className="space-y-3">
+              <h1 className="text-white text-lg font-bold">Settings</h1>
+
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <div className="space-y-2">
                   <button
                     onClick={() => navigate('/corporate-partner-profile-settings')}
-                    className="w-full p-4 rounded-lg bg-white/5 border border-gray-600 text-left"
+                    className="w-full p-3 rounded-lg bg-white/5 border border-gray-600 text-left"
                   >
-                    <div className="flex items-center gap-3">
-                      <Settings className="w-6 h-6 text-gray-400" />
+                    <div className="flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-gray-400" />
                       <div>
-                        <div className="text-white font-medium">Profile Settings</div>
-                        <div className="text-gray-400 text-xs">Manage SDG commitments & company info</div>
+                        <div className="text-white text-sm font-medium">Profile Settings</div>
+                        <div className="text-gray-400 text-[10px]">SDG commitments & company info</div>
                       </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
                     </div>
                   </button>
+
+                  <button
+                    onClick={() => navigate('/organization-settings')}
+                    className="w-full p-3 rounded-lg bg-white/5 border border-gray-600 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="w-5 h-5 text-gray-400" />
+                      <div>
+                        <div className="text-white text-sm font-medium">Organization</div>
+                        <div className="text-gray-400 text-[10px]">Manage org settings</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Current User Info */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-2">Account</h3>
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                    {adminName.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="text-white text-sm font-medium">{adminName}</div>
+                    <div className="text-gray-400 text-[10px]">{user?.email}</div>
+                  </div>
                 </div>
               </div>
             </div>
           )}
         </main>
 
-        {/* Bottom Navigation - Internal Tab Switching */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#1a0a2e] via-[#3d1a5c] to-[#d35400] border-t border-white/10 px-2 py-2 max-w-[428px] mx-auto z-50">
+        {/* Bottom Navigation - Compact */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#1a0a2e] via-[#3d1a5c] to-[#d35400] border-t border-white/10 px-1 py-1.5 max-w-[428px] mx-auto z-50">
           <div className="flex justify-around items-center">
             <button
               onClick={() => setMobileTab('overview')}
-              className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
-                mobileTab === 'overview' ? 'text-white' : 'text-white/60 hover:text-white/80'
+              className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
+                mobileTab === 'overview' ? 'text-white' : 'text-white/60'
               }`}
               data-testid="nav-overview"
             >
-              <Home className={`w-5 h-5 mb-1 ${mobileTab === 'overview' ? 'text-amber-400' : ''}`} />
-              <span className="text-[10px] font-medium">Overview</span>
+              <Home className={`w-4 h-4 mb-0.5 ${mobileTab === 'overview' ? 'text-amber-400' : ''}`} />
+              <span className="text-[9px] font-medium">Home</span>
             </button>
 
             <button
               onClick={() => setMobileTab('employees')}
-              className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
-                mobileTab === 'employees' ? 'text-white' : 'text-white/60 hover:text-white/80'
+              className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
+                mobileTab === 'employees' ? 'text-white' : 'text-white/60'
               }`}
               data-testid="nav-employees"
             >
-              <Users className={`w-5 h-5 mb-1 ${mobileTab === 'employees' ? 'text-amber-400' : ''}`} />
-              <span className="text-[10px] font-medium">Employees</span>
+              <Users className={`w-4 h-4 mb-0.5 ${mobileTab === 'employees' ? 'text-amber-400' : ''}`} />
+              <span className="text-[9px] font-medium">Team</span>
             </button>
 
             <button
               onClick={() => setMobileTab('sdgs')}
-              className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
-                mobileTab === 'sdgs' ? 'text-white' : 'text-white/60 hover:text-white/80'
+              className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
+                mobileTab === 'sdgs' ? 'text-white' : 'text-white/60'
               }`}
               data-testid="nav-sdgs"
             >
-              <Target className={`w-5 h-5 mb-1 ${mobileTab === 'sdgs' ? 'text-amber-400' : ''}`} />
-              <span className="text-[10px] font-medium">SDGs</span>
+              <Target className={`w-4 h-4 mb-0.5 ${mobileTab === 'sdgs' ? 'text-amber-400' : ''}`} />
+              <span className="text-[9px] font-medium">SDGs</span>
             </button>
 
             <button
               onClick={() => setMobileTab('reports')}
-              className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
-                mobileTab === 'reports' ? 'text-white' : 'text-white/60 hover:text-white/80'
+              className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
+                mobileTab === 'reports' ? 'text-white' : 'text-white/60'
               }`}
               data-testid="nav-reports"
             >
-              <BarChart3 className={`w-5 h-5 mb-1 ${mobileTab === 'reports' ? 'text-amber-400' : ''}`} />
-              <span className="text-[10px] font-medium">Reports</span>
+              <BarChart3 className={`w-4 h-4 mb-0.5 ${mobileTab === 'reports' ? 'text-amber-400' : ''}`} />
+              <span className="text-[9px] font-medium">Reports</span>
             </button>
 
             <button
               onClick={() => setMobileTab('settings')}
-              className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
-                mobileTab === 'settings' ? 'text-white' : 'text-white/60 hover:text-white/80'
+              className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
+                mobileTab === 'settings' ? 'text-white' : 'text-white/60'
               }`}
               data-testid="nav-settings"
             >
-              <Settings className={`w-5 h-5 mb-1 ${mobileTab === 'settings' ? 'text-amber-400' : ''}`} />
-              <span className="text-[10px] font-medium">Settings</span>
+              <Settings className={`w-4 h-4 mb-0.5 ${mobileTab === 'settings' ? 'text-amber-400' : ''}`} />
+              <span className="text-[9px] font-medium">Settings</span>
             </button>
           </div>
         </nav>
@@ -2075,520 +2417,419 @@ export default function CSRDashboard() {
                   marginTop: "24px",
                 }}
               >
-                {/* Row 1, Col 1: SDG Alignment Dashboard - Enhanced View */}
+                {/* Row 1, Col 1: SDG Alignment Dashboard - Radar Chart View */}
                 <div
                   style={{
                     backgroundColor: "white",
                     border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                    padding: "16px",
+                    borderRadius: "12px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    padding: "20px",
                     display: "flex",
                     flexDirection: "column",
                     height: "100%",
-                    minHeight: "420px",
+                    minHeight: "520px",
                   }}
                   data-testid="chart-sdg-alignment"
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        color: "#111827",
-                        margin: 0,
-                      }}
-                    >
-                      SDG Alignment Dashboard
-                    </h3>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        fontSize: "11px",
-                        color: "#6b7280",
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        ⏱️ Hours Logged
-                      </span>
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        👥 Volunteers
-                      </span>
-                      <span
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        📁 Projects
-                      </span>
+                  {/* Header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#111827", margin: 0 }}>
+                        SDG Alignment Radar
+                      </h3>
+                      <p style={{ fontSize: "12px", color: "#6b7280", margin: "4px 0 0 0" }}>
+                        Corporate commitments vs. employee activity
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                        <div style={{ width: "12px", height: "12px", backgroundColor: "#3b82f6", borderRadius: "2px", opacity: 0.3 }} />
+                        Commitment
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                        <div style={{ width: "12px", height: "12px", backgroundColor: "#10b981", borderRadius: "2px" }} />
+                        Active
+                      </div>
                     </div>
                   </div>
 
-                  {/* Summary Stats Row */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(3, 1fr)",
-                      gap: "12px",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        backgroundColor: "#f0fdf4",
-                        borderRadius: "8px",
-                        padding: "12px",
-                        textAlign: "center",
-                      }}
-                    >
-                      <p
-                        style={{
-                          fontSize: "20px",
-                          fontWeight: "bold",
-                          color: "#166534",
-                          margin: 0,
-                        }}
-                      >
-                        {sdgMetrics.filter((m: any) => m.totalHours > 0).length}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "11px",
-                          color: "#15803d",
-                          margin: "2px 0 0 0",
-                        }}
-                      >
-                        Active SDGs
-                      </p>
-                    </div>
-                    <div
+                  {/* KPI Buttons Row - 5 metrics */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "16px" }}>
+                    {/* Total Hours */}
+                    <button
+                      onClick={() => setShowTotalHoursModal(true)}
                       style={{
                         backgroundColor: "#eff6ff",
-                        borderRadius: "8px",
-                        padding: "12px",
+                        borderRadius: "10px",
+                        padding: "12px 8px",
                         textAlign: "center",
+                        border: "2px solid transparent",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; }}
                     >
-                      <p
-                        style={{
-                          fontSize: "20px",
-                          fontWeight: "bold",
-                          color: "#1e40af",
-                          margin: 0,
-                        }}
-                      >
-                        {totalSDGHours.toLocaleString()}
+                      <Clock style={{ width: "16px", height: "16px", color: "#3b82f6", margin: "0 auto 4px" }} />
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#1e40af", margin: 0 }}>{committedSDGHours.toLocaleString()}</p>
+                      <p style={{ fontSize: "9px", color: "#3b82f6", margin: "2px 0 0 0", fontWeight: "500" }}>TOTAL HOURS</p>
+                      <p style={{ fontSize: "8px", color: "#6b7280", margin: "2px 0 0 0" }}>
+                        {committedSDGHours > 0 ? `${Math.round(committedSDGHours / Math.max(1, committedSDGEmployees))} avg/emp` : "—"}
                       </p>
-                      <p
-                        style={{
-                          fontSize: "11px",
-                          color: "#1d4ed8",
-                          margin: "2px 0 0 0",
-                        }}
-                      >
-                        Total Hours
+                    </button>
+
+                    {/* Employees Engaged */}
+                    <button
+                      onClick={() => setShowEmployeesModal(true)}
+                      style={{
+                        backgroundColor: "#f0fdf4",
+                        borderRadius: "10px",
+                        padding: "12px 8px",
+                        textAlign: "center",
+                        border: "2px solid transparent",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#22c55e"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; }}
+                    >
+                      <Users style={{ width: "16px", height: "16px", color: "#22c55e", margin: "0 auto 4px" }} />
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#166534", margin: 0 }}>{committedSDGEmployees}</p>
+                      <p style={{ fontSize: "9px", color: "#22c55e", margin: "2px 0 0 0", fontWeight: "500" }}>ENGAGED</p>
+                      <p style={{ fontSize: "8px", color: "#6b7280", margin: "2px 0 0 0" }}>
+                        {csrData?.activeEmployees ? `${Math.round((committedSDGEmployees / csrData.activeEmployees) * 100)}% of total` : "—"}
                       </p>
-                    </div>
-                    <div
+                    </button>
+
+                    {/* Projects Active */}
+                    <button
+                      onClick={() => setShowActiveSDGsModal(true)}
                       style={{
                         backgroundColor: "#fef3c7",
-                        borderRadius: "8px",
-                        padding: "12px",
+                        borderRadius: "10px",
+                        padding: "12px 8px",
                         textAlign: "center",
+                        border: "2px solid transparent",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
                       }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; }}
                     >
-                      <p
-                        style={{
-                          fontSize: "20px",
-                          fontWeight: "bold",
-                          color: "#92400e",
-                          margin: 0,
-                        }}
-                      >
-                        {csrData?.activeEmployees || new Set(
-                          sdgMetrics
-                            .filter((m: any) => m.totalHours > 0)
-                            .flatMap((m: any) =>
-                              safeMap(m.employees, (emp: any) => emp.email)
-                            )
-                        ).size}
+                      <FolderKanban style={{ width: "16px", height: "16px", color: "#f59e0b", margin: "0 auto 4px" }} />
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#92400e", margin: 0 }}>{committedSDGProjects}</p>
+                      <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>PROJECTS</p>
+                      <p style={{ fontSize: "8px", color: "#6b7280", margin: "2px 0 0 0" }}>
+                        {committedSDGProjects > 0 ? `${Math.round(committedSDGHours / committedSDGProjects)} hrs/proj` : "—"}
                       </p>
-                      <p
-                        style={{
-                          fontSize: "11px",
-                          color: "#b45309",
-                          margin: "2px 0 0 0",
-                        }}
-                      >
-                        Employees
+                    </button>
+
+                    {/* Active SDGs */}
+                    <button
+                      onClick={() => setShowActiveSDGsModal(true)}
+                      style={{
+                        backgroundColor: "#fae8ff",
+                        borderRadius: "10px",
+                        padding: "12px 8px",
+                        textAlign: "center",
+                        border: "2px solid transparent",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#a855f7"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; }}
+                    >
+                      <Target style={{ width: "16px", height: "16px", color: "#a855f7", margin: "0 auto 4px" }} />
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#7e22ce", margin: 0 }}>{activeCommittedSDGs}/{committedSDGs.length}</p>
+                      <p style={{ fontSize: "9px", color: "#a855f7", margin: "2px 0 0 0", fontWeight: "500" }}>ACTIVE SDGs</p>
+                      <p style={{ fontSize: "8px", color: "#6b7280", margin: "2px 0 0 0" }}>
+                        {committedSDGs.length > 0 ? `${Math.round((activeCommittedSDGs / committedSDGs.length) * 100)}% coverage` : "—"}
                       </p>
-                    </div>
+                    </button>
+
+                    {/* Volunteers */}
+                    <button
+                      onClick={() => setShowEmployeesModal(true)}
+                      style={{
+                        backgroundColor: "#fef2f2",
+                        borderRadius: "10px",
+                        padding: "12px 8px",
+                        textAlign: "center",
+                        border: "2px solid transparent",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; }}
+                    >
+                      <Heart style={{ width: "16px", height: "16px", color: "#ef4444", margin: "0 auto 4px" }} />
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#dc2626", margin: 0 }}>
+                        {new Set(sdgMetrics.flatMap((m: any) => safeMap(m.employees, (emp: any) => emp.email))).size}
+                      </p>
+                      <p style={{ fontSize: "9px", color: "#ef4444", margin: "2px 0 0 0", fontWeight: "500" }}>VOLUNTEERS</p>
+                      <p style={{ fontSize: "8px", color: "#6b7280", margin: "2px 0 0 0" }}>
+                        all SDGs
+                      </p>
+                    </button>
                   </div>
 
-                  {/* SDG Progress Bars - Scrollable List */}
-                  <div
-                    style={{ flex: 1, overflowY: "auto", marginBottom: "12px" }}
-                  >
-                    {displayChartData.length > 0 ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "10px",
-                        }}
-                      >
-                        {displayChartData.map((sdg, idx) => (
-                          <div
-                            key={sdg.goal}
-                            style={{
-                              padding: "10px 12px",
-                              backgroundColor:
-                                selectedSDG === sdg.goal ? "#f8fafc" : "white",
-                              borderRadius: "8px",
-                              border:
-                                selectedSDG === sdg.goal
-                                  ? `2px solid ${sdg.color}`
-                                  : "1px solid #e5e7eb",
-                              cursor: "pointer",
-                              transition: "all 0.2s",
+                  {/* Radar Chart */}
+                  <div style={{ flex: 1, minHeight: "280px" }}>
+                    {committedSDGs.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart
+                          data={committedSDGs.map((sdgNum: number) => {
+                            const metric = sdgMetrics.find(m => m.sdg === sdgNum);
+                            const maxHours = Math.max(...sdgMetrics.filter(m => committedSDGs.includes(m.sdg)).map(m => m.totalHours || 0), 1);
+                            return {
+                              sdg: `SDG ${sdgNum}`,
+                              fullName: getSDGName(sdgNum),
+                              commitment: 100, // Full commitment shown as baseline
+                              activity: metric ? Math.round((metric.totalHours / maxHours) * 100) : 0,
+                              hours: metric?.totalHours || 0,
+                              employees: metric?.uniqueEmployees || 0,
+                              projects: metric?.projectsContributed || 0,
+                            };
+                          })}
+                          margin={{ top: 20, right: 30, bottom: 20, left: 30 }}
+                        >
+                          <PolarGrid stroke="#e5e7eb" />
+                          <PolarAngleAxis
+                            dataKey="sdg"
+                            tick={{ fontSize: 10, fill: "#374151" }}
+                            tickLine={false}
+                          />
+                          <PolarRadiusAxis
+                            angle={90}
+                            domain={[0, 100]}
+                            tick={{ fontSize: 9, fill: "#9ca3af" }}
+                            tickCount={5}
+                          />
+                          <Radar
+                            name="Commitment"
+                            dataKey="commitment"
+                            stroke="#3b82f6"
+                            fill="#3b82f6"
+                            fillOpacity={0.15}
+                            strokeWidth={2}
+                            strokeDasharray="5 5"
+                          />
+                          <Radar
+                            name="Activity"
+                            dataKey="activity"
+                            stroke="#10b981"
+                            fill="#10b981"
+                            fillOpacity={0.4}
+                            strokeWidth={2}
+                          />
+                          <Tooltip
+                            content={({ payload, label }) => {
+                              if (payload && payload.length > 0) {
+                                const data = payload[0].payload;
+                                return (
+                                  <div style={{
+                                    backgroundColor: "white",
+                                    padding: "12px",
+                                    borderRadius: "8px",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                                    border: "1px solid #e5e7eb",
+                                  }}>
+                                    <p style={{ fontWeight: "bold", color: "#111827", margin: "0 0 8px 0", fontSize: "13px" }}>{data.fullName}</p>
+                                    <p style={{ fontSize: "12px", color: "#6b7280", margin: "4px 0" }}>Hours: <span style={{ fontWeight: "600", color: "#111827" }}>{data.hours.toLocaleString()}</span></p>
+                                    <p style={{ fontSize: "12px", color: "#6b7280", margin: "4px 0" }}>Employees: <span style={{ fontWeight: "600", color: "#111827" }}>{data.employees}</span></p>
+                                    <p style={{ fontSize: "12px", color: "#6b7280", margin: "4px 0" }}>Projects: <span style={{ fontWeight: "600", color: "#111827" }}>{data.projects}</span></p>
+                                    <p style={{ fontSize: "12px", color: data.activity > 0 ? "#10b981" : "#ef4444", margin: "8px 0 0 0", fontWeight: "600" }}>
+                                      {data.activity > 0 ? `${data.activity}% active` : "No activity yet"}
+                                    </p>
+                                  </div>
+                                );
+                              }
+                              return null;
                             }}
-                            onClick={() =>
-                              setSelectedSDG(
-                                selectedSDG === sdg.goal ? null : sdg.goal,
-                              )
-                            }
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: "6px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    width: "28px",
-                                    height: "28px",
-                                    borderRadius: "6px",
-                                    backgroundColor: sdg.color,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    color: "white",
-                                    fontSize: "12px",
-                                    fontWeight: "bold",
-                                  }}
-                                >
-                                  {sdg.goal}
-                                </div>
-                                <div>
-                                  <p
-                                    style={{
-                                      fontSize: "13px",
-                                      fontWeight: "600",
-                                      color: "#111827",
-                                      margin: 0,
-                                    }}
-                                  >
-                                    {sdg.name}
-                                  </p>
-                                  <p
-                                    style={{
-                                      fontSize: "11px",
-                                      color: "#6b7280",
-                                      margin: 0,
-                                    }}
-                                  >
-                                    {sdg.fullName}
-                                  </p>
-                                </div>
-                              </div>
-                              <div style={{ textAlign: "right" }}>
-                                <p
-                                  style={{
-                                    fontSize: "14px",
-                                    fontWeight: "bold",
-                                    color: sdg.color,
-                                    margin: 0,
-                                  }}
-                                >
-                                  {sdg.value}%
-                                </p>
-                              </div>
-                            </div>
-
-                            {/* Progress Bar */}
-                            <div
-                              style={{
-                                height: "6px",
-                                backgroundColor: "#e5e7eb",
-                                borderRadius: "3px",
-                                overflow: "hidden",
-                                marginBottom: "6px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  height: "100%",
-                                  width: `${Math.min(100, sdg.value)}%`,
-                                  backgroundColor: sdg.color,
-                                  borderRadius: "3px",
-                                  transition: "width 0.3s",
-                                }}
-                              ></div>
-                            </div>
-
-                            {/* Stats Row */}
-                            <div
-                              style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                fontSize: "11px",
-                                color: "#6b7280",
-                              }}
-                            >
-                              <span>
-                                ⏱️ {(sdg.hours || 0).toLocaleString()} hrs
-                              </span>
-                              <span>👥 {sdg.employees || 0} volunteers</span>
-                              <span>📁 {sdg.projects || 0} projects</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                          />
+                          <Legend
+                            wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
+                          />
+                        </RadarChart>
+                      </ResponsiveContainer>
                     ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          height: "100%",
-                          color: "#9ca3af",
-                        }}
-                      >
-                        <p>No SDG data available yet</p>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#9ca3af" }}>
+                        <div style={{ textAlign: "center" }}>
+                          <Target style={{ width: "40px", height: "40px", margin: "0 auto 12px", opacity: 0.5 }} />
+                          <p style={{ fontSize: "14px", fontWeight: "500" }}>No SDG commitments set</p>
+                          <p style={{ fontSize: "12px" }}>Go to Settings to add your corporate SDG commitments</p>
+                        </div>
                       </div>
                     )}
                   </div>
 
-                  {/* AI Insights Section */}
-                  <div
-                    style={{
-                      padding: "10px",
-                      backgroundColor: "#f0f9ff",
-                      borderRadius: "6px",
-                      borderLeft: "4px solid #3b82f6",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontSize: "11px",
-                        fontWeight: "600",
-                        color: "#1e40af",
-                        marginBottom: "4px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      ✨ AI Insight
-                    </p>
-                    <p
-                      style={{
-                        fontSize: "12px",
-                        color: "#334155",
-                        lineHeight: "1.4",
-                        margin: 0,
-                      }}
-                    >
-                      {(() => {
-                        const activeSDGs = sdgMetrics.filter((m: any) => m.totalHours > 0);
-                        const totalHours = activeSDGs.reduce(
-                          (sum: number, m: any) => sum + (m.totalHours || 0),
-                          0,
-                        );
-                        // Get unique volunteers across all SDGs (not summing duplicates)
-                        const uniqueVolunteers = new Set(
-                          activeSDGs.flatMap((m: any) =>
-                            safeMap(m.employees, (emp: any) => emp.email)
-                          )
-                        ).size;
-                        const topSDG = activeSDGs.sort((a: any, b: any) => b.totalHours - a.totalHours)[0];
-                        const committedCount = committedSDGs.length;
-                        const activeCount = activeSDGs.length;
+                  {/* AI Insights + Expansion Banner */}
+                  <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+                    {/* AI Insight */}
+                    <div style={{ flex: 1, padding: "10px 12px", backgroundColor: "#f0f9ff", borderRadius: "8px", borderLeft: "3px solid #3b82f6" }}>
+                      <p style={{ fontSize: "10px", fontWeight: "600", color: "#1e40af", marginBottom: "4px" }}>✨ AI INSIGHT</p>
+                      <p style={{ fontSize: "11px", color: "#334155", lineHeight: "1.4", margin: 0 }}>
+                        {(() => {
+                          const activeCommitted = sdgMetrics.filter((m: any) => committedSDGs.includes(m.sdg) && m.totalHours > 0);
+                          const topCommitted = activeCommitted.sort((a: any, b: any) => b.totalHours - a.totalHours)[0];
+                          if (committedSDGs.length === 0) return "Set SDG commitments to unlock insights.";
+                          if (committedSDGHours === 0) return `${committedSDGs.length} SDGs committed. Waiting for employee activity.`;
+                          if (topCommitted) return `Top: ${getSDGName(topCommitted.sdg)} (${topCommitted.totalHours} hrs). ${activeCommittedSDGs}/${committedSDGs.length} SDGs active.`;
+                          return `${committedSDGEmployees} employees, ${committedSDGHours} hours.`;
+                        })()}
+                      </p>
+                    </div>
 
-                        if (totalHours === 0 && committedCount === 0) {
-                          return "Set SDG commitments in Settings and start tracking contributions to unlock AI-powered insights.";
-                        }
-
-                        if (totalHours === 0 && committedCount > 0) {
-                          return `You've committed to ${committedCount} SDG${committedCount > 1 ? 's' : ''}. Start logging volunteer hours to see your impact alignment!`;
-                        }
-
-                        if (topSDG && uniqueVolunteers > 0) {
-                          const alignmentStatus = committedSDGs.includes(topSDG.sdg)
-                            ? "✓ On track"
-                            : "⚠️ Not in commitments";
-                          return `${alignmentStatus}: Top focus is ${getSDGName(topSDG.sdg)} with ${topSDG.totalHours} hrs from ${uniqueVolunteers} volunteer${uniqueVolunteers > 1 ? 's' : ''} across ${activeCount} SDG${activeCount > 1 ? 's' : ''}.`;
-                        }
-                        return `${uniqueVolunteers} volunteer${uniqueVolunteers > 1 ? 's' : ''} contributing ${totalHours} hours across ${activeCount} SDG${activeCount > 1 ? 's' : ''}.`;
-                      })()}
-                    </p>
+                    {/* Expansion Opportunity */}
+                    {employeeActivityOutsideCommitments.length > 0 && (
+                      <button
+                        onClick={() => setShowExpansionInsightsModal(true)}
+                        style={{
+                          flex: 1,
+                          padding: "10px 12px",
+                          backgroundColor: "#fef3c7",
+                          borderRadius: "8px",
+                          borderLeft: "3px solid #f59e0b",
+                          border: "1px solid #fcd34d",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "all 0.2s",
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#fde68a"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#fef3c7"; }}
+                      >
+                        <p style={{ fontSize: "10px", fontWeight: "600", color: "#92400e", marginBottom: "4px" }}>💡 EXPAND</p>
+                        <p style={{ fontSize: "11px", color: "#78350f", lineHeight: "1.4", margin: 0 }}>
+                          {employeeActivityOutsideCommitments.length} SDGs outside commitments. Top: {employeeActivityOutsideCommitments[0]?.name}
+                        </p>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {/* Row 1, Col 2: Geographic Impact by Region - Interactive Map */}
+                {/* Row 1, Col 2: Geographic Impact by Region - Enhanced Map */}
                 <div
                   style={{
                     backgroundColor: "white",
                     border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                    padding: "16px",
+                    borderRadius: "12px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    padding: "20px",
                     display: "flex",
                     flexDirection: "column",
+                    minHeight: "520px",
                   }}
                   data-testid="chart-geographic-impact"
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "12px",
-                      flexWrap: "wrap",
-                      gap: "8px",
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontSize: "14px",
-                        fontWeight: "600",
-                        color: "#111827",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        margin: 0,
-                      }}
-                    >
-                      <MapPin style={{ width: "16px", height: "16px" }} />
-                      Geographic Impact by Region
-                    </h3>
-                    {/* Map Filters */}
-                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                      <select
-                        value={selectedMapRegion}
-                        onChange={(e) => setSelectedMapRegion(e.target.value)}
-                        style={{
-                          padding: "4px 8px",
-                          fontSize: "11px",
-                          borderRadius: "4px",
-                          border: "1px solid #d1d5db",
-                          backgroundColor: selectedMapRegion !== "all" ? "#dbeafe" : "white",
-                          color: "#374151",
-                          cursor: "pointer",
-                        }}
-                        data-testid="map-region-filter"
-                      >
-                        <option value="all">All Regions</option>
-                        {projectRegions.map((region: string) => (
-                          <option key={region} value={region}>{region}</option>
-                        ))}
-                      </select>
-                      <select
-                        value={selectedMapStatus}
-                        onChange={(e) => setSelectedMapStatus(e.target.value)}
-                        style={{
-                          padding: "4px 8px",
-                          fontSize: "11px",
-                          borderRadius: "4px",
-                          border: "1px solid #d1d5db",
-                          backgroundColor: selectedMapStatus !== "all" ? "#dbeafe" : "white",
-                          color: "#374151",
-                          cursor: "pointer",
-                        }}
-                        data-testid="map-status-filter"
-                      >
-                        <option value="all">All Statuses</option>
-                        <option value="active">Active</option>
-                        <option value="sponsored">Sponsored</option>
-                        <option value="completed">Completed</option>
-                      </select>
-                      {(selectedMapRegion !== "all" || selectedMapStatus !== "all") && (
-                        <button
-                          onClick={() => {
-                            setSelectedMapRegion("all");
-                            setSelectedMapStatus("all");
-                          }}
-                          style={{
-                            padding: "4px 8px",
-                            fontSize: "10px",
-                            borderRadius: "4px",
-                            border: "none",
-                            backgroundColor: "#fee2e2",
-                            color: "#991b1b",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Clear Filters
-                        </button>
-                      )}
+                  {/* Header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                        <MapPin style={{ width: "18px", height: "18px", color: "#3b82f6" }} />
+                        Global Project Impact
+                      </h3>
+                      <p style={{ fontSize: "12px", color: "#6b7280", margin: "4px 0 0 0" }}>
+                        Active projects and volunteer locations worldwide
+                      </p>
                     </div>
                   </div>
-                  {/* Map Legend */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "12px",
-                      marginBottom: "8px",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
-                      <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1e3a8a" }} />
-                      <span>Active</span>
+
+                  {/* Map Stats Row */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "16px" }}>
+                    <div style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#1e40af", margin: 0 }}>
+                        {filteredProjectLocations.length}
+                      </p>
+                      <p style={{ fontSize: "9px", color: "#3b82f6", margin: "2px 0 0 0", fontWeight: "500" }}>PROJECTS</p>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
-                      <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#f97316" }} />
-                      <span>Sponsored</span>
+                    <div style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#166534", margin: 0 }}>
+                        {filteredProjectLocations.reduce((sum, p) => sum + (p.employees || 0), 0)}
+                      </p>
+                      <p style={{ fontSize: "9px", color: "#22c55e", margin: "2px 0 0 0", fontWeight: "500" }}>VOLUNTEERS</p>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
-                      <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#22c55e" }} />
-                      <span>Completed</span>
+                    <div style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#92400e", margin: 0 }}>
+                        {filteredProjectLocations.reduce((sum, p) => sum + (p.hours || 0), 0).toLocaleString()}
+                      </p>
+                      <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>HOURS</p>
                     </div>
-                    <div style={{ marginLeft: "auto", fontSize: "10px", color: "#6b7280" }}>
-                      {filteredProjectLocations.length} project{filteredProjectLocations.length !== 1 ? "s" : ""} shown
+                    <div style={{ backgroundColor: "#fae8ff", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: "#7e22ce", margin: 0 }}>
+                        {new Set(filteredProjectLocations.map(p => p.region).filter(Boolean)).size}
+                      </p>
+                      <p style={{ fontSize: "9px", color: "#a855f7", margin: "2px 0 0 0", fontWeight: "500" }}>REGIONS</p>
+                    </div>
+                  </div>
+
+                  {/* Filters Row */}
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", flexWrap: "wrap", alignItems: "center" }}>
+                    <select
+                      value={selectedMapRegion}
+                      onChange={(e) => setSelectedMapRegion(e.target.value)}
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: "11px",
+                        borderRadius: "6px",
+                        border: "1px solid #d1d5db",
+                        backgroundColor: selectedMapRegion !== "all" ? "#dbeafe" : "white",
+                        color: "#374151",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="all">All Regions</option>
+                      {projectRegions.map((region: string) => (
+                        <option key={region} value={region}>{region}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={selectedMapStatus}
+                      onChange={(e) => setSelectedMapStatus(e.target.value)}
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: "11px",
+                        borderRadius: "6px",
+                        border: "1px solid #d1d5db",
+                        backgroundColor: selectedMapStatus !== "all" ? "#dbeafe" : "white",
+                        color: "#374151",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="all">All Statuses</option>
+                      <option value="active">Active</option>
+                      <option value="sponsored">Sponsored</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                    {(selectedMapRegion !== "all" || selectedMapStatus !== "all") && (
+                      <button
+                        onClick={() => { setSelectedMapRegion("all"); setSelectedMapStatus("all"); }}
+                        style={{
+                          padding: "6px 12px",
+                          fontSize: "10px",
+                          borderRadius: "6px",
+                          border: "none",
+                          backgroundColor: "#fee2e2",
+                          color: "#991b1b",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                    <div style={{ marginLeft: "auto", display: "flex", gap: "12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#1e3a8a" }} />
+                        Active ({filteredProjectLocations.filter(p => p.status === "active").length})
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#f97316" }} />
+                        Sponsored ({filteredProjectLocations.filter(p => p.status === "sponsored").length})
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10px", color: "#6b7280" }}>
+                        <div style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#22c55e" }} />
+                        Completed ({filteredProjectLocations.filter(p => p.status === "completed").length})
+                      </div>
                     </div>
                   </div>
                   <div
@@ -2712,198 +2953,159 @@ export default function CSRDashboard() {
                       </div>
                     )}
                   </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "12px",
-                      marginTop: "12px",
-                      fontSize: "12px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "12px",
-                          height: "12px",
-                          borderRadius: "50%",
-                          backgroundColor: "#1e3a8a",
-                        }}
-                      ></div>
-                      <span style={{ color: "#4b5563" }}>
-                        Active Projects ({filteredProjectLocations.filter(p => p.status === "active").length})
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "12px",
-                          height: "12px",
-                          borderRadius: "50%",
-                          backgroundColor: "#22c55e",
-                        }}
-                      ></div>
-                      <span style={{ color: "#4b5563" }}>
-                        Completed ({filteredProjectLocations.filter(p => p.status === "completed").length})
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "12px",
-                          height: "12px",
-                          borderRadius: "50%",
-                          backgroundColor: "#f97316",
-                        }}
-                      ></div>
-                      <span style={{ color: "#4b5563" }}>
-                        Sponsored ({filteredProjectLocations.filter(p => p.status === "sponsored").length})
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Row 2, Col 1: Employee Engagement Funnel */}
+                {/* Row 2, Col 1: Employee Engagement Funnel - Enhanced Visual */}
                 <div
                   style={{
                     backgroundColor: "white",
                     border: "1px solid #e5e7eb",
-                    borderRadius: "8px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                    padding: "16px",
+                    borderRadius: "12px",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                    padding: "20px",
                   }}
                   data-testid="chart-employee-funnel"
                 >
-                  <h3
-                    style={{
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#111827",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    Employee Engagement Funnel
-                  </h3>
+                  {/* Header */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                    <div>
+                      <h3 style={{ fontSize: "16px", fontWeight: "700", color: "#111827", margin: 0, display: "flex", alignItems: "center", gap: "8px" }}>
+                        <Activity style={{ width: "18px", height: "18px", color: "#8b5cf6" }} />
+                        Employee Engagement Funnel
+                      </h3>
+                      <p style={{ fontSize: "12px", color: "#6b7280", margin: "4px 0 0 0" }}>
+                        Track employee journey from signup to top performer
+                      </p>
+                    </div>
+                  </div>
+
                   {funnelData?.funnel ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "12px",
-                      }}
-                    >
-                      {funnelData.funnel.map((stage: any, idx: number) => (
-                        <div
-                          key={idx}
-                          onClick={() => {
-                            setSelectedFunnelStage(idx);
-                            setShowFunnelModal(true);
-                          }}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            fontSize: "13px",
-                            padding: "8px 12px",
-                            borderRadius: "6px",
-                            backgroundColor:
-                              selectedFunnelStage === idx
-                                ? "#eff6ff"
-                                : "transparent",
-                            border:
-                              selectedFunnelStage === idx
-                                ? "1px solid #3b82f6"
-                                : "1px solid transparent",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = "#f0f9ff";
-                            e.currentTarget.style.border = "1px solid #3b82f6";
-                          }}
-                          onMouseLeave={(e) => {
-                            if (selectedFunnelStage !== idx) {
-                              e.currentTarget.style.backgroundColor =
-                                "transparent";
-                              e.currentTarget.style.border =
-                                "1px solid transparent";
-                            }
-                          }}
-                        >
-                          {idx > 0 && (
-                            <ChevronRight
-                              style={{
-                                width: "14px",
-                                height: "14px",
-                                color: "#9ca3af",
-                              }}
-                            />
-                          )}
-                          <span
-                            style={{
-                              fontWeight: idx === 0 ? "600" : "500",
-                              color: idx === 0 ? "#1e3a8a" : "#374151",
-                              flex: 1,
-                            }}
-                          >
-                            {stage.stage}
-                          </span>
-                          <span style={{ fontWeight: "600", color: "#059669" }}>
-                            ({stage.count})
-                          </span>
-                          {idx > 0 && (
-                            <span
-                              style={{ fontSize: "11px", color: "#6b7280" }}
-                            >
-                              -{stage.dropoff}%
-                            </span>
-                          )}
-                          <span
-                            style={{
-                              fontSize: "11px",
-                              color: "#3b82f6",
-                              fontWeight: "500",
-                            }}
-                          >
-                            →
-                          </span>
+                    <div>
+                      {/* Funnel Summary Stats */}
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "16px" }}>
+                        <div style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                          <p style={{ fontSize: "20px", fontWeight: "bold", color: "#166534", margin: 0 }}>
+                            {funnelData.funnel[0]?.count || 0}
+                          </p>
+                          <p style={{ fontSize: "9px", color: "#22c55e", margin: "2px 0 0 0", fontWeight: "500" }}>TOTAL ENROLLED</p>
                         </div>
-                      ))}
-                      <div
-                        style={{
-                          marginTop: "8px",
-                          padding: "8px 0",
-                          borderTop: "1px solid #e5e7eb",
-                          fontSize: "12px",
-                          color: "#6b7280",
-                        }}
-                      >
-                        Conversion to Active: {funnelData.conversion.toActive}%
-                        • Top Performers:{" "}
-                        {funnelData.conversion.toTopPerformers}%
+                        <div style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                          <p style={{ fontSize: "20px", fontWeight: "bold", color: "#1e40af", margin: 0 }}>
+                            {funnelData.conversion?.toActive || 0}%
+                          </p>
+                          <p style={{ fontSize: "9px", color: "#3b82f6", margin: "2px 0 0 0", fontWeight: "500" }}>TO ACTIVE</p>
+                        </div>
+                        <div style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                          <p style={{ fontSize: "20px", fontWeight: "bold", color: "#92400e", margin: 0 }}>
+                            {funnelData.conversion?.toTopPerformers || 0}%
+                          </p>
+                          <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>TOP PERFORMERS</p>
+                        </div>
+                      </div>
+
+                      {/* Visual Funnel */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                        {funnelData.funnel.map((stage: any, idx: number) => {
+                          const maxCount = funnelData.funnel[0]?.count || 1;
+                          const widthPercent = Math.max(20, (stage.count / maxCount) * 100);
+                          const colors = [
+                            { bg: "#3b82f6", light: "#dbeafe", text: "#1e40af" },
+                            { bg: "#8b5cf6", light: "#ede9fe", text: "#6d28d9" },
+                            { bg: "#10b981", light: "#d1fae5", text: "#047857" },
+                            { bg: "#f59e0b", light: "#fef3c7", text: "#b45309" },
+                            { bg: "#ef4444", light: "#fee2e2", text: "#dc2626" },
+                          ];
+                          const color = colors[idx % colors.length];
+
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => {
+                                setSelectedFunnelStage(idx);
+                                setShowFunnelModal(true);
+                              }}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                cursor: "pointer",
+                                padding: "4px 0",
+                              }}
+                            >
+                              {/* Funnel Bar */}
+                              <div
+                                style={{
+                                  width: `${widthPercent}%`,
+                                  minWidth: "100px",
+                                  backgroundColor: color.bg,
+                                  borderRadius: idx === 0 ? "8px 8px 4px 4px" : idx === funnelData.funnel.length - 1 ? "4px 4px 8px 8px" : "4px",
+                                  padding: "10px 14px",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  transition: "all 0.3s",
+                                  marginLeft: `${(100 - widthPercent) / 2}%`,
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.transform = "scale(1.02)";
+                                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.transform = "scale(1)";
+                                  e.currentTarget.style.boxShadow = "none";
+                                }}
+                              >
+                                <span style={{ fontSize: "12px", fontWeight: "600", color: "white" }}>
+                                  {stage.stage}
+                                </span>
+                                <span style={{ fontSize: "14px", fontWeight: "bold", color: "white" }}>
+                                  {stage.count}
+                                </span>
+                              </div>
+
+                              {/* Drop-off indicator */}
+                              {idx > 0 && (
+                                <div style={{ minWidth: "60px", textAlign: "right" }}>
+                                  <span style={{
+                                    fontSize: "11px",
+                                    fontWeight: "600",
+                                    color: stage.dropoff > 30 ? "#ef4444" : stage.dropoff > 15 ? "#f59e0b" : "#22c55e",
+                                    backgroundColor: stage.dropoff > 30 ? "#fee2e2" : stage.dropoff > 15 ? "#fef3c7" : "#d1fae5",
+                                    padding: "2px 8px",
+                                    borderRadius: "10px",
+                                  }}>
+                                    -{stage.dropoff}%
+                                  </span>
+                                </div>
+                              )}
+                              {idx === 0 && <div style={{ minWidth: "60px" }} />}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Action Insights */}
+                      <div style={{ marginTop: "16px", padding: "12px", backgroundColor: "#f8fafc", borderRadius: "8px", borderLeft: "3px solid #8b5cf6" }}>
+                        <p style={{ fontSize: "10px", fontWeight: "600", color: "#6d28d9", marginBottom: "4px" }}>ENGAGEMENT INSIGHT</p>
+                        <p style={{ fontSize: "11px", color: "#334155", margin: 0, lineHeight: "1.4" }}>
+                          {(() => {
+                            const highestDropoff = funnelData.funnel
+                              .filter((s: any) => s.dropoff)
+                              .sort((a: any, b: any) => b.dropoff - a.dropoff)[0];
+                            if (highestDropoff && highestDropoff.dropoff > 20) {
+                              return `Highest drop-off at "${highestDropoff.stage}" stage (${highestDropoff.dropoff}%). Consider targeted engagement campaigns.`;
+                            }
+                            return `Healthy funnel conversion! ${funnelData.conversion?.toTopPerformers || 0}% reach top performer status.`;
+                          })()}
+                        </p>
                       </div>
                     </div>
                   ) : (
-                    <div style={{ color: "#9ca3af", fontSize: "13px" }}>
-                      Loading funnel data...
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "200px", color: "#9ca3af" }}>
+                      <div style={{ textAlign: "center" }}>
+                        <Activity style={{ width: "40px", height: "40px", margin: "0 auto 12px", opacity: 0.5 }} />
+                        <p style={{ fontSize: "13px" }}>Loading funnel data...</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -5332,6 +5534,507 @@ export default function CSRDashboard() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active SDGs Modal - Drill-down for committed SDGs */}
+      {showActiveSDGsModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 60,
+          }}
+          onClick={() => setShowActiveSDGsModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+              maxWidth: "600px",
+              width: "95%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: "24px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#166534", margin: 0 }}>
+                SDG Commitment Status ({activeCommittedSDGs}/{committedSDGs.length} Active)
+              </h2>
+              <button
+                onClick={() => setShowActiveSDGsModal(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
+              >
+                <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {committedSDGs.map((sdgNum: number) => {
+                const sdgData = sdgMetrics.find(m => m.sdg === sdgNum);
+                const isActive = sdgData && sdgData.totalHours > 0;
+                return (
+                  <div
+                    key={sdgNum}
+                    style={{
+                      padding: "16px",
+                      borderRadius: "12px",
+                      border: isActive ? `2px solid ${getSDGColor(sdgNum)}` : "1px solid #e5e7eb",
+                      backgroundColor: isActive ? `${getSDGColor(sdgNum)}10` : "#f9fafb",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "8px",
+                          backgroundColor: getSDGColor(sdgNum),
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "white",
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {sdgNum}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: "14px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                          {getSDGName(sdgNum)}
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0 0" }}>
+                          {getSDGFullName(sdgNum)}
+                        </p>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        {isActive ? (
+                          <>
+                            <p style={{ fontSize: "16px", fontWeight: "bold", color: getSDGColor(sdgNum), margin: 0 }}>
+                              {sdgData.totalHours} hrs
+                            </p>
+                            <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>
+                              {sdgData.uniqueEmployees} employees
+                            </p>
+                          </>
+                        ) : (
+                          <span style={{ fontSize: "12px", color: "#9ca3af", fontStyle: "italic" }}>
+                            No activity yet
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {committedSDGs.length === 0 && (
+                <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                  <p>No SDG commitments set. Go to Settings to add your corporate SDG commitments.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Total Hours Modal - Drill-down for hours per SDG */}
+      {showTotalHoursModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 60,
+          }}
+          onClick={() => setShowTotalHoursModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+              maxWidth: "600px",
+              width: "95%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: "24px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#1e40af", margin: 0 }}>
+                Hours by Committed SDG ({committedSDGHours.toLocaleString()} Total)
+              </h2>
+              <button
+                onClick={() => setShowTotalHoursModal(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
+              >
+                <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {sdgMetrics
+                .filter(m => committedSDGs.includes(m.sdg) && m.totalHours > 0)
+                .sort((a: any, b: any) => b.totalHours - a.totalHours)
+                .map((metric: any) => {
+                  const percentage = committedSDGHours > 0 ? Math.round((metric.totalHours / committedSDGHours) * 100) : 0;
+                  return (
+                    <div key={metric.sdg} style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
+                        <div
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "6px",
+                            backgroundColor: getSDGColor(metric.sdg),
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "white",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                          }}
+                        >
+                          {metric.sdg}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                            {getSDGName(metric.sdg)}
+                          </p>
+                        </div>
+                        <div style={{ textAlign: "right" }}>
+                          <span style={{ fontSize: "16px", fontWeight: "bold", color: "#1e40af" }}>
+                            {metric.totalHours.toLocaleString()} hrs
+                          </span>
+                          <span style={{ fontSize: "12px", color: "#6b7280", marginLeft: "8px" }}>
+                            ({percentage}%)
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ height: "6px", backgroundColor: "#e5e7eb", borderRadius: "3px", overflow: "hidden" }}>
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${percentage}%`,
+                            backgroundColor: getSDGColor(metric.sdg),
+                            borderRadius: "3px",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              {committedSDGHours === 0 && (
+                <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                  <p>No hours logged yet for committed SDGs. Encourage employees to log their volunteer activities!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Employees Modal - Drill-down for employees per SDG */}
+      {showEmployeesModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 60,
+          }}
+          onClick={() => setShowEmployeesModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+              maxWidth: "700px",
+              width: "95%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: "24px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#92400e", margin: 0 }}>
+                Employees Contributing ({committedSDGEmployees} Active)
+              </h2>
+              <button
+                onClick={() => setShowEmployeesModal(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
+              >
+                <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />
+              </button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {sdgMetrics
+                .filter(m => committedSDGs.includes(m.sdg) && m.totalHours > 0)
+                .sort((a: any, b: any) => b.uniqueEmployees - a.uniqueEmployees)
+                .map((metric: any) => (
+                  <div key={metric.sdg} style={{ padding: "16px", backgroundColor: "#f9fafb", borderRadius: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+                      <div
+                        style={{
+                          width: "36px",
+                          height: "36px",
+                          borderRadius: "8px",
+                          backgroundColor: getSDGColor(metric.sdg),
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "white",
+                          fontSize: "13px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {metric.sdg}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: "14px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                          {getSDGName(metric.sdg)}
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#6b7280", margin: 0 }}>
+                          {metric.uniqueEmployees} employee{metric.uniqueEmployees !== 1 ? 's' : ''} | {metric.totalHours} hrs
+                        </p>
+                      </div>
+                    </div>
+                    {metric.employees && metric.employees.length > 0 && (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                        {metric.employees.slice(0, 5).map((emp: any, idx: number) => (
+                          <div
+                            key={idx}
+                            style={{
+                              padding: "6px 12px",
+                              backgroundColor: "white",
+                              borderRadius: "6px",
+                              border: "1px solid #e5e7eb",
+                              fontSize: "12px",
+                            }}
+                          >
+                            <span style={{ color: "#111827" }}>{emp.name || emp.email?.split('@')[0] || 'Employee'}</span>
+                            <span style={{ color: "#6b7280", marginLeft: "6px" }}>({emp.hours} hrs)</span>
+                          </div>
+                        ))}
+                        {metric.employees.length > 5 && (
+                          <div
+                            style={{
+                              padding: "6px 12px",
+                              backgroundColor: "#e5e7eb",
+                              borderRadius: "6px",
+                              fontSize: "12px",
+                              color: "#6b7280",
+                            }}
+                          >
+                            +{metric.employees.length - 5} more
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              {committedSDGEmployees === 0 && (
+                <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                  <p>No employees have logged hours for committed SDGs yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expansion Insights Modal - AI recommendations for SDG expansion */}
+      {showExpansionInsightsModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 60,
+          }}
+          onClick={() => setShowExpansionInsightsModal(false)}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "16px",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+              maxWidth: "700px",
+              width: "95%",
+              maxHeight: "85vh",
+              overflowY: "auto",
+              padding: "24px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div>
+                <h2 style={{ fontSize: "20px", fontWeight: "bold", color: "#92400e", margin: 0 }}>
+                  SDG Expansion Opportunities
+                </h2>
+                <p style={{ fontSize: "13px", color: "#6b7280", margin: "4px 0 0 0" }}>
+                  Employee activity outside your current commitments
+                </p>
+              </div>
+              <button
+                onClick={() => setShowExpansionInsightsModal(false)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
+              >
+                <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />
+              </button>
+            </div>
+
+            {/* AI Recommendation Banner */}
+            <div
+              style={{
+                padding: "16px",
+                backgroundColor: "#f0f9ff",
+                borderRadius: "12px",
+                borderLeft: "4px solid #3b82f6",
+                marginBottom: "20px",
+              }}
+            >
+              <p style={{ fontSize: "12px", fontWeight: "600", color: "#1e40af", marginBottom: "6px" }}>
+                AI Recommendation
+              </p>
+              <p style={{ fontSize: "13px", color: "#334155", lineHeight: "1.5", margin: 0 }}>
+                {(() => {
+                  const topOpportunity = employeeActivityOutsideCommitments[0];
+                  const totalOutsideHours = employeeActivityOutsideCommitments.reduce((sum, item) => sum + item.hours, 0);
+                  const totalOutsideEmployees = new Set(
+                    sdgMetrics
+                      .filter(m => !committedSDGs.includes(m.sdg) && m.totalHours > 0)
+                      .flatMap((m: any) => safeMap(m.employees, (emp: any) => emp.email))
+                  ).size;
+
+                  if (topOpportunity) {
+                    return `Your employees have logged ${totalOutsideHours} hours across ${employeeActivityOutsideCommitments.length} SDGs not in your commitments. Consider adding "${topOpportunity.fullName}" (${topOpportunity.hours} hrs from ${topOpportunity.employees} employees) to align corporate goals with employee passion.`;
+                  }
+                  return "No expansion opportunities detected at this time.";
+                })()}
+              </p>
+            </div>
+
+            {/* SDG Opportunities List */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {employeeActivityOutsideCommitments.map((sdgData, idx) => (
+                <div
+                  key={sdgData.sdg}
+                  style={{
+                    padding: "16px",
+                    borderRadius: "12px",
+                    border: idx === 0 ? `2px solid ${sdgData.color}` : "1px solid #e5e7eb",
+                    backgroundColor: idx === 0 ? `${sdgData.color}08` : "white",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div
+                      style={{
+                        width: "48px",
+                        height: "48px",
+                        borderRadius: "10px",
+                        backgroundColor: sdgData.color,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontWeight: "bold",
+                        fontSize: "16px",
+                      }}
+                    >
+                      {sdgData.sdg}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: "15px", fontWeight: "600", color: "#111827", margin: 0 }}>
+                        {sdgData.name}
+                      </p>
+                      <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0 0" }}>
+                        {sdgData.fullName}
+                      </p>
+                    </div>
+                    {idx === 0 && (
+                      <div
+                        style={{
+                          padding: "4px 10px",
+                          backgroundColor: "#fef3c7",
+                          borderRadius: "20px",
+                          fontSize: "11px",
+                          fontWeight: "600",
+                          color: "#92400e",
+                        }}
+                      >
+                        Top Pick
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: "12px",
+                      marginTop: "12px",
+                      paddingTop: "12px",
+                      borderTop: "1px solid #e5e7eb",
+                    }}
+                  >
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: sdgData.color, margin: 0 }}>
+                        {sdgData.hours}
+                      </p>
+                      <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>Hours Logged</p>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: sdgData.color, margin: 0 }}>
+                        {sdgData.employees}
+                      </p>
+                      <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>Employees</p>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: "18px", fontWeight: "bold", color: sdgData.color, margin: 0 }}>
+                        {sdgData.projects}
+                      </p>
+                      <p style={{ fontSize: "11px", color: "#6b7280", margin: 0 }}>Projects</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {employeeActivityOutsideCommitments.length === 0 && (
+                <div style={{ textAlign: "center", padding: "40px", color: "#6b7280" }}>
+                  <p>All employee activity is aligned with your current SDG commitments.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

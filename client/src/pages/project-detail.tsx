@@ -52,7 +52,8 @@ interface Project {
   ongoingHoursPerWeek?: number;
   projectTotalHours?: number;
   totalHoursLogged?: number;
-  livesTouched?: number;
+  livesImpacted?: number; // Volunteer-entered value (feeds into AIU calculation)
+  aiuEarned?: number; // Calculated AIU value
   aiTrackingEnabled?: boolean;
   engagementType?: string;
   commitmentType?: string;
@@ -141,16 +142,16 @@ export default function ProjectDetail() {
 
   const { toast } = useToast();
 
-  const updateLivesTouchedMutation = useMutation({
-    mutationFn: async (livesTouched: number) => {
-      return apiRequest("PATCH", `/api/projects/${projectId}`, { livesTouched });
+  const updateLivesImpactedMutation = useMutation({
+    mutationFn: async (livesImpacted: number) => {
+      return apiRequest("PATCH", `/api/projects/${projectId}`, { livesImpacted });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
-      toast({ title: "Lives touched updated", description: "The impact metric has been saved." });
+      toast({ title: "Lives impacted updated", description: "The impact metric has been saved and will contribute to AIU calculations." });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to update lives touched", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to update lives impacted", variant: "destructive" });
     }
   });
 
@@ -236,10 +237,6 @@ export default function ProjectDetail() {
   const isOrganization = currentUser?.userType === 'organization';
   const canEditProject = currentUser?.userType === 'organization' && 
                         project?.organizationId === currentUser?.organizationId;
-
-  const updateLivesTouched = (value: number) => {
-    updateLivesTouchedMutation.mutate(value);
-  };
 
   // Delete task dialog state
   const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
@@ -391,15 +388,15 @@ export default function ProjectDetail() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/20 border-orange-200 dark:border-orange-700">
+          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20 border-emerald-200 dark:border-emerald-700">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-orange-500/20">
-                  <Heart className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                <div className="p-2 rounded-lg bg-emerald-500/20">
+                  <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-orange-700 dark:text-orange-300">{project.livesTouched || 0}</div>
-                  <div className="text-xs text-orange-600/80 dark:text-orange-400/80">Lives Touched</div>
+                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{(project.aiuEarned || 0).toFixed(1)}</div>
+                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">AIUs Earned</div>
                 </div>
               </div>
             </CardContent>
@@ -668,18 +665,29 @@ export default function ProjectDetail() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* AIU Display */}
+                <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg">
+                  <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">AIUs Earned</div>
+                  <div className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">{(project.aiuEarned || 0).toFixed(1)}</div>
+                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">Attributable Impact Units</div>
+                </div>
+
+                {/* Lives Impacted Input (for organizations) */}
                 <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg">
-                  <div className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-1">Lives Touched</div>
-                  <div className="text-3xl font-bold text-orange-700 dark:text-orange-300">{project.livesTouched || 0}</div>
+                  <div className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-1">Lives Impacted</div>
+                  <div className="text-3xl font-bold text-orange-700 dark:text-orange-300">{project.livesImpacted || 0}</div>
                   {isOrganization && (
-                    <input
-                      type="number"
-                      value={project.livesTouched || 0}
-                      onChange={(e) => updateLivesTouched(parseInt(e.target.value) || 0)}
-                      className="mt-2 w-full px-3 py-1.5 text-sm border rounded-md"
-                      placeholder="Update lives touched"
-                      data-testid="input-lives-touched"
-                    />
+                    <div className="mt-2">
+                      <input
+                        type="number"
+                        value={project.livesImpacted || 0}
+                        onChange={(e) => updateLivesImpactedMutation.mutate(parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-1.5 text-sm border rounded-md"
+                        placeholder="Update lives impacted"
+                        data-testid="input-lives-impacted"
+                      />
+                      <p className="text-xs text-orange-600/70 mt-1">This value feeds into AIU calculations</p>
+                    </div>
                   )}
                 </div>
                 

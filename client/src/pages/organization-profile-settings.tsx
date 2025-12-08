@@ -144,14 +144,16 @@ export default function OrganizationProfileSettings() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch((err) => {
+        // Log cache invalidation errors for monitoring but don't block user flow
+        if (process.env.NODE_ENV === 'development') console.warn('Cache invalidation failed:', err);
+      });
       toast({
         title: "Profile created!",
         description: "Your organization profile has been created successfully.",
       });
     },
     onError: (error: Error) => {
-      console.error("Profile create error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to create profile. Please try again.",
@@ -185,17 +187,18 @@ export default function OrganizationProfileSettings() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch((err) => {
+        if (process.env.NODE_ENV === 'development') console.warn('Cache invalidation failed:', err);
+      });
       toast({
         title: "Profile updated!",
         description: "Your organization profile has been updated successfully.",
       });
-      
+
       // Redirect to organization dashboard after successful save
       setTimeout(() => setLocation("/organization-dashboard"), 500);
     },
     onError: (error: Error) => {
-      console.error("Profile update error:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to update profile. Please try again.",

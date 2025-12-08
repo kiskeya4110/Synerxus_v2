@@ -327,12 +327,12 @@ export default function OrganizationImpactReport() {
         ? projects.reduce((sum: number, p: any) => sum + (p.totalHoursLogged || 0), 0)
         : timeFilteredActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
 
-  // Calculate beneficiaries from REAL project data (livesTouched field)
+  // Calculate beneficiaries from REAL project data (livesImpacted field)
   // Use backend totalPeopleImpacted if available, otherwise sum from projects
   const beneficiariesServed =
     timeFilter === "all" && dashboardData?.totalPeopleImpacted !== undefined
       ? dashboardData.totalPeopleImpacted
-      : projects.reduce((sum: number, p: any) => sum + (p.livesTouched || 0), 0);
+      : projects.reduce((sum: number, p: any) => sum + (p.livesImpacted || p.livesTouched || 0), 0);
 
   // Calculate real funding estimate based on industry standard volunteer value
   // Industry standard: $31.80/hour volunteer time value (Independent Sector 2024)

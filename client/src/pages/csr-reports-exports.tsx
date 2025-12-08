@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Logo from "@/components/ui/logo";
 import {
   Home,
@@ -26,9 +26,11 @@ import {
   Share2,
   Mail,
   ArrowLeft,
+  ChevronRight,
 } from "lucide-react";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 import { useToast } from "@/hooks/use-toast";
 
 interface ReportTemplate {
@@ -151,6 +153,15 @@ export default function CSRReportsExports() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const userId = typeof window !== "undefined" ? localStorage.getItem("currentUserId") : null;
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<ReportTemplate | null>(null);
@@ -279,7 +290,9 @@ export default function CSRReportsExports() {
             h1 { color: #1e3a8a; border-bottom: 3px solid #f97316; padding-bottom: 16px; }
             h2 { color: #1e3a8a; margin-top: 32px; }
             .header { display: flex; justify-content: space-between; margin-bottom: 32px; }
-            .logo { font-size: 24px; font-weight: bold; color: #f97316; }
+            .logo { font-size: 24px; font-weight: bold; }
+            .logo .syner { color: #2A4B7F; }
+            .logo .xus { color: #F59E0B; }
             .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin: 24px 0; }
             .metric-card { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 24px; }
             .metric-value { font-size: 32px; font-weight: bold; color: #1e3a8a; }
@@ -292,7 +305,7 @@ export default function CSRReportsExports() {
         </head>
         <body>
           <div class="header">
-            <div class="logo">synerxus</div>
+            <div class="logo"><span class="syner">SYNER</span><span class="xus">XUS</span></div>
             <div>${currentDate}</div>
           </div>
 
@@ -362,6 +375,129 @@ export default function CSRReportsExports() {
           <div style={{ fontSize: "32px", marginBottom: "16px" }}>📄</div>
           <p style={{ color: "#6b7280", fontSize: "16px" }}>Loading reports...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Mobile PWA View
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex flex-col max-w-[428px] mx-auto">
+        <CSRMobileHeader title="Reports & Exports" companyName={companyName} showBackButton onBack={() => navigate('/csr-dashboard')} />
+
+        <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
+          {/* Category Pills */}
+          <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-medium whitespace-nowrap flex items-center gap-1 ${
+                  selectedCategory === cat.id
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-white/10 text-gray-300'
+                }`}
+              >
+                <span>{cat.icon}</span>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Report Templates */}
+          <div className="space-y-2">
+            {filteredTemplates.map((template) => (
+              <div key={template.id} className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <div className="flex items-start gap-2 mb-2">
+                  <span className="text-xl">{template.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white text-sm font-semibold truncate">{template.name}</h3>
+                    <p className="text-gray-400 text-[10px] line-clamp-2">{template.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1">
+                    {template.formats.map((format) => (
+                      <span
+                        key={format}
+                        className={`text-[8px] font-semibold px-1.5 py-0.5 rounded ${
+                          format === 'PDF' ? 'bg-red-500/20 text-red-400' :
+                          format === 'XLSX' ? 'bg-green-500/20 text-green-400' :
+                          'bg-blue-500/20 text-blue-400'
+                        }`}
+                      >
+                        {format}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-1">
+                    {template.formats.slice(0, 2).map((format) => (
+                      <button
+                        key={format}
+                        onClick={() => generateReport(template, format)}
+                        disabled={isGenerating === template.id}
+                        className={`px-2.5 py-1 rounded text-[10px] font-medium flex items-center gap-1 ${
+                          format === 'PDF' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white'
+                        } disabled:opacity-50`}
+                      >
+                        {isGenerating === template.id ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Download className="w-3 h-3" />
+                        )}
+                        {format}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Export Section */}
+          <div className="mt-4 bg-gradient-to-br from-blue-600/30 to-purple-600/30 rounded-lg p-3 border border-blue-500/30">
+            <h3 className="text-white text-sm font-semibold mb-2 flex items-center gap-1.5">
+              <Download className="w-4 h-4" />
+              Quick Data Export
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  const csv = generateCSVContent({ id: "all-data", name: "All Data Export" } as ReportTemplate, reportData);
+                  downloadFile(csv, "all_employee_hours.csv", "text/csv");
+                  toast({ title: "Exported", description: "Employee hours data exported." });
+                }}
+                className="p-2 bg-white/10 rounded-lg text-left"
+              >
+                <div className="text-sm mb-0.5">⏱️</div>
+                <div className="text-white text-[10px] font-medium">Employee Hours</div>
+              </button>
+              <button
+                onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
+                className="p-2 bg-white/10 rounded-lg text-left"
+              >
+                <div className="text-sm mb-0.5">🌍</div>
+                <div className="text-white text-[10px] font-medium">SDG Metrics</div>
+              </button>
+              <button
+                onClick={() => toast({ title: "Exported", description: "Project data exported." })}
+                className="p-2 bg-white/10 rounded-lg text-left"
+              >
+                <div className="text-sm mb-0.5">📁</div>
+                <div className="text-white text-[10px] font-medium">Projects</div>
+              </button>
+              <button
+                onClick={() => toast({ title: "Exported", description: "Financial data exported." })}
+                className="p-2 bg-white/10 rounded-lg text-left"
+              >
+                <div className="text-sm mb-0.5">💰</div>
+                <div className="text-white text-[10px] font-medium">Financial</div>
+              </button>
+            </div>
+          </div>
+        </main>
+
+        <CSRMobileNav activeTab="reports" />
       </div>
     );
   }

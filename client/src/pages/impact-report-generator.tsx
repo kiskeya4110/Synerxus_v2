@@ -123,7 +123,10 @@ export default function ImpactReportGenerator() {
           <div className="flex items-center justify-between mb-4">
             <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">LOGO HERE</div>
             <div className="text-right">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">Synerxus</h1>
+              <h1 className="text-xl font-bold">
+                <span className="text-slate-900 dark:text-white">SYNER</span>
+                <span style={{ color: '#F59E0B' }}>XUS</span>
+              </h1>
               <p className="text-xs text-orange-500">Connect. Manage. Impact Globally.</p>
             </div>
           </div>

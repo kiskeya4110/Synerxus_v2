@@ -1,31 +1,31 @@
-import { FolderOpen, Clock, Target, Users } from "lucide-react";
+import { FolderOpen, Clock, Target, Users, TrendingUp } from "lucide-react";
 
 interface MobileMetricsGridProps {
   activeProjects?: number;
   totalHours?: number;
   sdgsAddressed?: number;
-  livesTouched?: number;
+  aiuEarned?: number; // Replaced livesTouched with AIU
   onActiveProjectsClick?: () => void;
   onTotalHoursClick?: () => void;
   onSdgsClick?: () => void;
-  onLivesTouchedClick?: () => void;
+  onAiuClick?: () => void;
 }
 
-export default function MobileMetricsGrid({ 
-  activeProjects = 0, 
-  totalHours = 0, 
-  sdgsAddressed = 0, 
-  livesTouched = 0,
+export default function MobileMetricsGrid({
+  activeProjects = 0,
+  totalHours = 0,
+  sdgsAddressed = 0,
+  aiuEarned = 0,
   onActiveProjectsClick,
   onTotalHoursClick,
   onSdgsClick,
-  onLivesTouchedClick,
+  onAiuClick,
 }: MobileMetricsGridProps) {
   const metrics = [
     { label: "Active Projects", value: activeProjects, icon: FolderOpen, color: "#667eea", onClick: onActiveProjectsClick, testId: "mobile-metric-projects" },
     { label: "Total Hours", value: totalHours, icon: Clock, color: "#764ba2", onClick: onTotalHoursClick, testId: "mobile-metric-hours" },
     { label: "SDGs Addressed", value: sdgsAddressed, icon: Target, color: "#f093fb", onClick: onSdgsClick, testId: "mobile-metric-sdgs" },
-    { label: "Lives Touched", value: livesTouched, icon: Users, color: "#667eea", onClick: onLivesTouchedClick, testId: "mobile-metric-lives" },
+    { label: "AIUs Earned", value: typeof aiuEarned === 'number' ? aiuEarned.toFixed(1) : aiuEarned, icon: TrendingUp, color: "#10b981", onClick: onAiuClick, testId: "mobile-metric-aiu", tooltip: "Attributable Impact Units" },
   ];
 
   return (
@@ -41,6 +41,7 @@ export default function MobileMetricsGrid({
               onTouchEnd={(e) => { if (metric.onClick) { e.preventDefault(); metric.onClick(); } }}
               aria-label={`${metric.label}: ${metric.value}`}
               data-testid={metric.testId}
+              title={(metric as any).tooltip || metric.label}
               style={{
                 backgroundColor: 'white',
                 borderRadius: '8px',

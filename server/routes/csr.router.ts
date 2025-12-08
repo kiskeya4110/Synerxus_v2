@@ -41,6 +41,37 @@ function handleValidationError(err: unknown) {
   };
 }
 
+/**
+ * Helper function to get all employee user IDs linked to a CSR partner
+ * Combines both direct links (volunteerProfiles.employerId) and explicit links (volunteerEmployerLinks)
+ */
+async function getLinkedEmployeeUserIds(partnerId: number): Promise<Set<number>> {
+  const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+  const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
+
+  const employeeUserIds = new Set<number>();
+
+  // Method 1: Direct link via volunteerProfiles.employerId
+  volunteerProfiles.forEach((vp: any) => {
+    if (vp.employerId === partnerId) {
+      employeeUserIds.add(vp.userId);
+    }
+  });
+
+  // Method 2: Explicit link via volunteerEmployerLinks table
+  employerLinks.forEach((link: any) => {
+    if (link.partnerId === partnerId && link.verificationStatus !== 'rejected') {
+      // Get the userId from the volunteer profile
+      const profile = volunteerProfiles.find((vp: any) => vp.id === link.volunteerId);
+      if (profile?.userId) {
+        employeeUserIds.add(profile.userId);
+      }
+    }
+  });
+
+  return employeeUserIds;
+}
+
 // ==================== CSR DIAGNOSTIC & DASHBOARD ROUTES ====================
 
 /**
@@ -164,12 +195,9 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
     // Get sponsored project IDs (for ROI tracking only)
     const partnerProjectIds = new Set(partnerBudgets.map((b: any) => b.projectId).filter(Boolean));
 
-    // Get employee user IDs (users with employer_id matching this partner)
-    const employeeUserIds = new Set(
-      volunteerProfiles
-        .filter((vp: any) => vp.employerId === userPartner.id)
-        .map((vp: any) => vp.userId)
-    );
+    // Get employee user IDs - use helper function to get ALL linked employees
+    // This includes both direct links (employerId) and explicit links (volunteerEmployerLinks)
+    const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     // Get ALL volunteer activities by employees (regardless of which project - tracks full employee engagement)
     const allEmployeeActivities = volunteerActivities.filter((a: any) =>
@@ -317,14 +345,10 @@ csrRouter.get("/csr/engagement-funnel", async (req: Request, res: Response) => {
     const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
-    const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
     const volunteerActivities = await storage.listVolunteerActivities?.() || [];
 
-    const employeeUserIds = new Set(
-      volunteerProfiles
-        .filter((vp: any) => vp.employerId === userPartner.id)
-        .map((vp: any) => vp.userId)
-    );
+    // Get employee user IDs - use helper function to get ALL linked employees
+    const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     const totalEmployees = employeeUserIds.size;
     const employeesWithActivity = new Set();
@@ -378,11 +402,8 @@ csrRouter.get("/csr/engagement-funnel-stage", async (req: Request, res: Response
     const volunteerActivities = await storage.listVolunteerActivities?.() || [];
     const users = await storage.listUsers?.() || [];
 
-    const employeeUserIds = new Set(
-      volunteerProfiles
-        .filter((vp: any) => vp.employerId === userPartner.id)
-        .map((vp: any) => vp.userId)
-    );
+    // Get employee user IDs - use helper function to get ALL linked employees
+    const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     const employeesActiveHours: Record<number, number> = {};
     volunteerActivities.forEach((activity: any) => {
@@ -453,11 +474,8 @@ csrRouter.get("/csr/pending-actions", async (req: Request, res: Response) => {
     const volunteerActivities = await storage.listVolunteerActivities?.() || [];
     const users = await storage.listUsers?.() || [];
 
-    const employeeUserIds = new Set(
-      volunteerProfiles
-        .filter((vp: any) => vp.employerId === userPartner.id)
-        .map((vp: any) => vp.userId)
-    );
+    // Get employee user IDs - use helper function to get ALL linked employees
+    const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     // Reviews: Name mismatches and incomplete profiles
     const reviews: any[] = [];
@@ -593,11 +611,8 @@ csrRouter.get("/csr/impact-reporting", async (req: Request, res: Response) => {
     const projects = await storage.listProjects?.() || [];
     const users = await storage.listUsers?.() || [];
 
-    const employeeUserIds = new Set(
-      volunteerProfiles
-        .filter((vp: any) => vp.employerId === userPartner.id)
-        .map((vp: any) => vp.userId)
-    );
+    // Get employee user IDs - use helper function to get ALL linked employees
+    const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
 
     // Get employee activities only
     const employeeActivities = volunteerActivities.filter((a: any) => employeeUserIds.has(a.userId));

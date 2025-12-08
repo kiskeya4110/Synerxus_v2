@@ -73,13 +73,13 @@ export default function Logo({
           )}
           style={{ letterSpacing: sizeClasses.letterSpacing }}
         >
-          <span style={{ color: "#1e3a8a" }}>SYNER</span>
-          <span style={{ color: "#b45309" }}>XUS</span>
+          <span style={{ color: "#2A4B7F" }}>SYNER</span>
+          <span style={{ color: "#F59E0B" }}>XUS</span>
         </span>
         {showMotto && (
           <p className={cn("font-bold whitespace-nowrap", sizeClasses.motto, sizeClasses.mottoLineHeight)} style={{ marginTop: "-2px" }}>
-            <span style={{ color: "#1e3a8a" }}>Connect. Manage. </span>
-            <span style={{ color: "#b45309" }}>Impact Globally</span>
+            <span style={{ color: "#2A4B7F" }}>Connect. Manage. </span>
+            <span style={{ color: "#F59E0B" }}>Impact Globally</span>
           </p>
         )}
       </div>

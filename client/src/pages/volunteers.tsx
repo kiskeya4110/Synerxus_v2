@@ -857,7 +857,7 @@ export default function Volunteers() {
       </div>
       
       {/* Mobile Metrics Grid - Organization Only */}
-      {isOrganization && <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />}
+      {isOrganization && <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} aiuEarned={0} />}
       
       {/* Mobile Bottom Navigation - Organization Only */}
       {isOrganization && <MobileBottomNav />}

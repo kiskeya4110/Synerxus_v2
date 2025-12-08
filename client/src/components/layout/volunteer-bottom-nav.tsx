@@ -18,8 +18,25 @@ export default function VolunteerBottomNav() {
     enabled: !!userId
   });
 
-  // Only show for volunteers on mobile
-  if (currentUser?.userType !== 'volunteer') {
+  // Routes that have their own complete navigation - don't show VolunteerBottomNav here
+  const standaloneRoutes = [
+    '/volunteer-dashboard',
+    '/csr-dashboard',
+    '/csr-dashboard-pwa',
+    '/organization-dashboard',
+    '/discover-opportunities/pwa',
+    '/projects/',  // PWA project detail pages
+    '/landing',
+    '/login',
+    '/'
+  ];
+
+  const isStandaloneRoute = standaloneRoutes.some(route =>
+    location === route || location.startsWith(route)
+  );
+
+  // Only show for volunteers on mobile, and not on standalone routes
+  if (currentUser?.userType !== 'volunteer' || isStandaloneRoute) {
     return null;
   }
 

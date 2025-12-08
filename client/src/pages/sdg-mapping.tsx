@@ -1111,7 +1111,7 @@ export default function SDGMapping() {
       </div>
       
       {/* Mobile Metrics Grid */}
-      <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} livesTouched={0} />
+      <MobileMetricsGrid activeProjects={0} totalHours={0} sdgsAddressed={0} aiuEarned={0} />
       
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />

@@ -55,12 +55,22 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [location, loading, user, isCompleted, startOnboarding]);
 
-  // These routes have their own layout, skip the wrapper
-  // PWA mobile routes are included to prevent double navigation
-  const standaloneRoutes = ["/", "/login", "/organization-messages", "/landing", "/csr-dashboard", "/volunteer-dashboard", "/organization-dashboard", "/overview", "/csr-impact-reporting", "/project-portfolio", "/csr-reports-exports", "/projects", "/volunteers", "/sdg-mapping", "/impact-visualization", "/my-work", "/my-applications", "/assignments", "/my-tasks", "/log-activity", "/discover-opportunities", "/volunteer-profile-settings", "/volunteer-messages", "/achievements"];
-  
-  if (standaloneRoutes.some(route => location === route || location.startsWith(route + "/"))) {
-    return <>{children}</>;
+  // Routes that have their own complete layout (defined outside LayoutRoute in App.tsx)
+  // These should return null to avoid rendering any Layout wrapper
+  const fullyStandaloneRoutes = [
+    "/", "/login", "/landing", "/dashboard",
+    "/csr-dashboard", "/csr-dashboard-pwa", "/team-overview",
+    "/volunteer-dashboard", "/organization-dashboard", "/overview",
+    "/organization-my-work", "/csr-impact-reporting", "/project-portfolio",
+    "/csr-reports-exports", "/projects", "/volunteers", "/sdg-mapping",
+    "/impact-visualization", "/organization-messages",
+    "/discover-opportunities/pwa", "/opportunities"
+  ];
+
+  const isFullyStandalone = fullyStandaloneRoutes.some(route => location === route || location.startsWith(route + "/"));
+
+  if (isFullyStandalone) {
+    return null; // Don't render anything - these routes have their own complete layout
   }
 
   return (

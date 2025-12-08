@@ -1146,3 +1146,124 @@ export const insertCSRProjectPortfolioSchema = createInsertSchema(csrProjectPort
 
 export type CSRProjectPortfolio = typeof csrProjectPortfolios.$inferSelect;
 export type InsertCSRProjectPortfolio = z.infer<typeof insertCSRProjectPortfolioSchema>;
+
+// =====================================================
+// AIU (Attributable Impact Units) Schema
+// =====================================================
+
+// Project AIU Settings - KPI baselines and attribution factors
+export const projectAiuSettings = pgTable("project_aiu_settings", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  sdgIndicator: text("sdg_indicator").notNull(), // e.g., "SDG 4.1.1"
+  kpiName: text("kpi_name").notNull(), // e.g., "Reading Proficiency Rate"
+  kpiUnit: text("kpi_unit").notNull(), // e.g., "percentage", "count"
+  kpiBefore: doublePrecision("kpi_before").notNull(),
+  kpiAfter: doublePrecision("kpi_after"),
+  kpiMeasurementDate: timestamp("kpi_measurement_date"),
+  attributionFactor: doublePrecision("attribution_factor").notNull().default(0.2), // 0-1
+  attributionMethodology: text("attribution_methodology"), // Description of how attribution was determined
+  reportingWindowStart: timestamp("reporting_window_start"),
+  reportingWindowEnd: timestamp("reporting_window_end"),
+  verificationStatus: text("verification_status").default("pending"), // pending, verified, disputed
+  verifierId: integer("verifier_id").references(() => users.id),
+  verifierOrganization: text("verifier_organization"),
+  verifiedAt: timestamp("verified_at"),
+  evidenceLinks: text("evidence_links").array(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Unique Beneficiary Registry - Track unique beneficiaries per project
+export const beneficiaryRegistry = pgTable("beneficiary_registry", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  beneficiaryIdentifier: text("beneficiary_identifier").notNull(), // Hashed or anonymized ID
+  firstServedDate: timestamp("first_served_date").notNull(),
+  lastServedDate: timestamp("last_served_date"),
+  totalSessionsAttended: integer("total_sessions_attended").default(1),
+  demographicCategory: text("demographic_category"), // Optional demographic info
+  verificationSource: text("verification_source"), // NGO attendance list, sign-in sheet, etc.
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Volunteer AIU Records - Individual volunteer contributions and AIU calculations
+export const volunteerAiuRecords = pgTable("volunteer_aiu_records", {
+  id: serial("id").primaryKey(),
+  projectId: integer("project_id").references(() => projects.id).notNull(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  aiuSettingsId: integer("aiu_settings_id").references(() => projectAiuSettings.id),
+  reportingPeriod: text("reporting_period"), // e.g., "Q1 2024"
+  role: text("role").notNull().default("support"), // lead, mentor, specialist, support, observer, admin
+  hoursContributed: doublePrecision("hours_contributed").notNull(),
+  sessionsCount: integer("sessions_count").default(0),
+  livesImpacted: integer("lives_impacted").default(0), // Volunteer-entered value
+  uniqueBeneficiariesServed: integer("unique_beneficiaries_served").default(0),
+  roleWeight: doublePrecision("role_weight").notNull().default(1.0),
+  reliabilityMultiplier: doublePrecision("reliability_multiplier").notNull().default(0.7),
+  volunteerWeight: doublePrecision("volunteer_weight"), // Calculated: roleWeight * hours * reliabilityMultiplier
+  weightPercentage: doublePrecision("weight_percentage"), // Share of total weight
+  aiuUnique: doublePrecision("aiu_unique"), // Calculated AIU Unique value
+  aiuSessions: doublePrecision("aiu_sessions"), // Calculated AIU Sessions value
+  totalAiu: doublePrecision("total_aiu"), // Combined AIU value
+  verificationStatus: text("verification_status").default("self_reported"), // pending, verified, self_reported, disputed
+  verifierId: integer("verifier_id").references(() => users.id),
+  verifiedAt: timestamp("verified_at"),
+  evidenceLinks: text("evidence_links").array(),
+  calculatedAt: timestamp("calculated_at"),
+  formulaVersion: text("formula_version").default("1.0.0"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// AIU Export Logs - Track exports for audit purposes
+export const aiuExportLogs = pgTable("aiu_export_logs", {
+  id: serial("id").primaryKey(),
+  exportedBy: integer("exported_by").references(() => users.id).notNull(),
+  exportType: text("export_type").notNull(), // csv, json, pdf
+  projectIds: integer("project_ids").array(),
+  volunteerIds: integer("volunteer_ids").array(),
+  reportingPeriod: text("reporting_period"),
+  recordCount: integer("record_count"),
+  exportData: jsonb("export_data"), // Snapshot of exported data for audit
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas for AIU tables
+export const insertProjectAiuSettingsSchema = createInsertSchema(projectAiuSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBeneficiaryRegistrySchema = createInsertSchema(beneficiaryRegistry).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVolunteerAiuRecordSchema = createInsertSchema(volunteerAiuRecords).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiuExportLogSchema = createInsertSchema(aiuExportLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for AIU tables
+export type ProjectAiuSettings = typeof projectAiuSettings.$inferSelect;
+export type InsertProjectAiuSettings = z.infer<typeof insertProjectAiuSettingsSchema>;
+
+export type BeneficiaryRegistry = typeof beneficiaryRegistry.$inferSelect;
+export type InsertBeneficiaryRegistry = z.infer<typeof insertBeneficiaryRegistrySchema>;
+
+export type VolunteerAiuRecord = typeof volunteerAiuRecords.$inferSelect;
+export type InsertVolunteerAiuRecord = z.infer<typeof insertVolunteerAiuRecordSchema>;
+
+export type AiuExportLog = typeof aiuExportLogs.$inferSelect;
+export type InsertAiuExportLog = z.infer<typeof insertAiuExportLogSchema>;

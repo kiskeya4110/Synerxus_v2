@@ -13,10 +13,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { sdgGoals } from "@shared/sdg-goals";
-import { Building2, Check } from "lucide-react";
+import { sdgGoals, getSDGColor } from "@shared/sdg-goals";
+import { Building2, Check, ChevronRight, Save } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import { Label } from "@/components/ui/label";
+import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
 
 const corporatePartnerSchema = z.object({
   companyName: z.string().min(2, "Company name is required"),
@@ -94,8 +95,17 @@ export default function CorporatePartnerProfileSettings() {
   const { toast } = useToast();
   const [selectedSdgs, setSelectedSdgs] = useState<number[]>([]);
   const [logoUrl, setLogoUrl] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
   const userId = localStorage.getItem('currentUserId');
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const { data: currentUser } = useQuery<{ id: number; displayName?: string; userType?: string }>({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -252,6 +262,206 @@ export default function CorporatePartnerProfileSettings() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-muted-foreground">Loading your profile...</div>
+      </div>
+    );
+  }
+
+  // Mobile PWA View
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-[#1a1a2e] flex flex-col max-w-[428px] mx-auto">
+        <CSRMobileHeader title="Profile Settings" showBackButton onBack={() => navigate('/csr-dashboard')} />
+
+        <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+              {/* Company Info Section */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-3">Company Information</h3>
+
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-300 text-xs">Company Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Acme Corporation"
+                            {...field}
+                            className="bg-white/10 border-gray-600 text-white text-sm h-9"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="industryType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-300 text-xs">Industry</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger className="bg-white/10 border-gray-600 text-white text-sm h-9">
+                              <SelectValue placeholder="Select industry" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {industryOptions.map((industry) => (
+                              <SelectItem key={industry} value={industry}>
+                                {industry}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <FormField
+                      control={form.control}
+                      name="employeeCount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-300 text-xs">Employees</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="500"
+                              {...field}
+                              className="bg-white/10 border-gray-600 text-white text-sm h-9"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="annualCSRBudget"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-300 text-xs">CSR Budget ($)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="50000"
+                              {...field}
+                              className="bg-white/10 border-gray-600 text-white text-sm h-9"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-xs" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Info Section */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-3">Contact Information</h3>
+
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="contactEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-300 text-xs">Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="csr@company.com"
+                            {...field}
+                            className="bg-white/10 border-gray-600 text-white text-sm h-9"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="contactPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-300 text-xs">Phone</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="tel"
+                            placeholder="+1 (555) 123-4567"
+                            {...field}
+                            className="bg-white/10 border-gray-600 text-white text-sm h-9"
+                          />
+                        </FormControl>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* SDG Focus Areas */}
+              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+                <h3 className="text-white text-sm font-semibold mb-2">SDG Focus Areas</h3>
+                <p className="text-gray-400 text-[10px] mb-3">Select the UN SDGs your company prioritizes</p>
+
+                <div className="grid grid-cols-5 gap-1.5">
+                  {Object.values(sdgGoals).map((sdg) => {
+                    const isSelected = selectedSdgs.includes(sdg.id);
+                    return (
+                      <button
+                        key={sdg.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSdgs(prev =>
+                            isSelected
+                              ? prev.filter(id => id !== sdg.id)
+                              : [...prev, sdg.id]
+                          );
+                        }}
+                        className={`aspect-square rounded flex flex-col items-center justify-center text-white p-1 transition-all ${
+                          isSelected ? 'ring-2 ring-white ring-offset-1 ring-offset-[#16213e]' : 'opacity-50'
+                        }`}
+                        style={{ backgroundColor: getSDGColor(sdg.id) }}
+                      >
+                        <span className="font-bold text-sm">{sdg.id}</span>
+                        {isSelected && <Check className="w-3 h-3 mt-0.5" />}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {selectedSdgs.length > 0 && (
+                  <div className="mt-2 text-emerald-400 text-[10px]">
+                    {selectedSdgs.length} SDG{selectedSdgs.length > 1 ? 's' : ''} selected
+                  </div>
+                )}
+              </div>
+
+              {/* Save Button */}
+              <button
+                type="submit"
+                disabled={updatePartnerMutation.isPending}
+                className="w-full p-3 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-medium text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Save className="w-4 h-4" />
+                {updatePartnerMutation.isPending ? 'Saving...' : 'Save Settings'}
+              </button>
+            </form>
+          </Form>
+        </main>
+
+        <CSRMobileNav activeTab="settings" />
       </div>
     );
   }

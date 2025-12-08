@@ -8,8 +8,8 @@
   <!-- Background with padding -->
   <rect width="100" height="100" fill="#1a1a2e"/>
 
-  <!-- Infinity loop symbol with padding - scaled down to 70% to prevent cropping -->
-  <g transform="translate(50, 50) scale(0.7)">
+  <!-- Infinity loop symbol with padding - scaled down to 55% to fit PWA maskable safe zone -->
+  <g transform="translate(50, 50) scale(0.55)">
     <!-- Left loop -->
     <path d="M -25 0 Q -35 -15 -35 0 Q -35 15 -25 0" fill="none" stroke="url(#infinityGrad)" stroke-width="6" stroke-linecap="round"/>
     <!-- Right loop -->

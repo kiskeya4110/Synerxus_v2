@@ -27,7 +27,18 @@ import {
   Mail,
   ArrowLeft,
   ChevronRight,
+  DollarSign,
+  Receipt,
+  PieChart,
+  Activity,
+  CreditCard,
+  Wallet,
+  ArrowUpRight,
+  ArrowDownRight,
+  AlertCircle,
+  Eye,
 } from "lucide-react";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPie, Pie, Cell } from "recharts";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
@@ -147,6 +158,46 @@ const reportTemplates: ReportTemplate[] = [
   },
 ];
 
+// Financial tracking data types
+interface ExpenseRecord {
+  id: string;
+  date: string;
+  category: string;
+  description: string;
+  amount: number;
+  status: "pending" | "approved" | "rejected";
+  project?: string;
+  submittedBy: string;
+}
+
+// Monthly spending data for charts
+const monthlySpendingData = [
+  { month: "Jan", budget: 15000, actual: 12500, projected: 13000 },
+  { month: "Feb", budget: 15000, actual: 14200, projected: 14500 },
+  { month: "Mar", budget: 18000, actual: 16800, projected: 17000 },
+  { month: "Apr", budget: 18000, actual: 17500, projected: 18000 },
+  { month: "May", budget: 20000, actual: 18200, projected: 19000 },
+  { month: "Jun", budget: 20000, actual: 19500, projected: 20000 },
+];
+
+// Expense categories breakdown
+const expenseCategoriesData = [
+  { name: "Program Costs", value: 45000, color: "#3b82f6" },
+  { name: "Volunteer Support", value: 25000, color: "#10b981" },
+  { name: "Marketing", value: 12000, color: "#f59e0b" },
+  { name: "Technology", value: 8000, color: "#8b5cf6" },
+  { name: "Admin", value: 5000, color: "#ef4444" },
+];
+
+// Sample expense records
+const sampleExpenses: ExpenseRecord[] = [
+  { id: "EXP001", date: "2024-06-15", category: "Program Costs", description: "Community event supplies", amount: 1250, status: "approved", project: "Youth Mentorship", submittedBy: "Sarah Johnson" },
+  { id: "EXP002", date: "2024-06-12", category: "Volunteer Support", description: "Volunteer training materials", amount: 850, status: "approved", project: "Skills Training", submittedBy: "Michael Chen" },
+  { id: "EXP003", date: "2024-06-10", category: "Technology", description: "Volunteer management software", amount: 2500, status: "pending", submittedBy: "Admin" },
+  { id: "EXP004", date: "2024-06-08", category: "Marketing", description: "Campaign materials", amount: 1800, status: "approved", project: "Food Bank Initiative", submittedBy: "Emily Davis" },
+  { id: "EXP005", date: "2024-06-05", category: "Program Costs", description: "Transportation for volunteers", amount: 650, status: "pending", project: "Environmental Cleanup", submittedBy: "James Wilson" },
+];
+
 export default function CSRReportsExports() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
@@ -169,6 +220,16 @@ export default function CSRReportsExports() {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [exportFormat, setExportFormat] = useState("PDF");
   const [isGenerating, setIsGenerating] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"reports" | "expenses" | "budget">("reports");
+  const [showExpenseModal, setShowExpenseModal] = useState(false);
+  const [expenses, setExpenses] = useState(sampleExpenses);
+
+  // Financial KPIs
+  const totalBudget = 106000;
+  const totalSpent = 98700;
+  const remainingBudget = totalBudget - totalSpent;
+  const budgetUtilization = Math.round((totalSpent / totalBudget) * 100);
+  const pendingExpenses = expenses.filter(e => e.status === "pending").reduce((sum, e) => sum + e.amount, 0);
 
   // Fetch report data
   const { data: reportData, isLoading } = useQuery({
@@ -584,10 +645,16 @@ export default function CSRReportsExports() {
           {/* Page Header */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
-              <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#111827", margin: 0 }}>Reports & Exports</h1>
-              <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "8px" }}>Generate comprehensive reports for stakeholders, compliance, and internal tracking.</p>
+              <h1 style={{ fontSize: "28px", fontWeight: "bold", color: "#111827", margin: 0 }}>Reports & Financial Tracking</h1>
+              <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "8px" }}>Generate reports, track expenses, and manage CSR program budget.</p>
             </div>
             <div style={{ display: "flex", gap: "12px" }}>
+              {activeTab === "expenses" && (
+                <button onClick={() => setShowExpenseModal(true)} style={{ padding: "10px 20px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "500", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Receipt style={{ width: "16px", height: "16px" }} />
+                  Add Expense
+                </button>
+              )}
               <button onClick={() => setShowScheduleModal(true)} style={{ padding: "10px 20px", backgroundColor: "#1e3a8a", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "500", fontSize: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
                 <Calendar style={{ width: "16px", height: "16px" }} />
                 Schedule Reports
@@ -595,6 +662,260 @@ export default function CSRReportsExports() {
             </div>
           </div>
 
+          {/* Main Tab Navigation */}
+          <div style={{ display: "flex", gap: "8px", borderBottom: "2px solid #e5e7eb", paddingBottom: "12px" }}>
+            {[
+              { id: "reports", label: "Reports", icon: <FileText style={{ width: "16px", height: "16px" }} /> },
+              { id: "expenses", label: "Expense Tracking", icon: <Receipt style={{ width: "16px", height: "16px" }} /> },
+              { id: "budget", label: "Budget Overview", icon: <Wallet style={{ width: "16px", height: "16px" }} /> },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: activeTab === tab.id ? "#1e3a8a" : "white",
+                  color: activeTab === tab.id ? "white" : "#374151",
+                  border: activeTab === tab.id ? "none" : "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: "500",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  transition: "all 0.2s",
+                }}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Financial KPI Cards */}
+          {(activeTab === "expenses" || activeTab === "budget") && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "16px" }}>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #3b82f6" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>Total Budget</div>
+                  <DollarSign style={{ width: "20px", height: "20px", color: "#3b82f6" }} />
+                </div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#3b82f6", marginTop: "8px" }}>${(totalBudget / 1000).toFixed(0)}K</div>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>Annual allocation</div>
+              </div>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #10b981" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>Total Spent</div>
+                  <CreditCard style={{ width: "20px", height: "20px", color: "#10b981" }} />
+                </div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#10b981", marginTop: "8px" }}>${(totalSpent / 1000).toFixed(0)}K</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+                  <ArrowUpRight style={{ width: "12px", height: "12px", color: "#10b981" }} />
+                  <span style={{ fontSize: "11px", color: "#10b981" }}>{budgetUtilization}% utilized</span>
+                </div>
+              </div>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #f59e0b" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>Remaining</div>
+                  <Wallet style={{ width: "20px", height: "20px", color: "#f59e0b" }} />
+                </div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#f59e0b", marginTop: "8px" }}>${(remainingBudget / 1000).toFixed(1)}K</div>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>{100 - budgetUtilization}% available</div>
+              </div>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #8b5cf6" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>Pending Approval</div>
+                  <Clock style={{ width: "20px", height: "20px", color: "#8b5cf6" }} />
+                </div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#8b5cf6", marginTop: "8px" }}>${(pendingExpenses / 1000).toFixed(1)}K</div>
+                <div style={{ fontSize: "11px", color: "#6b7280", marginTop: "4px" }}>{expenses.filter(e => e.status === "pending").length} expenses</div>
+              </div>
+              <div style={{ backgroundColor: "white", padding: "20px", borderRadius: "12px", border: "2px solid #059669" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
+                  <div style={{ fontSize: "12px", color: "#6b7280" }}>Cost per Beneficiary</div>
+                  <Activity style={{ width: "20px", height: "20px", color: "#059669" }} />
+                </div>
+                <div style={{ fontSize: "28px", fontWeight: "bold", color: "#059669", marginTop: "8px" }}>$12.50</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+                  <ArrowDownRight style={{ width: "12px", height: "12px", color: "#059669" }} />
+                  <span style={{ fontSize: "11px", color: "#059669" }}>-8% vs last year</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Expense Tracking Tab */}
+          {activeTab === "expenses" && (
+            <>
+              {/* Expense Table */}
+              <div style={{ backgroundColor: "white", borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
+                <div style={{ padding: "20px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", margin: 0 }}>Recent Expenses</h3>
+                  <button onClick={() => { toast({ title: "Exported", description: "Expense report exported." }); }} style={{ padding: "8px 16px", backgroundColor: "#f3f4f6", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "12px", fontWeight: "500", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Download style={{ width: "14px", height: "14px" }} />
+                    Export CSV
+                  </button>
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#f9fafb" }}>
+                      <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>ID</th>
+                      <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>Date</th>
+                      <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>Category</th>
+                      <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>Description</th>
+                      <th style={{ padding: "12px 16px", textAlign: "left", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>Project</th>
+                      <th style={{ padding: "12px 16px", textAlign: "right", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>Amount</th>
+                      <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>Status</th>
+                      <th style={{ padding: "12px 16px", textAlign: "center", fontWeight: "600", fontSize: "12px", color: "#6b7280" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expenses.map((expense) => (
+                      <tr key={expense.id} style={{ borderBottom: "1px solid #e5e7eb" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#6b7280" }}>{expense.id}</td>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#374151" }}>{expense.date}</td>
+                        <td style={{ padding: "12px 16px" }}>
+                          <span style={{ fontSize: "12px", padding: "4px 8px", backgroundColor: "#f3f4f6", borderRadius: "4px", color: "#374151" }}>{expense.category}</span>
+                        </td>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#374151" }}>{expense.description}</td>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#6b7280" }}>{expense.project || "-"}</td>
+                        <td style={{ padding: "12px 16px", fontSize: "14px", fontWeight: "600", color: "#111827", textAlign: "right" }}>${expense.amount.toLocaleString()}</td>
+                        <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                          <span style={{
+                            fontSize: "11px",
+                            fontWeight: "600",
+                            padding: "4px 10px",
+                            borderRadius: "12px",
+                            backgroundColor: expense.status === "approved" ? "#dcfce7" : expense.status === "pending" ? "#fef3c7" : "#fee2e2",
+                            color: expense.status === "approved" ? "#15803d" : expense.status === "pending" ? "#92400e" : "#dc2626",
+                          }}>
+                            {expense.status.charAt(0).toUpperCase() + expense.status.slice(1)}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 16px", textAlign: "center" }}>
+                          {expense.status === "pending" && (
+                            <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
+                              <button
+                                onClick={() => {
+                                  setExpenses(prev => prev.map(e => e.id === expense.id ? { ...e, status: "approved" } : e));
+                                  toast({ title: "Approved", description: `Expense ${expense.id} approved.` });
+                                }}
+                                style={{ padding: "4px 8px", backgroundColor: "#059669", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "11px" }}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setExpenses(prev => prev.map(e => e.id === expense.id ? { ...e, status: "rejected" } : e));
+                                  toast({ title: "Rejected", description: `Expense ${expense.id} rejected.` });
+                                }}
+                                style={{ padding: "4px 8px", backgroundColor: "#ef4444", color: "white", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "11px" }}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                          {expense.status !== "pending" && (
+                            <button style={{ padding: "4px 8px", backgroundColor: "#f3f4f6", color: "#374151", border: "none", borderRadius: "4px", cursor: "pointer", fontSize: "11px" }}>
+                              <Eye style={{ width: "12px", height: "12px" }} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
+          {/* Budget Overview Tab */}
+          {activeTab === "budget" && (
+            <>
+              <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px" }}>
+                {/* Spending Trend Chart */}
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Budget vs Actual Spending</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlySpendingData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                      <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} tickFormatter={(v) => `$${v/1000}K`} />
+                      <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} formatter={(value: number) => `$${value.toLocaleString()}`} />
+                      <Bar dataKey="budget" fill="#e5e7eb" name="Budget" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="actual" fill="#3b82f6" name="Actual" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "12px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ width: "12px", height: "12px", backgroundColor: "#e5e7eb", borderRadius: "2px" }} />
+                      <span style={{ fontSize: "12px", color: "#6b7280" }}>Budget</span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <div style={{ width: "12px", height: "12px", backgroundColor: "#3b82f6", borderRadius: "2px" }} />
+                      <span style={{ fontSize: "12px", color: "#6b7280" }}>Actual</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category Breakdown Pie Chart */}
+                <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+                  <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Spending by Category</h3>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <RechartsPie>
+                      <Pie
+                        data={expenseCategoriesData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={70}
+                        innerRadius={40}
+                      >
+                        {expenseCategoriesData.map((entry, index) => (
+                          <Cell key={index} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                    </RechartsPie>
+                  </ResponsiveContainer>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
+                    {expenseCategoriesData.map((cat) => (
+                      <div key={cat.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <div style={{ width: "10px", height: "10px", backgroundColor: cat.color, borderRadius: "2px" }} />
+                        <span style={{ flex: 1, fontSize: "12px", color: "#374151" }}>{cat.name}</span>
+                        <span style={{ fontSize: "12px", fontWeight: "600", color: "#111827" }}>${(cat.value / 1000).toFixed(0)}K</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Budget Alerts */}
+              <div style={{ backgroundColor: "#fef3c7", border: "2px solid #f59e0b", borderRadius: "12px", padding: "20px" }}>
+                <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#92400e", marginBottom: "12px", display: "flex", alignItems: "center", gap: "8px" }}>
+                  <AlertCircle style={{ width: "18px", height: "18px" }} />
+                  Budget Alerts & Recommendations
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px", backgroundColor: "white", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "13px", color: "#374151" }}>• Technology spend is {Math.round((8000 / totalSpent) * 100)}% under budget - consider allocating to Q3 volunteer training</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px", backgroundColor: "white", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "13px", color: "#374151" }}>• Program costs trending 5% higher than projected - review vendor contracts</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px", backgroundColor: "white", borderRadius: "6px" }}>
+                    <span style={{ fontSize: "13px", color: "#374151" }}>• ${remainingBudget.toLocaleString()} remaining for {6} months - average ${Math.round(remainingBudget / 6).toLocaleString()}/month available</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Reports Tab - Original Content */}
+          {activeTab === "reports" && (
+            <>
           {/* Category Filter */}
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             {categories.map((cat) => (
@@ -694,6 +1015,8 @@ export default function CSRReportsExports() {
               </button>
             </div>
           </div>
+            </>
+          )}
 
           <Footer />
         </main>

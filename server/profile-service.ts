@@ -11,7 +11,7 @@ interface ProfileUpdateData {
   displayName?: string;
   skills?: string[];
   email?: string;
-  
+
   // Volunteer profile fields
   location?: string;
   interests?: string[];
@@ -31,6 +31,8 @@ interface ProfileUpdateData {
   employerId?: number;
   departmentName?: string;
   jobTitleAtCompany?: string;
+  // Profile photo URL for volunteer_profiles table
+  profilePhotoUrl?: string;
 }
 
 /**
@@ -135,7 +137,11 @@ export async function updateVolunteerProfileWithUser(
     if (profileData.jobTitleAtCompany !== undefined) {
       profileUpdates.jobTitleAtCompany = profileData.jobTitleAtCompany || null;
     }
-    
+    // Save profile photo URL to volunteer_profiles table
+    if (profileData.profilePhotoUrl !== undefined) {
+      profileUpdates.profilePhotoUrl = profileData.profilePhotoUrl || null;
+    }
+
     let updatedProfile: VolunteerProfile;
     
     if (existingProfile) {
@@ -177,6 +183,7 @@ export async function updateVolunteerProfileWithUser(
         yearsOfExperience: profileData.yearsOfExperience,
         linkedinProfile: profileData.linkedinProfile,
         matchingPriorities: profileData.matchingPriorities,
+        profilePhotoUrl: profileData.profilePhotoUrl || null,
         onboardingCompleted: false
       };
       

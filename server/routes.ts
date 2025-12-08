@@ -712,6 +712,191 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get detailed AI match analysis for a project
+  app.get("/api/projects/:id/match-analysis", async (req, res) => {
+    try {
+      const projectId = parseInt(req.params.id);
+      const { userId } = req.query;
+
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required" });
+      }
+
+      const userIdNum = parseInt(userId as string);
+
+      // Get project details
+      const project = await storage.getProject(projectId);
+      if (!project) {
+        return res.status(404).json({ message: "Project not found" });
+      }
+
+      // Get volunteer and their profile
+      const volunteer = await storage.getUser(userIdNum);
+      if (!volunteer) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const volunteerProfile = await storage.getVolunteerProfileByUserId(userIdNum);
+
+      // Cast project to any for extended fields
+      const proj = project as any;
+
+      // Create an opportunity-like object from the project for matching
+      const opportunityLike = {
+        id: proj.id,
+        title: proj.name,
+        description: proj.description,
+        organizationId: proj.organizationId,
+        category: proj.category || 'general',
+        requiredSkills: proj.requiredSkills || [],
+        optionalSkills: proj.optionalSkills || [],
+        primarySdg: proj.primarySdg || proj.sdgGoals?.[0],
+        sdgGoals: proj.sdgGoals || [],
+        location: proj.location,
+        isRemote: proj.isRemote || false,
+        engagementType: proj.engagementType || 'ongoing',
+        commitmentType: proj.commitmentType || 'ongoing',
+        ongoingHoursPerWeek: proj.ongoingHoursPerWeek,
+        eventDurationHours: proj.eventDurationHours,
+        status: proj.status || 'open',
+      } as any;
+
+      // Calculate match score with full breakdown
+      const volunteerWithProfile = {
+        ...volunteer,
+        profile: volunteerProfile || undefined
+      } as any;
+
+      const matchResult = calculateMatchScore(volunteerWithProfile, opportunityLike);
+
+      // Get organization details
+      const organization = project.organizationId
+        ? await storage.getOrganization(project.organizationId)
+        : null;
+
+      // Cast volunteerProfile to any for extended fields
+      const volProfile = volunteerProfile as any;
+
+      // Calculate skill overlap details
+      const volunteerSkills = (volProfile?.skills || volunteer.skills || []).map((s: string) => s.toLowerCase());
+      const projectRequiredSkills = (proj.requiredSkills || []).map((s: string) => s.toLowerCase());
+      const projectOptionalSkills = (proj.optionalSkills || []).map((s: string) => s.toLowerCase());
+
+      const matchingRequiredSkills = projectRequiredSkills.filter((s: string) => volunteerSkills.includes(s));
+      const matchingOptionalSkills = projectOptionalSkills.filter((s: string) => volunteerSkills.includes(s));
+      const missingRequiredSkills = projectRequiredSkills.filter((s: string) => !volunteerSkills.includes(s));
+
+      // Calculate SDG overlap details
+      const volunteerSdgs = volProfile?.preferredSdgs || [];
+      const projectSdgs = proj.sdgGoals || [];
+      const matchingSdgs = projectSdgs.filter((sdg: number) => volunteerSdgs.includes(sdg));
+      const primarySdgMatch = volProfile?.primarySdg && proj.primarySdg
+        ? volProfile.primarySdg === proj.primarySdg
+        : false;
+
+      // Calculate availability fit
+      const volunteerHours = volProfile?.weeklyAvailability || 0;
+      const projectHours = proj.ongoingHoursPerWeek || 0;
+      const availabilityFit = volunteerHours > 0 && projectHours > 0
+        ? Math.min((volunteerHours / projectHours) * 100, 100)
+        : 0;
+
+      // Calculate location match details
+      const volunteerLocation = volProfile?.location || '';
+      const projectLocation = proj.location || '';
+      const isRemoteProject = proj.isRemote || false;
+      const volunteerWorkStyle = volProfile?.preferredWorkStyle || '';
+
+      let locationMatchType = 'unknown';
+      if (isRemoteProject) {
+        locationMatchType = 'remote';
+      } else if (volunteerLocation && projectLocation) {
+        if (volunteerLocation.toLowerCase() === projectLocation.toLowerCase()) {
+          locationMatchType = 'exact';
+        } else if (volunteerLocation.split(',')[1]?.trim().toLowerCase() === projectLocation.split(',')[1]?.trim().toLowerCase()) {
+          locationMatchType = 'same_region';
+        } else {
+          locationMatchType = 'different';
+        }
+      }
+
+      res.json({
+        score: Math.round(matchResult.score || 0),
+        matchCategory: matchResult.matchCategory || 'no-match',
+        breakdown: {
+          skillMatch: Math.round(matchResult.breakdown?.skillMatch || 0),
+          locationMatch: Math.round(matchResult.breakdown?.locationMatch || 0),
+          sdgMatch: Math.round(matchResult.breakdown?.sdgMatch || 0),
+          interestMatch: Math.round(matchResult.breakdown?.interestMatch || 0),
+          availabilityMatch: Math.round(matchResult.breakdown?.availabilityMatch || 0),
+          experienceMatch: Math.round(matchResult.breakdown?.experienceMatch || 0),
+          engagementBoost: Math.round(matchResult.breakdown?.engagementBoost || 0),
+        },
+        reasons: matchResult.reasons || [],
+        dataQualityWarnings: matchResult.dataQualityWarnings || [],
+        details: {
+          skills: {
+            volunteerSkills: volProfile?.skills || volunteer.skills || [],
+            projectRequiredSkills: proj.requiredSkills || [],
+            projectOptionalSkills: proj.optionalSkills || [],
+            matchingRequired: matchingRequiredSkills,
+            matchingOptional: matchingOptionalSkills,
+            missingRequired: missingRequiredSkills,
+            weight: 35,
+          },
+          sdg: {
+            volunteerSdgs: volunteerSdgs,
+            volunteerPrimarySdg: volProfile?.primarySdg,
+            projectSdgs: projectSdgs,
+            projectPrimarySdg: proj.primarySdg,
+            matchingSdgs: matchingSdgs,
+            primarySdgMatch: primarySdgMatch,
+            weight: 20,
+          },
+          availability: {
+            volunteerHoursPerWeek: volunteerHours,
+            projectHoursPerWeek: projectHours,
+            fitPercentage: Math.round(availabilityFit),
+            volunteerWorkStyle: volunteerWorkStyle,
+            projectEngagementType: proj.engagementType,
+            weight: 20,
+          },
+          location: {
+            volunteerLocation: volunteerLocation,
+            projectLocation: projectLocation,
+            isRemote: isRemoteProject,
+            matchType: locationMatchType,
+            weight: 10,
+          },
+          experience: {
+            volunteerYears: volProfile?.yearsOfExperience || 0,
+            projectExperienceLevel: proj.experienceLevel,
+            weight: 5,
+          },
+          interests: {
+            volunteerCauses: volProfile?.causes || [],
+            volunteerInterests: volProfile?.interests || [],
+            projectCategory: proj.category,
+            weight: 10,
+          },
+        },
+        volunteer: {
+          id: volunteer.id,
+          name: volunteer.displayName || volunteer.username,
+          avatar: volunteer.avatar,
+        },
+        project: {
+          id: project.id,
+          name: project.name,
+          organizationName: organization?.name || 'Unknown Organization',
+        },
+      });
+    } catch (err) {
+      console.error("Error getting project match analysis:", err);
+      res.status(500).json({ message: "Failed to get match analysis" });
+    }
+  });
+
   app.post("/api/projects", async (req, res) => {
     try {
       // Authorization: require organization user
@@ -2273,6 +2458,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (err) {
       console.error("Error fetching opportunity:", err);
       res.status(500).json({ message: "Failed to fetch opportunity" });
+    }
+  });
+
+  // Get detailed AI match analysis for an opportunity
+  app.get("/api/opportunities/:id/match-analysis", async (req, res) => {
+    try {
+      const opportunityId = parseInt(req.params.id);
+      const { userId } = req.query;
+
+      if (!userId) {
+        return res.status(400).json({ message: "userId is required" });
+      }
+
+      const userIdNum = parseInt(userId as string);
+
+      // Get opportunity details
+      const opportunity = await storage.getOpportunity(opportunityId);
+      if (!opportunity) {
+        return res.status(404).json({ message: "Opportunity not found" });
+      }
+
+      // Get volunteer and their profile
+      const volunteer = await storage.getUser(userIdNum);
+      if (!volunteer) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const volunteerProfile = await storage.getVolunteerProfileByUserId(userIdNum);
+
+      // Calculate match score with full breakdown
+      const volunteerWithProfile = {
+        ...volunteer,
+        profile: volunteerProfile || undefined
+      } as any;
+
+      const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
+
+      // Get organization details
+      const organization = opportunity.organizationId
+        ? await storage.getOrganization(opportunity.organizationId)
+        : null;
+
+      // Cast volunteerProfile and opportunity to any for extended fields
+      const volProfile = volunteerProfile as any;
+      const opp = opportunity as any;
+
+      // Calculate skill overlap details
+      const volunteerSkills = (volProfile?.skills || volunteer.skills || []).map((s: string) => s.toLowerCase());
+      const oppRequiredSkills = (opp.requiredSkills || []).map((s: string) => s.toLowerCase());
+      const oppOptionalSkills = (opp.optionalSkills || []).map((s: string) => s.toLowerCase());
+
+      const matchingRequiredSkills = oppRequiredSkills.filter((s: string) => volunteerSkills.includes(s));
+      const matchingOptionalSkills = oppOptionalSkills.filter((s: string) => volunteerSkills.includes(s));
+      const missingRequiredSkills = oppRequiredSkills.filter((s: string) => !volunteerSkills.includes(s));
+
+      // Calculate SDG overlap details
+      const volunteerSdgs = volProfile?.preferredSdgs || [];
+      const oppSdgs = opp.sdgGoals || [];
+      const matchingSdgs = oppSdgs.filter((sdg: number) => volunteerSdgs.includes(sdg));
+      const primarySdgMatch = volProfile?.primarySdg && opp.primarySdg
+        ? volProfile.primarySdg === opp.primarySdg
+        : false;
+
+      // Calculate availability fit
+      const volunteerHours = volProfile?.weeklyAvailability || 0;
+      const oppHours = opp.ongoingHoursPerWeek || 0;
+      const availabilityFit = volunteerHours > 0 && oppHours > 0
+        ? Math.min((volunteerHours / oppHours) * 100, 100)
+        : 0;
+
+      // Calculate location match details
+      const volunteerLocation = volProfile?.location || '';
+      const oppLocation = opp.location || '';
+      const isRemote = opp.isRemote || false;
+
+      let locationMatchType = 'unknown';
+      if (isRemote) {
+        locationMatchType = 'remote';
+      } else if (volunteerLocation && oppLocation) {
+        if (volunteerLocation.toLowerCase() === oppLocation.toLowerCase()) {
+          locationMatchType = 'exact';
+        } else if (volunteerLocation.split(',')[1]?.trim().toLowerCase() === oppLocation.split(',')[1]?.trim().toLowerCase()) {
+          locationMatchType = 'same_region';
+        } else {
+          locationMatchType = 'different';
+        }
+      }
+
+      res.json({
+        score: Math.round(matchResult.score || 0),
+        matchCategory: matchResult.matchCategory || 'no-match',
+        breakdown: {
+          skillMatch: Math.round(matchResult.breakdown?.skillMatch || 0),
+          locationMatch: Math.round(matchResult.breakdown?.locationMatch || 0),
+          sdgMatch: Math.round(matchResult.breakdown?.sdgMatch || 0),
+          interestMatch: Math.round(matchResult.breakdown?.interestMatch || 0),
+          availabilityMatch: Math.round(matchResult.breakdown?.availabilityMatch || 0),
+          experienceMatch: Math.round(matchResult.breakdown?.experienceMatch || 0),
+          engagementBoost: Math.round(matchResult.breakdown?.engagementBoost || 0),
+        },
+        reasons: matchResult.reasons || [],
+        dataQualityWarnings: matchResult.dataQualityWarnings || [],
+        details: {
+          skills: {
+            volunteerSkills: volProfile?.skills || volunteer.skills || [],
+            projectRequiredSkills: opp.requiredSkills || [],
+            projectOptionalSkills: opp.optionalSkills || [],
+            matchingRequired: matchingRequiredSkills,
+            matchingOptional: matchingOptionalSkills,
+            missingRequired: missingRequiredSkills,
+            weight: 35,
+          },
+          sdg: {
+            volunteerSdgs: volunteerSdgs,
+            volunteerPrimarySdg: volProfile?.primarySdg,
+            projectSdgs: oppSdgs,
+            projectPrimarySdg: opp.primarySdg,
+            matchingSdgs: matchingSdgs,
+            primarySdgMatch: primarySdgMatch,
+            weight: 20,
+          },
+          availability: {
+            volunteerHoursPerWeek: volunteerHours,
+            projectHoursPerWeek: oppHours,
+            fitPercentage: Math.round(availabilityFit),
+            volunteerWorkStyle: volProfile?.preferredWorkStyle || '',
+            projectEngagementType: opp.engagementType,
+            weight: 20,
+          },
+          location: {
+            volunteerLocation: volunteerLocation,
+            projectLocation: oppLocation,
+            isRemote: isRemote,
+            matchType: locationMatchType,
+            weight: 10,
+          },
+          experience: {
+            volunteerYears: volProfile?.yearsOfExperience || 0,
+            projectExperienceLevel: opp.experienceLevel,
+            weight: 5,
+          },
+          interests: {
+            volunteerCauses: volProfile?.causes || [],
+            volunteerInterests: volProfile?.interests || [],
+            projectCategory: opp.category,
+            weight: 10,
+          },
+        },
+        volunteer: {
+          id: volunteer.id,
+          name: volunteer.displayName || volunteer.username,
+          avatar: volunteer.avatar,
+        },
+        project: {
+          id: opportunity.id,
+          name: opportunity.title,
+          organizationName: organization?.name || 'Unknown Organization',
+        },
+      });
+    } catch (err) {
+      console.error("Error getting opportunity match analysis:", err);
+      res.status(500).json({ message: "Failed to get match analysis" });
     }
   });
 
@@ -4567,6 +4914,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       // Use profile service to atomically update both users and volunteer_profiles tables
       const profileUpdate = await updateVolunteerProfileWithUser(userId, {
         avatar: profilePhotoUrl,
+        profilePhotoUrl, // Also save to volunteer_profiles table
         bio,
         displayName,
         skills,

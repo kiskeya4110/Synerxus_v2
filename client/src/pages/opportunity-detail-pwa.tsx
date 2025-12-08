@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +10,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import ProjectChat from "@/components/project/project-chat";
+import MatchAnalysisModal from "@/components/volunteer/match-analysis-modal";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -29,6 +31,7 @@ const SDG_NAMES: { [key: number]: string } = {
 export default function OpportunityDetailPWA() {
   const [, params] = useRoute("/opportunities/:id/pwa");
   const opportunityId = params?.id ? parseInt(params.id) : null;
+  const [showMatchAnalysis, setShowMatchAnalysis] = useState(false);
 
   const { data: opportunity, isLoading } = useQuery<any>({
     queryKey: [`/api/opportunities/${opportunityId}`],
@@ -166,22 +169,29 @@ export default function OpportunityDetailPWA() {
               </div>
 
               {/* Right: Why Good Match */}
-              <div className="bg-slate-50 rounded-lg p-3 space-y-2">
-                <h3 className="font-semibold text-slate-900 text-sm">Why this is a good match</h3>
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-3 space-y-2 border border-emerald-100">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-emerald-500" />
+                  <h3 className="font-semibold text-slate-900 text-sm">Why this is a good match</h3>
+                </div>
                 <div className="space-y-2 text-xs text-slate-700">
                   {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
                     <p>
-                      Your profile skills in <span className="font-semibold">{opportunity.requiredSkills[0]}</span> align with the core needs.
+                      Your profile skills in <span className="font-semibold text-emerald-700">{opportunity.requiredSkills[0]}</span> align with the core needs.
                     </p>
                   )}
                   {opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && (
                     <p>
-                      You have expressed interest in <span className="font-semibold">"{SDG_NAMES[opportunity.sdgGoals[0]] || "Impact"}"</span> and related areas.
+                      You have expressed interest in <span className="font-semibold text-emerald-700">"{SDG_NAMES[opportunity.sdgGoals[0]] || "Impact"}"</span> and related areas.
                     </p>
                   )}
-                  <Link href="/volunteer-profile-settings" className="text-blue-600 hover:underline text-xs">
-                    View details →
-                  </Link>
+                  <button
+                    onClick={() => setShowMatchAnalysis(true)}
+                    className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-xs mt-2 transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    View AI Analysis →
+                  </button>
                 </div>
               </div>
             </div>
@@ -245,6 +255,14 @@ export default function OpportunityDetailPWA() {
           organizationName={opportunity.organizationName}
         />
       )}
+
+      {/* AI Match Analysis Modal */}
+      <MatchAnalysisModal
+        isOpen={showMatchAnalysis}
+        onClose={() => setShowMatchAnalysis(false)}
+        opportunityId={opportunityId!}
+        projectName={opportunity.title}
+      />
     </div>
   );
 }

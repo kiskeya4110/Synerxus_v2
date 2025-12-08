@@ -1,12 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign, Briefcase, Settings, Home, BarChart3, Users, FileText } from "lucide-react";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from "recharts";
+import { Plus, Filter, Grid3x3, Trello, Calendar, Map, ChevronRight, X, AlertCircle, CheckCircle, Clock, DollarSign, Briefcase, Settings, Home, BarChart3, Users, FileText, TrendingUp, Target, Zap, ArrowUpRight, ArrowDownRight, Award, Activity, Layers, Globe } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
+
+// Portfolio Management Standards
+const PORTFOLIO_BENCHMARKS = {
+  onTimeDelivery: { excellent: 90, good: 75, average: 60 },
+  budgetAdherence: { excellent: 95, good: 85, average: 70 },
+  stakeholderSatisfaction: { excellent: 90, good: 75, average: 60 },
+  impactEfficiency: { excellent: 1.5, good: 1.0, average: 0.7 }, // beneficiaries per $1K
+};
 
 interface PortfolioProject {
   id: number;
@@ -55,6 +63,44 @@ export default function ProjectPortfolio() {
   const [showInsightsPanel, setShowInsightsPanel] = useState(true);
   const [editingStatus, setEditingStatus] = useState(false);
   const [newStatusValue, setNewStatusValue] = useState("");
+  const [activeSubTab, setActiveSubTab] = useState<"projects" | "analytics" | "sdg" | "timeline">("projects");
+  const [showMetricModal, setShowMetricModal] = useState<string | null>(null);
+
+  // Enhanced portfolio metrics
+  const onTimeDeliveryRate = 82;
+  const budgetAdherenceRate = 88;
+  const stakeholderSatisfaction = 85;
+  const impactEfficiency = 1.2;
+
+  // SDG Distribution for portfolio
+  const portfolioSDGData = [
+    { sdg: 1, name: "No Poverty", projects: 2, hours: 450, color: "#e5243b" },
+    { sdg: 4, name: "Quality Education", projects: 4, hours: 890, color: "#c5192d" },
+    { sdg: 8, name: "Decent Work", projects: 3, hours: 620, color: "#a21942" },
+    { sdg: 10, name: "Reduced Inequalities", projects: 2, hours: 380, color: "#dd1367" },
+    { sdg: 11, name: "Sustainable Cities", projects: 3, hours: 540, color: "#fd9d24" },
+    { sdg: 13, name: "Climate Action", projects: 2, hours: 320, color: "#3f7e44" },
+  ];
+
+  // Project timeline data
+  const timelineData = [
+    { month: "Jan", planned: 3, completed: 2, inProgress: 4 },
+    { month: "Feb", planned: 4, completed: 3, inProgress: 5 },
+    { month: "Mar", planned: 5, completed: 4, inProgress: 6 },
+    { month: "Apr", planned: 4, completed: 5, inProgress: 5 },
+    { month: "May", planned: 6, completed: 4, inProgress: 7 },
+    { month: "Jun", planned: 5, completed: 6, inProgress: 6 },
+  ];
+
+  // Portfolio health radar data
+  const portfolioHealthData = [
+    { metric: "On-Time", value: onTimeDeliveryRate, fullMark: 100 },
+    { metric: "Budget", value: budgetAdherenceRate, fullMark: 100 },
+    { metric: "Quality", value: stakeholderSatisfaction, fullMark: 100 },
+    { metric: "Impact", value: Math.min(impactEfficiency * 66, 100), fullMark: 100 },
+    { metric: "Risk Mgmt", value: 78, fullMark: 100 },
+    { metric: "Team Perf", value: 85, fullMark: 100 },
+  ];
 
   const { data: portfolioData, isLoading } = useQuery<PortfolioSummary>({
     queryKey: ["/api/csr/portfolio/summary", userId],
@@ -625,8 +671,87 @@ export default function ProjectPortfolio() {
         </div>
       )}
 
+      {/* Sub-navigation Tabs */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "16px", borderBottom: "2px solid #e5e7eb", paddingBottom: "12px" }}>
+        {[
+          { id: "projects", label: "Projects", icon: <Briefcase style={{ width: "16px", height: "16px" }} /> },
+          { id: "analytics", label: "Analytics", icon: <Activity style={{ width: "16px", height: "16px" }} /> },
+          { id: "sdg", label: "SDG Impact", icon: <Globe style={{ width: "16px", height: "16px" }} /> },
+          { id: "timeline", label: "Timeline", icon: <Calendar style={{ width: "16px", height: "16px" }} /> },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveSubTab(tab.id as any)}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: activeSubTab === tab.id ? "#1e3a8a" : "white",
+              color: activeSubTab === tab.id ? "white" : "#374151",
+              border: activeSubTab === tab.id ? "none" : "1px solid #e5e7eb",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontSize: "13px",
+              fontWeight: "500",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              transition: "all 0.2s",
+            }}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Enhanced KPI Row with PM Standards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "12px", marginBottom: "20px" }}>
+        <button onClick={() => setShowMetricModal("delivery")} style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "2px solid #10b981", cursor: "pointer", textAlign: "left" }}>
+          <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>On-Time Delivery</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981" }}>{onTimeDeliveryRate}%</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+            <ArrowUpRight style={{ width: "12px", height: "12px", color: "#10b981" }} />
+            <span style={{ fontSize: "10px", color: "#10b981" }}>+3% vs target</span>
+          </div>
+        </button>
+        <button onClick={() => setShowMetricModal("budget")} style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "2px solid #3b82f6", cursor: "pointer", textAlign: "left" }}>
+          <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Budget Adherence</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#3b82f6" }}>{budgetAdherenceRate}%</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+            <ArrowUpRight style={{ width: "12px", height: "12px", color: "#3b82f6" }} />
+            <span style={{ fontSize: "10px", color: "#3b82f6" }}>On track</span>
+          </div>
+        </button>
+        <button onClick={() => setShowMetricModal("satisfaction")} style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "2px solid #8b5cf6", cursor: "pointer", textAlign: "left" }}>
+          <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Stakeholder Score</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#8b5cf6" }}>{stakeholderSatisfaction}%</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+            <ArrowUpRight style={{ width: "12px", height: "12px", color: "#8b5cf6" }} />
+            <span style={{ fontSize: "10px", color: "#8b5cf6" }}>NPS: 45</span>
+          </div>
+        </button>
+        <button onClick={() => setShowMetricModal("efficiency")} style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "2px solid #f59e0b", cursor: "pointer", textAlign: "left" }}>
+          <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Impact Efficiency</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#f59e0b" }}>{impactEfficiency}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+            <span style={{ fontSize: "10px", color: "#f59e0b" }}>beneficiaries/$1K</span>
+          </div>
+        </button>
+        <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+          <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Active SDGs</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}>{portfolioSDGData.length}</div>
+          <div style={{ fontSize: "10px", color: "#6b7280" }}>of 17 goals</div>
+        </div>
+        <div style={{ backgroundColor: "white", padding: "16px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+          <div style={{ fontSize: "11px", color: "#6b7280", marginBottom: "4px" }}>Avg Health Score</div>
+          <div style={{ fontSize: "24px", fontWeight: "bold", color: "#1e3a8a" }}>
+            {Math.round(portfolioHealthData.reduce((sum, d) => sum + d.value, 0) / portfolioHealthData.length)}
+          </div>
+          <div style={{ fontSize: "10px", color: "#6b7280" }}>/ 100</div>
+        </div>
+      </div>
+
       {/* AI Insights Panel */}
-      {showInsightsPanel && (
+      {showInsightsPanel && activeSubTab === "projects" && (
         <div style={{ backgroundColor: "#eff6ff", border: "1px solid #3b82f6", borderRadius: "12px", padding: "16px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
             <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#1e40af", margin: 0 }}>✨ AI Portfolio Insights & Recommendations</h3>
@@ -643,6 +768,135 @@ export default function ProjectPortfolio() {
           </div>
         </div>
       )}
+
+      {/* Analytics Sub-Tab */}
+      {activeSubTab === "analytics" && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", marginBottom: "24px" }}>
+          {/* Portfolio Health Radar */}
+          <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Portfolio Health Score</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <RadarChart data={portfolioHealthData}>
+                <PolarGrid stroke="#e5e7eb" />
+                <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10, fill: "#9ca3af" }} />
+                <Radar name="Score" dataKey="value" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.3} strokeWidth={2} />
+              </RadarChart>
+            </ResponsiveContainer>
+            <div style={{ textAlign: "center", marginTop: "8px" }}>
+              <span style={{ fontSize: "28px", fontWeight: "bold", color: "#3b82f6" }}>
+                {Math.round(portfolioHealthData.reduce((sum, d) => sum + d.value, 0) / portfolioHealthData.length)}
+              </span>
+              <span style={{ fontSize: "14px", color: "#6b7280" }}> / 100 Overall</span>
+            </div>
+          </div>
+
+          {/* Benchmark Comparison */}
+          <div style={{ backgroundColor: "#f0f9ff", padding: "24px", borderRadius: "12px", border: "2px solid #3b82f6" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#1e40af", marginBottom: "16px" }}>PM Industry Benchmarks</h3>
+            {[
+              { label: "On-Time Delivery", yours: onTimeDeliveryRate, benchmark: PORTFOLIO_BENCHMARKS.onTimeDelivery },
+              { label: "Budget Adherence", yours: budgetAdherenceRate, benchmark: PORTFOLIO_BENCHMARKS.budgetAdherence },
+              { label: "Stakeholder Score", yours: stakeholderSatisfaction, benchmark: PORTFOLIO_BENCHMARKS.stakeholderSatisfaction },
+            ].map((item, idx) => {
+              const status = item.yours >= item.benchmark.excellent ? "excellent" : item.yours >= item.benchmark.good ? "good" : "average";
+              const colors = { excellent: "#059669", good: "#3b82f6", average: "#f59e0b" };
+              return (
+                <div key={idx} style={{ marginBottom: "16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+                    <span style={{ fontSize: "13px", color: "#374151" }}>{item.label}</span>
+                    <span style={{ fontSize: "13px", fontWeight: "600", color: colors[status] }}>{item.yours}%</span>
+                  </div>
+                  <div style={{ height: "8px", backgroundColor: "#e5e7eb", borderRadius: "4px", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min((item.yours / item.benchmark.excellent) * 100, 100)}%`, backgroundColor: colors[status], borderRadius: "4px" }} />
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#6b7280", marginTop: "4px" }}>Target: {item.benchmark.good}% (Good) / {item.benchmark.excellent}% (Excellent)</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* SDG Impact Sub-Tab */}
+      {activeSubTab === "sdg" && (
+        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "24px", marginBottom: "24px" }}>
+          <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>SDG Distribution Across Portfolio</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={portfolioSDGData} layout="vertical">
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#6b7280" }} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "#6b7280" }} width={120} />
+                <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
+                <Bar dataKey="hours" fill="#3b82f6" name="Hours" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb" }}>
+            <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>SDG Summary</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {portfolioSDGData.map((sdg) => (
+                <div key={sdg.sdg} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "8px", backgroundColor: "#f9fafb", borderRadius: "6px" }}>
+                  <div style={{ width: "32px", height: "32px", backgroundColor: sdg.color, borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "12px", fontWeight: "bold" }}>
+                    {sdg.sdg}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "12px", fontWeight: "600", color: "#111827" }}>SDG {sdg.sdg}</div>
+                    <div style={{ fontSize: "10px", color: "#6b7280" }}>{sdg.projects} projects • {sdg.hours}h</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Timeline Sub-Tab */}
+      {activeSubTab === "timeline" && (
+        <div style={{ backgroundColor: "white", padding: "24px", borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "24px" }}>
+          <h3 style={{ fontSize: "16px", fontWeight: "600", color: "#111827", marginBottom: "16px" }}>Project Timeline Overview</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={timelineData}>
+              <defs>
+                <linearGradient id="completedGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="inProgressGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#6b7280" }} />
+              <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
+              <Tooltip contentStyle={{ backgroundColor: "#1e3a8a", border: "none", borderRadius: "8px", color: "white" }} />
+              <Area type="monotone" dataKey="completed" stroke="#10b981" fill="url(#completedGrad)" strokeWidth={2} name="Completed" />
+              <Area type="monotone" dataKey="inProgress" stroke="#3b82f6" fill="url(#inProgressGrad)" strokeWidth={2} name="In Progress" />
+              <Line type="monotone" dataKey="planned" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" name="Planned" />
+            </AreaChart>
+          </ResponsiveContainer>
+          <div style={{ display: "flex", justifyContent: "center", gap: "24px", marginTop: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ width: "12px", height: "12px", backgroundColor: "#10b981", borderRadius: "2px" }} />
+              <span style={{ fontSize: "12px", color: "#6b7280" }}>Completed</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ width: "12px", height: "12px", backgroundColor: "#3b82f6", borderRadius: "2px" }} />
+              <span style={{ fontSize: "12px", color: "#6b7280" }}>In Progress</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ width: "12px", height: "3px", backgroundColor: "#f59e0b", borderRadius: "2px" }} />
+              <span style={{ fontSize: "12px", color: "#6b7280" }}>Planned</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Projects Sub-Tab Content - Original content wrapped */}
+      {activeSubTab === "projects" && (
+        <>
 
       {/* Portfolio Summary Cards */}
       <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
@@ -774,9 +1028,11 @@ export default function ProjectPortfolio() {
           </ResponsiveContainer>
         </div>
       </div>
+        </>
+      )}
         </main>
       </div>
-      
+
       {/* Footer */}
       <Footer />
       

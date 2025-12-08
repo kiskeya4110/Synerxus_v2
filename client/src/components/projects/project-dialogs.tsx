@@ -1,17 +1,19 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, UserPlus } from "lucide-react";
+import { Plus, Edit, Trash2, UserPlus, Upload, X, Image } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { uploadFile, deleteFile, extractStoragePath } from "@/lib/upload";
 import type { Project } from "@shared/schema";
 
 const projectFormSchema = z.object({
@@ -52,7 +54,73 @@ interface CreateProjectDialogProps {
 
 export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps) {
   const [open, setOpen] = useState(false);
+  const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image under 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const filename = `project-${organizationId}-${timestamp}.${fileExtension}`;
+      const path = `project-covers/${filename}`;
+
+      const result = await uploadFile(file, path);
+      setCoverImageUrl(result.url);
+      toast({
+        title: "Image uploaded",
+        description: "Cover image has been uploaded successfully."
+      });
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error.message || "Failed to upload image",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (coverImageUrl) {
+      const path = extractStoragePath(coverImageUrl);
+      if (path) {
+        try {
+          await deleteFile(path);
+        } catch (err) {
+          console.warn("Could not delete old image:", err);
+        }
+      }
+      setCoverImageUrl("");
+    }
+  };
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
@@ -104,6 +172,7 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         sdgGoals: sdgArray,
         requiredSkills: requiredSkillsArray,
         optionalSkills: optionalSkillsArray,
+        coverImage: coverImageUrl || null, // Add cover image for marketing purposes
       };
 
       if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();
@@ -138,6 +207,7 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
       });
       setOpen(false);
       form.reset();
+      setCoverImageUrl(""); // Reset cover image
     },
     onError: () => {
       toast({
@@ -226,6 +296,76 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
                   </FormItem>
                 )}
               />
+
+              {/* Cover Image Upload for Marketing */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Image className="h-4 w-4" />
+                  Project Cover Image (Marketing)
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Upload a cover image for marketing purposes. This will be displayed on the project page and promotional materials.
+                </p>
+                <div className="flex items-start gap-4">
+                  {coverImageUrl ? (
+                    <div className="relative">
+                      <img
+                        src={coverImageUrl}
+                        alt="Project cover"
+                        className="w-40 h-24 object-cover rounded-lg border"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-40 h-24 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                      <div className="text-center text-gray-400">
+                        <Image className="h-8 w-8 mx-auto mb-1" />
+                        <p className="text-xs">No image</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      data-testid="input-project-cover-image"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingImage}
+                    >
+                      {isUploadingImage ? (
+                        <span className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          Uploading...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          {coverImageUrl ? "Change Image" : "Upload Image"}
+                        </span>
+                      )}
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Recommended: 1200x630px, max 5MB
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Section 2: The Ideal Volunteer */}
@@ -622,7 +762,71 @@ interface EditProjectDialogProps {
 
 export function EditProjectDialog({ project }: EditProjectDialogProps) {
   const [open, setOpen] = useState(false);
+  const [coverImageUrl, setCoverImageUrl] = useState(project.coverImage || "");
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image under 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop() || 'jpg';
+      const filename = `project-${project.id}-${timestamp}.${fileExtension}`;
+      const path = `project-covers/${filename}`;
+
+      const result = await uploadFile(file, path);
+      setCoverImageUrl(result.url);
+      toast({
+        title: "Image uploaded",
+        description: "Cover image has been uploaded successfully."
+      });
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: error.message || "Failed to upload image",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (coverImageUrl) {
+      const path = extractStoragePath(coverImageUrl);
+      if (path) {
+        try {
+          await deleteFile(path);
+        } catch (err) {
+          console.warn("Could not delete old image:", err);
+        }
+      }
+      setCoverImageUrl("");
+    }
+  };
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectFormSchema),
@@ -643,7 +847,8 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
 
       return apiRequest("PATCH", `/api/projects/${project.id}`, {
         ...data,
-        sdgGoals: sdgArray
+        sdgGoals: sdgArray,
+        coverImage: coverImageUrl || null
       });
     },
     onSuccess: () => {
@@ -758,6 +963,71 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
                 </FormItem>
               )}
             />
+
+            {/* Cover Image Upload */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                Project Cover Image
+              </Label>
+              <div className="flex items-start gap-4">
+                {coverImageUrl ? (
+                  <div className="relative">
+                    <img
+                      src={coverImageUrl}
+                      alt="Project cover"
+                      className="w-32 h-20 object-cover rounded-lg border"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
+                      onClick={handleRemoveImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="w-32 h-20 border-2 border-dashed rounded-lg flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                    <div className="text-center text-gray-400">
+                      <Image className="h-6 w-6 mx-auto" />
+                      <p className="text-xs">No image</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex flex-col gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    data-testid="input-edit-project-cover-image"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                  >
+                    {isUploadingImage ? (
+                      <span className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                        Uploading...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Upload className="h-4 w-4" />
+                        {coverImageUrl ? "Change" : "Upload"}
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel

@@ -2525,7 +2525,7 @@ export default function CSRDashboard() {
                       </p>
                     </button>
 
-                    {/* Active SDGs */}
+                    {/* Active SDGs - Enhanced with SDG numbers and titles */}
                     <button
                       onClick={() => setShowActiveSDGsModal(true)}
                       style={{
@@ -2536,16 +2536,50 @@ export default function CSRDashboard() {
                         border: "2px solid transparent",
                         cursor: "pointer",
                         transition: "all 0.2s",
+                        minHeight: "120px",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "flex-start",
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#a855f7"; e.currentTarget.style.transform = "translateY(-2px)"; }}
                       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; }}
                     >
-                      <Target style={{ width: "16px", height: "16px", color: "#a855f7", margin: "0 auto 4px" }} />
+                      <Target style={{ width: "16px", height: "16px", color: "#a855f7", marginBottom: "4px" }} />
                       <p style={{ fontSize: "18px", fontWeight: "bold", color: "#7e22ce", margin: 0 }}>{activeCommittedSDGs}/{committedSDGs.length}</p>
-                      <p style={{ fontSize: "9px", color: "#a855f7", margin: "2px 0 0 0", fontWeight: "500" }}>ACTIVE SDGs</p>
-                      <p style={{ fontSize: "8px", color: "#6b7280", margin: "2px 0 0 0" }}>
-                        {committedSDGs.length > 0 ? `${Math.round((activeCommittedSDGs / committedSDGs.length) * 100)}% coverage` : "—"}
-                      </p>
+                      <p style={{ fontSize: "9px", color: "#a855f7", margin: "2px 0 4px 0", fontWeight: "500" }}>ACTIVE SDGs</p>
+                      {/* SDG chips showing numbers and short names */}
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "3px", justifyContent: "center", maxWidth: "100%" }}>
+                        {committedSDGs.slice(0, 4).map((sdgNum: number) => {
+                          const sdgData = sdgMetrics.find((m: any) => m.sdg === sdgNum);
+                          const isActive = sdgData && sdgData.totalHours > 0;
+                          return (
+                            <div
+                              key={sdgNum}
+                              style={{
+                                fontSize: "7px",
+                                fontWeight: "600",
+                                padding: "2px 4px",
+                                borderRadius: "4px",
+                                backgroundColor: isActive ? getSDGColor(sdgNum) : "#e5e7eb",
+                                color: isActive ? "white" : "#9ca3af",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: "60px",
+                              }}
+                              title={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
+                            >
+                              {sdgNum}. {getSDGName(sdgNum).split(" ")[0]}
+                            </div>
+                          );
+                        })}
+                        {committedSDGs.length > 4 && (
+                          <div style={{ fontSize: "7px", color: "#6b7280", padding: "2px 4px" }}>
+                            +{committedSDGs.length - 4}
+                          </div>
+                        )}
+                      </div>
                     </button>
 
                     {/* Volunteers */}
@@ -3003,19 +3037,19 @@ export default function CSRDashboard() {
                         </div>
                       </div>
 
-                      {/* Visual Funnel */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {/* Visual Funnel - Enhanced Crisp Design */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "8px 0" }}>
                         {funnelData.funnel.map((stage: any, idx: number) => {
                           const maxCount = funnelData.funnel[0]?.count || 1;
-                          const widthPercent = Math.max(20, (stage.count / maxCount) * 100);
-                          const colors = [
-                            { bg: "#3b82f6", light: "#dbeafe", text: "#1e40af" },
-                            { bg: "#8b5cf6", light: "#ede9fe", text: "#6d28d9" },
-                            { bg: "#10b981", light: "#d1fae5", text: "#047857" },
-                            { bg: "#f59e0b", light: "#fef3c7", text: "#b45309" },
-                            { bg: "#ef4444", light: "#fee2e2", text: "#dc2626" },
+                          const widthPercent = Math.max(25, (stage.count / maxCount) * 100);
+                          const funnelColors = [
+                            { bg: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)", solid: "#3b82f6", shadow: "rgba(59, 130, 246, 0.4)" },
+                            { bg: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)", solid: "#8b5cf6", shadow: "rgba(139, 92, 246, 0.4)" },
+                            { bg: "linear-gradient(135deg, #10b981 0%, #059669 100%)", solid: "#10b981", shadow: "rgba(16, 185, 129, 0.4)" },
+                            { bg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)", solid: "#f59e0b", shadow: "rgba(245, 158, 11, 0.4)" },
+                            { bg: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)", solid: "#ef4444", shadow: "rgba(239, 68, 68, 0.4)" },
                           ];
-                          const color = colors[idx % colors.length];
+                          const color = funnelColors[idx % funnelColors.length];
 
                           return (
                             <div
@@ -3029,56 +3063,76 @@ export default function CSRDashboard() {
                                 alignItems: "center",
                                 gap: "12px",
                                 cursor: "pointer",
-                                padding: "4px 0",
+                                padding: "2px 0",
                               }}
                             >
-                              {/* Funnel Bar */}
+                              {/* Funnel Bar - Crisp with gradient and shadow */}
                               <div
                                 style={{
                                   width: `${widthPercent}%`,
-                                  minWidth: "100px",
-                                  backgroundColor: color.bg,
-                                  borderRadius: idx === 0 ? "8px 8px 4px 4px" : idx === funnelData.funnel.length - 1 ? "4px 4px 8px 8px" : "4px",
-                                  padding: "10px 14px",
+                                  minWidth: "120px",
+                                  background: color.bg,
+                                  borderRadius: idx === 0 ? "10px 10px 6px 6px" : idx === funnelData.funnel.length - 1 ? "6px 6px 10px 10px" : "6px",
+                                  padding: "12px 16px",
                                   display: "flex",
                                   justifyContent: "space-between",
                                   alignItems: "center",
-                                  transition: "all 0.3s",
+                                  transition: "all 0.25s ease-out",
                                   marginLeft: `${(100 - widthPercent) / 2}%`,
+                                  boxShadow: `0 2px 8px ${color.shadow}, inset 0 1px 0 rgba(255,255,255,0.15)`,
+                                  border: "1px solid rgba(255,255,255,0.1)",
                                 }}
                                 onMouseEnter={(e) => {
-                                  e.currentTarget.style.transform = "scale(1.02)";
-                                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+                                  e.currentTarget.style.transform = "scale(1.03) translateY(-1px)";
+                                  e.currentTarget.style.boxShadow = `0 6px 20px ${color.shadow}, inset 0 1px 0 rgba(255,255,255,0.2)`;
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.currentTarget.style.transform = "scale(1)";
-                                  e.currentTarget.style.boxShadow = "none";
+                                  e.currentTarget.style.transform = "scale(1) translateY(0)";
+                                  e.currentTarget.style.boxShadow = `0 2px 8px ${color.shadow}, inset 0 1px 0 rgba(255,255,255,0.15)`;
                                 }}
                               >
-                                <span style={{ fontSize: "12px", fontWeight: "600", color: "white" }}>
+                                <span style={{
+                                  fontSize: "12px",
+                                  fontWeight: "600",
+                                  color: "white",
+                                  textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                                  letterSpacing: "0.02em"
+                                }}>
                                   {stage.stage}
                                 </span>
-                                <span style={{ fontSize: "14px", fontWeight: "bold", color: "white" }}>
+                                <span style={{
+                                  fontSize: "15px",
+                                  fontWeight: "700",
+                                  color: "white",
+                                  textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+                                  backgroundColor: "rgba(255,255,255,0.2)",
+                                  padding: "2px 10px",
+                                  borderRadius: "12px",
+                                  minWidth: "32px",
+                                  textAlign: "center"
+                                }}>
                                   {stage.count}
                                 </span>
                               </div>
 
-                              {/* Drop-off indicator */}
+                              {/* Drop-off indicator - Enhanced */}
                               {idx > 0 && (
-                                <div style={{ minWidth: "60px", textAlign: "right" }}>
+                                <div style={{ minWidth: "65px", textAlign: "right" }}>
                                   <span style={{
                                     fontSize: "11px",
-                                    fontWeight: "600",
-                                    color: stage.dropoff > 30 ? "#ef4444" : stage.dropoff > 15 ? "#f59e0b" : "#22c55e",
-                                    backgroundColor: stage.dropoff > 30 ? "#fee2e2" : stage.dropoff > 15 ? "#fef3c7" : "#d1fae5",
-                                    padding: "2px 8px",
-                                    borderRadius: "10px",
+                                    fontWeight: "700",
+                                    color: stage.dropoff > 30 ? "#dc2626" : stage.dropoff > 15 ? "#d97706" : "#059669",
+                                    backgroundColor: stage.dropoff > 30 ? "#fef2f2" : stage.dropoff > 15 ? "#fffbeb" : "#ecfdf5",
+                                    padding: "4px 10px",
+                                    borderRadius: "12px",
+                                    border: `1px solid ${stage.dropoff > 30 ? "#fecaca" : stage.dropoff > 15 ? "#fde68a" : "#a7f3d0"}`,
+                                    boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
                                   }}>
                                     -{stage.dropoff}%
                                   </span>
                                 </div>
                               )}
-                              {idx === 0 && <div style={{ minWidth: "60px" }} />}
+                              {idx === 0 && <div style={{ minWidth: "65px" }} />}
                             </div>
                           );
                         })}

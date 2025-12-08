@@ -472,7 +472,7 @@ profileRouter.post("/intake/volunteer-profile", async (req: Request, res: Respon
     console.log(`[Intake POST] Verified saved availability:`, JSON.stringify(savedProfile?.availability));
     console.log(`[Intake POST] Verified saved yearsOfExperience:`, JSON.stringify(savedProfile?.yearsOfExperience));
 
-    // Update user's displayName, userType, and skills if needed (profile photo saved to volunteerProfiles)
+    // Update user's displayName, userType, skills, and avatar if needed
     const updates: any = {};
     if (!user.userType) {
       updates.userType = 'volunteer';
@@ -483,6 +483,10 @@ profileRouter.post("/intake/volunteer-profile", async (req: Request, res: Respon
     // Update skills in users table to match volunteer_profiles (for matching algorithm)
     if (req.body.skills) {
       updates.skills = req.body.skills;
+    }
+    // Update avatar in users table to match profilePhotoUrl
+    if (req.body.profilePhotoUrl) {
+      updates.avatar = req.body.profilePhotoUrl;
     }
     if (Object.keys(updates).length > 0) {
       await storage.updateUser(userId, updates);

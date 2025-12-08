@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle } from "lucide-react";
@@ -9,6 +10,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import ProjectChat from "@/components/project/project-chat";
+import MatchAnalysisModal from "@/components/volunteer/match-analysis-modal";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -30,6 +32,7 @@ export default function ProjectDetailPWA() {
   const [, params] = useRoute("/projects/:id/pwa");
   const [, navigate] = useLocation();
   const projectId = params?.id ? parseInt(params.id) : null;
+  const [showMatchAnalysis, setShowMatchAnalysis] = useState(false);
 
   const { data: project, isLoading } = useQuery<any>({
     queryKey: ["/api/projects", projectId],
@@ -177,22 +180,29 @@ export default function ProjectDetailPWA() {
               </div>
 
               {/* Right: Why Good Match */}
-              <div className="bg-slate-50 rounded-lg p-3 space-y-2">
-                <h3 className="font-semibold text-slate-900 text-sm">Why this is a good match</h3>
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-3 space-y-2 border border-emerald-100">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-emerald-500" />
+                  <h3 className="font-semibold text-slate-900 text-sm">Why this is a good match</h3>
+                </div>
                 <div className="space-y-2 text-xs text-slate-700">
                   {project.requiredSkills && project.requiredSkills.length > 0 && (
                     <p>
-                      Your profile skills in <span className="font-semibold">{project.requiredSkills[0]}</span> align with the core needs.
+                      Your profile skills in <span className="font-semibold text-emerald-700">{project.requiredSkills[0]}</span> align with the core needs.
                     </p>
                   )}
                   {project.sdgGoals && project.sdgGoals.length > 0 && (
                     <p>
-                      You have expressed interest in <span className="font-semibold">"{SDG_NAMES[project.sdgGoals[0]] || "Impact"}"</span> and similar projects.
+                      You have expressed interest in <span className="font-semibold text-emerald-700">"{SDG_NAMES[project.sdgGoals[0]] || "Impact"}"</span> and similar projects.
                     </p>
                   )}
-                  <Link href="/volunteer-profile-settings" className="text-blue-600 hover:underline text-xs">
-                    View details →
-                  </Link>
+                  <button
+                    onClick={() => setShowMatchAnalysis(true)}
+                    className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 font-medium text-xs mt-2 transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    View AI Analysis →
+                  </button>
                 </div>
               </div>
             </div>
@@ -256,6 +266,14 @@ export default function ProjectDetailPWA() {
           organizationName={project.organizationName}
         />
       )}
+
+      {/* AI Match Analysis Modal */}
+      <MatchAnalysisModal
+        isOpen={showMatchAnalysis}
+        onClose={() => setShowMatchAnalysis(false)}
+        projectId={projectId!}
+        projectName={project.name}
+      />
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">

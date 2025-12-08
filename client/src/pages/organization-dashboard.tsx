@@ -206,15 +206,21 @@ export default function OrganizationDashboard() {
     }
   }, [navigate]);
 
-  // Redirect non-organization users AFTER all hooks are called
-  if (!isOrganizationUser) {
-    if (userType === 'volunteer') {
-      navigate('/volunteer-dashboard');
-    } else if (userType === 'corporate-partner') {
-      navigate('/csr-dashboard');
-    } else {
-      navigate('/dashboard');
+  // Redirect non-organization users using useEffect to avoid hook order issues
+  useEffect(() => {
+    if (!isOrganizationUser) {
+      if (userType === 'volunteer') {
+        navigate('/volunteer-dashboard');
+      } else if (userType === 'corporate-partner') {
+        navigate('/csr-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
+  }, [isOrganizationUser, userType, navigate]);
+
+  // Show nothing while redirecting non-organization users
+  if (!isOrganizationUser) {
     return null;
   }
 
@@ -765,6 +771,7 @@ export default function OrganizationDashboard() {
             onClick={() => {
               setActiveModal('aiu');
             }}
+            tooltip="Attributable Impact Units (AIUs) measure verified impact. Calculated as: AIU = KPI Change × Attribution Factor × (Volunteer Weight / Total Weights). Volunteer weight = Role Weight × Hours × Verification Multiplier."
           />
         </div>
 
@@ -1518,48 +1525,82 @@ export default function OrganizationDashboard() {
   );
 }
 
-function MetricCard({ icon, label, value, color, testId, onClick }: { icon: React.ReactNode; label: string; value: number | string; color: string; testId: string; onClick?: () => void }) {
+function MetricCard({ icon, label, value, color, testId, onClick, tooltip }: { icon: React.ReactNode; label: string; value: number | string; color: string; testId: string; onClick?: () => void; tooltip?: string }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   const displayValue = typeof value === 'number' ? value.toLocaleString() : value;
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      onTouchEnd={(e) => { if (onClick) { e.preventDefault(); onClick(); } }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      aria-label={`${label}: ${displayValue}`}
-      className="metric-card-btn"
-      style={{
-        backgroundColor: isHovered ? `${color}05` : 'white',
-        borderRadius: '12px',
-        padding: '16px',
-        boxShadow: isHovered ? `0 8px 16px rgba(0,0,0,0.12)` : '0 1px 3px rgba(0,0,0,0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
-        border: `2px solid ${color}${isHovered ? '40' : '20'}`,
-        cursor: 'pointer',
-        transition: 'all 0.2s ease-in-out',
-        width: '100%',
-        height: '140px',
-        textAlign: 'center',
-        minHeight: 'auto',
-        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-        touchAction: 'manipulation',
-      }}
-      data-testid={testId}
-    >
-      <div style={{ padding: '8px', backgroundColor: `${color}10`, borderRadius: '8px', color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        {icon}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-        <p style={{ fontSize: '24px', fontWeight: 'bold', color, margin: 0 }}>{displayValue}</p>
-        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0, lineHeight: '1.2' }}>{label}</p>
-      </div>
-    </button>
+    <div style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={onClick}
+        onTouchEnd={(e) => { if (onClick) { e.preventDefault(); onClick(); } }}
+        onMouseEnter={() => { setIsHovered(true); if (tooltip) setShowTooltip(true); }}
+        onMouseLeave={() => { setIsHovered(false); setShowTooltip(false); }}
+        aria-label={`${label}: ${displayValue}`}
+        className="metric-card-btn"
+        style={{
+          backgroundColor: isHovered ? `${color}05` : 'white',
+          borderRadius: '12px',
+          padding: '16px',
+          boxShadow: isHovered ? `0 8px 16px rgba(0,0,0,0.12)` : '0 1px 3px rgba(0,0,0,0.1)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          border: `2px solid ${color}${isHovered ? '40' : '20'}`,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease-in-out',
+          width: '100%',
+          height: '140px',
+          textAlign: 'center',
+          minHeight: 'auto',
+          transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+          touchAction: 'manipulation',
+        }}
+        data-testid={testId}
+      >
+        <div style={{ padding: '8px', backgroundColor: `${color}10`, borderRadius: '8px', color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {icon}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
+          <p style={{ fontSize: '24px', fontWeight: 'bold', color, margin: 0 }}>{displayValue}</p>
+          <p style={{ fontSize: '12px', color: '#6b7280', margin: 0, lineHeight: '1.2' }}>{label}</p>
+        </div>
+      </button>
+      {tooltip && showTooltip && (
+        <div style={{
+          position: 'absolute',
+          bottom: '100%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          marginBottom: '8px',
+          backgroundColor: '#1f2937',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          fontSize: '12px',
+          lineHeight: '1.5',
+          maxWidth: '280px',
+          width: 'max-content',
+          zIndex: 50,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          pointerEvents: 'none',
+        }}>
+          {tooltip}
+          <div style={{
+            position: 'absolute',
+            top: '100%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            borderLeft: '8px solid transparent',
+            borderRight: '8px solid transparent',
+            borderTop: '8px solid #1f2937',
+          }} />
+        </div>
+      )}
+    </div>
   );
 }
 

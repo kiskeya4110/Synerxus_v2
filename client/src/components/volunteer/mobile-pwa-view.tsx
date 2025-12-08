@@ -170,31 +170,67 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     });
   }, [dashboardData?.monthlyImpactData, volunteerActivities]);
 
-  // SDG Distribution data
+  // SDG Distribution data with real metrics (hours per SDG)
   const sdgDistribution = useMemo(() => {
     const safeProjects = Array.isArray(projects) ? projects : [];
-    const sdgCounts: { [key: number]: number } = {};
+    const safeActivities = Array.isArray(volunteerActivities) ? volunteerActivities : [];
 
-    // Count SDGs from actual projects only
+    // Create a map of project ID to SDG goals
+    const projectSdgMap: { [projectId: number]: number[] } = {};
     safeProjects.forEach((p: any) => {
-      const sdgGoals = Array.isArray(p?.sdgGoals) ? p.sdgGoals : [];
-      sdgGoals.forEach((sdg: number) => {
-        if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
-          sdgCounts[sdg] = (sdgCounts[sdg] || 0) + 1;
-        }
-      });
+      if (p?.id && Array.isArray(p?.sdgGoals)) {
+        projectSdgMap[p.id] = p.sdgGoals.filter((sdg: number) =>
+          typeof sdg === 'number' && sdg >= 1 && sdg <= 17
+        );
+      }
     });
 
-    return Object.entries(sdgCounts)
-      .map(([sdg, count]) => ({
+    // Aggregate hours per SDG from activities
+    const sdgHours: { [key: number]: number } = {};
+    const sdgProjects: { [key: number]: Set<number> } = {};
+
+    safeActivities.forEach((activity: any) => {
+      const projectId = activity?.projectId;
+      const hours = Number(activity?.hours) || 0;
+
+      if (projectId && projectSdgMap[projectId] && hours > 0) {
+        // Distribute hours equally across all SDGs for this project
+        const sdgs = projectSdgMap[projectId];
+        const hoursPerSdg = hours / sdgs.length;
+
+        sdgs.forEach((sdg: number) => {
+          sdgHours[sdg] = (sdgHours[sdg] || 0) + hoursPerSdg;
+          if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+          sdgProjects[sdg].add(projectId);
+        });
+      }
+    });
+
+    // If no activities yet, fall back to counting projects per SDG
+    if (Object.keys(sdgHours).length === 0) {
+      safeProjects.forEach((p: any) => {
+        const sdgGoals = Array.isArray(p?.sdgGoals) ? p.sdgGoals : [];
+        sdgGoals.forEach((sdg: number) => {
+          if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
+            sdgHours[sdg] = (sdgHours[sdg] || 0) + 1;
+            if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+            sdgProjects[sdg].add(p.id);
+          }
+        });
+      });
+    }
+
+    return Object.entries(sdgHours)
+      .map(([sdg, hours]) => ({
         sdg: parseInt(sdg),
         name: SDG_NAMES[parseInt(sdg)] || `SDG ${sdg}`,
-        value: count,
+        value: Math.round(hours * 10) / 10, // Round to 1 decimal
+        projectCount: sdgProjects[parseInt(sdg)]?.size || 0,
         color: SDG_COLORS[parseInt(sdg)] || '#6B7280'
       }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Show up to 8 SDGs
-  }, [projects]);
+  }, [projects, volunteerActivities]);
 
   // Calculate match score with reasons
   const calculateMatchScore = (project: any) => {
@@ -609,40 +645,220 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </button>
             </div>
 
-            {/* All SDGs Section */}
+            {/* UN SDG Impact Report - Enhanced with UN-Compliant KPIs */}
             {sdgDistribution.length > 0 && (
               <div className="px-4">
-                <h2 className="text-slate-800 text-lg font-semibold mb-3">My SDG Contributions</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {sdgDistribution.map((sdg) => (
-                    <button
-                      key={sdg.sdg}
-                      onClick={() => setShowSdgModal(sdg.sdg)}
-                      className="bg-white rounded-xl p-3 border border-amber-200/60 shadow-sm hover:border-emerald-500/50 transition-all active:scale-95 text-left"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-                          style={{ backgroundColor: sdg.color }}
-                        >
-                          {sdg.sdg}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-slate-800 font-semibold text-xs truncate">{sdg.name}</div>
-                          <div className="text-slate-500 text-[10px]">{sdg.value} {sdg.value === 1 ? 'project' : 'projects'}</div>
-                        </div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-slate-800 text-lg font-semibold flex items-center gap-2">
+                    <Globe className="w-5 h-5 text-blue-600" />
+                    SDG Impact Report
+                  </h2>
+                  <span className="text-[10px] bg-blue-50 text-blue-700 px-2 py-1 rounded-full font-medium border border-blue-100">
+                    UN Aligned
+                  </span>
+                </div>
+
+                {/* UN SDG Summary KPIs - Key Performance Indicators */}
+                <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100 shadow-sm mb-3">
+                  <div className="grid grid-cols-4 gap-2 mb-4">
+                    {/* SDGs Contributed */}
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{sdgDistribution.length}</div>
+                      <div className="text-[9px] text-slate-600 font-medium">SDGs</div>
+                      <div className="text-[8px] text-slate-400">Active Goals</div>
+                    </div>
+                    {/* Total Hours */}
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-emerald-600">
+                        {sdgDistribution.reduce((sum, s) => sum + s.value, 0).toFixed(0)}
                       </div>
-                      <div className="bg-slate-200 rounded-full h-1.5 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            backgroundColor: sdg.color,
-                            width: `${Math.min((sdg.value / Math.max(...sdgDistribution.map(s => s.value))) * 100, 100)}%`
+                      <div className="text-[9px] text-slate-600 font-medium">Hours</div>
+                      <div className="text-[8px] text-slate-400">Volunteered</div>
+                    </div>
+                    {/* Projects */}
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {sdgDistribution.reduce((sum, s) => sum + (s.projectCount || 0), 0)}
+                      </div>
+                      <div className="text-[9px] text-slate-600 font-medium">Projects</div>
+                      <div className="text-[8px] text-slate-400">Contributing</div>
+                    </div>
+                    {/* Impact Score (AIU) */}
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-amber-600">
+                        {(sdgDistribution.reduce((sum, s) => sum + s.value, 0) * 0.15).toFixed(1)}
+                      </div>
+                      <div className="text-[9px] text-slate-600 font-medium">AIUs</div>
+                      <div className="text-[8px] text-slate-400">Impact Units</div>
+                    </div>
+                  </div>
+
+                  {/* UN SDG Coverage Indicator */}
+                  <div className="bg-white/70 rounded-lg p-2 mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-slate-600 font-medium">Global Goals Coverage</span>
+                      <span className="text-[10px] text-blue-600 font-bold">
+                        {Math.round((sdgDistribution.length / 17) * 100)}% of 17 SDGs
+                      </span>
+                    </div>
+                    <div className="flex gap-[2px]">
+                      {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
+                        const isActive = sdgDistribution.some(s => s.sdg === sdgNum);
+                        return (
+                          <div
+                            key={sdgNum}
+                            className="flex-1 h-2 rounded-sm transition-all"
+                            style={{
+                              backgroundColor: isActive ? SDG_COLORS[sdgNum] : '#e5e7eb',
+                              opacity: isActive ? 1 : 0.4
+                            }}
+                            title={`SDG ${sdgNum}: ${SDG_NAMES[sdgNum]}`}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Donut Chart with Center Stats */}
+                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-slate-600 text-xs font-medium">Hours Distribution by SDG</span>
+                    <span className="text-emerald-700 text-[10px] px-2 py-0.5 bg-emerald-50 rounded-full font-medium">
+                      Live Data
+                    </span>
+                  </div>
+
+                  {/* Enhanced Pie Chart with center label */}
+                  <div className="h-52 w-full relative">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={sdgDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={3}
+                          dataKey="value"
+                          onClick={(data) => setShowSdgModal(data.sdg)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          {sdgDistribution.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={entry.color}
+                              stroke="#fff"
+                              strokeWidth={2}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              const totalHours = sdgDistribution.reduce((sum, s) => sum + s.value, 0);
+                              const percentage = totalHours > 0 ? Math.round((data.value / totalHours) * 100) : 0;
+                              return (
+                                <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-3 text-xs min-w-[180px]">
+                                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
+                                    <div
+                                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                                      style={{ backgroundColor: data.color }}
+                                    >
+                                      {data.sdg}
+                                    </div>
+                                    <div>
+                                      <div className="font-bold text-slate-800">SDG {data.sdg}</div>
+                                      <div className="text-slate-500 text-[10px]">{data.name}</div>
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-500">Hours:</span>
+                                      <span className="font-semibold text-slate-800">{data.value} hrs</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-500">Projects:</span>
+                                      <span className="font-semibold text-slate-800">{data.projectCount}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-500">Share:</span>
+                                      <span className="font-semibold text-blue-600">{percentage}%</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-slate-500">Impact:</span>
+                                      <span className="font-semibold text-emerald-600">{(data.value * 0.15).toFixed(1)} AIU</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
                           }}
                         />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    {/* Center Label */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-slate-800">
+                          {sdgDistribution.reduce((sum, s) => sum + s.value, 0).toFixed(0)}
+                        </div>
+                        <div className="text-[10px] text-slate-500">Total Hours</div>
                       </div>
+                    </div>
+                  </div>
+
+                  {/* SDG Legend Grid with UN Indicator Colors */}
+                  <div className="grid grid-cols-2 gap-2 mt-4">
+                    {sdgDistribution.slice(0, 6).map((sdg) => {
+                      const totalHours = sdgDistribution.reduce((sum, s) => sum + s.value, 0);
+                      const percentage = totalHours > 0 ? Math.round((sdg.value / totalHours) * 100) : 0;
+                      const aiuEarned = sdg.value * 0.15;
+                      return (
+                        <button
+                          key={sdg.sdg}
+                          onClick={() => setShowSdgModal(sdg.sdg)}
+                          className="flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-50 transition-all text-left border border-transparent hover:border-slate-200 hover:shadow-sm"
+                        >
+                          <div
+                            className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm"
+                            style={{ backgroundColor: sdg.color }}
+                          >
+                            {sdg.sdg}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-slate-800 font-semibold text-[11px] truncate">{sdg.name}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-slate-600 text-[10px] font-medium">{sdg.value} hrs</span>
+                              <span className="text-blue-600 text-[9px] bg-blue-50 px-1.5 py-0.5 rounded font-medium">{percentage}%</span>
+                            </div>
+                            <div className="text-emerald-600 text-[9px] mt-0.5">{aiuEarned.toFixed(1)} AIU earned</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {sdgDistribution.length > 6 && (
+                    <button
+                      onClick={() => setShowKpiModal('sdgs')}
+                      className="w-full text-center mt-3 py-2 text-blue-600 text-xs font-medium hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      View all {sdgDistribution.length} SDGs →
                     </button>
-                  ))}
+                  )}
+
+                  {/* UN SDG Compliance Note */}
+                  <div className="mt-4 pt-3 border-t border-slate-100">
+                    <div className="flex items-start gap-2 text-[10px] text-slate-500">
+                      <Target className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                      <p>
+                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. AIU (Anthropic Impact Units) measure your contribution to global sustainability targets.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1561,8 +1777,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       {/* KPI Detail Modal */}
       {showKpiModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-[#16213e] rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <div className="sticky top-0 bg-[#16213e] border-b border-gray-700 p-4 flex items-center justify-between">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-slate-800 text-lg font-semibold">
                 {showKpiModal === 'hours' && 'Total Hours Logged'}
                 {showKpiModal === 'projects' && 'Total Projects'}
@@ -1571,7 +1787,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </h2>
               <button
                 onClick={() => setShowKpiModal(null)}
-                className="text-gray-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 text-xl font-medium"
               >
                 ✕
               </button>
@@ -1580,12 +1796,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showKpiModal === 'hours' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-blue-400 mb-2">{kpis.totalHours}</div>
-                    <div className="text-gray-400">Hours Volunteered</div>
+                    <div className="text-5xl font-bold text-blue-600 mb-2">{kpis.totalHours}</div>
+                    <div className="text-slate-500">Hours Volunteered</div>
                   </div>
                   {/* Monthly Hours Trend Chart */}
-                  <div className="bg-gray-800/50 rounded-lg p-3">
-                    <div className="text-xs text-gray-400 mb-2">Monthly Hours Trend</div>
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                    <div className="text-xs text-slate-500 mb-2">Monthly Hours Trend</div>
                     <div className="h-20">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={impactOverTimeData}>
@@ -1595,26 +1811,26 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                               <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="month" stroke="#6b7280" fontSize={10} tickLine={false} />
+                          <XAxis dataKey="month" stroke="#64748b" fontSize={10} tickLine={false} />
                           <YAxis hide />
                           <Area type="monotone" dataKey="hours" stroke="#3b82f6" fill="url(#hoursGradient)" strokeWidth={2} />
                         </AreaChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
-                  <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-100/50">
-                    <div className="text-sm text-gray-300 space-y-2">
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+                    <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">
                         <span>Impact Generated:</span>
-                        <span className="text-emerald-400 font-semibold">{(kpis.totalHours * 0.15).toFixed(1)} AIUs estimated</span>
+                        <span className="text-emerald-600 font-semibold">{(kpis.totalHours * 0.15).toFixed(1)} AIUs estimated</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Across Projects:</span>
-                        <span className="text-white font-semibold">{kpis.totalProjects}</span>
+                        <span className="text-slate-800 font-semibold">{kpis.totalProjects}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Avg Hours/Month:</span>
-                        <span className="text-blue-400 font-semibold">
+                        <span className="text-blue-600 font-semibold">
                           {impactOverTimeData.length > 0
                             ? (impactOverTimeData.reduce((sum, d) => sum + d.hours, 0) / impactOverTimeData.length).toFixed(1)
                             : 0}
@@ -1627,12 +1843,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showKpiModal === 'projects' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-green-400 mb-2">{kpis.totalProjects}</div>
-                    <div className="text-gray-400">Total Projects</div>
+                    <div className="text-5xl font-bold text-green-600 mb-2">{kpis.totalProjects}</div>
+                    <div className="text-slate-500">Total Projects</div>
                   </div>
                   {/* Project Status Donut Chart */}
-                  <div className="bg-gray-800/50 rounded-lg p-3">
-                    <div className="text-xs text-gray-400 mb-2">Project Status Distribution</div>
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                    <div className="text-xs text-slate-500 mb-2">Project Status Distribution</div>
                     <div className="h-24 flex items-center justify-center">
                       <ResponsiveContainer width="50%" height="100%">
                         <PieChart>
@@ -1654,41 +1870,41 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       <div className="text-xs space-y-1">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-orange-500" />
-                          <span className="text-gray-300">Active ({kpis.activeProjects})</span>
+                          <span className="text-slate-600">Active ({kpis.activeProjects})</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-green-500" />
-                          <span className="text-gray-300">Completed ({kpis.projectsCompleted})</span>
+                          <span className="text-slate-600">Completed ({kpis.projectsCompleted})</span>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-100/50 mb-4">
-                    <div className="text-sm text-gray-300 space-y-2">
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-100 mb-4">
+                    <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">
                         <span>Active:</span>
-                        <span className="text-orange-400 font-semibold">{kpis.activeProjects}</span>
+                        <span className="text-orange-600 font-semibold">{kpis.activeProjects}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Completed:</span>
-                        <span className="text-green-400 font-semibold">{kpis.projectsCompleted}</span>
+                        <span className="text-green-600 font-semibold">{kpis.projectsCompleted}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Total Hours:</span>
-                        <span className="text-blue-400 font-semibold">{kpis.totalHours}</span>
+                        <span className="text-blue-600 font-semibold">{kpis.totalHours}</span>
                       </div>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-slate-800 font-semibold text-sm">Your Projects:</h3>
                     {projects.slice(0, 5).map((project: any) => (
-                      <div key={project.id} className="bg-amber-50/50 rounded-lg p-3 border border-amber-100/50">
+                      <div key={project.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                         <div className="flex items-center justify-between mb-1">
-                          <div className="text-white font-medium text-sm">{project.name}</div>
+                          <div className="text-slate-800 font-medium text-sm">{project.name}</div>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            project.status === 'Active' ? 'bg-orange-500/20 text-orange-300' :
-                            project.status === 'Completed' ? 'bg-green-500/20 text-green-300' :
-                            'bg-gray-500/20 text-gray-300'
+                            project.status === 'Active' ? 'bg-orange-100 text-orange-700' :
+                            project.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                            'bg-slate-100 text-slate-600'
                           }`}>
                             {project.status || 'Active'}
                           </span>
@@ -1703,12 +1919,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showKpiModal === 'skills' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-orange-400 mb-2">{kpis.skills}</div>
-                    <div className="text-gray-400">Skills in Your Arsenal</div>
+                    <div className="text-5xl font-bold text-orange-500 mb-2">{kpis.skills}</div>
+                    <div className="text-slate-500">Skills in Your Arsenal</div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {(volunteerProfile?.skills || []).map((skill: string, idx: number) => (
-                      <div key={idx} className="bg-orange-500/20 text-orange-300 px-3 py-1 rounded-full text-sm">
+                      <div key={idx} className="bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-sm font-medium">
                         {skill}
                       </div>
                     ))}
@@ -1718,19 +1934,23 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showKpiModal === 'sdgs' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-pink-400 mb-2">{kpis.sdgsContributed}</div>
-                    <div className="text-gray-400">UN Sustainable Development Goals</div>
+                    <div className="text-5xl font-bold text-pink-500 mb-2">{kpis.sdgsContributed}</div>
+                    <div className="text-slate-500">UN Sustainable Development Goals</div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {sdgDistribution.map((sdg) => (
-                      <div
+                      <button
                         key={sdg.sdg}
-                        className="rounded-lg p-2 text-center"
+                        onClick={() => {
+                          setShowKpiModal(null);
+                          setShowSdgModal(sdg.sdg);
+                        }}
+                        className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity"
                         style={{ backgroundColor: sdg.color }}
                       >
                         <div className="text-white font-bold text-lg">SDG {sdg.sdg}</div>
-                        <div className="text-white/80 text-xs">{sdg.value} projects</div>
-                      </div>
+                        <div className="text-white/80 text-xs">{sdg.value} hrs</div>
+                      </button>
                     ))}
                   </div>
                 </>
@@ -1743,24 +1963,24 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       {/* SDG Projects Modal */}
       {showSdgModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-[#16213e] rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <div className="sticky top-0 bg-[#16213e] border-b border-gray-700 p-4 flex items-center justify-between">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-slate-800 text-lg font-semibold flex items-center gap-2">
                 <span>SDG {showSdgModal}</span>
-                <span className="text-sm font-normal text-gray-400">
+                <span className="text-sm font-normal text-slate-500">
                   {SDG_NAMES[showSdgModal]}
                 </span>
               </h2>
               <button
                 onClick={() => setShowSdgModal(null)}
-                className="text-gray-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 text-xl font-medium"
               >
                 ✕
               </button>
             </div>
             <div className="p-4">
               {/* SDG Header with smaller icon */}
-              <div className="flex items-center gap-3 mb-4 p-3 rounded-lg" style={{ backgroundColor: SDG_COLORS[showSdgModal] + '20' }}>
+              <div className="flex items-center gap-3 mb-4 p-3 rounded-lg" style={{ backgroundColor: SDG_COLORS[showSdgModal] + '15' }}>
                 <div
                   className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
                   style={{ backgroundColor: SDG_COLORS[showSdgModal] }}
@@ -1768,15 +1988,15 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   {showSdgModal}
                 </div>
                 <div className="flex-1">
-                  <div className="text-white font-semibold">{SDG_NAMES[showSdgModal]}</div>
-                  <div className="text-gray-400 text-xs">
+                  <div className="text-slate-800 font-semibold">{SDG_NAMES[showSdgModal]}</div>
+                  <div className="text-slate-500 text-xs">
                     {projects.filter((p: any) => p.sdgGoals?.includes(showSdgModal)).length} projects contributing
                   </div>
                 </div>
               </div>
 
-              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-                <Briefcase className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 text-emerald-600" />
                 Your Contributing Projects
               </h3>
               <div className="space-y-2">
@@ -1785,24 +2005,24 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   .map((project: any) => (
                     <div
                       key={project.id}
-                      className="bg-amber-50/50 rounded-lg p-3 border border-amber-100/50 cursor-pointer hover:bg-[#1a1a2e]/70 border border-gray-700"
+                      className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
                       onClick={() => {
                         setShowSdgModal(null);
                         navigate(`/projects/${project.id}/pwa`);
                       }}
                     >
                       <div className="flex items-start justify-between mb-1">
-                        <div className="text-white font-medium text-sm flex-1">{project.name}</div>
+                        <div className="text-slate-800 font-medium text-sm flex-1">{project.name}</div>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                          project.status === 'Active' ? 'bg-orange-500/20 text-orange-300' :
-                          project.status === 'Completed' ? 'bg-green-500/20 text-green-300' :
-                          'bg-gray-500/20 text-gray-300'
+                          project.status === 'Active' ? 'bg-orange-100 text-orange-700' :
+                          project.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                          'bg-slate-100 text-slate-600'
                         }`}>
                           {project.status || 'Active'}
                         </span>
                       </div>
                       <div className="text-xs text-slate-500">{project.organizationName}</div>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           <span>{project.totalHoursLogged || 0} hrs</span>
@@ -1817,12 +2037,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         </div>
                       </div>
                       {project.description && (
-                        <p className="text-gray-500 text-xs mt-2 line-clamp-2">{project.description}</p>
+                        <p className="text-slate-500 text-xs mt-2 line-clamp-2">{project.description}</p>
                       )}
                     </div>
                   ))}
                 {projects.filter((p: any) => p.sdgGoals?.includes(showSdgModal)).length === 0 && (
-                  <div className="text-center py-6 text-gray-500">
+                  <div className="text-center py-6 text-slate-400">
                     <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No projects yet for this SDG</p>
                     <p className="text-xs mt-1">Join projects to contribute to SDG {showSdgModal}</p>
@@ -1837,8 +2057,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       {/* Project Stats Modal */}
       {showProjectStatsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-[#16213e] rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto">
-            <div className="sticky top-0 bg-[#16213e] border-b border-gray-700 p-4 flex items-center justify-between">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-slate-800 text-lg font-semibold">
                 {showProjectStatsModal === 'active' && 'Active Projects'}
                 {showProjectStatsModal === 'total' && 'All Projects'}
@@ -1846,7 +2066,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </h2>
               <button
                 onClick={() => setShowProjectStatsModal(null)}
-                className="text-gray-400 hover:text-white"
+                className="text-slate-400 hover:text-slate-600 text-xl font-medium"
               >
                 ✕
               </button>
@@ -1855,8 +2075,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showProjectStatsModal === 'active' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-orange-400 mb-2">{kpis.activeProjects}</div>
-                    <div className="text-gray-400">Currently Active Projects</div>
+                    <div className="text-5xl font-bold text-orange-500 mb-2">{kpis.activeProjects}</div>
+                    <div className="text-slate-500">Currently Active Projects</div>
                   </div>
                   <div className="space-y-2">
                     {projects
@@ -1864,19 +2084,19 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       .map((project: any) => (
                         <div
                           key={project.id}
-                          className="bg-amber-50/50 rounded-lg p-3 border border-amber-100/50 cursor-pointer hover:bg-[#1a1a2e]/70"
+                          className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
                           onClick={() => {
                             setShowProjectStatsModal(null);
                             navigate(`/projects/${project.id}/pwa`);
                           }}
                         >
-                          <div className="text-white font-medium text-sm">{project.name}</div>
+                          <div className="text-slate-800 font-medium text-sm">{project.name}</div>
                           <div className="text-xs text-slate-500 mt-1">{project.organizationName}</div>
                           <div className="flex items-center gap-3 mt-2">
                             <Progress value={project.completionPercentage || 0} className="flex-1 h-2" />
-                            <span className="text-xs text-slate-500">{project.completionPercentage || 0}%</span>
+                            <span className="text-xs text-slate-600">{project.completionPercentage || 0}%</span>
                           </div>
-                          <div className="flex items-center gap-2 mt-2 text-xs text-slate-500">
+                          <div className="flex items-center gap-2 mt-2 text-xs text-slate-600">
                             <div className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               <span>{project.totalHoursLogged || 0} hrs</span>
@@ -1889,7 +2109,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         </div>
                       ))}
                     {kpis.activeProjects === 0 && (
-                      <div className="text-center text-gray-400 py-8">
+                      <div className="text-center text-slate-400 py-8">
                         <p>No active projects at the moment.</p>
                         <Button
                           onClick={() => {
@@ -1908,25 +2128,25 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showProjectStatsModal === 'total' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-green-400 mb-2">{kpis.totalProjects}</div>
-                    <div className="text-gray-400">Total Projects</div>
+                    <div className="text-5xl font-bold text-green-600 mb-2">{kpis.totalProjects}</div>
+                    <div className="text-slate-500">Total Projects</div>
                   </div>
-                  <div className="bg-amber-50/50 rounded-lg p-4 border border-amber-100/50 space-y-2">
+                  <div className="bg-green-50 rounded-lg p-4 border border-green-100 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Active:</span>
-                      <span className="text-orange-400 font-semibold">{kpis.activeProjects}</span>
+                      <span className="text-slate-600">Active:</span>
+                      <span className="text-orange-600 font-semibold">{kpis.activeProjects}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Completed:</span>
-                      <span className="text-green-400 font-semibold">{kpis.projectsCompleted}</span>
+                      <span className="text-slate-600">Completed:</span>
+                      <span className="text-green-600 font-semibold">{kpis.projectsCompleted}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total Hours:</span>
-                      <span className="text-blue-400 font-semibold">{kpis.totalHours}</span>
+                      <span className="text-slate-600">Total Hours:</span>
+                      <span className="text-blue-600 font-semibold">{kpis.totalHours}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">AIUs Earned:</span>
-                      <span className="text-emerald-400 font-semibold">{typeof kpis.livesImpacted === 'number' ? kpis.livesImpacted.toFixed(1) : kpis.livesImpacted}</span>
+                      <span className="text-slate-600">AIUs Earned:</span>
+                      <span className="text-emerald-600 font-semibold">{typeof kpis.livesImpacted === 'number' ? kpis.livesImpacted.toFixed(1) : kpis.livesImpacted}</span>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -1934,18 +2154,18 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     {projects.map((project: any) => (
                       <div
                         key={project.id}
-                        className="bg-amber-50/50 rounded-lg p-3 border border-amber-100/50 cursor-pointer hover:bg-[#1a1a2e]/70"
+                        className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
                         onClick={() => {
                           setShowProjectStatsModal(null);
                           navigate(`/projects/${project.id}/pwa`);
                         }}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <div className="text-white font-medium text-sm">{project.name}</div>
+                          <div className="text-slate-800 font-medium text-sm">{project.name}</div>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            project.status === 'Active' ? 'bg-orange-500/20 text-orange-300' :
-                            project.status === 'Completed' ? 'bg-green-500/20 text-green-300' :
-                            'bg-gray-500/20 text-gray-300'
+                            project.status === 'Active' ? 'bg-orange-100 text-orange-700' :
+                            project.status === 'Completed' ? 'bg-green-100 text-green-700' :
+                            'bg-slate-100 text-slate-600'
                           }`}>
                             {project.status || 'Active'}
                           </span>
@@ -1962,15 +2182,15 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showProjectStatsModal === 'sdgs' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-pink-400 mb-2">{kpis.sdgsContributed}</div>
-                    <div className="text-gray-400">Sustainable Development Goals</div>
+                    <div className="text-5xl font-bold text-pink-500 mb-2">{kpis.sdgsContributed}</div>
+                    <div className="text-slate-500">Sustainable Development Goals</div>
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-slate-800 font-semibold text-sm">SDG Distribution:</h3>
                     {sdgDistribution.map((sdg) => (
                       <div
                         key={sdg.sdg}
-                        className="bg-amber-50/50 rounded-lg p-3 border border-amber-100/50 cursor-pointer hover:bg-[#1a1a2e]/70"
+                        className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
                         onClick={() => {
                           setShowProjectStatsModal(null);
                           setShowSdgModal(sdg.sdg);
@@ -1978,24 +2198,24 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0"
+                            className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0 text-xs"
                             style={{ backgroundColor: sdg.color }}
                           >
                             SDG {sdg.sdg}
                           </div>
                           <div className="flex-1">
-                            <div className="text-white font-medium text-sm">{sdg.name}</div>
+                            <div className="text-slate-800 font-medium text-sm">{sdg.name}</div>
                             <div className="text-xs text-slate-500 mt-1">
-                              {sdg.value} project{sdg.value !== 1 ? 's' : ''}
+                              {sdg.value} hrs
                             </div>
                           </div>
-                          <div className="text-gray-400">→</div>
+                          <div className="text-slate-400">→</div>
                         </div>
                       </div>
                     ))}
                   </div>
                   {kpis.sdgsContributed === 0 && (
-                    <div className="text-center text-gray-400 py-8">
+                    <div className="text-center text-slate-400 py-8">
                       <p>No SDG contributions yet.</p>
                       <p className="text-xs mt-2">Start volunteering to make an impact!</p>
                     </div>

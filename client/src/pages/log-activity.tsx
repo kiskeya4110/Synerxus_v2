@@ -65,14 +65,16 @@ export default function LogActivity() {
   // Ensure projectAssignments is always an array
   const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
 
-  // Fetch all projects as fallback
+  // Fetch all projects for this user
   const { data: allProjects = [] } = useQuery<any[]>({
-    queryKey: ["/api/projects"],
+    queryKey: ["/api/projects", { userId: currentUser?.id }],
     queryFn: async () => {
-      const response = await fetch("/api/projects");
+      if (!currentUser?.id) return [];
+      const response = await fetch(`/api/projects?userId=${currentUser.id}`);
       const data = await response.json();
       return Array.isArray(data) ? data : [];
     },
+    enabled: !!currentUser?.id,
   });
 
   // Get available projects - show all projects, prioritizing assigned ones

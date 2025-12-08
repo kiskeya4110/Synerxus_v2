@@ -128,8 +128,9 @@ export default function OrganizationProfileSettings() {
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Profile creation timeout. Please try again.")), 15000)
       );
-      
+
       try {
+        // First create the matchable organization
         const result = await Promise.race([
           apiRequest("POST", "/api/matchable-organizations", {
             ...data,
@@ -137,6 +138,19 @@ export default function OrganizationProfileSettings() {
           }),
           timeoutPromise
         ]) as any;
+
+        // Also update the user profile tables (users, organizations) to save logo
+        if (currentUser?.id) {
+          await apiRequest("PATCH", `/api/profile/organization?userId=${currentUser.id}`, {
+            profilePhotoUrl: logoUrl,
+            name: data.name,
+            mission: data.mission,
+            needs: data.needs,
+            sdgFocus: data.sdgFocus,
+            location: data.location,
+          });
+        }
+
         return result;
       } catch (error) {
         console.error("Create mutation error:", error);
@@ -148,6 +162,7 @@ export default function OrganizationProfileSettings() {
         // Log cache invalidation errors for monitoring but don't block user flow
         if (process.env.NODE_ENV === 'development') console.warn('Cache invalidation failed:', err);
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
       toast({
         title: "Profile created!",
         description: "Your organization profile has been created successfully.",
@@ -166,13 +181,14 @@ export default function OrganizationProfileSettings() {
   const updateMutation = useMutation({
     mutationFn: async (data: FormData) => {
       if (!existingProfile?.id) throw new Error("No profile found to update");
-      
+
       // Add timeout protection - 15 seconds max
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Profile update timeout. Please try again.")), 15000)
       );
-      
+
       try {
+        // Update matchable organization
         const result = await Promise.race([
           apiRequest("PATCH", `/api/matchable-organizations/${existingProfile.id}`, {
             ...data,
@@ -180,6 +196,19 @@ export default function OrganizationProfileSettings() {
           }),
           timeoutPromise
         ]) as any;
+
+        // Also update the user profile tables (users, organizations) to save logo
+        if (currentUser?.id) {
+          await apiRequest("PATCH", `/api/profile/organization?userId=${currentUser.id}`, {
+            profilePhotoUrl: logoUrl,
+            name: data.name,
+            mission: data.mission,
+            needs: data.needs,
+            sdgFocus: data.sdgFocus,
+            location: data.location,
+          });
+        }
+
         return result;
       } catch (error) {
         console.error("Update mutation error:", error);
@@ -190,6 +219,7 @@ export default function OrganizationProfileSettings() {
       queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch((err) => {
         if (process.env.NODE_ENV === 'development') console.warn('Cache invalidation failed:', err);
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
       toast({
         title: "Profile updated!",
         description: "Your organization profile has been updated successfully.",

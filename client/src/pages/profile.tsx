@@ -82,13 +82,10 @@ export default function Profile() {
     queryFn: async () => {
       const id = localStorage.getItem('currentUserId');
       if (!id) return null;
-      console.log(`[Profile] Fetching intake profile for user ${id}`);
       const url = `/api/intake/volunteer-profile?userId=${id}`;
       const response = await fetch(url);
       if (!response.ok) return null;
-      const data = await response.json();
-      console.log(`[Profile] Loaded weeklyAvailability: ${data?.weeklyAvailability}, availability slots: ${data?.availability?.length || 0}`);
-      return data;
+      return response.json();
     }
   });
 
@@ -306,7 +303,6 @@ export default function Profile() {
                         return sum + (end - start);
                       }, 0);
                       const actualAvailability = Math.min(weeklyHours, totalSlotHours);
-                      console.log(`[Profile] Availability Card: min(${weeklyHours}, ${totalSlotHours}) = ${actualAvailability}`);
                       return <div className="text-2xl font-bold">{actualAvailability} hrs</div>;
                     })()}
                     <p className="text-xs text-muted-foreground mt-1">

@@ -270,9 +270,6 @@ const useAvailabilityManagement = (form: any) => {
       // Set to lesser of the two values
       const availabilityHours = Math.min(currentWeeklyHours, totalSlotHours);
       form.setValue("weeklyHours", availabilityHours);
-      console.log(
-        `[Availability Management] Updated weekly hours to min(${currentWeeklyHours}, ${totalSlotHours}) = ${availabilityHours}`,
-      );
     },
     [form],
   );
@@ -936,10 +933,6 @@ export default function VolunteerProfileSettings() {
     if (!currentUser?.id) return;
 
     if (existingProfile) {
-      console.log(
-        `[Profile Load Effect] Loading profile for user ${currentUser?.id}:`,
-        existingProfile,
-      );
       form.reset({
         email: currentUser?.email || "",
         name: existingProfile.volunteerName || currentUser?.displayName || "",
@@ -973,9 +966,6 @@ export default function VolunteerProfileSettings() {
       });
     } else if (!loadingProfile && currentUser?.email) {
       // New profile - initialize with user data
-      console.log(
-        `[Profile Load Effect] Initializing new profile for user ${currentUser?.id}`,
-      );
       form.reset({
         email: currentUser?.email || "",
         name: currentUser?.displayName || "",
@@ -1015,17 +1005,11 @@ export default function VolunteerProfileSettings() {
   const mutationConfig = {
     onSuccess: async (result: any) => {
       const id = currentUser?.id;
-      console.log(`[Settings Mutation] Success - mutation returned:`, result);
 
       // IMMEDIATELY populate form with saved data to prevent blank form
       const profileData = result.volunteerProfile || result;
-      console.log(
-        `[Settings Mutation] Immediately updating form with saved profile data:`,
-        profileData,
-      );
 
       // Directly set form values with saved data - this prevents the form from going blank
-      // Make sure to include ALL fields from the schema
       form.reset({
         email: currentUser?.email || "",
         name: profileData.volunteerName || currentUser?.displayName || "",
@@ -1100,14 +1084,8 @@ export default function VolunteerProfileSettings() {
       if (!currentUser?.id) throw new Error("User not authenticated");
 
       const targetUserId = currentUser.id;
-      console.log(
-        `[Settings Mutation CRITICAL] SAVING FOR USER ID: ${targetUserId}, EMAIL: ${currentUser.email}`,
-      );
 
       // Transform form data to match volunteer profile API
-      // Convert skills array of {name, proficiency} objects to:
-      // - skills: array of strings (skill names only) for database storage
-      // - skillRatings: object {skillName: proficiency} for matching algorithm
       const skillsArray = data.skills.map((s: { name: string; proficiency: number }) => s.name);
       const skillRatingsObj: Record<string, number> = {};
       data.skills.forEach((s: { name: string; proficiency: number }) => {
@@ -1115,10 +1093,10 @@ export default function VolunteerProfileSettings() {
       });
 
       const profileData = {
-        email: data.email, // Add email to profile update
+        email: data.email,
         volunteerName: data.name,
-        skills: skillsArray, // Array of skill names (strings)
-        skillRatings: skillRatingsObj, // Object {skillName: proficiency} for matching
+        skills: skillsArray,
+        skillRatings: skillRatingsObj,
         interests: data.interests,
         location: data.location,
         yearsOfExperience: data.yearsOfExperience,
@@ -1128,8 +1106,8 @@ export default function VolunteerProfileSettings() {
         employerId: data.employerId ? parseInt(data.employerId) : null,
         departmentName: data.departmentName,
         jobTitleAtCompany: data.jobTitleAtCompany,
-        preferredSdgs: data.sdgGoals, // Map sdgGoals to preferredSdgs for backend
-        weeklyAvailability: data.weeklyHours, // Map weeklyHours to weeklyAvailability
+        preferredSdgs: data.sdgGoals,
+        weeklyAvailability: data.weeklyHours,
         availability: data.availability,
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
@@ -1139,16 +1117,6 @@ export default function VolunteerProfileSettings() {
         profilePhotoUrl: profilePhotoUrl,
       };
 
-      console.log(
-        `[Settings Mutation] Submitting profile data for user ${targetUserId}:`,
-        {
-          weeklyAvailability: profileData.weeklyAvailability,
-          skills: profileData.skills,
-          skillRatings: profileData.skillRatings,
-          preferredSdgs: profileData.preferredSdgs,
-        }
-      );
-
       // Add timeout protection - 15 seconds max
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(
@@ -1157,24 +1125,13 @@ export default function VolunteerProfileSettings() {
         ),
       );
 
-      try {
-        const url = `/api/intake/volunteer-profile?userId=${targetUserId}`;
-        console.log(`[Settings Mutation CRITICAL] API URL: ${url}`);
+      const url = `/api/intake/volunteer-profile?userId=${targetUserId}`;
+      const result = (await Promise.race([
+        apiRequest("POST", url, profileData),
+        timeoutPromise,
+      ])) as any;
 
-        const result = (await Promise.race([
-          apiRequest("POST", url, profileData),
-          timeoutPromise,
-        ])) as any;
-
-        console.log(
-          `[Settings Mutation CRITICAL] Backend response received for user ${targetUserId}`,
-          result,
-        );
-        return result;
-      } catch (error) {
-        console.error("Profile mutation error:", error);
-        throw error;
-      }
+      return result;
     },
     ...mutationConfig,
   });
@@ -1244,26 +1201,8 @@ export default function VolunteerProfileSettings() {
   const availabilityOps = useAvailabilityManagement(form);
 
   const onSubmit = async (data: FormData) => {
-    console.log(
-      `[Settings Form Submit CRITICAL] currentUser?.id = ${currentUser?.id}`,
-    );
-    console.log(
-      `[Settings Form Submit CRITICAL] currentUser?.email = ${currentUser?.email}`,
-    );
-    console.log(
-      `[Settings Form Submit CRITICAL] currentUser object:`,
-      currentUser,
-    );
-    console.log(
-      `[Settings Form Submit] User clicked save - weeklyHours value: ${data.weeklyHours}`,
-    );
-    console.log(`[Settings Form Submit] Full form data:`, data);
-
     // Validate weeklyHours is set
     if (!data.weeklyHours || data.weeklyHours <= 0) {
-      console.error(
-        `[Settings Form Submit] Invalid weeklyHours: ${data.weeklyHours}`,
-      );
       toast({
         title: "Invalid Weekly Hours",
         description: "Weekly Hours Available must be greater than 0",
@@ -1272,9 +1211,6 @@ export default function VolunteerProfileSettings() {
       return;
     }
 
-    console.log(
-      `[Settings Form Submit] Submitting mutation with weeklyHours: ${data.weeklyHours}`,
-    );
     profileMutation.mutate(data);
   };
 

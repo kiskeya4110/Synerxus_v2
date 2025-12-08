@@ -219,11 +219,6 @@ export default function VolunteerIntake() {
       const user = profileResponse.user;
       
       if (profile) {
-        console.log("[Intake] Loading saved profile data:", {
-          weeklyAvailability: profile.weeklyAvailability,
-          availability: profile.availability?.length,
-          skills: profile.skills?.length,
-        });
         form.reset({
           email: user?.email || currentUser?.email || "",
           name: profile.volunteerName || user?.displayName || "",

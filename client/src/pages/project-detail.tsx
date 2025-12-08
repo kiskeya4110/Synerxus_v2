@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3 } from "lucide-react";
@@ -9,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { CompletionProgress } from "@/components/ui/completion-progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DeleteConfirmDialog } from "@/components/ui/dialog-factory";
 import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -239,10 +241,21 @@ export default function ProjectDetail() {
     updateLivesTouchedMutation.mutate(value);
   };
 
+  // Delete task dialog state
+  const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
+
   const handleDeleteTask = (taskId: number) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
-      deleteTaskMutation.mutate(taskId);
+    setTaskToDelete(taskId);
+    setDeleteTaskDialogOpen(true);
+  };
+
+  const confirmDeleteTask = () => {
+    if (taskToDelete) {
+      deleteTaskMutation.mutate(taskToDelete);
     }
+    setDeleteTaskDialogOpen(false);
+    setTaskToDelete(null);
   };
 
   return (
@@ -755,9 +768,21 @@ export default function ProjectDetail() {
 
       {/* Footer */}
       <Footer />
-      
+
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
+
+      {/* Delete Task Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteTaskDialogOpen}
+        onClose={() => {
+          setDeleteTaskDialogOpen(false);
+          setTaskToDelete(null);
+        }}
+        itemType="task"
+        onConfirm={confirmDeleteTask}
+        isLoading={deleteTaskMutation.isPending}
+      />
       </div>
     </div>
   );

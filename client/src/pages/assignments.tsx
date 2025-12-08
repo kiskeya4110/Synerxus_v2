@@ -42,17 +42,13 @@ export default function Assignments() {
   const { data: assignments = [], isLoading: assignmentsLoading } = useQuery<any[]>({
     queryKey: ["/api/project-assignments", currentUser?.id],
     queryFn: async () => {
-      console.log(`[Assignments] Fetching for volunteer ${currentUser?.id}`);
       const response = await fetch(`/api/project-assignments?volunteerId=${currentUser?.id}`, {
         credentials: "include"
       });
       if (!response.ok) {
-        console.error(`[Assignments] API returned ${response.status}`);
         return [];
       }
-      const data = await response.json();
-      console.log(`[Assignments] Fetched ${data?.length || 0} assignments`);
-      return data;
+      return response.json();
     },
     enabled: !!currentUser?.id
   });

@@ -25,6 +25,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { useState } from "react";
+import { ConfirmDialog } from "@/components/ui/dialog-factory";
+import { safeArray, safeMap, safeFilter, safeReduce } from "@/lib/safe-array";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -140,6 +142,10 @@ export default function CSRDashboard() {
   // SDG Filters - support multiple selection
   const [selectedSDGFilters, setSelectedSDGFilters] = useState<number[]>([]);
   const [dateRange, setDateRange] = useState<"all" | "30d" | "90d" | "1y">("all");
+
+  // Engagement tips confirmation dialog
+  const [showEngagementTipsDialog, setShowEngagementTipsDialog] = useState(false);
+  const [isSendingTips, setIsSendingTips] = useState(false);
 
   // Time Period options
   const TIME_PERIODS = [
@@ -530,9 +536,9 @@ export default function CSRDashboard() {
     : sdgMetrics;
 
   const filteredProjectLocations = selectedSDGFilters.length > 0
-    ? (csrData?.projectLocations || []).filter((project: any) =>
+    ? safeFilter(csrData?.projectLocations, (project: any) =>
         matchesSDGFilter(project.sdgGoals))
-    : (csrData?.projectLocations || []);
+    : safeArray(csrData?.projectLocations);
 
   // Recalculate KPIs based on filtered data
   const filteredTotalHours = filteredSDGMetrics.reduce(
@@ -542,13 +548,13 @@ export default function CSRDashboard() {
 
   const filteredUniqueEmployees = new Set(
     filteredSDGMetrics.flatMap((metric: any) =>
-      (metric.employees || []).map((emp: any) => emp.email)
+      safeMap(metric.employees, (emp: any) => emp.email)
     )
   ).size;
 
   const filteredProjectsCount = new Set(
     filteredSDGMetrics.flatMap((metric: any) =>
-      (metric.projects || []).map((proj: any) => proj.id)
+      safeMap(metric.projects, (proj: any) => proj.id)
     )
   ).size;
 
@@ -1723,7 +1729,7 @@ export default function CSRDashboard() {
                           sdgMetrics
                             .filter((m: any) => m.totalHours > 0)
                             .flatMap((m: any) =>
-                              (m.employees || []).map((emp: any) => emp.email)
+                              safeMap(m.employees, (emp: any) => emp.email)
                             )
                         ).size}
                       </p>
@@ -1932,7 +1938,7 @@ export default function CSRDashboard() {
                         // Get unique volunteers across all SDGs (not summing duplicates)
                         const uniqueVolunteers = new Set(
                           activeSDGs.flatMap((m: any) =>
-                            (m.employees || []).map((emp: any) => emp.email)
+                            safeMap(m.employees, (emp: any) => emp.email)
                           )
                         ).size;
                         const topSDG = activeSDGs.sort((a: any, b: any) => b.totalHours - a.totalHours)[0];
@@ -4070,32 +4076,7 @@ export default function CSRDashboard() {
                 </button>
                 {selectedFunnelStage === 1 && (
                   <button
-                    onClick={async () => {
-                      // Send engagement tips to inactive employees
-                      const confirmed = window.confirm(
-                        "Send engagement tips to all inactive employees? This will send personalized tips to help them get started with volunteering."
-                      );
-                      if (confirmed) {
-                        try {
-                          const response = await fetch("/api/employee-engagement/send-tips", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              userId,
-                              stage: "inactive",
-                            }),
-                          });
-                          if (response.ok) {
-                            alert("✅ Engagement tips sent successfully to inactive employees!");
-                            setShowFunnelModal(false);
-                          } else {
-                            alert("❌ Failed to send engagement tips. Please try again.");
-                          }
-                        } catch (error) {
-                          alert("❌ Error sending engagement tips. Please try again.");
-                        }
-                      }
-                    }}
+                    onClick={() => setShowEngagementTipsDialog(true)}
                     style={{
                       padding: "8px 16px",
                       border: "none",
@@ -4569,6 +4550,40 @@ export default function CSRDashboard() {
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
+
+      {/* Engagement Tips Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showEngagementTipsDialog}
+        onClose={() => setShowEngagementTipsDialog(false)}
+        title="Send Engagement Tips"
+        description="Send engagement tips to all inactive employees? This will send personalized tips to help them get started with volunteering."
+        confirmText="Send Tips"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          setIsSendingTips(true);
+          try {
+            const response = await fetch("/api/employee-engagement/send-tips", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId,
+                stage: "inactive",
+              }),
+            });
+            if (response.ok) {
+              alert("Engagement tips sent successfully to inactive employees!");
+              setShowFunnelModal(false);
+            } else {
+              alert("Failed to send engagement tips. Please try again.");
+            }
+          } catch (error) {
+            alert("Error sending engagement tips. Please try again.");
+          } finally {
+            setIsSendingTips(false);
+          }
+        }}
+        isLoading={isSendingTips}
+      />
     </div>
   );
 }

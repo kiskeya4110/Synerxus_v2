@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Upload, User, X } from "lucide-react";
+import { Upload, User, X, Crop } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ImageCropper } from "@/components/ui/image-cropper";
 import { uploadProfilePhoto, deleteFile, extractStoragePath } from "@/lib/upload";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,6 +13,7 @@ interface ProfilePictureUploadProps {
   userType: 'volunteer' | 'organization';
   type?: 'avatar' | 'logo';
   label?: string;
+  enableCrop?: boolean;
 }
 
 export function ProfilePictureUpload({
@@ -20,11 +22,15 @@ export function ProfilePictureUpload({
   userId,
   userType,
   type = 'avatar',
-  label
+  label,
+  enableCrop = true
 }: ProfilePictureUploadProps) {
   const [photoUrl, setPhotoUrl] = useState<string>(currentPhotoUrl || "");
   const [isUploading, setIsUploading] = useState(false);
   const [storagePath, setStoragePath] = useState<string>("");
+  const [showCropper, setShowCropper] = useState(false);
+  const [pendingImage, setPendingImage] = useState<string>("");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -43,13 +49,61 @@ export function ProfilePictureUpload({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate userId early
+    if (!userId) {
+      toast({
+        title: "Upload failed",
+        description: "User ID is required. Please ensure you're logged in.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // If crop is enabled, show cropper first
+    if (enableCrop) {
+      const imageUrl = URL.createObjectURL(file);
+      setPendingImage(imageUrl);
+      setPendingFile(file);
+      setShowCropper(true);
+      return;
+    }
+
+    // Otherwise upload directly
+    await uploadImage(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    // Convert blob to file
+    const croppedFile = new File(
+      [croppedBlob],
+      pendingFile?.name || 'cropped-image.jpg',
+      { type: 'image/jpeg' }
+    );
+
+    // Clean up pending state
+    if (pendingImage) {
+      URL.revokeObjectURL(pendingImage);
+    }
+    setPendingImage("");
+    setPendingFile(null);
+    setShowCropper(false);
+
+    // Upload the cropped image
+    await uploadImage(croppedFile);
+  };
+
+  const handleCropCancel = () => {
+    if (pendingImage) {
+      URL.revokeObjectURL(pendingImage);
+    }
+    setPendingImage("");
+    setPendingFile(null);
+    setShowCropper(false);
+  };
+
+  const uploadImage = async (file: File) => {
     try {
       setIsUploading(true);
-
-      // Validate userId
-      if (!userId) {
-        throw new Error("User ID is required. Please ensure you're logged in.");
-      }
 
       // Delete old photo if exists
       if (storagePath) {
@@ -62,12 +116,12 @@ export function ProfilePictureUpload({
 
       // Upload new photo with timeout
       const uploadPromise = uploadProfilePhoto(file, userId, userType);
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Upload timeout. Please try again.")), 30000)
       );
-      
+
       const result = await Promise.race([uploadPromise, timeoutPromise]) as any;
-      
+
       setPhotoUrl(result.url);
       setStoragePath(result.path);
       onPhotoChange(result.url);
@@ -180,6 +234,17 @@ export function ProfilePictureUpload({
       <p className="text-xs text-muted-foreground">
         Recommended: Square image, max 5MB
       </p>
+
+      {/* Image Cropper Modal */}
+      <ImageCropper
+        isOpen={showCropper}
+        onClose={handleCropCancel}
+        imageSrc={pendingImage}
+        aspectRatio={type === 'avatar' ? 1 : 1} // Square for both avatar and logo
+        cropShape={type === 'avatar' ? 'round' : 'rect'}
+        onCropComplete={handleCropComplete}
+        title={type === 'avatar' ? 'Crop Profile Picture' : 'Crop Logo'}
+      />
     </div>
   );
 }

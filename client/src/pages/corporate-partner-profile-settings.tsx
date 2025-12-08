@@ -129,7 +129,6 @@ export default function CorporatePartnerProfileSettings() {
       try {
         const response = await fetch(`/api/csr/partners?userId=${userId}`);
         const data = await response.json();
-        console.log("[Corporate Settings] Fetched partner profile:", data);
         return data || null;
       } catch (err) {
         console.error("[Corporate Settings] Error fetching profile:", err);
@@ -184,7 +183,6 @@ export default function CorporatePartnerProfileSettings() {
 
       // If profile exists, update it; otherwise create new one
       if (partnerProfile?.id) {
-        console.log(`[Corporate Settings] Updating existing partner ID: ${partnerProfile.id}`);
         const response = await fetch(`/api/csr/partners/${partnerProfile.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -193,7 +191,6 @@ export default function CorporatePartnerProfileSettings() {
         if (!response.ok) throw new Error('Failed to update CSR partner profile');
         return response.json();
       } else {
-        console.log(`[Corporate Settings] Creating new CSR partner for user ${currentUser?.id}`);
         const response = await fetch('/api/csr/partners', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -239,14 +236,6 @@ export default function CorporatePartnerProfileSettings() {
         });
         return;
       }
-      
-      console.log("[Corporate Settings] Form submitted:", { 
-        data, 
-        sdgsToSave, 
-        hasExistingProfile: !!partnerProfile?.id,
-        partnerProfileId: partnerProfile?.id,
-        currentUserId: currentUser?.id
-      });
       
       updatePartnerMutation.mutate(data);
     } catch (err) {

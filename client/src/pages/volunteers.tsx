@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DeleteConfirmDialog } from "@/components/ui/dialog-factory";
 import { Label } from "@/components/ui/label";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -32,6 +33,8 @@ export default function Volunteers() {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [deleteVolunteerDialogOpen, setDeleteVolunteerDialogOpen] = useState(false);
+  const [volunteerToDelete, setVolunteerToDelete] = useState<{ id: number; name: string } | null>(null);
   const { toast } = useToast();
 
   // Get current user to check if organization
@@ -206,16 +209,10 @@ export default function Volunteers() {
   const volunteersWithStats = useMemo(() => {
     // For organizations, the stats are already included from the backend
     if (isOrganization) {
-      return volunteers.map((volunteer: any) => {
-        const parsedSkills = parseSkillNames(volunteer.skills);
-        if (volunteer.displayName && (!parsedSkills || parsedSkills.length === 0) && volunteer.skills) {
-          console.log(`${volunteer.displayName} skills:`, volunteer.skills, "parsed:", parsedSkills);
-        }
-        return {
-          ...volunteer,
-          skills: parsedSkills,
-        };
-      });
+      return volunteers.map((volunteer: any) => ({
+        ...volunteer,
+        skills: parseSkillNames(volunteer.skills),
+      }));
     }
     
     // For admin/other users, calculate stats from activities
@@ -232,14 +229,17 @@ export default function Volunteers() {
     });
   }, [volunteers, volunteerActivities, isOrganization]);
 
-  const filteredVolunteers = volunteersWithStats.filter((volunteer: any) => {
+  const filteredVolunteers = useMemo(() => volunteersWithStats.filter((volunteer: any) => {
     const matchesSearch = volunteer.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          volunteer.email?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSkill = skillFilter === "all" || (volunteer.skills && volunteer.skills.includes(skillFilter));
     return matchesSearch && matchesSkill;
-  });
+  }), [volunteersWithStats, searchTerm, skillFilter]);
 
-  const allSkills = Array.from(new Set(volunteersWithStats.flatMap((v: any) => v.skills || [])));
+  const allSkills = useMemo(() =>
+    Array.from(new Set(volunteersWithStats.flatMap((v: any) => v.skills || []))),
+    [volunteersWithStats]
+  );
 
   // Memoize selected volunteer to avoid repeated .find() calls
   const selectedVolunteerData = useMemo(() => {
@@ -476,15 +476,6 @@ export default function Volunteers() {
                     variant="outline"
                     className="flex-1 min-h-[40px] border-2 border-green-500 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
                     onClick={() => {
-                      console.log('[Performance Button] Volunteer data:', {
-                        id: volunteer.id,
-                        userId: volunteer.userId,
-                        name: volunteer.displayName,
-                        email: volunteer.email,
-                        fullVolunteer: volunteer
-                      });
-
-                      // Use userId if id is not available
                       const volId = volunteer.id || volunteer.userId;
 
                       if (!volId) {
@@ -493,7 +484,6 @@ export default function Volunteers() {
                           description: "Volunteer ID is missing. Cannot load performance data.",
                           variant: "destructive",
                         });
-                        console.error('[Performance Button] No ID found for volunteer:', volunteer);
                         return;
                       }
 
@@ -513,14 +503,11 @@ export default function Volunteers() {
                     variant="outline"
                     className="flex-1 min-h-[40px] border-2 border-red-500 text-red-700 hover:bg-red-50 dark:border-red-400 dark:text-red-400 dark:hover:bg-red-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
                     onClick={() => {
-                      if (window.confirm(`Are you sure you want to remove ${volunteer.displayName || 'this volunteer'}? This action cannot be undone.`)) {
-                        toast({
-                          title: "Volunteer Removed",
-                          description: `${volunteer.displayName || 'Volunteer'} has been removed from the organization`,
-                        });
-                        // In a real implementation, this would call an API to remove the volunteer
-                        // queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
-                      }
+                      setVolunteerToDelete({
+                        id: volunteer.id,
+                        name: volunteer.displayName || 'this volunteer'
+                      });
+                      setDeleteVolunteerDialogOpen(true);
                     }}
                     data-testid={`button-remove-${volunteer.id}`}
                   >
@@ -877,6 +864,25 @@ export default function Volunteers() {
       
       {/* Footer */}
       <Footer />
+
+      {/* Delete Volunteer Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteVolunteerDialogOpen}
+        onClose={() => {
+          setDeleteVolunteerDialogOpen(false);
+          setVolunteerToDelete(null);
+        }}
+        itemName={volunteerToDelete?.name}
+        itemType="volunteer"
+        onConfirm={() => {
+          toast({
+            title: "Volunteer Removed",
+            description: `${volunteerToDelete?.name || 'Volunteer'} has been removed from the organization`,
+          });
+          // In a real implementation, this would call an API to remove the volunteer
+          // queryClient.invalidateQueries({ queryKey: ["/api/volunteers"] });
+        }}
+      />
     </>
   );
 }

@@ -97,7 +97,6 @@ export default function OrganizationProfileSettings() {
   // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
   useEffect(() => {
     if (existingProfile) {
-      console.log("[Organization Settings] Resetting form with profile data");
       form.reset({
         email: existingProfile.email || currentUser?.email || "",
         name: existingProfile.name || "",

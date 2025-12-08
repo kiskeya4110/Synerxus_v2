@@ -23,7 +23,12 @@
       "Bash(git commit:*)",
       "Bash(sqlite3:*)",
       "Bash(tsx update-user.ts:*)",
-      "Bash(tsx update-al-user.ts:*)"
+      "Bash(tsx update-al-user.ts:*)",
+      "Bash(wc:*)",
+      "Bash(ls:*)",
+      "Bash(npm i:*)",
+      "Bash(sort:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

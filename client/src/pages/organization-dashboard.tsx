@@ -2,7 +2,7 @@ import React from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { 
   FolderOpen, Clock, Target, Users, Plus,
   ChevronDown, AlertTriangle, CheckSquare, TrendingUp, 
@@ -169,18 +169,6 @@ export default function OrganizationDashboard() {
     enabled: !!currentUser?.organizationId,
   });
 
-  const handleQuickAction = (actionId: string) => {
-    if (actionId === 'create-project') {
-      navigate('/projects?create=true');
-    } else if (actionId === 'invite-volunteer') {
-      navigate('/volunteers?invite=true');
-    } else if (actionId === 'create-task') {
-      navigate('/tasks?create=true');
-    } else if (actionId === 'view-reports') {
-      navigate('/impact-visualization');
-    }
-  };
-
   if (isLoading) {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -193,7 +181,45 @@ export default function OrganizationDashboard() {
     );
   }
 
-  const metrics = dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, livesTouched: 0, activeVolunteers: 0, totalProjects: 0 };
+  // Memoized computed values
+  const metrics = useMemo(() =>
+    dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, livesTouched: 0, activeVolunteers: 0, totalProjects: 0 },
+    [dashboardData?.keyMetrics]
+  );
+
+  const sdgTotalHours = useMemo(() =>
+    dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0,
+    [dashboardData?.sdgDistribution]
+  );
+
+  const avgProjectCompletion = useMemo(() =>
+    dashboardData?.projects?.length
+      ? Math.round(dashboardData.projects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / dashboardData.projects.length)
+      : 0,
+    [dashboardData?.projects]
+  );
+
+  const sdgChartData = useMemo(() =>
+    dashboardData?.sdgDistribution?.map(item => ({
+      name: getSDGName(item.goal),
+      hours: item.hours,
+      goal: item.goal,
+    })) || [],
+    [dashboardData?.sdgDistribution]
+  );
+
+  // Memoized callbacks
+  const handleQuickActionMemo = useCallback((actionId: string) => {
+    if (actionId === 'create-project') {
+      navigate('/projects?create=true');
+    } else if (actionId === 'invite-volunteer') {
+      navigate('/volunteers?invite=true');
+    } else if (actionId === 'create-task') {
+      navigate('/tasks?create=true');
+    } else if (actionId === 'view-reports') {
+      navigate('/impact-visualization');
+    }
+  }, [navigate]);
 
   return (
     <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb', paddingBottom: '180px' }} data-testid="organization-dashboard">

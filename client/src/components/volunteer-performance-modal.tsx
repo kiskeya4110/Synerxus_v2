@@ -29,31 +29,21 @@ export function VolunteerPerformanceModal({
     queryKey: ["/api/volunteers/performance", volunteerId],
     queryFn: async () => {
       if (!volunteerId) {
-        console.error('[Performance Modal] No volunteerId provided!');
         throw new Error("Volunteer ID is required");
       }
 
-      console.log(`[Performance Modal] Fetching data for volunteer ID: ${volunteerId}`);
       const response = await fetch(`/api/volunteers/${volunteerId}/performance`);
-      console.log(`[Performance Modal] Response status:`, response.status);
-      console.log(`[Performance Modal] Response URL:`, response.url);
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Performance Modal] API Error:`, errorText);
         throw new Error(`Failed to fetch performance data: ${response.status}`);
       }
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error(`[Performance Modal] Received non-JSON response:`, text.substring(0, 200));
         throw new Error("Server returned HTML instead of JSON. Check API endpoint.");
       }
 
-      const data = await response.json();
-      console.log(`[Performance Modal] Data received from API:`, data);
-      return data;
+      return response.json();
     },
     enabled: isOpen && !!volunteerId,
     retry: 1,
@@ -61,14 +51,6 @@ export function VolunteerPerformanceModal({
   });
 
   if (!isOpen) return null;
-
-  console.log('[Performance Modal] Current state:', {
-    isLoading,
-    isError,
-    hasData: !!performanceData,
-    volunteerId,
-    volunteerName
-  });
 
   // Use received data or show error
   const data = performanceData || {

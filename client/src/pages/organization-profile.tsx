@@ -207,15 +207,13 @@ export default function OrganizationProfile() {
       }
 
       const id = localStorage.getItem('currentUserId');
-      console.log('[OrganizationProfile] Saving profile with userId:', id);
-      
+
       if (!id) {
         throw new Error('User ID not found in localStorage. Please log in again.');
       }
-      
+
       const url = `/api/profile/organization?userId=${id}`;
-      console.log('[OrganizationProfile] PATCH URL:', url);
-      
+
       const response = await apiRequest("PATCH", url, {
         ...data,
         profilePhotoUrl: photoUrl,

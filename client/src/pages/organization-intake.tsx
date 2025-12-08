@@ -157,10 +157,6 @@ export default function OrganizationIntake() {
   // Reset form when profile data loads - keeps database data visible and prevents duplication on re-entry
   useEffect(() => {
     if (existingProfile) {
-      console.log("[Organization Intake] Loading saved profile data", {
-        organizationName: existingProfile.organizationName,
-        primarySdgs: existingProfile.primarySdgs?.length
-      });
       form.reset({
         organizationName: existingProfile.organizationName || "",
         organizationLocation: existingProfile.organizationLocation || "",
@@ -238,8 +234,6 @@ export default function OrganizationIntake() {
   });
 
   const onSubmit = (data: OrganizationProfileForm) => {
-    console.log("Form submission triggered with data:", data);
-    console.log("Form errors:", form.formState.errors);
     submitMutation.mutate(data);
   };
 
@@ -698,11 +692,7 @@ export default function OrganizationIntake() {
                 <Button
                   data-testid="button-next"
                   type="button"
-                  onClick={() => {
-                    console.log("Moving to next step. Current form values:", form.getValues());
-                    console.log("Current form errors:", form.formState.errors);
-                    setStep(Math.min(totalSteps, step + 1));
-                  }}
+                  onClick={() => setStep(Math.min(totalSteps, step + 1))}
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -712,11 +702,6 @@ export default function OrganizationIntake() {
                   data-testid="button-submit"
                   type="submit"
                   disabled={submitMutation.isPending}
-                  onClick={() => {
-                    console.log("Submit button clicked");
-                    console.log("Form values:", form.getValues());
-                    console.log("Form errors:", form.formState.errors);
-                  }}
                 >
                   {submitMutation.isPending ? "Submitting..." : "Complete Profile"}
                   <Check className="w-4 h-4 ml-2" />

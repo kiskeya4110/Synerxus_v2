@@ -1,10 +1,16 @@
 /**
  * UN Sustainable Development Goals (SDG) Utilities
  * Centralized functions for SDG-related operations
+ *
+ * IMPORTANT: Use these exports instead of defining SDG colors/names locally.
+ * This prevents duplication and ensures consistency across the application.
  */
 
-// SDG Color Mapping
-const SDG_COLORS: Record<number, string> = {
+// Re-export from shared for convenience
+export { SDG_GOALS, getSDGColor as getSDGColorFromShared } from '@shared/sdg-goals';
+
+// SDG Color Mapping - Exported for direct use in charts/visualizations
+export const SDG_COLORS: Record<number, string> = {
   1: "#E5243B",  // No Poverty
   2: "#DDA63A",  // Zero Hunger
   3: "#4C9F38",  // Good Health and Well-being
@@ -24,8 +30,8 @@ const SDG_COLORS: Record<number, string> = {
   17: "#19486A", // Partnerships for the Goals
 };
 
-// SDG Short Names
-const SDG_SHORT_NAMES: Record<number, string> = {
+// SDG Short Names - Exported for direct use
+export const SDG_SHORT_NAMES: Record<number, string> = {
   1: "No Poverty",
   2: "Zero Hunger",
   3: "Good Health",
@@ -45,8 +51,8 @@ const SDG_SHORT_NAMES: Record<number, string> = {
   17: "Partnerships",
 };
 
-// SDG Full Names
-const SDG_FULL_NAMES: Record<number, string> = {
+// SDG Full Names - Exported for direct use
+export const SDG_FULL_NAMES: Record<number, string> = {
   1: "End poverty in all its forms everywhere",
   2: "End hunger, achieve food security and improved nutrition",
   3: "Ensure healthy lives and promote well-being for all",

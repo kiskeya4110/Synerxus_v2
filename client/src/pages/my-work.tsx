@@ -162,11 +162,8 @@ export default function MyWork() {
     queryKey: ["/api/projects", "org", currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
-      console.log("Fetching projects for org:", currentUser.organizationId);
       const response = await fetch(`/api/projects?organizationId=${currentUser.organizationId}`);
-      const data = response.ok ? await response.json() : [];
-      console.log("Projects fetched:", data.length, data);
-      return data;
+      return response.ok ? await response.json() : [];
     },
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization',
     staleTime: 0,

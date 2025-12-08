@@ -82,8 +82,6 @@ export default function ImpactReportGenerator() {
         },
       };
 
-      console.log("Sending report request:", payload);
-
       const response = await fetch("/api/generate-impact-report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -51,19 +51,20 @@ export default function LogActivity() {
     },
   });
 
-  // Fetch volunteer's projects
+  // Fetch volunteer's project assignments (includes enriched project data)
   const { data: projectAssignments = [] } = useQuery<any[]>({
     queryKey: ["/api/project-assignments", { volunteerId: currentUser?.id }],
     queryFn: async () => {
       if (!currentUser?.id) return [];
       const response = await fetch(`/api/project-assignments?volunteerId=${currentUser.id}`);
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!currentUser?.id
   });
 
-  // Fetch projects
-  const { data: projects = [] } = useQuery<any[]>({
+  // Fetch all projects as fallback
+  const { data: allProjects = [] } = useQuery<any[]>({
     queryKey: ["/api/projects"],
     queryFn: async () => {
       const response = await fetch("/api/projects");
@@ -72,11 +73,24 @@ export default function LogActivity() {
     },
   });
 
-  // Get assigned projects
-  const assignedProjects = Array.isArray(projects) && Array.isArray(projectAssignments)
-    ? projects.filter(project =>
-        projectAssignments.some((assignment: any) => assignment.projectId === project.id)
-      )
+  // Get assigned projects - prioritize projects from assignments (enriched data)
+  // Fall back to matching with all projects if assignment doesn't have project data
+  const assignedProjects = Array.isArray(projectAssignments)
+    ? projectAssignments
+        .filter((assignment: any) => assignment.projectId && assignment.status !== 'removed')
+        .map((assignment: any) => {
+          // Use enriched project from assignment if available
+          if (assignment.project) {
+            return assignment.project;
+          }
+          // Otherwise find from all projects
+          return allProjects.find((p: any) => p.id === assignment.projectId);
+        })
+        .filter(Boolean) // Remove any undefined entries
+        .filter((project: any, index: number, self: any[]) =>
+          // Remove duplicates by id
+          index === self.findIndex((p: any) => p.id === project.id)
+        )
     : [];
 
   // Log activity mutation

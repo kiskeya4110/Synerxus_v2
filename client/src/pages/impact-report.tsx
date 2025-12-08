@@ -517,7 +517,7 @@ export default function ImpactReport() {
   };
 
   const handleShareSocial = (platform: 'twitter' | 'linkedin' | 'facebook') => {
-    const text = `Check out my Global Impact Report! I've contributed ${filteredTotalHours} hours and helped advance sustainable development goals.`;
+    const text = `Check out my SDG Impact Report! I've contributed ${filteredTotalHours} hours and helped advance sustainable development goals.`;
     const url = shareUrl;
     const encodedUrl = encodeURIComponent(url);
     const encodedText = encodeURIComponent(text);
@@ -712,7 +712,7 @@ export default function ImpactReport() {
                 </p>
                 
                 <h1 className="text-lg md:text-xl lg:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg">
-                  Global Impact Report
+                  SDG Impact Report
                 </h1>
 
                 <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
@@ -1735,7 +1735,7 @@ export default function ImpactReport() {
             {/* Footer */}
             <div className="mt-8 pt-6 border-t-2 border-gray-200 dark:border-gray-700 text-center text-sm text-gray-600 dark:text-gray-400 print:mt-4 print:pt-3 print:border-t print:text-xs">
               <p>
-                Generated on {new Date().toLocaleDateString()} • Global Impact Report {timeFilter !== 'all' && `(${['All Time', 'This Month', 'This Quarter', 'This Year'][['all', 'month', 'quarter', 'year'].indexOf(timeFilter)]})`}
+                Generated on {new Date().toLocaleDateString()} • SDG Impact Report {timeFilter !== 'all' && `(${['All Time', 'This Month', 'This Quarter', 'This Year'][['all', 'month', 'quarter', 'year'].indexOf(timeFilter)]})`}
               </p>
               {!isPrinting && volunteerId && (
                 <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">

@@ -1017,9 +1017,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             {/* Dashboard Title */}
             <h1 className="text-white text-2xl font-bold">Dashboard</h1>
 
-            {/* Global Impact Snapshot - Green Gradient Card */}
+            {/* SDG Impact Snapshot - Green Gradient Card */}
             <div className="bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-xl p-4 text-white shadow-lg">
-              <h2 className="text-lg font-semibold mb-3">Global Impact Snapshot</h2>
+              <h2 className="text-lg font-semibold mb-3">SDG Impact Snapshot</h2>
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-5xl font-bold">{kpis.totalHours}</span>
                 <div className="flex-1">

@@ -1463,11 +1463,12 @@ export default function CSRDashboard() {
                   <p style={{ fontSize: "30px", fontWeight: "bold" }}>
                     {displayTotalHours.toLocaleString()}
                   </p>
-                  {selectedSDGFilters.length > 0 && (
-                    <p style={{ fontSize: "11px", color: "#93c5fd", marginTop: "4px" }}>
-                      Filtered from {(csrData?.totalHours || 0).toLocaleString()} total
-                    </p>
-                  )}
+                  <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
+                    {selectedSDGFilters.length > 0
+                      ? `Filtered from ${(csrData?.totalHours || 0).toLocaleString()} total`
+                      : `$${((csrData as any)?.kpiBreakdown?.hours?.economicValue || displayTotalHours * 35).toLocaleString()} value`
+                    }
+                  </p>
                 </div>
 
                 <div
@@ -1510,11 +1511,12 @@ export default function CSRDashboard() {
                   <p style={{ fontSize: "30px", fontWeight: "bold" }}>
                     {displayActiveEmployees}
                   </p>
-                  {selectedSDGFilters.length > 0 && (
-                    <p style={{ fontSize: "11px", color: "#93c5fd", marginTop: "4px" }}>
-                      Filtered from {csrData?.activeEmployees || 0} total
-                    </p>
-                  )}
+                  <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
+                    {selectedSDGFilters.length > 0
+                      ? `Filtered from ${csrData?.activeEmployees || 0} total`
+                      : `Avg ${(csrData as any)?.kpiBreakdown?.employees?.averageHoursPerEmployee || 0} hrs/employee`
+                    }
+                  </p>
                 </div>
 
                 <div
@@ -1550,16 +1552,17 @@ export default function CSRDashboard() {
                       fontWeight: "500",
                     }}
                   >
-                    Projects Completed
+                    Projects Active
                   </p>
                   <p style={{ fontSize: "30px", fontWeight: "bold" }}>
-                    {displayProjectsCompleted}
+                    {(csrData as any)?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted}
                   </p>
-                  {selectedSDGFilters.length > 0 && (
-                    <p style={{ fontSize: "11px", color: "#93c5fd", marginTop: "4px" }}>
-                      Filtered from {csrData?.projectsCompleted || 0} total
-                    </p>
-                  )}
+                  <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
+                    {selectedSDGFilters.length > 0
+                      ? `Filtered from ${csrData?.projectsCompleted || 0} total`
+                      : `${(csrData as any)?.kpiBreakdown?.projects?.regionsServed || 0} regions served`
+                    }
+                  </p>
                 </div>
 
                 <div
@@ -1595,20 +1598,23 @@ export default function CSRDashboard() {
                       fontWeight: "500",
                     }}
                   >
-                    SDG Score Delta
+                    Active SDGs
                   </p>
                   <p style={{ fontSize: "28px", fontWeight: "bold" }}>
-                    {(csrData?.sdgScoreDelta || 0) >= 0 ? "+" : ""}
-                    {csrData?.sdgScoreDelta || 0}%{" "}
+                    {sdgMetrics.filter((m: any) => m.totalHours > 0).length}
                     <span
                       style={{
                         fontSize: "14px",
                         fontWeight: "normal",
                         color: "#d1d5db",
+                        marginLeft: "4px",
                       }}
                     >
-                      Q3
+                      of 17
                     </span>
+                  </p>
+                  <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
+                    {(csrData?.sdgScoreDelta || 0) >= 0 ? "+" : ""}{csrData?.sdgScoreDelta || 0}% vs last quarter
                   </p>
                 </div>
 
@@ -1646,13 +1652,13 @@ export default function CSRDashboard() {
                       fontWeight: "500",
                     }}
                   >
-                    Total Volunteers
+                    Employee Volunteers
                   </p>
                   <p style={{ fontSize: "28px", fontWeight: "bold" }}>
-                    {(csrData as any)?.totalVolunteers || sdgMetrics.reduce((sum, m) => sum + (m.uniqueEmployees || 0), 0) || 0}
+                    {csrData?.activeEmployees || 0}
                   </p>
                   <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
-                    Active across all projects
+                    {(csrData as any)?.kpiBreakdown?.employees?.engagementRate || 0}% engagement rate
                   </p>
                 </div>
               </div>
@@ -1763,7 +1769,7 @@ export default function CSRDashboard() {
                           margin: 0,
                         }}
                       >
-                        {sdgMetrics.length || 0}
+                        {sdgMetrics.filter((m: any) => m.totalHours > 0).length}
                       </p>
                       <p
                         style={{
@@ -1819,7 +1825,7 @@ export default function CSRDashboard() {
                           margin: 0,
                         }}
                       >
-                        {new Set(
+                        {csrData?.activeEmployees || new Set(
                           sdgMetrics
                             .filter((m: any) => m.totalHours > 0)
                             .flatMap((m: any) =>
@@ -1834,7 +1840,7 @@ export default function CSRDashboard() {
                           margin: "2px 0 0 0",
                         }}
                       >
-                        Volunteers
+                        Employees
                       </p>
                     </div>
                   </div>
@@ -2667,8 +2673,8 @@ export default function CSRDashboard() {
                 {selectedKPI === "hours" && "Total Hours Logged"}
                 {selectedKPI === "employees" && "Employees Engaged"}
                 {selectedKPI === "projects" && "Projects Completed"}
-                {selectedKPI === "sdg" && "SDG Score Performance"}
-                {selectedKPI === "volunteers" && "Total Volunteers"}
+                {selectedKPI === "sdg" && "Active SDGs"}
+                {selectedKPI === "volunteers" && "Employee Volunteers"}
               </h2>
               <button
                 onClick={() => setSelectedKPI(null)}
@@ -3066,8 +3072,7 @@ export default function CSRDashboard() {
                     marginBottom: "16px",
                   }}
                 >
-                  +{(csrData as any)?.kpiBreakdown?.sdg?.scoreDelta || 0}% SDG
-                  Performance
+                  {sdgMetrics.filter((m: any) => m.totalHours > 0).length} of 17 SDGs Active
                 </p>
                 <p
                   style={{
@@ -3076,8 +3081,7 @@ export default function CSRDashboard() {
                     lineHeight: "1.6",
                   }}
                 >
-                  Progress across Sustainable Development Goals aligned with
-                  your CSR strategy.
+                  SDGs with employee volunteer hours logged through CSR-sponsored initiatives.
                 </p>
                 <div
                   style={{
@@ -3095,7 +3099,7 @@ export default function CSRDashboard() {
                       marginBottom: "8px",
                     }}
                   >
-                    SDG Progress Metrics:
+                    Employee SDG Engagement:
                   </p>
                   <ul
                     style={{
@@ -3112,10 +3116,9 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ Active SDG commitments:</span>
+                      <span>✓ Active SDGs with hours:</span>
                       <span style={{ fontWeight: "600" }}>
-                        {(csrData as any)?.kpiBreakdown?.sdg
-                          ?.activeCommitments || 0}
+                        {sdgMetrics.filter((m: any) => m.totalHours > 0).length} of 17
                       </span>
                     </li>
                     <li
@@ -3125,11 +3128,9 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ Average progress:</span>
+                      <span>✓ Total SDG hours logged:</span>
                       <span style={{ fontWeight: "600" }}>
-                        {(csrData as any)?.kpiBreakdown?.sdg?.averageProgress ||
-                          0}
-                        %
+                        {sdgMetrics.reduce((sum: number, m: any) => sum + (m.totalHours || 0), 0).toLocaleString()} hrs
                       </span>
                     </li>
                     <li
@@ -3139,13 +3140,9 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ Total SDG hours:</span>
+                      <span>✓ Employees contributing:</span>
                       <span style={{ fontWeight: "600" }}>
-                        {(
-                          (csrData as any)?.kpiBreakdown?.sdg?.totalSdgHours ||
-                          0
-                        ).toLocaleString()}{" "}
-                        hrs
+                        {sdgMetrics.reduce((sum: number, m: any) => sum + (m.uniqueEmployees || 0), 0)}
                       </span>
                     </li>
                     <li
@@ -3155,23 +3152,9 @@ export default function CSRDashboard() {
                         justifyContent: "space-between",
                       }}
                     >
-                      <span>✓ Active challenges:</span>
+                      <span>✓ Performance vs last quarter:</span>
                       <span style={{ fontWeight: "600" }}>
-                        {(csrData as any)?.kpiBreakdown?.sdg
-                          ?.challengesActive || 0}
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Completed challenges:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {(csrData as any)?.kpiBreakdown?.sdg
-                          ?.challengesCompleted || 0}
+                        {(csrData?.sdgScoreDelta || 0) >= 0 ? "+" : ""}{csrData?.sdgScoreDelta || 0}%
                       </span>
                     </li>
                     <li
@@ -3183,17 +3166,55 @@ export default function CSRDashboard() {
                       }}
                     >
                       <span>
-                        🎯 Top SDG (Goal{" "}
-                        {(csrData as any)?.kpiBreakdown?.sdg?.topSdg || 0}):
+                        🎯 Top SDG by hours:
                       </span>
                       <span style={{ fontWeight: "600", color: "#059669" }}>
-                        {(
-                          (csrData as any)?.kpiBreakdown?.sdg?.topSdgHours || 0
-                        ).toLocaleString()}{" "}
-                        hrs
+                        {(() => {
+                          const topSDG = sdgMetrics.reduce((max: any, m: any) =>
+                            (m.totalHours || 0) > (max.totalHours || 0) ? m : max, sdgMetrics[0] || {});
+                          return topSDG ? `Goal ${topSDG.sdg} (${(topSDG.totalHours || 0).toLocaleString()} hrs)` : 'N/A';
+                        })()}
                       </span>
                     </li>
                   </ul>
+                </div>
+                <div
+                  style={{
+                    marginTop: "16px",
+                    maxHeight: "200px",
+                    overflowY: "auto",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      color: "#6b7280",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Active SDGs Breakdown:
+                  </p>
+                  {sdgMetrics
+                    .filter((m: any) => m.totalHours > 0)
+                    .sort((a: any, b: any) => (b.totalHours || 0) - (a.totalHours || 0))
+                    .map((metric: any) => (
+                      <div
+                        key={metric.sdg}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          padding: "6px 8px",
+                          backgroundColor: "#f9fafb",
+                          borderRadius: "4px",
+                          marginBottom: "4px",
+                          fontSize: "13px",
+                        }}
+                      >
+                        <span>SDG {metric.sdg}: {metric.name}</span>
+                        <span style={{ fontWeight: "600" }}>{(metric.totalHours || 0).toLocaleString()} hrs</span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -3208,7 +3229,7 @@ export default function CSRDashboard() {
                     marginBottom: "16px",
                   }}
                 >
-                  {(csrData as any)?.totalVolunteers || sdgMetrics.reduce((sum, m) => sum + (m.uniqueEmployees || 0), 0) || 0} volunteers
+                  {csrData?.activeEmployees || 0} Employee Volunteers
                 </p>
                 <p
                   style={{
@@ -3217,7 +3238,7 @@ export default function CSRDashboard() {
                     lineHeight: "1.6",
                   }}
                 >
-                  Total unique volunteers actively contributing to your CSR initiatives across all projects and SDG goals.
+                  Employees actively participating in CSR-sponsored volunteer initiatives.
                 </p>
                 <div
                   style={{
@@ -3235,9 +3256,85 @@ export default function CSRDashboard() {
                       marginBottom: "8px",
                     }}
                   >
-                    Volunteer Distribution by SDG:
+                    Employee Engagement Metrics:
                   </p>
-                  <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+                  <ul
+                    style={{
+                      fontSize: "14px",
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                    }}
+                  >
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ Active employee volunteers:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {csrData?.activeEmployees || 0}
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ Engagement rate:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {(csrData as any)?.kpiBreakdown?.employees?.engagementRate || 0}%
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ Average hours contributed:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {(csrData as any)?.kpiBreakdown?.employees?.averageHoursPerEmployee || 0} hrs
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ New this month:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {(csrData as any)?.kpiBreakdown?.employees?.newThisMonth || 0}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <div
+                  style={{
+                    backgroundColor: "#f3f4f6",
+                    padding: "16px",
+                    borderRadius: "8px",
+                    marginTop: "16px",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      color: "#6b7280",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Employee Distribution by SDG:
+                  </p>
+                  <div style={{ maxHeight: "180px", overflowY: "auto" }}>
                     {sdgMetrics
                       .filter((m) => m.uniqueEmployees > 0)
                       .sort((a, b) => b.uniqueEmployees - a.uniqueEmployees)
@@ -3248,31 +3345,31 @@ export default function CSRDashboard() {
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            padding: "8px 0",
+                            padding: "6px 0",
                             borderBottom: "1px solid #e5e7eb",
                           }}
                         >
                           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                             <div
                               style={{
-                                width: "24px",
-                                height: "24px",
+                                width: "20px",
+                                height: "20px",
                                 borderRadius: "4px",
                                 backgroundColor: getSDGColor(metric.sdg),
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
                                 color: "white",
-                                fontSize: "11px",
+                                fontSize: "10px",
                                 fontWeight: "bold",
                               }}
                             >
                               {metric.sdg}
                             </div>
-                            <span style={{ fontSize: "13px" }}>{getSDGName(metric.sdg)}</span>
+                            <span style={{ fontSize: "12px" }}>{getSDGName(metric.sdg)}</span>
                           </div>
-                          <span style={{ fontWeight: "600", color: "#1e3a8a" }}>
-                            {metric.uniqueEmployees} volunteers
+                          <span style={{ fontWeight: "600", color: "#1e3a8a", fontSize: "12px" }}>
+                            {metric.uniqueEmployees} employees
                           </span>
                         </div>
                       ))}
@@ -3289,13 +3386,10 @@ export default function CSRDashboard() {
                     gap: "8px",
                   }}
                 >
-                  <span style={{ fontSize: "18px" }}>📊</span>
+                  <span style={{ fontSize: "18px" }}>💼</span>
                   <span style={{ fontSize: "13px", color: "#1e40af" }}>
-                    <strong>Impact:</strong> Each volunteer contributes an average of{" "}
-                    {csrData?.activeEmployees && csrData?.totalHours
-                      ? Math.round(csrData.totalHours / csrData.activeEmployees)
-                      : 0}{" "}
-                    hours to your CSR goals.
+                    <strong>Impact:</strong> Employee volunteers have contributed{" "}
+                    {(csrData?.totalHours || 0).toLocaleString()} total hours worth ${((csrData?.totalHours || 0) * 35).toLocaleString()} in economic value.
                   </span>
                 </div>
               </div>

@@ -916,7 +916,7 @@ export default function OrganizationImpactReport() {
                 </p>
 
                 <h1 className="text-xl md:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg mb-4">
-                  Global Impact Report
+                  SDG Impact Report
                 </h1>
 
                 <div className="space-y-3">

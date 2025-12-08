@@ -527,7 +527,7 @@ export default function Organizations() {
                     <CardContent className="pt-6 text-center">
                       <Zap className="h-12 w-12 mx-auto mb-4 text-purple-600" />
                       <p className="text-4xl font-bold text-purple-600">{selectedOrg.stats.impactScore}</p>
-                      <p className="text-lg font-medium mt-2">Global Impact Score</p>
+                      <p className="text-lg font-medium mt-2">SDG Impact Score</p>
                       <p className="text-sm text-gray-500 mt-1">
                         Based on projects, volunteers, hours contributed, and community impact
                       </p>

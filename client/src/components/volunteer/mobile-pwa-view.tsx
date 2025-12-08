@@ -446,7 +446,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           <div className="space-y-4">
             {/* Header Title */}
             <div className="px-4 pt-4">
-              <h1 className="text-white text-xl font-bold">{user?.displayName || 'Volunteer'} Synergy Dashboard</h1>
+              <h1 className="text-white text-xl font-bold">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'} Synergy Dashboard</h1>
             </div>
 
             {/* Personal Profile Section */}
@@ -460,12 +460,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         {dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture ? (
                           <img
                             src={dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture}
-                            alt={user?.displayName || 'Profile'}
+                            alt={volunteerProfile?.volunteer_name || user?.displayName || 'Profile'}
                             className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-2xl font-bold">
-                            {(user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
+                            {(volunteerProfile?.volunteer_name || user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
@@ -1199,10 +1199,10 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               <Avatar className="w-20 h-20 mx-auto border-4 border-amber-400">
                 <AvatarImage src={user?.profilePicture} />
                 <AvatarFallback className="bg-[#16213e] text-white text-2xl">
-                  {user?.displayName?.charAt(0) || 'V'}
+                  {(volunteerProfile?.volunteer_name || user?.displayName || 'V').charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <h2 className="text-white text-xl font-bold mt-3">{user?.displayName || 'Volunteer'}</h2>
+              <h2 className="text-white text-xl font-bold mt-3">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'}</h2>
               <p className="text-gray-400 text-sm">{user?.email}</p>
             </div>
 

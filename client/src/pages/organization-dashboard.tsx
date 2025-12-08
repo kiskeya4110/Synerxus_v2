@@ -104,16 +104,8 @@ export default function OrganizationDashboard() {
   const [hoveredSDG, setHoveredSDG] = useState<number | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
-  if (userType !== 'organization') {
-    if (userType === 'volunteer') {
-      navigate('/volunteer-dashboard');
-    } else if (userType === 'corporate-partner') {
-      navigate('/csr-dashboard');
-    } else {
-      navigate('/dashboard');
-    }
-    return null;
-  }
+  // Check if user is an organization user (used for query enabled flags)
+  const isOrganizationUser = userType === 'organization';
 
   const { data: dashboardData, isLoading } = useQuery<DashboardData>({
     queryKey: ['/api/organization/dashboard', userId, projectFilter, timePeriod, sdgFilter],
@@ -126,7 +118,7 @@ export default function OrganizationDashboard() {
       if (!response.ok) throw new Error('Failed to fetch dashboard data');
       return response.json();
     },
-    enabled: !!userId,
+    enabled: !!userId && isOrganizationUser,
   });
 
   const { data: currentUser } = useQuery({
@@ -136,7 +128,7 @@ export default function OrganizationDashboard() {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!userId,
+    enabled: !!userId && isOrganizationUser,
   });
 
   const { data: organizationProfile } = useQuery({
@@ -147,7 +139,7 @@ export default function OrganizationDashboard() {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!currentUser?.organizationId && isOrganizationUser,
   });
 
   const { data: organization } = useQuery({
@@ -158,7 +150,7 @@ export default function OrganizationDashboard() {
       if (!response.ok) return null;
       return response.json();
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!currentUser?.organizationId && isOrganizationUser,
   });
 
   // Fetch pending applications for the organization
@@ -171,22 +163,10 @@ export default function OrganizationDashboard() {
       const allApplications = await response.json();
       return allApplications.filter((app: any) => app.status === 'pending');
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!currentUser?.organizationId && isOrganizationUser,
   });
 
-  if (isLoading) {
-    return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '48px', height: '48px', border: '4px solid #166534', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-          <p style={{ color: '#6b7280' }}>Loading dashboard...</p>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  // Memoized computed values
+  // Memoized computed values - MUST be before any early returns
   const metrics = useMemo(() =>
     dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, aiuEarned: 0, activeVolunteers: 0, totalProjects: 0 },
     [dashboardData?.keyMetrics]
@@ -213,7 +193,7 @@ export default function OrganizationDashboard() {
     [dashboardData?.sdgDistribution]
   );
 
-  // Memoized callbacks
+  // Memoized callbacks - MUST be before any early returns
   const handleQuickActionMemo = useCallback((actionId: string) => {
     if (actionId === 'create-project') {
       navigate('/projects?create=true');
@@ -225,6 +205,30 @@ export default function OrganizationDashboard() {
       navigate('/impact-visualization');
     }
   }, [navigate]);
+
+  // Redirect non-organization users AFTER all hooks are called
+  if (!isOrganizationUser) {
+    if (userType === 'volunteer') {
+      navigate('/volunteer-dashboard');
+    } else if (userType === 'corporate-partner') {
+      navigate('/csr-dashboard');
+    } else {
+      navigate('/dashboard');
+    }
+    return null;
+  }
+
+  if (isLoading) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '48px', height: '48px', border: '4px solid #166534', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+          <p style={{ color: '#6b7280' }}>Loading dashboard...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb', paddingBottom: '180px' }} data-testid="organization-dashboard">

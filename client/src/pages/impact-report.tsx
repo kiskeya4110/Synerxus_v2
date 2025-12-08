@@ -200,7 +200,8 @@ export default function ImpactReport() {
     queryFn: async () => {
       if (!volunteerId) return [];
       const response = await fetch(`/api/volunteer-activities?userId=${volunteerId}`);
-      return response.json();
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!volunteerId
   });
@@ -278,6 +279,9 @@ export default function ImpactReport() {
 
   // Filter activities by time period
   const getFilteredActivities = () => {
+    // Ensure volunteerActivities is an array
+    const activities = Array.isArray(volunteerActivities) ? volunteerActivities : [];
+    
     const now = new Date();
     let startDate = new Date(0); // All time
     
@@ -293,7 +297,7 @@ export default function ImpactReport() {
         break;
     }
     
-    return volunteerActivities.filter(a => {
+    return activities.filter(a => {
       if (!a.date) return true;
       const activityDate = new Date(a.date);
       return activityDate >= startDate;

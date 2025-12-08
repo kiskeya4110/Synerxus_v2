@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText } from "lucide-react";
@@ -44,13 +44,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const userType = localStorage.getItem('userType');
+  const userId = localStorage.getItem('currentUserId');
 
-  // Redirect corporate partners to CSR Dashboard
-  if (userType === 'corporate-partner') {
-    navigate('/csr-dashboard');
-    return null;
-  }
-
+  // All useState hooks must be called before any conditional returns
   const [selectedProject, setSelectedProject] = useState<string>("all");
   const [timeFilter, setTimeFilter] = useState<'all' | 'month' | 'quarter' | 'year'>('all');
   interface KPIState {
@@ -61,8 +57,14 @@ export default function Dashboard() {
   const [selectedKPI, setSelectedKPI] = useState<KPIState | null>(null);
   const [showContactModal, setShowContactModal] = useState(false);
 
+  // Redirect corporate partners to CSR Dashboard using useEffect
+  useEffect(() => {
+    if (userType === 'corporate-partner') {
+      navigate('/csr-dashboard');
+    }
+  }, [userType, navigate]);
+
   // Fetch current user from database
-  const userId = localStorage.getItem('currentUserId');
   const { data: currentUser, isLoading: isLoadingUser, error: userError } = useQuery({
     queryKey: ["/api/users/me", userId],
     queryFn: async () => {
@@ -913,6 +915,11 @@ export default function Dashboard() {
         <Skeleton className="h-96" />
       </div>
     );
+  }
+
+  // Return null while redirecting corporate partners
+  if (userType === 'corporate-partner') {
+    return null;
   }
 
   // Mobile PWA View for Volunteers

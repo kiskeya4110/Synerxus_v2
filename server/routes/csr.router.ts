@@ -278,6 +278,8 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
       activeEmployees,
       totalHours,
       totalImpact,
+      primarySdgs: userPartner.primarySdgs || [],
+      companyName: userPartner.companyName || '',
       sdgProgress: Object.fromEntries(Object.entries(sdgProgress).map(([k, v]) => [k, v])),
       topSdgs,
       topProjects,

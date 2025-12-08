@@ -1589,27 +1589,57 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
         <div className="flex justify-around items-center">
-          {[
-            { id: 'dashboard' as TabType, icon: Home, label: 'Home' },
-            { id: 'projects' as TabType, icon: Briefcase, label: 'Projects' },
-            { id: 'potential' as TabType, icon: Sparkles, label: 'Potential' },
-            { id: 'impacts' as TabType, icon: BarChart3, label: 'Impacts' },
-            { id: 'profile' as TabType, icon: User, label: 'Profile' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
-                activeTab === tab.id
-                  ? 'text-emerald-400'
-                  : 'text-gray-400 hover:text-gray-200'
-              }`}
-              data-testid={`nav-${tab.id}`}
-            >
-              <tab.icon className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">{tab.label}</span>
-            </button>
-          ))}
+          {/* Home tab - internal tab switching */}
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex flex-col items-center py-1 px-3 rounded-lg transition-all ${
+              activeTab === 'dashboard' ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200'
+            }`}
+            data-testid="nav-dashboard"
+          >
+            <Home className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Home</span>
+          </button>
+
+          {/* Projects - navigate to my-work page */}
+          <button
+            onClick={() => navigate('/my-work')}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            data-testid="nav-projects"
+          >
+            <Briefcase className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Projects</span>
+          </button>
+
+          {/* Insights - navigate to discover opportunities */}
+          <button
+            onClick={() => navigate('/discover-opportunities/pwa')}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            data-testid="nav-insights"
+          >
+            <Lightbulb className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Insights</span>
+          </button>
+
+          {/* Impact - navigate to volunteer impact report */}
+          <button
+            onClick={() => navigate(`/impact-report/${userId}`)}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            data-testid="nav-impact"
+          >
+            <BarChart3 className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Impact</span>
+          </button>
+
+          {/* Profile - navigate to profile settings */}
+          <button
+            onClick={() => navigate('/volunteer-profile-settings')}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            data-testid="nav-profile"
+          >
+            <User className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </button>
         </div>
       </nav>
     </div>

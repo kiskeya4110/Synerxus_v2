@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import {
   Search, MapPin, Clock, Users, Sparkles, Target,
   ChevronDown, ArrowLeft, CheckCircle, Home, Briefcase,
-  User, BarChart3, Building2, Calendar, Filter
+  User, BarChart3, Building2, Calendar, Filter, Lightbulb
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -464,19 +464,21 @@ export default function DiscoverOpportunitiesPWA() {
       <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
         <div className="flex justify-around items-center">
           {[
-            { path: '/volunteer-dashboard', icon: Home, label: 'Home' },
-            { path: '/discover-opportunities/pwa', icon: Briefcase, label: 'Projects' },
-            { path: '/volunteer-dashboard', icon: Sparkles, label: 'Potential' },
-            { path: '/volunteer-dashboard', icon: BarChart3, label: 'Impacts' },
-            { path: '/volunteer-profile-settings', icon: User, label: 'Profile' },
+            { path: '/volunteer-dashboard', icon: Home, label: 'Home', isActive: false },
+            { path: '/my-work', icon: Briefcase, label: 'Projects', isActive: false },
+            { path: '/discover-opportunities/pwa', icon: Lightbulb, label: 'Insights', isActive: true },
+            { path: `/impact-report/${userId}`, icon: BarChart3, label: 'Impact', isActive: false },
+            { path: '/volunteer-profile-settings', icon: User, label: 'Profile', isActive: false },
           ].map((tab) => (
             <button
-              key={tab.path}
+              key={tab.label}
               onClick={() => navigate(tab.path)}
-              className="flex flex-col items-center justify-center px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-colors"
+              className={`flex flex-col items-center justify-center px-3 py-1 rounded-lg transition-colors ${
+                tab.isActive ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+              }`}
             >
-              <tab.icon className="w-5 h-5 text-gray-400" />
-              <span className="text-[10px] text-gray-400 mt-0.5">{tab.label}</span>
+              <tab.icon className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5">{tab.label}</span>
             </button>
           ))}
         </div>

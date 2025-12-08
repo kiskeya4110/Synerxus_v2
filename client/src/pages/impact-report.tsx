@@ -8,12 +8,13 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook } from "lucide-react";
+import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Home, Briefcase, Lightbulb, User as UserIcon } from "lucide-react";
 import type { User, Task, ProjectAssignment, Organization } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 declare const html2pdf: { (): { set(options: any): { from(element: HTMLElement): { save(): void } } } };
 import {
   Chart as ChartJS,
@@ -119,6 +120,9 @@ const getSkillBadgeClass = (index: number): string => {
 export default function ImpactReport() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
+  const userType = localStorage.getItem('userType');
+  const isVolunteer = userType === 'volunteer';
   const [isPrinting, setIsPrinting] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [viewMode, setViewMode] = useState<"tabs" | "single">("tabs");
@@ -1954,8 +1958,33 @@ export default function ImpactReport() {
         }
       `}</style>
       
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      {/* Mobile Bottom Navigation - Different for volunteers vs organizations */}
+      {isVolunteer && isMobile ? (
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+          <div className="flex justify-around items-center">
+            {[
+              { path: '/volunteer-dashboard', icon: Home, label: 'Home', isActive: false },
+              { path: '/my-work', icon: Briefcase, label: 'Projects', isActive: false },
+              { path: '/discover-opportunities/pwa', icon: Lightbulb, label: 'Insights', isActive: false },
+              { path: `/impact-report/${volunteerId}`, icon: BarChart3, label: 'Impact', isActive: true },
+              { path: '/volunteer-profile-settings', icon: UserIcon, label: 'Profile', isActive: false },
+            ].map((tab) => (
+              <button
+                key={tab.label}
+                onClick={() => setLocation(tab.path)}
+                className={`flex flex-col items-center justify-center px-3 py-1 rounded-lg transition-colors ${
+                  tab.isActive ? 'text-emerald-400' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
+      ) : (
+        <MobileBottomNav />
+      )}
     </div>
   );
 }

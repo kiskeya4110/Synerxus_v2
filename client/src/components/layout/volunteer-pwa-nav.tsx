@@ -12,7 +12,7 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
   // Determine active tab from current location if not provided
   const currentTab = activeTab || (() => {
     if (location === '/volunteer-dashboard' || location === '/dashboard') return 'home';
-    if (location === '/my-work' || location.startsWith('/my-work')) return 'projects';
+    if (location === '/projects' || location.startsWith('/projects/')) return 'projects';
     if (location.includes('discover-opportunities')) return 'insights';
     if (location.includes('impact-report')) return 'impact';
     if (location.includes('profile-settings')) return 'profile';
@@ -30,7 +30,7 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
       id: 'projects' as const,
       label: 'Projects',
       icon: Briefcase,
-      path: '/my-work'
+      path: '/projects'
     },
     {
       id: 'insights' as const,

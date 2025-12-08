@@ -11,6 +11,8 @@ import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opp
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import OrganizationHeader from "@/components/layout/organization-header";
 import Footer from "@/components/layout/footer";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
 interface ProjectWithDetails extends Project {
@@ -21,6 +23,9 @@ interface ProjectWithDetails extends Project {
 export default function Projects() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
+  const isMobile = useIsMobile();
+  const userType = localStorage.getItem('userType');
+  const isVolunteer = userType === 'volunteer';
 
   // Fetch current user to get organization ID
   const userId = localStorage.getItem('currentUserId');
@@ -319,6 +324,11 @@ export default function Projects() {
       
       {/* Footer */}
       <Footer />
+
+      {/* PWA Bottom Navigation for Volunteers on Mobile */}
+      {isVolunteer && isMobile && (
+        <VolunteerPWANav userId={userId || undefined} activeTab="projects" />
+      )}
     </>
   );
 }

@@ -41,6 +41,8 @@ import {
   Sliders,
 } from "lucide-react";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Form,
   FormControl,
@@ -832,6 +834,7 @@ const SDGGoalsSection = ({ form }: { form: any }) => {
 export default function VolunteerProfileSettings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const isMobile = useIsMobile();
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50);
   const [interestInput, setInterestInput] = useState("");
@@ -1382,6 +1385,11 @@ export default function VolunteerProfileSettings() {
           </Form>
         </CardContent>
       </Card>
+
+      {/* PWA Bottom Navigation for Mobile */}
+      {isMobile && (
+        <VolunteerPWANav userId={userId || undefined} activeTab="profile" />
+      )}
     </div>
   );
 }

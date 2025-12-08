@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, Compass, TrendingUp, MoreHorizontal, MoreVertical, Settings, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, LogOut, Bell, HelpCircle } from "lucide-react";
+import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
@@ -56,7 +56,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [showMenu, setShowMenu] = useState(false);
   const [showKpiModal, setShowKpiModal] = useState<string | null>(null);
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
@@ -321,118 +320,14 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             SYNERXUS
           </span>
         </button>
-        <div className="flex items-center gap-2 relative">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setShowMenu(!showMenu)}
+            onClick={() => navigate('/volunteer-messages')}
             className="p-2 hover:bg-white/10 rounded-full"
+            data-testid="btn-messages"
           >
-            <MoreVertical className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5" />
           </button>
-
-          {/* Floating Menu */}
-          {showMenu && (
-            <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setShowMenu(false)}
-              />
-              <div className="absolute top-12 right-0 bg-[#16213e] border border-gray-700 rounded-lg shadow-xl w-56 z-50">
-                <div className="py-2">
-                  <button
-                    onClick={() => {
-                      navigate('/my-work');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <Briefcase className="w-4 h-4" />
-                    <span>My Work</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigate('/discover-opportunities');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <Compass className="w-4 h-4" />
-                    <span>Discover Opportunities</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigate('/log-activity');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <Clock className="w-4 h-4" />
-                    <span>Log Activity</span>
-                  </button>
-                  <div className="border-t border-gray-700 my-1"></div>
-                  <button
-                    onClick={() => {
-                      navigate('/volunteer-profile-settings');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span>Profile Settings</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigate('/volunteer-messages');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Messages</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigate('/achievements');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <Award className="w-4 h-4" />
-                    <span>Achievements</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <Bell className="w-4 h-4" />
-                    <span>Notifications</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                  >
-                    <HelpCircle className="w-4 h-4" />
-                    <span>Help & Support</span>
-                  </button>
-                  <div className="border-t border-gray-700 my-1"></div>
-                  <button
-                    onClick={() => {
-                      localStorage.clear();
-                      navigate('/login');
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-red-400"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
         </div>
       </header>
 

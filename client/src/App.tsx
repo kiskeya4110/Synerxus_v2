@@ -43,6 +43,7 @@ import DiscoverOpportunities from "@/pages/discover-opportunities";
 import DiscoverOpportunitiesPWA from "@/pages/discover-opportunities-pwa";
 import SDGMapping from "@/pages/sdg-mapping";
 import CSRDashboard from "@/pages/csr-dashboard";
+import CSRDashboardPWA from "@/pages/csr-dashboard-pwa";
 import VolunteerDashboard from "@/pages/volunteer-dashboard";
 import OrganizationDashboard from "@/pages/organization-dashboard";
 import { CSRImpactReporting } from "@/pages/csr-impact-reporting";
@@ -170,6 +171,7 @@ export default function App() {
           <Route path="/landing" component={Landing} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/csr-dashboard" component={CSRDashboard} />
+          <Route path="/csr-dashboard-pwa" component={CSRDashboardPWA} />
           <Route path="/team-overview" component={TeamOverview} />
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/organization-dashboard" component={OrganizationDashboard} />

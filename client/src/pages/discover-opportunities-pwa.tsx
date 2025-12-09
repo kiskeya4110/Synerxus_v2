@@ -250,10 +250,6 @@ export default function DiscoverOpportunitiesPWA() {
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
           <img src={logoUrl} alt="Synerxus Logo" className="h-12 w-auto object-contain" />
-          <span className="font-bold text-base">
-            <span style={{ color: '#ffffff' }}>SYNER</span>
-            <span style={{ color: '#FFB84D' }}>XUS</span>
-          </span>
         </button>
         <div className="flex items-center gap-1">
           <button

@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
-import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
+import logoUrl from "@assets/2026_Synerxus_Logo_1765300182021.jpg";
 
 interface EnrichedOpportunity {
   id: number;

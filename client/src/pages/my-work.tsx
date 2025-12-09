@@ -22,7 +22,7 @@ import { ProjectListCard } from "@/components/projects/project-list-card";
 import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
-import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
+import logoUrl from "@assets/2026_Synerxus_Logo_1765300182021.jpg";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
+import logoUrl from "@assets/2026_Synerxus_Logo_1765300182021.jpg";
 import {
   LineChart,
   Line,
@@ -176,9 +176,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   };
 
   // Impact Over Time data - use pre-calculated monthlyImpactData from server
-  // AIU is now calculated from actual verified peopleImpacted data, not hours * arbitrary multiplier
+  // AIU is calculated using the proper formula: (peopleImpacted * attributionFactor * verificationMultiplier) / hoursNormalization
   const impactOverTimeData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const attributionFactor = 0.2; // Standard 20% attribution for volunteer contributions
+    const verificationMultiplier = 0.9; // Average multiplier (mix of verified and pending)
 
     // Use server-calculated monthlyImpactData if available (format: { month: "YYYY-MM", hours, peopleImpacted })
     const serverMonthlyData = dashboardData?.monthlyImpactData;
@@ -193,10 +195,17 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         const hours = Number(item.hours) || 0;
         const peopleImpacted = Number(item.peopleImpacted) || 0;
 
+        // Calculate AIU using proper formula matching dashboard-service.ts
+        const hoursNormalization = Math.max(hours, 1) / 10;
+        const aiu = Math.round(
+          (peopleImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
+        ) / 100;
+
         return {
           month: monthLabel,
           hours: hours,
-          peopleReached: peopleImpacted
+          peopleReached: peopleImpacted,
+          aiu: aiu
         };
       });
     }
@@ -215,11 +224,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         }
       });
       const hours = monthActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0);
-      // Without server data, show 0 for people reached until data is loaded
+      // Without server data, show 0 for people reached and AIU until data is loaded
       return {
         month,
         hours: hours,
-        peopleReached: 0
+        peopleReached: 0,
+        aiu: 0
       };
     });
   }, [dashboardData?.monthlyImpactData, volunteerActivities]);
@@ -947,28 +957,34 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   </div>
                   {impactOverTimeData.some(d => d.hours > 0) ? (
                     <>
-                      <div className="flex gap-4 mb-2 text-xs">
+                      <div className="flex flex-wrap gap-3 mb-2 text-xs">
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-0.5 bg-[#4CAF50]"></div>
                           <span className="text-slate-500">Hours</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <div className="w-3 h-0.5 bg-[#E91E63]"></div>
+                          <div className="w-3 h-0.5 bg-[#2563eb]"></div>
                           <span className="text-slate-500">People Reached</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-0.5 bg-[#f59e0b]"></div>
+                          <span className="text-slate-500">AIUs</span>
                         </div>
                       </div>
                       <div className="h-40">
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={impactOverTimeData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                             <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
-                            <YAxis stroke="#9CA3AF" fontSize={10} />
+                            <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={10} />
+                            <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" fontSize={10} />
                             <Tooltip
-                              contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                              labelStyle={{ color: '#fff' }}
+                              contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                              labelStyle={{ color: '#1f2937', fontWeight: 600 }}
                             />
-                            <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="Hours" />
-                            <Line type="monotone" dataKey="peopleReached" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} name="People Reached" />
+                            <Line yAxisId="left" type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="Hours" />
+                            <Line yAxisId="left" type="monotone" dataKey="peopleReached" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 3 }} name="People Reached" />
+                            <Line yAxisId="right" type="monotone" dataKey="aiu" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} name="AIUs" />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>

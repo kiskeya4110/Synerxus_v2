@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
+import logoUrl from "@assets/2026_Synerxus_Logo_1765300182021.jpg";
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
   { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },

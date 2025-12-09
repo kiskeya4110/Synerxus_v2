@@ -18,7 +18,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import OrganizationHeader from "@/components/layout/organization-header";
-import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
+import logoUrl from "@assets/2026_Synerxus_Logo_1765300182021.jpg";
 
 // Form schema for adding events
 const eventFormSchema = z.object({

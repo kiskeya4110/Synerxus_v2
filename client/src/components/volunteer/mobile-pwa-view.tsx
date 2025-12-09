@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/2026_Synerxus_Logo_1765300715822.jpg";
+import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
 import {
   LineChart,
   Line,

@@ -48,7 +48,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/2026_Synerxus_Logo_1765300715822.jpg";
+import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
 import {
   LineChart,
   Line,

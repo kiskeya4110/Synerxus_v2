@@ -140,11 +140,15 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         const [year, monthNum] = (item.month || '').split('-');
         const monthIndex = parseInt(monthNum, 10) - 1;
         const monthLabel = monthNames[monthIndex] || item.month;
+        
+        // Calculate AIU: hours * 0.15 (standard AIU formula)
+        const hours = Number(item.hours) || 0;
+        const aiu = hours * 0.15;
 
         return {
           month: monthLabel,
-          hours: Number(item.hours) || 0,
-          impact: Number(item.peopleImpacted) || Math.floor((Number(item.hours) || 0) * 2.5)
+          hours: hours,
+          aiu: parseFloat(aiu.toFixed(2))
         };
       });
     }
@@ -162,10 +166,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         }
       });
       const hours = monthActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0);
+      const aiu = hours * 0.15;
       return {
         month,
         hours: hours,
-        impact: Math.floor(hours * 2.5)
+        aiu: parseFloat(aiu.toFixed(2))
       };
     });
   }, [dashboardData?.monthlyImpactData, volunteerActivities]);
@@ -895,7 +900,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                               labelStyle={{ color: '#fff' }}
                             />
                             <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} />
-                            <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} />
+                            <Line type="monotone" dataKey="aiu" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
@@ -1566,7 +1571,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             labelStyle={{ color: '#fff' }}
                           />
                           <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} />
-                          <Line type="monotone" dataKey="impact" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} />
+                          <Line type="monotone" dataKey="aiu" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>

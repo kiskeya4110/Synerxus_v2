@@ -1410,10 +1410,10 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
                   <div className="space-y-4">
                     {[
-                      { title: 'Rising Star', desc: 'Complete 5 projects', target: 5, current: kpis.projectsCompleted, icon: '⭐', color: 'amber' },
-                      { title: 'Impact Leader', desc: 'Log 50 volunteer hours', target: 50, current: kpis.totalHours, icon: '🏆', color: 'blue' },
-                      { title: 'Global Champion', desc: 'Contribute to 5 SDGs', target: 5, current: kpis.sdgsContributed, icon: '🌍', color: 'emerald' },
-                      { title: 'Community Builder', desc: 'Join 3 organizations', target: 3, current: Math.min(projects.length, 3), icon: '🤝', color: 'purple' }
+                      { title: 'Rising Star', desc: 'Complete 5 projects', target: 5, current: kpis.projectsCompleted, icon: '⭐', bgFrom: '#fbbf24', bgTo: '#f59e0b' },
+                      { title: 'Impact Leader', desc: 'Log 50 volunteer hours', target: 50, current: kpis.totalHours, icon: '🏆', bgFrom: '#60a5fa', bgTo: '#3b82f6' },
+                      { title: 'Global Champion', desc: 'Contribute to 5 SDGs', target: 5, current: kpis.sdgsContributed, icon: '🌍', bgFrom: '#4ade80', bgTo: '#22c55e' },
+                      { title: 'Community Builder', desc: 'Join 3 organizations', target: 3, current: Math.min(projects.length, 3), icon: '🤝', bgFrom: '#c084fc', bgTo: '#a855f7' }
                     ].map((milestone, idx) => {
                       const progress = Math.min((milestone.current / milestone.target) * 100, 100);
                       const isComplete = progress >= 100;
@@ -1435,10 +1435,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             <div className="flex items-center gap-2 mt-1">
                               <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                 <div
-                                  className={`h-full rounded-full bg-gradient-to-r ${
-                                    isComplete ? 'from-emerald-400 to-emerald-500' : `from-${milestone.color}-400 to-${milestone.color}-500`
-                                  }`}
-                                  style={{ width: `${progress}%` }}
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${progress}%`,
+                                    background: isComplete
+                                      ? 'linear-gradient(to right, #4ade80, #22c55e)'
+                                      : `linear-gradient(to right, ${milestone.bgFrom}, ${milestone.bgTo})`
+                                  }}
                                 />
                               </div>
                               <span className="text-[10px] text-slate-500">{milestone.current}/{milestone.target}</span>

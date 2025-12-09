@@ -447,7 +447,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
       {/* Top App Bar */}
-      <header className="bg-[#16213e] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+      <header className="bg-[#2a4068] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <button
           onClick={() => navigate("/landing")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"

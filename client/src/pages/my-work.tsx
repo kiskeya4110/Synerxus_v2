@@ -423,12 +423,12 @@ export default function MyWork() {
     <div className={`h-screen overflow-y-auto ${!isOrganizationManager && isMobile ? 'bg-[#1a1a2e] max-w-[428px] mx-auto' : ''}`}>
       {/* PWA Header for Volunteers on Mobile */}
       {!isOrganizationManager && isMobile && (
-        <header className="bg-[#16213e] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <header className="bg-[#2a4068] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => setLocation("/")}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
+            <img src={logoUrl} alt="Synerxus Logo" className="h-12 w-auto object-contain" />
             <span className="font-bold text-base">
               <span style={{ color: '#ffffff' }}>SYNER</span>
               <span style={{ color: '#FFB84D' }}>XUS</span>

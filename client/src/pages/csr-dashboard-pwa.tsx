@@ -314,7 +314,7 @@ export default function CSRDashboardPWA() {
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Logo & Title */}
           <div className="flex items-center gap-3">
-            <img src={logoUrl} alt="Synerxus" className="h-7 w-auto" />
+            <img src={logoUrl} alt="Synerxus" className="h-12 w-auto object-contain" />
             <div className="hidden sm:block">
               <h1 className="text-sm font-semibold text-white leading-tight">{companyName}</h1>
               <p className="text-[10px] text-gray-500">CSR Impact Dashboard</p>

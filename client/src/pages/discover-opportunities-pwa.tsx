@@ -66,23 +66,20 @@ export default function DiscoverOpportunitiesPWA() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<EnrichedOpportunity | null>(null);
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-
-  const userId = localStorage.getItem('currentUserId');
   const [hasTimedOut, setHasTimedOut] = useState(false);
 
-  // Add timeout to prevent stuck loading state
+  const userId = localStorage.getItem('currentUserId');
+
+  // Immediately reset timeout when component mounts or userId changes
   useEffect(() => {
+    setHasTimedOut(false);
+    
     const timeoutId = setTimeout(() => {
       setHasTimedOut(true);
     }, 8000); // 8 second timeout
 
     return () => clearTimeout(timeoutId);
-  }, [userId]);
-
-  // Reset timeout when userId changes
-  useEffect(() => {
-    setHasTimedOut(false);
-  }, [userId]);
+  }, []);
 
   // Fetch opportunities with error handling
   const { data: opportunities = [], isLoading, isError, error, refetch: refetchOpportunities } = useQuery<EnrichedOpportunity[]>({

@@ -34,6 +34,27 @@ interface MobilePWAViewProps {
 
 type TabType = 'dashboard' | 'projects' | 'potential' | 'impacts' | 'more' | 'profile' | 'messages';
 
+// AIU Summary interface
+interface AIUSummary {
+  volunteerId: number;
+  volunteerName: string;
+  totalAiu: number;
+  aiuUnique: number;
+  aiuSessions: number;
+  totalHours: number;
+  projectCount: number;
+  sdgsContributed: number[];
+  verificationRate: number;
+  projects: {
+    projectId: number;
+    projectName: string;
+    aiu: number;
+    hours: number;
+    role: string;
+    sdgIndicator: string;
+  }[];
+}
+
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
   5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
@@ -75,6 +96,18 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const projects = dashboardData?.projects || [];
   const volunteerProfile = dashboardData?.volunteerProfile;
   const volunteerActivities = dashboardData?.activities || [];
+
+  // Fetch AIU summary for volunteer
+  const { data: aiuSummary } = useQuery<AIUSummary>({
+    queryKey: ["/api/aiu/volunteer", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/aiu/volunteer/${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   // Calculate real KPIs from dashboard data
   const kpis = useMemo(() => {
@@ -1115,49 +1148,56 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
 
                 return (
-                  <Link key={project.id} href={`/projects/${project.id}/pwa`}>
-                    <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm hover:border-gray-500 transition-all">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
-                          <span className="text-xs text-slate-500">{displayStatus}</span>
-                        </div>
-                        <div className="flex gap-1">
-                          {projectSDGs.slice(0, 3).map((sdg: number) => (
-                            <div
-                              key={sdg}
-                              className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
-                              style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
-                            >
-                              {sdg}
-                            </div>
-                          ))}
-                        </div>
+                  <div
+                    key={project.id}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      navigate(`/projects/${project.id}/pwa`);
+                    }}
+                    className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm hover:border-gray-500 transition-all cursor-pointer active:scale-95"
+                    data-testid={`project-card-${project.id}`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
+                        <span className="text-xs text-slate-500">{displayStatus}</span>
                       </div>
-                      
-                      <h3 className="text-slate-800 font-semibold mb-1">{project.name}</h3>
-                      <p className="text-xs text-slate-500 mb-2 line-clamp-2">{project.description}</p>
-                      
-                      <div className="mb-2">
-                        <div className="flex justify-between text-xs text-slate-500 mb-1">
-                          <span>Completion</span>
-                          <span>{completion}%</span>
-                        </div>
-                        <Progress value={completion} className="h-2 bg-slate-200" />
-                      </div>
-                      
-                      <div className="flex items-center gap-3 text-xs text-slate-500">
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" />
-                          <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{Math.round(project.totalHoursLogged || 0)} hrs</span>
-                        </div>
+                      <div className="flex gap-1">
+                        {projectSDGs.slice(0, 3).map((sdg: number) => (
+                          <div
+                            key={sdg}
+                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                            style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                          >
+                            {sdg}
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </Link>
+                    
+                    <h3 className="text-slate-800 font-semibold mb-1">{project.name}</h3>
+                    <p className="text-xs text-slate-500 mb-2 line-clamp-2">{project.description}</p>
+                    
+                    <div className="mb-2">
+                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>Completion</span>
+                        <span>{completion}%</span>
+                      </div>
+                      <Progress value={completion} className="h-2 bg-slate-200" />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 text-xs text-slate-500">
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" />
+                        <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{Math.round(project.totalHoursLogged || 0)} hrs</span>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -1598,20 +1638,33 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             {/* Dashboard Title */}
             <h1 className="text-slate-800 text-2xl font-bold">Dashboard</h1>
 
-            {/* SDG Impact Snapshot - Green Gradient Card */}
+            {/* SDG Impact Snapshot - Green Gradient Card with AIU */}
             <div className="bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-xl p-4 text-white shadow-lg">
               <h2 className="text-lg font-semibold mb-3">SDG Impact Snapshot</h2>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-5xl font-bold">{kpis.totalHours}</span>
-                <div className="flex-1">
-                  <span className="text-sm">Volunteer Hours Logged</span>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                {/* Hours */}
+                <div className="flex items-center gap-2">
+                  <Clock className="w-6 h-6 opacity-80" />
+                  <div>
+                    <div className="text-3xl font-bold">{kpis.totalHours}</div>
+                    <div className="text-xs opacity-80">Volunteer Hours</div>
+                  </div>
                 </div>
-                <Globe className="w-8 h-8 opacity-80" />
+                {/* AIU Score */}
+                <div className="flex items-center gap-2">
+                  <Target className="w-6 h-6 opacity-80" />
+                  <div>
+                    <div className="text-3xl font-bold">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</div>
+                    <div className="text-xs opacity-80">Total AIU Earned</div>
+                  </div>
+                </div>
               </div>
               <div className="flex items-center gap-2 border-t border-white/30 pt-2 mt-2">
-                <Clock className="w-5 h-5 opacity-80" />
-                <span className="text-sm">Contributed to {kpis.sdgsContributed} SDGS</span>
-                <Globe className="w-5 h-5 opacity-80 ml-auto" />
+                <Globe className="w-5 h-5 opacity-80" />
+                <span className="text-sm">Contributed to {kpis.sdgsContributed} SDGs</span>
+                <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">
+                  {aiuSummary?.verificationRate || 0}% Verified
+                </span>
               </div>
             </div>
 
@@ -2202,10 +2255,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       <div
                         key={project.id}
                         className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setShowSdgModal(null);
                           navigate(`/projects/${project.id}/pwa`);
                         }}
+                        data-testid={`sdg-project-card-${project.id}`}
                       >
                         <div className="flex items-start justify-between mb-1">
                           <div className="text-slate-800 font-medium text-sm flex-1">{project.name}</div>
@@ -2282,10 +2338,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         <div
                           key={project.id}
                           className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             setShowProjectStatsModal(null);
                             navigate(`/projects/${project.id}/pwa`);
                           }}
+                          data-testid={`active-projects-list-${project.id}`}
                         >
                           <div className="text-slate-800 font-medium text-sm">{project.name}</div>
                           <div className="text-xs text-slate-500 mt-1">{project.organizationName}</div>
@@ -2355,10 +2414,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         <div
                           key={project.id}
                           className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             setShowProjectStatsModal(null);
                             navigate(`/projects/${project.id}/pwa`);
                           }}
+                          data-testid={`all-projects-list-${project.id}`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <div className="text-slate-800 font-medium text-sm">{project.name}</div>

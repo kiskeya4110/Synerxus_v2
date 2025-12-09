@@ -68,58 +68,76 @@ export default function DiscoverOpportunitiesPWA() {
 
   const userId = localStorage.getItem('currentUserId');
 
-  // Fetch opportunities
-  const { data: opportunities = [], isLoading } = useQuery<EnrichedOpportunity[]>({
+  // Fetch opportunities with error handling
+  const { data: opportunities = [], isLoading, isError, error } = useQuery<EnrichedOpportunity[]>({
     queryKey: [`/api/opportunities/discover`, userId],
     queryFn: async () => {
       if (!userId) return [];
-      try {
-        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
-        if (!response.ok) return [];
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching opportunities:", error);
-        return [];
+      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch opportunities: ${response.status}`);
       }
+      return response.json();
     },
     enabled: !!userId,
+    retry: 2,
+    staleTime: 30000, // Cache for 30 seconds
   });
 
-  // Fetch opportunity status
+  // Fetch opportunity status with error handling
   const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] } } = useQuery<OpportunityStatus>({
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
       if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
-      try {
-        const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
-        if (!response.ok) return { savedIds: [], rejectedIds: [], appliedIds: [] };
-        return response.json();
-      } catch (error) {
+      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+      if (!response.ok) {
+        console.warn("Failed to fetch opportunity status, continuing with empty status");
         return { savedIds: [], rejectedIds: [], appliedIds: [] };
       }
+      return response.json();
     },
     enabled: !!userId,
+    retry: 1,
   });
 
+  // Redirect to login if not authenticated
+  if (!userId) {
+    return (
+      <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
+        <div className="text-slate-800 text-center p-6">
+          <p className="mb-4">Please log in to discover opportunities</p>
+          <Button onClick={() => navigate('/login')} className="bg-emerald-500 hover:bg-emerald-600">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const availableCategories = useMemo(() => {
-    return Array.from(new Set(opportunities.map(o => o.category).filter(Boolean))).sort();
+    if (!Array.isArray(opportunities)) return [];
+    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort();
   }, [opportunities]);
 
   const availableLocations = useMemo(() => {
-    return Array.from(new Set(opportunities.map(o => o.location).filter(Boolean))).sort();
+    if (!Array.isArray(opportunities)) return [];
+    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort();
   }, [opportunities]);
 
-  const filteredOpportunities = opportunities.filter((opp) => {
+  const filteredOpportunities = (opportunities || []).filter((opp) => {
+    // Guard against malformed opportunity objects
+    if (!opp || typeof opp.id !== 'number') return false;
+
     const matchesSearch = searchQuery
-      ? opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opp.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      ? (opp.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (opp.description || '').toLowerCase().includes(searchQuery.toLowerCase())
       : true;
 
     const matchesCategory = categoryFilter === "all" || opp.category === categoryFilter;
     const matchesLocation = locationFilter === "all" ||
-      (locationFilter === "remote" ? opp.isRemote : opp.location?.includes(locationFilter));
+      (locationFilter === "remote" ? opp.isRemote : (opp.location || '').includes(locationFilter));
 
-    const isNotRejected = !opportunityStatus?.rejectedIds.includes(opp.id);
+    const isNotRejected = !opportunityStatus?.rejectedIds?.includes(opp.id);
 
     return matchesSearch && matchesCategory && matchesLocation && isNotRejected;
   });
@@ -130,12 +148,38 @@ export default function DiscoverOpportunitiesPWA() {
     return opportunityStatus?.appliedIds.includes(opportunityId) || false;
   };
 
+  // Show loading state
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
         <div className="text-slate-800 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
           <p>Loading opportunities...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with retry option
+  if (isError) {
+    return (
+      <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
+        <div className="text-slate-800 text-center p-6">
+          <div className="w-16 h-16 mx-auto mb-4 text-red-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+          <p className="text-lg font-semibold mb-2">Failed to load opportunities</p>
+          <p className="text-sm text-slate-500 mb-4">{error instanceof Error ? error.message : 'Please try again'}</p>
+          <div className="flex gap-2 justify-center">
+            <Button onClick={() => window.location.reload()} className="bg-emerald-500 hover:bg-emerald-600">
+              Retry
+            </Button>
+            <Button onClick={() => navigate('/volunteer-dashboard')} variant="outline">
+              Go to Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );

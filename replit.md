@@ -30,6 +30,19 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Impacts Tab**: Global impact report with charts, SDG distribution, and full report navigation
 - **Bottom Navigation**: Home, Projects, Potential, Impacts, Profile with active state indicators
 
+### Bug Fixes & Protections (December 9, 2025)
+**Project Navigation Fixed**: Fixed issue where clicking projects in PWA dashboard would sometimes load discover-opportunities instead:
+- Replaced Link components with protected onClick handlers using navigate()
+- Added event.preventDefault() and event.stopPropagation() to all project cards
+- Fixed project clicks in main list, SDG modal, and stats modals
+- Added data-testid attributes to all project cards for tracking
+- Result: Project clicks now consistently navigate to correct project detail page
+
+**Bidirectional Project Chat**: Implemented real-time polling for organization messages page:
+- Threads refresh every 5 seconds to catch new conversations
+- Messages refresh every 3 seconds when thread is selected
+- Volunteer messages now appear on organization messages page in real-time
+
 ### Performance Optimizations (December 2025)
 **CSR Dashboard Optimization**: Implemented O(1) lookup maps to replace O(n) array.find() calls throughout data aggregation:
 - **projectsMap** and **profilesMap**: Eliminated repeated project and profile lookups in SDG metrics and geographic map calculations

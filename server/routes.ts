@@ -55,6 +55,7 @@ import { gamificationRouter } from "./routes/gamification.router";
 import { adminRouter } from "./routes/admin.router";
 import { storageRouter } from "./routes/storage.router";
 import { miscRouter } from "./routes/misc.router";
+import { aiuRouter } from "./routes/aiu.router";
 
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
 /**
@@ -312,6 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", adminRouter); // Handles /users/me (DELETE), /user-validation, /generate-impact-report, /email-digest
   app.use("/api", storageRouter); // Handles /upload, /storage/:filePath
   app.use("/api", miscRouter); // Handles /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
+  app.use("/api/aiu", aiuRouter); // Handles /aiu/volunteer/:id, /aiu/project/:id, /aiu/organization/:id, /aiu/csr-report
 
   // ===== LEGACY ROUTES (To be deprecated) =====
   // The routes below are still defined inline but are now handled by the modular routers above.
@@ -7079,14 +7081,39 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         projects: m.projectDetails.sort((a: any, b: any) => b.hours - a.hours)
       }));
 
-      // SDG Progress - build from challenges and employee engagement metrics
+      // SDG Progress - calculate actual average project completion per SDG
       const sdgProgress: Record<number, any> = {};
-      
+
+      // Get all projects to calculate completion per SDG
+      const allProjects = await storage.listProjects();
+
+      // Group projects by SDG and calculate average completion
+      const sdgProjectCompletion: Record<number, { completionSum: number; projectCount: number; hours: number }> = {};
+
+      // Initialize from orgwideSDGMetrics
+      Object.keys(orgwideSDGMetrics).forEach((sdgKey: any) => {
+        const sdg = parseInt(sdgKey);
+        sdgProjectCompletion[sdg] = { completionSum: 0, projectCount: 0, hours: orgwideSDGMetrics[sdg].totalHours || 0 };
+      });
+
+      // Calculate average completion for each SDG from project data
+      allProjects.forEach((project: any) => {
+        if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+          project.sdgGoals.forEach((sdg: number) => {
+            if (!sdgProjectCompletion[sdg]) {
+              sdgProjectCompletion[sdg] = { completionSum: 0, projectCount: 0, hours: 0 };
+            }
+            sdgProjectCompletion[sdg].completionSum += (project.completionPercentage || 0);
+            sdgProjectCompletion[sdg].projectCount += 1;
+          });
+        }
+      });
+
       // Add progress from active challenges with real hours
       partnerChallenges.forEach((challenge: any) => {
         const sdg = challenge.sdgGoal;
         const progress = Math.min(100, (challenge.currentHours || 0) / (challenge.targetHours || 1) * 100);
-        
+
         if ((challenge.currentHours || 0) > 0) {
           sdgProgress[sdg] = {
             goal: sdg,
@@ -7099,17 +7126,24 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           };
         }
       });
-      
-      // Add SDGs from employee engagement metrics
+
+      // Add SDGs from employee engagement metrics with ACTUAL project completion averages
       Object.keys(orgwideSDGMetrics).forEach((sdgKey: any) => {
         const sdg = parseInt(sdgKey);
         const metric = orgwideSDGMetrics[sdg];
+        const completionData = sdgProjectCompletion[sdg];
+
         if (metric && metric.totalHours > 0 && !sdgProgress[sdg]) {
+          // Calculate average project completion for this SDG
+          const avgCompletion = completionData && completionData.projectCount > 0
+            ? Math.round(completionData.completionSum / completionData.projectCount)
+            : 0;
+
           sdgProgress[sdg] = {
             goal: sdg,
             name: `Goal ${sdg}`,
             color: `hsl(${sdg * 40}, 70%, 50%)`,
-            progress: totalHours > 0 ? (metric.totalHours / totalHours) * 100 : 0,
+            progress: avgCompletion, // Now using actual project completion average
             currentHours: metric.totalHours,
             targetHours: totalHours,
             status: 'active'

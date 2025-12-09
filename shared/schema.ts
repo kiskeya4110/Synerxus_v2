@@ -69,6 +69,58 @@ export const projects = pgTable("projects", {
   impactMetricName: text("impact_metric_name"), // e.g., "Students Tutored", "Trees Planted"
   impactMetricUnit: text("impact_metric_unit"), // e.g., "students", "trees"
   livesTouched: integer("lives_touched").default(0), // Total lives impacted by this project
+
+  // ===== AIU (Attributable Impact Units) Calculation Fields =====
+  // These fields provide all input data and mathematical constants needed for AIU calculation
+
+  // KPI Measurement Fields (required for AIU calculation)
+  aiuKpiBefore: doublePrecision("aiu_kpi_before"), // Baseline KPI value before intervention (e.g., 0.40 = 40% literacy rate)
+  aiuKpiAfter: doublePrecision("aiu_kpi_after"), // Post-intervention KPI value (e.g., 0.46 = 46% literacy rate)
+  aiuKpiName: text("aiu_kpi_name"), // Name of the KPI being measured (e.g., "Literacy Rate", "Employment Rate")
+  aiuKpiUnit: text("aiu_kpi_unit"), // Unit of measurement (e.g., "percentage", "count", "rate")
+  aiuKpiMeasurementDate: timestamp("aiu_kpi_measurement_date"), // Date when KPI was measured
+
+  // Attribution and Calculation Constants
+  aiuAttributionFactor: doublePrecision("aiu_attribution_factor").default(0.2), // % of KPI change attributed to volunteers (0.0-1.0, default 20%)
+  aiuAttributionMethodology: text("aiu_attribution_methodology"), // Description of how attribution factor was determined
+
+  // SDG Indicator Mapping
+  aiuSdgIndicator: text("aiu_sdg_indicator"), // Specific SDG indicator (e.g., "SDG 4.1.1", "SDG 3.4.1")
+  aiuSdgTarget: text("aiu_sdg_target"), // Target description from UN SDG framework
+
+  // Beneficiary Tracking
+  aiuTargetBeneficiaries: integer("aiu_target_beneficiaries"), // Planned/target number of beneficiaries
+  aiuActualBeneficiaries: integer("aiu_actual_beneficiaries"), // Actual unique beneficiaries reached
+  aiuBeneficiaryType: text("aiu_beneficiary_type"), // Type of beneficiaries (e.g., "students", "patients", "farmers")
+
+  // Session and Service Delivery Tracking
+  aiuPlannedSessions: integer("aiu_planned_sessions"), // Total planned service sessions
+  aiuCompletedSessions: integer("aiu_completed_sessions"), // Actual completed sessions
+  aiuSessionDuration: doublePrecision("aiu_session_duration").default(2.0), // Average session duration in hours (default: 2 hours)
+
+  // Verification and Evidence
+  aiuVerificationStatus: text("aiu_verification_status").default("pending"), // pending, verified, self_reported, disputed
+  aiuVerifierId: integer("aiu_verifier_id"), // User ID of verifier (NGO staff, partner org)
+  aiuVerifierOrganization: text("aiu_verifier_organization"), // Name of verifying organization
+  aiuVerifiedAt: timestamp("aiu_verified_at"), // Timestamp of verification
+  aiuEvidenceLinks: text("aiu_evidence_links").array(), // URLs to supporting evidence (photos, documents, reports)
+
+  // Reporting Window
+  aiuReportingWindowStart: timestamp("aiu_reporting_window_start"), // Start of reporting period
+  aiuReportingWindowEnd: timestamp("aiu_reporting_window_end"), // End of reporting period
+
+  // Calculated AIU Values (cached for performance, recalculated when inputs change)
+  aiuDeltaKpi: doublePrecision("aiu_delta_kpi"), // Calculated: kpiAfter - kpiBefore
+  aiuDeltaSynerxus: doublePrecision("aiu_delta_synerxus"), // Calculated: deltaKpi * attributionFactor
+  aiuTotalUnique: doublePrecision("aiu_total_unique"), // Calculated total unique AIUs for project
+  aiuTotalSessions: doublePrecision("aiu_total_sessions"), // Calculated total session AIUs for project
+  aiuTotalCombined: doublePrecision("aiu_total_combined"), // Calculated: totalUnique + (totalSessions * 0.1)
+  aiuLastCalculatedAt: timestamp("aiu_last_calculated_at"), // When AIU was last calculated
+  aiuFormulaVersion: text("aiu_formula_version").default("1.0.0"), // Version of AIU formula used
+
+  // Notes and Additional Context
+  aiuNotes: text("aiu_notes"), // Additional notes about AIU calculation or methodology
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -680,6 +732,12 @@ export const insertProjectSchema = createInsertSchema(projects)
   .extend({
     startDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
     endDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    // AIU timestamp fields
+    aiuKpiMeasurementDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    aiuVerifiedAt: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    aiuReportingWindowStart: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    aiuReportingWindowEnd: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    aiuLastCalculatedAt: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
   });
 
 export const insertTaskSchema = createInsertSchema(tasks)

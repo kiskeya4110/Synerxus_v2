@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   Search, MapPin, Clock, Users, Sparkles, Target,
-  ChevronDown, ArrowLeft, CheckCircle, Building2, Calendar, Filter
+  ChevronDown, CheckCircle, Building2, Calendar, Filter,
+  Home, Briefcase, Lightbulb, BarChart3, User, MessageCircle, MoreVertical, Settings, ClipboardList, LogOut
 } from "lucide-react";
-import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -64,6 +64,7 @@ export default function DiscoverOpportunitiesPWA() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<EnrichedOpportunity | null>(null);
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const userId = localStorage.getItem('currentUserId');
 
@@ -142,21 +143,98 @@ export default function DiscoverOpportunitiesPWA() {
 
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
-      {/* Top App Bar */}
+      {/* Top App Bar - Matching Dashboard Frame */}
       <header className="bg-[#16213e] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <button
-          onClick={() => navigate('/volunteer-dashboard')}
+          onClick={() => navigate("/landing")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="font-semibold text-base">Back</span>
+          <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
+          <span className="font-bold text-base">
+            <span style={{ color: '#ffffff' }}>SYNER</span>
+            <span style={{ color: '#FFB84D' }}>XUS</span>
+          </span>
         </button>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="p-2 hover:bg-white/10 rounded-full"
-        >
-          <Filter className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="p-2 hover:bg-white/10 rounded-full"
+          >
+            <Filter className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => navigate('/volunteer-messages/pwa')}
+            className="p-2 hover:bg-white/10 rounded-full"
+            data-testid="btn-messages"
+          >
+            <MessageCircle className="w-5 h-5" />
+          </button>
+
+          {/* Three-Dot Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 hover:bg-white/10 rounded-full"
+              data-testid="mobile-menu-trigger"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showMobileMenu && (
+              <>
+                {/* Backdrop to close menu */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowMobileMenu(false)}
+                />
+                <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a2e] border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
+                  <button
+                    onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <ClipboardList className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm">My Work</span>
+                  </button>
+                  <button
+                    onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <Clock className="w-4 h-4 text-blue-400" />
+                    <span className="text-sm">Log Activity</span>
+                  </button>
+                  <button
+                    onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4 text-green-400" />
+                    <span className="text-sm">Calendar</span>
+                  </button>
+                  <div className="border-t border-gray-700 my-1"></div>
+                  <button
+                    onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm">Settings</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem('currentUserId');
+                      localStorage.removeItem('userType');
+                      navigate('/login');
+                      setShowMobileMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-sm">Logout</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </header>
 
       {/* Main Content */}
@@ -460,8 +538,64 @@ export default function DiscoverOpportunitiesPWA() {
         />
       )}
 
-      {/* Bottom Navigation */}
-      <VolunteerPWANav userId={userId || undefined} activeTab="insights" />
+      {/* Bottom Navigation - Matching Dashboard Frame */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
+        <div className="flex justify-around items-center">
+          <button
+            type="button"
+            onClick={() => navigate('/volunteer-dashboard')}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            data-testid="nav-home"
+          >
+            <Home className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Home</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/projects')}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            data-testid="nav-projects"
+          >
+            <Briefcase className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Projects</span>
+          </button>
+
+          <button
+            type="button"
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-emerald-400"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            data-testid="nav-insights"
+          >
+            <Lightbulb className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Insights</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(userId ? `/impact-report/${userId}` : '/impact-report')}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            data-testid="nav-impact"
+          >
+            <BarChart3 className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Impact</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate('/volunteer-profile-settings')}
+            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            data-testid="nav-profile"
+          >
+            <User className="w-5 h-5 mb-1" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

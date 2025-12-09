@@ -1,16 +1,20 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
-import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import ProjectChat from "@/components/project/project-chat";
 import MatchAnalysisModal from "@/components/volunteer/match-analysis-modal";
+import { format } from "date-fns";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -33,7 +37,13 @@ export default function ProjectDetailPWA() {
   const [, navigate] = useLocation();
   const projectId = params?.id ? parseInt(params.id) : null;
   const [showMatchAnalysis, setShowMatchAnalysis] = useState(false);
-  
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [taskHours, setTaskHours] = useState("");
+  const [taskImpact, setTaskImpact] = useState("");
+  const [taskNotes, setTaskNotes] = useState("");
+  const { toast } = useToast();
+
   const handleBack = () => {
     if (window.history.length > 1) {
       window.history.back();
@@ -41,6 +51,8 @@ export default function ProjectDetailPWA() {
       navigate("/discover-opportunities-pwa");
     }
   };
+
+  const userId = localStorage.getItem('currentUserId');
 
   const { data: project, isLoading } = useQuery<any>({
     queryKey: ["/api/projects", projectId],
@@ -67,12 +79,23 @@ export default function ProjectDetailPWA() {
   });
 
   // Check if user has applied for this project
-  const userId = localStorage.getItem('currentUserId');
   const hasApplied = applications.some((app: any) =>
     app.projectId === projectId && app.userId === parseInt(userId || '0')
   );
 
-  const { toast } = useToast();
+  // Fetch impact metrics to get the default metric ID
+  const { data: impactMetrics = [] } = useQuery<any[]>({
+    queryKey: ["/api/impact-metrics"],
+    queryFn: async () => {
+      const response = await fetch("/api/impact-metrics");
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  const livesImpactedMetricId = impactMetrics.find(
+    (m: any) => m.name === "Lives Impacted" || m.category === "general"
+  )?.id || 1;
 
   const applyMutation = useMutation({
     mutationFn: async () => {
@@ -89,6 +112,103 @@ export default function ProjectDetailPWA() {
       toast({ title: "Error", description: "Failed to apply", variant: "destructive" });
     }
   });
+
+  // Log activity for a task
+  const logActivityMutation = useMutation({
+    mutationFn: async (data: { taskId: number; hours: number; notes: string }) => {
+      const response = await fetch("/api/volunteer-activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: parseInt(userId || '0'),
+          projectId,
+          taskId: data.taskId,
+          hours: data.hours,
+          date: new Date().toISOString(),
+          description: data.notes || `Worked on task: ${selectedTask?.title}`,
+          activityType: "task_work",
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to log activity");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      toast({ title: "Hours Logged", description: `${taskHours} hours logged for this task.` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to log hours", variant: "destructive" });
+    }
+  });
+
+  // Log impact for a task
+  const logImpactMutation = useMutation({
+    mutationFn: async (data: { taskId: number; value: number; notes: string }) => {
+      const response = await fetch("/api/project-impacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId,
+          userId: parseInt(userId || '0'),
+          taskId: data.taskId,
+          metricId: livesImpactedMetricId,
+          value: data.value,
+          date: new Date().toISOString(),
+          notes: data.notes || `Impact from task: ${selectedTask?.title}`,
+          outcomeType: "individual",
+          role: "lead",
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to log impact");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      toast({ title: "Impact Logged", description: `${taskImpact} people impacted recorded.` });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to log impact", variant: "destructive" });
+    }
+  });
+
+  // Handle task submission
+  const handleTaskSubmit = () => {
+    if (!selectedTask) return;
+
+    const hours = parseFloat(taskHours);
+    const impact = parseInt(taskImpact);
+
+    if (hours > 0) {
+      logActivityMutation.mutate({
+        taskId: selectedTask.id,
+        hours,
+        notes: taskNotes,
+      });
+    }
+
+    if (impact > 0) {
+      logImpactMutation.mutate({
+        taskId: selectedTask.id,
+        value: impact,
+        notes: taskNotes,
+      });
+    }
+
+    // Reset and close
+    setTaskHours("");
+    setTaskImpact("");
+    setTaskNotes("");
+    setShowTaskModal(false);
+    setSelectedTask(null);
+  };
+
+  // Open task modal
+  const openTaskModal = (task: any) => {
+    setSelectedTask(task);
+    setShowTaskModal(true);
+  };
 
   if (isLoading) {
     return (
@@ -251,6 +371,65 @@ export default function ProjectDetailPWA() {
               </div>
             </div>
 
+            {/* Task List - Clickable */}
+            {projectTasks.length > 0 && (
+              <div className="border-t pt-4">
+                <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-emerald-500" />
+                  Project Tasks
+                </h3>
+                <div className="space-y-2">
+                  {projectTasks.map((task: any) => {
+                    const statusColor = task.status?.toLowerCase() === 'completed' ? 'bg-emerald-500' :
+                                       task.status?.toLowerCase() === 'in progress' ? 'bg-blue-500' : 'bg-gray-400';
+                    const statusIcon = task.status?.toLowerCase() === 'completed' ? CheckCircle :
+                                      task.status?.toLowerCase() === 'in progress' ? Play : Circle;
+                    const StatusIcon = statusIcon;
+
+                    return (
+                      <button
+                        key={task.id}
+                        onClick={() => openTaskModal(task)}
+                        className="w-full text-left bg-white border border-slate-200 rounded-lg p-3 hover:border-emerald-300 hover:shadow-sm transition-all"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className={`w-6 h-6 rounded-full ${statusColor} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                            <StatusIcon className="w-3.5 h-3.5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-slate-800 text-sm truncate">{task.title}</p>
+                            {task.description && (
+                              <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{task.description}</p>
+                            )}
+                            <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-500">
+                              {task.priority && (
+                                <span className={`px-1.5 py-0.5 rounded ${
+                                  task.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                  task.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {task.priority}
+                                </span>
+                              )}
+                              {task.dueDate && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {format(new Date(task.dueDate), 'MMM d')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-emerald-500">
+                            <Plus className="w-5 h-5" />
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Apply Button */}
             <Button
               onClick={() => !hasApplied && applyMutation.mutate()}
@@ -285,6 +464,129 @@ export default function ProjectDetailPWA() {
         projectId={projectId!}
         projectName={project.name}
       />
+
+      {/* Task Log Modal */}
+      {showTaskModal && selectedTask && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
+          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
+              <div>
+                <h2 className="text-slate-800 text-lg font-semibold">Log Time & Impact</h2>
+                <p className="text-xs text-slate-500 mt-0.5">{selectedTask.title}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowTaskModal(false);
+                  setSelectedTask(null);
+                  setTaskHours("");
+                  setTaskImpact("");
+                  setTaskNotes("");
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 space-y-4">
+              {/* Task Info */}
+              <div className="bg-slate-50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <Target className="w-4 h-4 text-emerald-500" />
+                  <span className="font-medium text-slate-800 text-sm">Task Details</span>
+                </div>
+                {selectedTask.description && (
+                  <p className="text-xs text-slate-600">{selectedTask.description}</p>
+                )}
+                <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                  {selectedTask.status && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                      selectedTask.status?.toLowerCase() === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                      selectedTask.status?.toLowerCase() === 'in progress' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {selectedTask.status}
+                    </span>
+                  )}
+                  {selectedTask.priority && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                      selectedTask.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      selectedTask.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>
+                      {selectedTask.priority} priority
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Hours Input */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                  <Clock className="w-4 h-4 text-blue-500" />
+                  Hours Worked
+                </label>
+                <Input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  placeholder="Enter hours (e.g., 2.5)"
+                  value={taskHours}
+                  onChange={(e) => setTaskHours(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Impact Input */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                  <Users className="w-4 h-4 text-emerald-500" />
+                  People Impacted
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  placeholder="Number of people reached"
+                  value={taskImpact}
+                  onChange={(e) => setTaskImpact(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Notes Input */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                  <MessageCircle className="w-4 h-4 text-purple-500" />
+                  Notes (Optional)
+                </label>
+                <Textarea
+                  placeholder="Describe what you accomplished..."
+                  value={taskNotes}
+                  onChange={(e) => setTaskNotes(e.target.value)}
+                  rows={3}
+                  className="w-full resize-none"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                onClick={handleTaskSubmit}
+                disabled={(!taskHours || parseFloat(taskHours) <= 0) && (!taskImpact || parseInt(taskImpact) <= 0)}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold"
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Log Activity
+              </Button>
+
+              <p className="text-[10px] text-slate-400 text-center">
+                Your contribution will be tracked and reflected in your impact metrics
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">

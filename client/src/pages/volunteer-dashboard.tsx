@@ -435,9 +435,9 @@ export default function Dashboard() {
     // When a specific project is filtered, calculate filtered KPIs
     const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
     const filteredTotalTasks = filteredData.tasks.length;
-    const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status === "Completed").length;
-    const filteredActiveProjects = filteredData.projects.filter((p: any) => 
-      p.status === "In Progress" || p.status === "Active"
+    const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status?.toLowerCase() === "completed").length;
+    const filteredActiveProjects = filteredData.projects.filter((p: any) =>
+      p.status?.toLowerCase() === "in progress" || p.status?.toLowerCase() === "active"
     ).length;
     
     // Calculate unique SDGs from filtered projects
@@ -680,7 +680,7 @@ export default function Dashboard() {
       case "Tasks Completed":
         detailData = {
           title: "Completed Tasks",
-          items: filteredData.tasks.filter((t: any) => t.status === "Completed").map((t: any) => ({
+          items: filteredData.tasks.filter((t: any) => t.status?.toLowerCase() === "completed").map((t: any) => ({
             label: t.title,
             project: projects.find((p: any) => p.id === t.projectId)?.name,
           })),
@@ -1806,8 +1806,8 @@ function formatTasksForTable(tasks: any[], projects: any[]): Task[] {
 function calculateProgress(projectId: number, tasks: any[]): number {
   const projectTasks = tasks.filter((t: any) => t.projectId === projectId);
   if (projectTasks.length === 0) return 0;
-  
-  const completedTasks = projectTasks.filter((t: any) => t.status === "Completed").length;
+
+  const completedTasks = projectTasks.filter((t: any) => t.status?.toLowerCase() === "completed").length;
   return Math.round((completedTasks / projectTasks.length) * 100);
 }
 

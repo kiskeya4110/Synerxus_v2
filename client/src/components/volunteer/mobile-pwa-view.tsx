@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, MoreVertical, ClipboardList, Calendar, LogOut } from "lucide-react";
+import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, MoreVertical, ClipboardList, Calendar, LogOut, Building2 } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
@@ -79,7 +79,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   // Calculate real KPIs from dashboard data
   const kpis = useMemo(() => {
     const safeProjects = Array.isArray(projects) ? projects : [];
-    const totalHours = Number(dashboardData?.totalHours) || 0;
+    const totalHours = Math.round(Number(dashboardData?.totalHours) || 0); // Round to whole hours
     const projectsCompleted = safeProjects.filter((p: any) =>
       (Number(p?.completionPercentage) >= 100) || p?.status === 'Completed'
     ).length;
@@ -308,6 +308,32 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   });
   // Ensure projectAssignments is always an array
   const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
+
+  // Fetch discover opportunities for the Insights tab
+  const { data: discoverOpportunities = [], isLoading: loadingOpportunities } = useQuery({
+    queryKey: ['/api/opportunities/discover', userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Fetch opportunity status (applied, saved, rejected)
+  const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] } } = useQuery({
+    queryKey: ['/api/opportunities/status', userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+      if (!response.ok) return { savedIds: [], rejectedIds: [], appliedIds: [] };
+      return response.json();
+    },
+  });
+
+  // Check if user has applied for an opportunity
+  const hasAppliedToOpportunity = (opportunityId: number) => {
+    return opportunityStatus?.appliedIds?.includes(opportunityId) || false;
+  };
 
   // Check if user has applied for a project (check both applications and assignments)
   const hasApplied = (projectId: number) => {
@@ -675,7 +701,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     {/* Total Hours */}
                     <div className="text-center">
                       <div className="text-2xl font-bold text-emerald-600">
-                        {sdgDistribution.reduce((sum, s) => sum + s.value, 0).toFixed(0)}
+                        {Math.round(sdgDistribution.reduce((sum, s) => sum + s.value, 0))}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">Hours</div>
                       <div className="text-[8px] text-slate-400">Volunteered</div>
@@ -691,7 +717,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     {/* Impact Score (AIU) */}
                     <div className="text-center">
                       <div className="text-2xl font-bold text-amber-600">
-                        {(sdgDistribution.reduce((sum, s) => sum + s.value, 0) * 0.15).toFixed(1)}
+                        {Math.round(sdgDistribution.reduce((sum, s) => sum + s.value, 0) * 0.15)}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">AIUs</div>
                       <div className="text-[8px] text-slate-400">Impact Units</div>
@@ -793,7 +819,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                                     </div>
                                     <div className="flex justify-between">
                                       <span className="text-slate-500">Impact:</span>
-                                      <span className="font-semibold text-emerald-600">{(data.value * 0.15).toFixed(1)} AIU</span>
+                                      <span className="font-semibold text-emerald-600">{Math.round(data.value * 0.15)} AIU</span>
                                     </div>
                                   </div>
                                 </div>
@@ -808,7 +834,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-slate-800">
-                          {sdgDistribution.reduce((sum, s) => sum + s.value, 0).toFixed(0)}
+                          {Math.round(sdgDistribution.reduce((sum, s) => sum + s.value, 0))}
                         </div>
                         <div className="text-[10px] text-slate-500">Total Hours</div>
                       </div>
@@ -820,7 +846,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     {sdgDistribution.slice(0, 6).map((sdg) => {
                       const totalHours = sdgDistribution.reduce((sum, s) => sum + s.value, 0);
                       const percentage = totalHours > 0 ? Math.round((sdg.value / totalHours) * 100) : 0;
-                      const aiuEarned = sdg.value * 0.15;
+                      const aiuEarned = Math.round(sdg.value * 0.15); // Round AIU to whole number
                       return (
                         <button
                           key={sdg.sdg}
@@ -836,10 +862,10 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           <div className="flex-1 min-w-0">
                             <div className="text-slate-800 font-semibold text-[11px] truncate">{sdg.name}</div>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-slate-600 text-[10px] font-medium">{sdg.value} hrs</span>
+                              <span className="text-slate-600 text-[10px] font-medium">{Math.round(sdg.value)} hrs</span>
                               <span className="text-blue-600 text-[9px] bg-blue-50 px-1.5 py-0.5 rounded font-medium">{percentage}%</span>
                             </div>
-                            <div className="text-emerald-600 text-[9px] mt-0.5">{aiuEarned.toFixed(1)} AIU earned</div>
+                            <div className="text-emerald-600 text-[9px] mt-0.5">{aiuEarned} AIU earned</div>
                           </div>
                         </button>
                       );
@@ -860,7 +886,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="flex items-start gap-2 text-[10px] text-slate-500">
                       <Target className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                       <p>
-                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. AIU (Anthropic Impact Units) measure your contribution to global sustainability targets.
+                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. AIU (Attributable Impact Units) measure your contribution to global sustainability targets.
                       </p>
                     </div>
                   </div>
@@ -1081,16 +1107,18 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 const matchScore = calculateMatchScore(project);
                 const projectSDGs = project.sdgGoals || [];
                 const completion = project.completionPercentage || 0;
-                const statusColor = project.status === 'Active' ? 'bg-emerald-500' : 
-                                   project.status === 'Completed' ? 'bg-blue-500' : 'bg-gray-500';
-                
+                const normalizedStatus = (project.status || 'active').toLowerCase();
+                const statusColor = normalizedStatus === 'active' ? 'bg-emerald-500' :
+                                   normalizedStatus === 'completed' ? 'bg-blue-500' : 'bg-gray-500';
+                const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+
                 return (
                   <Link key={project.id} href={`/projects/${project.id}/pwa`}>
                     <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm hover:border-gray-500 transition-all">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${statusColor}`}></span>
-                          <span className="text-xs text-slate-500">{project.status || 'Active'}</span>
+                          <span className="text-xs text-slate-500">{displayStatus}</span>
                         </div>
                         <div className="flex gap-1">
                           {projectSDGs.slice(0, 3).map((sdg: number) => (
@@ -1119,11 +1147,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       <div className="flex items-center gap-3 text-xs text-slate-500">
                         <div className="flex items-center gap-1">
                           <TrendingUp className="w-3 h-3" />
-                          <span>{project.aiuEarned?.toFixed(1) || project.livesImpacted || 0} AIUs</span>
+                          <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          <span>{project.totalHoursLogged || 0} hrs</span>
+                          <span>{Math.round(project.totalHoursLogged || 0)} hrs</span>
                         </div>
                       </div>
                     </div>
@@ -1414,6 +1442,151 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 <Globe className="w-4 h-4 mr-2" />
                 View Full Impact Visualization
               </Button>
+
+              {/* Discover Opportunities Section */}
+              <div className="mt-6 pt-6 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-slate-800 text-lg font-bold flex items-center gap-2">
+                    <Search className="w-5 h-5 text-emerald-600" />
+                    Discover Opportunities
+                  </h2>
+                  <span className="text-xs text-slate-500">
+                    {discoverOpportunities.filter((o: any) => !opportunityStatus?.rejectedIds?.includes(o.id)).length} matches
+                  </span>
+                </div>
+
+                {loadingOpportunities ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mx-auto mb-2"></div>
+                    <p className="text-slate-500 text-sm">Finding opportunities...</p>
+                  </div>
+                ) : discoverOpportunities.length === 0 ? (
+                  <div className="bg-white rounded-xl p-6 text-center border border-amber-200/60">
+                    <Search className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                    <p className="text-slate-600">No opportunities found</p>
+                    <p className="text-slate-400 text-sm mt-1">Check back later for new matches</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Top Matches */}
+                    {discoverOpportunities
+                      .filter((opp: any) => !opportunityStatus?.rejectedIds?.includes(opp.id))
+                      .slice(0, 5)
+                      .map((opp: any) => {
+                        const matchScore = opp.matchScore ?? 0;
+                        const matchColor = matchScore >= 80 ? 'from-emerald-500 to-teal-500' :
+                                          matchScore >= 60 ? 'from-blue-500 to-indigo-500' :
+                                          matchScore >= 40 ? 'from-amber-500 to-orange-500' : 'from-gray-400 to-gray-500';
+                        const hasApplied = hasAppliedToOpportunity(opp.id);
+
+                        return (
+                          <div
+                            key={opp.id}
+                            className="bg-white rounded-xl border border-amber-200/60 overflow-hidden shadow-sm"
+                          >
+                            {/* Match Score Header */}
+                            <div className={`bg-gradient-to-r ${matchColor} px-4 py-2 flex items-center justify-between`}>
+                              <div className="flex items-center gap-2 text-white">
+                                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                                  <span className="text-xs font-bold">{matchScore}%</span>
+                                </div>
+                                <span className="text-xs font-medium">
+                                  {matchScore >= 80 ? 'Excellent Match' :
+                                   matchScore >= 60 ? 'Good Match' :
+                                   matchScore >= 40 ? 'Fair Match' : 'Explore'}
+                                </span>
+                              </div>
+                              {hasApplied && (
+                                <span className="text-xs px-2 py-0.5 bg-white/20 rounded text-white">Applied</span>
+                              )}
+                            </div>
+
+                            <div className="p-4">
+                              <h3 className="text-slate-800 font-semibold text-sm mb-1">{opp.title}</h3>
+                              {opp.organizationName && (
+                                <div className="flex items-center gap-1 text-slate-500 text-xs mb-2">
+                                  <Building2 className="w-3 h-3" />
+                                  <span>{opp.organizationName}</span>
+                                </div>
+                              )}
+
+                              {/* SDG Goals */}
+                              {opp.sdgGoals && opp.sdgGoals.length > 0 && (
+                                <div className="flex gap-1 mb-2">
+                                  {opp.sdgGoals.slice(0, 4).map((sdg: number) => (
+                                    <div
+                                      key={sdg}
+                                      className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[9px] font-bold"
+                                      style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                                    >
+                                      {sdg}
+                                    </div>
+                                  ))}
+                                  {opp.sdgGoals.length > 4 && (
+                                    <div className="w-5 h-5 rounded-full bg-gray-500 flex items-center justify-center text-white text-[9px]">
+                                      +{opp.sdgGoals.length - 4}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Match Reason */}
+                              {opp.matchReasons && opp.matchReasons.length > 0 && (
+                                <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 mb-2">
+                                  <p className="text-blue-600 text-[10px] flex items-center gap-1">
+                                    <CheckCircle className="w-3 h-3" />
+                                    {opp.matchReasons[0]}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Meta Info */}
+                              <div className="flex flex-wrap gap-2 text-[10px] text-slate-500 mb-3">
+                                {opp.location && (
+                                  <div className="flex items-center gap-1">
+                                    <MapPin className="w-3 h-3" />
+                                    <span>{opp.location}</span>
+                                  </div>
+                                )}
+                                {opp.timeCommitment && (
+                                  <div className="flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    <span>{opp.timeCommitment}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Apply Button */}
+                              <Button
+                                onClick={() => {
+                                  if (!hasApplied) {
+                                    navigate(`/opportunities/${opp.id}/pwa`);
+                                  }
+                                }}
+                                disabled={hasApplied}
+                                size="sm"
+                                className={`w-full ${hasApplied ? 'bg-gray-400' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'} text-white font-medium text-xs`}
+                              >
+                                {hasApplied ? "Already Applied" : "View & Apply"}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    {/* View More Link */}
+                    {discoverOpportunities.filter((o: any) => !opportunityStatus?.rejectedIds?.includes(o.id)).length > 5 && (
+                      <Button
+                        onClick={() => navigate('/discover-opportunities/pwa')}
+                        variant="outline"
+                        className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      >
+                        View All {discoverOpportunities.filter((o: any) => !opportunityStatus?.rejectedIds?.includes(o.id)).length} Opportunities
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -1827,7 +2000,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">
                         <span>Impact Generated:</span>
-                        <span className="text-emerald-600 font-semibold">{(kpis.totalHours * 0.15).toFixed(1)} AIUs estimated</span>
+                        <span className="text-emerald-600 font-semibold">{Math.round(kpis.totalHours * 0.15)} AIUs estimated</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Across Projects:</span>
@@ -1837,7 +2010,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         <span>Avg Hours/Month:</span>
                         <span className="text-blue-600 font-semibold">
                           {impactOverTimeData.length > 0
-                            ? (impactOverTimeData.reduce((sum, d) => sum + d.hours, 0) / impactOverTimeData.length).toFixed(1)
+                            ? Math.round(impactOverTimeData.reduce((sum, d) => sum + d.hours, 0) / impactOverTimeData.length)
                             : 0}
                         </span>
                       </div>
@@ -1902,22 +2075,26 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-slate-800 font-semibold text-sm">Your Projects:</h3>
-                    {projects.slice(0, 5).map((project: any) => (
-                      <div key={project.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="text-slate-800 font-medium text-sm">{project.name}</div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            project.status === 'Active' ? 'bg-orange-100 text-orange-700' :
-                            project.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                            'bg-slate-100 text-slate-600'
-                          }`}>
-                            {project.status || 'Active'}
-                          </span>
+                    {projects.slice(0, 5).map((project: any) => {
+                      const normalizedStatus = (project.status || 'active').toLowerCase();
+                      const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+                      return (
+                        <div key={project.id} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-slate-800 font-medium text-sm">{project.name}</div>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              normalizedStatus === 'active' ? 'bg-orange-100 text-orange-700' :
+                              normalizedStatus === 'completed' ? 'bg-green-100 text-green-700' :
+                              'bg-slate-100 text-slate-600'
+                            }`}>
+                              {displayStatus}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">{project.organizationName}</div>
+                          <Progress value={project.completionPercentage || 0} className="h-1 mt-2" />
                         </div>
-                        <div className="text-xs text-slate-500 mt-1">{project.organizationName}</div>
-                        <Progress value={project.completionPercentage || 0} className="h-1 mt-2" />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               )}
@@ -2007,45 +2184,49 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               <div className="space-y-2">
                 {projects
                   .filter((p: any) => p.sdgGoals?.includes(showSdgModal))
-                  .map((project: any) => (
-                    <div
-                      key={project.id}
-                      className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
-                      onClick={() => {
-                        setShowSdgModal(null);
-                        navigate(`/projects/${project.id}/pwa`);
-                      }}
-                    >
-                      <div className="flex items-start justify-between mb-1">
-                        <div className="text-slate-800 font-medium text-sm flex-1">{project.name}</div>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                          project.status === 'Active' ? 'bg-orange-100 text-orange-700' :
-                          project.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                          'bg-slate-100 text-slate-600'
-                        }`}>
-                          {project.status || 'Active'}
-                        </span>
+                  .map((project: any) => {
+                    const normalizedStatus = (project.status || 'active').toLowerCase();
+                    const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+                    return (
+                      <div
+                        key={project.id}
+                        className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+                        onClick={() => {
+                          setShowSdgModal(null);
+                          navigate(`/projects/${project.id}/pwa`);
+                        }}
+                      >
+                        <div className="flex items-start justify-between mb-1">
+                          <div className="text-slate-800 font-medium text-sm flex-1">{project.name}</div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                            normalizedStatus === 'active' ? 'bg-orange-100 text-orange-700' :
+                            normalizedStatus === 'completed' ? 'bg-green-100 text-green-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {displayStatus}
+                          </span>
+                        </div>
+                        <div className="text-xs text-slate-500">{project.organizationName}</div>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
+                          <div className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{Math.round(project.totalHoursLogged || 0)} hrs</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" />
+                            <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            <span>{project.volunteersCount || 0} volunteers</span>
+                          </div>
+                        </div>
+                        {project.description && (
+                          <p className="text-slate-500 text-xs mt-2 line-clamp-2">{project.description}</p>
+                        )}
                       </div>
-                      <div className="text-xs text-slate-500">{project.organizationName}</div>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{project.totalHoursLogged || 0} hrs</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="w-3 h-3" />
-                          <span>{project.aiuEarned?.toFixed(1) || project.livesImpacted || 0} AIUs</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Users className="w-3 h-3" />
-                          <span>{project.volunteersCount || 0} volunteers</span>
-                        </div>
-                      </div>
-                      {project.description && (
-                        <p className="text-slate-500 text-xs mt-2 line-clamp-2">{project.description}</p>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
                 {projects.filter((p: any) => p.sdgGoals?.includes(showSdgModal)).length === 0 && (
                   <div className="text-center py-6 text-slate-400">
                     <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -2104,11 +2285,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           <div className="flex items-center gap-2 mt-2 text-xs text-slate-600">
                             <div className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
-                              <span>{project.totalHoursLogged || 0} hrs</span>
+                              <span>{Math.round(project.totalHoursLogged || 0)} hrs</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <TrendingUp className="w-3 h-3" />
-                              <span>{project.aiuEarned?.toFixed(1) || project.livesImpacted || 0} AIUs</span>
+                              <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
                             </div>
                           </div>
                         </div>
@@ -2147,40 +2328,44 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">Total Hours:</span>
-                      <span className="text-blue-600 font-semibold">{kpis.totalHours}</span>
+                      <span className="text-blue-600 font-semibold">{Math.round(kpis.totalHours)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">AIUs Earned:</span>
-                      <span className="text-emerald-600 font-semibold">{typeof kpis.livesImpacted === 'number' ? kpis.livesImpacted.toFixed(1) : kpis.livesImpacted}</span>
+                      <span className="text-emerald-600 font-semibold">{Math.round(typeof kpis.livesImpacted === 'number' ? kpis.livesImpacted : 0)}</span>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     <h3 className="text-slate-800 font-semibold text-sm mb-2">All Projects:</h3>
-                    {projects.map((project: any) => (
-                      <div
-                        key={project.id}
-                        className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
-                        onClick={() => {
-                          setShowProjectStatsModal(null);
-                          navigate(`/projects/${project.id}/pwa`);
-                        }}
-                      >
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="text-slate-800 font-medium text-sm">{project.name}</div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            project.status === 'Active' ? 'bg-orange-100 text-orange-700' :
-                            project.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                            'bg-slate-100 text-slate-600'
-                          }`}>
-                            {project.status || 'Active'}
-                          </span>
+                    {projects.map((project: any) => {
+                      const normalizedStatus = (project.status || 'active').toLowerCase();
+                      const displayStatus = normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1);
+                      return (
+                        <div
+                          key={project.id}
+                          className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
+                          onClick={() => {
+                            setShowProjectStatsModal(null);
+                            navigate(`/projects/${project.id}/pwa`);
+                          }}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-slate-800 font-medium text-sm">{project.name}</div>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              normalizedStatus === 'active' ? 'bg-orange-100 text-orange-700' :
+                              normalizedStatus === 'completed' ? 'bg-green-100 text-green-700' :
+                              'bg-slate-100 text-slate-600'
+                            }`}>
+                              {displayStatus}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-500">{project.organizationName}</div>
+                          {project.completionPercentage > 0 && (
+                            <Progress value={project.completionPercentage || 0} className="h-1 mt-2" />
+                          )}
                         </div>
-                        <div className="text-xs text-slate-500">{project.organizationName}</div>
-                        {project.completionPercentage > 0 && (
-                          <Progress value={project.completionPercentage || 0} className="h-1 mt-2" />
-                        )}
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               )}

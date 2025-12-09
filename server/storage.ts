@@ -331,6 +331,13 @@ export class DatabaseStorage implements IStorage {
   private async initializeImpactMetrics() {
     const initialMetrics: InsertImpactMetric[] = [
       {
+        name: "Lives Impacted",
+        description: "Number of people directly impacted by volunteer activities",
+        unit: "people",
+        category: "general",
+        sdgGoal: 1
+      },
+      {
         name: "People with Clean Water Access",
         description: "Number of people who gained access to clean water",
         unit: "people",

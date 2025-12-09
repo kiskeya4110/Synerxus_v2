@@ -131,6 +131,7 @@ export const impactMetrics = pgTable("impact_metrics", {
 export const projectImpacts = pgTable("project_impacts", {
   id: serial("id").primaryKey(),
   projectId: integer("project_id").references(() => projects.id),
+  taskId: integer("task_id").references(() => tasks.id), // Track which task generated the impact
   metricId: integer("metric_id").references(() => impactMetrics.id),
   userId: integer("user_id").references(() => users.id), // Track who logged it
   value: integer("value").notNull(),

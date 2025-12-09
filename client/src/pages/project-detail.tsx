@@ -234,9 +234,9 @@ export default function ProjectDetail() {
   const projectActivities = volunteerActivities.filter((a) => a.projectId === projectId);
   const projectImpact = projectImpacts.filter((i) => i.projectId === projectId);
 
-  const completedTasks = projectTasks.filter((t) => t.status === "Completed").length;
-  const inProgressTasks = projectTasks.filter((t) => t.status === "In Progress").length;
-  const pendingTasks = projectTasks.filter((t) => t.status === "Pending" || t.status === "Not Started").length;
+  const completedTasks = projectTasks.filter((t) => t.status?.toLowerCase() === "completed").length;
+  const inProgressTasks = projectTasks.filter((t) => t.status?.toLowerCase() === "in progress").length;
+  const pendingTasks = projectTasks.filter((t) => t.status?.toLowerCase() === "pending" || t.status?.toLowerCase() === "todo").length;
   const totalHours = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const uniqueVolunteers = new Set(projectActivities.map((a) => a.userId)).size;
   const totalImpact = projectImpact.reduce((sum, i) => sum + (i.value || 0), 0);

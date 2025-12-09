@@ -500,7 +500,7 @@ export function CSRImpactReporting() {
         benchmark: { industry: VMS_BENCHMARKS.participationRate.good, yours: impactData?.engagementMetrics.participationRate || 0 },
       },
       aiu: {
-        title: "AIUs Earned (Anthropic Impact Units)",
+        title: "AIUs Earned (Attributable Impact Units)",
         value: impactData?.impactMetrics.estimatedLivesTouched || 0,
         description: "Standardized impact measurement combining reach, depth, and quality",
         breakdown: [

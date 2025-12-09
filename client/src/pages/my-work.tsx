@@ -919,9 +919,57 @@ export default function MyWork() {
       {/* Mobile Bottom Navigation - Organization Only */}
       {isOrganizationManager && <MobileBottomNav />}
 
-      {/* PWA Bottom Navigation for Volunteers on Mobile */}
+      {/* PWA Bottom Navigation for Volunteers on Mobile - Matching Dashboard Frame */}
       {!isOrganizationManager && isMobile && (
-        <VolunteerPWANav userId={userId || undefined} activeTab="projects" />
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
+          <div className="flex justify-around items-center">
+            <button
+              type="button"
+              onClick={() => setLocation('/volunteer-dashboard')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Home className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Home</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocation('/projects')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Briefcase className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Projects</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocation('/volunteer-dashboard')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Lightbulb className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Insights</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocation(`/impact-report/${userId || ''}`)}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <BarChart3 className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Impact</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocation('/volunteer-profile-settings')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <UserIcon className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Profile</span>
+            </button>
+          </div>
+        </nav>
       )}
     </div>
   );

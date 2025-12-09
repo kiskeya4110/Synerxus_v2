@@ -850,16 +850,40 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       allOrganizations.map(org => [org.id, { name: org.name, logo: org.logo }])
     );
 
-    // Enrich assigned projects with organization information
-    const projectsWithOrganization = assignedProjects.map(project => ({
-      ...project,
-      organizationName: project.organizationId 
-        ? organizationMap.get(project.organizationId)?.name || 'Unknown Organization'
-        : undefined,
-      organizationLogo: project.organizationId 
-        ? organizationMap.get(project.organizationId)?.logo
-        : undefined,
-    }));
+    // Enrich assigned projects with organization information, hours, AIU, and volunteer count
+    const projectsWithOrganization = assignedProjects.map(project => {
+      // Calculate total hours logged for this project (from all activities, not just this volunteer's)
+      const projectActivities = allActivities.filter(a => a.projectId === project.id);
+      const totalHoursLogged = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+
+      // Calculate volunteers count for this project
+      const projectVolunteerIds = new Set(
+        allProjectAssignments
+          .filter(pa => pa.projectId === project.id && pa.status !== 'declined' && pa.status !== 'pending')
+          .map(pa => pa.volunteerId)
+      );
+      const volunteersCount = projectVolunteerIds.size;
+
+      // Calculate AIU earned for this project (from impacts)
+      const projectImpacts = allImpacts.filter(i => i.projectId === project.id);
+      const livesImpacted = projectImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+      // AIU formula: lives impacted * hours factor (simplified)
+      const aiuEarned = livesImpacted > 0 ? livesImpacted : Math.round(totalHoursLogged * 0.5);
+
+      return {
+        ...project,
+        organizationName: project.organizationId
+          ? organizationMap.get(project.organizationId)?.name || 'Unknown Organization'
+          : undefined,
+        organizationLogo: project.organizationId
+          ? organizationMap.get(project.organizationId)?.logo
+          : undefined,
+        totalHoursLogged: Math.round(totalHoursLogged), // Round to whole hours
+        volunteersCount,
+        aiuEarned,
+        livesImpacted,
+      };
+    });
 
     // Create project map from enriched projects
     const projectMap = new Map(

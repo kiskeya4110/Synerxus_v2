@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon } from "lucide-react";
+import { useLocation } from "wouter";
+import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Home, Briefcase, Lightbulb, BarChart3, User, MoreVertical, MessageCircle, Settings, ClipboardList, Clock, LogOut } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +14,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { format } from "date-fns";
 import OrganizationHeader from "@/components/layout/organization-header";
+import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
 
 // Form schema for adding events
 const eventFormSchema = z.object({
@@ -32,16 +35,20 @@ const eventFormSchema = z.object({
 type EventFormData = z.infer<typeof eventFormSchema>;
 
 export default function Calendar() {
+  const [, navigate] = useLocation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Get current user ID and type for scoping
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType');
   const isOrganizationUser = userType === 'organization';
+  const isVolunteer = userType === 'volunteer';
 
   // Fetch events from API - scoped to user
   const { data: events = [], isLoading } = useQuery({
@@ -162,19 +169,82 @@ export default function Calendar() {
     return colors[eventType] || "bg-gray-500";
   };
 
+  // Check if PWA mobile view for volunteer
+  const isPWAView = isMobile && isVolunteer;
+
   return (
-    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+    <div className={isPWAView ? "min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {/* PWA Header for Volunteers on Mobile */}
+      {isPWAView && (
+        <header className="bg-[#16213e] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+          <button
+            onClick={() => navigate("/landing")}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
+            <span className="font-bold text-base">
+              <span style={{ color: '#ffffff' }}>SYNER</span>
+              <span style={{ color: '#FFB84D' }}>XUS</span>
+            </span>
+          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => navigate('/volunteer-messages/pwa')}
+              className="p-2 hover:bg-white/10 rounded-full"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className="p-2 hover:bg-white/10 rounded-full"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+              {showMobileMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowMobileMenu(false)} />
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a2e] border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
+                    <button onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
+                      <ClipboardList className="w-4 h-4 text-purple-400" />
+                      <span className="text-sm">My Work</span>
+                    </button>
+                    <button onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
+                      <Clock className="w-4 h-4 text-blue-400" />
+                      <span className="text-sm">Log Activity</span>
+                    </button>
+                    <button onClick={() => { navigate('/discover-opportunities/pwa'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
+                      <Lightbulb className="w-4 h-4 text-amber-400" />
+                      <span className="text-sm">Find Opportunities</span>
+                    </button>
+                    <div className="border-t border-gray-700 my-1"></div>
+                    <button onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors">
+                      <Settings className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm">Settings</span>
+                    </button>
+                    <button onClick={() => { localStorage.removeItem('currentUserId'); localStorage.removeItem('userType'); navigate('/login'); setShowMobileMenu(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors">
+                      <LogOut className="w-4 h-4" />
+                      <span className="text-sm">Logout</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </header>
+      )}
+
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-      <div className={isOrganizationUser ? "p-6 space-y-6" : "space-y-6"}>
+      <div className={isPWAView ? "flex-1 overflow-y-auto pb-20 p-4" : isOrganizationUser ? "p-6 space-y-6" : "space-y-6"}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Calendar</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            <h1 className={`text-2xl sm:text-3xl font-bold ${isPWAView ? 'text-slate-800' : 'text-gray-900 dark:text-white'}`}>Calendar</h1>
+            <p className={`text-sm mt-1 ${isPWAView ? 'text-slate-500' : 'text-gray-600 dark:text-gray-400'}`}>
               Manage volunteer shifts, meetings, and deadlines
             </p>
           </div>
-          <Button onClick={() => setIsAddEventOpen(true)} data-testid="button-add-event">
+          <Button onClick={() => setIsAddEventOpen(true)} data-testid="button-add-event" className={isPWAView ? 'bg-emerald-500 hover:bg-emerald-600' : ''}>
             <Plus className="mr-2 h-4 w-4" />
             Add Event
           </Button>
@@ -493,6 +563,59 @@ export default function Calendar() {
         </DialogContent>
       </Dialog>
       </div>
+
+      {/* Bottom Navigation for PWA - Matching Dashboard Frame */}
+      {isPWAView && (
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
+          <div className="flex justify-around items-center">
+            <button
+              type="button"
+              onClick={() => navigate('/volunteer-dashboard')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Home className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Home</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/projects')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Briefcase className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Projects</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/volunteer-dashboard')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <Lightbulb className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Insights</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(`/impact-report/${userId || ''}`)}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <BarChart3 className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Impact</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/volunteer-profile-settings')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <User className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Profile</span>
+            </button>
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

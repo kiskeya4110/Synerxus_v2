@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import type { User } from "@shared/schema";
 import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
@@ -77,6 +77,21 @@ export default function LogActivity() {
     enabled: !!currentUser?.id,
   });
 
+  // Fetch impact metrics to get the default "Lives Impacted" metric ID
+  const { data: impactMetrics = [] } = useQuery<any[]>({
+    queryKey: ["/api/impact-metrics"],
+    queryFn: async () => {
+      const response = await fetch("/api/impact-metrics");
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Find the "Lives Impacted" metric ID
+  const livesImpactedMetricId = impactMetrics.find(
+    (m: any) => m.name === "Lives Impacted" || m.category === "general"
+  )?.id || 1;
+
   // Get available projects - show all projects, prioritizing assigned ones
   // Get assigned project IDs for reference
   const assignedProjectIds = new Set(
@@ -133,10 +148,10 @@ export default function LogActivity() {
     },
   });
 
-  // Record impact mutation
+  // Record impact mutation - uses /api/project-impacts endpoint
   const recordImpactMutation = useMutation({
     mutationFn: async (impactData: any) => {
-      const response = await fetch("/api/impact-metrics", {
+      const response = await fetch("/api/project-impacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(impactData),
@@ -145,7 +160,7 @@ export default function LogActivity() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/impact-metrics"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
 
       toast({
@@ -205,13 +220,17 @@ export default function LogActivity() {
       return;
     }
 
+    // Format data for /api/project-impacts endpoint
+    // Uses value field (lives impacted) and includes userId for tracking
     const impactData = {
       projectId: parseInt(impactProjectId),
-      date: format(impactDate, "yyyy-MM-dd"),
-      peopleReached: parseInt(peopleReached),
-      description: impactDescription || null,
-      category: impactCategory,
-      reportedBy: currentUser?.id,
+      userId: currentUser?.id,
+      metricId: livesImpactedMetricId, // Use dynamically fetched "Lives Impacted" metric ID
+      value: parseInt(peopleReached), // Lives impacted / people reached
+      date: new Date(impactDate).toISOString(),
+      notes: impactDescription || null,
+      outcomeType: impactCategory === 'direct' ? 'individual' : impactCategory === 'community' ? 'shared' : 'individual',
+      role: 'lead', // Volunteer logging their own impact
     };
 
     recordImpactMutation.mutate(impactData);
@@ -700,40 +719,51 @@ export default function LogActivity() {
         )}
       </div>
 
-      {/* Bottom Navigation for PWA */}
+      {/* Bottom Navigation for PWA - Matching Dashboard Frame */}
       {isMobile && isVolunteer && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
           <div className="flex justify-around items-center">
             <button
+              type="button"
               onClick={() => setLocation('/volunteer-dashboard')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               <Home className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-medium">Home</span>
             </button>
             <button
-              onClick={() => setLocation('/discover-opportunities/pwa')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+              type="button"
+              onClick={() => setLocation('/projects')}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              <Compass className="w-5 h-5 mb-1" />
+              <Briefcase className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-medium">Projects</span>
             </button>
             <button
-              className="flex flex-col items-center py-1 px-3 rounded-lg text-emerald-400"
-            >
-              <Clock className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Log</span>
-            </button>
-            <button
+              type="button"
               onClick={() => setLocation('/volunteer-dashboard')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
-              <TrendingUp className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Impacts</span>
+              <Lightbulb className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Insights</span>
             </button>
             <button
+              type="button"
+              onClick={() => setLocation(`/impact-report/${currentUser?.id || ''}`)}
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
+            >
+              <BarChart3 className="w-5 h-5 mb-1" />
+              <span className="text-[10px] font-medium">Impact</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setLocation('/volunteer-profile-settings')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200"
+              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
+              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
             >
               <UserIcon className="w-5 h-5 mb-1" />
               <span className="text-[10px] font-medium">Profile</span>

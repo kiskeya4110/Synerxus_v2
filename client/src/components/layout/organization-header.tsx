@@ -134,9 +134,9 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
         {/* Right: Notifications, Settings, Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Notifications Button */}
+          {/* Notifications Button - redirects to dashboard */}
           <button
-            onClick={() => navigate('/notifications')}
+            onClick={() => navigate('/organization-dashboard')}
             data-testid="notifications-button"
             style={{
               width: '36px',

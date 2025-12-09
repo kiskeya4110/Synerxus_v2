@@ -268,36 +268,17 @@ export async function calculateProjectAIU(projectId: number): Promise<ProjectAIU
     });
   });
 
-  // Set up AIU calculation input - prioritize project fields, fall back to projectAiuSettings, then defaults
-  // KPI values: project.aiuKpiBefore -> aiuSettings.kpiBefore -> 0
-  const kpiBefore = project.aiuKpiBefore ?? aiuSettings?.kpiBefore ?? 0;
-  // KPI after: project.aiuKpiAfter -> aiuSettings.kpiAfter -> kpiBefore + 5%
-  const kpiAfter = project.aiuKpiAfter ?? aiuSettings?.kpiAfter ?? (kpiBefore + 0.05);
-  // Attribution factor: project.aiuAttributionFactor -> aiuSettings.attributionFactor -> 20%
-  const attributionFactor = project.aiuAttributionFactor ?? aiuSettings?.attributionFactor ?? 0.2;
-  // SDG indicator: project.aiuSdgIndicator -> aiuSettings.sdgIndicator -> derived from primarySdg
-  const sdgIndicator = project.aiuSdgIndicator || aiuSettings?.sdgIndicator || `SDG ${project.primarySdg || project.sdgGoals?.[0] || 4}.1.1`;
-  // Session duration for calculating sessions count
-  const sessionDuration = project.aiuSessionDuration ?? 2.0;
-
-  // Recalculate volunteer contributions with project-specific session duration
-  const volunteerContributionsWithSessions: VolunteerContribution[] = [];
-  volunteerHours.forEach((hours, volunteerId) => {
-    volunteerContributionsWithSessions.push({
-      volunteerId,
-      volunteerName: volunteerMap.get(volunteerId) || `Volunteer ${volunteerId}`,
-      role: volunteerRoles.get(volunteerId) || 'support',
-      hours,
-      reliabilityStatus: volunteerVerification.get(volunteerId) || 'pending',
-      sessionsCount: Math.ceil(hours / sessionDuration), // Use project's session duration
-    });
-  });
+  // Set up AIU calculation input from projectAiuSettings table
+  const kpiBefore = aiuSettings?.kpiBefore ?? 0;
+  const kpiAfter = aiuSettings?.kpiAfter ?? (kpiBefore + 0.05); // Default 5% improvement if not set
+  const attributionFactor = aiuSettings?.attributionFactor ?? 0.2; // Default 20% attribution
+  const sdgIndicator = aiuSettings?.sdgIndicator || `SDG ${project.primarySdg || project.sdgGoals?.[0] || 4}.1.1`;
 
   const aiuInput: AIUCalculationInput = {
     kpiBefore,
     kpiAfter,
     attributionFactor,
-    volunteers: volunteerContributionsWithSessions,
+    volunteers: volunteerContributions,
   };
 
   // Calculate AIUs
@@ -335,10 +316,10 @@ export async function calculateProjectAIU(projectId: number): Promise<ProjectAIU
     totalAiuUnique: aiuResult.aiuUniqueTotal,
     totalAiuSessions: aiuResult.aiuSessionsTotal,
     totalAiu: aiuResult.aiuUniqueTotal + aiuResult.aiuSessionsTotal * 0.1,
-    volunteerCount: volunteerContributionsWithSessions.length,
-    totalHours: volunteerContributionsWithSessions.reduce((sum, v) => sum + v.hours, 0),
-    livesImpacted: project.aiuActualBeneficiaries ?? livesImpacted,
-    verificationStatus: project.aiuVerificationStatus || aiuSettings?.verificationStatus || 'pending',
+    volunteerCount: volunteerContributions.length,
+    totalHours: volunteerContributions.reduce((sum, v) => sum + v.hours, 0),
+    livesImpacted,
+    verificationStatus: aiuSettings?.verificationStatus || 'pending',
     volunteers: aiuResult.volunteerAius.map(v => ({
       volunteerId: v.volunteerId,
       volunteerName: v.volunteerName,

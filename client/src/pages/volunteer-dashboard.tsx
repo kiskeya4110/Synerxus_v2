@@ -126,6 +126,39 @@ export default function Dashboard() {
     enabled: !!currentUser && !!currentUser.userType
   });
 
+  // Fetch AIU summary for volunteer users
+  interface AIUSummary {
+    volunteerId: number;
+    volunteerName: string;
+    totalAiu: number;
+    aiuUnique: number;
+    aiuSessions: number;
+    totalHours: number;
+    projectCount: number;
+    sdgsContributed: number[];
+    verificationRate: number;
+    projects: Array<{
+      projectId: number;
+      projectName: string;
+      aiu: number;
+      hours: number;
+      role: string;
+      sdgIndicator: string;
+    }>;
+  }
+  const { data: aiuSummary } = useQuery<AIUSummary | null>({
+    queryKey: ["/api/aiu/volunteer", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/aiu/volunteer/${id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId && currentUser?.userType === 'volunteer',
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
   // Determine dashboard type early (needed for data filtering) - must be before useMemo
   const dashboardType = currentUser?.userType;
 
@@ -416,6 +449,7 @@ export default function Dashboard() {
   }, [filteredMonthlyImpactData, timeFilter, dashboardType, selectedProject, filteredData, projects]);
 
   // Use KPIs from backend - API returns summary data at top level
+  // Use aiuSummary from dedicated AIU endpoint for accurate metrics
   const kpis = useMemo(() => {
     // When "all" is selected or no filter, use backend KPIs directly
     if (selectedProject === "all") {
@@ -428,10 +462,13 @@ export default function Dashboard() {
         sdgs: dashboardData?.sdgsAddressed || 0,
         impactScore: dashboardData?.impactScore || 0,
         skills: dashboardData?.volunteerProfile?.skills?.length || 0,
-        aiuEarned: dashboardData?.totalAiuEarned || dashboardData?.totalPeopleImpacted * 0.1 || 0,
+        // Use accurate AIU data from dedicated endpoint, fallback to dashboard data
+        aiuEarned: aiuSummary?.totalAiu ?? dashboardData?.totalAiuEarned ?? 0,
+        aiuVerificationRate: aiuSummary?.verificationRate ?? 0,
+        aiuProjects: aiuSummary?.projects ?? [],
       };
     }
-    
+
     // When a specific project is filtered, calculate filtered KPIs
     const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
     const filteredTotalTasks = filteredData.tasks.length;
@@ -439,7 +476,7 @@ export default function Dashboard() {
     const filteredActiveProjects = filteredData.projects.filter((p: any) =>
       p.status?.toLowerCase() === "in progress" || p.status?.toLowerCase() === "active"
     ).length;
-    
+
     // Calculate unique SDGs from filtered projects
     const uniqueSDGs = new Set();
     filteredData.projects.forEach((p: any) => {
@@ -447,6 +484,13 @@ export default function Dashboard() {
         p.sdgGoals.forEach((sdg: number) => uniqueSDGs.add(sdg));
       }
     });
+
+    // Filter AIU projects by selected project
+    const selectedProjectId = parseInt(selectedProject);
+    const filteredAiuProjects = (aiuSummary?.projects ?? []).filter(
+      (p: any) => p.projectId === selectedProjectId
+    );
+    const filteredAiu = filteredAiuProjects.reduce((sum: number, p: any) => sum + (p.aiu || 0), 0);
 
     return {
       volunteers: dashboardData?.activeVolunteers || 0,
@@ -458,8 +502,11 @@ export default function Dashboard() {
       impactScore: dashboardData?.impactScore || 0,
       skills: dashboardData?.volunteerProfile?.skills?.length || 0,
       livesTouched: dashboardData?.totalPeopleImpacted || 0,
+      aiuEarned: filteredAiu || 0,
+      aiuVerificationRate: aiuSummary?.verificationRate ?? 0,
+      aiuProjects: filteredAiuProjects,
     };
-  }, [dashboardData, filteredData, selectedProject]);
+  }, [dashboardData, filteredData, selectedProject, aiuSummary]);
 
   // Transform activities for the activity feed - MUST BE BEFORE EARLY RETURNS
   const formattedActivities: Activity[] = useMemo(() => {
@@ -1247,75 +1294,75 @@ export default function Dashboard() {
         )}
       </StaggerContainer>
 
-      {/* AIU Project Breakdown - Shows impact per project */}
-      {(dashboardType === "volunteer" || dashboardType === "organization") && (() => {
-        const beneficiariesByProjectId = new Map<number, { projectName: string; beneficiaries: number }>();
-        const peopleMetricIdsSet = new Set((dashboardData?.peopleMetricIds || []) as number[]);
-        
-        // For each activity with a projectId, sum its associated impacts
-        (filteredData.activities || []).forEach((activity: any) => {
-          if (!activity.projectId) return;
-          
-          // Initialize project entry if not exists
-          if (!beneficiariesByProjectId.has(activity.projectId)) {
-            const project = filteredData.projects.find((p: any) => p.id === activity.projectId) ||
-                           projects.find((p: any) => p.id === activity.projectId);
-            beneficiariesByProjectId.set(activity.projectId, {
-              projectName: project?.name || "Unknown Project",
-              beneficiaries: 0
-            });
-          }
-          
-          // Sum impacts for this activity that are people-related metrics
-          const activityImpacts = (filteredData.impacts || []).filter((i: any) => 
-            i.activityId === activity.id && peopleMetricIdsSet.has(i.metricId)
-          );
-          
-          const projectData = beneficiariesByProjectId.get(activity.projectId)!;
-          activityImpacts.forEach((impact: any) => {
-            projectData.beneficiaries += impact.value || 0;
-          });
-        });
-        
-        const projectsArray = Array.from(beneficiariesByProjectId.values())
-          .filter(p => p.beneficiaries > 0)
-          .sort((a, b) => b.beneficiaries - a.beneficiaries);
-        
-        // Calculate efficiency metric
-        const totalHoursForEfficiency = (filteredData.activities || []).reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
-        const totalBeneficiariesEfficiency = Array.from(beneficiariesByProjectId.values()).reduce((sum, p) => sum + p.beneficiaries, 0);
-        const efficiencyPerHour = totalHoursForEfficiency > 0 ? Math.ceil(totalBeneficiariesEfficiency / totalHoursForEfficiency) : 0;
-        
-        return projectsArray.length > 0 ? (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="text-sm">AIU Breakdown - By Project</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Efficiency metric */}
-                <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+      {/* AIU Project Breakdown - Shows impact per project using AIU endpoint data */}
+      {dashboardType === "volunteer" && aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 && (
+        <Card className="mb-6 border-emerald-200 dark:border-emerald-800">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-600" />
+              AIU Breakdown - By Project
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Summary stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Impact Efficiency</span>
-                    <span className="text-lg font-bold text-red-600 dark:text-red-400">{efficiencyPerHour} people/hour</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total AIU</span>
+                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary.totalAiu?.toFixed(1) || '0.0'}</span>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Based on {totalHoursForEfficiency.toFixed(1)} total hours</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">From {aiuSummary.projectCount} project{aiuSummary.projectCount !== 1 ? 's' : ''}</p>
                 </div>
-                
-                {/* Project breakdown */}
-                <div className="space-y-2">
-                  {projectsArray.map((project, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate">{project.projectName}</span>
-                      <span className="text-sm font-bold text-red-600 dark:text-red-400 ml-2">{project.beneficiaries.toLocaleString()}</span>
-                    </div>
-                  ))}
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Verification</span>
+                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{aiuSummary.verificationRate || 0}%</span>
+                  </div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{aiuSummary.totalHours?.toFixed(1) || 0} hours logged</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ) : null;
-      })()}
+
+              {/* SDGs contributed */}
+              {aiuSummary.sdgsContributed && aiuSummary.sdgsContributed.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs text-gray-500 dark:text-gray-400">SDGs:</span>
+                  {aiuSummary.sdgsContributed.map((sdg: number) => (
+                    <span key={sdg} className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-full">
+                      SDG {sdg}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Project breakdown */}
+              <div className="space-y-2">
+                {aiuSummary.projects.map((project: any, idx: number) => (
+                  <Link key={idx} href={`/projects/${project.projectId}`}>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer border border-transparent hover:border-emerald-300 dark:hover:border-emerald-700">
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">{project.projectName}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{project.role}</span>
+                          <span className="text-xs text-gray-400">•</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{project.hours?.toFixed(1) || 0}h</span>
+                          {project.sdgIndicator && (
+                            <>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs text-emerald-600 dark:text-emerald-400">{project.sdgIndicator}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 ml-2">{project.aiu?.toFixed(1) || '0.0'}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

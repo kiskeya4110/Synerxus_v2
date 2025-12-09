@@ -331,7 +331,7 @@ export default function OrganizationDashboard() {
                 }}
               >
                 <button
-                  onClick={() => { navigate('/notifications'); setShowMobileMenu(false); }}
+                  onClick={() => { setShowMobileMenu(false); }}
                   data-testid="mobile-menu-notifications"
                   style={{
                     width: '100%',
@@ -1889,7 +1889,7 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                 <p style={{ color: '#9ca3af', textAlign: 'center', padding: '20px' }}>No projects</p>
               ) : (
                 data.map((project: any) => (
-                  <button 
+                  <button
                     key={project.id}
                     onClick={() => {
                       navigate(`/projects/${project.id}`);
@@ -1925,6 +1925,99 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                   </button>
                 ))
               )}
+            </div>
+          )}
+
+          {type === 'aiu' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* AIU Summary Card */}
+              <div style={{ padding: '20px', backgroundColor: '#10b98110', borderRadius: '12px', border: '2px solid #10b981' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total AIUs Earned</p>
+                    <p style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', margin: 0 }}>
+                      {data.reduce((sum, p: any) => sum + (p.aiuEarned || 0), 0).toFixed(1)}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Active Projects</p>
+                    <p style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', margin: 0 }}>
+                      {data.filter((p: any) => p.status === 'Active' || p.status === 'In Progress').length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* AIU Formula Explanation */}
+              <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', fontSize: '13px', color: '#4b5563' }}>
+                <p style={{ fontWeight: '600', marginBottom: '8px', color: '#111827' }}>How AIUs are Calculated:</p>
+                <p style={{ margin: '0 0 4px 0' }}>AIU = KPI Change x Attribution Factor x Volunteer Weight</p>
+                <p style={{ margin: '0', fontSize: '12px', color: '#6b7280' }}>
+                  Volunteer Weight = Role Weight x Hours x Verification Multiplier
+                </p>
+              </div>
+
+              {/* Project AIU Breakdown */}
+              <div>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>AIU by Project</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {data.length === 0 ? (
+                    <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No project data</p>
+                  ) : (
+                    data.slice(0, 10).map((project: any) => (
+                      <button
+                        key={project.id}
+                        onClick={() => {
+                          navigate(`/projects/${project.id}`);
+                          onClose();
+                        }}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '16px',
+                          backgroundColor: '#f9fafb',
+                          borderRadius: '8px',
+                          border: '2px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          width: '100%',
+                          textAlign: 'left'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#10b98110';
+                          e.currentTarget.style.borderColor = '#10b98140';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f9fafb';
+                          e.currentTarget.style.borderColor = 'transparent';
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.name}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                            <span style={{ fontSize: '12px', color: '#6b7280' }}>{project.status}</span>
+                            {project.sdgGoals?.length > 0 && (
+                              <>
+                                <span style={{ fontSize: '12px', color: '#9ca3af' }}>•</span>
+                                <span style={{ fontSize: '12px', color: '#10b981' }}>
+                                  SDG {project.sdgGoals.slice(0, 3).join(', ')}{project.sdgGoals.length > 3 ? '...' : ''}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <div style={{ marginLeft: '16px', textAlign: 'right' }}>
+                          <p style={{ fontSize: '20px', fontWeight: '700', color: '#10b981', margin: 0 }}>
+                            {(project.aiuEarned || 0).toFixed(1)}
+                          </p>
+                          <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>AIUs</p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

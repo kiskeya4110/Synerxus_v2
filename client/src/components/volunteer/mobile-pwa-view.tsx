@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
+import logoUrl from "@assets/Synerxus Modern Logo - ALL_1763957261507.png";
 import {
   LineChart,
   Line,
@@ -452,7 +452,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           onClick={() => navigate("/landing")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
         >
-          <img src={logoUrl} alt="Synerxus Logo" className="h-7 w-auto" />
+          <img src={logoUrl} alt="Synerxus Logo" className="h-12 w-auto object-contain" />
           <span className="font-bold text-base">
             <span style={{ color: '#ffffff' }}>SYNER</span>
             <span style={{ color: '#FFB84D' }}>XUS</span>

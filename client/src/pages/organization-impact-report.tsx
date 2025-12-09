@@ -1208,6 +1208,27 @@ export default function OrganizationImpactReport() {
                       </div>
                     </div>
 
+                    <div className="bg-emerald-50 dark:bg-emerald-900 p-2.5 md:p-4 rounded-lg border border-emerald-200 dark:border-emerald-700">
+                      <p className="text-[10px] md:text-xs text-emerald-600 dark:text-emerald-400 uppercase font-semibold mb-1 md:mb-2">
+                        AIUs Earned
+                      </p>
+                      <p className="text-xl md:text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-1 md:mb-2">
+                        {(organizationImpactScore * 0.35).toFixed(1)}
+                      </p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Verified:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                            {Math.round(organizationImpactScore * 0.9)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] md:text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">Type:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">Impact</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {leaderData && (
                       <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 p-2.5 md:p-4 rounded-lg border-2 border-yellow-200 dark:border-yellow-700 col-span-2 md:col-span-1">
                         <div className="flex items-center justify-between mb-1 md:mb-3">

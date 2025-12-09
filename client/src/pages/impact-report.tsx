@@ -860,6 +860,39 @@ export default function ImpactReport() {
                   </div>
                 </div>
 
+                {/* AIU Summary Card */}
+                <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 p-4 rounded-lg border border-emerald-200 dark:border-emerald-700 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-emerald-100 dark:bg-emerald-800 p-2 rounded-full">
+                        <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase font-semibold">AIUs Earned</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Attributable Impact Units</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{(filteredImpactScore * 0.25).toFixed(1)}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Based on verified impact</p>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-700 grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Projects</p>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{filteredActiveProjects}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">SDGs</p>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{sdgs.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">Hours</p>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{Math.round(filteredTotalHours)}</p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Charts Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:page-break-inside-avoid">
                   {/* Monthly Hours Trend */}

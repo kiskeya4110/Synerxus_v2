@@ -832,12 +832,12 @@ export default function CSRDashboard() {
                   </div>
                   <div className="text-white text-xl font-bold mt-1">{displayProjectsCompleted}</div>
                 </div>
-                <div className="bg-gradient-to-br from-amber-600/30 to-amber-800/30 rounded-lg p-3 border border-amber-500/30">
+                <div className="bg-gradient-to-br from-teal-600/30 to-teal-800/30 rounded-lg p-3 border border-teal-500/30">
                   <div className="flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-amber-300" />
-                    <span className="text-amber-300 text-[10px]">Impact</span>
+                    <TrendingUp className="w-3.5 h-3.5 text-teal-300" />
+                    <span className="text-teal-300 text-[10px]">AIUs Earned</span>
                   </div>
-                  <div className="text-white text-xl font-bold mt-1">${((csrData?.totalImpact || displayTotalHours * 50) / 1000).toFixed(0)}K</div>
+                  <div className="text-white text-xl font-bold mt-1">{(csrData?.totalImpact || 0).toFixed(1)}</div>
                 </div>
               </div>
 
@@ -1175,8 +1175,8 @@ export default function CSRDashboard() {
                 <h3 className="text-white text-sm font-semibold mb-2">Quick Summary</h3>
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div className="bg-white/10 rounded p-2">
-                    <div className="text-gray-400">Total Impact Value</div>
-                    <div className="text-white text-lg font-bold">${(csrData?.totalImpact || displayTotalHours * 50).toLocaleString()}</div>
+                    <div className="text-gray-400">Total AIUs Earned</div>
+                    <div className="text-teal-400 text-lg font-bold">{(csrData?.totalImpact || 0).toFixed(1)}</div>
                   </div>
                   <div className="bg-white/10 rounded p-2">
                     <div className="text-gray-400">SDGs Addressed</div>
@@ -1262,7 +1262,7 @@ export default function CSRDashboard() {
                   </button>
 
                   <button
-                    onClick={() => navigate('/organization-settings')}
+                    onClick={() => navigate('/corporate-partner-profile-settings')}
                     className="w-full p-3 rounded-lg bg-white/5 border border-gray-600 text-left"
                   >
                     <div className="flex items-center gap-2">
@@ -2404,6 +2404,50 @@ export default function CSRDashboard() {
                   </p>
                   <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
                     {csrData?.kpiBreakdown?.employees?.engagementRate || 0}% engagement rate
+                  </p>
+                </div>
+
+                {/* 6th KPI: AIUs Earned */}
+                <div
+                  onClick={() => setSelectedKPI("aiu")}
+                  style={{
+                    backgroundColor: "#0d5f52",
+                    color: "white",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    cursor: "pointer",
+                    transition: "all 0.3s ease",
+                    border:
+                      selectedKPI === "aiu" ? "2px solid #f97316" : "none",
+                  }}
+                  onMouseOver={(e) => (
+                    (e.currentTarget.style.transform = "translateY(-4px)"),
+                    (e.currentTarget.style.boxShadow =
+                      "0 8px 12px -1px rgba(0, 0, 0, 0.2)")
+                  )}
+                  onMouseOut={(e) => (
+                    (e.currentTarget.style.transform = "translateY(0)"),
+                    (e.currentTarget.style.boxShadow =
+                      "0 4px 6px -1px rgba(0, 0, 0, 0.1)")
+                  )}
+                  data-testid="kpi-aiu"
+                >
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      color: "#a7f3d0",
+                      marginBottom: "8px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    AIUs Earned
+                  </p>
+                  <p style={{ fontSize: "28px", fontWeight: "bold" }}>
+                    {(csrData?.totalImpact || 0).toFixed(1)}
+                  </p>
+                  <p style={{ fontSize: "10px", color: "#6ee7b7", marginTop: "4px" }}>
+                    Attributable Impact Units
                   </p>
                 </div>
               </div>

@@ -1187,8 +1187,8 @@ export default function CSRDashboard() {
                     <div className="text-white text-lg font-bold">{displayActiveEmployees > 0 ? Math.round(displayTotalHours / displayActiveEmployees) : 0}</div>
                   </div>
                   <div className="bg-white/10 rounded p-2">
-                    <div className="text-gray-400">Project ROI</div>
-                    <div className="text-white text-lg font-bold">{csrData?.kpiBreakdown?.projects?.totalRoi || 0}%</div>
+                    <div className="text-gray-400">Economic Value</div>
+                    <div className="text-emerald-400 text-lg font-bold">${((csrData?.totalHours || displayTotalHours || 0) * 35 / 1000).toFixed(0)}K</div>
                   </div>
                 </div>
               </div>
@@ -2297,7 +2297,7 @@ export default function CSRDashboard() {
                       fontWeight: "500",
                     }}
                   >
-                    Projects Active
+                    Active Projects
                   </p>
                   <p style={{ fontSize: "30px", fontWeight: "bold" }}>
                     {csrData?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted}
@@ -2502,7 +2502,7 @@ export default function CSRDashboard() {
                       </p>
                     </button>
 
-                    {/* Projects Active */}
+                    {/* Active Projects */}
                     <button
                       onClick={() => setShowActiveSDGsModal(true)}
                       style={{
@@ -2519,7 +2519,7 @@ export default function CSRDashboard() {
                     >
                       <FolderKanban style={{ width: "16px", height: "16px", color: "#f59e0b", margin: "0 auto 4px" }} />
                       <p style={{ fontSize: "18px", fontWeight: "bold", color: "#92400e", margin: 0 }}>{committedSDGProjects}</p>
-                      <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>PROJECTS</p>
+                      <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>ACTIVE PROJECTS</p>
                       <p style={{ fontSize: "8px", color: "#6b7280", margin: "2px 0 0 0" }}>
                         {committedSDGProjects > 0 ? `${Math.round(committedSDGHours / committedSDGProjects)} hrs/proj` : "—"}
                       </p>
@@ -3695,7 +3695,33 @@ export default function CSRDashboard() {
                         {(
                           csrData?.kpiBreakdown?.projects?.totalRoi ||
                           csrData?.totalImpact || 0
-                        ).toFixed(1)}
+                        ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>💰 Economic Value:</span>
+                      <span style={{ fontWeight: "600", color: "#059669" }}>
+                        ${((csrData?.totalHours || displayTotalHours || 0) * 35).toLocaleString()}
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>📊 Value per Project:</span>
+                      <span style={{ fontWeight: "600", color: "#3b82f6" }}>
+                        ${(csrData?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted) > 0
+                          ? Math.round(((csrData?.totalHours || displayTotalHours || 0) * 35) / (csrData?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted)).toLocaleString()
+                          : "0"}
                       </span>
                     </li>
                     <li

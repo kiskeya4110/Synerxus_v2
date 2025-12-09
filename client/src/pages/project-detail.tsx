@@ -15,6 +15,7 @@ import { format } from "date-fns";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 import OrganizationHeader from "@/components/layout/organization-header";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
@@ -99,8 +100,17 @@ interface DBUser {
 
 export default function ProjectDetail() {
   const [, params] = useRoute("/projects/:id");
+  const [, navigate] = useLocation();
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
+  
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/projects");
+    }
+  };
 
   const { data: currentUser } = useQuery<DBUser>({
     queryKey: ["/api/users/me", userId],

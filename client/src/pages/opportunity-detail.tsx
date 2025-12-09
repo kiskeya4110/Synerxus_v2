@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
+import { useParams, useLocation, Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,17 @@ import { SDG_GOALS } from "@shared/sdg-goals";
 
 export default function OpportunityDetail() {
   const { id } = useParams();
+  const [, navigate] = useLocation();
   const opportunityId = parseInt(id!);
+  
+  const handleBack = () => {
+    // Use history back to return to dashboard with framing intact
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/discover-opportunities");
+    }
+  };
 
   const { data: opportunity, isLoading } = useQuery<any>({
     queryKey: [`/api/opportunities/${opportunityId}`],
@@ -52,12 +62,10 @@ export default function OpportunityDetail() {
         <p className="text-gray-600 dark:text-gray-400 mb-6 text-center">
           The opportunity you're looking for doesn't exist or has been removed.
         </p>
-        <Link href="/discover-opportunities">
-          <Button>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Opportunities
-          </Button>
-        </Link>
+        <Button onClick={handleBack}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Opportunities
+        </Button>
       </div>
     );
   }
@@ -89,11 +97,15 @@ export default function OpportunityDetail() {
     <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 pb-20 md:pb-0">
       {/* Mobile Header */}
       <div className="sticky top-0 z-10 bg-blue-600 text-white px-4 py-3 flex items-center justify-between md:hidden">
-        <Link href="/my-applications">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-blue-700 -ml-2" data-testid="button-back">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-white hover:bg-blue-700 -ml-2" 
+          onClick={handleBack}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <h1 className="text-base font-semibold">Opportunity Detail</h1>
         <div className="w-10" />
       </div>

@@ -180,7 +180,7 @@ function calculateMaturityScore(data: ImpactData): { score: number; level: strin
   else { score += (data.impactMetrics.directBeneficiaries / 1000) * 25; nextSteps.push("Scale beneficiary reach to 1,000+"); }
 
   // Compliance (25 pts)
-  const avgCompliance = (data.complianceStatus.complianceScores?.bCorpScore || 0 + data.complianceStatus.complianceScores?.griScore || 0) / 2;
+  const avgCompliance = ((data.complianceStatus.complianceScores?.bCorpScore || 0) + (data.complianceStatus.complianceScores?.griScore || 0)) / 2;
   if (avgCompliance >= 75) score += 25;
   else { score += (avgCompliance / 75) * 25; nextSteps.push("Achieve 75+ compliance score across frameworks"); }
 

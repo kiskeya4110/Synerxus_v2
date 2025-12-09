@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useRoute, Link } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,8 +30,18 @@ const SDG_NAMES: { [key: number]: string } = {
 
 export default function OpportunityDetailPWA() {
   const [, params] = useRoute("/opportunities/:id/pwa");
+  const [, navigate] = useLocation();
   const opportunityId = params?.id ? parseInt(params.id) : null;
   const [showMatchAnalysis, setShowMatchAnalysis] = useState(false);
+  
+  const handleBack = () => {
+    // Use history back if available, otherwise navigate to discover-opportunities-pwa
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/discover-opportunities-pwa");
+    }
+  };
 
   const { data: opportunity, isLoading } = useQuery<any>({
     queryKey: [`/api/opportunities/${opportunityId}`],
@@ -89,12 +99,10 @@ export default function OpportunityDetailPWA() {
     return (
       <div className="w-full min-h-screen bg-white flex flex-col items-center justify-center p-6">
         <h1 className="text-2xl font-bold mb-4">Opportunity Not Found</h1>
-        <Link href="/discover-opportunities">
-          <Button>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Opportunities
-          </Button>
-        </Link>
+        <Button onClick={handleBack}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Opportunities
+        </Button>
       </div>
     );
   }
@@ -106,11 +114,15 @@ export default function OpportunityDetailPWA() {
     <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-white pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-gradient-to-r from-teal-500 to-blue-500 text-white px-4 py-3 flex items-center justify-between">
-        <Link href="/discover-opportunities">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 -ml-2" data-testid="button-back">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-white hover:bg-white/20 -ml-2" 
+          onClick={handleBack}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <h1 className="text-base font-semibold">
           <span style={{ color: '#ffffff' }}>SYNER</span>
           <span style={{ color: '#FFB84D' }}>XUS</span>

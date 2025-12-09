@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals, getSDGColor } from "@shared/sdg-goals";
-import { Building2, Check, ChevronRight, Save } from "lucide-react";
+import { Building2, Check, ChevronRight, Save, Bell, Target, Settings as SettingsIcon, Users, Calendar, Globe, FileText, Shield, Mail, Clock, Zap, Award } from "lucide-react";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import { Label } from "@/components/ui/label";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
@@ -633,6 +633,174 @@ export default function CorporatePartnerProfileSettings() {
                         }}
                         error={selectedSdgs.length === 0 ? "Select at least one SDG" : undefined}
                       />
+                    </div>
+                  </div>
+
+                  {/* Program Goals Section */}
+                  <div className="border-t pt-6 mt-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Target className="w-5 h-5 text-amber-500" />
+                      <h3 className="text-lg font-semibold">Program Goals & Targets</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="targetParticipation" className="text-sm font-medium">Target Participation Rate (%)</Label>
+                        <Input id="targetParticipation" type="number" defaultValue={40} placeholder="40" className="mt-1.5" />
+                        <p className="text-xs text-gray-500 mt-1">Industry benchmark: 30-45%</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="targetHours" className="text-sm font-medium">Target Annual Hours</Label>
+                        <Input id="targetHours" type="number" defaultValue={5000} placeholder="5000" className="mt-1.5" />
+                        <p className="text-xs text-gray-500 mt-1">Based on employee count</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="vtoHoursPerEmployee" className="text-sm font-medium">VTO Hours per Employee</Label>
+                        <Input id="vtoHoursPerEmployee" type="number" defaultValue={16} placeholder="16" className="mt-1.5" />
+                        <p className="text-xs text-gray-500 mt-1">Typical: 8-24 hours/year</p>
+                      </div>
+                      <div>
+                        <Label htmlFor="targetBeneficiaries" className="text-sm font-medium">Target Beneficiaries</Label>
+                        <Input id="targetBeneficiaries" type="number" defaultValue={2000} placeholder="2000" className="mt-1.5" />
+                        <p className="text-xs text-gray-500 mt-1">Direct impact goal</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notifications Section */}
+                  <div className="border-t pt-6 mt-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Bell className="w-5 h-5 text-blue-500" />
+                      <h3 className="text-lg font-semibold">Notification Preferences</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium text-sm">Weekly Digest Report</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Receive weekly summary of volunteer activities</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Zap className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium text-sm">New Project Alerts</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Get notified when new volunteer opportunities match your SDGs</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Award className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium text-sm">Milestone Notifications</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Celebrate when employees reach volunteer milestones</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium text-sm">Quarterly Reports</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Auto-generate quarterly impact reports</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Compliance & Reporting Section */}
+                  <div className="border-t pt-6 mt-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Shield className="w-5 h-5 text-purple-500" />
+                      <h3 className="text-lg font-semibold">Compliance & Reporting Standards</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-green-600" />
+                            <span className="font-medium text-sm">GRI Standards Reporting</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Enable Global Reporting Initiative aligned metrics</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-blue-600" />
+                            <span className="font-medium text-sm">B-Corp Metrics Tracking</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Track metrics aligned with B-Corp certification</p>
+                        </div>
+                        <Checkbox />
+                      </div>
+
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <SettingsIcon className="w-4 h-4 text-orange-600" />
+                            <span className="font-medium text-sm">UN SDG Progress Tracking</span>
+                          </div>
+                          <p className="text-xs text-gray-500">Map activities to UN Sustainable Development Goals</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Employee Access Settings */}
+                  <div className="border-t pt-6 mt-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Users className="w-5 h-5 text-teal-500" />
+                      <h3 className="text-lg font-semibold">Employee Access & Permissions</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <span className="font-medium text-sm">Allow Self-Registration</span>
+                          <p className="text-xs text-gray-500">Employees can register using company email domain</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <span className="font-medium text-sm">Require Manager Approval</span>
+                          <p className="text-xs text-gray-500">VTO hours require manager sign-off</p>
+                        </div>
+                        <Checkbox />
+                      </div>
+
+                      <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <span className="font-medium text-sm">Enable Skills-Based Matching</span>
+                          <p className="text-xs text-gray-500">Match employees to projects based on their skills</p>
+                        </div>
+                        <Checkbox defaultChecked />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="emailDomain" className="text-sm font-medium">Allowed Email Domains</Label>
+                        <Input id="emailDomain" placeholder="@company.com, @subsidiary.com" className="mt-1.5" />
+                        <p className="text-xs text-gray-500 mt-1">Comma-separated list of allowed email domains</p>
+                      </div>
                     </div>
                   </div>
                 </div>

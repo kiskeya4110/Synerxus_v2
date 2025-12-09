@@ -33,6 +33,14 @@ export default function ProjectDetailPWA() {
   const [, navigate] = useLocation();
   const projectId = params?.id ? parseInt(params.id) : null;
   const [showMatchAnalysis, setShowMatchAnalysis] = useState(false);
+  
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate("/discover-opportunities-pwa");
+    }
+  };
 
   const { data: project, isLoading } = useQuery<any>({
     queryKey: ["/api/projects", projectId],
@@ -117,11 +125,14 @@ export default function ProjectDetailPWA() {
     <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-white pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-gradient-to-r from-teal-500 to-blue-500 text-white px-4 py-3 flex items-center justify-between">
-        <Link href="/discover-opportunities">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 -ml-2">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="text-white hover:bg-white/20 -ml-2"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
         <h1 className="text-base font-semibold">
           <span style={{ color: '#ffffff' }}>SYNER</span>
           <span style={{ color: '#FFB84D' }}>XUS</span>

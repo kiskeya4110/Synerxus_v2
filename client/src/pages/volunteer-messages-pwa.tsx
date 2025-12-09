@@ -242,23 +242,23 @@ export default function VolunteerMessagesPWA() {
   const connectedProjects = projects.filter(p => connectedProjectIds.has(p.id));
 
   return (
-    <div className="w-full min-h-screen bg-[#FDF8F3] pb-20 max-w-[428px] mx-auto">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#16213e] text-white px-4 py-3">
+    <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 pb-20 max-w-[428px] mx-auto">
+      {/* Header - Blue to off-white/sky-blue gradient for logo contrast */}
+      <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 shadow-md">
         <div className="flex items-center justify-between">
           {selectedThread ? (
             <>
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/10 -ml-2"
+                className="text-slate-800 hover:bg-white/30 -ml-2"
                 onClick={() => setSelectedThread(null)}
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
               <div className="flex-1 text-center">
                 <p className="font-semibold text-sm truncate">{selectedThread.organizationName}</p>
-                <p className="text-xs text-white/70 truncate">{selectedThread.topic}</p>
+                <p className="text-xs text-slate-600 truncate">{selectedThread.topic}</p>
               </div>
               <div className="w-8" />
             </>
@@ -268,7 +268,7 @@ export default function VolunteerMessagesPWA() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white hover:bg-white/10"
+                className="text-slate-800 hover:bg-white/30"
                 onClick={() => setShowNewConversation(true)}
               >
                 <Plus className="h-5 w-5" />

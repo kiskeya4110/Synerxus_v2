@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
-import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
+import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
 
 interface EnrichedOpportunity {
   id: number;
@@ -240,8 +240,8 @@ export default function DiscoverOpportunitiesPWA() {
 
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
-      {/* Top App Bar - Matching Dashboard Frame */}
-      <header className="bg-[#2a4068] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+      {/* Top App Bar - Blue to off-white/sky-blue gradient for logo contrast */}
+      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <button
           onClick={() => navigate("/landing")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -251,26 +251,26 @@ export default function DiscoverOpportunitiesPWA() {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="p-2 hover:bg-white/10 rounded-full"
+            className="p-2 hover:bg-slate-800/10 rounded-full"
           >
-            <Filter className="w-5 h-5" />
+            <Filter className="w-5 h-5 text-slate-700" />
           </button>
           <button
             onClick={() => navigate('/volunteer-messages/pwa')}
-            className="p-2 hover:bg-white/10 rounded-full"
+            className="p-2 hover:bg-slate-800/10 rounded-full"
             data-testid="btn-messages"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5 text-slate-700" />
           </button>
 
           {/* Three-Dot Menu */}
           <div className="relative">
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-2 hover:bg-white/10 rounded-full"
+              className="p-2 hover:bg-slate-800/10 rounded-full"
               data-testid="mobile-menu-trigger"
             >
-              <MoreVertical className="w-5 h-5" />
+              <MoreVertical className="w-5 h-5 text-slate-700" />
             </button>
 
             {/* Dropdown Menu */}

@@ -60,7 +60,7 @@ import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
-import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
+import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
 
 interface SDGEmployee {
   name: string;

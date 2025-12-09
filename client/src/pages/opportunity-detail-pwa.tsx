@@ -111,23 +111,19 @@ export default function OpportunityDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-white pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-gradient-to-r from-teal-500 to-blue-500 text-white px-4 py-3 flex items-center justify-between">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-white hover:bg-white/20 -ml-2" 
+    <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 pb-24">
+      {/* Header - Blue to off-white/sky-blue gradient for logo contrast */}
+      <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center shadow-md">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-slate-800 hover:bg-white/30 -ml-2"
           onClick={handleBack}
           data-testid="button-back"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-base font-semibold">
-          <span style={{ color: '#ffffff' }}>SYNER</span>
-          <span style={{ color: '#FFB84D' }}>XUS</span>
-        </h1>
-        <div className="w-10" />
+        <h1 className="text-base font-semibold ml-2">Opportunity Details</h1>
       </div>
 
       {/* Hero Image Section */}

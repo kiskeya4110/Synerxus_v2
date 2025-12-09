@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import logoImage from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
+import logoImage from "@assets/generated_images/synerxus_infinity_loop_logo.png";
 
 interface LogoProps {
   className?: string;

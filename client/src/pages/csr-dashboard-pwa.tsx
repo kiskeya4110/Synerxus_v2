@@ -48,7 +48,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
+import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
 import {
   LineChart,
   Line,
@@ -309,15 +309,15 @@ export default function CSRDashboardPWA() {
         </div>
       )}
 
-      {/* Compact Header */}
-      <header className="sticky top-0 z-50 bg-slate-900/98 backdrop-blur-md border-b border-slate-800">
+      {/* Compact Header - Blue to off-white/sky-blue gradient for logo contrast */}
+      <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 shadow-md">
         <div className="flex items-center justify-between px-4 py-3">
           {/* Left: Logo & Title */}
           <div className="flex items-center gap-3">
             <img src={logoUrl} alt="Synerxus" className="h-12 w-auto object-contain" />
             <div className="hidden sm:block">
-              <h1 className="text-sm font-semibold text-white leading-tight">{companyName}</h1>
-              <p className="text-[10px] text-gray-500">CSR Impact Dashboard</p>
+              <h1 className="text-sm font-semibold text-slate-800 leading-tight">{companyName}</h1>
+              <p className="text-[10px] text-slate-600">CSR Impact Dashboard</p>
             </div>
           </div>
 
@@ -326,26 +326,26 @@ export default function CSRDashboardPWA() {
             {/* Refresh Button */}
             <button
               onClick={handleRefresh}
-              className={`p-2 rounded-full hover:bg-slate-800 transition-colors ${refreshing ? 'animate-spin' : ''}`}
+              className={`p-2 rounded-full hover:bg-slate-800/10 transition-colors ${refreshing ? 'animate-spin' : ''}`}
               title="Refresh"
             >
-              <RefreshCw className="w-4 h-4 text-gray-400" />
+              <RefreshCw className="w-4 h-4 text-slate-700" />
             </button>
 
             {/* Notifications */}
-            <button className="p-2 rounded-full hover:bg-slate-800 transition-colors relative" title="Notifications">
-              <Bell className="w-4 h-4 text-gray-400" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-amber-500 rounded-full" />
+            <button className="p-2 rounded-full hover:bg-slate-800/10 transition-colors relative" title="Notifications">
+              <Bell className="w-4 h-4 text-slate-700" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
             </button>
 
             {/* Three-Dot Menu */}
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="p-2 rounded-full hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-full hover:bg-slate-800/10 transition-colors"
                 title="Menu"
               >
-                <MoreVertical className="w-5 h-5 text-gray-400" />
+                <MoreVertical className="w-5 h-5 text-slate-700" />
               </button>
 
               {/* Dropdown Menu */}
@@ -479,8 +479,8 @@ export default function CSRDashboardPWA() {
                 onClick={() => setActiveTab(id as NavTab)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   activeTab === id
-                    ? 'bg-amber-500 text-black'
-                    : 'bg-slate-800 text-gray-400 hover:text-white hover:bg-slate-700'
+                    ? 'bg-slate-800 text-white'
+                    : 'bg-white/50 text-slate-700 hover:bg-white/70'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />

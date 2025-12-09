@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/Synerxus Modern Logo - ALL_1763957261507.png";
+import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
 import {
   LineChart,
   Line,
@@ -190,16 +190,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         const monthLabel = monthNames[monthIndex] || item.month;
 
         // Use actual peopleImpacted from server (already verification-weighted)
-        // This replaces the arbitrary hours * 0.15 formula
         const hours = Number(item.hours) || 0;
         const peopleImpacted = Number(item.peopleImpacted) || 0;
-        // AIU is the verified people impacted count from the server
-        const aiu = peopleImpacted;
 
         return {
           month: monthLabel,
           hours: hours,
-          aiu: aiu
+          peopleReached: peopleImpacted
         };
       });
     }
@@ -218,11 +215,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         }
       });
       const hours = monthActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0);
-      // Without server data, we cannot accurately calculate AIU - show 0 until data is loaded
+      // Without server data, show 0 for people reached until data is loaded
       return {
         month,
         hours: hours,
-        aiu: 0
+        peopleReached: 0
       };
     });
   }, [dashboardData?.monthlyImpactData, volunteerActivities]);
@@ -460,8 +457,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
-      {/* Top App Bar */}
-      <header className="bg-[#2a4068] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+      {/* Top App Bar - Blue to off-white/sky-blue gradient for logo contrast */}
+      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <button
           onClick={() => navigate("/landing")}
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -471,20 +468,20 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigate('/volunteer-messages/pwa')}
-            className="p-2 hover:bg-white/10 rounded-full"
+            className="p-2 hover:bg-slate-800/10 rounded-full"
             data-testid="btn-messages"
           >
-            <MessageCircle className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5 text-slate-700" />
           </button>
 
           {/* Three-Dot Menu */}
           <div className="relative">
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-2 hover:bg-white/10 rounded-full"
+              className="p-2 hover:bg-slate-800/10 rounded-full"
               data-testid="mobile-menu-trigger"
             >
-              <MoreVertical className="w-5 h-5" />
+              <MoreVertical className="w-5 h-5 text-slate-700" />
             </button>
 
             {/* Dropdown Menu */}
@@ -651,7 +648,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             <div className="px-4 grid grid-cols-4 gap-2">
               <button
                 onClick={() => setShowKpiModal('hours')}
-                className="bg-[#4A90D9] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-[#2563eb] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
                 data-testid="kpi-hours"
               >
                 {/* Mini sparkline background */}
@@ -664,13 +661,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     />
                   ))}
                 </div>
-                <Clock className="w-4 h-4 mx-auto mb-1 opacity-70 relative z-10" />
+                <Clock className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
                 <div className="text-xl font-bold relative z-10">{kpis.totalHours}</div>
-                <div className="text-[10px] opacity-90 leading-tight relative z-10">Hours</div>
+                <div className="text-[10px] font-medium leading-tight relative z-10">Hours</div>
               </button>
               <button
                 onClick={() => setShowKpiModal('projects')}
-                className="bg-[#4CAF50] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-[#059669] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
                 data-testid="kpi-projects"
               >
                 {/* Mini donut indicator */}
@@ -684,13 +681,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     />
                   </svg>
                 </div>
-                <CheckCircle className="w-4 h-4 mx-auto mb-1 opacity-70 relative z-10" />
+                <CheckCircle className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
                 <div className="text-xl font-bold relative z-10">{kpis.totalProjects}</div>
-                <div className="text-[10px] opacity-90 leading-tight relative z-10">Projects</div>
+                <div className="text-[10px] font-medium leading-tight relative z-10">Projects</div>
               </button>
               <button
                 onClick={() => setShowKpiModal('skills')}
-                className="bg-[#FF9800] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-[#d97706] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
                 data-testid="kpi-skills"
               >
                 {/* Skill dots indicator */}
@@ -699,13 +696,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div key={i} className="w-1.5 h-1.5 bg-white rounded-full" />
                   ))}
                 </div>
-                <Award className="w-4 h-4 mx-auto mb-1 opacity-70 relative z-10" />
+                <Award className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
                 <div className="text-xl font-bold relative z-10">{kpis.skills}</div>
-                <div className="text-[10px] opacity-90 leading-tight relative z-10">Skills</div>
+                <div className="text-[10px] font-medium leading-tight relative z-10">Skills</div>
               </button>
               <button
                 onClick={() => setShowKpiModal('sdgs')}
-                className="bg-[#E91E63] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-[#be185d] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
                 data-testid="kpi-sdgs"
               >
                 {/* SDG grid indicator */}
@@ -718,9 +715,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     />
                   ))}
                 </div>
-                <Target className="w-4 h-4 mx-auto mb-1 opacity-70 relative z-10" />
+                <Target className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
                 <div className="text-xl font-bold relative z-10">{kpis.sdgsContributed}</div>
-                <div className="text-[10px] opacity-90 leading-tight relative z-10">SDGs</div>
+                <div className="text-[10px] font-medium leading-tight relative z-10">SDGs</div>
               </button>
             </div>
 
@@ -762,10 +759,10 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       <div className="text-[9px] text-slate-600 font-medium">Projects</div>
                       <div className="text-[8px] text-slate-400">Contributing</div>
                     </div>
-                    {/* Impact Score (AIU) */}
+                    {/* Impact Score (AIU) - Using aiuSummary as single source of truth */}
                     <div className="text-center">
                       <div className="text-2xl font-bold text-amber-600">
-                        {Math.round(sdgDistribution.reduce((sum, s) => sum + s.value, 0) * 0.15)}
+                        {aiuSummary?.totalAiu?.toFixed(1) || '0.0'}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">AIUs</div>
                       <div className="text-[8px] text-slate-400">Impact Units</div>
@@ -957,7 +954,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         </div>
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-0.5 bg-[#E91E63]"></div>
-                          <span className="text-slate-500">AIUs Earned</span>
+                          <span className="text-slate-500">People Reached</span>
                         </div>
                       </div>
                       <div className="h-40">
@@ -970,8 +967,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                               contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
                               labelStyle={{ color: '#fff' }}
                             />
-                            <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} />
-                            <Line type="monotone" dataKey="aiu" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} />
+                            <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="Hours" />
+                            <Line type="monotone" dataKey="peopleReached" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} name="People Reached" />
                           </LineChart>
                         </ResponsiveContainer>
                       </div>
@@ -1084,7 +1081,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             }}
                             disabled={applyMutation.isPending}
                             size="sm"
-                            className="flex-1 text-xs h-8 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50"
+                            className="flex-1 text-xs h-8 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50"
                           >
                             {applyMutation.isPending ? "Applying..." : "Apply Now"}
                           </Button>
@@ -1121,27 +1118,27 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             <div className="grid grid-cols-3 gap-2">
               <button
                 onClick={() => setShowProjectStatsModal('active')}
-                className="bg-[#FF9800] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
+                className="bg-[#d97706] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
               >
                 <div className="text-2xl font-bold mb-1">{kpis.activeProjects}</div>
-                <div className="text-xs opacity-90">Active</div>
-                <CheckCircle className="w-4 h-4 mx-auto mt-1 opacity-70" />
+                <div className="text-xs font-medium">Active</div>
+                <CheckCircle className="w-4 h-4 mx-auto mt-1 opacity-90" />
               </button>
               <button
                 onClick={() => setShowProjectStatsModal('total')}
-                className="bg-[#4CAF50] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
+                className="bg-[#059669] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
               >
                 <div className="text-2xl font-bold mb-1">{kpis.totalProjects}</div>
-                <div className="text-xs opacity-90">Total</div>
-                <Briefcase className="w-4 h-4 mx-auto mt-1 opacity-70" />
+                <div className="text-xs font-medium">Total</div>
+                <Briefcase className="w-4 h-4 mx-auto mt-1 opacity-90" />
               </button>
               <button
                 onClick={() => setShowProjectStatsModal('sdgs')}
-                className="bg-[#E91E63] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
+                className="bg-[#be185d] rounded-lg p-3 text-white text-center hover:brightness-110 transition-all active:scale-95"
               >
                 <div className="text-2xl font-bold mb-1">{kpis.sdgsContributed}</div>
-                <div className="text-xs opacity-90">SDG Impact</div>
-                <Target className="w-4 h-4 mx-auto mt-1 opacity-70" />
+                <div className="text-xs font-medium">SDG Impact</div>
+                <Target className="w-4 h-4 mx-auto mt-1 opacity-90" />
               </button>
             </div>
 
@@ -1620,7 +1617,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                                 }}
                                 disabled={hasApplied}
                                 size="sm"
-                                className={`w-full ${hasApplied ? 'bg-gray-400' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'} text-white font-medium text-xs`}
+                                className={`w-full ${hasApplied ? 'bg-gray-500' : 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700'} text-white font-medium text-xs`}
                               >
                                 {hasApplied ? "Already Applied" : "View & Apply"}
                               </Button>
@@ -1801,7 +1798,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#E91E63]"></div>
-                        <span className="text-slate-600">People Impacted</span>
+                        <span className="text-slate-600">People Reached</span>
                       </div>
                     </div>
                     <div className="h-32" style={{ isolation: 'isolate' }}>
@@ -1817,11 +1814,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             labelStyle={{ color: '#1f2937', fontWeight: 600 }}
                             formatter={(value: number, name: string) => [
                               value,
-                              name === 'hours' ? 'Hours' : 'People Impacted'
+                              name === 'hours' ? 'Hours' : 'People Reached'
                             ]}
                           />
                           <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="hours" />
-                          <Line type="monotone" dataKey="aiu" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} name="aiu" />
+                          <Line type="monotone" dataKey="peopleReached" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} name="peopleReached" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
@@ -1856,7 +1853,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
             <Button
               onClick={() => navigate(`/impact-report/${userId}`)}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3"
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3"
             >
               <FileText className="w-4 h-4 mr-2" />
               View Full Impact Report
@@ -2020,7 +2017,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
             <Button
               onClick={() => navigate('/volunteer-profile-settings')}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3"
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold py-3"
             >
               <Settings className="w-4 h-4 mr-2" />
               Edit Profile Settings
@@ -2076,8 +2073,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
                     <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">
-                        <span>Impact Generated:</span>
-                        <span className="text-emerald-600 font-semibold">{Math.round(kpis.totalHours * 0.15)} AIUs estimated</span>
+                        <span>AIUs Earned:</span>
+                        <span className="text-emerald-600 font-semibold">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Across Projects:</span>
@@ -2415,7 +2412,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">AIUs Earned:</span>
-                      <span className="text-emerald-600 font-semibold">{Math.round(typeof kpis.livesImpacted === 'number' ? kpis.livesImpacted : 0)}</span>
+                      <span className="text-emerald-600 font-semibold">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</span>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">

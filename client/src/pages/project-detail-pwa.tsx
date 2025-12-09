@@ -212,7 +212,7 @@ export default function ProjectDetailPWA() {
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-white">
+      <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-64 w-full" />
         <div className="p-4 space-y-4">
@@ -225,7 +225,7 @@ export default function ProjectDetailPWA() {
 
   if (!project) {
     return (
-      <div className="w-full min-h-screen bg-white flex flex-col items-center justify-center p-6">
+      <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 flex flex-col items-center justify-center p-6">
         <h1 className="text-2xl font-bold mb-4">Project Not Found</h1>
         <Link href="/projects">
           <Button>
@@ -242,22 +242,18 @@ export default function ProjectDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-white pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-gradient-to-r from-teal-500 to-blue-500 text-white px-4 py-3 flex items-center justify-between">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="text-white hover:bg-white/20 -ml-2"
+    <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 pb-24">
+      {/* Header - Blue to off-white/sky-blue gradient for logo contrast */}
+      <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center shadow-md">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-slate-800 hover:bg-white/30 -ml-2"
           onClick={handleBack}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-base font-semibold">
-          <span style={{ color: '#ffffff' }}>SYNER</span>
-          <span style={{ color: '#FFB84D' }}>XUS</span>
-        </h1>
-        <div className="w-10" />
+        <h1 className="text-base font-semibold ml-2">Project Details</h1>
       </div>
 
       {/* Hero Image Section */}

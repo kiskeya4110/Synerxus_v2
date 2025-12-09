@@ -16,7 +16,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList, Target, Circle, Play, ChevronDown, ChevronUp, X } from "lucide-react";
 import { format } from "date-fns";
 import type { User } from "@shared/schema";
-import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
+import logoUrl from "@assets/generated_images/synerxus_infinity_loop_logo.png";
 
 export default function LogActivity() {
   const [, setLocation] = useLocation();

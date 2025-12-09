@@ -96,6 +96,7 @@ export default function OrganizationMessages() {
       return response.json();
     },
     enabled: !!organizationId,
+    refetchInterval: 5000 // Poll every 5 seconds to catch new messages and threads
   });
 
   const { data: threadMessages, isLoading: loadingMessages, refetch: refetchMessages } = useQuery({
@@ -107,6 +108,7 @@ export default function OrganizationMessages() {
       return response.json();
     },
     enabled: !!selectedThread && !!userId,
+    refetchInterval: selectedThread ? 3000 : false // Poll every 3 seconds when a thread is selected
   });
 
   const { data: volunteers = [], isLoading: loadingVolunteers, error: volunteersError } = useQuery({

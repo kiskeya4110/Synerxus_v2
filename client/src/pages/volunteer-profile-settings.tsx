@@ -933,10 +933,14 @@ export default function VolunteerProfileSettings() {
 
   // Load profile data into form whenever profile data changes or user ID changes
   useEffect(() => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id || userLoading) return;
 
-    if (existingProfile) {
-      form.reset({
+    // Determine if we have existing profile data
+    const hasProfileData = existingProfile && Object.keys(existingProfile).length > 0;
+
+    if (hasProfileData && !loadingProfile) {
+      // Existing profile - reset form with all profile data
+      const resetData = {
         email: currentUser?.email || "",
         name: existingProfile.volunteerName || currentUser?.displayName || "",
         professionalTitle: existingProfile.professionalTitle || "",
@@ -966,9 +970,10 @@ export default function VolunteerProfileSettings() {
           geographicPreference: 3,
           impactPotential: 3,
         },
-      });
-    } else if (!loadingProfile && currentUser?.email) {
-      // New profile - initialize with user data
+      };
+      form.reset(resetData);
+    } else if (!loadingProfile && !hasProfileData && currentUser?.email) {
+      // New profile - initialize with user data only
       form.reset({
         email: currentUser?.email || "",
         name: currentUser?.displayName || "",
@@ -995,7 +1000,7 @@ export default function VolunteerProfileSettings() {
         },
       });
     }
-  }, [currentUser?.id, currentUser?.email, existingProfile, loadingProfile, form]);
+  }, [currentUser?.id, currentUser?.email, existingProfile, loadingProfile, userLoading, form]);
 
   // Load existing photo URL
   useEffect(() => {

@@ -96,7 +96,12 @@ export default function OrganizationProfileSettings() {
 
   // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
   useEffect(() => {
-    if (existingProfile) {
+    if (userLoading) return;
+
+    const hasProfileData = existingProfile && Object.keys(existingProfile).length > 0;
+
+    if (hasProfileData && !loadingProfile) {
+      // Existing profile - populate form with all data
       form.reset({
         email: existingProfile.email || currentUser?.email || "",
         name: existingProfile.name || "",
@@ -108,8 +113,8 @@ export default function OrganizationProfileSettings() {
       if (existingProfile.logo) {
         setLogoUrl(existingProfile.logo);
       }
-    } else if (!loadingProfile && currentUser?.email) {
-      // New profile - initialize with user data
+    } else if (!loadingProfile && !hasProfileData && currentUser?.email) {
+      // New profile - initialize with user data only
       form.reset({
         email: currentUser.email,
         name: currentUser.displayName || "",
@@ -119,7 +124,7 @@ export default function OrganizationProfileSettings() {
         sdgFocus: [],
       });
     }
-  }, [existingProfile, loadingProfile, currentUser, form]);
+  }, [existingProfile, loadingProfile, currentUser, userLoading, form]);
 
   // Create mutation
   const createMutation = useMutation({

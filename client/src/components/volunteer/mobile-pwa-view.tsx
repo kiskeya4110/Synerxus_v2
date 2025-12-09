@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/2026_Synerxus_Logo_1765300182021.jpg";
+import logoUrl from "@assets/2026_Synerxus_Logo_1765300715822.jpg";
 import {
   LineChart,
   Line,
@@ -1807,14 +1807,18 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
                 {impactOverTimeData.some(d => d.hours > 0) ? (
                   <>
-                    <div className="flex gap-4 mb-2 text-xs">
+                    <div className="flex flex-wrap gap-3 mb-2 text-xs">
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#4CAF50]"></div>
                         <span className="text-slate-600">Hours</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <div className="w-3 h-0.5 bg-[#E91E63]"></div>
+                        <div className="w-3 h-0.5 bg-[#2563eb]"></div>
                         <span className="text-slate-600">People Reached</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-0.5 bg-[#f59e0b]"></div>
+                        <span className="text-slate-600">AIUs</span>
                       </div>
                     </div>
                     <div className="h-32" style={{ isolation: 'isolate' }}>
@@ -1822,19 +1826,21 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         <LineChart data={impactOverTimeData}>
                           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                           <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
-                          <YAxis stroke="#9CA3AF" fontSize={10} />
+                          <YAxis yAxisId="left" stroke="#9CA3AF" fontSize={10} />
+                          <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" fontSize={10} />
                           <Tooltip
                             wrapperStyle={{ zIndex: 9999 }}
                             allowEscapeViewBox={{ x: true, y: true }}
                             contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
                             labelStyle={{ color: '#1f2937', fontWeight: 600 }}
                             formatter={(value: number, name: string) => [
-                              value,
-                              name === 'hours' ? 'Hours' : 'People Reached'
+                              name === 'aiu' ? value.toFixed(2) : value,
+                              name === 'hours' ? 'Hours' : name === 'peopleReached' ? 'People Reached' : 'AIUs'
                             ]}
                           />
-                          <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="hours" />
-                          <Line type="monotone" dataKey="peopleReached" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} name="peopleReached" />
+                          <Line yAxisId="left" type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="hours" />
+                          <Line yAxisId="left" type="monotone" dataKey="peopleReached" stroke="#2563eb" strokeWidth={2} dot={{ fill: '#2563eb', r: 3 }} name="peopleReached" />
+                          <Line yAxisId="right" type="monotone" dataKey="aiu" stroke="#f59e0b" strokeWidth={2} dot={{ fill: '#f59e0b', r: 4 }} name="aiu" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>

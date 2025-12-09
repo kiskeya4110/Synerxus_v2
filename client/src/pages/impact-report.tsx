@@ -233,6 +233,38 @@ export default function ImpactReport() {
     enabled: !!volunteerId
   });
 
+  // Fetch AIU summary for accurate AIU metrics (single source of truth)
+  interface AIUSummary {
+    volunteerId: number;
+    volunteerName: string;
+    totalAiu: number;
+    aiuUnique: number;
+    aiuSessions: number;
+    totalHours: number;
+    projectCount: number;
+    sdgsContributed: number[];
+    verificationRate: number;
+    projects: {
+      projectId: number;
+      projectName: string;
+      aiu: number;
+      hours: number;
+      role: string;
+      sdgIndicator: string;
+    }[];
+  }
+
+  const { data: aiuSummary } = useQuery<AIUSummary | null>({
+    queryKey: ["/api/aiu/volunteer", volunteerId],
+    queryFn: async () => {
+      if (!volunteerId) return null;
+      const response = await fetch(`/api/aiu/volunteer/${volunteerId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!volunteerId
+  });
+
   // Fetch organizations
   const { data: organizations = [] } = useQuery<Organization[]>({
     queryKey: ["/api/organizations"],
@@ -860,7 +892,7 @@ export default function ImpactReport() {
                   </div>
                 </div>
 
-                {/* AIU Summary Card */}
+                {/* AIU Summary Card - Using real AIU data from /api/aiu/volunteer endpoint */}
                 <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/30 dark:to-teal-900/30 p-4 rounded-lg border border-emerald-200 dark:border-emerald-700 mb-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -873,22 +905,22 @@ export default function ImpactReport() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{(filteredImpactScore * 0.25).toFixed(1)}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Based on verified impact</p>
+                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{aiuSummary?.verificationRate || 0}% verified</p>
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-emerald-200 dark:border-emerald-700 grid grid-cols-3 gap-4 text-center">
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Projects</p>
-                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{filteredActiveProjects}</p>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{aiuSummary?.projectCount || filteredActiveProjects}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">SDGs</p>
-                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{sdgs.length}</p>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{aiuSummary?.sdgsContributed?.length || sdgs.length}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-600 dark:text-gray-400">Hours</p>
-                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{Math.round(filteredTotalHours)}</p>
+                      <p className="font-semibold text-emerald-700 dark:text-emerald-300">{Math.round(aiuSummary?.totalHours || filteredTotalHours)}</p>
                     </div>
                   </div>
                 </div>

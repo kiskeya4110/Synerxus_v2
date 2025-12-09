@@ -125,6 +125,20 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
       .reduce((sum, i) => sum + (i.value || 0), 0);
 
+    // Calculate total AIU earned using proper formula from aiu-calculations.ts
+    // AIU = livesImpacted × attributionFactor × verificationMultiplier / hoursNormalization
+    const attributionFactor = 0.2; // Standard 20% attribution
+    const verifiedImpacts = organizationImpacts.filter(i =>
+      i.metricId && peopleMetricIds.has(i.metricId) &&
+      (i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
+    );
+    const verifiedPeopleImpacted = verifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+    const verificationMultiplier = verifiedPeopleImpacted > 0 ? 1.0 : 0.8;
+    const hoursNormalization = Math.max(totalHours, 1) / 10;
+    const totalAiuEarned = Math.round(
+      (totalPeopleImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
+    ) / 100;
+
     // SDG Distribution
     const sdgDistribution: Record<number, { hours: number; projects: number; volunteers: number }> = {};
     organizationProjects.forEach(project => {
@@ -278,7 +292,8 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
         totalProjects: organizationProjects.length,
         totalHours,
         sdgsAddressed: uniqueSDGs.size,
-        livesTouched: totalPeopleImpacted,
+        aiuEarned: totalAiuEarned, // Properly calculated AIU replacing raw livesTouched
+        livesTouched: totalPeopleImpacted, // Keep for backwards compatibility
         activeVolunteers: organizationVolunteers.length,
       },
       sdgDistribution: Object.entries(sdgDistribution).map(([goal, data]) => ({
@@ -301,6 +316,18 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
           .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
           .reduce((sum, i) => sum + (i.value || 0), 0);
 
+        // Calculate AIU for this project using proper formula
+        const projectVerifiedImpacts = projectImpacts.filter(i =>
+          i.metricId && peopleMetricIds.has(i.metricId) &&
+          (i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
+        );
+        const projectVerifiedPeople = projectVerifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+        const projectVerificationMultiplier = projectVerifiedPeople > 0 ? 1.0 : 0.8;
+        const projectHoursNorm = Math.max(projectHours, 1) / 10;
+        const projectAiuEarned = Math.round(
+          (projectLivesTouched * attributionFactor * projectVerificationMultiplier) / Math.max(projectHoursNorm, 1) * 100
+        ) / 100;
+
         return {
           id: p.id,
           name: p.name,
@@ -310,6 +337,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
           location: p.location,
           totalHours: projectHours,
           livesTouched: projectLivesTouched,
+          aiuEarned: projectAiuEarned, // Add proper AIU calculation
         };
       }),
       volunteerSummaries: volunteerSummaries.slice(0, 10),

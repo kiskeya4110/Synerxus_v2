@@ -889,8 +889,19 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       const pendingLivesImpacted = pendingImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
       // Weighted sum: verified at 100%, pending/self-reported at 70% (matching RELIABILITY_MULTIPLIERS.pending)
       const livesImpacted = verifiedLivesImpacted + Math.round(pendingLivesImpacted * 0.7);
-      // AIU formula: use calculated lives impacted, no arbitrary hours fallback
-      const aiuEarned = livesImpacted;
+
+      // AIU Calculation: Use proper formula from aiu-calculations.ts
+      // AIU = livesImpacted × attributionFactor × roleWeight × reliabilityMultiplier
+      // Default attribution factor is 0.2 (20%), default role weight is 1.0, reliability is based on verification
+      const attributionFactor = 0.2; // Standard 20% attribution for volunteer contributions
+      const verificationMultiplier = verifiedLivesImpacted > 0 ? 1.0 : 0.8; // 1.0 if verified, 0.8 if pending
+      // Apply the formula: AIU represents a fractional attribution of impact
+      // Base formula: (livesImpacted × attributionFactor × verificationMultiplier) / normalization factor
+      // Use hours-based normalization to give reasonable AIU values (similar to aiu-service.ts calculations)
+      const hoursNormalization = Math.max(totalHoursLogged, 1) / 10; // Normalize based on effort
+      const aiuEarned = Math.round(
+        (livesImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
+      ) / 100; // Round to 2 decimal places
 
       return {
         ...project,

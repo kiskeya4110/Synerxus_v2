@@ -161,6 +161,20 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   // Extract pending applications count for easy access
   const pendingApplicationsCount = kpis.pendingApplications;
 
+  // Helper to get project AIU from aiuSummary (single source of truth)
+  // Falls back to project.aiuEarned if aiuSummary is not available
+  const getProjectAiu = (projectId: number): number => {
+    if (aiuSummary?.projects) {
+      const aiuProject = aiuSummary.projects.find((p: any) => p.projectId === projectId);
+      if (aiuProject) {
+        return aiuProject.aiu || 0;
+      }
+    }
+    // Fallback to dashboard calculated AIU (now correctly calculated in dashboard-service)
+    const dashboardProject = projects?.find((p: any) => p.id === projectId);
+    return dashboardProject?.aiuEarned || 0;
+  };
+
   // Impact Over Time data - use pre-calculated monthlyImpactData from server
   // AIU is now calculated from actual verified peopleImpacted data, not hours * arbitrary multiplier
   const impactOverTimeData = useMemo(() => {
@@ -1190,7 +1204,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="flex items-center gap-3 text-xs text-slate-500">
                       <div className="flex items-center gap-1">
                         <TrendingUp className="w-3 h-3" />
-                        <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
+                        <span>{getProjectAiu(project.id).toFixed(1)} AIUs</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -2284,7 +2298,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           </div>
                           <div className="flex items-center gap-1">
                             <TrendingUp className="w-3 h-3" />
-                            <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
+                            <span>{getProjectAiu(project.id).toFixed(1)} AIUs</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
@@ -2362,7 +2376,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             </div>
                             <div className="flex items-center gap-1">
                               <TrendingUp className="w-3 h-3" />
-                              <span>{Math.round(project.aiuEarned || project.livesImpacted || 0)} AIUs</span>
+                              <span>{getProjectAiu(project.id).toFixed(1)} AIUs</span>
                             </div>
                           </div>
                         </div>

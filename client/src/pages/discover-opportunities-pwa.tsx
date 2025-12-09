@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
   Search, MapPin, Clock, Users, Sparkles, Target,
@@ -67,37 +68,79 @@ export default function DiscoverOpportunitiesPWA() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const userId = localStorage.getItem('currentUserId');
+  const [hasTimedOut, setHasTimedOut] = useState(false);
+
+  // Add timeout to prevent stuck loading state
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setHasTimedOut(true);
+    }, 8000); // 8 second timeout
+
+    return () => clearTimeout(timeoutId);
+  }, [userId]);
+
+  // Reset timeout when userId changes
+  useEffect(() => {
+    setHasTimedOut(false);
+  }, [userId]);
 
   // Fetch opportunities with error handling
-  const { data: opportunities = [], isLoading, isError, error } = useQuery<EnrichedOpportunity[]>({
+  const { data: opportunities = [], isLoading, isError, error, refetch: refetchOpportunities } = useQuery<EnrichedOpportunity[]>({
     queryKey: [`/api/opportunities/discover`, userId],
     queryFn: async () => {
       if (!userId) return [];
-      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch opportunities: ${response.status}`);
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+        
+        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch opportunities: ${response.status}`);
+        }
+        return response.json();
+      } catch (err) {
+        console.error('Opportunities fetch error:', err);
+        throw err;
       }
-      return response.json();
-    },
-    enabled: !!userId,
-    retry: 2,
-    staleTime: 30000, // Cache for 30 seconds
-  });
-
-  // Fetch opportunity status with error handling
-  const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] } } = useQuery<OpportunityStatus>({
-    queryKey: ["/api/opportunities/status", userId],
-    queryFn: async () => {
-      if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
-      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
-      if (!response.ok) {
-        console.warn("Failed to fetch opportunity status, continuing with empty status");
-        return { savedIds: [], rejectedIds: [], appliedIds: [] };
-      }
-      return response.json();
     },
     enabled: !!userId,
     retry: 1,
+    staleTime: 60000, // Cache for 60 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  });
+
+  // Fetch opportunity status with error handling
+  const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] }, refetch: refetchStatus } = useQuery<OpportunityStatus>({
+    queryKey: ["/api/opportunities/status", userId],
+    queryFn: async () => {
+      if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+        
+        const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+          console.warn("Failed to fetch opportunity status, continuing with empty status");
+          return { savedIds: [], rejectedIds: [], appliedIds: [] };
+        }
+        return response.json();
+      } catch (err) {
+        console.warn('Status fetch error:', err);
+        return { savedIds: [], rejectedIds: [], appliedIds: [] };
+      }
+    },
+    enabled: !!userId,
+    retry: 0, // No retries for status
+    staleTime: 60000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Redirect to login if not authenticated
@@ -149,7 +192,7 @@ export default function DiscoverOpportunitiesPWA() {
   };
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading && !hasTimedOut) {
     return (
       <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
         <div className="text-slate-800 text-center">
@@ -160,8 +203,8 @@ export default function DiscoverOpportunitiesPWA() {
     );
   }
 
-  // Show error state with retry option
-  if (isError) {
+  // Show error state or timeout recovery with retry option
+  if (isError || hasTimedOut) {
     return (
       <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
         <div className="text-slate-800 text-center p-6">
@@ -170,11 +213,24 @@ export default function DiscoverOpportunitiesPWA() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
           </div>
-          <p className="text-lg font-semibold mb-2">Failed to load opportunities</p>
-          <p className="text-sm text-slate-500 mb-4">{error instanceof Error ? error.message : 'Please try again'}</p>
+          <p className="text-lg font-semibold mb-2">{hasTimedOut ? 'Loading took too long' : 'Failed to load opportunities'}</p>
+          <p className="text-sm text-slate-500 mb-4">
+            {hasTimedOut 
+              ? 'The page is taking longer than expected. Please retry.' 
+              : error instanceof Error 
+                ? error.message 
+                : 'Please try again'}
+          </p>
           <div className="flex gap-2 justify-center">
-            <Button onClick={() => window.location.reload()} className="bg-emerald-500 hover:bg-emerald-600">
-              Retry
+            <Button 
+              onClick={() => {
+                setHasTimedOut(false);
+                refetchOpportunities();
+                refetchStatus();
+              }} 
+              className="bg-emerald-500 hover:bg-emerald-600"
+            >
+              Retry Now
             </Button>
             <Button onClick={() => navigate('/volunteer-dashboard')} variant="outline">
               Go to Dashboard

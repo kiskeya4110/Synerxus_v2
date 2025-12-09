@@ -49,10 +49,31 @@ export default function CreateOpportunityDialog({ open, onOpenChange }: CreateOp
 
   const createMutation = useMutation({
     mutationFn: async (data: OpportunityFormData) => {
+      // Get organization ID from current user's context
+      const userId = localStorage.getItem('currentUserId');
+      const userType = localStorage.getItem('userType');
+      const userOrgId = localStorage.getItem('organizationId');
+
+      // Determine organization ID: from localStorage, or fetch from user data
+      let organizationId = userOrgId ? parseInt(userOrgId) : null;
+
+      if (!organizationId && userId) {
+        // Fetch user to get their organization ID
+        try {
+          const userResponse = await fetch(`/api/users/${userId}`);
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            organizationId = userData.organizationId;
+          }
+        } catch (err) {
+          console.warn('Could not fetch user organization ID');
+        }
+      }
+
       const payload = {
         ...data,
         requiredSkills: data.requiredSkills ? data.requiredSkills.split(',').map(s => s.trim()).filter(Boolean) : [],
-        organizationId: 1, // TODO: Get from auth context
+        organizationId: organizationId || 1, // Fallback to 1 only if unable to determine
       };
       return await apiRequest("POST", "/api/opportunities", payload);
     },

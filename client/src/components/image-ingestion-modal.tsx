@@ -79,8 +79,8 @@ export default function ImageIngestionModal({
       const formData = new FormData();
       formData.append("file", selectedFile);
 
-      // Direct call to Python backend
-      const response = await fetch("http://localhost:8001/api/images/ingest", {
+      // Call image ingestion API (uses relative path for production compatibility)
+      const response = await fetch("/api/images/ingest", {
         method: "POST",
         body: formData,
       });

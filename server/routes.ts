@@ -6414,15 +6414,27 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   // File delete endpoint
   app.delete("/api/upload", async (req, res) => {
     try {
-      const { path } = req.body;
-      
-      if (!path) {
+      const { path: filePath } = req.body;
+
+      if (!filePath) {
         return res.status(400).json({ message: "path is required" });
       }
 
-      // TODO: Delete file from actual object storage
-      console.log(`File deleted: ${path}`);
-      
+      // Delete file from local storage
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const fullPath = path.join(process.cwd(), 'uploads', filePath);
+
+      try {
+        await fs.unlink(fullPath);
+        console.log(`File deleted: ${filePath}`);
+      } catch (err: any) {
+        if (err.code !== 'ENOENT') {
+          throw err;
+        }
+        // File doesn't exist, that's ok
+      }
+
       res.json({
         message: "File deleted successfully"
       });
@@ -6436,8 +6448,28 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
   app.get("/api/storage/:filePath(*)", async (req, res) => {
     try {
       const filePath = req.params.filePath;
-      // TODO: Retrieve file from object storage and send it
-      res.status(404).json({ message: "File not found" });
+      const fs = await import('fs/promises');
+      const path = await import('path');
+
+      // Sanitize path to prevent directory traversal
+      const sanitizedPath = path.normalize(filePath).replace(/^(\.\.(\/|\\|$))+/, '');
+      const fullPath = path.join(process.cwd(), 'uploads', sanitizedPath);
+
+      // Check if file exists
+      try {
+        await fs.access(fullPath);
+      } catch {
+        // Also check attached_assets directory for static assets
+        const attachedPath = path.join(process.cwd(), 'attached_assets', sanitizedPath);
+        try {
+          await fs.access(attachedPath);
+          return res.sendFile(attachedPath);
+        } catch {
+          return res.status(404).json({ message: "File not found" });
+        }
+      }
+
+      res.sendFile(fullPath);
     } catch (err) {
       console.error("Error retrieving file:", err);
       res.status(500).json({ message: "Failed to retrieve file" });

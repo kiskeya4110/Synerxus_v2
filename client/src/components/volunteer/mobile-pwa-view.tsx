@@ -129,6 +129,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const pendingApplicationsCount = kpis.pendingApplications;
 
   // Impact Over Time data - use pre-calculated monthlyImpactData from server
+  // AIU is now calculated from actual verified peopleImpacted data, not hours * arbitrary multiplier
   const impactOverTimeData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -140,20 +141,24 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         const [year, monthNum] = (item.month || '').split('-');
         const monthIndex = parseInt(monthNum, 10) - 1;
         const monthLabel = monthNames[monthIndex] || item.month;
-        
-        // Calculate AIU: hours * 0.15 (standard AIU formula)
+
+        // Use actual peopleImpacted from server (already verification-weighted)
+        // This replaces the arbitrary hours * 0.15 formula
         const hours = Number(item.hours) || 0;
-        const aiu = hours * 0.15;
+        const peopleImpacted = Number(item.peopleImpacted) || 0;
+        // AIU is the verified people impacted count from the server
+        const aiu = peopleImpacted;
 
         return {
           month: monthLabel,
           hours: hours,
-          aiu: parseFloat(aiu.toFixed(2))
+          aiu: aiu
         };
       });
     }
 
     // Fallback: calculate from volunteerActivities if server data not available
+    // Note: This fallback cannot access verified impact data, so it shows hours only
     const currentMonth = new Date().getMonth();
     return monthNames.slice(0, currentMonth + 1).map((month, idx) => {
       const monthActivities = (volunteerActivities || []).filter((a: any) => {
@@ -166,11 +171,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         }
       });
       const hours = monthActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0);
-      const aiu = hours * 0.15;
+      // Without server data, we cannot accurately calculate AIU - show 0 until data is loaded
       return {
         month,
         hours: hours,
-        aiu: parseFloat(aiu.toFixed(2))
+        aiu: 0
       };
     });
   }, [dashboardData?.monthlyImpactData, volunteerActivities]);
@@ -760,9 +765,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </span>
                   </div>
 
-                  {/* Enhanced Pie Chart with center label */}
-                  <div className="h-52 w-full relative">
-                    <ResponsiveContainer width="100%" height="100%">
+                  {/* Enhanced Pie Chart with center label showing average completion */}
+                  <div className="h-52 w-full relative" style={{ isolation: 'isolate' }}>
+                    <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-tooltip-wrapper]:!z-[9999] [&_.recharts-tooltip-wrapper]:!pointer-events-none">
                       <PieChart>
                         <Pie
                           data={sdgDistribution}
@@ -785,13 +790,15 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           ))}
                         </Pie>
                         <Tooltip
+                          wrapperStyle={{ zIndex: 100, pointerEvents: 'none' }}
+                          allowEscapeViewBox={{ x: true, y: true }}
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
                               const totalHours = sdgDistribution.reduce((sum, s) => sum + s.value, 0);
                               const percentage = totalHours > 0 ? Math.round((data.value / totalHours) * 100) : 0;
                               return (
-                                <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-3 text-xs min-w-[180px]">
+                                <div className="bg-white border border-slate-200 rounded-xl shadow-xl p-3 text-xs min-w-[180px] z-[100]">
                                   <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-100">
                                     <div
                                       className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
@@ -817,10 +824,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                                       <span className="text-slate-500">Share:</span>
                                       <span className="font-semibold text-blue-600">{percentage}%</span>
                                     </div>
-                                    <div className="flex justify-between">
-                                      <span className="text-slate-500">Impact:</span>
-                                      <span className="font-semibold text-emerald-600">{Math.round(data.value * 0.15)} AIU</span>
-                                    </div>
                                   </div>
                                 </div>
                               );
@@ -830,13 +833,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         />
                       </PieChart>
                     </ResponsiveContainer>
-                    {/* Center Label */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-slate-800">
-                          {Math.round(sdgDistribution.reduce((sum, s) => sum + s.value, 0))}
+                    {/* Center Label - Shows Average Completion Percentage */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 1 }}>
+                      <div className="text-center bg-white/90 rounded-full w-[90px] h-[90px] flex flex-col items-center justify-center shadow-sm">
+                        <div className="text-2xl font-bold text-emerald-600">
+                          {kpis.totalTasks > 0 ? Math.round((kpis.completedTasks / kpis.totalTasks) * 100) : 0}%
                         </div>
-                        <div className="text-[10px] text-slate-500">Total Hours</div>
+                        <div className="text-[9px] text-slate-500 leading-tight">Avg Completion</div>
                       </div>
                     </div>
                   </div>
@@ -846,7 +849,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     {sdgDistribution.slice(0, 6).map((sdg) => {
                       const totalHours = sdgDistribution.reduce((sum, s) => sum + s.value, 0);
                       const percentage = totalHours > 0 ? Math.round((sdg.value / totalHours) * 100) : 0;
-                      const aiuEarned = Math.round(sdg.value * 0.15); // Round AIU to whole number
                       return (
                         <button
                           key={sdg.sdg}
@@ -865,7 +867,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                               <span className="text-slate-600 text-[10px] font-medium">{Math.round(sdg.value)} hrs</span>
                               <span className="text-blue-600 text-[9px] bg-blue-50 px-1.5 py-0.5 rounded font-medium">{percentage}%</span>
                             </div>
-                            <div className="text-emerald-600 text-[9px] mt-0.5">{aiuEarned} AIU earned</div>
+                            <div className="text-emerald-600 text-[9px] mt-0.5">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</div>
                           </div>
                         </button>
                       );
@@ -1677,15 +1679,18 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
                 {sdgDistribution.length > 0 ? (
                   <>
-                    <div className="h-32">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-32" style={{ isolation: 'isolate' }}>
+                      <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-tooltip-wrapper]:!z-[9999]">
                         <BarChart data={sdgDistribution.slice(0, 4)} layout="horizontal">
                           <XAxis type="category" dataKey="sdg" stroke="#9CA3AF" fontSize={10} tickFormatter={(val) => `SDG ${val}`} />
                           <YAxis type="number" stroke="#9CA3AF" fontSize={10} />
                           <Tooltip
-                            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                            labelStyle={{ color: '#fff' }}
-                            formatter={(value: number, name: string) => [value, 'Projects']}
+                            wrapperStyle={{ zIndex: 9999 }}
+                            allowEscapeViewBox={{ x: true, y: true }}
+                            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                            labelStyle={{ color: '#1f2937', fontWeight: 600 }}
+                            formatter={(value: number, name: string) => [value, 'Hours']}
+                            labelFormatter={(label) => `SDG ${label}`}
                           />
                           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                             {sdgDistribution.slice(0, 4).map((entry, index) => (
@@ -1730,21 +1735,27 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       </div>
                       <div className="flex items-center gap-1">
                         <div className="w-3 h-0.5 bg-[#E91E63]"></div>
-                        <span className="text-slate-600">AIUs Earned</span>
+                        <span className="text-slate-600">People Impacted</span>
                       </div>
                     </div>
-                    <div className="h-32">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-32" style={{ isolation: 'isolate' }}>
+                      <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-tooltip-wrapper]:!z-[9999]">
                         <LineChart data={impactOverTimeData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                           <XAxis dataKey="month" stroke="#9CA3AF" fontSize={10} />
                           <YAxis stroke="#9CA3AF" fontSize={10} />
                           <Tooltip
-                            contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px' }}
-                            labelStyle={{ color: '#fff' }}
+                            wrapperStyle={{ zIndex: 9999 }}
+                            allowEscapeViewBox={{ x: true, y: true }}
+                            contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                            labelStyle={{ color: '#1f2937', fontWeight: 600 }}
+                            formatter={(value: number, name: string) => [
+                              value,
+                              name === 'hours' ? 'Hours' : 'People Impacted'
+                            ]}
                           />
-                          <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} />
-                          <Line type="monotone" dataKey="aiu" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} />
+                          <Line type="monotone" dataKey="hours" stroke="#4CAF50" strokeWidth={2} dot={{ fill: '#4CAF50', r: 3 }} name="hours" />
+                          <Line type="monotone" dataKey="aiu" stroke="#E91E63" strokeWidth={2} dot={{ fill: '#E91E63', r: 3 }} name="aiu" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>

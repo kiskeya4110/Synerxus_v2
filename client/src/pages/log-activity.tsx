@@ -10,9 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Save, ArrowLeft, CheckCircle, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, TrendingUp, Users, Briefcase, Lightbulb, BarChart3, ClipboardList, Target, Circle, Play, ChevronDown, ChevronUp, X } from "lucide-react";
 import { format } from "date-fns";
 import type { User } from "@shared/schema";
 import logoUrl from "@assets/Synerxus Modern Logo  NBG_1763706841211.png";
@@ -27,17 +28,25 @@ export default function LogActivity() {
 
   // Activity form state
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [selectedTaskId, setSelectedTaskId] = useState<string>("");
   const [date, setDate] = useState<Date>(new Date());
   const [hours, setHours] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [activityType, setActivityType] = useState<string>("volunteering");
+  const [showTasksSection, setShowTasksSection] = useState<boolean>(true);
 
   // Impact form state
   const [impactProjectId, setImpactProjectId] = useState<string>("");
+  const [impactTaskId, setImpactTaskId] = useState<string>("");
   const [impactDate, setImpactDate] = useState<Date>(new Date());
   const [peopleReached, setPeopleReached] = useState<string>("");
   const [impactDescription, setImpactDescription] = useState<string>("");
   const [impactCategory, setImpactCategory] = useState<string>("direct");
+  const [showImpactTasksSection, setShowImpactTasksSection] = useState<boolean>(true);
+
+  // Task comment modal state
+  const [selectedTaskForComment, setSelectedTaskForComment] = useState<any>(null);
+  const [taskComment, setTaskComment] = useState<string>("");
 
   // Fetch current user
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
@@ -92,6 +101,26 @@ export default function LogActivity() {
     (m: any) => m.name === "Lives Impacted" || m.category === "general"
   )?.id || 1;
 
+  // Fetch all tasks
+  const { data: allTasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/tasks"],
+    queryFn: async () => {
+      const response = await fetch("/api/tasks");
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Get tasks for selected project (activity form)
+  const projectTasks = selectedProjectId
+    ? allTasks.filter((task: any) => task.projectId === parseInt(selectedProjectId))
+    : [];
+
+  // Get tasks for impact project
+  const impactProjectTasks = impactProjectId
+    ? allTasks.filter((task: any) => task.projectId === parseInt(impactProjectId))
+    : [];
+
   // Get available projects - show all projects, prioritizing assigned ones
   // Get assigned project IDs for reference
   const assignedProjectIds = new Set(
@@ -134,6 +163,7 @@ export default function LogActivity() {
 
       // Reset form
       setSelectedProjectId("");
+      setSelectedTaskId("");
       setHours("");
       setDescription("");
       setActivityType("volunteering");
@@ -170,6 +200,7 @@ export default function LogActivity() {
 
       // Reset form
       setImpactProjectId("");
+      setImpactTaskId("");
       setPeopleReached("");
       setImpactDescription("");
       setImpactCategory("direct");
@@ -199,6 +230,7 @@ export default function LogActivity() {
     const activityData = {
       userId: currentUser?.id,
       projectId: parseInt(selectedProjectId),
+      taskId: selectedTaskId ? parseInt(selectedTaskId) : null,
       date: format(date, "yyyy-MM-dd"),
       hours: parseFloat(hours),
       description: description || null,
@@ -224,6 +256,7 @@ export default function LogActivity() {
     // Uses value field (lives impacted) and includes userId for tracking
     const impactData = {
       projectId: parseInt(impactProjectId),
+      taskId: impactTaskId ? parseInt(impactTaskId) : null,
       userId: currentUser?.id,
       metricId: livesImpactedMetricId, // Use dynamically fetched "Lives Impacted" metric ID
       value: parseInt(peopleReached), // Lives impacted / people reached
@@ -434,6 +467,85 @@ export default function LogActivity() {
                 </Select>
               </div>
 
+              {/* Tasks Section - Collapsible list of project tasks */}
+              {selectedProjectId && projectTasks.length > 0 && (
+                <div className={`space-y-2 rounded-lg border ${isMobile && isVolunteer ? 'border-amber-200/60 bg-amber-50/50' : 'border-slate-200 bg-slate-50'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowTasksSection(!showTasksSection)}
+                    className={`w-full flex items-center justify-between p-3 ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-emerald-500" />
+                      <span className="font-medium text-sm">Project Tasks ({projectTasks.length})</span>
+                    </div>
+                    {showTasksSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+
+                  {showTasksSection && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {projectTasks.map((task: any) => {
+                        const isSelected = selectedTaskId === task.id.toString();
+                        const statusColor = task.status?.toLowerCase() === 'completed' ? 'bg-emerald-500' :
+                                           task.status?.toLowerCase() === 'in progress' ? 'bg-blue-500' : 'bg-gray-400';
+                        const StatusIcon = task.status?.toLowerCase() === 'completed' ? CheckCircle :
+                                          task.status?.toLowerCase() === 'in progress' ? Play : Circle;
+
+                        return (
+                          <div
+                            key={task.id}
+                            className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-emerald-500 bg-emerald-50'
+                                : isMobile && isVolunteer
+                                  ? 'border-slate-200 bg-white hover:border-emerald-300'
+                                  : 'border-slate-200 bg-white hover:border-emerald-300'
+                            }`}
+                            onClick={() => setSelectedTaskId(isSelected ? "" : task.id.toString())}
+                          >
+                            <div className={`w-5 h-5 rounded-full ${statusColor} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                              <StatusIcon className="w-3 h-3 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-medium text-sm truncate ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>{task.title}</p>
+                              {task.description && (
+                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{task.description}</p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1">
+                                {task.priority && (
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                                    task.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                    task.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {task.priority}
+                                  </span>
+                                )}
+                                {isSelected && (
+                                  <span className="text-[10px] text-emerald-600 font-medium">✓ Selected</span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTaskForComment(task);
+                                setTaskComment(description || "");
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded transition-colors"
+                              title="Add comment for this task"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Date Selection */}
               <div className="space-y-2">
                 <Label htmlFor="date" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
@@ -575,6 +687,85 @@ export default function LogActivity() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Tasks Section for Impact - Collapsible list of project tasks */}
+              {impactProjectId && impactProjectTasks.length > 0 && (
+                <div className={`space-y-2 rounded-lg border ${isMobile && isVolunteer ? 'border-amber-200/60 bg-amber-50/50' : 'border-slate-200 bg-slate-50'}`}>
+                  <button
+                    type="button"
+                    onClick={() => setShowImpactTasksSection(!showImpactTasksSection)}
+                    className={`w-full flex items-center justify-between p-3 ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-emerald-500" />
+                      <span className="font-medium text-sm">Project Tasks ({impactProjectTasks.length})</span>
+                    </div>
+                    {showImpactTasksSection ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </button>
+
+                  {showImpactTasksSection && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {impactProjectTasks.map((task: any) => {
+                        const isSelected = impactTaskId === task.id.toString();
+                        const statusColor = task.status?.toLowerCase() === 'completed' ? 'bg-emerald-500' :
+                                           task.status?.toLowerCase() === 'in progress' ? 'bg-blue-500' : 'bg-gray-400';
+                        const StatusIcon = task.status?.toLowerCase() === 'completed' ? CheckCircle :
+                                          task.status?.toLowerCase() === 'in progress' ? Play : Circle;
+
+                        return (
+                          <div
+                            key={task.id}
+                            className={`flex items-start gap-3 p-2.5 rounded-lg border transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-emerald-500 bg-emerald-50'
+                                : isMobile && isVolunteer
+                                  ? 'border-slate-200 bg-white hover:border-emerald-300'
+                                  : 'border-slate-200 bg-white hover:border-emerald-300'
+                            }`}
+                            onClick={() => setImpactTaskId(isSelected ? "" : task.id.toString())}
+                          >
+                            <div className={`w-5 h-5 rounded-full ${statusColor} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                              <StatusIcon className="w-3 h-3 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`font-medium text-sm truncate ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>{task.title}</p>
+                              {task.description && (
+                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{task.description}</p>
+                              )}
+                              <div className="flex items-center gap-2 mt-1">
+                                {task.priority && (
+                                  <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                                    task.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                    task.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {task.priority}
+                                  </span>
+                                )}
+                                {isSelected && (
+                                  <span className="text-[10px] text-emerald-600 font-medium">✓ Selected</span>
+                                )}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTaskForComment(task);
+                                setTaskComment(impactDescription || "");
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded transition-colors"
+                              title="Add comment for this task"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Date Selection */}
               <div className="space-y-2">
@@ -771,6 +962,71 @@ export default function LogActivity() {
           </div>
         </nav>
       )}
+
+      {/* Task Comment Modal */}
+      <Dialog open={!!selectedTaskForComment} onOpenChange={() => setSelectedTaskForComment(null)}>
+        <DialogContent className={`max-w-md ${isMobile && isVolunteer ? 'bg-white' : ''}`}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-emerald-500" />
+              Add Comment for Task
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedTaskForComment && (
+              <div className={`p-3 rounded-lg ${isMobile && isVolunteer ? 'bg-amber-50 border border-amber-200/60' : 'bg-slate-50'}`}>
+                <p className={`font-medium text-sm ${isMobile && isVolunteer ? 'text-slate-800' : ''}`}>
+                  {selectedTaskForComment.title}
+                </p>
+                {selectedTaskForComment.description && (
+                  <p className="text-xs text-slate-500 mt-1">{selectedTaskForComment.description}</p>
+                )}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="task-comment" className={isMobile && isVolunteer ? 'text-slate-700' : ''}>
+                Comment / Notes
+              </Label>
+              <Textarea
+                id="task-comment"
+                value={taskComment}
+                onChange={(e) => setTaskComment(e.target.value)}
+                placeholder="Describe what you accomplished on this task..."
+                rows={4}
+                className={isMobile && isVolunteer ? 'bg-slate-50 border-slate-200 text-slate-800 placeholder:text-slate-400' : ''}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  if (activeTab === 'activity') {
+                    setDescription(taskComment);
+                    setSelectedTaskId(selectedTaskForComment?.id?.toString() || "");
+                  } else {
+                    setImpactDescription(taskComment);
+                    setImpactTaskId(selectedTaskForComment?.id?.toString() || "");
+                  }
+                  setSelectedTaskForComment(null);
+                  setTaskComment("");
+                }}
+                className={`flex-1 ${isMobile && isVolunteer ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : ''}`}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Apply Comment
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedTaskForComment(null);
+                  setTaskComment("");
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

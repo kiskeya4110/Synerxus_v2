@@ -152,6 +152,10 @@ export default function ProjectDetail() {
 
   const { toast } = useToast();
 
+  // Delete task dialog state - moved to top for React Hooks rules
+  const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
+
   const updateLivesImpactedMutation = useMutation({
     mutationFn: async (livesImpacted: number) => {
       return apiRequest("PATCH", `/api/projects/${projectId}`, { livesImpacted });
@@ -247,10 +251,6 @@ export default function ProjectDetail() {
   const isOrganization = currentUser?.userType === 'organization';
   const canEditProject = currentUser?.userType === 'organization' && 
                         project?.organizationId === currentUser?.organizationId;
-
-  // Delete task dialog state
-  const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
 
   const handleDeleteTask = (taskId: number) => {
     setTaskToDelete(taskId);

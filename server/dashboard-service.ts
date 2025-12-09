@@ -56,11 +56,22 @@ export async function getVisibleProjectIdsForVolunteer(
 /**
  * Shared utility: Calculate total people impacted from impact metrics
  * Filters impacts to only people-related metrics and sums their values
+ * Uses verification-weighted calculation: verified at 100%, pending/self-reported at 70%
  */
 function calculatePeopleImpacted(impacts: any[], peopleMetricIds: Set<number>): number {
-  return impacts
-    .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
+  const peopleImpacts = impacts.filter(i => i.metricId && peopleMetricIds.has(i.metricId));
+
+  // Verified impacts count at 100%
+  const verifiedSum = peopleImpacts
+    .filter(i => i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
     .reduce((sum, i) => sum + (i.value || 0), 0);
+
+  // Pending/self-reported impacts count at 70% (matching RELIABILITY_MULTIPLIERS.pending)
+  const pendingSum = peopleImpacts
+    .filter(i => i.verificationStatus === 'pending' || i.verificationStatus === 'self_reported' || !i.verificationStatus)
+    .reduce((sum, i) => sum + (i.value || 0), 0);
+
+  return verifiedSum + Math.round(pendingSum * 0.7);
 }
 
 /**
@@ -864,11 +875,22 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       );
       const volunteersCount = projectVolunteerIds.size;
 
-      // Calculate AIU earned for this project (from impacts)
+      // Calculate AIU earned for this project (from VERIFIED impacts only)
+      // Filter to only include verified/approved impacts to prevent falsely submitted data
       const projectImpacts = allImpacts.filter(i => i.projectId === project.id);
-      const livesImpacted = projectImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
-      // AIU formula: lives impacted * hours factor (simplified)
-      const aiuEarned = livesImpacted > 0 ? livesImpacted : Math.round(totalHoursLogged * 0.5);
+      const verifiedImpacts = projectImpacts.filter(i =>
+        i.verificationStatus === 'verified' || i.verificationStatus === 'approved'
+      );
+      // Use verified impacts for AIU calculation; fall back to pending impacts weighted at 70%
+      const verifiedLivesImpacted = verifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+      const pendingImpacts = projectImpacts.filter(i =>
+        i.verificationStatus === 'pending' || i.verificationStatus === 'self_reported'
+      );
+      const pendingLivesImpacted = pendingImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+      // Weighted sum: verified at 100%, pending/self-reported at 70% (matching RELIABILITY_MULTIPLIERS.pending)
+      const livesImpacted = verifiedLivesImpacted + Math.round(pendingLivesImpacted * 0.7);
+      // AIU formula: use calculated lives impacted, no arbitrary hours fallback
+      const aiuEarned = livesImpacted;
 
       return {
         ...project,

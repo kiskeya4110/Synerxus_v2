@@ -30,7 +30,8 @@
       "Bash(sort:*)",
       "Bash(git checkout:*)",
       "Bash(tree:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(fuser:*)"
     ],
     "deny": [],
     "ask": []

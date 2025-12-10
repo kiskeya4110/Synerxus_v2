@@ -1857,12 +1857,12 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
     const activities = await storage.listEmployeeActivityLogs?.() || [];
     const commitments = await storage.listEmployeeCommitments?.() || [];
     const milestones = await storage.listEmployeeMilestones?.() || [];
-    const employerLinks = await storage.listVolunteerEmployerLinks?.() || [];
 
     // Get volunteer activities for employees linked to this partner
+    // Use the same helper function as the main dashboard to ensure consistency
     const volunteerActivities = await storage.listVolunteerActivities?.() || [];
-    const partnerEmployeeIds = employerLinks.filter((link: any) => link.partnerId === userPartner.id).map((link: any) => link.volunteerId);
-    const partnerActivities = volunteerActivities.filter((act: any) => partnerEmployeeIds.includes(act.userId));
+    const employeeUserIds = await getLinkedEmployeeUserIds(userPartner.id);
+    const partnerActivities = volunteerActivities.filter((act: any) => employeeUserIds.has(act.userId));
 
     // Count unique engaged employees from volunteer activities
     const engagedEmployees = new Set(partnerActivities.map((act: any) => act.userId)).size;
@@ -1888,21 +1888,34 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
     // Calculate engagement rate with REAL employee count (show 2 decimal places)
     const engagementRate = totalEmployeeCount > 0 ? parseFloat(((engagedEmployees / totalEmployeeCount) * 100).toFixed(2)) : 0;
 
-    // Get all volunteers for leaderboard
+    // Get all volunteers and users for leaderboard name lookup
     const allVolunteers = await storage.listVolunteers?.() || [];
+    const volunteerProfiles = await storage.listVolunteerProfiles?.() || [];
+    const users = await storage.listUsers?.() || [];
+
+    // Helper to get employee name from various sources
+    const getEmployeeName = (userId: number): string => {
+      const volunteer = allVolunteers.find((v: any) => v.userId === userId);
+      if (volunteer?.name) return volunteer.name;
+      const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
+      if (profile?.name) return profile.name;
+      const user = users.find((u: any) => u.id === userId);
+      if (user?.name) return user.name;
+      if (user?.email) return user.email.split('@')[0];
+      return `Employee ${userId}`;
+    };
 
     // Build real leaderboard from actual volunteer data
     const volunteerHoursMap = new Map<number, { name: string; hours: number; projects: number; skills: string[]; userId: number }>();
 
     for (const activity of partnerActivities) {
-      const volunteer = allVolunteers.find((v: any) => v.userId === activity.userId);
       const existing = volunteerHoursMap.get(activity.userId);
       if (existing) {
         existing.hours += activity.hours || 0;
         existing.projects = new Set([...partnerActivities.filter((a: any) => a.userId === activity.userId).map((a: any) => a.projectId)]).size;
       } else {
         volunteerHoursMap.set(activity.userId, {
-          name: volunteer?.name || `Employee ${activity.userId}`,
+          name: getEmployeeName(activity.userId),
           hours: activity.hours || 0,
           projects: 1,
           skills: activity.skills || [],
@@ -2015,7 +2028,6 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
       .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 5)
       .map((activity: any) => {
-        const volunteer = allVolunteers.find((v: any) => v.userId === activity.userId);
         const volData = volunteerHoursMap.get(activity.userId);
         let badge = 'Activity Logged';
         let icon = '📝';
@@ -2024,7 +2036,7 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
         else if (volData && volData.hours >= 10) { badge = 'Dedicated Volunteer'; icon = '⭐'; }
 
         return {
-          name: volunteer?.name || `Employee ${activity.userId}`,
+          name: getEmployeeName(activity.userId),
           badge,
           icon,
           time: getTimeAgo(new Date(activity.date)),

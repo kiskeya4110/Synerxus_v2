@@ -1050,15 +1050,20 @@ export default function CSRDashboard() {
                   <h3 className="text-slate-900 text-sm font-semibold mb-2">Top Volunteers</h3>
                   <div className="space-y-1.5">
                     {csrData.leaderboard.slice(0, 4).map((employee: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded bg-amber-50 border border-amber-200">
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedEmployee({ ...employee, rank: idx + 1 })}
+                        className="w-full flex items-center gap-2 p-1.5 rounded bg-amber-50 border border-amber-200 cursor-pointer hover:bg-amber-100 hover:border-amber-300 hover:shadow-sm transition-all active:scale-[0.98]"
+                      >
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-[10px]">
                           {idx + 1}
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 text-left">
                           <div className="text-slate-900 text-xs truncate font-medium">{employee.name || employee.employeeName}</div>
                         </div>
                         <div className="text-amber-700 font-semibold text-xs">{employee.hours}h</div>
-                      </div>
+                        <ChevronRight className="w-3 h-3 text-amber-400" />
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -1304,7 +1309,11 @@ export default function CSRDashboard() {
                     </thead>
                     <tbody>
                       {(csrData?.leaderboard || []).slice(0, 8).map((employee: any, idx: number) => (
-                        <tr key={idx} className="border-b border-slate-100">
+                        <tr
+                          key={idx}
+                          onClick={() => setSelectedEmployee({ ...employee, rank: idx + 1 })}
+                          className="border-b border-slate-100 cursor-pointer hover:bg-amber-50 transition-colors active:bg-amber-100"
+                        >
                           <td className="py-1.5">
                             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[9px] font-bold ${
                               idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-600' :
@@ -1422,6 +1431,7 @@ export default function CSRDashboard() {
                             src={getSDGIcon(sdg)}
                             alt={`SDG ${sdg}: ${getSDGName(sdg)}`}
                             className="w-full h-full object-cover"
+                            loading="lazy"
                           />
                           {hasActivity && (
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1">
@@ -1461,6 +1471,7 @@ export default function CSRDashboard() {
                                 src={getSDGIcon(metric.sdg)}
                                 alt={`SDG ${metric.sdg}`}
                                 className="w-6 h-6 rounded object-cover shadow-sm"
+                                loading="lazy"
                               />
                               <span className="text-slate-700 truncate max-w-[70px]">{getSDGName(metric.sdg)}</span>
                             </div>
@@ -2733,6 +2744,7 @@ export default function CSRDashboard() {
                             <img
                               src={getSDGIcon(sdgNum)}
                               alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
+                              loading="lazy"
                               style={{
                                 width: "36px",
                                 height: "36px",
@@ -3439,8 +3451,14 @@ export default function CSRDashboard() {
 
                   {/* AI Insights + Expansion Banner */}
                   <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
-                    {/* AI Insight */}
-                    <div style={{ flex: 1, padding: "10px 12px", backgroundColor: "#f0f9ff", borderRadius: "8px", borderLeft: "3px solid #3b82f6" }}>
+                    {/* AI Insight - Clickable */}
+                    <button
+                      onClick={() => setShowActiveSDGsModal(true)}
+                      title="Click to view SDG activity details"
+                      style={{ flex: 1, padding: "10px 12px", backgroundColor: "#f0f9ff", borderRadius: "8px", borderLeft: "3px solid #3b82f6", border: "1px solid #bfdbfe", cursor: "pointer", textAlign: "left", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#dbeafe"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.15)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#f0f9ff"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                    >
                       <p style={{ fontSize: "10px", fontWeight: "600", color: "#1e40af", marginBottom: "4px" }}>✨ AI INSIGHT</p>
                       <p style={{ fontSize: "11px", color: "#334155", lineHeight: "1.4", margin: 0 }}>
                         {(() => {
@@ -3452,7 +3470,7 @@ export default function CSRDashboard() {
                           return `${committedSDGEmployees} employees, ${committedSDGHours} hours.`;
                         })()}
                       </p>
-                    </div>
+                    </button>
 
                     {/* Expansion Opportunity */}
                     {employeeActivityOutsideCommitments.length > 0 && (
@@ -3508,32 +3526,56 @@ export default function CSRDashboard() {
                     </div>
                   </div>
 
-                  {/* Map Stats Row */}
+                  {/* Map Stats Row - Interactive buttons */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "16px" }}>
-                    <div style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                    <button
+                      onClick={() => setSelectedKPI("projects")}
+                      title="Click to view project details"
+                      style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.2)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                    >
                       <p style={{ fontSize: "18px", fontWeight: "bold", color: "#1e40af", margin: 0 }}>
                         {filteredProjectLocations.length}
                       </p>
                       <p style={{ fontSize: "9px", color: "#3b82f6", margin: "2px 0 0 0", fontWeight: "500" }}>PROJECTS</p>
-                    </div>
-                    <div style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                    </button>
+                    <button
+                      onClick={() => setShowEmployeesModal(true)}
+                      title="Click to view volunteer details"
+                      style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#22c55e"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(34,197,94,0.2)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                    >
                       <p style={{ fontSize: "18px", fontWeight: "bold", color: "#166534", margin: 0 }}>
                         {filteredProjectLocations.reduce((sum, p) => sum + (p.employees || 0), 0)}
                       </p>
                       <p style={{ fontSize: "9px", color: "#22c55e", margin: "2px 0 0 0", fontWeight: "500" }}>VOLUNTEERS</p>
-                    </div>
-                    <div style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                    </button>
+                    <button
+                      onClick={() => setShowTotalHoursModal(true)}
+                      title="Click to view hours breakdown"
+                      style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(245,158,11,0.2)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                    >
                       <p style={{ fontSize: "18px", fontWeight: "bold", color: "#92400e", margin: 0 }}>
                         {filteredProjectLocations.reduce((sum, p) => sum + (p.hours || 0), 0).toLocaleString()}
                       </p>
                       <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>HOURS</p>
-                    </div>
-                    <div style={{ backgroundColor: "#fae8ff", borderRadius: "8px", padding: "10px", textAlign: "center" }}>
+                    </button>
+                    <button
+                      onClick={() => setSelectedMapRegion("all")}
+                      title="Click to view all regions"
+                      style={{ backgroundColor: "#fae8ff", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#a855f7"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(168,85,247,0.2)"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                    >
                       <p style={{ fontSize: "18px", fontWeight: "bold", color: "#7e22ce", margin: 0 }}>
                         {new Set(filteredProjectLocations.map(p => p.region).filter(Boolean)).size}
                       </p>
                       <p style={{ fontSize: "9px", color: "#a855f7", margin: "2px 0 0 0", fontWeight: "500" }}>REGIONS</p>
-                    </div>
+                    </button>
                   </div>
 
                   {/* Filters Row */}
@@ -3754,26 +3796,44 @@ export default function CSRDashboard() {
 
                   {funnelData?.funnel ? (
                     <div>
-                      {/* Funnel Summary Stats */}
+                      {/* Funnel Summary Stats - Interactive */}
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "16px" }}>
-                        <div style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                        <button
+                          onClick={() => { setSelectedFunnelStage(0); setShowFunnelModal(true); }}
+                          title="Click to view enrolled employees"
+                          style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "12px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#22c55e"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(34,197,94,0.2)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                        >
                           <p style={{ fontSize: "20px", fontWeight: "bold", color: "#166534", margin: 0 }}>
                             {funnelData.funnel[0]?.count || 0}
                           </p>
                           <p style={{ fontSize: "9px", color: "#22c55e", margin: "2px 0 0 0", fontWeight: "500" }}>TOTAL ENROLLED</p>
-                        </div>
-                        <div style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                        </button>
+                        <button
+                          onClick={() => { setSelectedFunnelStage(2); setShowFunnelModal(true); }}
+                          title="Click to view active employees"
+                          style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "12px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.2)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                        >
                           <p style={{ fontSize: "20px", fontWeight: "bold", color: "#1e40af", margin: 0 }}>
                             {funnelData.conversion?.toActive || 0}%
                           </p>
                           <p style={{ fontSize: "9px", color: "#3b82f6", margin: "2px 0 0 0", fontWeight: "500" }}>TO ACTIVE</p>
-                        </div>
-                        <div style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "12px", textAlign: "center" }}>
+                        </button>
+                        <button
+                          onClick={() => { setSelectedFunnelStage(funnelData.funnel.length - 1); setShowFunnelModal(true); }}
+                          title="Click to view top performers"
+                          style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "12px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(245,158,11,0.2)"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "transparent"; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                        >
                           <p style={{ fontSize: "20px", fontWeight: "bold", color: "#92400e", margin: 0 }}>
                             {funnelData.conversion?.toTopPerformers || 0}%
                           </p>
                           <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>TOP PERFORMERS</p>
-                        </div>
+                        </button>
                       </div>
 
                       {/* Visual Funnel - Enhanced Crisp Design */}
@@ -5077,6 +5137,7 @@ export default function CSRDashboard() {
                       <img
                         src={getSDGIcon(selectedSDG)}
                         alt={`SDG ${selectedSDG}: ${getSDGName(selectedSDG)}`}
+                        loading="lazy"
                         style={{
                           width: "80px",
                           height: "80px",
@@ -6790,6 +6851,7 @@ export default function CSRDashboard() {
                       <img
                         src={getSDGIcon(sdgNum)}
                         alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
+                        loading="lazy"
                         style={{
                           width: "50px",
                           height: "50px",
@@ -6896,6 +6958,7 @@ export default function CSRDashboard() {
                         <img
                           src={getSDGIcon(metric.sdg)}
                           alt={`SDG ${metric.sdg}: ${getSDGName(metric.sdg)}`}
+                          loading="lazy"
                           style={{
                             width: "40px",
                             height: "40px",

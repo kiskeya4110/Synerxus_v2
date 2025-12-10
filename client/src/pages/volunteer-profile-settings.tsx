@@ -39,7 +39,9 @@ import {
   Globe,
   Award,
   Sliders,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -834,12 +836,19 @@ const SDGGoalsSection = ({ form }: { form: any }) => {
 export default function VolunteerProfileSettings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { signOut } = useAuth();
   const isMobile = useIsMobile();
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50);
   const [interestInput, setInterestInput] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const hasInitializedRef = useRef(false); // Track if form has been initialized
+
+  // Handle logout
+  const handleLogout = async () => {
+    await signOut();
+    setLocation('/');
+  };
 
   // Data fetching - ALWAYS use fresh user data, no caching
   const userId = localStorage.getItem("currentUserId");
@@ -1394,9 +1403,43 @@ export default function VolunteerProfileSettings() {
         </CardContent>
       </Card>
 
+      {/* Account Actions Section */}
+      <Card className="mt-6 border-red-200 dark:border-red-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+            <LogOut className="h-5 w-5" />
+            Account Actions
+          </CardTitle>
+          <CardDescription>
+            Sign out of your volunteer account
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white">Sign Out</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                End your current session and return to the landing page
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={handleLogout}
+              className="w-full sm:w-auto flex items-center gap-2"
+              data-testid="button-logout"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* PWA Bottom Navigation for Mobile */}
       {isMobile && (
-        <VolunteerPWANav userId={userId || undefined} activeTab="profile" />
+        <div className="pb-20">
+          <VolunteerPWANav userId={userId || undefined} activeTab="profile" />
+        </div>
       )}
     </div>
   );

@@ -1,9 +1,11 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Search, Briefcase, User, Settings, Menu, X } from "lucide-react";
+import { Home, Search, Briefcase, User, Settings, Menu, X, LogOut, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const VOLUNTEER_NAV_ITEMS = [
   { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
@@ -18,8 +20,9 @@ const MENU_ITEMS = [
 ];
 
 export default function VolunteerNav() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { signOut } = useAuth();
   const userId = localStorage.getItem('currentUserId');
 
   // Fetch current user to verify volunteer type
@@ -33,10 +36,19 @@ export default function VolunteerNav() {
     enabled: !!userId
   });
 
+  // Handle logout
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await signOut();
+    navigate('/');
+  };
+
   // Only show for volunteers on desktop (hide on mobile for PWA)
   if (currentUser?.userType !== 'volunteer') {
     return null;
   }
+
+  const userInitial = (currentUser?.displayName || currentUser?.name || 'V').charAt(0).toUpperCase();
 
   return (
     <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
@@ -68,49 +80,105 @@ export default function VolunteerNav() {
             })}
           </div>
 
-          {/* Hamburger Menu for Profile & Settings */}
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              aria-label="Menu"
-            >
-              {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+          {/* Right Section: Notifications + User Profile Menu */}
+          <div className="flex items-center gap-3">
+            {/* Notifications Bell */}
+            <Link href="/notifications">
+              <button
+                className="relative p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="w-5 h-5" />
+              </button>
+            </Link>
 
-            {/* Dropdown Menu */}
-            {menuOpen && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setMenuOpen(false)}
-                />
+            {/* User Profile Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="User menu"
+              >
+                <Avatar className="h-8 w-8 border-2 border-blue-500">
+                  <AvatarImage src={currentUser?.profilePicture} alt={currentUser?.displayName || 'User'} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold">
+                    {userInitial}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="hidden lg:inline text-sm font-medium max-w-[120px] truncate">
+                  {currentUser?.displayName || currentUser?.name || 'Volunteer'}
+                </span>
+                {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </button>
 
-                {/* Menu Panel */}
-                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-40">
-                  {MENU_ITEMS.map((item) => {
-                    const isActive = location === item.href;
-                    return (
-                      <Link key={item.href} href={item.href}>
-                        <button
-                          className={cn(
-                            "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors first:rounded-t-lg last:rounded-b-lg",
-                            isActive
-                              ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
-                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                          )}
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          {item.icon}
-                          <span className="font-medium">{item.label}</span>
-                        </button>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+              {/* Dropdown Menu */}
+              {menuOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setMenuOpen(false)}
+                  />
+
+                  {/* Menu Panel */}
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-40 overflow-hidden">
+                    {/* User Info Header */}
+                    <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10 border-2 border-blue-500">
+                          <AvatarImage src={currentUser?.profilePicture} alt={currentUser?.displayName || 'User'} />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
+                            {userInitial}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {currentUser?.displayName || currentUser?.name || 'Volunteer'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {currentUser?.email || 'volunteer@example.com'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Menu Items */}
+                    <div className="py-1">
+                      {MENU_ITEMS.map((item) => {
+                        const isActive = location === item.href;
+                        return (
+                          <Link key={item.href} href={item.href}>
+                            <button
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                isActive
+                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                  : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                              )}
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              {item.icon}
+                              <span className="font-medium">{item.label}</span>
+                            </button>
+                          </Link>
+                        );
+                      })}
+                    </div>
+
+                    {/* Logout Button */}
+                    <div className="border-t border-gray-200 dark:border-gray-600 py-1">
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span className="font-medium">Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

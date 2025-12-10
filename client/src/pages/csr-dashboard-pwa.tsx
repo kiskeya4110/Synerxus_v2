@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense, memo, useTransition } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -152,6 +152,7 @@ export default function CSRDashboardPWA() {
   const { toast } = useToast();
   const userId = localStorage.getItem("currentUserId");
   const menuRef = useRef<HTMLDivElement>(null);
+  const [isPending, startTransition] = useTransition();
 
   // State
   const [activeTab, setActiveTab] = useState<NavTab>('home');
@@ -415,35 +416,35 @@ export default function CSRDashboardPWA() {
                   {/* Navigation Items */}
                   <div className="py-1">
                     <button
-                      onClick={() => { setActiveTab('home'); setShowMenu(false); }}
+                      onClick={() => { startTransition(() => { setActiveTab('home'); setShowMenu(false); }); }}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'home' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
                     >
                       <Home className="w-4 h-4" />
                       <span>Dashboard Home</span>
                     </button>
                     <button
-                      onClick={() => { setActiveTab('sdgs'); setShowMenu(false); }}
+                      onClick={() => { startTransition(() => { setActiveTab('sdgs'); setShowMenu(false); }); }}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'sdgs' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
                     >
                       <Target className="w-4 h-4" />
                       <span>SDG Goals</span>
                     </button>
                     <button
-                      onClick={() => { setActiveTab('projects'); setShowMenu(false); }}
+                      onClick={() => { startTransition(() => { setActiveTab('projects'); setShowMenu(false); }); }}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'projects' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
                     >
                       <Briefcase className="w-4 h-4" />
                       <span>Projects</span>
                     </button>
                     <button
-                      onClick={() => { setActiveTab('reports'); setShowMenu(false); }}
+                      onClick={() => { startTransition(() => { setActiveTab('reports'); setShowMenu(false); }); }}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'reports' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
                     >
                       <FileText className="w-4 h-4" />
                       <span>Reports</span>
                     </button>
                     <button
-                      onClick={() => { setActiveTab('insights'); setShowMenu(false); }}
+                      onClick={() => { startTransition(() => { setActiveTab('insights'); setShowMenu(false); }); }}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'insights' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
                     >
                       <Sparkles className="w-4 h-4" />
@@ -524,7 +525,7 @@ export default function CSRDashboardPWA() {
             ].map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
-                onClick={() => setActiveTab(id as NavTab)}
+                onClick={() => startTransition(() => setActiveTab(id as NavTab))}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   activeTab === id
                     ? 'bg-slate-800 text-white'
@@ -581,7 +582,7 @@ export default function CSRDashboardPWA() {
                   subtitle={`$${((metrics?.economicValue || 0)).toLocaleString()} value`}
                   icon={Clock}
                   color="emerald"
-                  onClick={() => setSelectedKPI('hours')}
+                  onClick={() => startTransition(() => setSelectedKPI('hours'))}
                 />
                 <KPICard
                   title="Active Employees"
@@ -589,7 +590,7 @@ export default function CSRDashboardPWA() {
                   subtitle={`${metrics?.engagementRate || 0}% engaged`}
                   icon={Users}
                   color="blue"
-                  onClick={() => setSelectedKPI('employees')}
+                  onClick={() => startTransition(() => setSelectedKPI('employees'))}
                   trend={(metrics?.engagementRate || 0) > 50 ? 'up' : 'neutral'}
                 />
                 <KPICard
@@ -598,7 +599,7 @@ export default function CSRDashboardPWA() {
                   subtitle="@$35/hour"
                   icon={DollarSign}
                   color="amber"
-                  onClick={() => setSelectedKPI('impact')}
+                  onClick={() => startTransition(() => setSelectedKPI('impact'))}
                   format="currency"
                 />
                 <KPICard
@@ -607,7 +608,7 @@ export default function CSRDashboardPWA() {
                   subtitle={`${metrics?.activeProjects || 0} active`}
                   icon={Briefcase}
                   color="purple"
-                  onClick={() => setSelectedKPI('projects')}
+                  onClick={() => startTransition(() => setSelectedKPI('projects'))}
                 />
                 <KPICard
                   title="Active SDGs"
@@ -615,7 +616,7 @@ export default function CSRDashboardPWA() {
                   subtitle="of 17 goals"
                   icon={Target}
                   color="teal"
-                  onClick={() => setActiveTab('sdgs')}
+                  onClick={() => startTransition(() => setActiveTab('sdgs'))}
                   trend={(metrics?.sdgScoreDelta || 0) >= 0 ? 'up' : 'down'}
                 />
                 <KPICard
@@ -624,7 +625,7 @@ export default function CSRDashboardPWA() {
                   subtitle="lives impacted"
                   icon={Award}
                   color="rose"
-                  onClick={() => setSelectedKPI('beneficiaries')}
+                  onClick={() => startTransition(() => setSelectedKPI('beneficiaries'))}
                 />
               </div>
             </div>

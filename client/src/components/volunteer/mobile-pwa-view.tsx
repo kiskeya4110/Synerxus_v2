@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
 import {
   LineChart,
@@ -75,12 +76,20 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showKpiModal, setShowKpiModal] = useState<string | null>(null);
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+
+  // Handle logout using proper auth signOut
+  const handleLogout = async () => {
+    setShowMobileMenu(false);
+    await signOut();
+    navigate('/');
+  };
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -540,16 +549,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <span className="text-sm">Settings</span>
                   </button>
                   <button
-                    onClick={() => {
-                      localStorage.removeItem('currentUserId');
-                      localStorage.removeItem('userType');
-                      navigate('/login');
-                      setShowMobileMenu(false);
-                    }}
+                    onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span className="text-sm">Logout</span>
+                    <span className="text-sm">Sign Out</span>
                   </button>
                 </div>
               </>

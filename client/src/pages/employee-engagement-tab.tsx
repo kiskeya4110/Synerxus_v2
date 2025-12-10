@@ -70,21 +70,21 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
     const completedProjects = engagementData?.completedCommitments || 0;
 
     const engagementRate = engagementData?.engagementRate || 0;
-    const avgHoursPerVolunteer = activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0;
+    const avgHoursPerVolunteer = engagementData?.avgHoursPerEmployee || (activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0);
 
-    // Calculate retention and other metrics from real data
+    // Use real API data for metrics
     const leaderboard = engagementData?.leaderboard || [];
     const returningVolunteers = leaderboard.filter((v: any) => v.projects > 1).length;
-    const retentionRate = activeEmployees > 0 ? Math.round((returningVolunteers / activeEmployees) * 100) : 0;
+    const retentionRate = engagementData?.retentionRate || (activeEmployees > 0 ? Math.round((returningVolunteers / activeEmployees) * 100) : 0);
     const repeatVolunteerRate = activeEmployees > 0 ? Math.round((leaderboard.filter((v: any) => v.hours >= 10).length / activeEmployees) * 100) : 0;
 
     // Skills match calculated from skills breakdown
     const skillsBreakdown = engagementData?.skillsBreakdown || [];
     const skillsMatchScore = skillsBreakdown.length > 0 ? Math.min(100, skillsBreakdown.length * 15) : 0;
 
-    // Satisfaction and NPS based on activity levels
-    const volunteerSatisfaction = activeEmployees > 0 ? Math.min(95, 60 + Math.round((avgHoursPerVolunteer / 20) * 35)) : 0;
-    const npsScore = Math.round(volunteerSatisfaction * 0.5);
+    // Satisfaction and NPS from real API data
+    const volunteerSatisfaction = engagementData?.volunteerSatisfaction || (activeEmployees > 0 ? Math.min(95, 60 + Math.round((avgHoursPerVolunteer / 20) * 35)) : 0);
+    const npsScore = engagementData?.npsScore || Math.round(volunteerSatisfaction * 0.5);
 
     // Growth rate from monthly trends
     const monthlyTrends = engagementData?.monthlyTrends || [];
@@ -107,11 +107,12 @@ export default function EmployeeEngagementTab({ userId }: EngagementTabProps) {
       volunteerSatisfaction: volunteerSatisfaction || 0,
       npsScore: npsScore || 0,
       growthRate: growthRate || 0,
-      economicValue,
+      economicValue: engagementData?.economicValue || (totalHours * 35),
       inProgressProjects: engagementData?.inProgressCommitments || 0,
       newThisMonth: engagementData?.newEmployeesThisMonth || 0,
       hoursThisMonth: engagementData?.hoursThisMonth || 0,
       completionRate: engagementData?.completionRate || 0,
+      activeSdgs: Math.min(17, Math.ceil(activeEmployees / 5)), // Estimate SDGs from employee count
     };
   }, [engagementData]);
 

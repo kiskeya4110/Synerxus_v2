@@ -206,7 +206,7 @@ export default function Header() {
           data-testid="button-logo-header"
           title={user ? "Go to dashboard" : "Go to home"}
         >
-          <Logo size="sm" showMotto={true} showIcon={true} />
+          <Logo size="sm" showMotto={true} showIcon={true} clickable={false} />
         </button>
 
         {/* Logo mobile version - icon only */}
@@ -216,7 +216,7 @@ export default function Header() {
           data-testid="button-logo-header-mobile"
           title={user ? "Go to dashboard" : "Go to home"}
         >
-          <Logo size="sm" showMotto={false} showIcon={true} />
+          <Logo size="sm" showMotto={false} showIcon={true} clickable={false} />
         </button>
         
         {/* Home Button - Show only when not logged in */}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -49,25 +49,50 @@ import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
+
+// Lazy load heavy chart components for better initial load
+const LineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
+const AreaChart = lazy(() => import("recharts").then(m => ({ default: m.AreaChart })));
+const BarChart = lazy(() => import("recharts").then(m => ({ default: m.BarChart })));
+const RechartsPieChart = lazy(() => import("recharts").then(m => ({ default: m.PieChart })));
+
+// Regular imports for non-heavy chart parts
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  AreaChart,
   Area,
-  PieChart as RechartsPieChart,
   Pie,
   Cell,
-  BarChart,
   Bar,
   Legend
 } from "recharts";
-import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+
+// Lazy load map components
+const MapContainer = lazy(() => import("react-leaflet").then(m => ({ default: m.MapContainer })));
+const TileLayer = lazy(() => import("react-leaflet").then(m => ({ default: m.TileLayer })));
+const CircleMarker = lazy(() => import("react-leaflet").then(m => ({ default: m.CircleMarker })));
+const Popup = lazy(() => import("react-leaflet").then(m => ({ default: m.Popup })));
 import "leaflet/dist/leaflet.css";
+
+// Loading fallback for charts
+const ChartSkeleton = memo(({ height = "h-40" }: { height?: string }) => (
+  <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
+    <div className="text-slate-400 text-xs">Loading chart...</div>
+  </div>
+));
+ChartSkeleton.displayName = "ChartSkeleton";
+
+// Loading fallback for map
+const MapSkeleton = memo(() => (
+  <div className="h-48 bg-slate-100 animate-pulse rounded-lg flex items-center justify-center">
+    <MapPin className="w-6 h-6 text-slate-400 animate-bounce" />
+  </div>
+));
+MapSkeleton.displayName = "MapSkeleton";
 
 // Types
 interface CSRDashboardData {

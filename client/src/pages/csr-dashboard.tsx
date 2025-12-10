@@ -61,15 +61,38 @@ import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { useState, useEffect } from "react";
 import { ConfirmDialog } from "@/components/ui/dialog-factory";
 import { safeArray, safeMap, safeFilter, safeReduce } from "@/lib/safe-array";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import EmployeeEngagementTab from "./employee-engagement-tab";
+import { lazy, Suspense, useMemo, useCallback, memo } from "react";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
+
+// Lazy load heavy components for better initial load time
+const MapContainer = lazy(() => import("react-leaflet").then(m => ({ default: m.MapContainer })));
+const TileLayer = lazy(() => import("react-leaflet").then(m => ({ default: m.TileLayer })));
+const Marker = lazy(() => import("react-leaflet").then(m => ({ default: m.Marker })));
+const Popup = lazy(() => import("react-leaflet").then(m => ({ default: m.Popup })));
+const EmployeeEngagementTab = lazy(() => import("./employee-engagement-tab"));
+
+// Import Leaflet for marker icon configuration
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Skeleton component for lazy-loaded sections
+const ChartSkeleton = memo(({ height = "h-64" }: { height?: string }) => (
+  <div className={`${height} bg-slate-100 animate-pulse rounded-lg flex items-center justify-center`}>
+    <div className="text-slate-400 text-sm">Loading chart...</div>
+  </div>
+));
+ChartSkeleton.displayName = "ChartSkeleton";
+
+const MapSkeleton = memo(() => (
+  <div className="h-64 bg-slate-100 animate-pulse rounded-lg flex items-center justify-center">
+    <div className="text-slate-400 text-sm">Loading map...</div>
+  </div>
+));
+MapSkeleton.displayName = "MapSkeleton";
 
 interface SDGEmployee {
   name: string;
@@ -436,53 +459,88 @@ export default function CSRDashboard() {
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          backgroundColor: "#faf9f7",
-        }}
-      >
-        <div
-          style={{ height: "64px", backgroundColor: "#1e3a8a", flexShrink: 0 }}
-        />
-        <div
-          style={{ display: "flex", flex: 1 }}
-        >
-          <div
-            style={{ width: "20%", backgroundColor: "#1e3a8a", flexShrink: 0 }}
-          />
-          <div
-            style={{
-              width: "80%",
-              backgroundColor: "#f9fafb",
-              padding: "32px",
-            }}
-          >
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gap: "16px",
-                marginBottom: "24px",
-              }}
-            >
+      <div className="flex flex-col min-h-screen bg-[#faf9f7]">
+        {/* Header Skeleton */}
+        <div className="h-16 bg-gradient-to-r from-blue-900 to-blue-800 flex-shrink-0 flex items-center px-6">
+          <Skeleton className="h-8 w-32 bg-blue-700/50" />
+          <div className="ml-auto flex items-center gap-4">
+            <Skeleton className="h-8 w-24 bg-blue-700/50" />
+            <Skeleton className="h-10 w-10 rounded-full bg-blue-700/50" />
+          </div>
+        </div>
+
+        <div className="flex flex-1">
+          {/* Sidebar Skeleton */}
+          <div className="w-[240px] bg-gradient-to-b from-blue-900 to-blue-950 flex-shrink-0 p-4 space-y-3 hidden md:block">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-10 bg-blue-800/50 rounded-lg" />
+            ))}
+          </div>
+
+          {/* Main Content Skeleton */}
+          <div className="flex-1 bg-slate-50 p-6 md:p-8 overflow-auto">
+            {/* Page Title Skeleton */}
+            <div className="mb-6">
+              <Skeleton className="h-8 w-64 bg-slate-200 mb-2" />
+              <Skeleton className="h-4 w-40 bg-slate-200" />
+            </div>
+
+            {/* KPI Cards Skeleton with shimmer effect */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-24 bg-slate-200" />
+                <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-20 bg-slate-200" />
+                    <Skeleton className="h-8 w-8 rounded-lg bg-slate-100" />
+                  </div>
+                  <Skeleton className="h-8 w-24 bg-slate-200" />
+                  <Skeleton className="h-3 w-32 bg-slate-100" />
+                </div>
               ))}
             </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "24px",
-              }}
-            >
-              <Skeleton className="h-96 bg-slate-200" />
-              <Skeleton className="h-96 bg-slate-200" />
-              <Skeleton className="h-48 bg-slate-200" />
-              <Skeleton className="h-48 bg-slate-200" />
+
+            {/* Charts Row Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-40 bg-slate-200 mb-4" />
+                <div className="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-200 animate-pulse" />
+                    <Skeleton className="h-4 w-32 bg-slate-200 mx-auto" />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-36 bg-slate-200 mb-4" />
+                <div className="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-200 animate-pulse" />
+                    <Skeleton className="h-4 w-32 bg-slate-200 mx-auto" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Row Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-32 bg-slate-200 mb-4" />
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full bg-slate-200" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-full bg-slate-200 mb-1" />
+                        <Skeleton className="h-3 w-2/3 bg-slate-100" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-28 bg-slate-200 mb-4" />
+                <div className="h-48 bg-slate-50 rounded-lg" />
+              </div>
             </div>
           </div>
         </div>
@@ -490,311 +548,269 @@ export default function CSRDashboard() {
     );
   }
 
-  const companyName = csrData?.companyName || csrData?.partners?.[0]?.companyName || "Loading...";
-  const currentDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const adminName = user?.displayName || user?.email?.split('@')[0] || "Admin";
+  // ===== MEMOIZED COMPUTED VALUES FOR PERFORMANCE =====
+  // These computations are expensive and should only recalculate when dependencies change
 
-  // Calculate SDG percentages based on real employee contribution data
-  const sdgMetrics = csrData?.sdgMetrics || [];
-  const totalSDGHours = sdgMetrics.reduce(
-    (sum: number, metric: any) => sum + (metric.totalHours || 0),
-    0,
+  const companyName = useMemo(() =>
+    csrData?.companyName || csrData?.partners?.[0]?.companyName || "Loading...",
+    [csrData?.companyName, csrData?.partners]
   );
 
-  // Get organization's committed SDGs first (needed for filtering)
-  const committedSDGsList = csrData?.primarySdgs || [];
+  const currentDate = useMemo(() =>
+    new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    []
+  );
 
-  // Build SDG chart data from real metrics - ONLY show SDGs in corporate commitments
-  // Sort numerically by SDG goal number (1-17)
-  const sdgChartData = sdgMetrics
-    .filter((metric) => committedSDGsList.includes(metric.sdg)) // Only show committed SDGs
-    .map((metric) => {
-      // Calculate percentage based only on committed SDGs total hours
-      const committedTotalHours = sdgMetrics
-        .filter(m => committedSDGsList.includes(m.sdg))
-        .reduce((sum, m) => sum + (m.totalHours || 0), 0);
-      const percentage =
-        committedTotalHours > 0
-          ? Math.round((metric.totalHours / committedTotalHours) * 100)
+  const adminName = useMemo(() =>
+    user?.displayName || user?.email?.split('@')[0] || "Admin",
+    [user?.displayName, user?.email]
+  );
+
+  // Memoize base SDG metrics
+  const sdgMetrics = useMemo(() => csrData?.sdgMetrics || [], [csrData?.sdgMetrics]);
+
+  const totalSDGHours = useMemo(() =>
+    sdgMetrics.reduce((sum: number, metric: any) => sum + (metric.totalHours || 0), 0),
+    [sdgMetrics]
+  );
+
+  const committedSDGsList = useMemo(() => csrData?.primarySdgs || [], [csrData?.primarySdgs]);
+
+  // Memoize SDG chart data - expensive computation
+  const { sdgChartData, committedTotalHours } = useMemo(() => {
+    const committedTotal = sdgMetrics
+      .filter(m => committedSDGsList.includes(m.sdg))
+      .reduce((sum, m) => sum + (m.totalHours || 0), 0);
+
+    const chartData = sdgMetrics
+      .filter((metric) => committedSDGsList.includes(metric.sdg))
+      .map((metric) => {
+        const percentage = committedTotal > 0
+          ? Math.round((metric.totalHours / committedTotal) * 100)
           : 0;
-      return {
+        return {
+          name: getSDGName(metric.sdg),
+          fullName: getSDGFullName(metric.sdg),
+          value: Math.max(5, percentage),
+          color: getSDGColor(metric.sdg),
+          goal: metric.sdg,
+          hours: metric.totalHours,
+          employees: metric.uniqueEmployees,
+          projects: metric.projectsContributed,
+        };
+      })
+      .sort((a, b) => a.goal - b.goal);
+
+    return { sdgChartData: chartData, committedTotalHours: committedTotal };
+  }, [sdgMetrics, committedSDGsList]);
+
+  // Memoize committed SDGs without data
+  const committedSDGsWithoutData = useMemo(() =>
+    committedSDGsList
+      .filter((sdg: number) => !sdgMetrics.some(m => m.sdg === sdg && m.totalHours > 0))
+      .map((sdg: number) => ({
+        name: getSDGName(sdg),
+        fullName: getSDGFullName(sdg),
+        value: 0,
+        color: getSDGColor(sdg),
+        goal: sdg,
+        hours: 0,
+        employees: 0,
+        projects: 0,
+      })),
+    [sdgMetrics, committedSDGsList]
+  );
+
+  // Memoize all committed SDG chart data
+  const allCommittedSDGChartData = useMemo(() =>
+    [...sdgChartData, ...committedSDGsWithoutData].sort((a, b) => a.goal - b.goal),
+    [sdgChartData, committedSDGsWithoutData]
+  );
+
+  // Memoize employee activity outside commitments
+  const employeeActivityOutsideCommitments = useMemo(() =>
+    sdgMetrics
+      .filter((metric) => !committedSDGsList.includes(metric.sdg) && metric.totalHours > 0)
+      .map((metric) => ({
+        sdg: metric.sdg,
         name: getSDGName(metric.sdg),
         fullName: getSDGFullName(metric.sdg),
-        value: Math.max(5, percentage), // Min 5% for visibility in pie chart
         color: getSDGColor(metric.sdg),
-        goal: metric.sdg,
         hours: metric.totalHours,
         employees: metric.uniqueEmployees,
         projects: metric.projectsContributed,
-      };
-    })
-    .sort((a, b) => a.goal - b.goal);
+      }))
+      .sort((a, b) => b.hours - a.hours),
+    [sdgMetrics, committedSDGsList]
+  );
 
-  // Also build chart data for committed SDGs that have no hours yet (to show as 0%)
-  const committedSDGsWithoutData = committedSDGsList
-    .filter((sdg: number) => !sdgMetrics.some(m => m.sdg === sdg && m.totalHours > 0))
-    .map((sdg: number) => ({
-      name: getSDGName(sdg),
-      fullName: getSDGFullName(sdg),
-      value: 0,
-      color: getSDGColor(sdg),
-      goal: sdg,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    }));
+  // Static default SDG data - only compute once
+  const defaultSdgData = useMemo(() => [
+    { name: getSDGName(1), fullName: getSDGFullName(1), value: 18, color: getSDGColor(1), goal: 1, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(3), fullName: getSDGFullName(3), value: 18, color: getSDGColor(3), goal: 3, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(4), fullName: getSDGFullName(4), value: 19, color: getSDGColor(4), goal: 4, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(5), fullName: getSDGFullName(5), value: 22, color: getSDGColor(5), goal: 5, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(10), fullName: getSDGFullName(10), value: 22, color: getSDGColor(10), goal: 10, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(13), fullName: getSDGFullName(13), value: 29, color: getSDGColor(13), goal: 13, hours: 0, employees: 0, projects: 0 },
+    { name: getSDGName(15), fullName: getSDGFullName(15), value: 18, color: getSDGColor(15), goal: 15, hours: 0, employees: 0, projects: 0 },
+  ], []);
 
-  // Combine and sort all committed SDGs
-  const allCommittedSDGChartData = [...sdgChartData, ...committedSDGsWithoutData]
-    .sort((a, b) => a.goal - b.goal);
+  // Memoize chart data selection
+  const chartData = useMemo(() =>
+    allCommittedSDGChartData.length > 0 ? allCommittedSDGChartData : defaultSdgData,
+    [allCommittedSDGChartData, defaultSdgData]
+  );
 
-  // Get SDGs where employees are working but NOT in corporate commitments (for AI expansion insights)
-  const employeeActivityOutsideCommitments = sdgMetrics
-    .filter((metric) => !committedSDGsList.includes(metric.sdg) && metric.totalHours > 0)
-    .map((metric) => ({
-      sdg: metric.sdg,
-      name: getSDGName(metric.sdg),
-      fullName: getSDGFullName(metric.sdg),
-      color: getSDGColor(metric.sdg),
-      hours: metric.totalHours,
-      employees: metric.uniqueEmployees,
-      projects: metric.projectsContributed,
-    }))
-    .sort((a, b) => b.hours - a.hours); // Sort by most hours
-
-  // Default SDG data if none exists - sorted numerically by goal number
-  const defaultSdgData = [
-    {
-      name: getSDGName(1),
-      fullName: getSDGFullName(1),
-      value: 18,
-      color: getSDGColor(1),
-      goal: 1,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(3),
-      fullName: getSDGFullName(3),
-      value: 18,
-      color: getSDGColor(3),
-      goal: 3,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(4),
-      fullName: getSDGFullName(4),
-      value: 19,
-      color: getSDGColor(4),
-      goal: 4,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(5),
-      fullName: getSDGFullName(5),
-      value: 22,
-      color: getSDGColor(5),
-      goal: 5,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(10),
-      fullName: getSDGFullName(10),
-      value: 22,
-      color: getSDGColor(10),
-      goal: 10,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(13),
-      fullName: getSDGFullName(13),
-      value: 29,
-      color: getSDGColor(13),
-      goal: 13,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-    {
-      name: getSDGName(15),
-      fullName: getSDGFullName(15),
-      value: 18,
-      color: getSDGColor(15),
-      goal: 15,
-      hours: 0,
-      employees: 0,
-      projects: 0,
-    },
-  ];
-
-  // Only show chart data for committed SDGs, with placeholder if no commitments set
-  const chartData = allCommittedSDGChartData.length > 0 ? allCommittedSDGChartData : defaultSdgData;
-
-  // ===== SDG COMMITMENT & AI INSIGHTS =====
-  // Use committedSDGsList defined earlier
+  // ===== MEMOIZED SDG COMMITMENT & AI INSIGHTS =====
   const committedSDGs = committedSDGsList;
 
-  // Calculate totals for ONLY committed SDGs
-  const committedSDGHours = sdgMetrics
-    .filter(m => committedSDGs.includes(m.sdg))
-    .reduce((sum, m) => sum + (m.totalHours || 0), 0);
-
-  const committedSDGEmployees = new Set(
+  const committedSDGHours = useMemo(() =>
     sdgMetrics
       .filter(m => committedSDGs.includes(m.sdg))
-      .flatMap((m: any) => safeMap(m.employees, (emp: any) => emp.email))
-  ).size;
-
-  const committedSDGProjects = new Set(
-    sdgMetrics
-      .filter(m => committedSDGs.includes(m.sdg))
-      .flatMap((m: any) => safeMap(m.projects, (proj: any) => proj.id))
-  ).size;
-
-  // Count active SDGs (committed SDGs with hours logged)
-  const activeCommittedSDGs = sdgMetrics
-    .filter(m => committedSDGs.includes(m.sdg) && m.totalHours > 0)
-    .length;
-
-  // Get SDGs that employees are actually working on
-  const employeeUsedSDGs = new Set(
-    sdgMetrics.filter(m => m.totalHours > 0).map(m => m.sdg)
+      .reduce((sum, m) => sum + (m.totalHours || 0), 0),
+    [sdgMetrics, committedSDGs]
   );
 
-  // Find SDGs employees are using but not in corporate commitment (AI Insights)
-  const suggestedSDGs = Array.from(employeeUsedSDGs).filter(
-    sdg => !committedSDGs.includes(sdg)
-  ).sort((a, b) => a - b);
+  const committedSDGEmployees = useMemo(() =>
+    new Set(
+      sdgMetrics
+        .filter(m => committedSDGs.includes(m.sdg))
+        .flatMap((m: any) => safeMap(m.employees, (emp: any) => emp.email))
+    ).size,
+    [sdgMetrics, committedSDGs]
+  );
 
-  // Determine which SDGs to show in filter chips - only show committed SDGs from settings
-  const displayedSDGsForFilters = committedSDGs.length > 0
-    ? committedSDGs
-    : []; // Show nothing if no committed SDGs
+  const committedSDGProjects = useMemo(() =>
+    new Set(
+      sdgMetrics
+        .filter(m => committedSDGs.includes(m.sdg))
+        .flatMap((m: any) => safeMap(m.projects, (proj: any) => proj.id))
+    ).size,
+    [sdgMetrics, committedSDGs]
+  );
 
-  // ===== FILTERING LOGIC =====
-  // Filter function to check if data matches selected SDG filters
-  const matchesSDGFilter = (sdgs: number[] | undefined) => {
+  const activeCommittedSDGs = useMemo(() =>
+    sdgMetrics.filter(m => committedSDGs.includes(m.sdg) && m.totalHours > 0).length,
+    [sdgMetrics, committedSDGs]
+  );
+
+  const employeeUsedSDGs = useMemo(() =>
+    new Set(sdgMetrics.filter(m => m.totalHours > 0).map(m => m.sdg)),
+    [sdgMetrics]
+  );
+
+  const suggestedSDGs = useMemo(() =>
+    Array.from(employeeUsedSDGs).filter(sdg => !committedSDGs.includes(sdg)).sort((a, b) => a - b),
+    [employeeUsedSDGs, committedSDGs]
+  );
+
+  const displayedSDGsForFilters = useMemo(() =>
+    committedSDGs.length > 0 ? committedSDGs : [],
+    [committedSDGs]
+  );
+
+  // ===== MEMOIZED FILTERING LOGIC =====
+  const matchesSDGFilter = useCallback((sdgs: number[] | undefined) => {
     if (selectedSDGFilters.length === 0) return true;
     if (!sdgs || sdgs.length === 0) return false;
-    // Return true if ANY of the selected filters match the data's SDGs
     return selectedSDGFilters.some(filter => sdgs.includes(filter));
-  };
+  }, [selectedSDGFilters]);
 
-  // Apply SDG filters to all data
-  const filteredSDGMetrics = selectedSDGFilters.length > 0
-    ? sdgMetrics.filter(metric => selectedSDGFilters.includes(metric.sdg))
-    : sdgMetrics;
-
-  // Get unique regions from project locations for filter dropdown
-  const projectRegions = Array.from(new Set(
-    safeArray(csrData?.projectLocations).map((p: any) => p.region).filter(Boolean)
-  )).sort();
-
-  // Apply all filters to project locations (SDG + region + status)
-  const filteredProjectLocations = safeArray(csrData?.projectLocations).filter((project: any) => {
-    // SDG filter
-    if (selectedSDGFilters.length > 0 && !matchesSDGFilter(project.sdgGoals)) {
-      return false;
-    }
-    // Region filter
-    if (selectedMapRegion !== "all" && project.region !== selectedMapRegion) {
-      return false;
-    }
-    // Status filter
-    if (selectedMapStatus !== "all" && project.status !== selectedMapStatus) {
-      return false;
-    }
-    return true;
-  });
-
-  // Recalculate KPIs based on filtered data
-  const filteredTotalHours = filteredSDGMetrics.reduce(
-    (sum: number, metric: any) => sum + (metric.totalHours || 0),
-    0,
+  const filteredSDGMetrics = useMemo(() =>
+    selectedSDGFilters.length > 0
+      ? sdgMetrics.filter(metric => selectedSDGFilters.includes(metric.sdg))
+      : sdgMetrics,
+    [sdgMetrics, selectedSDGFilters]
   );
 
-  const filteredUniqueEmployees = new Set(
-    filteredSDGMetrics.flatMap((metric: any) =>
-      safeMap(metric.employees, (emp: any) => emp.email)
-    )
-  ).size;
+  const projectRegions = useMemo(() =>
+    Array.from(new Set(
+      safeArray(csrData?.projectLocations).map((p: any) => p.region).filter(Boolean)
+    )).sort(),
+    [csrData?.projectLocations]
+  );
 
-  const filteredProjectsCount = new Set(
-    filteredSDGMetrics.flatMap((metric: any) =>
-      safeMap(metric.projects, (proj: any) => proj.id)
-    )
-  ).size;
+  const filteredProjectLocations = useMemo(() =>
+    safeArray(csrData?.projectLocations).filter((project: any) => {
+      if (selectedSDGFilters.length > 0 && !matchesSDGFilter(project.sdgGoals)) return false;
+      if (selectedMapRegion !== "all" && project.region !== selectedMapRegion) return false;
+      if (selectedMapStatus !== "all" && project.status !== selectedMapStatus) return false;
+      return true;
+    }),
+    [csrData?.projectLocations, selectedSDGFilters, selectedMapRegion, selectedMapStatus, matchesSDGFilter]
+  );
 
-  // Use filtered data if filters are active, otherwise use original data
-  const displayTotalHours = selectedSDGFilters.length > 0
-    ? filteredTotalHours
-    : (csrData?.totalHours || 0);
+  // Memoize filtered KPIs
+  const { filteredTotalHours, filteredUniqueEmployees, filteredProjectsCount } = useMemo(() => ({
+    filteredTotalHours: filteredSDGMetrics.reduce((sum: number, metric: any) => sum + (metric.totalHours || 0), 0),
+    filteredUniqueEmployees: new Set(filteredSDGMetrics.flatMap((metric: any) => safeMap(metric.employees, (emp: any) => emp.email))).size,
+    filteredProjectsCount: new Set(filteredSDGMetrics.flatMap((metric: any) => safeMap(metric.projects, (proj: any) => proj.id))).size,
+  }), [filteredSDGMetrics]);
 
-  const displayActiveEmployees = selectedSDGFilters.length > 0
-    ? filteredUniqueEmployees
-    : (csrData?.activeEmployees || 0);
+  // Memoize display values
+  const displayTotalHours = useMemo(() =>
+    selectedSDGFilters.length > 0 ? filteredTotalHours : (csrData?.totalHours || 0),
+    [selectedSDGFilters.length, filteredTotalHours, csrData?.totalHours]
+  );
 
-  const displayProjectsCompleted = selectedSDGFilters.length > 0
-    ? filteredProjectsCount
-    : (csrData?.projectsCompleted || 0);
+  const displayActiveEmployees = useMemo(() =>
+    selectedSDGFilters.length > 0 ? filteredUniqueEmployees : (csrData?.activeEmployees || 0),
+    [selectedSDGFilters.length, filteredUniqueEmployees, csrData?.activeEmployees]
+  );
 
-  // Filter chart data
-  const displayChartData = selectedSDGFilters.length > 0
-    ? chartData.filter(item => selectedSDGFilters.includes(item.goal))
-    : chartData;
+  const displayProjectsCompleted = useMemo(() =>
+    selectedSDGFilters.length > 0 ? filteredProjectsCount : (csrData?.projectsCompleted || 0),
+    [selectedSDGFilters.length, filteredProjectsCount, csrData?.projectsCompleted]
+  );
 
-  // Toggle SDG filter
-  const toggleSDGFilter = (sdgNumber: number) => {
+  const displayChartData = useMemo(() =>
+    selectedSDGFilters.length > 0
+      ? chartData.filter(item => selectedSDGFilters.includes(item.goal))
+      : chartData,
+    [chartData, selectedSDGFilters]
+  );
+
+  // Memoize callbacks
+  const toggleSDGFilter = useCallback((sdgNumber: number) => {
     setSelectedSDGFilters(prev =>
       prev.includes(sdgNumber)
         ? prev.filter(s => s !== sdgNumber)
         : [...prev, sdgNumber]
     );
-  };
+  }, []);
 
-  // Clear all filters
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSelectedSDGFilters([]);
     setDateRange("all");
-  };
+  }, []);
 
-  // Mobile PWA View - Prepare radar chart data for SDG progress (all SDGs with activity)
-  const mobileRadarData = sdgMetrics.slice(0, 8).map((metric: any) => ({
+  // ===== MEMOIZED MOBILE DATA =====
+  const mobileRadarData = useMemo(() => sdgMetrics.slice(0, 8).map((metric: any) => ({
     sdg: `SDG ${metric.sdg}`,
     hours: metric.totalHours,
-    employees: metric.uniqueEmployees * 10, // Scale for visibility
-    projects: metric.projectsContributed * 20, // Scale for visibility
+    employees: metric.uniqueEmployees * 10,
+    projects: metric.projectsContributed * 20,
     fullMark: Math.max(totalSDGHours / 2, 100),
-  }));
+  })), [sdgMetrics, totalSDGHours]);
 
-  // Commitment vs Progress radar - ONLY shows committed SDGs for accurate comparison
-  // Calculate what the target SHOULD be: total hours divided equally among committed SDGs
-  // This represents an even distribution goal across all commitments
-  const targetHoursPerSDG = committedSDGs.length > 0
-    ? Math.round(displayTotalHours / committedSDGs.length)
-    : 100;
+  // Memoize target hours calculation
+  const targetHoursPerSDG = useMemo(() =>
+    committedSDGs.length > 0 ? Math.round(displayTotalHours / committedSDGs.length) : 100,
+    [committedSDGs.length, displayTotalHours]
+  );
 
-  const commitmentRadarData = committedSDGs.map((sdg: number) => {
+  // Memoize commitment radar data
+  const commitmentRadarData = useMemo(() => committedSDGs.map((sdg: number) => {
     const metric = sdgMetrics.find((m: any) => m.sdg === sdg);
     const actualHours = metric?.totalHours || 0;
     const employees = metric?.uniqueEmployees || 0;
     const projectCount = metric?.projectsContributed || 0;
-    // Progress percentage: how much of the target has been achieved
     const progressPercent = targetHoursPerSDG > 0
-      ? Math.min(Math.round((actualHours / targetHoursPerSDG) * 100), 150) // Cap at 150%
+      ? Math.min(Math.round((actualHours / targetHoursPerSDG) * 100), 150)
       : 0;
     return {
       sdg: `SDG ${sdg}`,
@@ -805,27 +821,27 @@ export default function CSRDashboard() {
       employees: employees,
       projects: projectCount,
     };
-  });
+  }), [committedSDGs, sdgMetrics, targetHoursPerSDG]);
 
-  // Prepare bar chart data for top SDGs
-  const mobileBarData = sdgMetrics.slice(0, 6).map((metric: any) => ({
+  // Memoize bar chart data
+  const mobileBarData = useMemo(() => sdgMetrics.slice(0, 6).map((metric: any) => ({
     name: getSDGName(metric.sdg).substring(0, 8),
     sdg: metric.sdg,
     hours: metric.totalHours,
     employees: metric.uniqueEmployees,
     projects: metric.projectsContributed,
     color: getSDGColor(metric.sdg),
-  }));
+  })), [sdgMetrics]);
 
-  // Prepare trend data for line chart (simulated monthly progression)
-  const mobileTrendData = [
+  // Memoize trend data
+  const mobileTrendData = useMemo(() => [
     { month: 'Jan', hours: Math.round(displayTotalHours * 0.1), employees: Math.round(displayActiveEmployees * 0.3) },
     { month: 'Feb', hours: Math.round(displayTotalHours * 0.2), employees: Math.round(displayActiveEmployees * 0.4) },
     { month: 'Mar', hours: Math.round(displayTotalHours * 0.35), employees: Math.round(displayActiveEmployees * 0.5) },
     { month: 'Apr', hours: Math.round(displayTotalHours * 0.5), employees: Math.round(displayActiveEmployees * 0.6) },
     { month: 'May', hours: Math.round(displayTotalHours * 0.7), employees: Math.round(displayActiveEmployees * 0.8) },
     { month: 'Jun', hours: displayTotalHours, employees: displayActiveEmployees },
-  ];
+  ], [displayTotalHours, displayActiveEmployees]);
 
   // Mobile PWA View
   if (isMobile) {
@@ -975,6 +991,7 @@ export default function CSRDashboard() {
                             src={getSDGIcon(sdg)}
                             alt={`SDG ${sdg}: ${getSDGName(sdg)}`}
                             className="w-12 h-12 rounded-lg object-cover shadow-sm"
+                            loading="lazy"
                             style={{
                               border: hasActivity ? '2px solid #22c55e' : '1px solid #e5e7eb',
                             }}
@@ -1005,6 +1022,7 @@ export default function CSRDashboard() {
                         src={getSDGIcon(metric.sdg)}
                         alt={`SDG ${metric.sdg}`}
                         className="w-8 h-8 rounded object-cover flex-shrink-0 shadow-sm"
+                        loading="lazy"
                       />
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex justify-between text-[10px] mb-0.5">

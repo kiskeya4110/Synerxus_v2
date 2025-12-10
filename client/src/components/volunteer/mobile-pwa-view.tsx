@@ -938,7 +938,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="flex items-start gap-2 text-[10px] text-slate-500">
                       <Target className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                       <p>
-                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. AIU (Attributable Impact Units) measure your contribution to global sustainability targets.
+                        <span className="font-semibold text-slate-700">UN SDG Tracking:</span> Your volunteer hours are mapped to the 17 UN Sustainable Development Goals. AIUs (Attributable Impact Units) are auditable credits showing your verified share of SDG-linked outcomes, backed by project data and NGO verification.
                       </p>
                     </div>
                   </div>

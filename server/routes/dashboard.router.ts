@@ -8,6 +8,40 @@ import {
 
 export const dashboardRouter = Router();
 
+// ===== HELPER FUNCTIONS =====
+
+/**
+ * Safe parseInt with NaN validation
+ */
+function safeParseInt(value: any): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = parseInt(String(value), 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * Safe date validation
+ */
+function isValidDate(date: Date): boolean {
+  return date instanceof Date && !isNaN(date.getTime());
+}
+
+/**
+ * Safe array with null/undefined check
+ */
+function safeArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
+/**
+ * Safe number access with default
+ */
+function safeNumber(value: any, defaultValue: number = 0): number {
+  if (typeof value === 'number' && !isNaN(value)) return value;
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
+
 // GET /api/organization/dashboard - Organization-specific dashboard
 // Returns comprehensive dashboard data for organizations including:
 // - Key metrics (projects, hours, SDGs, people impacted, volunteers)

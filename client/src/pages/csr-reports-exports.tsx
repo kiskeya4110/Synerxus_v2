@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import Logo from "@/components/ui/logo";
+import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
 import {
   Home,
   BarChart3,
@@ -242,7 +243,18 @@ export default function CSRReportsExports() {
     enabled: !!userId,
   });
 
-  const companyName = "Your Company";
+  // Fetch CSR dashboard data for company name
+  const { data: csrDashboardData } = useQuery<any>({
+    queryKey: ["/api/csr/dashboard", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/csr/dashboard?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+
+  const companyName = csrDashboardData?.companyName || csrDashboardData?.partners?.[0]?.companyName || "Your Company";
   const adminName = user?.displayName || user?.email?.split('@')[0] || "Admin";
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -447,16 +459,16 @@ export default function CSRReportsExports() {
         <CSRMobileHeader title="Reports & Exports" companyName={companyName} showBackButton onBack={() => navigate('/csr-dashboard')} />
 
         <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
-          {/* Category Pills */}
+          {/* Category Pills - Light colors for better contrast */}
           <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-full text-[10px] font-medium whitespace-nowrap flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap flex items-center gap-1 shadow-sm ${
                   selectedCategory === cat.id
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-white/10 text-gray-300'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-slate-700 border border-slate-200'
                 }`}
               >
                 <span>{cat.icon}</span>
@@ -465,15 +477,15 @@ export default function CSRReportsExports() {
             ))}
           </div>
 
-          {/* Report Templates */}
+          {/* Report Templates - Light backgrounds */}
           <div className="space-y-2">
             {filteredTemplates.map((template) => (
-              <div key={template.id} className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+              <div key={template.id} className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                 <div className="flex items-start gap-2 mb-2">
                   <span className="text-xl">{template.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-white text-sm font-semibold truncate">{template.name}</h3>
-                    <p className="text-gray-400 text-[10px] line-clamp-2">{template.description}</p>
+                    <h3 className="text-slate-900 text-sm font-semibold truncate">{template.name}</h3>
+                    <p className="text-slate-600 text-[10px] line-clamp-2">{template.description}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
@@ -481,10 +493,10 @@ export default function CSRReportsExports() {
                     {template.formats.map((format) => (
                       <span
                         key={format}
-                        className={`text-[8px] font-semibold px-1.5 py-0.5 rounded ${
-                          format === 'PDF' ? 'bg-red-500/20 text-red-400' :
-                          format === 'XLSX' ? 'bg-green-500/20 text-green-400' :
-                          'bg-blue-500/20 text-blue-400'
+                        className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                          format === 'PDF' ? 'bg-red-100 text-red-700 border border-red-200' :
+                          format === 'XLSX' ? 'bg-green-100 text-green-700 border border-green-200' :
+                          'bg-blue-100 text-blue-700 border border-blue-200'
                         }`}
                       >
                         {format}
@@ -497,7 +509,7 @@ export default function CSRReportsExports() {
                         key={format}
                         onClick={() => generateReport(template, format)}
                         disabled={isGenerating === template.id}
-                        className={`px-2.5 py-1 rounded text-[10px] font-medium flex items-center gap-1 ${
+                        className={`px-2.5 py-1 rounded text-[10px] font-semibold flex items-center gap-1 shadow-sm ${
                           format === 'PDF' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white'
                         } disabled:opacity-50`}
                       >
@@ -515,10 +527,10 @@ export default function CSRReportsExports() {
             ))}
           </div>
 
-          {/* Quick Export Section */}
-          <div className="mt-4 bg-gradient-to-br from-blue-600/30 to-purple-600/30 rounded-lg p-3 border border-blue-500/30">
-            <h3 className="text-white text-sm font-semibold mb-2 flex items-center gap-1.5">
-              <Download className="w-4 h-4" />
+          {/* Quick Export Section - Light background */}
+          <div className="mt-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-200 shadow-sm">
+            <h3 className="text-slate-900 text-sm font-semibold mb-2 flex items-center gap-1.5">
+              <Download className="w-4 h-4 text-blue-600" />
               Quick Data Export
             </h3>
             <div className="grid grid-cols-2 gap-2">
@@ -528,31 +540,31 @@ export default function CSRReportsExports() {
                   downloadFile(csv, "all_employee_hours.csv", "text/csv");
                   toast({ title: "Exported", description: "Employee hours data exported." });
                 }}
-                className="p-2 bg-white/10 rounded-lg text-left"
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
               >
                 <div className="text-sm mb-0.5">⏱️</div>
-                <div className="text-white text-[10px] font-medium">Employee Hours</div>
+                <div className="text-slate-800 text-[10px] font-semibold">Employee Hours</div>
               </button>
               <button
                 onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
-                className="p-2 bg-white/10 rounded-lg text-left"
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
               >
                 <div className="text-sm mb-0.5">🌍</div>
-                <div className="text-white text-[10px] font-medium">SDG Metrics</div>
+                <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
               </button>
               <button
                 onClick={() => toast({ title: "Exported", description: "Project data exported." })}
-                className="p-2 bg-white/10 rounded-lg text-left"
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
               >
                 <div className="text-sm mb-0.5">📁</div>
-                <div className="text-white text-[10px] font-medium">Projects</div>
+                <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
               </button>
               <button
                 onClick={() => toast({ title: "Exported", description: "Financial data exported." })}
-                className="p-2 bg-white/10 rounded-lg text-left"
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
               >
                 <div className="text-sm mb-0.5">💰</div>
-                <div className="text-white text-[10px] font-medium">Financial</div>
+                <div className="text-slate-800 text-[10px] font-semibold">Financial</div>
               </button>
             </div>
           </div>

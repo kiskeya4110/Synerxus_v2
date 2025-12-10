@@ -123,10 +123,20 @@ aiuRouter.get("/csr-report", async (req: Request, res: Response) => {
 
     let reportingPeriod: { start: Date; end: Date } | undefined;
     if (startDate && endDate) {
-      reportingPeriod = {
-        start: new Date(startDate as string),
-        end: new Date(endDate as string),
-      };
+      const start = new Date(startDate as string);
+      const end = new Date(endDate as string);
+
+      // Validate dates
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ error: "Invalid date format. Use ISO 8601 format (YYYY-MM-DD)" });
+      }
+
+      // Validate date range
+      if (start >= end) {
+        return res.status(400).json({ error: "Start date must be before end date" });
+      }
+
+      reportingPeriod = { start, end };
     }
 
     const report = await generateCSRAIUReport(reportingPeriod);
@@ -266,10 +276,43 @@ aiuRouter.post("/calculate", async (req: Request, res: Response) => {
   try {
     const input: AIUCalculationInput = req.body;
 
-    if (!input.kpiBefore || input.kpiAfter === undefined || !input.attributionFactor || !input.volunteers) {
+    // Validate required fields exist
+    if (input.kpiBefore === undefined || input.kpiAfter === undefined ||
+        input.attributionFactor === undefined || !input.volunteers) {
       return res.status(400).json({
         error: "Missing required fields: kpiBefore, kpiAfter, attributionFactor, volunteers",
       });
+    }
+
+    // Validate numeric types
+    if (typeof input.kpiBefore !== 'number' || typeof input.kpiAfter !== 'number' ||
+        typeof input.attributionFactor !== 'number') {
+      return res.status(400).json({
+        error: "kpiBefore, kpiAfter, and attributionFactor must be numbers",
+      });
+    }
+
+    // Validate attribution factor is between 0 and 1
+    if (input.attributionFactor < 0 || input.attributionFactor > 1) {
+      return res.status(400).json({
+        error: "attributionFactor must be between 0 and 1",
+      });
+    }
+
+    // Validate volunteers array
+    if (!Array.isArray(input.volunteers) || input.volunteers.length === 0) {
+      return res.status(400).json({
+        error: "volunteers must be a non-empty array",
+      });
+    }
+
+    // Validate each volunteer has positive hours
+    for (const volunteer of input.volunteers) {
+      if (typeof volunteer.hours !== 'number' || volunteer.hours < 0) {
+        return res.status(400).json({
+          error: `Invalid hours for volunteer ${volunteer.volunteerName || volunteer.volunteerId}: must be a non-negative number`,
+        });
+      }
     }
 
     const result = calculateProjectAIUs(input);

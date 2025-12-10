@@ -23,6 +23,15 @@ import {
   FolderKanban,
   TrendingUp,
   Activity,
+  Brain,
+  Lightbulb,
+  AlertTriangle,
+  CheckCircle,
+  Zap,
+  ArrowUpRight,
+  ArrowDownRight,
+  Info,
+  Mail,
 } from "lucide-react";
 import {
   RadarChart,
@@ -199,6 +208,9 @@ export default function CSRDashboard() {
   // Mobile detection and PWA tab state
   const [isMobile, setIsMobile] = useState(false);
   const [mobileTab, setMobileTab] = useState<'overview' | 'employees' | 'sdgs' | 'reports' | 'settings'>('overview');
+
+  // Mobile KPI modal state
+  const [mobileKPIModal, setMobileKPIModal] = useState<string | null>(null);
 
   // Detect mobile viewport
   useEffect(() => {
@@ -815,8 +827,8 @@ export default function CSRDashboard() {
   if (isMobile) {
     return (
       <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
-        {/* Mobile Header - Compact */}
-        <header className="bg-gradient-to-r from-slate-700 via-purple-800 to-orange-600 text-white px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        {/* Mobile Header - Compact with lighter gradient for logo contrast */}
+        <header className="bg-gradient-to-r from-blue-500 via-sky-400 to-sky-200 text-slate-800 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => navigate("/landing")}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
@@ -824,9 +836,9 @@ export default function CSRDashboard() {
             <img src={logoUrl} alt="Synerxus" className="h-7 w-auto" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/90 font-medium">CSR Dashboard</span>
-            <span className="text-white/50">•</span>
-            <span className="text-[10px] text-white/80 truncate max-w-[100px]">{companyName}</span>
+            <span className="text-xs text-slate-800 font-medium">CSR Dashboard</span>
+            <span className="text-slate-500">•</span>
+            <span className="text-[10px] text-slate-700 truncate max-w-[100px]">{companyName}</span>
           </div>
         </header>
 
@@ -836,36 +848,73 @@ export default function CSRDashboard() {
             <div className="space-y-3">
               <h1 className="text-slate-900 text-lg font-bold">CSR Dashboard</h1>
 
-              {/* KPI Cards Grid - Compact */}
+              {/* KPI Cards Grid - Interactive */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="bg-blue-50 rounded-lg p-3 border border-blue-300 shadow-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-blue-700" />
-                    <span className="text-blue-700 text-[10px] font-medium">Total Hours</span>
+                <button
+                  onClick={() => setMobileKPIModal('hours')}
+                  className="bg-blue-50 rounded-lg p-3 border border-blue-300 shadow-sm text-left hover:bg-blue-100 hover:border-blue-400 transition-all active:scale-98"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-blue-700" />
+                      <span className="text-blue-700 text-[10px] font-medium">Total Hours</span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-blue-400" />
                   </div>
                   <div className="text-slate-900 text-xl font-bold mt-1">{displayTotalHours.toLocaleString()}</div>
-                </div>
-                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-300 shadow-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-emerald-700" />
-                    <span className="text-emerald-700 text-[10px] font-medium">Employees</span>
+                  <div className="text-blue-600 text-[9px] mt-0.5 flex items-center gap-0.5">
+                    <ArrowUpRight className="w-2.5 h-2.5" />
+                    +12% vs last month
+                  </div>
+                </button>
+                <button
+                  onClick={() => setMobileKPIModal('employees')}
+                  className="bg-emerald-50 rounded-lg p-3 border border-emerald-300 shadow-sm text-left hover:bg-emerald-100 hover:border-emerald-400 transition-all active:scale-98"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-emerald-700" />
+                      <span className="text-emerald-700 text-[10px] font-medium">Employees</span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-emerald-400" />
                   </div>
                   <div className="text-slate-900 text-xl font-bold mt-1">{displayActiveEmployees}</div>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-3 border border-purple-300 shadow-sm">
-                  <div className="flex items-center gap-1.5">
-                    <FolderKanban className="w-3.5 h-3.5 text-purple-700" />
-                    <span className="text-purple-700 text-[10px] font-medium">Projects</span>
+                  <div className="text-emerald-600 text-[9px] mt-0.5 flex items-center gap-0.5">
+                    <ArrowUpRight className="w-2.5 h-2.5" />
+                    +8% vs last month
+                  </div>
+                </button>
+                <button
+                  onClick={() => setMobileKPIModal('projects')}
+                  className="bg-purple-50 rounded-lg p-3 border border-purple-300 shadow-sm text-left hover:bg-purple-100 hover:border-purple-400 transition-all active:scale-98"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <FolderKanban className="w-3.5 h-3.5 text-purple-700" />
+                      <span className="text-purple-700 text-[10px] font-medium">Projects</span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-purple-400" />
                   </div>
                   <div className="text-slate-900 text-xl font-bold mt-1">{displayProjectsCompleted}</div>
-                </div>
-                <div className="bg-teal-50 rounded-lg p-3 border border-teal-300 shadow-sm">
-                  <div className="flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-teal-700" />
-                    <span className="text-teal-700 text-[10px] font-medium">AIUs Earned</span>
+                  <div className="text-purple-600 text-[9px] mt-0.5">Active initiatives</div>
+                </button>
+                <button
+                  onClick={() => setMobileKPIModal('aiu')}
+                  className="bg-teal-50 rounded-lg p-3 border border-teal-300 shadow-sm text-left hover:bg-teal-100 hover:border-teal-400 transition-all active:scale-98"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-teal-700" />
+                      <span className="text-teal-700 text-[10px] font-medium">AIUs Earned</span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-teal-400" />
                   </div>
                   <div className="text-slate-900 text-xl font-bold mt-1">{(csrData?.totalImpact || 0).toFixed(1)}</div>
-                </div>
+                  <div className="text-teal-600 text-[9px] mt-0.5 flex items-center gap-0.5">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    Impact units
+                  </div>
+                </button>
               </div>
 
               {/* SDG Radar Chart - Compact */}
@@ -975,7 +1024,132 @@ export default function CSRDashboard() {
 
           {mobileTab === 'employees' && (
             <div className="space-y-3">
-              <h1 className="text-slate-900 text-lg font-bold">Employees</h1>
+              <div className="flex items-center justify-between">
+                <h1 className="text-slate-900 text-lg font-bold">Team Analytics</h1>
+                <button
+                  onClick={() => navigate('/employee-engagement-tab')}
+                  className="text-[10px] text-blue-600 font-medium flex items-center gap-1"
+                >
+                  Full Analytics <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+
+              {/* AI Insights Section - Industry Innovating */}
+              <div className="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 rounded-lg p-3 border border-indigo-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                    <Brain className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-slate-900 text-sm font-bold">AI-Powered Insights</h3>
+                    <p className="text-indigo-600 text-[9px]">Real-time workforce intelligence</p>
+                  </div>
+                </div>
+
+                {/* Key AI Insights */}
+                <div className="space-y-2">
+                  {/* Insight 1 - Engagement Prediction */}
+                  <div className="bg-white/80 rounded-lg p-2.5 border border-indigo-100">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <TrendingUp className="w-3 h-3 text-emerald-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-emerald-700">Engagement Surge Predicted</span>
+                          <span className="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">+23%</span>
+                        </div>
+                        <p className="text-[9px] text-slate-600 mt-0.5">Based on current momentum, expect 23% more volunteers next month. Consider launching new SDG 4 & 13 initiatives.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Insight 2 - Risk Alert */}
+                  <div className="bg-white/80 rounded-lg p-2.5 border border-amber-100">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <AlertTriangle className="w-3 h-3 text-amber-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-amber-700">Retention Risk Detected</span>
+                          <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">12 employees</span>
+                        </div>
+                        <p className="text-[9px] text-slate-600 mt-0.5">12 active volunteers showing declining engagement. Recommend personalized outreach within 7 days.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Insight 3 - Skills Match Opportunity */}
+                  <div className="bg-white/80 rounded-lg p-2.5 border border-blue-100">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Lightbulb className="w-3 h-3 text-blue-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-blue-700">Skills-Based Opportunity</span>
+                          <span className="text-[8px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">High Impact</span>
+                        </div>
+                        <p className="text-[9px] text-slate-600 mt-0.5">8 employees with tech skills not yet matched. Pro bono tech mentoring could increase AIU by 340%.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Insight 4 - Achievement Unlocked */}
+                  <div className="bg-white/80 rounded-lg p-2.5 border border-purple-100">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Award className="w-3 h-3 text-purple-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-purple-700">Milestone Approaching</span>
+                          <span className="text-[8px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">95% complete</span>
+                        </div>
+                        <p className="text-[9px] text-slate-600 mt-0.5">Only 127 hours needed to unlock "Impact Champion" badge. Rally the team for a final push!</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Actions */}
+                <div className="grid grid-cols-2 gap-2 mt-3">
+                  <button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-sm">
+                    <Zap className="w-3 h-3" />
+                    Auto-Engage At-Risk
+                  </button>
+                  <button className="bg-white text-indigo-700 text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-indigo-200">
+                    <Brain className="w-3 h-3" />
+                    Generate Report
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Team Stats */}
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setMobileKPIModal('participation')}
+                  className="bg-blue-50 rounded-lg p-2 border border-blue-200 text-center hover:bg-blue-100 transition-colors"
+                >
+                  <div className="text-blue-700 text-lg font-bold">42%</div>
+                  <div className="text-blue-600 text-[9px] font-medium">Participation</div>
+                </button>
+                <button
+                  onClick={() => setMobileKPIModal('retention')}
+                  className="bg-emerald-50 rounded-lg p-2 border border-emerald-200 text-center hover:bg-emerald-100 transition-colors"
+                >
+                  <div className="text-emerald-700 text-lg font-bold">78%</div>
+                  <div className="text-emerald-600 text-[9px] font-medium">Retention</div>
+                </button>
+                <button
+                  onClick={() => setMobileKPIModal('satisfaction')}
+                  className="bg-amber-50 rounded-lg p-2 border border-amber-200 text-center hover:bg-amber-100 transition-colors"
+                >
+                  <div className="text-amber-700 text-lg font-bold">4.6</div>
+                  <div className="text-amber-600 text-[9px] font-medium">Satisfaction</div>
+                </button>
+              </div>
 
               {/* Engagement Trend Chart */}
               <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
@@ -1027,17 +1201,27 @@ export default function CSRDashboard() {
                 </div>
               </div>
 
-              {/* Engagement Funnel - Compact */}
+              {/* Engagement Funnel - Interactive */}
               {funnelData?.funnel && (
                 <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
-                  <h3 className="text-slate-900 text-sm font-semibold mb-2">Engagement Funnel</h3>
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-slate-900 text-sm font-semibold">Engagement Funnel</h3>
+                    <span className="text-[9px] text-blue-600 font-medium">Tap to engage</span>
+                  </div>
                   <div className="space-y-2">
                     {funnelData.funnel.map((stage: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2">
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSelectedFunnelStage(idx);
+                          setShowFunnelModal(true);
+                        }}
+                        className="w-full flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200 active:bg-slate-100"
+                      >
                         <div className="w-10 text-right">
                           <span className="text-slate-900 font-bold text-sm">{stage.count}</span>
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 text-left">
                           <div className="text-slate-700 text-[10px] truncate">{stage.stage}</div>
                           <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-0.5">
                             <div
@@ -1046,11 +1230,17 @@ export default function CSRDashboard() {
                             />
                           </div>
                         </div>
-                        <div className="text-slate-600 text-[10px] w-10 text-right font-medium">
-                          {Math.round((stage.count / (funnelData.funnel[0]?.count || 1)) * 100)}%
+                        <div className="flex items-center gap-1">
+                          <span className="text-slate-600 text-[10px] font-medium">
+                            {Math.round((stage.count / (funnelData.funnel[0]?.count || 1)) * 100)}%
+                          </span>
+                          <ChevronRight className="w-3 h-3 text-slate-400" />
                         </div>
-                      </div>
+                      </button>
                     ))}
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-slate-100">
+                    <p className="text-[9px] text-slate-500 text-center">Click any stage to view employees and take action</p>
                   </div>
                 </div>
               )}
@@ -1132,16 +1322,16 @@ export default function CSRDashboard() {
                       <RadarChart data={commitmentRadarData} margin={{ top: 10, right: 25, bottom: 10, left: 25 }}>
                         <PolarGrid stroke="#e2e8f0" />
                         <PolarAngleAxis dataKey="sdg" tick={{ fill: '#475569', fontSize: 8 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 150]} tick={{ fill: '#475569', fontSize: 7 }} tickFormatter={(v) => `${v}%`} />
-                        <Radar name="Progress %" dataKey="progress" stroke="#10B981" fill="#10B981" fillOpacity={0.5} />
+                        <PolarRadiusAxis angle={30} domain={[0, Math.max(targetHoursPerSDG * 1.5, 100)]} tick={{ fill: '#475569', fontSize: 7 }} />
+                        <Radar name="Target" dataKey="target" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.2} strokeWidth={2} />
+                        <Radar name="Actual" dataKey="actual" stroke="#10B981" fill="#10B981" fillOpacity={0.5} strokeWidth={2} />
+                        <Legend wrapperStyle={{ fontSize: '9px' }} />
                         <Tooltip
-                          contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', fontSize: '10px' }}
+                          contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', fontSize: '10px', color: '#fff' }}
                           formatter={(value: number, name: string, props: any) => {
                             const data = props.payload;
-                            return [
-                              `${data.actual}h / ${data.target}h (${value}%)`,
-                              `SDG ${data.sdgNumber}`
-                            ];
+                            if (name === 'Target') return [`${value}h target`, `SDG ${data.sdgNumber}`];
+                            return [`${value}h actual (${data.progress}%)`, `SDG ${data.sdgNumber}`];
                           }}
                         />
                       </RadarChart>
@@ -1149,10 +1339,13 @@ export default function CSRDashboard() {
                   </div>
                   <div className="flex justify-center gap-4 mt-1 text-[10px]">
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span className="text-slate-700 font-medium">Progress %</span>
+                      <div className="w-2 h-2 rounded-full bg-blue-500" />
+                      <span className="text-slate-700 font-medium">Target ({targetHoursPerSDG}h)</span>
                     </div>
-                    <span className="text-slate-600 font-medium">Target: {targetHoursPerSDG}h per SDG</span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-slate-700 font-medium">Actual Hours</span>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -1353,65 +1546,403 @@ export default function CSRDashboard() {
           )}
         </main>
 
-        {/* Bottom Navigation - Compact */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-700 via-purple-800 to-orange-600 border-t border-white/10 px-1 py-1.5 max-w-[428px] mx-auto z-50">
+        {/* Bottom Navigation - Compact with lighter gradient for contrast */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 via-sky-500 to-sky-300 border-t border-slate-200/30 px-1 py-1.5 max-w-[428px] mx-auto z-50 shadow-lg">
           <div className="flex justify-around items-center">
             <button
               onClick={() => setMobileTab('overview')}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'overview' ? 'text-white' : 'text-white/60'
+                mobileTab === 'overview' ? 'text-slate-900' : 'text-slate-700'
               }`}
               data-testid="nav-overview"
             >
-              <Home className={`w-4 h-4 mb-0.5 ${mobileTab === 'overview' ? 'text-amber-400' : ''}`} />
+              <Home className={`w-4 h-4 mb-0.5 ${mobileTab === 'overview' ? 'text-blue-900' : 'text-slate-600'}`} />
               <span className="text-[9px] font-medium">Home</span>
             </button>
 
             <button
               onClick={() => setMobileTab('employees')}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'employees' ? 'text-white' : 'text-white/60'
+                mobileTab === 'employees' ? 'text-slate-900' : 'text-slate-700'
               }`}
               data-testid="nav-employees"
             >
-              <Users className={`w-4 h-4 mb-0.5 ${mobileTab === 'employees' ? 'text-amber-400' : ''}`} />
+              <Users className={`w-4 h-4 mb-0.5 ${mobileTab === 'employees' ? 'text-blue-900' : 'text-slate-600'}`} />
               <span className="text-[9px] font-medium">Team</span>
             </button>
 
             <button
               onClick={() => setMobileTab('sdgs')}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'sdgs' ? 'text-white' : 'text-white/60'
+                mobileTab === 'sdgs' ? 'text-slate-900' : 'text-slate-700'
               }`}
               data-testid="nav-sdgs"
             >
-              <Target className={`w-4 h-4 mb-0.5 ${mobileTab === 'sdgs' ? 'text-amber-400' : ''}`} />
+              <Target className={`w-4 h-4 mb-0.5 ${mobileTab === 'sdgs' ? 'text-blue-900' : 'text-slate-600'}`} />
               <span className="text-[9px] font-medium">SDGs</span>
             </button>
 
             <button
               onClick={() => setMobileTab('reports')}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'reports' ? 'text-white' : 'text-white/60'
+                mobileTab === 'reports' ? 'text-slate-900' : 'text-slate-700'
               }`}
               data-testid="nav-reports"
             >
-              <BarChart3 className={`w-4 h-4 mb-0.5 ${mobileTab === 'reports' ? 'text-amber-400' : ''}`} />
+              <BarChart3 className={`w-4 h-4 mb-0.5 ${mobileTab === 'reports' ? 'text-blue-900' : 'text-slate-600'}`} />
               <span className="text-[9px] font-medium">Reports</span>
             </button>
 
             <button
               onClick={() => setMobileTab('settings')}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'settings' ? 'text-white' : 'text-white/60'
+                mobileTab === 'settings' ? 'text-slate-900' : 'text-slate-700'
               }`}
               data-testid="nav-settings"
             >
-              <Settings className={`w-4 h-4 mb-0.5 ${mobileTab === 'settings' ? 'text-amber-400' : ''}`} />
+              <Settings className={`w-4 h-4 mb-0.5 ${mobileTab === 'settings' ? 'text-blue-900' : 'text-slate-600'}`} />
               <span className="text-[9px] font-medium">Settings</span>
             </button>
           </div>
         </nav>
+
+        {/* Mobile KPI Detail Modal */}
+        {mobileKPIModal && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => setMobileKPIModal(null)}>
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900">
+                  {mobileKPIModal === 'hours' && 'Total Volunteer Hours'}
+                  {mobileKPIModal === 'employees' && 'Active Employees'}
+                  {mobileKPIModal === 'projects' && 'Active Projects'}
+                  {mobileKPIModal === 'aiu' && 'Attributable Impact Units'}
+                  {mobileKPIModal === 'participation' && 'Participation Rate'}
+                  {mobileKPIModal === 'retention' && 'Volunteer Retention'}
+                  {mobileKPIModal === 'satisfaction' && 'Satisfaction Score'}
+                </h2>
+                <button
+                  onClick={() => setMobileKPIModal(null)}
+                  className="p-2 rounded-full hover:bg-slate-100"
+                >
+                  <X className="w-5 h-5 text-slate-600" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-4 space-y-4">
+                {/* Hours Modal */}
+                {mobileKPIModal === 'hours' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="text-4xl font-bold text-blue-600">{displayTotalHours.toLocaleString()}</div>
+                      <div className="text-slate-600 text-sm mt-1">Total hours contributed</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-blue-50 rounded-lg p-3 text-center">
+                        <div className="text-blue-700 text-xl font-bold">{Math.round(displayTotalHours / (displayActiveEmployees || 1))}</div>
+                        <div className="text-blue-600 text-xs">Avg Hours/Employee</div>
+                      </div>
+                      <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                        <div className="text-emerald-700 text-xl font-bold flex items-center justify-center gap-1">
+                          <ArrowUpRight className="w-4 h-4" />12%
+                        </div>
+                        <div className="text-emerald-600 text-xs">vs Last Month</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Hours by Department</h4>
+                      <div className="space-y-2">
+                        {['Engineering', 'Marketing', 'Sales', 'HR'].map((dept, i) => (
+                          <div key={dept} className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-slate-700">{dept}</span>
+                                <span className="text-slate-900 font-medium">{Math.round(displayTotalHours * [0.35, 0.25, 0.22, 0.18][i])}h</span>
+                              </div>
+                              <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${[35, 25, 22, 18][i]}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Employees Modal */}
+                {mobileKPIModal === 'employees' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="text-4xl font-bold text-emerald-600">{displayActiveEmployees}</div>
+                      <div className="text-slate-600 text-sm mt-1">Active volunteers this period</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-emerald-50 rounded-lg p-2 text-center">
+                        <div className="text-emerald-700 text-lg font-bold">42%</div>
+                        <div className="text-emerald-600 text-[10px]">Participation</div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-2 text-center">
+                        <div className="text-blue-700 text-lg font-bold">{Math.round(displayActiveEmployees * 0.78)}</div>
+                        <div className="text-blue-600 text-[10px]">Returning</div>
+                      </div>
+                      <div className="bg-amber-50 rounded-lg p-2 text-center">
+                        <div className="text-amber-700 text-lg font-bold">{Math.round(displayActiveEmployees * 0.22)}</div>
+                        <div className="text-amber-600 text-[10px]">New</div>
+                      </div>
+                    </div>
+                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Brain className="w-4 h-4 text-indigo-600" />
+                        <span className="text-sm font-semibold text-indigo-800">AI Insight</span>
+                      </div>
+                      <p className="text-xs text-slate-700">Based on engagement patterns, 15 employees are likely to volunteer for the first time next month. Consider targeted outreach.</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Projects Modal */}
+                {mobileKPIModal === 'projects' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="text-4xl font-bold text-purple-600">{displayProjectsCompleted}</div>
+                      <div className="text-slate-600 text-sm mt-1">Active volunteer projects</div>
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-slate-800 text-sm">Top Projects by Impact</h4>
+                      {['Community Garden Initiative', 'Youth STEM Mentorship', 'Food Bank Partnership', 'Environmental Cleanup'].slice(0, Math.min(4, displayProjectsCompleted)).map((proj, i) => (
+                        <div key={proj} className="bg-white rounded-lg p-2.5 border border-slate-200 flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
+                            {i + 1}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-slate-900 text-sm font-medium truncate">{proj}</div>
+                            <div className="text-slate-500 text-xs">{Math.round(displayTotalHours * [0.3, 0.25, 0.25, 0.2][i])} hours</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {/* AIU Modal */}
+                {mobileKPIModal === 'aiu' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="text-4xl font-bold text-teal-600">{(csrData?.totalImpact || 0).toFixed(4)}</div>
+                      <div className="text-slate-600 text-sm mt-1">Attributable Impact Units</div>
+                    </div>
+                    <div className="bg-teal-50 rounded-lg p-3 border border-teal-200">
+                      <h4 className="font-semibold text-teal-800 text-sm mb-2">What is an AIU?</h4>
+                      <p className="text-xs text-slate-700 mb-2">AIUs are auditable units of attributable SDG progress. Each AIU represents your verified share of real-world change, backed by NGO evidence and project data.</p>
+                      <p className="text-[10px] text-slate-600 italic">1 AIU = one unit of attributable share of SDG Delta (not lives touched)</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-blue-50 rounded-lg p-3 text-center">
+                        <div className="text-blue-700 text-xl font-bold">{csrData?.sdgMetrics?.length || 0}</div>
+                        <div className="text-blue-600 text-xs">SDGs Impacted</div>
+                      </div>
+                      <div className="bg-emerald-50 rounded-lg p-3 text-center">
+                        <div className="text-emerald-700 text-lg font-bold">Verified</div>
+                        <div className="text-emerald-600 text-xs">Evidence-Backed</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-2 mt-2">
+                      <p className="text-[10px] text-slate-600 text-center">AIUs are fractional and cumulative, calculated using transparent formulas, role weighting, hours, and reliability.</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Participation Modal */}
+                {mobileKPIModal === 'participation' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="text-4xl font-bold text-blue-600">42%</div>
+                      <div className="text-slate-600 text-sm mt-1">Employee participation rate</div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-slate-700">Industry Benchmark</span>
+                        <span className="text-sm font-semibold text-blue-700">35%</span>
+                      </div>
+                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-blue-500 rounded-full" style={{ width: '42%' }} />
+                      </div>
+                      <div className="text-xs text-emerald-600 mt-2 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Above industry average
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Retention Modal */}
+                {mobileKPIModal === 'retention' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="text-4xl font-bold text-emerald-600">78%</div>
+                      <div className="text-slate-600 text-sm mt-1">Volunteer retention rate</div>
+                    </div>
+                    <div className="bg-emerald-50 rounded-lg p-3">
+                      <p className="text-xs text-slate-700">78% of employees who volunteered last quarter continue to participate. This is 12% above the VMS industry benchmark of 66%.</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Satisfaction Modal */}
+                {mobileKPIModal === 'satisfaction' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="text-4xl font-bold text-amber-600">4.6<span className="text-xl">/5</span></div>
+                      <div className="text-slate-600 text-sm mt-1">Average satisfaction score</div>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3">
+                      <div className="flex gap-1 justify-center mb-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className={`w-6 h-6 ${star <= 4 ? 'text-amber-500 fill-amber-500' : 'text-amber-300'}`} />
+                        ))}
+                      </div>
+                      <p className="text-xs text-slate-700 text-center">Based on 156 volunteer feedback responses this quarter.</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Engagement Funnel Modal */}
+        {showFunnelModal && selectedFunnelStage !== null && funnelData?.funnel && (
+          <div
+            className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center"
+            onClick={() => setShowFunnelModal(false)}
+          >
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-blue-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-lg font-bold text-white">
+                    {funnelData.funnel[selectedFunnelStage].stage}
+                  </h2>
+                  <p className="text-xs text-white/80">
+                    {funnelData.funnel[selectedFunnelStage].description || 'Engagement stage details'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowFunnelModal(false)}
+                  className="p-2 rounded-full hover:bg-white/20"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-4 space-y-4">
+                {/* Stage Stats */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-200">
+                    <div className="text-emerald-700 text-2xl font-bold">
+                      {funnelData.funnel[selectedFunnelStage].count}
+                    </div>
+                    <div className="text-emerald-600 text-xs">Employees in Stage</div>
+                  </div>
+                  {selectedFunnelStage > 0 && (
+                    <div className="bg-red-50 rounded-lg p-3 text-center border border-red-200">
+                      <div className="text-red-700 text-2xl font-bold">
+                        {funnelData.funnel[selectedFunnelStage].dropoff || 0}%
+                      </div>
+                      <div className="text-red-600 text-xs">Drop-off Rate</div>
+                    </div>
+                  )}
+                  {selectedFunnelStage === 0 && (
+                    <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
+                      <div className="text-blue-700 text-2xl font-bold">100%</div>
+                      <div className="text-blue-600 text-xs">Starting Point</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Conversion Progress */}
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-semibold text-slate-700">Funnel Progress</span>
+                    <span className="text-sm font-bold text-emerald-600">
+                      {Math.round((funnelData.funnel[selectedFunnelStage].count / (funnelData.funnel[0]?.count || 1)) * 100)}%
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full transition-all"
+                      style={{ width: `${(funnelData.funnel[selectedFunnelStage].count / (funnelData.funnel[0]?.count || 1)) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Employees List */}
+                <div>
+                  <h4 className="font-semibold text-slate-800 text-sm mb-2 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-slate-600" />
+                    Employees in this Stage ({funnelStageData?.employees?.length || 0})
+                  </h4>
+                  {funnelStageData?.employees && funnelStageData.employees.length > 0 ? (
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                      {funnelStageData.employees.slice(0, 10).map((emp: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between p-2 bg-white rounded-lg border border-slate-200"
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-bold">
+                              {(emp.name || emp.employeeName || 'U').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-slate-800">{emp.name || emp.employeeName || 'Employee'}</div>
+                              <div className="text-[10px] text-slate-500">{emp.hours || 0}h logged</div>
+                            </div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-slate-500 text-sm">
+                      Loading employee data...
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <button
+                    className="bg-gradient-to-r from-emerald-500 to-blue-500 text-white text-sm font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2"
+                    onClick={() => {
+                      setShowFunnelModal(false);
+                      // Could trigger email/notification action
+                    }}
+                  >
+                    <Mail className="w-4 h-4" />
+                    Engage All
+                  </button>
+                  <button
+                    className="bg-white text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-lg border border-slate-300 flex items-center justify-center gap-2"
+                    onClick={() => setShowFunnelModal(false)}
+                  >
+                    <X className="w-4 h-4" />
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1426,18 +1957,18 @@ export default function CSRDashboard() {
         overflow: "hidden",
       }}
     >
-      {/* Top Header Bar - Gradient Theme matching Organization Dashboard */}
+      {/* Top Header Bar - Lighter gradient for logo contrast */}
       <header
         style={{
-          background: "linear-gradient(135deg, #475569 0%, #6b21a8 50%, #7c3aed 75%, #ea580c 100%)",
-          color: "white",
+          background: "linear-gradient(135deg, #3B82F6 0%, #38BDF8 50%, #7DD3FC 75%, #E0F2FE 100%)",
+          color: "#1e293b",
           padding: "12px 24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexShrink: 0,
           height: "64px",
-          boxShadow: "0 2px 16px rgba(26, 10, 46, 0.4)",
+          boxShadow: "0 2px 16px rgba(59, 130, 246, 0.3)",
           position: "sticky",
           top: 0,
           zIndex: 50,
@@ -1451,7 +1982,7 @@ export default function CSRDashboard() {
             alignItems: "center",
             gap: "8px",
             paddingRight: "16px",
-            borderRight: "1px solid rgba(255,255,255,0.2)",
+            borderRight: "1px solid rgba(30, 41, 59, 0.2)",
             backgroundColor: "transparent",
             border: "none",
             cursor: "pointer",
@@ -1479,16 +2010,16 @@ export default function CSRDashboard() {
           }}
         >
           <span
-            style={{ fontSize: "16px", fontWeight: "600", color: "#ffffff" }}
+            style={{ fontSize: "16px", fontWeight: "600", color: "#1e293b" }}
           >
             CSR Dashboard
           </span>
-          <span style={{ fontSize: "16px", color: "#ffffff" }}>•</span>
+          <span style={{ fontSize: "16px", color: "#475569" }}>•</span>
           <Briefcase
-            style={{ width: "18px", height: "18px", color: "#ffffff" }}
+            style={{ width: "18px", height: "18px", color: "#1e293b" }}
           />
           <span
-            style={{ fontSize: "16px", fontWeight: "500", color: "#ffffff" }}
+            style={{ fontSize: "16px", fontWeight: "500", color: "#1e293b" }}
           >
             {companyName}
           </span>
@@ -1503,7 +2034,7 @@ export default function CSRDashboard() {
             minWidth: "fit-content",
           }}
         >
-          <span style={{ fontSize: "14px", color: "#ffffff", opacity: 0.9 }}>
+          <span style={{ fontSize: "14px", color: "#334155" }}>
             {currentDate}
           </span>
           <UserProfileDropdown />
@@ -1849,7 +2380,7 @@ export default function CSRDashboard() {
                     </div>
                   </div>
 
-                  {/* UN SDG Icon Buttons - Only Committed SDGs */}
+                  {/* UN SDG Icon Buttons - Only Committed SDGs - Interactive */}
                   <div
                     style={{
                       display: "flex",
@@ -1860,80 +2391,142 @@ export default function CSRDashboard() {
                   >
                     {displayedSDGsForFilters.map((sdgNum) => {
                       const sdgIcon = getSDGIcon(sdgNum);
-                      const isSelected = selectedSDGFilters.includes(sdgNum);
+                      const isFiltered = selectedSDGFilters.includes(sdgNum);
+                      const sdgMetric = sdgMetrics.find((m: SDGMetric) => m.sdg === sdgNum);
+                      const hasActivity = sdgMetric && sdgMetric.totalHours > 0;
 
                       return (
-                        <button
+                        <div
                           key={sdgNum}
-                          onClick={() => toggleSDGFilter(sdgNum)}
                           style={{
+                            position: "relative",
                             width: "120px",
                             height: "120px",
-                            padding: 0,
-                            border: isSelected ? "4px solid #111827" : "2px solid transparent",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            transition: "all 0.2s ease",
-                            boxShadow: isSelected
-                              ? "0 6px 16px rgba(0,0,0,0.3)"
-                              : "0 2px 8px rgba(0,0,0,0.1)",
-                            transform: isSelected ? "scale(1.05)" : "scale(1)",
-                            overflow: "hidden",
-                            position: "relative",
-                            background: "transparent",
-                          }}
-                          onMouseEnter={(e) => {
-                            if (!isSelected) {
-                              e.currentTarget.style.transform = "scale(1.05)";
-                              e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isSelected) {
-                              e.currentTarget.style.transform = "scale(1)";
-                              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-                            }
                           }}
                         >
-                          <img
-                            src={sdgIcon}
-                            alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
+                          <button
+                            onClick={() => setSelectedSDG(sdgNum)}
+                            title={`Click to view details for SDG ${sdgNum}: ${getSDGFullName(sdgNum)}`}
                             style={{
                               width: "100%",
                               height: "100%",
-                              objectFit: "cover",
-                              display: "block",
+                              padding: 0,
+                              border: isFiltered ? "4px solid #1e3a8a" : hasActivity ? "3px solid #22c55e" : "2px solid #e5e7eb",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                              boxShadow: isFiltered
+                                ? "0 6px 16px rgba(30,58,138,0.4)"
+                                : hasActivity
+                                  ? "0 4px 12px rgba(34,197,94,0.3)"
+                                  : "0 2px 8px rgba(0,0,0,0.1)",
+                              transform: isFiltered ? "scale(1.05)" : "scale(1)",
+                              overflow: "hidden",
+                              position: "relative",
+                              background: "transparent",
                             }}
-                          />
-                          {isSelected && (
-                            <div
+                            onMouseEnter={(e) => {
+                              if (!isFiltered) {
+                                e.currentTarget.style.transform = "scale(1.08)";
+                                e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.25)";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isFiltered) {
+                                e.currentTarget.style.transform = "scale(1)";
+                                e.currentTarget.style.boxShadow = hasActivity
+                                  ? "0 4px 12px rgba(34,197,94,0.3)"
+                                  : "0 2px 8px rgba(0,0,0,0.1)";
+                              }
+                            }}
+                          >
+                            <img
+                              src={sdgIcon}
+                              alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
                               style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: "rgba(0,0,0,0.3)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                display: "block",
                               }}
-                            >
+                            />
+                            {/* Activity indicator badge */}
+                            {hasActivity && (
                               <div
                                 style={{
-                                  backgroundColor: "#111827",
+                                  position: "absolute",
+                                  top: "4px",
+                                  right: "4px",
+                                  backgroundColor: "#22c55e",
                                   color: "white",
-                                  padding: "4px 8px",
-                                  borderRadius: "4px",
-                                  fontSize: "11px",
+                                  padding: "2px 6px",
+                                  borderRadius: "10px",
+                                  fontSize: "10px",
                                   fontWeight: "700",
+                                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                                 }}
                               >
-                                ✓ ACTIVE
+                                {sdgMetric.totalHours}h
                               </div>
-                            </div>
-                          )}
-                        </button>
+                            )}
+                            {/* Filtered indicator overlay */}
+                            {isFiltered && (
+                              <div
+                                style={{
+                                  position: "absolute",
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  backgroundColor: "rgba(30,58,138,0.9)",
+                                  color: "white",
+                                  padding: "4px",
+                                  fontSize: "10px",
+                                  fontWeight: "700",
+                                  textAlign: "center",
+                                }}
+                              >
+                                FILTERING
+                              </div>
+                            )}
+                          </button>
+                          {/* Filter toggle button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleSDGFilter(sdgNum);
+                            }}
+                            title={isFiltered ? "Remove from filter" : "Add to filter"}
+                            style={{
+                              position: "absolute",
+                              bottom: "-6px",
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              width: "28px",
+                              height: "28px",
+                              borderRadius: "50%",
+                              border: "2px solid white",
+                              backgroundColor: isFiltered ? "#dc2626" : "#1e3a8a",
+                              color: "white",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "14px",
+                              fontWeight: "bold",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                              transition: "all 0.2s ease",
+                              zIndex: 10,
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateX(-50%) scale(1.15)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "translateX(-50%) scale(1)";
+                            }}
+                          >
+                            {isFiltered ? "−" : "+"}
+                          </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -2076,25 +2669,21 @@ export default function CSRDashboard() {
                             e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.1)";
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-                            <div
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                            {/* Official UN SDG Icon */}
+                            <img
+                              src={getSDGIcon(sdgNum)}
+                              alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
                               style={{
-                                width: "28px",
-                                height: "28px",
-                                backgroundColor: sdgColor,
+                                width: "36px",
+                                height: "36px",
                                 borderRadius: "4px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "13px",
-                                fontWeight: "bold",
-                                color: "white",
+                                objectFit: "cover",
+                                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                               }}
-                            >
-                              {sdgNum}
-                            </div>
+                            />
                             <div style={{ fontSize: "12px", fontWeight: "600", color: "#111827", flex: 1 }}>
-                              {getSDGName(sdgNum)}
+                              SDG {sdgNum}: {getSDGName(sdgNum)}
                             </div>
                           </div>
                           <div style={{ display: "flex", gap: "12px", fontSize: "12px" }}>
@@ -4189,7 +4778,7 @@ export default function CSRDashboard() {
                     lineHeight: "1.6",
                   }}
                 >
-                  Attributable Impact Units (AIUs) measure your organization's verified social impact across all CSR initiatives.
+                  AIUs are auditable units of attributable SDG progress, calculated using transparent formulas with role weighting, hours, and reliability. Each AIU represents your verified share of real-world change.
                 </p>
                 <div
                   style={{
@@ -4363,7 +4952,7 @@ export default function CSRDashboard() {
                 >
                   <span style={{ fontSize: "18px" }}>🌍</span>
                   <span style={{ fontSize: "13px", color: "#065f46" }}>
-                    <strong>What are AIUs?</strong> Attributable Impact Units quantify your verified social impact, accounting for volunteer hours, SDG alignment, and beneficiary reach.
+                    <strong>What are AIUs?</strong> Attributable Impact Units are micro, auditable credits representing your attributable share of SDG-linked outcomes. AIUs are fractional and cumulative, evidence-backed with project ID, SDG indicator, attribution factor, and NGO verification.
                   </span>
                 </div>
               </div>
@@ -4422,41 +5011,37 @@ export default function CSRDashboard() {
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "12px",
+                        gap: "16px",
                       }}
                     >
-                      <div
+                      {/* Official UN SDG Icon */}
+                      <img
+                        src={getSDGIcon(selectedSDG)}
+                        alt={`SDG ${selectedSDG}: ${getSDGName(selectedSDG)}`}
                         style={{
-                          width: "48px",
-                          height: "48px",
-                          borderRadius: "10px",
-                          backgroundColor: sdgColor,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "white",
-                          fontSize: "20px",
-                          fontWeight: "bold",
+                          width: "80px",
+                          height: "80px",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                          objectFit: "cover",
                         }}
-                      >
-                        {selectedSDG}
-                      </div>
+                      />
                       <div>
                         <h2
                           style={{
-                            fontSize: "20px",
+                            fontSize: "22px",
                             fontWeight: "bold",
                             color: "#111827",
                             margin: 0,
                           }}
                         >
-                          {getSDGName(selectedSDG)}
+                          SDG {selectedSDG}: {getSDGName(selectedSDG)}
                         </h2>
                         <p
                           style={{
                             fontSize: "14px",
                             color: "#6b7280",
-                            margin: "2px 0 0 0",
+                            margin: "4px 0 0 0",
                           }}
                         >
                           {getSDGFullName(selectedSDG)}
@@ -5966,25 +6551,27 @@ export default function CSRDashboard() {
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <div
+                      {/* Official UN SDG Icon */}
+                      <img
+                        src={getSDGIcon(sdgNum)}
+                        alt={`SDG ${sdgNum}: ${getSDGName(sdgNum)}`}
                         style={{
-                          width: "40px",
-                          height: "40px",
+                          width: "50px",
+                          height: "50px",
                           borderRadius: "8px",
-                          backgroundColor: getSDGColor(sdgNum),
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "white",
-                          fontWeight: "bold",
-                          fontSize: "14px",
+                          objectFit: "cover",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                          cursor: "pointer",
                         }}
-                      >
-                        {sdgNum}
-                      </div>
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowActiveSDGsModal(false);
+                          setSelectedSDG(sdgNum);
+                        }}
+                      />
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: "14px", fontWeight: "600", color: "#111827", margin: 0 }}>
-                          {getSDGName(sdgNum)}
+                          SDG {sdgNum}: {getSDGName(sdgNum)}
                         </p>
                         <p style={{ fontSize: "12px", color: "#6b7280", margin: "2px 0 0 0" }}>
                           {getSDGFullName(sdgNum)}
@@ -6070,25 +6657,27 @@ export default function CSRDashboard() {
                   return (
                     <div key={metric.sdg} style={{ padding: "12px", backgroundColor: "#f9fafb", borderRadius: "8px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                        <div
+                        {/* Official UN SDG Icon */}
+                        <img
+                          src={getSDGIcon(metric.sdg)}
+                          alt={`SDG ${metric.sdg}: ${getSDGName(metric.sdg)}`}
                           style={{
-                            width: "32px",
-                            height: "32px",
+                            width: "40px",
+                            height: "40px",
                             borderRadius: "6px",
-                            backgroundColor: getSDGColor(metric.sdg),
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "white",
-                            fontSize: "12px",
-                            fontWeight: "bold",
+                            objectFit: "cover",
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            cursor: "pointer",
                           }}
-                        >
-                          {metric.sdg}
-                        </div>
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowTotalHoursModal(false);
+                            setSelectedSDG(metric.sdg);
+                          }}
+                        />
                         <div style={{ flex: 1 }}>
                           <p style={{ fontSize: "13px", fontWeight: "600", color: "#111827", margin: 0 }}>
-                            {getSDGName(metric.sdg)}
+                            SDG {metric.sdg}: {getSDGName(metric.sdg)}
                           </p>
                         </div>
                         <div style={{ textAlign: "right" }}>

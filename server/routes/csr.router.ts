@@ -15,6 +15,45 @@ export const csrRouter = Router();
 // ===== HELPER FUNCTIONS =====
 
 /**
+ * Safe parseInt with NaN validation
+ * Returns null if parsing fails or value is NaN
+ */
+function safeParseInt(value: any): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = parseInt(String(value), 10);
+  return isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * Safe date parsing with validation
+ * Returns null if date is invalid
+ */
+function safeParseDate(value: any): Date | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Safe array access - ensures array is valid before operations
+ */
+function safeArray<T>(value: T[] | null | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
+/**
+ * Create standardized error response
+ */
+function createErrorResponse(code: string, message: string, details?: any) {
+  return {
+    error: code,
+    message,
+    details,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
  * Helper function to handle validation and authorization errors
  */
 function handleValidationError(err: unknown) {
@@ -1105,13 +1144,21 @@ csrRouter.get("/csr/impact-reporting", async (req: Request, res: Response) => {
 csrRouter.get("/csr/impact-reporting/export/csv", async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
-    if (!userId) return res.status(400).json({ error: "User ID required" });
+    if (!userId || isNaN(userId)) return res.status(400).json({ error: "Valid User ID required" });
 
-    const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+    const partners = await storage.listCSRPartners?.() || [];
+    const userPartner = partners.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
-    // Fetch impact data
-    const impactResponse = await fetch(`http://localhost:5000/api/csr/impact-reporting?userId=${userId}`);
+    // Fetch impact data using internal function instead of HTTP call
+    const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const impactResponse = await fetch(`${baseUrl}/api/csr/impact-reporting?userId=${userId}`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!impactResponse.ok) {
+      console.error(`Impact reporting API returned ${impactResponse.status}`);
+      return res.status(502).json({ error: "Failed to fetch impact data" });
+    }
     const impactData = await impactResponse.json();
 
     // Generate CSV
@@ -1170,13 +1217,21 @@ csrRouter.get("/csr/impact-reporting/export/pdf", async (req: Request, res: Resp
     const userId = req.query.userId ? parseInt(req.query.userId as string) : null;
     const reportTitle = (req.query.title as string) || "CSR Impact Report";
     const reportTimeline = (req.query.timeline as string) || "Annual";
-    if (!userId) return res.status(400).json({ error: "User ID required" });
+    if (!userId || isNaN(userId)) return res.status(400).json({ error: "Valid User ID required" });
 
-    const userPartner = (await storage.listCSRPartners?.())?.find((p: any) => p.userId === userId);
+    const partners = await storage.listCSRPartners?.() || [];
+    const userPartner = partners.find((p: any) => p.userId === userId);
     if (!userPartner) return res.status(404).json({ error: "CSR partner not found" });
 
-    // Fetch impact data
-    const impactResponse = await fetch(`http://localhost:5000/api/csr/impact-reporting?userId=${userId}`);
+    // Fetch impact data using environment-aware URL
+    const baseUrl = process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const impactResponse = await fetch(`${baseUrl}/api/csr/impact-reporting?userId=${userId}`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    if (!impactResponse.ok) {
+      console.error(`Impact reporting API returned ${impactResponse.status}`);
+      return res.status(502).json({ error: "Failed to fetch impact data" });
+    }
     const impactData = await impactResponse.json();
 
     // Calculate Synerxus Impact Rating (0-100)

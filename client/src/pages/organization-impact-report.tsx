@@ -1213,7 +1213,7 @@ export default function OrganizationImpactReport() {
                         AIUs Earned
                       </p>
                       <p className="text-xl md:text-2xl font-bold text-emerald-900 dark:text-emerald-100 mb-1 md:mb-2">
-                        {(organizationImpactScore * 0.35).toFixed(1)}
+                        {(organizationImpactScore * 0.0035).toFixed(4)}
                       </p>
                       <div className="space-y-1">
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
@@ -1223,8 +1223,8 @@ export default function OrganizationImpactReport() {
                           </span>
                         </div>
                         <div className="flex justify-between items-center text-[10px] md:text-xs">
-                          <span className="text-gray-600 dark:text-gray-400">Type:</span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">Impact</span>
+                          <span className="text-gray-600 dark:text-gray-400">SDG Share:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">Auditable</span>
                         </div>
                       </div>
                     </div>

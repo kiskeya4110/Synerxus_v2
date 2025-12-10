@@ -901,7 +901,7 @@ export default function ImpactReport() {
                       </div>
                       <div>
                         <p className="text-xs text-emerald-600 dark:text-emerald-400 uppercase font-semibold">AIUs Earned</p>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">Attributable Impact Units</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Your verified share of SDG progress</p>
                       </div>
                     </div>
                     <div className="text-right">

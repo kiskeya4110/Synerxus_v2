@@ -188,7 +188,7 @@ export default function CSRDashboardPWA() {
     }
   }, []);
 
-  // Fetch CSR Dashboard Data
+  // Fetch CSR Dashboard Data - optimized for faster initial load
   const { data: csrData, isLoading, error, refetch } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId],
     queryFn: async () => {
@@ -198,8 +198,9 @@ export default function CSRDashboardPWA() {
       return response.json();
     },
     enabled: !!userId,
-    staleTime: 30000,
-    refetchInterval: 60000,
+    staleTime: 120000, // Increased from 30s to reduce refetches
+    refetchInterval: 300000, // Increased from 60s to 5min
+    gcTime: 600000, // Increased cache retention to 10min
   });
 
   // Fetch AI Insights
@@ -272,13 +273,35 @@ export default function CSRDashboardPWA() {
     toast({ title: "Refreshed", description: "Data updated" });
   }, [refetch, toast]);
 
-  // Loading state
+  // Loading state with skeleton UI
   if (isLoading && !csrData) {
     return (
-      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
-        <div className="text-center">
-          <div className="w-12 h-12 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-amber-700 text-sm">Loading Dashboard...</p>
+      <div className="h-screen bg-[#faf9f7] flex flex-col overflow-hidden">
+        {/* Header skeleton */}
+        <div className="bg-white border-b border-slate-200 px-4 py-3 h-16 flex items-center justify-between animate-pulse">
+          <div className="h-6 w-32 bg-slate-200 rounded" />
+          <div className="h-8 w-8 bg-slate-200 rounded-lg" />
+        </div>
+        {/* Content skeleton */}
+        <div className="flex-1 overflow-auto p-4 space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-white rounded-lg p-4 border border-slate-200 animate-pulse">
+              <div className="h-4 w-24 bg-slate-200 rounded mb-3" />
+              <div className="space-y-2">
+                <div className="h-8 w-16 bg-slate-200 rounded" />
+                <div className="h-3 w-full bg-slate-100 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+        {/* Bottom nav skeleton */}
+        <div className="bg-white border-t border-slate-200 px-4 py-2 h-20 flex items-center justify-around">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-1">
+              <div className="h-6 w-6 bg-slate-200 rounded-lg animate-pulse" />
+              <div className="h-2 w-8 bg-slate-200 rounded animate-pulse" />
+            </div>
+          ))}
         </div>
       </div>
     );

@@ -1898,9 +1898,9 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
       const volunteer = allVolunteers.find((v: any) => v.userId === userId);
       if (volunteer?.name) return volunteer.name;
       const profile = volunteerProfiles.find((vp: any) => vp.userId === userId);
-      if (profile?.name) return profile.name;
+      if (profile?.volunteerName) return profile.volunteerName;
       const user = users.find((u: any) => u.id === userId);
-      if (user?.name) return user.name;
+      if (user?.displayName) return user.displayName;
       if (user?.email) return user.email.split('@')[0];
       return `Employee ${userId}`;
     };
@@ -1909,17 +1909,19 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
     const volunteerHoursMap = new Map<number, { name: string; hours: number; projects: number; skills: string[]; userId: number }>();
 
     for (const activity of partnerActivities) {
-      const existing = volunteerHoursMap.get(activity.userId);
+      if (!activity.userId) continue; // Skip activities without userId
+      const actUserId = activity.userId;
+      const existing = volunteerHoursMap.get(actUserId);
       if (existing) {
         existing.hours += activity.hours || 0;
-        existing.projects = new Set([...partnerActivities.filter((a: any) => a.userId === activity.userId).map((a: any) => a.projectId)]).size;
+        existing.projects = new Set([...partnerActivities.filter((a: any) => a.userId === actUserId).map((a: any) => a.projectId).filter(Boolean)]).size;
       } else {
-        volunteerHoursMap.set(activity.userId, {
-          name: getEmployeeName(activity.userId),
+        volunteerHoursMap.set(actUserId, {
+          name: getEmployeeName(actUserId),
           hours: activity.hours || 0,
           projects: 1,
-          skills: activity.skills || [],
-          userId: activity.userId
+          skills: (activity as any).skills || [],
+          userId: actUserId
         });
       }
     }
@@ -1942,16 +1944,19 @@ csrRouter.get("/employee-engagement/summary", async (req: Request, res: Response
     // Calculate skills distribution from real activities
     const skillsMap = new Map<string, { volunteers: Set<number>; hours: number; projects: Set<number> }>();
     for (const activity of partnerActivities) {
-      const actSkills = activity.skills || activity.category ? [activity.category] : ['General'];
+      if (!activity.userId) continue;
+      const actUserId = activity.userId;
+      const activityAny = activity as any;
+      const actSkills: string[] = activityAny.skills || (activityAny.category ? [activityAny.category] : ['General']);
       for (const skill of actSkills) {
         const existing = skillsMap.get(skill);
         if (existing) {
-          existing.volunteers.add(activity.userId);
+          existing.volunteers.add(actUserId);
           existing.hours += activity.hours || 0;
           if (activity.projectId) existing.projects.add(activity.projectId);
         } else {
           skillsMap.set(skill, {
-            volunteers: new Set([activity.userId]),
+            volunteers: new Set([actUserId]),
             hours: activity.hours || 0,
             projects: activity.projectId ? new Set([activity.projectId]) : new Set()
           });

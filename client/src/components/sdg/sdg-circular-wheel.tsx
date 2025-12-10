@@ -161,12 +161,15 @@ export function SDGCircularWheel({ scale = 1.0 }: SDGCircularWheelProps = {}) {
                     {/* SDG Icon - using UN approved icon image */}
                     <image
                       href={UN_SDG_ICONS[sdg.id]}
-                      x={iconPos.x - (15 * scale)}
-                      y={iconPos.y - (15 * scale)}
-                      width={30 * scale}
-                      height={30 * scale}
+                      x={iconPos.x - (22 * scale)}
+                      y={iconPos.y - (22 * scale)}
+                      width={44 * scale}
+                      height={44 * scale}
                       className="pointer-events-none select-none"
-                      style={{ opacity: 0.9 }}
+                      style={{
+                        opacity: 1,
+                        filter: isHovered ? "drop-shadow(0 0 8px rgba(255,255,255,0.8))" : "drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+                      }}
                     />
                   </g>
                 );

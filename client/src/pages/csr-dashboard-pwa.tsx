@@ -301,7 +301,7 @@ export default function CSRDashboardPWA() {
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="h-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40">
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">
@@ -492,7 +492,7 @@ export default function CSRDashboardPWA() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-6">
+      <main className="flex-1 overflow-y-auto pb-6 bg-[#faf9f7]">
         {/* Home Tab */}
         {activeTab === 'home' && (
           <div className="space-y-4 p-4">

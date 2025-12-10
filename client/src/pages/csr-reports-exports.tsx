@@ -431,7 +431,7 @@ export default function CSRReportsExports() {
 
   if (isLoading) {
     return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", backgroundColor: "#faf9f7" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", backgroundColor: "#faf9f7", overflow: "hidden" }}>
         <div style={{ textAlign: "center" }}>
           <div style={{ fontSize: "32px", marginBottom: "16px" }}>📄</div>
           <p style={{ color: "#6b7280", fontSize: "16px" }}>Loading reports...</p>
@@ -443,7 +443,7 @@ export default function CSRReportsExports() {
   // Mobile PWA View
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto">
+      <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
         <CSRMobileHeader title="Reports & Exports" companyName={companyName} showBackButton onBack={() => navigate('/csr-dashboard')} />
 
         <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">

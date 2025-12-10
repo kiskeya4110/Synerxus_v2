@@ -1,13 +1,14 @@
 import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import EmployeeEngagementTab from "./employee-engagement-tab";
+import Footer from "@/components/layout/footer";
 
 export default function EmployeeEngagementTabPage() {
   const [, setLocation] = useLocation();
   const userId = localStorage.getItem("currentUserId");
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#faf9f7" }}>
+    <div style={{ height: "100vh", backgroundColor: "#faf9f7", display: "flex", flexDirection: "column", overflow: "hidden" }}>
       {/* Header */}
       <div
         style={{
@@ -16,9 +17,7 @@ export default function EmployeeEngagementTabPage() {
           display: "flex",
           alignItems: "center",
           gap: "16px",
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
+          flexShrink: 0,
         }}
       >
         <button
@@ -54,9 +53,12 @@ export default function EmployeeEngagementTabPage() {
       </div>
 
       {/* Content */}
-      <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
-        <EmployeeEngagementTab userId={userId} />
-      </div>
+      <main style={{ flex: 1, overflowY: "auto" }}>
+        <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
+          <EmployeeEngagementTab userId={userId} />
+        </div>
+        <Footer />
+      </main>
     </div>
   );
 }

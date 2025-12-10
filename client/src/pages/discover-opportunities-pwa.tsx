@@ -143,7 +143,7 @@ export default function DiscoverOpportunitiesPWA() {
   // Redirect to login if not authenticated
   if (!userId) {
     return (
-      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
+      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
         <div className="text-slate-800 text-center p-6">
           <p className="mb-4">Please log in to discover opportunities</p>
           <Button onClick={() => navigate('/login')} className="bg-emerald-500 hover:bg-emerald-600">
@@ -191,7 +191,7 @@ export default function DiscoverOpportunitiesPWA() {
   // Show loading state
   if (isLoading && !hasTimedOut) {
     return (
-      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
+      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
         <div className="text-slate-800 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
           <p>Loading opportunities...</p>
@@ -203,7 +203,7 @@ export default function DiscoverOpportunitiesPWA() {
   // Show error state or timeout recovery with retry option
   if (isError || hasTimedOut) {
     return (
-      <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
+      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
         <div className="text-slate-800 text-center p-6">
           <div className="w-16 h-16 mx-auto mb-4 text-red-500">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -239,7 +239,7 @@ export default function DiscoverOpportunitiesPWA() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto">
+    <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
       {/* Top App Bar - Blue to off-white/sky-blue gradient for logo contrast */}
       <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <button

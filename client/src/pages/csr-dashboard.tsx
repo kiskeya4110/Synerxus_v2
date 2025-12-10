@@ -245,6 +245,10 @@ export default function CSRDashboard() {
   const [showEngagementTipsDialog, setShowEngagementTipsDialog] = useState(false);
   const [isSendingTips, setIsSendingTips] = useState(false);
 
+  // Individual employee selection for engagement
+  const [selectedEmployeesForEngagement, setSelectedEmployeesForEngagement] = useState<string[]>([]);
+  const [engagementMode, setEngagementMode] = useState<'all' | 'selected'>('all');
+
   // Time Period options
   const TIME_PERIODS = [
     { value: 'all', label: 'All Time' },
@@ -949,38 +953,60 @@ export default function CSRDashboard() {
                 </div>
               )}
 
-              {/* SDG Commitments - Compact */}
+              {/* SDG Commitments - Interactive with UN Icons */}
               {committedSDGs && committedSDGs.length > 0 && (
                 <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
-                  <h3 className="text-slate-900 text-sm font-semibold mb-2">SDG Commitments</h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {committedSDGs.map((sdg: number) => (
-                      <div
-                        key={sdg}
-                        className="w-8 h-8 rounded flex items-center justify-center text-white text-[10px] font-bold"
-                        style={{ backgroundColor: getSDGColor(sdg) }}
-                        title={getSDGName(sdg)}
-                      >
-                        {sdg}
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-slate-900 text-sm font-semibold">SDG Commitments</h3>
+                    <span className="text-[10px] text-slate-500">{activeCommittedSDGs}/{committedSDGs.length} Active</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {committedSDGs.map((sdg: number) => {
+                      const metric = sdgMetrics.find((m: any) => m.sdg === sdg);
+                      const hasActivity = metric && metric.totalHours > 0;
+                      return (
+                        <button
+                          key={sdg}
+                          onClick={() => setSelectedSDG(sdg)}
+                          className="relative"
+                          title={`${getSDGName(sdg)} - Click for details`}
+                        >
+                          <img
+                            src={getSDGIcon(sdg)}
+                            alt={`SDG ${sdg}: ${getSDGName(sdg)}`}
+                            className="w-12 h-12 rounded-lg object-cover shadow-sm"
+                            style={{
+                              border: hasActivity ? '2px solid #22c55e' : '1px solid #e5e7eb',
+                            }}
+                          />
+                          {hasActivity && (
+                            <span className="absolute -top-1 -right-1 bg-green-500 text-white text-[8px] font-bold px-1 rounded-full shadow">
+                              {metric.totalHours}h
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Top SDG Progress - Compact */}
+              {/* Top SDG Progress - Interactive with UN Icons */}
               <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                 <h3 className="text-slate-900 text-sm font-semibold mb-2">Top SDG Impact</h3>
                 <div className="space-y-2">
                   {sdgMetrics.slice(0, 4).map((metric: any) => (
-                    <div key={metric.sdg} className="flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-                        style={{ backgroundColor: getSDGColor(metric.sdg) }}
-                      >
-                        {metric.sdg}
-                      </div>
-                      <div className="flex-1 min-w-0">
+                    <button
+                      key={metric.sdg}
+                      onClick={() => setSelectedSDG(metric.sdg)}
+                      className="w-full flex items-center gap-2 p-1 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                      <img
+                        src={getSDGIcon(metric.sdg)}
+                        alt={`SDG ${metric.sdg}`}
+                        className="w-8 h-8 rounded object-cover flex-shrink-0 shadow-sm"
+                      />
+                      <div className="flex-1 min-w-0 text-left">
                         <div className="flex justify-between text-[10px] mb-0.5">
                           <span className="text-slate-700 truncate">{getSDGName(metric.sdg)}</span>
                           <span className="text-slate-900 font-semibold ml-1">{metric.totalHours}h</span>
@@ -995,7 +1021,7 @@ export default function CSRDashboard() {
                           />
                         </div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -1357,29 +1383,41 @@ export default function CSRDashboard() {
                 </div>
               )}
 
-              {/* SDG Commitments Grid */}
+              {/* SDG Commitments Grid - Interactive with UN Icons */}
               {committedSDGs && committedSDGs.length > 0 && (
                 <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                   <h3 className="text-slate-900 text-sm font-semibold mb-2">Committed SDGs</h3>
-                  <div className="grid grid-cols-5 gap-1.5">
+                  <div className="grid grid-cols-4 gap-2">
                     {committedSDGs.map((sdg: number) => {
                       const metric = sdgMetrics.find((m: any) => m.sdg === sdg);
+                      const hasActivity = metric && metric.totalHours > 0;
                       return (
-                        <div
+                        <button
                           key={sdg}
-                          className="aspect-square rounded flex flex-col items-center justify-center text-white p-1"
-                          style={{ backgroundColor: getSDGColor(sdg) }}
+                          onClick={() => setSelectedSDG(sdg)}
+                          className="relative aspect-square rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                          style={{
+                            border: hasActivity ? '2px solid #22c55e' : '1px solid #e5e7eb',
+                          }}
                         >
-                          <span className="font-bold text-sm">{sdg}</span>
-                          <span className="text-[7px] opacity-90">{metric?.totalHours || 0}h</span>
-                        </div>
+                          <img
+                            src={getSDGIcon(sdg)}
+                            alt={`SDG ${sdg}: ${getSDGName(sdg)}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {hasActivity && (
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1">
+                              <span className="text-white text-[9px] font-bold">{metric.totalHours}h</span>
+                            </div>
+                          )}
+                        </button>
                       );
                     })}
                   </div>
                 </div>
               )}
 
-              {/* SDG Metrics Table */}
+              {/* SDG Metrics Table - Interactive with UN Icons */}
               <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                 <h3 className="text-slate-900 text-sm font-semibold mb-2">SDG Metrics</h3>
                 <div className="overflow-x-auto">
@@ -1394,16 +1432,19 @@ export default function CSRDashboard() {
                     </thead>
                     <tbody>
                       {sdgMetrics.slice(0, 8).map((metric: any) => (
-                        <tr key={metric.sdg} className="border-b border-slate-100">
+                        <tr
+                          key={metric.sdg}
+                          className="border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
+                          onClick={() => setSelectedSDG(metric.sdg)}
+                        >
                           <td className="py-1.5">
                             <div className="flex items-center gap-1.5">
-                              <div
-                                className="w-5 h-5 rounded flex items-center justify-center text-white text-[8px] font-bold"
-                                style={{ backgroundColor: getSDGColor(metric.sdg) }}
-                              >
-                                {metric.sdg}
-                              </div>
-                              <span className="text-slate-700 truncate max-w-[80px]">{getSDGName(metric.sdg)}</span>
+                              <img
+                                src={getSDGIcon(metric.sdg)}
+                                alt={`SDG ${metric.sdg}`}
+                                className="w-6 h-6 rounded object-cover shadow-sm"
+                              />
+                              <span className="text-slate-700 truncate max-w-[70px]">{getSDGName(metric.sdg)}</span>
                             </div>
                           </td>
                           <td className="py-1.5 text-slate-900 font-semibold text-right">{metric.totalHours}</td>
@@ -5911,16 +5952,53 @@ export default function CSRDashboard() {
               </div>
 
               <div style={{ marginBottom: "20px" }}>
-                <h3
-                  style={{
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    color: "#111827",
-                    marginBottom: "12px",
-                  }}
-                >
-                  Employees ({funnelStageData?.employees?.length || 0})
-                </h3>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <h3
+                    style={{
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#111827",
+                    }}
+                  >
+                    Employees ({funnelStageData?.employees?.length || 0})
+                  </h3>
+                  {/* Select All / Clear Selection Toggle */}
+                  {funnelStageData?.employees && funnelStageData.employees.length > 0 && (
+                    <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <span style={{ fontSize: "12px", color: "#6b7280" }}>
+                        {selectedEmployeesForEngagement.length > 0
+                          ? `${selectedEmployeesForEngagement.length} selected`
+                          : "Click arrow to select"}
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (selectedEmployeesForEngagement.length === funnelStageData.employees.length) {
+                            setSelectedEmployeesForEngagement([]);
+                            setEngagementMode('all');
+                          } else {
+                            setSelectedEmployeesForEngagement(
+                              funnelStageData.employees.map((emp: any) => emp.email || emp.name)
+                            );
+                            setEngagementMode('selected');
+                          }
+                        }}
+                        style={{
+                          padding: "4px 10px",
+                          fontSize: "11px",
+                          fontWeight: "600",
+                          border: "1px solid #1e3a8a",
+                          backgroundColor: selectedEmployeesForEngagement.length === funnelStageData?.employees?.length ? "#1e3a8a" : "white",
+                          color: selectedEmployeesForEngagement.length === funnelStageData?.employees?.length ? "white" : "#1e3a8a",
+                          borderRadius: "4px",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {selectedEmployeesForEngagement.length === funnelStageData?.employees?.length ? "Clear All" : "Select All"}
+                      </button>
+                    </div>
+                  )}
+                </div>
                 {funnelStageData?.employees &&
                 funnelStageData.employees.length > 0 ? (
                   <div
@@ -5933,55 +6011,107 @@ export default function CSRDashboard() {
                       paddingRight: "4px",
                     }}
                   >
-                    {funnelStageData.employees.map((emp: any, idx: number) => (
-                      <div
-                        key={idx}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          padding: "12px",
-                          backgroundColor: "#f9fafb",
-                          borderRadius: "6px",
-                          border: "1px solid #e5e7eb",
-                        }}
-                      >
-                        <div style={{ flex: 1 }}>
-                          <div
+                    {funnelStageData.employees.map((emp: any, idx: number) => {
+                      const employeeId = emp.email || emp.name;
+                      const isSelected = selectedEmployeesForEngagement.includes(employeeId);
+
+                      return (
+                        <div
+                          key={idx}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            padding: "12px",
+                            backgroundColor: isSelected ? "#dbeafe" : "#f9fafb",
+                            borderRadius: "6px",
+                            border: isSelected ? "2px solid #1e3a8a" : "1px solid #e5e7eb",
+                            transition: "all 0.2s",
+                          }}
+                        >
+                          {/* Selection Arrow/Checkbox */}
+                          <button
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedEmployeesForEngagement(prev => prev.filter(id => id !== employeeId));
+                              } else {
+                                setSelectedEmployeesForEngagement(prev => [...prev, employeeId]);
+                              }
+                              setEngagementMode('selected');
+                            }}
+                            title={isSelected ? "Deselect for engagement" : "Select for engagement"}
                             style={{
-                              fontWeight: "500",
-                              color: "#111827",
-                              marginBottom: "4px",
+                              width: "32px",
+                              height: "32px",
+                              borderRadius: "50%",
+                              border: isSelected ? "2px solid #1e3a8a" : "2px solid #d1d5db",
+                              backgroundColor: isSelected ? "#1e3a8a" : "white",
+                              color: isSelected ? "white" : "#9ca3af",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              marginRight: "12px",
+                              transition: "all 0.2s",
+                              flexShrink: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.borderColor = "#1e3a8a";
+                                e.currentTarget.style.color = "#1e3a8a";
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelected) {
+                                e.currentTarget.style.borderColor = "#d1d5db";
+                                e.currentTarget.style.color = "#9ca3af";
+                              }
                             }}
                           >
-                            {idx + 1}. {emp.name}
+                            {isSelected ? (
+                              <span style={{ fontSize: "14px", fontWeight: "bold" }}>✓</span>
+                            ) : (
+                              <ChevronRight style={{ width: "16px", height: "16px" }} />
+                            )}
+                          </button>
+                          <div style={{ flex: 1 }}>
+                            <div
+                              style={{
+                                fontWeight: "500",
+                                color: "#111827",
+                                marginBottom: "4px",
+                              }}
+                            >
+                              {idx + 1}. {emp.name}
+                            </div>
+                            <div style={{ fontSize: "12px", color: "#6b7280" }}>
+                              {emp.status === "linked"
+                                ? "🔗 Linked"
+                                : emp.status === "started"
+                                  ? "🚀 Started"
+                                  : emp.status === "active"
+                                    ? "⭐ Active"
+                                    : "🏆 Top Performer"}
+                              {emp.email && <span style={{ marginLeft: "8px", color: "#9ca3af" }}>• {emp.email}</span>}
+                            </div>
                           </div>
-                          <div style={{ fontSize: "12px", color: "#6b7280" }}>
-                            {emp.status === "linked"
-                              ? "🔗 Linked"
-                              : emp.status === "started"
-                                ? "🚀 Started"
-                                : emp.status === "active"
-                                  ? "⭐ Active"
-                                  : "🏆 Top Performer"}
+                          <div style={{ textAlign: "right" }}>
+                            <div
+                              style={{
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                                color: "#059669",
+                              }}
+                            >
+                              {emp.hours}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              hrs
+                            </div>
                           </div>
                         </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div
-                            style={{
-                              fontSize: "16px",
-                              fontWeight: "bold",
-                              color: "#059669",
-                            }}
-                          >
-                            {emp.hours}
-                          </div>
-                          <div style={{ fontSize: "11px", color: "#6b7280" }}>
-                            hrs
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div
@@ -6001,56 +6131,141 @@ export default function CSRDashboard() {
                 style={{
                   display: "flex",
                   gap: "12px",
-                  justifyContent: "flex-end",
+                  justifyContent: "space-between",
+                  alignItems: "center",
                   paddingTop: "16px",
                   borderTop: "1px solid #e5e7eb",
+                  flexWrap: "wrap",
                 }}
               >
-                <button
-                  onClick={() => setShowFunnelModal(false)}
-                  style={{
-                    padding: "8px 16px",
-                    border: "1px solid #e5e7eb",
-                    backgroundColor: "white",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                    color: "#374151",
-                  }}
-                >
-                  Close
-                </button>
-                {selectedFunnelStage === 1 && (
+                {/* Engagement Mode Toggle */}
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <span style={{ fontSize: "12px", color: "#6b7280" }}>Engage:</span>
                   <button
-                    onClick={() => setShowEngagementTipsDialog(true)}
+                    onClick={() => {
+                      setEngagementMode('all');
+                      setSelectedEmployeesForEngagement([]);
+                    }}
+                    style={{
+                      padding: "4px 12px",
+                      border: engagementMode === 'all' ? "2px solid #1e3a8a" : "1px solid #d1d5db",
+                      backgroundColor: engagementMode === 'all' ? "#dbeafe" : "white",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: engagementMode === 'all' ? "600" : "400",
+                      color: engagementMode === 'all' ? "#1e3a8a" : "#6b7280",
+                    }}
+                  >
+                    ALL ({funnelStageData?.employees?.length || 0})
+                  </button>
+                  <button
+                    onClick={() => setEngagementMode('selected')}
+                    disabled={selectedEmployeesForEngagement.length === 0}
+                    style={{
+                      padding: "4px 12px",
+                      border: engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0 ? "2px solid #1e3a8a" : "1px solid #d1d5db",
+                      backgroundColor: engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0 ? "#dbeafe" : "white",
+                      borderRadius: "4px",
+                      cursor: selectedEmployeesForEngagement.length > 0 ? "pointer" : "not-allowed",
+                      fontSize: "12px",
+                      fontWeight: engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0 ? "600" : "400",
+                      color: engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0 ? "#1e3a8a" : "#9ca3af",
+                      opacity: selectedEmployeesForEngagement.length === 0 ? 0.5 : 1,
+                    }}
+                  >
+                    SELECTED ({selectedEmployeesForEngagement.length})
+                  </button>
+                </div>
+
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button
+                    onClick={() => {
+                      setShowFunnelModal(false);
+                      setSelectedEmployeesForEngagement([]);
+                      setEngagementMode('all');
+                    }}
                     style={{
                       padding: "8px 16px",
-                      border: "none",
-                      backgroundColor: "#1e3a8a",
-                      color: "white",
+                      border: "1px solid #e5e7eb",
+                      backgroundColor: "white",
                       borderRadius: "6px",
                       cursor: "pointer",
                       fontSize: "14px",
                       fontWeight: "500",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
+                      color: "#374151",
                     }}
                   >
-                    <Send style={{ width: "16px", height: "16px" }} />
-                    Send Engagement Tips
+                    Close
                   </button>
-                )}
-                {selectedFunnelStage === 3 && (
+                  {selectedFunnelStage === 1 && (
+                    <button
+                      onClick={() => setShowEngagementTipsDialog(true)}
+                      style={{
+                        padding: "8px 16px",
+                        border: "none",
+                        backgroundColor: "#1e3a8a",
+                        color: "white",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Send style={{ width: "16px", height: "16px" }} />
+                      {engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0
+                        ? `Send to ${selectedEmployeesForEngagement.length} Selected`
+                        : "Send to All"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Selection hint for other stages */}
+              {selectedFunnelStage !== 1 && selectedEmployeesForEngagement.length > 0 && (
+                <div
+                  style={{
+                    marginTop: "12px",
+                    padding: "10px",
+                    backgroundColor: "#fef3c7",
+                    borderRadius: "6px",
+                    fontSize: "12px",
+                    color: "#92400e",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <Info style={{ width: "14px", height: "14px" }} />
+                  {selectedEmployeesForEngagement.length} employee(s) selected for individual engagement actions
+                </div>
+              )}
+
+              {/* Stage 3 Recognition Button */}
+              {selectedFunnelStage === 3 && (
+                <div style={{ marginTop: "12px", display: "flex", justifyContent: "flex-end" }}>
                   <button
                     onClick={() => {
-                      // Get top performers from leaderboard
-                      const topPerformer = csrData?.leaderboard?.[0];
-                      if (topPerformer) {
-                        setSelectedEmployee(topPerformer);
-                        setShowRecognitionModal(true);
-                        setShowFunnelModal(false);
+                      // If employees are selected, use first selected; otherwise use top performer
+                      if (engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0) {
+                        const selectedEmp = funnelStageData?.employees?.find((emp: any) =>
+                          selectedEmployeesForEngagement.includes(emp.email || emp.name)
+                        );
+                        if (selectedEmp) {
+                          setSelectedEmployee(selectedEmp);
+                          setShowRecognitionModal(true);
+                          setShowFunnelModal(false);
+                        }
+                      } else {
+                        const topPerformer = csrData?.leaderboard?.[0];
+                        if (topPerformer) {
+                          setSelectedEmployee(topPerformer);
+                          setShowRecognitionModal(true);
+                          setShowFunnelModal(false);
+                        }
                       }
                     }}
                     style={{
@@ -6068,10 +6283,12 @@ export default function CSRDashboard() {
                     }}
                   >
                     <Award style={{ width: "16px", height: "16px" }} />
-                    Recognize Performance
+                    {engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0
+                      ? `Recognize ${selectedEmployeesForEngagement.length} Selected`
+                      : "Recognize Top Performer"}
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -7008,8 +7225,16 @@ export default function CSRDashboard() {
         isOpen={showEngagementTipsDialog}
         onClose={() => setShowEngagementTipsDialog(false)}
         title="Send Engagement Tips"
-        description="Send engagement tips to all inactive employees? This will send personalized tips to help them get started with volunteering."
-        confirmText="Send Tips"
+        description={
+          engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0
+            ? `Send engagement tips to ${selectedEmployeesForEngagement.length} selected employee(s)? This will send personalized tips to help them get started with volunteering.`
+            : "Send engagement tips to all inactive employees? This will send personalized tips to help them get started with volunteering."
+        }
+        confirmText={
+          engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0
+            ? `Send to ${selectedEmployeesForEngagement.length} Selected`
+            : "Send to All"
+        }
         cancelText="Cancel"
         onConfirm={async () => {
           setIsSendingTips(true);
@@ -7020,11 +7245,20 @@ export default function CSRDashboard() {
               body: JSON.stringify({
                 userId,
                 stage: "inactive",
+                // Include selected employees if in selected mode
+                ...(engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0
+                  ? { selectedEmployees: selectedEmployeesForEngagement }
+                  : {}),
               }),
             });
             if (response.ok) {
-              alert("Engagement tips sent successfully to inactive employees!");
+              const targetCount = engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0
+                ? `${selectedEmployeesForEngagement.length} selected`
+                : "inactive";
+              alert(`Engagement tips sent successfully to ${targetCount} employees!`);
               setShowFunnelModal(false);
+              setSelectedEmployeesForEngagement([]);
+              setEngagementMode('all');
             } else {
               alert("Failed to send engagement tips. Please try again.");
             }

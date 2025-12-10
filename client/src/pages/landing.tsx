@@ -675,8 +675,8 @@ export default function Landing() {
 
               {/* Header Text */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight flex-1" data-testid="text-hero-title">
-                <span className="text-blue-900">Bridge Action to Impact,</span><br />
-                <span className="text-amber-600">Globally</span>
+                <span className="text-blue-900 whitespace-nowrap">Bridge Action</span><br />
+                <span className="text-amber-600 whitespace-nowrap">Impact, Globally</span>
               </h1>
             </div>
             <p className="text-base sm:text-lg md:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">

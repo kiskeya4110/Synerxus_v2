@@ -1,0 +1,1 @@
+- make sure once a change is made to fix an error like producing more hooks than before  that it continues so that the error does not come back

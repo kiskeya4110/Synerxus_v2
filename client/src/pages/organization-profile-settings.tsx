@@ -55,11 +55,54 @@ export default function OrganizationProfileSettings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [needInput, setNeedInput] = useState("");
-  
+  const [logoUrl, setLogoUrl] = useState("");
+
+  // Get userId from localStorage for proper data scoping
+  const userId = localStorage.getItem("currentUserId");
+
   // Fetch current user to get organization info
-  const { data: currentUser, isLoading: userLoading } = useQuery<any>({
-    queryKey: ["/api/users/me"],
+  const { data: currentUser, isLoading: userLoading, error: userError } = useQuery<any>({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 0,
   });
+
+  // Fetch existing organization profile by filtering all organizations
+  const { data: organizations, isLoading: loadingProfile, error: profileError } = useQuery<MatchableOrganization[]>({
+    queryKey: ["/api/matchable-organizations"],
+    queryFn: async () => {
+      const response = await fetch("/api/matchable-organizations");
+      if (!response.ok) throw new Error("Failed to fetch organizations");
+      return response.json();
+    },
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  // Also fetch organization profile data directly for current user
+  const { data: orgProfileData } = useQuery<any>({
+    queryKey: ["/api/profile/organization", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/profile/organization?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 0,
+  });
+
+  // Find the organization profile for current user (match by email or userId)
+  const existingProfile = organizations?.find(o =>
+    o.email === currentUser?.email ||
+    (orgProfileData?.organizationName && o.name === orgProfileData.organizationName)
+  );
 
   // Redirect non-organization users
   useEffect(() => {
@@ -69,18 +112,6 @@ export default function OrganizationProfileSettings() {
       setLocation("/corporate-partner-profile-settings");
     }
   }, [currentUser?.userType, setLocation]);
-
-  // Fetch existing organization profile by filtering all organizations
-  const { data: organizations, isLoading: loadingProfile } = useQuery<MatchableOrganization[]>({
-    queryKey: ["/api/matchable-organizations"],
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache the data
-  });
-
-  const [logoUrl, setLogoUrl] = useState("");
-
-  // Find the organization profile for current user (match by email)
-  const existingProfile = organizations?.find(o => o.email === currentUser?.email);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -96,12 +127,13 @@ export default function OrganizationProfileSettings() {
 
   // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
   useEffect(() => {
-    if (userLoading) return;
+    if (userLoading || loadingProfile) return;
 
-    const hasProfileData = existingProfile && Object.keys(existingProfile).length > 0;
+    const hasMatchableProfile = existingProfile && Object.keys(existingProfile).length > 0;
+    const hasOrgProfile = orgProfileData && Object.keys(orgProfileData).length > 0;
 
-    if (hasProfileData && !loadingProfile) {
-      // Existing profile - populate form with all data
+    if (hasMatchableProfile) {
+      // Existing matchable organization profile - populate form with all data
       form.reset({
         email: existingProfile.email || currentUser?.email || "",
         name: existingProfile.name || "",
@@ -113,7 +145,20 @@ export default function OrganizationProfileSettings() {
       if (existingProfile.logo) {
         setLogoUrl(existingProfile.logo);
       }
-    } else if (!loadingProfile && !hasProfileData && currentUser?.email) {
+    } else if (hasOrgProfile) {
+      // Fallback to organization profile data if no matchable org found
+      form.reset({
+        email: currentUser?.email || "",
+        name: orgProfileData.organizationName || currentUser?.displayName || "",
+        mission: orgProfileData.mission || "",
+        location: orgProfileData.location || "",
+        needs: orgProfileData.needs || [],
+        sdgFocus: orgProfileData.sdgFocus || orgProfileData.primarySdgs || [],
+      });
+      if (orgProfileData.profilePhotoUrl || orgProfileData.logo) {
+        setLogoUrl(orgProfileData.profilePhotoUrl || orgProfileData.logo);
+      }
+    } else if (currentUser?.email) {
       // New profile - initialize with user data only
       form.reset({
         email: currentUser.email,
@@ -124,7 +169,7 @@ export default function OrganizationProfileSettings() {
         sdgFocus: [],
       });
     }
-  }, [existingProfile, loadingProfile, currentUser, userLoading, form]);
+  }, [existingProfile, orgProfileData, loadingProfile, currentUser, userLoading, form]);
 
   // Create mutation
   const createMutation = useMutation({
@@ -245,8 +290,33 @@ export default function OrganizationProfileSettings() {
   // Show loading while user data is loading
   if (userLoading || loadingProfile) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading organization profile...</p>
+      </div>
+    );
+  }
+
+  // Handle case when no userId is found
+  if (!userId) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Building2 className="h-12 w-12 text-muted-foreground" />
+        <h2 className="text-xl font-semibold">Session Expired</h2>
+        <p className="text-muted-foreground">Please log in to access your organization profile.</p>
+        <Button onClick={() => setLocation("/login")}>Go to Login</Button>
+      </div>
+    );
+  }
+
+  // Handle errors
+  if (userError || profileError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+        <Building2 className="h-12 w-12 text-destructive" />
+        <h2 className="text-xl font-semibold">Unable to Load Profile</h2>
+        <p className="text-muted-foreground">There was an error loading your profile data.</p>
+        <Button onClick={() => window.location.reload()}>Retry</Button>
       </div>
     );
   }

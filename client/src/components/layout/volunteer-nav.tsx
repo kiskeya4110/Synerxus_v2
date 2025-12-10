@@ -48,7 +48,7 @@ export default function VolunteerNav() {
     return null;
   }
 
-  const userInitial = (currentUser?.displayName || currentUser?.name || 'V').charAt(0).toUpperCase();
+  const userInitial = (currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase();
 
   return (
     <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
@@ -100,13 +100,13 @@ export default function VolunteerNav() {
                 aria-label="User menu"
               >
                 <Avatar className="h-8 w-8 border-2 border-blue-500">
-                  <AvatarImage src={currentUser?.profilePicture} alt={currentUser?.displayName || 'User'} />
+                  <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold">
                     {userInitial}
                   </AvatarFallback>
                 </Avatar>
                 <span className="hidden lg:inline text-sm font-medium max-w-[120px] truncate">
-                  {currentUser?.displayName || currentUser?.name || 'Volunteer'}
+                  {currentUser?.displayName || currentUser?.username || 'Volunteer'}
                 </span>
                 {menuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
               </button>
@@ -126,14 +126,14 @@ export default function VolunteerNav() {
                     <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 border-2 border-blue-500">
-                          <AvatarImage src={currentUser?.profilePicture} alt={currentUser?.displayName || 'User'} />
+                          <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold">
                             {userInitial}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {currentUser?.displayName || currentUser?.name || 'Volunteer'}
+                            {currentUser?.displayName || currentUser?.username || 'Volunteer'}
                           </p>
                           <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                             {currentUser?.email || 'volunteer@example.com'}

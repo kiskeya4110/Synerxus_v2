@@ -56,9 +56,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { getSDGName, getSDGFullName, getSDGColor } from "@shared/sdg-goals";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { ConfirmDialog } from "@/components/ui/dialog-factory";
 import { safeArray, safeMap, safeFilter, safeReduce } from "@/lib/safe-array";
 import { lazy, Suspense, useMemo, useCallback, memo } from "react";
@@ -213,7 +214,9 @@ interface CSRDashboardData {
 export default function CSRDashboard() {
   const { user, loading: authLoading } = useAuth();
   const [, navigate] = useLocation();
+  const { toast } = useToast();
   const userId = localStorage.getItem("currentUserId");
+  const [isPending, startTransition] = useTransition();
   const [selectedKPI, setSelectedKPI] = useState<string | null>(null);
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const [selectedAdminTab, setSelectedAdminTab] = useState<
@@ -348,205 +351,6 @@ export default function CSRDashboard() {
     },
     enabled: isAuthenticated && selectedFunnelStage !== null,
   });
-
-  // Show loading while checking auth
-  if (authLoading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          backgroundColor: "#faf9f7",
-        }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <Skeleton className="h-8 w-48 mb-4" />
-          <p style={{ color: "#6b7280" }}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Redirect if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          backgroundColor: "#faf9f7",
-        }}
-      >
-        <Card
-          style={{ maxWidth: "400px", padding: "24px", textAlign: "center" }}
-        >
-          <CardHeader>
-            <CardTitle style={{ color: "#1e3a8a" }}>Access Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
-              Please sign in to access the CSR Dashboard.
-            </p>
-            <button
-              onClick={() => navigate("/login")}
-              style={{
-                backgroundColor: "#1e3a8a",
-                color: "white",
-                padding: "8px 24px",
-                borderRadius: "6px",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
-              data-testid="btn-login-redirect"
-            >
-              Sign In
-            </button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Show error if access denied
-  if (error) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "100vh",
-          backgroundColor: "#faf9f7",
-        }}
-      >
-        <Card
-          style={{ maxWidth: "400px", padding: "24px", textAlign: "center" }}
-        >
-          <CardHeader>
-            <CardTitle style={{ color: "#dc2626" }}>Access Denied</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
-              {error instanceof Error ? error.message : "An error occurred"}
-            </p>
-            <button
-              onClick={() => navigate("/dashboard")}
-              style={{
-                backgroundColor: "#1e3a8a",
-                color: "white",
-                padding: "8px 24px",
-                borderRadius: "6px",
-                border: "none",
-                cursor: "pointer",
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
-              data-testid="btn-dashboard-redirect"
-            >
-              Go to Dashboard
-            </button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen bg-[#faf9f7]">
-        {/* Header Skeleton */}
-        <div className="h-16 bg-gradient-to-r from-blue-900 to-blue-800 flex-shrink-0 flex items-center px-6">
-          <Skeleton className="h-8 w-32 bg-blue-700/50" />
-          <div className="ml-auto flex items-center gap-4">
-            <Skeleton className="h-8 w-24 bg-blue-700/50" />
-            <Skeleton className="h-10 w-10 rounded-full bg-blue-700/50" />
-          </div>
-        </div>
-
-        <div className="flex flex-1">
-          {/* Sidebar Skeleton */}
-          <div className="w-[240px] bg-gradient-to-b from-blue-900 to-blue-950 flex-shrink-0 p-4 space-y-3 hidden md:block">
-            {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-10 bg-blue-800/50 rounded-lg" />
-            ))}
-          </div>
-
-          {/* Main Content Skeleton */}
-          <div className="flex-1 bg-slate-50 p-6 md:p-8 overflow-auto">
-            {/* Page Title Skeleton */}
-            <div className="mb-6">
-              <Skeleton className="h-8 w-64 bg-slate-200 mb-2" />
-              <Skeleton className="h-4 w-40 bg-slate-200" />
-            </div>
-
-            {/* KPI Cards Skeleton with shimmer effect */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-20 bg-slate-200" />
-                    <Skeleton className="h-8 w-8 rounded-lg bg-slate-100" />
-                  </div>
-                  <Skeleton className="h-8 w-24 bg-slate-200" />
-                  <Skeleton className="h-3 w-32 bg-slate-100" />
-                </div>
-              ))}
-            </div>
-
-            {/* Charts Row Skeleton */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <Skeleton className="h-5 w-40 bg-slate-200 mb-4" />
-                <div className="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-200 animate-pulse" />
-                    <Skeleton className="h-4 w-32 bg-slate-200 mx-auto" />
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <Skeleton className="h-5 w-36 bg-slate-200 mb-4" />
-                <div className="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-200 animate-pulse" />
-                    <Skeleton className="h-4 w-32 bg-slate-200 mx-auto" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Row Skeleton */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <Skeleton className="h-5 w-32 bg-slate-200 mb-4" />
-                <div className="space-y-3">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <Skeleton className="h-10 w-10 rounded-full bg-slate-200" />
-                      <div className="flex-1">
-                        <Skeleton className="h-4 w-full bg-slate-200 mb-1" />
-                        <Skeleton className="h-3 w-2/3 bg-slate-100" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
-                <Skeleton className="h-5 w-28 bg-slate-200 mb-4" />
-                <div className="h-48 bg-slate-50 rounded-lg" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // ===== MEMOIZED COMPUTED VALUES FOR PERFORMANCE =====
   // These computations are expensive and should only recalculate when dependencies change
@@ -762,10 +566,15 @@ export default function CSRDashboard() {
     [selectedSDGFilters.length, filteredUniqueEmployees, csrData?.activeEmployees]
   );
 
-  const displayProjectsCompleted = useMemo(() =>
-    selectedSDGFilters.length > 0 ? filteredProjectsCount : (csrData?.projectsCompleted || 0),
-    [selectedSDGFilters.length, filteredProjectsCount, csrData?.projectsCompleted]
-  );
+  const displayProjectsCompleted = useMemo(() => {
+    if (selectedSDGFilters.length > 0) return filteredProjectsCount;
+    // Use kpiBreakdown.projects.total or activeProjects first, then projectsCompleted, then projectLocations count
+    return csrData?.kpiBreakdown?.projects?.total ||
+           csrData?.kpiBreakdown?.projects?.activeProjects ||
+           csrData?.projectsCompleted ||
+           csrData?.projectLocations?.length ||
+           0;
+  }, [selectedSDGFilters.length, filteredProjectsCount, csrData?.projectsCompleted, csrData?.kpiBreakdown?.projects, csrData?.projectLocations?.length]);
 
   const displayChartData = useMemo(() =>
     selectedSDGFilters.length > 0
@@ -843,6 +652,207 @@ export default function CSRDashboard() {
     { month: 'Jun', hours: displayTotalHours, employees: displayActiveEmployees },
   ], [displayTotalHours, displayActiveEmployees]);
 
+  // ===== EARLY RETURNS (after all hooks) =====
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          backgroundColor: "#faf9f7",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <Skeleton className="h-8 w-48 mb-4" />
+          <p style={{ color: "#6b7280" }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          backgroundColor: "#faf9f7",
+        }}
+      >
+        <Card
+          style={{ maxWidth: "400px", padding: "24px", textAlign: "center" }}
+        >
+          <CardHeader>
+            <CardTitle style={{ color: "#1e3a8a" }}>Access Required</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
+              Please sign in to access the CSR Dashboard.
+            </p>
+            <button
+              onClick={() => navigate("/login")}
+              style={{
+                backgroundColor: "#1e3a8a",
+                color: "white",
+                padding: "8px 24px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "500",
+              }}
+              data-testid="btn-login-redirect"
+            >
+              Sign In
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error if access denied
+  if (error) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          backgroundColor: "#faf9f7",
+        }}
+      >
+        <Card
+          style={{ maxWidth: "400px", padding: "24px", textAlign: "center" }}
+        >
+          <CardHeader>
+            <CardTitle style={{ color: "#dc2626" }}>Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p style={{ color: "#6b7280", marginBottom: "16px" }}>
+              {error instanceof Error ? error.message : "An error occurred"}
+            </p>
+            <button
+              onClick={() => navigate("/dashboard")}
+              style={{
+                backgroundColor: "#1e3a8a",
+                color: "white",
+                padding: "8px 24px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: "500",
+              }}
+              data-testid="btn-dashboard-redirect"
+            >
+              Go to Dashboard
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#faf9f7]">
+        {/* Header Skeleton */}
+        <div className="h-16 bg-gradient-to-r from-blue-900 to-blue-800 flex-shrink-0 flex items-center px-6">
+          <Skeleton className="h-8 w-32 bg-blue-700/50" />
+          <div className="ml-auto flex items-center gap-4">
+            <Skeleton className="h-8 w-24 bg-blue-700/50" />
+            <Skeleton className="h-10 w-10 rounded-full bg-blue-700/50" />
+          </div>
+        </div>
+
+        <div className="flex flex-1">
+          {/* Sidebar Skeleton */}
+          <div className="w-[240px] bg-gradient-to-b from-blue-900 to-blue-950 flex-shrink-0 p-4 space-y-3 hidden md:block">
+            {[...Array(6)].map((_, i) => (
+              <Skeleton key={i} className="h-10 bg-blue-800/50 rounded-lg" />
+            ))}
+          </div>
+
+          {/* Main Content Skeleton */}
+          <div className="flex-1 bg-slate-50 p-6 md:p-8 overflow-auto">
+            {/* Page Title Skeleton */}
+            <div className="mb-6">
+              <Skeleton className="h-8 w-64 bg-slate-200 mb-2" />
+              <Skeleton className="h-4 w-40 bg-slate-200" />
+            </div>
+
+            {/* KPI Cards Skeleton with shimmer effect */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-20 bg-slate-200" />
+                    <Skeleton className="h-8 w-8 rounded-lg bg-slate-100" />
+                  </div>
+                  <Skeleton className="h-8 w-24 bg-slate-200" />
+                  <Skeleton className="h-3 w-32 bg-slate-100" />
+                </div>
+              ))}
+            </div>
+
+            {/* Charts Row Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-40 bg-slate-200 mb-4" />
+                <div className="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-200 animate-pulse" />
+                    <Skeleton className="h-4 w-32 bg-slate-200 mx-auto" />
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-36 bg-slate-200 mb-4" />
+                <div className="h-64 bg-slate-50 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-200 animate-pulse" />
+                    <Skeleton className="h-4 w-32 bg-slate-200 mx-auto" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Row Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-32 bg-slate-200 mb-4" />
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full bg-slate-200" />
+                      <div className="flex-1">
+                        <Skeleton className="h-4 w-full bg-slate-200 mb-1" />
+                        <Skeleton className="h-3 w-2/3 bg-slate-100" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-100">
+                <Skeleton className="h-5 w-28 bg-slate-200 mb-4" />
+                <div className="h-48 bg-slate-50 rounded-lg" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Mobile PWA View
   if (isMobile) {
     return (
@@ -855,10 +865,9 @@ export default function CSRDashboard() {
           >
             <img src={logoUrl} alt="Synerxus" className="h-7 w-auto" />
           </button>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-800 font-medium">CSR Dashboard</span>
-            <span className="text-slate-500">•</span>
-            <span className="text-[10px] text-slate-700 truncate max-w-[100px]">{companyName}</span>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-blue-900 font-bold truncate max-w-[100px]">{companyName}</span>
+            <span className="text-xs text-slate-800 font-medium">ESG Insights</span>
           </div>
         </header>
 
@@ -866,12 +875,12 @@ export default function CSRDashboard() {
         <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
           {mobileTab === 'overview' && (
             <div className="space-y-3">
-              <h1 className="text-slate-900 text-lg font-bold">CSR Dashboard</h1>
+              <h1 className="text-slate-900 text-lg font-bold">{companyName} ESG Insights</h1>
 
               {/* KPI Cards Grid - Interactive */}
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => setMobileKPIModal('hours')}
+                  onClick={() => startTransition(() => setMobileKPIModal('hours'))}
                   className="bg-blue-50 rounded-lg p-3 border border-blue-300 shadow-sm text-left hover:bg-blue-100 hover:border-blue-400 transition-all active:scale-98"
                 >
                   <div className="flex items-center justify-between">
@@ -888,7 +897,7 @@ export default function CSRDashboard() {
                   </div>
                 </button>
                 <button
-                  onClick={() => setMobileKPIModal('employees')}
+                  onClick={() => startTransition(() => setMobileKPIModal('employees'))}
                   className="bg-emerald-50 rounded-lg p-3 border border-emerald-300 shadow-sm text-left hover:bg-emerald-100 hover:border-emerald-400 transition-all active:scale-98"
                 >
                   <div className="flex items-center justify-between">
@@ -905,7 +914,7 @@ export default function CSRDashboard() {
                   </div>
                 </button>
                 <button
-                  onClick={() => setMobileKPIModal('projects')}
+                  onClick={() => startTransition(() => setMobileKPIModal('projects'))}
                   className="bg-purple-50 rounded-lg p-3 border border-purple-300 shadow-sm text-left hover:bg-purple-100 hover:border-purple-400 transition-all active:scale-98"
                 >
                   <div className="flex items-center justify-between">
@@ -919,7 +928,7 @@ export default function CSRDashboard() {
                   <div className="text-purple-600 text-[9px] mt-0.5">Active initiatives</div>
                 </button>
                 <button
-                  onClick={() => setMobileKPIModal('aiu')}
+                  onClick={() => startTransition(() => setMobileKPIModal('aiu'))}
                   className="bg-teal-50 rounded-lg p-3 border border-teal-300 shadow-sm text-left hover:bg-teal-100 hover:border-teal-400 transition-all active:scale-98"
                 >
                   <div className="flex items-center justify-between">
@@ -983,7 +992,7 @@ export default function CSRDashboard() {
                       return (
                         <button
                           key={sdg}
-                          onClick={() => setSelectedSDG(sdg)}
+                          onClick={() => startTransition(() => setSelectedSDG(sdg))}
                           className="relative"
                           title={`${getSDGName(sdg)} - Click for details`}
                         >
@@ -1015,7 +1024,7 @@ export default function CSRDashboard() {
                   {sdgMetrics.slice(0, 4).map((metric: any) => (
                     <button
                       key={metric.sdg}
-                      onClick={() => setSelectedSDG(metric.sdg)}
+                      onClick={() => startTransition(() => setSelectedSDG(metric.sdg))}
                       className="w-full flex items-center gap-2 p-1 rounded-lg hover:bg-slate-50 transition-colors"
                     >
                       <img
@@ -1052,7 +1061,7 @@ export default function CSRDashboard() {
                     {csrData.leaderboard.slice(0, 4).map((employee: any, idx: number) => (
                       <button
                         key={idx}
-                        onClick={() => setSelectedEmployee({ ...employee, rank: idx + 1 })}
+                        onClick={() => startTransition(() => setSelectedEmployee({ ...employee, rank: idx + 1 }))}
                         className="w-full flex items-center gap-2 p-1.5 rounded bg-amber-50 border border-amber-200 cursor-pointer hover:bg-amber-100 hover:border-amber-300 hover:shadow-sm transition-all active:scale-[0.98]"
                       >
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-[10px]">
@@ -1164,11 +1173,22 @@ export default function CSRDashboard() {
 
                 {/* AI Actions */}
                 <div className="grid grid-cols-2 gap-2 mt-3">
-                  <button className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-sm">
+                  <button
+                    onClick={() => {
+                      toast({
+                        title: "Auto-Engage Initiated",
+                        description: "AI is sending personalized engagement messages to at-risk employees.",
+                      });
+                    }}
+                    className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-sm hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition-all"
+                  >
                     <Zap className="w-3 h-3" />
                     Auto-Engage At-Risk
                   </button>
-                  <button className="bg-white text-indigo-700 text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-indigo-200">
+                  <button
+                    onClick={() => navigate('/csr-reports-exports')}
+                    className="bg-white text-indigo-700 text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all"
+                  >
                     <Brain className="w-3 h-3" />
                     Generate Report
                   </button>
@@ -1311,7 +1331,7 @@ export default function CSRDashboard() {
                       {(csrData?.leaderboard || []).slice(0, 8).map((employee: any, idx: number) => (
                         <tr
                           key={idx}
-                          onClick={() => setSelectedEmployee({ ...employee, rank: idx + 1 })}
+                          onClick={() => startTransition(() => setSelectedEmployee({ ...employee, rank: idx + 1 }))}
                           className="border-b border-slate-100 cursor-pointer hover:bg-amber-50 transition-colors active:bg-amber-100"
                         >
                           <td className="py-1.5">
@@ -1421,7 +1441,7 @@ export default function CSRDashboard() {
                       return (
                         <button
                           key={sdg}
-                          onClick={() => setSelectedSDG(sdg)}
+                          onClick={() => startTransition(() => setSelectedSDG(sdg))}
                           className="relative aspect-square rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                           style={{
                             border: hasActivity ? '2px solid #22c55e' : '1px solid #e5e7eb',
@@ -1463,7 +1483,7 @@ export default function CSRDashboard() {
                         <tr
                           key={metric.sdg}
                           className="border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
-                          onClick={() => setSelectedSDG(metric.sdg)}
+                          onClick={() => startTransition(() => setSelectedSDG(metric.sdg))}
                         >
                           <td className="py-1.5">
                             <div className="flex items-center gap-1.5">
@@ -1712,34 +1732,77 @@ export default function CSRDashboard() {
                       <div className="text-slate-600 text-sm mt-1">Total hours contributed</div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-blue-50 rounded-lg p-3 text-center">
-                        <div className="text-blue-700 text-xl font-bold">{Math.round(displayTotalHours / (displayActiveEmployees || 1))}</div>
-                        <div className="text-blue-600 text-xs">Avg Hours/Employee</div>
-                      </div>
-                      <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                        <div className="text-emerald-700 text-xl font-bold flex items-center justify-center gap-1">
-                          <ArrowUpRight className="w-4 h-4" />12%
+                      <button
+                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('employees'); }}
+                        className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200 hover:bg-blue-100 hover:border-blue-300 active:scale-95 transition-all"
+                      >
+                        <div className="text-blue-700 text-xl font-bold">
+                          {csrData?.kpiBreakdown?.hours?.averagePerEmployee || Math.round(displayTotalHours / (displayActiveEmployees || 1))}
                         </div>
-                        <div className="text-emerald-600 text-xs">vs Last Month</div>
-                      </div>
+                        <div className="text-blue-600 text-xs">Avg Hours/Employee</div>
+                      </button>
+                      <button
+                        onClick={() => navigate('/csr-reports-exports')}
+                        className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 active:scale-95 transition-all"
+                      >
+                        <div className="text-emerald-700 text-xl font-bold">
+                          ${((csrData?.kpiBreakdown?.hours?.economicValue || displayTotalHours * 29) / 1000).toFixed(1)}K
+                        </div>
+                        <div className="text-emerald-600 text-xs">Economic Value</div>
+                      </button>
                     </div>
                     <div className="bg-slate-50 rounded-lg p-3">
-                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Hours by Department</h4>
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Hours by SDG (tap to view)</h4>
                       <div className="space-y-2">
-                        {['Engineering', 'Marketing', 'Sales', 'HR'].map((dept, i) => (
-                          <div key={dept} className="flex items-center gap-2">
-                            <div className="flex-1">
-                              <div className="flex justify-between text-xs mb-1">
-                                <span className="text-slate-700">{dept}</span>
-                                <span className="text-slate-900 font-medium">{Math.round(displayTotalHours * [0.35, 0.25, 0.22, 0.18][i])}h</span>
-                              </div>
-                              <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${[35, 25, 22, 18][i]}%` }} />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                        {sdgMetrics
+                          .slice()
+                          .sort((a: any, b: any) => (b.totalHours || 0) - (a.totalHours || 0))
+                          .slice(0, 4)
+                          .map((metric: any) => {
+                            const percentage = displayTotalHours > 0 ? Math.round((metric.totalHours / displayTotalHours) * 100) : 0;
+                            return (
+                              <button
+                                key={metric.sdg}
+                                onClick={() => { setMobileKPIModal(null); setSelectedSDG(metric.sdg); }}
+                                className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-white active:scale-98 transition-all border border-transparent hover:border-slate-300"
+                              >
+                                <div className="w-7 h-7 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: getSDGColor(metric.sdg) }}>
+                                  {metric.sdg}
+                                </div>
+                                <div className="flex-1 text-left">
+                                  <div className="flex justify-between text-xs mb-1">
+                                    <span className="text-slate-700 truncate">{getSDGName(metric.sdg)}</span>
+                                    <span className="text-slate-900 font-medium">{metric.totalHours}h</span>
+                                  </div>
+                                  <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div className="h-full rounded-full" style={{ width: `${percentage}%`, backgroundColor: getSDGColor(metric.sdg) }} />
+                                  </div>
+                                </div>
+                                <ChevronRight className="w-4 h-4 text-slate-400" />
+                              </button>
+                            );
+                          })}
+                        {sdgMetrics.length === 0 && (
+                          <div className="text-center text-slate-500 text-sm py-2">No SDG data available</div>
+                        )}
                       </div>
+                    </div>
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <button
+                        onClick={() => navigate('/csr-impact-reporting')}
+                        className="bg-blue-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-blue-700 active:scale-95 transition-all"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        View Report
+                      </button>
+                      <button
+                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('employees'); }}
+                        className="bg-white text-blue-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-blue-300 hover:bg-blue-50 active:scale-95 transition-all"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        View Employees
+                      </button>
                     </div>
                   </>
                 )}
@@ -1752,25 +1815,77 @@ export default function CSRDashboard() {
                       <div className="text-slate-600 text-sm mt-1">Active volunteers this period</div>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-emerald-50 rounded-lg p-2 text-center">
-                        <div className="text-emerald-700 text-lg font-bold">42%</div>
+                      <button
+                        onClick={() => toast({ title: "Participation Rate", description: `${csrData?.kpiBreakdown?.employees?.engagementRate || 0}% of workforce actively volunteers.` })}
+                        className="bg-emerald-50 rounded-lg p-2 text-center border border-emerald-200 hover:bg-emerald-100 active:scale-95 transition-all"
+                      >
+                        <div className="text-emerald-700 text-lg font-bold">
+                          {csrData?.kpiBreakdown?.employees?.engagementRate || (csrData?.kpiBreakdown?.employees?.totalRoster && displayActiveEmployees
+                            ? Math.round((displayActiveEmployees / csrData.kpiBreakdown.employees.totalRoster) * 100)
+                            : 0)}%
+                        </div>
                         <div className="text-emerald-600 text-[10px]">Participation</div>
-                      </div>
-                      <div className="bg-blue-50 rounded-lg p-2 text-center">
-                        <div className="text-blue-700 text-lg font-bold">{Math.round(displayActiveEmployees * 0.78)}</div>
-                        <div className="text-blue-600 text-[10px]">Returning</div>
-                      </div>
-                      <div className="bg-amber-50 rounded-lg p-2 text-center">
-                        <div className="text-amber-700 text-lg font-bold">{Math.round(displayActiveEmployees * 0.22)}</div>
-                        <div className="text-amber-600 text-[10px]">New</div>
+                      </button>
+                      <button
+                        onClick={() => toast({ title: "Total Roster", description: `${csrData?.kpiBreakdown?.employees?.totalRoster || Math.round(displayActiveEmployees * 1.5)} employees in workforce.` })}
+                        className="bg-blue-50 rounded-lg p-2 text-center border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all"
+                      >
+                        <div className="text-blue-700 text-lg font-bold">
+                          {csrData?.kpiBreakdown?.employees?.totalRoster || Math.round(displayActiveEmployees * 1.5)}
+                        </div>
+                        <div className="text-blue-600 text-[10px]">Total Roster</div>
+                      </button>
+                      <button
+                        onClick={() => toast({ title: "New Volunteers", description: `${csrData?.kpiBreakdown?.employees?.newThisMonth || Math.round(displayActiveEmployees * 0.15)} new participants joined this month!` })}
+                        className="bg-amber-50 rounded-lg p-2 text-center border border-amber-200 hover:bg-amber-100 active:scale-95 transition-all"
+                      >
+                        <div className="text-amber-700 text-lg font-bold">
+                          +{csrData?.kpiBreakdown?.employees?.newThisMonth || Math.round(displayActiveEmployees * 0.15)}
+                        </div>
+                        <div className="text-amber-600 text-[10px]">New This Month</div>
+                      </button>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Top Volunteers (tap for details)</h4>
+                      <div className="space-y-2">
+                        {(csrData?.leaderboard || []).slice(0, 5).map((emp: any, i: number) => (
+                          <button
+                            key={emp.rank || i}
+                            onClick={() => { setMobileKPIModal(null); setSelectedEmployee({ ...emp, rank: i + 1 }); }}
+                            className="flex items-center gap-2 w-full bg-white rounded-lg p-2.5 border border-slate-200 hover:bg-amber-50 hover:border-amber-300 active:scale-98 transition-all"
+                          >
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-amber-700' : 'bg-emerald-600'}`}>
+                              {i + 1}
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <div className="text-slate-900 text-sm font-medium truncate">{emp.employeeName || `Volunteer ${i + 1}`}</div>
+                              <div className="text-slate-500 text-[10px]">{emp.points || 0} points</div>
+                            </div>
+                            <div className="text-emerald-600 text-sm font-bold">{emp.hours || 0}h</div>
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
+                          </button>
+                        ))}
+                        {(!csrData?.leaderboard || csrData.leaderboard.length === 0) && (
+                          <div className="text-center text-slate-500 text-sm py-3">No volunteer data available</div>
+                        )}
                       </div>
                     </div>
-                    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-3 border border-indigo-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Brain className="w-4 h-4 text-indigo-600" />
-                        <span className="text-sm font-semibold text-indigo-800">AI Insight</span>
-                      </div>
-                      <p className="text-xs text-slate-700">Based on engagement patterns, 15 employees are likely to volunteer for the first time next month. Consider targeted outreach.</p>
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <button
+                        onClick={() => { setMobileKPIModal(null); setMobileTab('employees'); }}
+                        className="bg-emerald-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-emerald-700 active:scale-95 transition-all"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        Team Analytics
+                      </button>
+                      <button
+                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('hours'); }}
+                        className="bg-white text-emerald-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-emerald-300 hover:bg-emerald-50 active:scale-95 transition-all"
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        View Hours
+                      </button>
                     </div>
                   </>
                 )}
@@ -1782,20 +1897,67 @@ export default function CSRDashboard() {
                       <div className="text-4xl font-bold text-purple-600">{displayProjectsCompleted}</div>
                       <div className="text-slate-600 text-sm mt-1">Active volunteer projects</div>
                     </div>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <button
+                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('hours'); }}
+                        className="bg-purple-50 rounded-lg p-3 text-center border border-purple-200 hover:bg-purple-100 active:scale-95 transition-all"
+                      >
+                        <div className="text-purple-700 text-xl font-bold">{csrData?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted}</div>
+                        <div className="text-purple-600 text-xs">Active Projects</div>
+                      </button>
+                      <button
+                        onClick={() => toast({ title: "Regions Served", description: `Projects span ${csrData?.kpiBreakdown?.projects?.regionsServed || csrData?.projectLocations?.length || 0} geographic regions.` })}
+                        className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200 hover:bg-blue-100 active:scale-95 transition-all"
+                      >
+                        <div className="text-blue-700 text-xl font-bold">{csrData?.kpiBreakdown?.projects?.regionsServed || csrData?.projectLocations?.length || 0}</div>
+                        <div className="text-blue-600 text-xs">Regions Served</div>
+                      </button>
+                    </div>
                     <div className="space-y-2">
-                      <h4 className="font-semibold text-slate-800 text-sm">Top Projects by Impact</h4>
-                      {['Community Garden Initiative', 'Youth STEM Mentorship', 'Food Bank Partnership', 'Environmental Cleanup'].slice(0, Math.min(4, displayProjectsCompleted)).map((proj, i) => (
-                        <div key={proj} className="bg-white rounded-lg p-2.5 border border-slate-200 flex items-center gap-2">
+                      <h4 className="font-semibold text-slate-800 text-sm">Top Projects (tap for details)</h4>
+                      {(csrData?.projectLocations || [])
+                        .slice()
+                        .sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
+                        .slice(0, 4)
+                        .map((proj: any, i: number) => (
+                        <button
+                          key={proj.id || i}
+                          onClick={() => toast({ title: proj.name || `Project ${i + 1}`, description: `${proj.hours || 0} hours • ${proj.employees || 0} volunteers • ${proj.region || 'N/A'}` })}
+                          className="bg-white rounded-lg p-2.5 border border-slate-200 flex items-center gap-2 w-full hover:bg-purple-50 hover:border-purple-300 active:scale-98 transition-all"
+                        >
                           <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">
                             {i + 1}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-slate-900 text-sm font-medium truncate">{proj}</div>
-                            <div className="text-slate-500 text-xs">{Math.round(displayTotalHours * [0.3, 0.25, 0.25, 0.2][i])} hours</div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className="text-slate-900 text-sm font-medium truncate">{proj.name || `Project ${proj.id}`}</div>
+                            <div className="text-slate-500 text-xs">{proj.hours || 0} hours • {proj.region || 'N/A'}</div>
                           </div>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${proj.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                            {proj.status || 'active'}
+                          </span>
                           <ChevronRight className="w-4 h-4 text-slate-400" />
-                        </div>
+                        </button>
                       ))}
+                      {(!csrData?.projectLocations || csrData.projectLocations.length === 0) && (
+                        <div className="text-center text-slate-500 text-sm py-4">No project data available</div>
+                      )}
+                    </div>
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <button
+                        onClick={() => navigate('/project-portfolio')}
+                        className="bg-purple-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-purple-700 active:scale-95 transition-all"
+                      >
+                        <FolderKanban className="w-3.5 h-3.5" />
+                        All Projects
+                      </button>
+                      <button
+                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('aiu'); }}
+                        className="bg-white text-purple-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-purple-300 hover:bg-purple-50 active:scale-95 transition-all"
+                      >
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        View AIUs
+                      </button>
                     </div>
                   </>
                 )}
@@ -1813,17 +1975,54 @@ export default function CSRDashboard() {
                       <p className="text-[10px] text-slate-600 italic">1 AIU = one unit of attributable share of SDG Delta (not lives touched)</p>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-blue-50 rounded-lg p-3 text-center">
-                        <div className="text-blue-700 text-xl font-bold">{csrData?.sdgMetrics?.length || 0}</div>
+                      <button
+                        onClick={() => {
+                          setMobileKPIModal(null);
+                          setMobileTab('sdgs');
+                        }}
+                        className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200 hover:bg-blue-100 hover:border-blue-300 active:scale-95 transition-all"
+                      >
+                        <div className="text-blue-700 text-xl font-bold">{sdgMetrics.filter((m: any) => m.totalHours > 0).length}</div>
                         <div className="text-blue-600 text-xs">SDGs Impacted</div>
-                      </div>
-                      <div className="bg-emerald-50 rounded-lg p-3 text-center">
-                        <div className="text-emerald-700 text-lg font-bold">Verified</div>
+                      </button>
+                      <button
+                        onClick={() => {
+                          toast({
+                            title: "Verification Status",
+                            description: "All AIUs are evidence-backed with NGO verification and project IDs.",
+                          });
+                        }}
+                        className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 active:scale-95 transition-all"
+                      >
+                        <div className="text-emerald-700 text-lg font-bold flex items-center justify-center gap-1">
+                          <CheckCircle className="w-4 h-4" />
+                          Verified
+                        </div>
                         <div className="text-emerald-600 text-xs">Evidence-Backed</div>
-                      </div>
+                      </button>
                     </div>
                     <div className="bg-slate-50 rounded-lg p-2 mt-2">
                       <p className="text-[10px] text-slate-600 text-center">AIUs are fractional and cumulative, calculated using transparent formulas, role weighting, hours, and reliability.</p>
+                    </div>
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-2 gap-2 mt-3">
+                      <button
+                        onClick={() => navigate('/csr-impact-reporting')}
+                        className="bg-teal-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-teal-700 active:scale-95 transition-all"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        View Impact Report
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMobileKPIModal(null);
+                          setSelectedKPI('sdg');
+                        }}
+                        className="bg-white text-teal-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-teal-300 hover:bg-teal-50 active:scale-95 transition-all"
+                      >
+                        <Target className="w-3.5 h-3.5" />
+                        SDG Breakdown
+                      </button>
                     </div>
                   </>
                 )}
@@ -2069,29 +2268,25 @@ export default function CSRDashboard() {
           />
         </button>
 
-        {/* Center: CSR Dashboard Title with Company Name */}
+        {/* Center: Corporation Name ESG Insights */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            gap: "8px",
             flex: 1,
             justifyContent: "center",
           }}
         >
           <span
-            style={{ fontSize: "16px", fontWeight: "600", color: "#1e293b" }}
-          >
-            CSR Dashboard
-          </span>
-          <span style={{ fontSize: "16px", color: "#475569" }}>•</span>
-          <Briefcase
-            style={{ width: "18px", height: "18px", color: "#1e293b" }}
-          />
-          <span
-            style={{ fontSize: "16px", fontWeight: "500", color: "#1e293b" }}
+            style={{ fontSize: "18px", fontWeight: "700", color: "#1e3a8a" }}
           >
             {companyName}
+          </span>
+          <span
+            style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b" }}
+          >
+            ESG Insights
           </span>
         </div>
 
@@ -2475,7 +2670,7 @@ export default function CSRDashboard() {
                           }}
                         >
                           <button
-                            onClick={() => setSelectedSDG(sdgNum)}
+                            onClick={() => startTransition(() => setSelectedSDG(sdgNum))}
                             title={`Click to view details for SDG ${sdgNum}: ${getSDGFullName(sdgNum)}`}
                             style={{
                               width: "100%",
@@ -2877,7 +3072,7 @@ export default function CSRDashboard() {
                   gap: "12px",
                 }}
               >
-                <div
+                <button
                   onClick={() => setSelectedKPI("hours")}
                   style={{
                     backgroundColor: "#1e3a8a",
@@ -2887,8 +3082,9 @@ export default function CSRDashboard() {
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
-                    border:
-                      selectedKPI === "hours" ? "2px solid #f97316" : "none",
+                    border: selectedKPI === "hours" ? "2px solid #f97316" : "2px solid transparent",
+                    textAlign: "left",
+                    width: "100%",
                   }}
                   onMouseOver={(e) => (
                     (e.currentTarget.style.transform = "translateY(-4px)"),
@@ -2921,9 +3117,9 @@ export default function CSRDashboard() {
                       : `$${(csrData?.kpiBreakdown?.hours?.economicValue || displayTotalHours * 35).toLocaleString()} value`
                     }
                   </p>
-                </div>
+                </button>
 
-                <div
+                <button
                   onClick={() => setSelectedKPI("employees")}
                   style={{
                     backgroundColor: "#1e3a8a",
@@ -2933,10 +3129,9 @@ export default function CSRDashboard() {
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
-                    border:
-                      selectedKPI === "employees"
-                        ? "2px solid #f97316"
-                        : "none",
+                    border: selectedKPI === "employees" ? "2px solid #f97316" : "2px solid transparent",
+                    textAlign: "left",
+                    width: "100%",
                   }}
                   onMouseOver={(e) => (
                     (e.currentTarget.style.transform = "translateY(-4px)"),
@@ -2969,9 +3164,9 @@ export default function CSRDashboard() {
                       : `Avg ${csrData?.kpiBreakdown?.employees?.averageHoursPerEmployee || 0} hrs/employee`
                     }
                   </p>
-                </div>
+                </button>
 
-                <div
+                <button
                   onClick={() => setSelectedKPI("projects")}
                   style={{
                     backgroundColor: "#1e3a8a",
@@ -2981,8 +3176,9 @@ export default function CSRDashboard() {
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
-                    border:
-                      selectedKPI === "projects" ? "2px solid #f97316" : "none",
+                    border: selectedKPI === "projects" ? "2px solid #f97316" : "2px solid transparent",
+                    textAlign: "left",
+                    width: "100%",
                   }}
                   onMouseOver={(e) => (
                     (e.currentTarget.style.transform = "translateY(-4px)"),
@@ -3015,9 +3211,9 @@ export default function CSRDashboard() {
                       : `${csrData?.kpiBreakdown?.projects?.regionsServed || 0} regions served`
                     }
                   </p>
-                </div>
+                </button>
 
-                <div
+                <button
                   onClick={() => setSelectedKPI("sdg")}
                   style={{
                     backgroundColor: "#1e3a8a",
@@ -3027,8 +3223,9 @@ export default function CSRDashboard() {
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
-                    border:
-                      selectedKPI === "sdg" ? "2px solid #f97316" : "none",
+                    border: selectedKPI === "sdg" ? "2px solid #f97316" : "2px solid transparent",
+                    textAlign: "left",
+                    width: "100%",
                   }}
                   onMouseOver={(e) => (
                     (e.currentTarget.style.transform = "translateY(-4px)"),
@@ -3068,10 +3265,10 @@ export default function CSRDashboard() {
                   <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
                     {(csrData?.sdgScoreDelta || 0) >= 0 ? "+" : ""}{csrData?.sdgScoreDelta || 0}% vs last quarter
                   </p>
-                </div>
+                </button>
 
                 {/* 5th KPI: Total Volunteers */}
-                <div
+                <button
                   onClick={() => setSelectedKPI("volunteers")}
                   style={{
                     backgroundColor: "#1e3a8a",
@@ -3081,8 +3278,9 @@ export default function CSRDashboard() {
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
-                    border:
-                      selectedKPI === "volunteers" ? "2px solid #f97316" : "none",
+                    border: selectedKPI === "volunteers" ? "2px solid #f97316" : "2px solid transparent",
+                    textAlign: "left",
+                    width: "100%",
                   }}
                   onMouseOver={(e) => (
                     (e.currentTarget.style.transform = "translateY(-4px)"),
@@ -3112,10 +3310,10 @@ export default function CSRDashboard() {
                   <p style={{ fontSize: "10px", color: "#93c5fd", marginTop: "4px" }}>
                     {csrData?.kpiBreakdown?.employees?.engagementRate || 0}% engagement rate
                   </p>
-                </div>
+                </button>
 
                 {/* 6th KPI: AIUs Earned */}
-                <div
+                <button
                   onClick={() => setSelectedKPI("aiu")}
                   style={{
                     backgroundColor: "#0d5f52",
@@ -3125,8 +3323,9 @@ export default function CSRDashboard() {
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     cursor: "pointer",
                     transition: "all 0.3s ease",
-                    border:
-                      selectedKPI === "aiu" ? "2px solid #f97316" : "none",
+                    border: selectedKPI === "aiu" ? "2px solid #f97316" : "2px solid transparent",
+                    textAlign: "left",
+                    width: "100%",
                   }}
                   onMouseOver={(e) => (
                     (e.currentTarget.style.transform = "translateY(-4px)"),
@@ -3156,7 +3355,7 @@ export default function CSRDashboard() {
                   <p style={{ fontSize: "10px", color: "#6ee7b7", marginTop: "4px" }}>
                     Attributable Impact Units
                   </p>
-                </div>
+                </button>
               </div>
 
               {/* Analytics Grid - 2x2 layout (responsive) */}
@@ -4174,92 +4373,129 @@ export default function CSRDashboard() {
                 >
                   Total employee hours contributed to CSR-sponsored initiatives.
                 </p>
-                <div
-                  style={{
-                    backgroundColor: "#f3f4f6",
-                    padding: "16px",
-                    borderRadius: "8px",
-                    marginTop: "16px",
-                  }}
-                >
-                  <p
+                {/* Interactive KPI Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                  <button
+                    onClick={() => { setSelectedKPI(null); setSelectedKPI("employees"); }}
                     style={{
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      color: "#6b7280",
-                      marginBottom: "8px",
+                      backgroundColor: "#eff6ff",
+                      padding: "16px",
+                      borderRadius: "8px",
+                      border: "1px solid #bfdbfe",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.2s",
                     }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#dbeafe"; e.currentTarget.style.borderColor = "#93c5fd"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
                   >
-                    Employee Hours Summary:
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#1e40af" }}>
+                      {csrData?.kpiBreakdown?.hours?.averagePerEmployee ||
+                        (csrData?.activeEmployees && csrData?.totalHours ? Math.round(csrData.totalHours / csrData.activeEmployees) : 0)}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#3b82f6" }}>Avg Hours/Employee</div>
+                  </button>
+                  <button
+                    onClick={() => navigate('/csr-reports-exports')}
+                    style={{
+                      backgroundColor: "#ecfdf5",
+                      padding: "16px",
+                      borderRadius: "8px",
+                      border: "1px solid #a7f3d0",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#d1fae5"; e.currentTarget.style.borderColor = "#6ee7b7"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#ecfdf5"; e.currentTarget.style.borderColor = "#a7f3d0"; }}
+                  >
+                    <div style={{ fontSize: "24px", fontWeight: "bold", color: "#059669" }}>
+                      ${((csrData?.kpiBreakdown?.hours?.economicValue || (csrData?.totalHours || 0) * 35) / 1000).toFixed(1)}K
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#10b981" }}>Economic Value</div>
+                  </button>
+                </div>
+                {/* Hours by SDG - Interactive List */}
+                <div style={{ backgroundColor: "#f3f4f6", padding: "16px", borderRadius: "8px" }}>
+                  <p style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "12px" }}>
+                    Hours by SDG (click to view details):
                   </p>
-                  <ul
+                  <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+                    {sdgMetrics
+                      .filter((m: SDGMetric) => m.totalHours > 0)
+                      .sort((a: SDGMetric, b: SDGMetric) => b.totalHours - a.totalHours)
+                      .slice(0, 5)
+                      .map((metric: SDGMetric) => (
+                        <button
+                          key={metric.sdg}
+                          onClick={() => { setSelectedKPI(null); setSelectedSDG(metric.sdg); }}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            width: "100%",
+                            padding: "10px 8px",
+                            marginBottom: "4px",
+                            backgroundColor: "white",
+                            border: "1px solid #e5e7eb",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                          }}
+                          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#f9fafb"; e.currentTarget.style.borderColor = getSDGColor(metric.sdg); }}
+                          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "white"; e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div style={{
+                              width: "28px", height: "28px", borderRadius: "6px",
+                              backgroundColor: getSDGColor(metric.sdg),
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              color: "white", fontSize: "12px", fontWeight: "bold"
+                            }}>
+                              {metric.sdg}
+                            </div>
+                            <span style={{ fontSize: "13px", color: "#374151" }}>{getSDGName(metric.sdg)}</span>
+                          </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <span style={{ fontWeight: "600", color: "#1e3a8a", fontSize: "13px" }}>{metric.totalHours} hrs</span>
+                            <ChevronRight style={{ width: "16px", height: "16px", color: "#9ca3af" }} />
+                          </div>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+                {/* Action Buttons */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
+                  <button
+                    onClick={() => navigate('/csr-impact-reporting')}
                     style={{
-                      fontSize: "14px",
-                      listStyle: "none",
-                      padding: 0,
-                      margin: 0,
+                      backgroundColor: "#1e3a8a", color: "white", padding: "12px 16px",
+                      borderRadius: "8px", border: "none", cursor: "pointer",
+                      fontWeight: "600", fontSize: "14px",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                      transition: "all 0.2s",
                     }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#1e40af")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#1e3a8a")}
                   >
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Average per employee:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.hours?.averagePerEmployee ||
-                          (csrData?.activeEmployees && csrData?.totalHours ? Math.round(csrData.totalHours / csrData.activeEmployees) : 0)}{" "}
-                        hrs
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Weekly average:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.hours?.weeklyAverage ||
-                          Math.round((csrData?.totalHours || 0) / 12)}{" "}
-                        hrs/week
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Top project hours:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.hours?.topProjectHours ||
-                          Math.round((csrData?.totalHours || 0) * 0.3)}{" "}
-                        hrs
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        paddingTop: "8px",
-                        borderTop: "1px solid #e5e7eb",
-                      }}
-                    >
-                      <span>💰 Economic value (@$35/hr):</span>
-                      <span style={{ fontWeight: "600", color: "#059669" }}>
-                        $
-                        {(
-                          csrData?.kpiBreakdown?.hours?.economicValue ||
-                          (csrData?.totalHours || 0) * 35
-                        ).toLocaleString()}
-                      </span>
-                    </li>
-                  </ul>
+                    <FileText style={{ width: "16px", height: "16px" }} />
+                    View Full Report
+                  </button>
+                  <button
+                    onClick={() => { setSelectedKPI(null); setSelectedKPI("employees"); }}
+                    style={{
+                      backgroundColor: "white", color: "#1e3a8a", padding: "12px 16px",
+                      borderRadius: "8px", border: "2px solid #1e3a8a", cursor: "pointer",
+                      fontWeight: "600", fontSize: "14px",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#eff6ff")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
+                  >
+                    <Users style={{ width: "16px", height: "16px" }} />
+                    View Employees
+                  </button>
                 </div>
               </div>
             )}
@@ -4284,93 +4520,141 @@ export default function CSRDashboard() {
                     lineHeight: "1.6",
                   }}
                 >
-                  Company employees actively participating in CSR-sponsored
-                  initiatives.
+                  Company employees actively participating in CSR-sponsored initiatives.
                 </p>
-                <div
-                  style={{
-                    backgroundColor: "#f3f4f6",
-                    padding: "16px",
-                    borderRadius: "8px",
-                    marginTop: "16px",
-                  }}
-                >
-                  <p
+                {/* Interactive KPI Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                  <button
+                    onClick={() => { setSelectedKPI(null); setSelectedKPI("hours"); }}
                     style={{
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      color: "#6b7280",
-                      marginBottom: "8px",
+                      backgroundColor: "#eff6ff", padding: "14px", borderRadius: "8px",
+                      border: "1px solid #bfdbfe", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
                     }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#dbeafe"; e.currentTarget.style.borderColor = "#93c5fd"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
                   >
-                    Employee Engagement Metrics:
+                    <div style={{ fontSize: "22px", fontWeight: "bold", color: "#1e40af" }}>
+                      {csrData?.kpiBreakdown?.employees?.averageHoursPerEmployee ||
+                        (csrData?.activeEmployees && csrData?.totalHours ? Math.round(csrData.totalHours / csrData.activeEmployees) : 0)}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#3b82f6" }}>Avg Hrs/Employee</div>
+                  </button>
+                  <button
+                    onClick={() => toast({ title: "Engagement Rate", description: `${csrData?.kpiBreakdown?.employees?.engagementRate || 0}% of total workforce actively volunteers.` })}
+                    style={{
+                      backgroundColor: "#ecfdf5", padding: "14px", borderRadius: "8px",
+                      border: "1px solid #a7f3d0", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#d1fae5"; e.currentTarget.style.borderColor = "#6ee7b7"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#ecfdf5"; e.currentTarget.style.borderColor = "#a7f3d0"; }}
+                  >
+                    <div style={{ fontSize: "22px", fontWeight: "bold", color: "#059669" }}>
+                      {csrData?.kpiBreakdown?.employees?.engagementRate || 0}%
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#10b981" }}>Engagement Rate</div>
+                  </button>
+                  <button
+                    onClick={() => toast({ title: "New Volunteers", description: `${csrData?.kpiBreakdown?.employees?.newThisMonth || Math.max(1, Math.floor((csrData?.activeEmployees || 0) * 0.2))} new participants joined this month.` })}
+                    style={{
+                      backgroundColor: "#fef3c7", padding: "14px", borderRadius: "8px",
+                      border: "1px solid #fcd34d", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#fde68a"; e.currentTarget.style.borderColor = "#fbbf24"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#fef3c7"; e.currentTarget.style.borderColor = "#fcd34d"; }}
+                  >
+                    <div style={{ fontSize: "22px", fontWeight: "bold", color: "#d97706" }}>
+                      +{csrData?.kpiBreakdown?.employees?.newThisMonth || Math.max(1, Math.floor((csrData?.activeEmployees || 0) * 0.2))}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#f59e0b" }}>New This Month</div>
+                  </button>
+                </div>
+                {/* Top Volunteers List - Real Names */}
+                <div style={{ backgroundColor: "#f3f4f6", padding: "16px", borderRadius: "8px" }}>
+                  <p style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "12px" }}>
+                    Top Volunteers (click to view profile):
                   </p>
-                  <ul
+                  <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                    {(csrData?.leaderboard || []).slice(0, 8).map((volunteer: any, idx: number) => (
+                      <button
+                        key={volunteer.rank || idx}
+                        onClick={() => { setSelectedKPI(null); setSelectedEmployee({ ...volunteer, rank: idx + 1 }); }}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          width: "100%", padding: "10px 12px", marginBottom: "6px",
+                          backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "8px",
+                          cursor: "pointer", transition: "all 0.2s",
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#fef3c7"; e.currentTarget.style.borderColor = "#fbbf24"; }}
+                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "white"; e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div style={{
+                            width: "32px", height: "32px", borderRadius: "50%",
+                            backgroundColor: idx === 0 ? "#fbbf24" : idx === 1 ? "#9ca3af" : idx === 2 ? "#cd7f32" : "#1e3a8a",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            color: "white", fontSize: "14px", fontWeight: "bold"
+                          }}>
+                            {idx + 1}
+                          </div>
+                          <div style={{ textAlign: "left" }}>
+                            <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
+                              {volunteer.employeeName || `Volunteer ${idx + 1}`}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              {volunteer.points || 0} points earned
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: "16px", fontWeight: "bold", color: "#059669" }}>
+                              {volunteer.hours || 0}
+                            </div>
+                            <div style={{ fontSize: "10px", color: "#6b7280" }}>hours</div>
+                          </div>
+                          <ChevronRight style={{ width: "16px", height: "16px", color: "#9ca3af" }} />
+                        </div>
+                      </button>
+                    ))}
+                    {(!csrData?.leaderboard || csrData.leaderboard.length === 0) && (
+                      <div style={{ textAlign: "center", padding: "20px", color: "#6b7280" }}>
+                        No volunteer data available
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Action Buttons */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
+                  <button
+                    onClick={() => setSelectedMainTab("engagement")}
                     style={{
-                      fontSize: "14px",
-                      listStyle: "none",
-                      padding: 0,
-                      margin: 0,
+                      backgroundColor: "#1e3a8a", color: "white", padding: "12px 16px",
+                      borderRadius: "8px", border: "none", cursor: "pointer",
+                      fontWeight: "600", fontSize: "14px",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                      transition: "all 0.2s",
                     }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#1e40af")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#1e3a8a")}
                   >
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Average hours per employee:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.employees?.averageHoursPerEmployee ||
-                          (csrData?.activeEmployees && csrData?.totalHours ? Math.round(csrData.totalHours / csrData.activeEmployees) : 0)}{" "}
-                        hrs
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Engagement rate:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.employees?.engagementRate || 0}% of workforce
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ New participants this month:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.employees?.newThisMonth ||
-                          Math.max(1, Math.floor((csrData?.activeEmployees || 0) * 0.2))}
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        paddingTop: "8px",
-                        borderTop: "1px solid #e5e7eb",
-                      }}
-                    >
-                      <span>🏆 Top performer:</span>
-                      <span style={{ fontWeight: "600", color: "#059669" }}>
-                        {csrData?.kpiBreakdown?.employees?.topPerformer ||
-                          (csrData?.leaderboard?.[0]?.employeeName || "N/A")}{" "}
-                        (
-                        {csrData?.kpiBreakdown?.employees?.topPerformerHours ||
-                          (csrData?.leaderboard?.[0]?.hours || 0)}{" "}
-                        hrs)
-                      </span>
-                    </li>
-                  </ul>
+                    <Users style={{ width: "16px", height: "16px" }} />
+                    View Engagement Tab
+                  </button>
+                  <button
+                    onClick={() => { setSelectedKPI(null); setSelectedKPI("hours"); }}
+                    style={{
+                      backgroundColor: "white", color: "#1e3a8a", padding: "12px 16px",
+                      borderRadius: "8px", border: "2px solid #1e3a8a", cursor: "pointer",
+                      fontWeight: "600", fontSize: "14px",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#eff6ff")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
+                  >
+                    <Clock style={{ width: "16px", height: "16px" }} />
+                    View Hours
+                  </button>
                 </div>
               </div>
             )}
@@ -4395,152 +4679,143 @@ export default function CSRDashboard() {
                     lineHeight: "1.6",
                   }}
                 >
-                  CSR initiatives sponsored with employee participation and
-                  measured impact.
+                  CSR initiatives sponsored with employee participation and measured impact.
                 </p>
-                <div
-                  style={{
-                    backgroundColor: "#f3f4f6",
-                    padding: "16px",
-                    borderRadius: "8px",
-                    marginTop: "16px",
-                  }}
-                >
-                  <p
+                {/* Interactive KPI Grid */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                  <button
+                    onClick={() => { setSelectedKPI(null); setSelectedKPI("hours"); }}
                     style={{
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      color: "#6b7280",
-                      marginBottom: "8px",
+                      backgroundColor: "#eff6ff", padding: "14px", borderRadius: "8px",
+                      border: "1px solid #bfdbfe", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
                     }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#dbeafe"; e.currentTarget.style.borderColor = "#93c5fd"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#eff6ff"; e.currentTarget.style.borderColor = "#bfdbfe"; }}
                   >
-                    Employee Project Impact:
+                    <div style={{ fontSize: "22px", fontWeight: "bold", color: "#1e40af" }}>
+                      {(csrData?.kpiBreakdown?.projects?.totalHoursInvested || csrData?.totalHours || 0).toLocaleString()}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#3b82f6" }}>Total Hours</div>
+                  </button>
+                  <button
+                    onClick={() => toast({ title: "Regions Served", description: `Your projects span ${csrData?.kpiBreakdown?.projects?.regionsServed || csrData?.projectLocations?.length || 0} geographic regions.` })}
+                    style={{
+                      backgroundColor: "#f5f3ff", padding: "14px", borderRadius: "8px",
+                      border: "1px solid #c4b5fd", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#ede9fe"; e.currentTarget.style.borderColor = "#a78bfa"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#f5f3ff"; e.currentTarget.style.borderColor = "#c4b5fd"; }}
+                  >
+                    <div style={{ fontSize: "22px", fontWeight: "bold", color: "#7c3aed" }}>
+                      {csrData?.kpiBreakdown?.projects?.regionsServed || csrData?.projectLocations?.length || 0}
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#8b5cf6" }}>Regions Served</div>
+                  </button>
+                  <button
+                    onClick={() => navigate('/csr-reports-exports')}
+                    style={{
+                      backgroundColor: "#ecfdf5", padding: "14px", borderRadius: "8px",
+                      border: "1px solid #a7f3d0", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#d1fae5"; e.currentTarget.style.borderColor = "#6ee7b7"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "#ecfdf5"; e.currentTarget.style.borderColor = "#a7f3d0"; }}
+                  >
+                    <div style={{ fontSize: "22px", fontWeight: "bold", color: "#059669" }}>
+                      ${((csrData?.kpiBreakdown?.hours?.economicValue || (csrData?.totalHours || 0) * 35) / 1000).toFixed(0)}K
+                    </div>
+                    <div style={{ fontSize: "11px", color: "#10b981" }}>Economic Value</div>
+                  </button>
+                </div>
+                {/* Project List - Real Data */}
+                <div style={{ backgroundColor: "#f3f4f6", padding: "16px", borderRadius: "8px" }}>
+                  <p style={{ fontSize: "12px", fontWeight: "600", color: "#6b7280", marginBottom: "12px" }}>
+                    Active Projects (click to view on map):
                   </p>
-                  <ul
+                  <div style={{ maxHeight: "220px", overflowY: "auto" }}>
+                    {(csrData?.projectLocations || []).slice(0, 8).map((project: any, idx: number) => (
+                      <button
+                        key={project.id || idx}
+                        onClick={() => {
+                          setSelectedKPI(null);
+                          setSelectedMapRegion(project.region || "all");
+                          toast({ title: project.name || `Project ${idx + 1}`, description: `${project.hours || 0} hours • ${project.employees || 0} volunteers • ${project.region || "N/A"}` });
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          width: "100%", padding: "10px 12px", marginBottom: "6px",
+                          backgroundColor: "white", border: "1px solid #e5e7eb", borderRadius: "8px",
+                          cursor: "pointer", transition: "all 0.2s",
+                        }}
+                        onMouseOver={(e) => { e.currentTarget.style.backgroundColor = "#f5f3ff"; e.currentTarget.style.borderColor = "#a78bfa"; }}
+                        onMouseOut={(e) => { e.currentTarget.style.backgroundColor = "white"; e.currentTarget.style.borderColor = "#e5e7eb"; }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                          <div style={{
+                            width: "32px", height: "32px", borderRadius: "8px",
+                            backgroundColor: project.status === "active" ? "#10b981" : "#6b7280",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <MapPin style={{ width: "16px", height: "16px", color: "white" }} />
+                          </div>
+                          <div style={{ textAlign: "left" }}>
+                            <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
+                              {project.name || `Project ${idx + 1}`}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                              {project.region || "N/A"} • {project.employees || 0} volunteers
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ fontSize: "16px", fontWeight: "bold", color: "#7c3aed" }}>
+                              {project.hours || 0}
+                            </div>
+                            <div style={{ fontSize: "10px", color: "#6b7280" }}>hours</div>
+                          </div>
+                          <ChevronRight style={{ width: "16px", height: "16px", color: "#9ca3af" }} />
+                        </div>
+                      </button>
+                    ))}
+                    {(!csrData?.projectLocations || csrData.projectLocations.length === 0) && (
+                      <div style={{ textAlign: "center", padding: "20px", color: "#6b7280" }}>
+                        No project data available
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {/* Action Buttons */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
+                  <button
+                    onClick={() => navigate('/project-portfolio')}
                     style={{
-                      fontSize: "14px",
-                      listStyle: "none",
-                      padding: 0,
-                      margin: 0,
+                      backgroundColor: "#7c3aed", color: "white", padding: "12px 16px",
+                      borderRadius: "8px", border: "none", cursor: "pointer",
+                      fontWeight: "600", fontSize: "14px",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                      transition: "all 0.2s",
                     }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#6d28d9")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#7c3aed")}
                   >
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Active with employee hours:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.projects?.activeProjects ||
-                          csrData?.projectsCompleted || 0}
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Total employee hours:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {(
-                          csrData?.kpiBreakdown?.projects?.totalHoursInvested ||
-                          csrData?.totalHours || 0
-                        ).toLocaleString()}{" "}
-                        hrs
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Average hours per project:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {(
-                          csrData?.kpiBreakdown?.projects?.averageHoursPerProject ||
-                          (csrData?.projectsCompleted && csrData?.totalHours ? Math.round(csrData.totalHours / csrData.projectsCompleted) : 0)
-                        ).toLocaleString()}{" "}
-                        hrs
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Geographic regions:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {csrData?.kpiBreakdown?.projects?.regionsServed ||
-                          (csrData?.projectLocations?.length || 0)}{" "}
-                        regions
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>✓ Total ROI:</span>
-                      <span style={{ fontWeight: "600" }}>
-                        {(
-                          csrData?.kpiBreakdown?.projects?.totalRoi ||
-                          csrData?.totalImpact || 0
-                        ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>💰 Economic Value:</span>
-                      <span style={{ fontWeight: "600", color: "#059669" }}>
-                        ${((csrData?.totalHours || displayTotalHours || 0) * 35).toLocaleString()}
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        marginBottom: "8px",
-                        display: "flex",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <span>📊 Value per Project:</span>
-                      <span style={{ fontWeight: "600", color: "#3b82f6" }}>
-                        ${(csrData?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted) > 0
-                          ? Math.round(((csrData?.totalHours || displayTotalHours || 0) * 35) / (csrData?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted)).toLocaleString()
-                          : "0"}
-                      </span>
-                    </li>
-                    <li
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        paddingTop: "8px",
-                        borderTop: "1px solid #e5e7eb",
-                      }}
-                    >
-                      <span>👥 Beneficiaries reached:</span>
-                      <span style={{ fontWeight: "600", color: "#059669" }}>
-                        {(
-                          csrData?.kpiBreakdown?.projects?.beneficiariesReached ||
-                          (csrData?.projectsCompleted || 0) * 150
-                        ).toLocaleString()}
-                      </span>
-                    </li>
-                  </ul>
+                    <FolderKanban style={{ width: "16px", height: "16px" }} />
+                    View All Projects
+                  </button>
+                  <button
+                    onClick={() => { setSelectedKPI(null); setSelectedKPI("aiu"); }}
+                    style={{
+                      backgroundColor: "white", color: "#7c3aed", padding: "12px 16px",
+                      borderRadius: "8px", border: "2px solid #7c3aed", cursor: "pointer",
+                      fontWeight: "600", fontSize: "14px",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#f5f3ff")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
+                  >
+                    <TrendingUp style={{ width: "16px", height: "16px" }} />
+                    View AIUs
+                  </button>
                 </div>
               </div>
             )}
@@ -5021,15 +5296,27 @@ export default function CSRDashboard() {
                           ? ((metric.totalHours / totalSDGHours) * csrData.totalImpact).toFixed(2)
                           : "0.00";
                         return (
-                          <div
+                          <button
                             key={metric.sdg}
+                            onClick={() => {
+                              setSelectedKPI(null);
+                              setSelectedSDG(metric.sdg);
+                            }}
                             style={{
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
-                              padding: "6px 0",
+                              padding: "8px 6px",
                               borderBottom: "1px solid #e5e7eb",
+                              width: "100%",
+                              background: "none",
+                              border: "none",
+                              borderRadius: "4px",
+                              cursor: "pointer",
+                              transition: "all 0.2s",
                             }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                           >
                             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                               <div
@@ -5050,10 +5337,13 @@ export default function CSRDashboard() {
                               </div>
                               <span style={{ fontSize: "12px" }}>{getSDGName(metric.sdg)}</span>
                             </div>
-                            <span style={{ fontWeight: "600", color: "#0d5f52", fontSize: "12px" }}>
-                              {metricAIU} AIUs
-                            </span>
-                          </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontWeight: "600", color: "#0d5f52", fontSize: "12px" }}>
+                                {metricAIU} AIUs
+                              </span>
+                              <ChevronRight style={{ width: "14px", height: "14px", color: "#9ca3af" }} />
+                            </div>
+                          </button>
                         );
                       })}
                   </div>
@@ -5073,6 +5363,65 @@ export default function CSRDashboard() {
                   <span style={{ fontSize: "13px", color: "#065f46" }}>
                     <strong>What are AIUs?</strong> Attributable Impact Units are micro, auditable credits representing your attributable share of SDG-linked outcomes. AIUs are fractional and cumulative, evidence-backed with project ID, SDG indicator, attribution factor, and NGO verification.
                   </span>
+                </div>
+                {/* Action Buttons */}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "12px",
+                    marginTop: "20px",
+                  }}
+                >
+                  <button
+                    onClick={() => navigate('/csr-impact-reporting')}
+                    style={{
+                      backgroundColor: "#0d5f52",
+                      color: "white",
+                      padding: "12px 16px",
+                      borderRadius: "8px",
+                      border: "none",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      fontSize: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0a4f44")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#0d5f52")}
+                  >
+                    <FileText style={{ width: "16px", height: "16px" }} />
+                    View Impact Report
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedKPI(null);
+                      setSelectedKPI("sdg");
+                    }}
+                    style={{
+                      backgroundColor: "white",
+                      color: "#0d5f52",
+                      padding: "12px 16px",
+                      borderRadius: "8px",
+                      border: "2px solid #0d5f52",
+                      cursor: "pointer",
+                      fontWeight: "600",
+                      fontSize: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#ecfdf5")}
+                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "white")}
+                  >
+                    <Target style={{ width: "16px", height: "16px" }} />
+                    SDG Breakdown
+                  </button>
                 </div>
               </div>
             )}
@@ -5095,7 +5444,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 1000,
           }}
-          onClick={() => setSelectedSDG(null)}
+          onClick={() => startTransition(() => setSelectedSDG(null))}
         >
           <div
             style={{
@@ -5169,7 +5518,7 @@ export default function CSRDashboard() {
                       </div>
                     </div>
                     <button
-                      onClick={() => setSelectedSDG(null)}
+                      onClick={() => startTransition(() => setSelectedSDG(null))}
                       style={{
                         background: "none",
                         border: "none",

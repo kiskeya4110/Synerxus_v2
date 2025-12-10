@@ -69,27 +69,23 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const currentTab = NAV_TABS.find(tab => tab.path === location)?.id || activeTab;
 
   return (
-    <div style={{ background: 'linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 75%, #d35400 100%)', padding: '0', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 2px 16px rgba(26, 10, 46, 0.4)' }}>
+    <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%)', padding: '0', position: 'sticky', top: 0, zIndex: 50, boxShadow: '0 2px 16px rgba(30, 58, 95, 0.4)' }}>
       <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Left: Logo + Brand Name + Navigation Tabs */}
+        {/* Left: Logo + Navigation Tabs */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          {/* Logo and Brand */}
+          {/* Logo */}
           <button
             onClick={handleLogoClick}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.2)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', transition: 'opacity 0.2s' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.3)', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', transition: 'opacity 0.2s' }}
             onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
             onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
             title="Go to landing page"
           >
-            <img 
-              src={logoUrl} 
-              alt="Synerxus Logo" 
+            <img
+              src={logoUrl}
+              alt="Synerxus Logo"
               style={{ height: '32px', width: 'auto' }}
             />
-            <div style={{ display: 'flex', gap: '0', fontWeight: '700', fontSize: '16px', letterSpacing: '0.5px' }}>
-              <span style={{ color: '#ffffff' }}>SYNER</span>
-              <span style={{ color: '#FFB84D' }}>XUS</span>
-            </div>
           </button>
 
           {/* Navigation Tabs - Hidden on Mobile */}
@@ -105,23 +101,26 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
                 gap: '6px',
                 padding: '8px 14px',
                 backgroundColor: currentTab === tab.id ? 'rgba(255,255,255,0.2)' : 'transparent',
-                border: 'none',
+                border: currentTab === tab.id ? '1px solid rgba(255,255,255,0.3)' : '1px solid transparent',
                 borderRadius: '8px',
-                color: 'white',
+                color: '#ffffff',
                 fontSize: '14px',
-                fontWeight: '500',
+                fontWeight: currentTab === tab.id ? '600' : '500',
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
+                transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
               }}
               onMouseEnter={(e) => {
                 if (currentTab !== tab.id) {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (currentTab !== tab.id) {
                   e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.borderColor = 'transparent';
                 }
               }}
             >
@@ -133,26 +132,32 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
         </div>
 
         {/* Right: Notifications, Settings, Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {/* Notifications Button - redirects to dashboard */}
           <button
             onClick={() => navigate('/organization-dashboard')}
             data-testid="notifications-button"
             style={{
-              width: '36px',
-              height: '36px',
+              width: '38px',
+              height: '38px',
               borderRadius: '50%',
-              backgroundColor: 'transparent',
-              border: 'none',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
-              transition: 'background-color 0.2s',
+              color: '#ffffff',
+              transition: 'all 0.2s',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+            }}
           >
             <Bell size={18} />
           </button>
@@ -162,20 +167,26 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             onClick={() => navigate('/organization-profile-settings')}
             data-testid="settings-button"
             style={{
-              width: '36px',
-              height: '36px',
+              width: '38px',
+              height: '38px',
               borderRadius: '50%',
-              backgroundColor: 'transparent',
-              border: 'none',
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.2)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'white',
-              transition: 'background-color 0.2s',
+              color: '#ffffff',
+              transition: 'all 0.2s',
             }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)';
+            }}
           >
             <Settings size={18} />
           </button>
@@ -186,21 +197,27 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
               <button
                 data-testid="profile-button"
                 style={{
-                  width: '36px',
-                  height: '36px',
+                  width: '38px',
+                  height: '38px',
                   borderRadius: '50%',
                   backgroundColor: 'rgba(255,255,255,0.2)',
-                  border: 'none',
+                  border: '2px solid rgba(255,255,255,0.4)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'white',
+                  color: '#ffffff',
                   overflow: 'hidden',
-                  transition: 'background-color 0.2s',
+                  transition: 'all 0.2s',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.3)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.3)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
+                }}
               >
                 {(user as any)?.avatar ? (
                   <img src={(user as any).avatar} alt="Profile" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />

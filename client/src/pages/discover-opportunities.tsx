@@ -91,9 +91,10 @@ export default function DiscoverOpportunities() {
 
   // Extract unique categories and locations from actual opportunities data
   const availableCategories = useMemo(() => {
+    if (!Array.isArray(opportunities)) return [];
     const categories = new Set<string>();
     opportunities.forEach(opp => {
-      if (opp.category) {
+      if (opp?.category) {
         categories.add(opp.category);
       }
     });
@@ -101,9 +102,10 @@ export default function DiscoverOpportunities() {
   }, [opportunities]);
 
   const availableLocations = useMemo(() => {
+    if (!Array.isArray(opportunities)) return [];
     const locations = new Set<string>();
     opportunities.forEach(opp => {
-      if (opp.location) {
+      if (opp?.location) {
         locations.add(opp.location);
       }
     });
@@ -111,18 +113,21 @@ export default function DiscoverOpportunities() {
   }, [opportunities]);
 
   // Filter opportunities based on search, filters, and status
-  const filteredOpportunities = opportunities.filter((opp) => {
+  const filteredOpportunities = (opportunities || []).filter((opp) => {
+    // Guard against malformed opportunity objects
+    if (!opp || typeof opp.id !== 'number') return false;
+
     const matchesSearch = searchQuery
-      ? opp.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opp.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      ? (opp.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (opp.description || '').toLowerCase().includes(searchQuery.toLowerCase())
       : true;
-    
+
     const matchesCategory = categoryFilter === "all" || opp.category === categoryFilter;
-    const matchesLocation = locationFilter === "all" || 
-      (locationFilter === "remote" ? opp.isRemote : opp.location?.includes(locationFilter));
-    
-    // Filter out rejected opportunities
-    const isNotRejected = !opportunityStatus?.rejectedIds.includes(opp.id);
+    const matchesLocation = locationFilter === "all" ||
+      (locationFilter === "remote" ? opp.isRemote : (opp.location || '').includes(locationFilter));
+
+    // Filter out rejected opportunities - use optional chaining with nullish coalescing
+    const isNotRejected = !(opportunityStatus?.rejectedIds?.includes(opp.id) ?? false);
 
     return matchesSearch && matchesCategory && matchesLocation && isNotRejected;
   });
@@ -158,17 +163,17 @@ export default function DiscoverOpportunities() {
   };
 
   const getOpportunityStatusBadge = (opportunityId: number) => {
-    if (opportunityStatus?.appliedIds.includes(opportunityId)) {
+    if (opportunityStatus?.appliedIds?.includes(opportunityId)) {
       return <Badge variant="default" className="bg-green-600 text-white">Applied</Badge>;
     }
-    if (opportunityStatus?.savedIds.includes(opportunityId)) {
+    if (opportunityStatus?.savedIds?.includes(opportunityId)) {
       return <Badge variant="secondary">Saved</Badge>;
     }
     return null;
   };
 
   const hasApplied = (opportunityId: number) => {
-    return opportunityStatus?.appliedIds.includes(opportunityId) || false;
+    return opportunityStatus?.appliedIds?.includes(opportunityId) ?? false;
   };
 
   if (isLoading) {

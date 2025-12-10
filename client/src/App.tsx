@@ -57,6 +57,7 @@ import Overview from "@/pages/overview";
 import OrganizationMessages from "@/pages/organization-messages";
 import VolunteerMessages from "@/pages/volunteer-messages";
 import VolunteerMessagesPWA from "@/pages/volunteer-messages-pwa";
+import EmployeeEngagementTabPage from "@/pages/employee-engagement-tab-page";
 import NotFound from "@/pages/not-found";
 
 function RootRedirectRoute() {
@@ -179,6 +180,7 @@ export default function App() {
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/csr-dashboard-pwa" component={CSRDashboardPWA} />
+          <Route path="/employee-engagement-tab" component={EmployeeEngagementTabPage} />
           <Route path="/team-overview" component={TeamOverview} />
           <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/organization-dashboard" component={OrganizationDashboard} />

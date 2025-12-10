@@ -84,7 +84,7 @@ export default function OpportunityDetailPWA() {
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-white">
+      <div className="w-full min-h-screen bg-[#faf9f7]">
         <Skeleton className="h-12 w-full" />
         <Skeleton className="h-64 w-full" />
         <div className="p-4 space-y-4">
@@ -97,7 +97,7 @@ export default function OpportunityDetailPWA() {
 
   if (!opportunity) {
     return (
-      <div className="w-full min-h-screen bg-white flex flex-col items-center justify-center p-6">
+      <div className="w-full min-h-screen bg-[#faf9f7] flex flex-col items-center justify-center p-6">
         <h1 className="text-2xl font-bold mb-4">Opportunity Not Found</h1>
         <Button onClick={handleBack}>
           <ArrowLeft className="w-4 h-4 mr-2" />

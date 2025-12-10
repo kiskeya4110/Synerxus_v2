@@ -319,7 +319,7 @@ export default function CSRDashboard() {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          backgroundColor: "#f9fafb",
+          backgroundColor: "#faf9f7",
         }}
       >
         <div style={{ textAlign: "center" }}>
@@ -339,7 +339,7 @@ export default function CSRDashboard() {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          backgroundColor: "#f9fafb",
+          backgroundColor: "#faf9f7",
         }}
       >
         <Card
@@ -383,7 +383,7 @@ export default function CSRDashboard() {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          backgroundColor: "#f9fafb",
+          backgroundColor: "#faf9f7",
         }}
       >
         <Card
@@ -425,7 +425,7 @@ export default function CSRDashboard() {
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          backgroundColor: "#ffffff",
+          backgroundColor: "#faf9f7",
         }}
       >
         <div
@@ -755,7 +755,7 @@ export default function CSRDashboard() {
     setDateRange("all");
   };
 
-  // Mobile PWA View - Prepare radar chart data for SDG progress
+  // Mobile PWA View - Prepare radar chart data for SDG progress (all SDGs with activity)
   const mobileRadarData = sdgMetrics.slice(0, 8).map((metric: any) => ({
     sdg: `SDG ${metric.sdg}`,
     hours: metric.totalHours,
@@ -763,6 +763,33 @@ export default function CSRDashboard() {
     projects: metric.projectsContributed * 20, // Scale for visibility
     fullMark: Math.max(totalSDGHours / 2, 100),
   }));
+
+  // Commitment vs Progress radar - ONLY shows committed SDGs for accurate comparison
+  // Calculate what the target SHOULD be: total hours divided equally among committed SDGs
+  // This represents an even distribution goal across all commitments
+  const targetHoursPerSDG = committedSDGs.length > 0
+    ? Math.round(displayTotalHours / committedSDGs.length)
+    : 100;
+
+  const commitmentRadarData = committedSDGs.map((sdg: number) => {
+    const metric = sdgMetrics.find((m: any) => m.sdg === sdg);
+    const actualHours = metric?.totalHours || 0;
+    const employees = metric?.uniqueEmployees || 0;
+    const projectCount = metric?.projectsContributed || 0;
+    // Progress percentage: how much of the target has been achieved
+    const progressPercent = targetHoursPerSDG > 0
+      ? Math.min(Math.round((actualHours / targetHoursPerSDG) * 100), 150) // Cap at 150%
+      : 0;
+    return {
+      sdg: `SDG ${sdg}`,
+      sdgNumber: sdg,
+      actual: actualHours,
+      target: targetHoursPerSDG,
+      progress: progressPercent,
+      employees: employees,
+      projects: projectCount,
+    };
+  });
 
   // Prepare bar chart data for top SDGs
   const mobileBarData = sdgMetrics.slice(0, 6).map((metric: any) => ({
@@ -787,74 +814,74 @@ export default function CSRDashboard() {
   // Mobile PWA View
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex flex-col max-w-[428px] mx-auto">
+      <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
         {/* Mobile Header - Compact */}
-        <header className="bg-gradient-to-r from-[#1a0a2e] via-[#3d1a5c] to-[#d35400] text-white px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <header className="bg-gradient-to-r from-slate-700 via-purple-800 to-orange-600 text-white px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => navigate("/landing")}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
           >
-            <img src={logoUrl} alt="Synerxus Logo" className="h-6 w-auto" />
-            <span className="font-bold text-xs">
-              <span className="text-white">SYNER</span>
-              <span className="text-amber-400">XUS</span>
-            </span>
+            <img src={logoUrl} alt="Synerxus" className="h-7 w-auto" />
           </button>
-          <div className="text-[10px] text-white/80 truncate max-w-[120px]">{companyName}</div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-white/90 font-medium">CSR Dashboard</span>
+            <span className="text-white/50">•</span>
+            <span className="text-[10px] text-white/80 truncate max-w-[100px]">{companyName}</span>
+          </div>
         </header>
 
         {/* Main Content with Internal Tabs */}
         <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
           {mobileTab === 'overview' && (
             <div className="space-y-3">
-              <h1 className="text-white text-lg font-bold">CSR Dashboard</h1>
+              <h1 className="text-slate-900 text-lg font-bold">CSR Dashboard</h1>
 
               {/* KPI Cards Grid - Compact */}
               <div className="grid grid-cols-2 gap-2">
-                <div className="bg-gradient-to-br from-blue-600/30 to-blue-800/30 rounded-lg p-3 border border-blue-500/30">
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-300 shadow-sm">
                   <div className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-blue-300" />
-                    <span className="text-blue-300 text-[10px]">Total Hours</span>
+                    <Clock className="w-3.5 h-3.5 text-blue-700" />
+                    <span className="text-blue-700 text-[10px] font-medium">Total Hours</span>
                   </div>
-                  <div className="text-white text-xl font-bold mt-1">{displayTotalHours.toLocaleString()}</div>
+                  <div className="text-slate-900 text-xl font-bold mt-1">{displayTotalHours.toLocaleString()}</div>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-600/30 to-emerald-800/30 rounded-lg p-3 border border-emerald-500/30">
+                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-300 shadow-sm">
                   <div className="flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-emerald-300" />
-                    <span className="text-emerald-300 text-[10px]">Employees</span>
+                    <Users className="w-3.5 h-3.5 text-emerald-700" />
+                    <span className="text-emerald-700 text-[10px] font-medium">Employees</span>
                   </div>
-                  <div className="text-white text-xl font-bold mt-1">{displayActiveEmployees}</div>
+                  <div className="text-slate-900 text-xl font-bold mt-1">{displayActiveEmployees}</div>
                 </div>
-                <div className="bg-gradient-to-br from-purple-600/30 to-purple-800/30 rounded-lg p-3 border border-purple-500/30">
+                <div className="bg-purple-50 rounded-lg p-3 border border-purple-300 shadow-sm">
                   <div className="flex items-center gap-1.5">
-                    <FolderKanban className="w-3.5 h-3.5 text-purple-300" />
-                    <span className="text-purple-300 text-[10px]">Projects</span>
+                    <FolderKanban className="w-3.5 h-3.5 text-purple-700" />
+                    <span className="text-purple-700 text-[10px] font-medium">Projects</span>
                   </div>
-                  <div className="text-white text-xl font-bold mt-1">{displayProjectsCompleted}</div>
+                  <div className="text-slate-900 text-xl font-bold mt-1">{displayProjectsCompleted}</div>
                 </div>
-                <div className="bg-gradient-to-br from-teal-600/30 to-teal-800/30 rounded-lg p-3 border border-teal-500/30">
+                <div className="bg-teal-50 rounded-lg p-3 border border-teal-300 shadow-sm">
                   <div className="flex items-center gap-1.5">
-                    <TrendingUp className="w-3.5 h-3.5 text-teal-300" />
-                    <span className="text-teal-300 text-[10px]">AIUs Earned</span>
+                    <TrendingUp className="w-3.5 h-3.5 text-teal-700" />
+                    <span className="text-teal-700 text-[10px] font-medium">AIUs Earned</span>
                   </div>
-                  <div className="text-white text-xl font-bold mt-1">{(csrData?.totalImpact || 0).toFixed(1)}</div>
+                  <div className="text-slate-900 text-xl font-bold mt-1">{(csrData?.totalImpact || 0).toFixed(1)}</div>
                 </div>
               </div>
 
               {/* SDG Radar Chart - Compact */}
               {mobileRadarData.length > 0 && (
-                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                  <h3 className="text-white text-sm font-semibold mb-2">SDG Progress Radar</h3>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">SDG Progress Radar</h3>
                   <div className="h-44">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={mobileRadarData} margin={{ top: 5, right: 20, bottom: 5, left: 20 }}>
-                        <PolarGrid stroke="#374151" />
-                        <PolarAngleAxis dataKey="sdg" tick={{ fill: '#9CA3AF', fontSize: 9 }} />
-                        <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#9CA3AF', fontSize: 8 }} />
+                        <PolarGrid stroke="#e2e8f0" />
+                        <PolarAngleAxis dataKey="sdg" tick={{ fill: '#475569', fontSize: 9 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#475569', fontSize: 8 }} />
                         <Radar name="Hours" dataKey="hours" stroke="#3B82F6" fill="#3B82F6" fillOpacity={0.4} />
                         <Radar name="Employees" dataKey="employees" stroke="#10B981" fill="#10B981" fillOpacity={0.3} />
                         <Tooltip
-                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '11px' }}
+                          contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', fontSize: '11px' }}
                           labelStyle={{ color: '#fff' }}
                         />
                       </RadarChart>
@@ -863,11 +890,11 @@ export default function CSRDashboard() {
                   <div className="flex justify-center gap-4 mt-2 text-[10px]">
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-blue-500" />
-                      <span className="text-gray-400">Hours</span>
+                      <span className="text-slate-700 font-medium">Hours</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                      <span className="text-gray-400">Employees</span>
+                      <span className="text-slate-700 font-medium">Employees</span>
                     </div>
                   </div>
                 </div>
@@ -875,8 +902,8 @@ export default function CSRDashboard() {
 
               {/* SDG Commitments - Compact */}
               {committedSDGs && committedSDGs.length > 0 && (
-                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                  <h3 className="text-white text-sm font-semibold mb-2">SDG Commitments</h3>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">SDG Commitments</h3>
                   <div className="flex flex-wrap gap-1.5">
                     {committedSDGs.map((sdg: number) => (
                       <div
@@ -893,8 +920,8 @@ export default function CSRDashboard() {
               )}
 
               {/* Top SDG Progress - Compact */}
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                <h3 className="text-white text-sm font-semibold mb-2">Top SDG Impact</h3>
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <h3 className="text-slate-900 text-sm font-semibold mb-2">Top SDG Impact</h3>
                 <div className="space-y-2">
                   {sdgMetrics.slice(0, 4).map((metric: any) => (
                     <div key={metric.sdg} className="flex items-center gap-2">
@@ -906,10 +933,10 @@ export default function CSRDashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between text-[10px] mb-0.5">
-                          <span className="text-gray-300 truncate">{getSDGName(metric.sdg)}</span>
-                          <span className="text-white font-medium ml-1">{metric.totalHours}h</span>
+                          <span className="text-slate-700 truncate">{getSDGName(metric.sdg)}</span>
+                          <span className="text-slate-900 font-semibold ml-1">{metric.totalHours}h</span>
                         </div>
-                        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full"
                             style={{
@@ -926,18 +953,18 @@ export default function CSRDashboard() {
 
               {/* Leaderboard Preview - Compact */}
               {csrData?.leaderboard && csrData.leaderboard.length > 0 && (
-                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                  <h3 className="text-white text-sm font-semibold mb-2">Top Volunteers</h3>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">Top Volunteers</h3>
                   <div className="space-y-1.5">
                     {csrData.leaderboard.slice(0, 4).map((employee: any, idx: number) => (
-                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded bg-white/5">
+                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded bg-amber-50 border border-amber-200">
                         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-[10px]">
                           {idx + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-white text-xs truncate">{employee.name || employee.employeeName}</div>
+                          <div className="text-slate-900 text-xs truncate font-medium">{employee.name || employee.employeeName}</div>
                         </div>
-                        <div className="text-amber-400 font-semibold text-xs">{employee.hours}h</div>
+                        <div className="text-amber-700 font-semibold text-xs">{employee.hours}h</div>
                       </div>
                     ))}
                   </div>
@@ -948,58 +975,78 @@ export default function CSRDashboard() {
 
           {mobileTab === 'employees' && (
             <div className="space-y-3">
-              <h1 className="text-white text-lg font-bold">Employees</h1>
+              <h1 className="text-slate-900 text-lg font-bold">Employees</h1>
 
               {/* Engagement Trend Chart */}
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                <h3 className="text-white text-sm font-semibold mb-2">Engagement Trend</h3>
-                <div className="h-36">
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <h3 className="text-slate-900 text-sm font-semibold mb-2">Engagement Trend</h3>
+                <div className="h-40">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={mobileTrendData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey="month" tick={{ fill: '#9CA3AF', fontSize: 9 }} />
-                      <YAxis tick={{ fill: '#9CA3AF', fontSize: 9 }} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '10px' }}
-                        labelStyle={{ color: '#fff' }}
+                    <LineChart data={mobileTrendData} margin={{ top: 5, right: 35, bottom: 5, left: -5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="month" tick={{ fill: '#475569', fontSize: 9 }} />
+                      <YAxis
+                        yAxisId="hours"
+                        orientation="left"
+                        tick={{ fill: '#3B82F6', fontSize: 8 }}
+                        scale="log"
+                        domain={[1, 'auto']}
+                        allowDataOverflow
+                        tickFormatter={(value) => value >= 1000 ? `${(value/1000).toFixed(0)}k` : value}
                       />
-                      <Line type="monotone" dataKey="hours" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 3 }} />
-                      <Line type="monotone" dataKey="employees" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', r: 3 }} />
+                      <YAxis
+                        yAxisId="employees"
+                        orientation="right"
+                        tick={{ fill: '#10B981', fontSize: 8 }}
+                        scale="log"
+                        domain={[1, 'auto']}
+                        allowDataOverflow
+                      />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', fontSize: '10px' }}
+                        labelStyle={{ color: '#fff' }}
+                        formatter={(value: number, name: string) => [
+                          value.toLocaleString(),
+                          name === 'hours' ? 'Hours' : 'Employees'
+                        ]}
+                      />
+                      <Line yAxisId="hours" type="monotone" dataKey="hours" stroke="#3B82F6" strokeWidth={2} dot={{ fill: '#3B82F6', r: 3 }} />
+                      <Line yAxisId="employees" type="monotone" dataKey="employees" stroke="#10B981" strokeWidth={2} dot={{ fill: '#10B981', r: 3 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
                 <div className="flex justify-center gap-4 mt-1 text-[10px]">
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-blue-500" />
-                    <span className="text-gray-400">Hours</span>
+                    <span className="text-slate-700 font-medium">Hours (log)</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-gray-400">Employees</span>
+                    <span className="text-slate-700 font-medium">Employees (log)</span>
                   </div>
                 </div>
               </div>
 
               {/* Engagement Funnel - Compact */}
               {funnelData?.funnel && (
-                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                  <h3 className="text-white text-sm font-semibold mb-2">Engagement Funnel</h3>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">Engagement Funnel</h3>
                   <div className="space-y-2">
                     {funnelData.funnel.map((stage: any, idx: number) => (
                       <div key={idx} className="flex items-center gap-2">
                         <div className="w-10 text-right">
-                          <span className="text-white font-bold text-sm">{stage.count}</span>
+                          <span className="text-slate-900 font-bold text-sm">{stage.count}</span>
                         </div>
                         <div className="flex-1">
-                          <div className="text-gray-300 text-[10px] truncate">{stage.stage}</div>
-                          <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden mt-0.5">
+                          <div className="text-slate-700 text-[10px] truncate">{stage.stage}</div>
+                          <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden mt-0.5">
                             <div
                               className="h-full bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full"
                               style={{ width: `${(stage.count / (funnelData.funnel[0]?.count || 1)) * 100}%` }}
                             />
                           </div>
                         </div>
-                        <div className="text-gray-400 text-[10px] w-10 text-right">
+                        <div className="text-slate-600 text-[10px] w-10 text-right font-medium">
                           {Math.round((stage.count / (funnelData.funnel[0]?.count || 1)) * 100)}%
                         </div>
                       </div>
@@ -1009,34 +1056,34 @@ export default function CSRDashboard() {
               )}
 
               {/* Full Leaderboard - Compact Table */}
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                <h3 className="text-white text-sm font-semibold mb-2">Leaderboard</h3>
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <h3 className="text-slate-900 text-sm font-semibold mb-2">Leaderboard</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-[10px]">
                     <thead>
-                      <tr className="border-b border-gray-700">
-                        <th className="text-left text-gray-400 pb-1.5 font-medium">#</th>
-                        <th className="text-left text-gray-400 pb-1.5 font-medium">Employee</th>
-                        <th className="text-right text-gray-400 pb-1.5 font-medium">Hours</th>
-                        <th className="text-right text-gray-400 pb-1.5 font-medium">Pts</th>
+                      <tr className="border-b border-slate-200">
+                        <th className="text-left text-slate-600 pb-1.5 font-semibold">#</th>
+                        <th className="text-left text-slate-600 pb-1.5 font-semibold">Employee</th>
+                        <th className="text-right text-slate-600 pb-1.5 font-semibold">Hours</th>
+                        <th className="text-right text-slate-600 pb-1.5 font-semibold">Pts</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(csrData?.leaderboard || []).slice(0, 8).map((employee: any, idx: number) => (
-                        <tr key={idx} className="border-b border-gray-700/50">
+                        <tr key={idx} className="border-b border-slate-100">
                           <td className="py-1.5">
                             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-white text-[9px] font-bold ${
                               idx === 0 ? 'bg-gradient-to-br from-yellow-400 to-amber-600' :
                               idx === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' :
                               idx === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-800' :
-                              'bg-gray-600'
+                              'bg-gray-500'
                             }`}>
                               {idx + 1}
                             </span>
                           </td>
-                          <td className="py-1.5 text-white truncate max-w-[120px]">{employee.name || employee.employeeName}</td>
-                          <td className="py-1.5 text-amber-400 font-medium text-right">{employee.hours}h</td>
-                          <td className="py-1.5 text-blue-400 text-right">{employee.points || employee.hours * 10}</td>
+                          <td className="py-1.5 text-slate-900 truncate max-w-[120px] font-medium">{employee.name || employee.employeeName}</td>
+                          <td className="py-1.5 text-amber-700 font-semibold text-right">{employee.hours}h</td>
+                          <td className="py-1.5 text-blue-700 text-right font-medium">{employee.points || employee.hours * 10}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1048,20 +1095,20 @@ export default function CSRDashboard() {
 
           {mobileTab === 'sdgs' && (
             <div className="space-y-3">
-              <h1 className="text-white text-lg font-bold">SDG Impact</h1>
+              <h1 className="text-slate-900 text-lg font-bold">SDG Impact</h1>
 
               {/* SDG Bar Chart */}
               {mobileBarData.length > 0 && (
-                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                  <h3 className="text-white text-sm font-semibold mb-2">Hours by SDG</h3>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">Hours by SDG</h3>
                   <div className="h-40">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={mobileBarData} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis dataKey="name" tick={{ fill: '#9CA3AF', fontSize: 8 }} angle={-45} textAnchor="end" height={40} />
-                        <YAxis tick={{ fill: '#9CA3AF', fontSize: 9 }} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="name" tick={{ fill: '#475569', fontSize: 8 }} angle={-45} textAnchor="end" height={40} />
+                        <YAxis tick={{ fill: '#475569', fontSize: 9 }} />
                         <Tooltip
-                          contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '10px' }}
+                          contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', fontSize: '10px' }}
                           labelStyle={{ color: '#fff' }}
                           formatter={(value: number, name: string) => [`${value}h`, 'Hours']}
                         />
@@ -1076,39 +1123,51 @@ export default function CSRDashboard() {
                 </div>
               )}
 
-              {/* SDG Radar with Commitments Overlay */}
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                <h3 className="text-white text-sm font-semibold mb-2">Commitment vs Progress</h3>
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={mobileRadarData} margin={{ top: 10, right: 25, bottom: 10, left: 25 }}>
-                      <PolarGrid stroke="#374151" />
-                      <PolarAngleAxis dataKey="sdg" tick={{ fill: '#9CA3AF', fontSize: 8 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={{ fill: '#9CA3AF', fontSize: 7 }} />
-                      <Radar name="Actual Hours" dataKey="hours" stroke="#10B981" fill="#10B981" fillOpacity={0.5} />
-                      <Radar name="Projects" dataKey="projects" stroke="#8B5CF6" fill="#8B5CF6" fillOpacity={0.3} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #374151', borderRadius: '8px', fontSize: '10px' }}
-                      />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="flex justify-center gap-4 mt-1 text-[10px]">
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span className="text-gray-400">Hours</span>
+              {/* SDG Radar with Commitments Overlay - Only shows committed SDGs */}
+              {commitmentRadarData.length > 0 ? (
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">Commitment vs Progress</h3>
+                  <div className="h-48">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={commitmentRadarData} margin={{ top: 10, right: 25, bottom: 10, left: 25 }}>
+                        <PolarGrid stroke="#e2e8f0" />
+                        <PolarAngleAxis dataKey="sdg" tick={{ fill: '#475569', fontSize: 8 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 150]} tick={{ fill: '#475569', fontSize: 7 }} tickFormatter={(v) => `${v}%`} />
+                        <Radar name="Progress %" dataKey="progress" stroke="#10B981" fill="#10B981" fillOpacity={0.5} />
+                        <Tooltip
+                          contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px', fontSize: '10px' }}
+                          formatter={(value: number, name: string, props: any) => {
+                            const data = props.payload;
+                            return [
+                              `${data.actual}h / ${data.target}h (${value}%)`,
+                              `SDG ${data.sdgNumber}`
+                            ];
+                          }}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-purple-500" />
-                    <span className="text-gray-400">Projects</span>
+                  <div className="flex justify-center gap-4 mt-1 text-[10px]">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="text-slate-700 font-medium">Progress %</span>
+                    </div>
+                    <span className="text-slate-600 font-medium">Target: {targetHoursPerSDG}h per SDG</span>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">Commitment vs Progress</h3>
+                  <p className="text-slate-600 text-xs text-center py-4">
+                    Set SDG commitments to track progress
+                  </p>
+                </div>
+              )}
 
               {/* SDG Commitments Grid */}
               {committedSDGs && committedSDGs.length > 0 && (
-                <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                  <h3 className="text-white text-sm font-semibold mb-2">Committed SDGs</h3>
+                <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                  <h3 className="text-slate-900 text-sm font-semibold mb-2">Committed SDGs</h3>
                   <div className="grid grid-cols-5 gap-1.5">
                     {committedSDGs.map((sdg: number) => {
                       const metric = sdgMetrics.find((m: any) => m.sdg === sdg);
@@ -1119,7 +1178,7 @@ export default function CSRDashboard() {
                           style={{ backgroundColor: getSDGColor(sdg) }}
                         >
                           <span className="font-bold text-sm">{sdg}</span>
-                          <span className="text-[7px] opacity-80">{metric?.totalHours || 0}h</span>
+                          <span className="text-[7px] opacity-90">{metric?.totalHours || 0}h</span>
                         </div>
                       );
                     })}
@@ -1128,21 +1187,21 @@ export default function CSRDashboard() {
               )}
 
               {/* SDG Metrics Table */}
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                <h3 className="text-white text-sm font-semibold mb-2">SDG Metrics</h3>
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <h3 className="text-slate-900 text-sm font-semibold mb-2">SDG Metrics</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-[10px]">
                     <thead>
-                      <tr className="border-b border-gray-700">
-                        <th className="text-left text-gray-400 pb-1.5 font-medium">SDG</th>
-                        <th className="text-right text-gray-400 pb-1.5 font-medium">Hours</th>
-                        <th className="text-right text-gray-400 pb-1.5 font-medium">Staff</th>
-                        <th className="text-right text-gray-400 pb-1.5 font-medium">Proj</th>
+                      <tr className="border-b border-slate-200">
+                        <th className="text-left text-slate-600 pb-1.5 font-semibold">SDG</th>
+                        <th className="text-right text-slate-600 pb-1.5 font-semibold">Hours</th>
+                        <th className="text-right text-slate-600 pb-1.5 font-semibold">Staff</th>
+                        <th className="text-right text-slate-600 pb-1.5 font-semibold">Proj</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sdgMetrics.slice(0, 8).map((metric: any) => (
-                        <tr key={metric.sdg} className="border-b border-gray-700/50">
+                        <tr key={metric.sdg} className="border-b border-slate-100">
                           <td className="py-1.5">
                             <div className="flex items-center gap-1.5">
                               <div
@@ -1151,12 +1210,12 @@ export default function CSRDashboard() {
                               >
                                 {metric.sdg}
                               </div>
-                              <span className="text-gray-300 truncate max-w-[80px]">{getSDGName(metric.sdg)}</span>
+                              <span className="text-slate-700 truncate max-w-[80px]">{getSDGName(metric.sdg)}</span>
                             </div>
                           </td>
-                          <td className="py-1.5 text-white font-medium text-right">{metric.totalHours}</td>
-                          <td className="py-1.5 text-emerald-400 text-right">{metric.uniqueEmployees}</td>
-                          <td className="py-1.5 text-purple-400 text-right">{metric.projectsContributed}</td>
+                          <td className="py-1.5 text-slate-900 font-semibold text-right">{metric.totalHours}</td>
+                          <td className="py-1.5 text-emerald-700 text-right font-medium">{metric.uniqueEmployees}</td>
+                          <td className="py-1.5 text-purple-700 text-right font-medium">{metric.projectsContributed}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1168,72 +1227,72 @@ export default function CSRDashboard() {
 
           {mobileTab === 'reports' && (
             <div className="space-y-3">
-              <h1 className="text-white text-lg font-bold">Reports</h1>
+              <h1 className="text-slate-900 text-lg font-bold">Reports</h1>
 
               {/* Summary Stats */}
-              <div className="bg-gradient-to-br from-emerald-600/30 to-blue-600/30 rounded-lg p-3 border border-emerald-500/30">
-                <h3 className="text-white text-sm font-semibold mb-2">Quick Summary</h3>
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <h3 className="text-slate-900 text-sm font-semibold mb-2">Quick Summary</h3>
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
-                  <div className="bg-white/10 rounded p-2">
-                    <div className="text-gray-400">Total AIUs Earned</div>
-                    <div className="text-teal-400 text-lg font-bold">{(csrData?.totalImpact || 0).toFixed(1)}</div>
+                  <div className="bg-teal-50 rounded p-2 border border-teal-200">
+                    <div className="text-slate-600 font-medium">Total AIUs Earned</div>
+                    <div className="text-teal-700 text-lg font-bold">{(csrData?.totalImpact || 0).toFixed(1)}</div>
                   </div>
-                  <div className="bg-white/10 rounded p-2">
-                    <div className="text-gray-400">SDGs Addressed</div>
-                    <div className="text-white text-lg font-bold">{sdgMetrics.length}</div>
+                  <div className="bg-blue-50 rounded p-2 border border-blue-200">
+                    <div className="text-slate-600 font-medium">SDGs Addressed</div>
+                    <div className="text-blue-700 text-lg font-bold">{sdgMetrics.length}</div>
                   </div>
-                  <div className="bg-white/10 rounded p-2">
-                    <div className="text-gray-400">Avg Hours/Employee</div>
-                    <div className="text-white text-lg font-bold">{displayActiveEmployees > 0 ? Math.round(displayTotalHours / displayActiveEmployees) : 0}</div>
+                  <div className="bg-purple-50 rounded p-2 border border-purple-200">
+                    <div className="text-slate-600 font-medium">Avg Hours/Employee</div>
+                    <div className="text-purple-700 text-lg font-bold">{displayActiveEmployees > 0 ? Math.round(displayTotalHours / displayActiveEmployees) : 0}</div>
                   </div>
-                  <div className="bg-white/10 rounded p-2">
-                    <div className="text-gray-400">Economic Value</div>
-                    <div className="text-emerald-400 text-lg font-bold">${((csrData?.totalHours || displayTotalHours || 0) * 35 / 1000).toFixed(0)}K</div>
+                  <div className="bg-emerald-50 rounded p-2 border border-emerald-200">
+                    <div className="text-slate-600 font-medium">Economic Value</div>
+                    <div className="text-emerald-700 text-lg font-bold">${((csrData?.totalHours || displayTotalHours || 0) * 35 / 1000).toFixed(0)}K</div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                 <div className="space-y-2">
                   <button
                     onClick={() => navigate('/csr-impact-reporting')}
-                    className="w-full p-3 rounded-lg bg-gradient-to-r from-blue-600/30 to-blue-800/30 border border-blue-500/30 text-left"
+                    className="w-full p-3 rounded-lg bg-blue-50 border border-blue-300 text-left hover:bg-blue-100 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-blue-400" />
+                      <BarChart3 className="w-5 h-5 text-blue-700" />
                       <div>
-                        <div className="text-white text-sm font-medium">Impact Report</div>
-                        <div className="text-blue-300/70 text-[10px]">View detailed analytics</div>
+                        <div className="text-slate-900 text-sm font-semibold">Impact Report</div>
+                        <div className="text-slate-600 text-[10px]">View detailed analytics</div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-blue-400 ml-auto" />
+                      <ChevronRight className="w-4 h-4 text-blue-700 ml-auto" />
                     </div>
                   </button>
 
                   <button
                     onClick={() => navigate('/csr-reports-exports')}
-                    className="w-full p-3 rounded-lg bg-gradient-to-r from-purple-600/30 to-purple-800/30 border border-purple-500/30 text-left"
+                    className="w-full p-3 rounded-lg bg-purple-50 border border-purple-300 text-left hover:bg-purple-100 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-purple-400" />
+                      <FileText className="w-5 h-5 text-purple-700" />
                       <div>
-                        <div className="text-white text-sm font-medium">Export Data</div>
-                        <div className="text-purple-300/70 text-[10px]">Download reports</div>
+                        <div className="text-slate-900 text-sm font-semibold">Export Data</div>
+                        <div className="text-slate-600 text-[10px]">Download reports</div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-purple-400 ml-auto" />
+                      <ChevronRight className="w-4 h-4 text-purple-700 ml-auto" />
                     </div>
                   </button>
 
                   <button
                     onClick={() => navigate('/employee-engagement-tab')}
-                    className="w-full p-3 rounded-lg bg-gradient-to-r from-amber-600/30 to-amber-800/30 border border-amber-500/30 text-left"
+                    className="w-full p-3 rounded-lg bg-amber-50 border border-amber-300 text-left hover:bg-amber-100 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-amber-400" />
+                      <Users className="w-5 h-5 text-amber-700" />
                       <div>
-                        <div className="text-white text-sm font-medium">Engagement Analytics</div>
-                        <div className="text-amber-300/70 text-[10px]">Employee insights</div>
+                        <div className="text-slate-900 text-sm font-semibold">Engagement Analytics</div>
+                        <div className="text-slate-600 text-[10px]">Employee insights</div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-amber-400 ml-auto" />
+                      <ChevronRight className="w-4 h-4 text-amber-700 ml-auto" />
                     </div>
                   </button>
                 </div>
@@ -1243,50 +1302,50 @@ export default function CSRDashboard() {
 
           {mobileTab === 'settings' && (
             <div className="space-y-3">
-              <h1 className="text-white text-lg font-bold">Settings</h1>
+              <h1 className="text-slate-900 text-lg font-bold">Settings</h1>
 
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
                 <div className="space-y-2">
                   <button
                     onClick={() => navigate('/corporate-partner-profile-settings')}
-                    className="w-full p-3 rounded-lg bg-white/5 border border-gray-600 text-left"
+                    className="w-full p-3 rounded-lg bg-slate-50 border border-slate-300 text-left hover:bg-slate-100 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <Settings className="w-5 h-5 text-gray-400" />
+                      <Settings className="w-5 h-5 text-slate-700" />
                       <div>
-                        <div className="text-white text-sm font-medium">Profile Settings</div>
-                        <div className="text-gray-400 text-[10px]">SDG commitments & company info</div>
+                        <div className="text-slate-900 text-sm font-semibold">Profile Settings</div>
+                        <div className="text-slate-600 text-[10px]">SDG commitments & company info</div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                      <ChevronRight className="w-4 h-4 text-slate-600 ml-auto" />
                     </div>
                   </button>
 
                   <button
                     onClick={() => navigate('/corporate-partner-profile-settings')}
-                    className="w-full p-3 rounded-lg bg-white/5 border border-gray-600 text-left"
+                    className="w-full p-3 rounded-lg bg-slate-50 border border-slate-300 text-left hover:bg-slate-100 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <Briefcase className="w-5 h-5 text-gray-400" />
+                      <Briefcase className="w-5 h-5 text-slate-700" />
                       <div>
-                        <div className="text-white text-sm font-medium">Organization</div>
-                        <div className="text-gray-400 text-[10px]">Manage org settings</div>
+                        <div className="text-slate-900 text-sm font-semibold">Organization</div>
+                        <div className="text-slate-600 text-[10px]">Manage org settings</div>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                      <ChevronRight className="w-4 h-4 text-slate-600 ml-auto" />
                     </div>
                   </button>
                 </div>
               </div>
 
               {/* Current User Info */}
-              <div className="bg-[#16213e] rounded-lg p-3 border border-gray-700">
-                <h3 className="text-white text-sm font-semibold mb-2">Account</h3>
+              <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <h3 className="text-slate-900 text-sm font-semibold mb-2">Account</h3>
                 <div className="flex items-center gap-2">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
                     {adminName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="text-white text-sm font-medium">{adminName}</div>
-                    <div className="text-gray-400 text-[10px]">{user?.email}</div>
+                    <div className="text-slate-900 text-sm font-semibold">{adminName}</div>
+                    <div className="text-slate-600 text-[10px]">{user?.email}</div>
                   </div>
                 </div>
               </div>
@@ -1295,7 +1354,7 @@ export default function CSRDashboard() {
         </main>
 
         {/* Bottom Navigation - Compact */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#1a0a2e] via-[#3d1a5c] to-[#d35400] border-t border-white/10 px-1 py-1.5 max-w-[428px] mx-auto z-50">
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-slate-700 via-purple-800 to-orange-600 border-t border-white/10 px-1 py-1.5 max-w-[428px] mx-auto z-50">
           <div className="flex justify-around items-center">
             <button
               onClick={() => setMobileTab('overview')}
@@ -1370,7 +1429,7 @@ export default function CSRDashboard() {
       {/* Top Header Bar - Gradient Theme matching Organization Dashboard */}
       <header
         style={{
-          background: "linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 75%, #d35400 100%)",
+          background: "linear-gradient(135deg, #475569 0%, #6b21a8 50%, #7c3aed 75%, #ea580c 100%)",
           color: "white",
           padding: "12px 24px",
           display: "flex",
@@ -1404,21 +1463,9 @@ export default function CSRDashboard() {
         >
           <img
             src={logoUrl}
-            alt="Synerxus Logo"
-            style={{ height: "32px", width: "auto" }}
+            alt="Synerxus"
+            style={{ height: "36px", width: "auto" }}
           />
-          <div
-            style={{
-              display: "flex",
-              gap: "0",
-              fontWeight: "700",
-              fontSize: "16px",
-              letterSpacing: "0.5px",
-            }}
-          >
-            <span style={{ color: "#ffffff" }}>SYNER</span>
-            <span style={{ color: "#FFB84D" }}>XUS</span>
-          </div>
         </button>
 
         {/* Center: CSR Dashboard Title with Company Name */}
@@ -3378,6 +3425,7 @@ export default function CSRDashboard() {
                 {selectedKPI === "projects" && "Projects Completed"}
                 {selectedKPI === "sdg" && "Active SDGs"}
                 {selectedKPI === "volunteers" && "Employee Volunteers"}
+                {selectedKPI === "aiu" && "AIUs Earned"}
               </h2>
               <button
                 onClick={() => setSelectedKPI(null)}
@@ -4117,6 +4165,205 @@ export default function CSRDashboard() {
                   <span style={{ fontSize: "13px", color: "#1e40af" }}>
                     <strong>Impact:</strong> Employee volunteers have contributed{" "}
                     {(csrData?.totalHours || 0).toLocaleString()} total hours worth ${((csrData?.totalHours || 0) * 35).toLocaleString()} in economic value.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {selectedKPI === "aiu" && (
+              <div style={{ color: "#374151" }}>
+                <p
+                  style={{
+                    fontSize: "32px",
+                    fontWeight: "bold",
+                    color: "#0d5f52",
+                    marginBottom: "16px",
+                  }}
+                >
+                  {(csrData?.totalImpact || 0).toFixed(1)} AIUs Earned
+                </p>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    marginBottom: "16px",
+                    lineHeight: "1.6",
+                  }}
+                >
+                  Attributable Impact Units (AIUs) measure your organization's verified social impact across all CSR initiatives.
+                </p>
+                <div
+                  style={{
+                    backgroundColor: "#ecfdf5",
+                    padding: "16px",
+                    borderRadius: "8px",
+                    marginTop: "16px",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      color: "#065f46",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    AIU Breakdown:
+                  </p>
+                  <ul
+                    style={{
+                      fontSize: "14px",
+                      listStyle: "none",
+                      padding: 0,
+                      margin: 0,
+                    }}
+                  >
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ Total AIUs earned:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {(csrData?.totalImpact || 0).toFixed(2)}
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ AIUs per employee:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {csrData?.activeEmployees && csrData?.totalImpact
+                          ? (csrData.totalImpact / csrData.activeEmployees).toFixed(2)
+                          : "0.00"}
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ AIUs per project:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {csrData?.projectsCompleted && csrData?.totalImpact
+                          ? (csrData.totalImpact / csrData.projectsCompleted).toFixed(2)
+                          : "0.00"}
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        marginBottom: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <span>✓ Hours per AIU:</span>
+                      <span style={{ fontWeight: "600" }}>
+                        {csrData?.totalImpact && csrData?.totalHours
+                          ? (csrData.totalHours / csrData.totalImpact).toFixed(1)
+                          : "0"} hrs
+                      </span>
+                    </li>
+                    <li
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        paddingTop: "8px",
+                        borderTop: "1px solid #d1fae5",
+                      }}
+                    >
+                      <span>🎯 SDGs contributing:</span>
+                      <span style={{ fontWeight: "600", color: "#059669" }}>
+                        {sdgMetrics.filter((m: SDGMetric) => m.totalHours > 0).length} of 17
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <div
+                  style={{
+                    backgroundColor: "#f3f4f6",
+                    padding: "16px",
+                    borderRadius: "8px",
+                    marginTop: "16px",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      color: "#6b7280",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    AIU Contribution by SDG:
+                  </p>
+                  <div style={{ maxHeight: "180px", overflowY: "auto" }}>
+                    {sdgMetrics
+                      .filter((m) => m.totalHours > 0)
+                      .sort((a, b) => b.totalHours - a.totalHours)
+                      .map((metric) => {
+                        const metricAIU = csrData?.totalImpact && totalSDGHours > 0
+                          ? ((metric.totalHours / totalSDGHours) * csrData.totalImpact).toFixed(2)
+                          : "0.00";
+                        return (
+                          <div
+                            key={metric.sdg}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "6px 0",
+                              borderBottom: "1px solid #e5e7eb",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <div
+                                style={{
+                                  width: "20px",
+                                  height: "20px",
+                                  borderRadius: "4px",
+                                  backgroundColor: getSDGColor(metric.sdg),
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "white",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                }}
+                              >
+                                {metric.sdg}
+                              </div>
+                              <span style={{ fontSize: "12px" }}>{getSDGName(metric.sdg)}</span>
+                            </div>
+                            <span style={{ fontWeight: "600", color: "#0d5f52", fontSize: "12px" }}>
+                              {metricAIU} AIUs
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    backgroundColor: "#d1fae5",
+                    padding: "12px",
+                    borderRadius: "8px",
+                    marginTop: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                  }}
+                >
+                  <span style={{ fontSize: "18px" }}>🌍</span>
+                  <span style={{ fontSize: "13px", color: "#065f46" }}>
+                    <strong>What are AIUs?</strong> Attributable Impact Units quantify your verified social impact, accounting for volunteer hours, SDG alignment, and beneficiary reach.
                   </span>
                 </div>
               </div>

@@ -163,7 +163,7 @@ export default function CorporatePartnerIntake() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900 py-12 px-4">
+    <div className="min-h-screen bg-[#faf9f7] dark:from-blue-900/20 dark:to-gray-900 py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader className="bg-blue-600 dark:bg-blue-900 text-white rounded-t-lg">

@@ -42,7 +42,7 @@ export default function OpportunityDetail() {
 
   if (isLoading) {
     return (
-      <div className="w-full min-h-screen bg-white dark:bg-slate-900">
+      <div className="w-full min-h-screen bg-[#faf9f7] dark:bg-slate-900">
         <div className="sticky top-0 z-10 bg-blue-600 text-white px-4 py-3 md:hidden">
           <Skeleton className="h-6 w-32" />
         </div>
@@ -57,7 +57,7 @@ export default function OpportunityDetail() {
 
   if (!opportunity) {
     return (
-      <div className="w-full min-h-screen bg-white dark:bg-slate-900 flex flex-col items-center justify-center p-6">
+      <div className="w-full min-h-screen bg-[#faf9f7] dark:bg-slate-900 flex flex-col items-center justify-center p-6">
         <h1 className="text-2xl font-bold mb-4">Opportunity Not Found</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-6 text-center">
           The opportunity you're looking for doesn't exist or has been removed.
@@ -94,7 +94,7 @@ export default function OpportunityDetail() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-50 dark:bg-slate-900 pb-20 md:pb-0">
+    <div className="w-full min-h-screen bg-[#faf9f7] dark:bg-slate-900 pb-20 md:pb-0">
       {/* Mobile Header */}
       <div className="sticky top-0 z-10 bg-blue-600 text-white px-4 py-3 flex items-center justify-between md:hidden">
         <Button 

@@ -138,7 +138,7 @@ export default function PostUrgentOpportunity() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="min-h-screen bg-[#faf9f7] py-8 px-4">
       <div className="max-w-3xl mx-auto">
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-2">

@@ -116,7 +116,7 @@ export default function ImpactReportGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-900 p-6">
+    <div className="min-h-screen bg-[#faf9f7] dark:bg-slate-900 p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-8 pb-6 border-b border-slate-200 dark:border-slate-700">

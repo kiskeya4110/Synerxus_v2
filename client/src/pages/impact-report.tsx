@@ -585,7 +585,7 @@ export default function ImpactReport() {
   // Show error if no volunteer ID is available
   if (!volunteerId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
         <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
           <CardContent className="p-8 text-center">
             <div className="mb-4 text-4xl">⚠️</div>
@@ -607,7 +607,7 @@ export default function ImpactReport() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-2 md:p-8">
+    <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 p-2 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header with Back Button */}
         <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2">

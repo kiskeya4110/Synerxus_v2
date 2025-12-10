@@ -196,7 +196,7 @@ export default function ProjectDetail() {
 
   if (loadingProject) {
     return (
-      <div className="w-full min-h-screen bg-slate-50">
+      <div className="w-full min-h-screen bg-[#faf9f7]">
         <div className="sticky top-0 z-10 bg-white border-b">
           <div className="px-4 py-3 flex items-center justify-between">
             <Skeleton className="h-8 w-32" />

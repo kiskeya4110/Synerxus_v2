@@ -8,6 +8,7 @@ import {
 } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
+import { calculateVolunteerAIU } from "../aiu-service";
 
 export const csrRouter = Router();
 
@@ -218,8 +219,25 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
     const uniqueEmployees = new Set(filteredEmployeeActivities.map((a: any) => a.userId));
     const activeEmployees = uniqueEmployees.size;
 
-    // Calculate impact - Use $50 per volunteer hour as standard economic value
-    const totalImpact = totalHours * 50;
+    // Calculate AIU impact - aggregate real AIU from all employee volunteers
+    let totalImpact = 0;
+    try {
+      // Calculate AIU for each unique employee
+      const employeeUserIdsArray = Array.from(uniqueEmployees) as number[];
+      for (const employeeUserId of employeeUserIdsArray) {
+        const volunteerAIU = await calculateVolunteerAIU(employeeUserId);
+        if (volunteerAIU) {
+          totalImpact += volunteerAIU.totalAiu;
+        }
+      }
+      // Round to 1 decimal place
+      totalImpact = Math.round(totalImpact * 10) / 10;
+    } catch (aiuError) {
+      console.error("Error calculating AIU for CSR dashboard:", aiuError);
+      // Fallback to hours-based estimation if AIU calculation fails
+      // Use a conservative AIU estimation: 0.5 AIU per hour of volunteer work
+      totalImpact = Math.round(totalHours * 0.5 * 10) / 10;
+    }
 
     // SDG Progress - Track hours by SDG goal with detailed metrics
     const sdgProgressDetailed: Record<number, {

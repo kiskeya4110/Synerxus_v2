@@ -270,7 +270,7 @@ export default function CorporatePartnerProfileSettings() {
   // Mobile PWA View
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-[#1a1a2e] flex flex-col max-w-[428px] mx-auto">
+      <div className="min-h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto">
         <CSRMobileHeader title="Profile Settings" showBackButton onBack={() => navigate('/csr-dashboard')} />
 
         <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">

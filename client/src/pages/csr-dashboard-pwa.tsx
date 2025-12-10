@@ -275,7 +275,7 @@ export default function CSRDashboardPWA() {
   // Loading state
   if (isLoading && !csrData) {
     return (
-      <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center">
+      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
         <div className="text-center">
           <div className="w-12 h-12 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="text-amber-700 text-sm">Loading Dashboard...</p>
@@ -287,7 +287,7 @@ export default function CSRDashboardPWA() {
   // Error state
   if (error && !csrData) {
     return (
-      <div className="min-h-screen bg-[#FDF8F3] flex items-center justify-center p-4">
+      <div className="h-screen bg-[#faf9f7] flex items-center justify-center p-4 overflow-hidden">
         <div className="text-center">
           <X className="w-12 h-12 text-red-400 mx-auto mb-3" />
           <p className="text-slate-800 font-medium mb-2">Unable to Load</p>
@@ -301,7 +301,7 @@ export default function CSRDashboardPWA() {
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="min-h-screen bg-[#FDF8F3] text-slate-800">
+    <div className="h-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden">
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">
@@ -492,7 +492,7 @@ export default function CSRDashboardPWA() {
       </header>
 
       {/* Main Content */}
-      <main className="pb-6">
+      <main className="flex-1 overflow-y-auto pb-6">
         {/* Home Tab */}
         {activeTab === 'home' && (
           <div className="space-y-4 p-4">
@@ -729,18 +729,20 @@ export default function CSRDashboardPWA() {
 
 // Quick Stat Component
 function QuickStat({ label, value, icon: Icon, color }: { label: string; value: number; icon: any; color: string }) {
-  const colors: Record<string, string> = {
-    emerald: 'text-emerald-600',
-    blue: 'text-blue-600',
-    purple: 'text-purple-600',
-    amber: 'text-amber-600',
+  const colors: Record<string, { icon: string; bg: string; border: string }> = {
+    emerald: { icon: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+    blue: { icon: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
+    purple: { icon: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' },
+    amber: { icon: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200' },
   };
 
+  const c = colors[color] || colors.blue;
+
   return (
-    <div className="bg-white rounded-lg p-2.5 text-center border border-amber-200/60 shadow-sm">
-      <Icon className={`w-4 h-4 mx-auto mb-1 ${colors[color]}`} />
-      <p className="text-lg font-bold text-slate-800">{value.toLocaleString()}</p>
-      <p className="text-[9px] text-slate-500 uppercase tracking-wide">{label}</p>
+    <div className={`${c.bg} rounded-lg p-2.5 text-center border ${c.border} shadow-sm`}>
+      <Icon className={`w-4 h-4 mx-auto mb-1 ${c.icon}`} />
+      <p className="text-lg font-bold text-slate-900">{value.toLocaleString()}</p>
+      <p className="text-[9px] text-slate-700 uppercase tracking-wide font-medium">{label}</p>
     </div>
   );
 }
@@ -751,12 +753,12 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
   format?: 'number' | 'currency'; trend?: 'up' | 'down' | 'neutral';
 }) {
   const colors: Record<string, { bg: string; text: string; border: string }> = {
-    emerald: { bg: 'from-emerald-50 to-emerald-100/50', text: 'text-emerald-600', border: 'border-emerald-200' },
-    blue: { bg: 'from-blue-50 to-blue-100/50', text: 'text-blue-600', border: 'border-blue-200' },
-    amber: { bg: 'from-amber-50 to-amber-100/50', text: 'text-amber-600', border: 'border-amber-200' },
-    purple: { bg: 'from-purple-50 to-purple-100/50', text: 'text-purple-600', border: 'border-purple-200' },
-    teal: { bg: 'from-teal-50 to-teal-100/50', text: 'text-teal-600', border: 'border-teal-200' },
-    rose: { bg: 'from-rose-50 to-rose-100/50', text: 'text-rose-600', border: 'border-rose-200' },
+    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-300' },
+    blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-300' },
+    amber: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-300' },
+    purple: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-300' },
+    teal: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-300' },
+    rose: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-300' },
   };
 
   const c = colors[color] || colors.blue;
@@ -765,19 +767,19 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
   return (
     <button
       onClick={onClick}
-      className={`bg-gradient-to-br ${c.bg} border ${c.border} rounded-xl p-3 min-w-[140px] text-left active:scale-95 transition-transform shadow-sm`}
+      className={`${c.bg} border ${c.border} rounded-xl p-3 min-w-[140px] text-left active:scale-95 transition-transform shadow-sm hover:shadow-md`}
     >
       <div className="flex items-center justify-between mb-1">
         <Icon className={`w-4 h-4 ${c.text}`} />
         {trend && trend !== 'neutral' && (
-          <span className={trend === 'up' ? 'text-emerald-600' : 'text-red-500'}>
+          <span className={trend === 'up' ? 'text-emerald-700' : 'text-red-600'}>
             {trend === 'up' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
           </span>
         )}
       </div>
-      <p className="text-xl font-bold text-slate-800">{displayValue}</p>
-      <p className="text-[10px] text-slate-600 truncate">{title}</p>
-      <p className="text-[9px] text-slate-500 truncate">{subtitle}</p>
+      <p className="text-xl font-bold text-slate-900">{displayValue}</p>
+      <p className="text-[10px] text-slate-800 font-medium truncate">{title}</p>
+      <p className="text-[9px] text-slate-600 truncate">{subtitle}</p>
     </button>
   );
 }
@@ -785,16 +787,16 @@ function KPICard({ title, value, subtitle, icon: Icon, color, onClick, format = 
 // Action Button Component
 function ActionButton({ icon: Icon, label, color, onClick }: { icon: any; label: string; color: string; onClick: () => void }) {
   const colors: Record<string, string> = {
-    emerald: 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200',
-    blue: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
-    purple: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
-    amber: 'bg-amber-100 text-amber-700 hover:bg-amber-200',
+    emerald: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border border-emerald-300',
+    blue: 'bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-300',
+    purple: 'bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-300',
+    amber: 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300',
   };
 
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-sm font-medium transition-colors ${colors[color]}`}
+      className={`w-full flex items-center gap-2 p-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm ${colors[color]}`}
     >
       <Icon className="w-4 h-4" />
       <span>{label}</span>
@@ -812,17 +814,17 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
     <div className="p-4 space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-teal-50 rounded-xl p-3 text-center border border-teal-200 shadow-sm">
-          <p className="text-2xl font-bold text-teal-600">{activeSdgs.length}</p>
-          <p className="text-[10px] text-slate-500">Active SDGs</p>
+        <div className="bg-teal-50 rounded-xl p-3 text-center border border-teal-300 shadow-sm">
+          <p className="text-2xl font-bold text-teal-700">{activeSdgs.length}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Active SDGs</p>
         </div>
-        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-200 shadow-sm">
-          <p className="text-2xl font-bold text-emerald-600">{totalHours.toLocaleString()}</p>
-          <p className="text-[10px] text-slate-500">Total Hours</p>
+        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-300 shadow-sm">
+          <p className="text-2xl font-bold text-emerald-700">{totalHours.toLocaleString()}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Total Hours</p>
         </div>
-        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-200 shadow-sm">
-          <p className="text-2xl font-bold text-amber-600">{csrData?.sdgScoreDelta || 0}%</p>
-          <p className="text-[10px] text-slate-500">vs Quarter</p>
+        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-300 shadow-sm">
+          <p className="text-2xl font-bold text-amber-700">{csrData?.sdgScoreDelta || 0}%</p>
+          <p className="text-[10px] text-slate-700 font-medium">vs Quarter</p>
         </div>
       </div>
 
@@ -892,31 +894,31 @@ function ProjectsSection({ csrData, navigate, onOpenMap }: { csrData: CSRDashboa
     <div className="p-4 space-y-4">
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-200 shadow-sm">
-          <p className="text-2xl font-bold text-purple-600">{csrData?.projectsCompleted || 0}</p>
-          <p className="text-[10px] text-slate-500">Total</p>
+        <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-300 shadow-sm">
+          <p className="text-2xl font-bold text-purple-700">{csrData?.projectsCompleted || 0}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Total</p>
         </div>
-        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-200 shadow-sm">
-          <p className="text-2xl font-bold text-emerald-600">{csrData?.kpiBreakdown?.projects?.activeProjects || 0}</p>
-          <p className="text-[10px] text-slate-500">Active</p>
+        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-300 shadow-sm">
+          <p className="text-2xl font-bold text-emerald-700">{csrData?.kpiBreakdown?.projects?.activeProjects || 0}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Active</p>
         </div>
-        <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-200 shadow-sm">
-          <p className="text-2xl font-bold text-blue-600">{csrData?.kpiBreakdown?.projects?.regionsServed || 0}</p>
-          <p className="text-[10px] text-slate-500">Regions</p>
+        <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-300 shadow-sm">
+          <p className="text-2xl font-bold text-blue-700">{csrData?.kpiBreakdown?.projects?.regionsServed || 0}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Regions</p>
         </div>
-        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-200 shadow-sm">
-          <p className="text-2xl font-bold text-amber-600">${(csrData?.kpiBreakdown?.projects?.totalRoi || 0).toLocaleString()}</p>
-          <p className="text-[10px] text-slate-500">ROI</p>
+        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-300 shadow-sm">
+          <p className="text-2xl font-bold text-amber-700">${(csrData?.kpiBreakdown?.projects?.totalRoi || 0).toLocaleString()}</p>
+          <p className="text-[10px] text-slate-700 font-medium">ROI</p>
         </div>
       </div>
 
       {/* Map Button */}
       <button
         onClick={onOpenMap}
-        className="w-full flex items-center justify-center gap-2 p-4 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-xl border border-emerald-200 hover:from-emerald-200 hover:to-teal-200 transition-all shadow-sm"
+        className="w-full flex items-center justify-center gap-2 p-4 bg-emerald-100 rounded-xl border border-emerald-300 hover:bg-emerald-200 transition-all shadow-sm"
       >
-        <Globe className="w-5 h-5 text-emerald-600" />
-        <span className="text-slate-800 font-medium">View Global Impact Map</span>
+        <Globe className="w-5 h-5 text-emerald-700" />
+        <span className="text-slate-900 font-semibold">View Global Impact Map</span>
       </button>
 
       {/* Project List */}
@@ -968,21 +970,21 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
     <div className="p-4 space-y-4">
       {/* Quick Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
-          <p className="text-xl font-bold text-emerald-600">{csrData?.totalHours?.toLocaleString() || 0}</p>
-          <p className="text-[10px] text-slate-500">Total Hours</p>
+        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-300 shadow-sm">
+          <p className="text-xl font-bold text-emerald-700">{csrData?.totalHours?.toLocaleString() || 0}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Total Hours</p>
         </div>
-        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
-          <p className="text-xl font-bold text-amber-600">${((csrData?.totalHours || 0) * 35).toLocaleString()}</p>
-          <p className="text-[10px] text-slate-500">Value</p>
+        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-300 shadow-sm">
+          <p className="text-xl font-bold text-amber-700">${((csrData?.totalHours || 0) * 35).toLocaleString()}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Value</p>
         </div>
-        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
-          <p className="text-xl font-bold text-blue-600">{csrData?.activeEmployees || 0}</p>
-          <p className="text-[10px] text-slate-500">Volunteers</p>
+        <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-300 shadow-sm">
+          <p className="text-xl font-bold text-blue-700">{csrData?.activeEmployees || 0}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Volunteers</p>
         </div>
-        <div className="bg-white rounded-xl p-3 text-center border border-amber-200/60 shadow-sm">
-          <p className="text-xl font-bold text-purple-600">{csrData?.projectsCompleted || 0}</p>
-          <p className="text-[10px] text-slate-500">Projects</p>
+        <div className="bg-purple-50 rounded-xl p-3 text-center border border-purple-300 shadow-sm">
+          <p className="text-xl font-bold text-purple-700">{csrData?.projectsCompleted || 0}</p>
+          <p className="text-[10px] text-slate-700 font-medium">Projects</p>
         </div>
       </div>
 
@@ -990,16 +992,16 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {reports.map(r => {
           const colors: Record<string, string> = {
-            emerald: 'bg-emerald-50 border-emerald-200',
-            blue: 'bg-blue-50 border-blue-200',
-            amber: 'bg-amber-50 border-amber-200',
-            purple: 'bg-purple-50 border-purple-200',
+            emerald: 'bg-emerald-50 border-emerald-300',
+            blue: 'bg-blue-50 border-blue-300',
+            amber: 'bg-amber-50 border-amber-300',
+            purple: 'bg-purple-50 border-purple-300',
           };
           const textColors: Record<string, string> = {
-            emerald: 'text-emerald-600',
-            blue: 'text-blue-600',
-            amber: 'text-amber-600',
-            purple: 'text-purple-600',
+            emerald: 'text-emerald-700',
+            blue: 'text-blue-700',
+            amber: 'text-amber-700',
+            purple: 'text-purple-700',
           };
 
           return (
@@ -1009,8 +1011,8 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
               className={`${colors[r.color]} border rounded-xl p-4 text-left hover:scale-[1.02] transition-transform active:scale-95 shadow-sm`}
             >
               <r.icon className={`w-6 h-6 ${textColors[r.color]} mb-2`} />
-              <p className="text-slate-800 font-medium">{r.title}</p>
-              <p className="text-xs text-slate-500">{r.desc}</p>
+              <p className="text-slate-900 font-semibold">{r.title}</p>
+              <p className="text-xs text-slate-600">{r.desc}</p>
             </button>
           );
         })}
@@ -1031,22 +1033,22 @@ function InsightsSection({ aiInsights, csrData }: { aiInsights: any; csrData: CS
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 border border-purple-200 shadow-sm">
-        <Sparkles className="w-5 h-5 text-purple-600" />
+      <div className="flex items-center gap-2 bg-purple-100 rounded-xl p-4 border border-purple-300 shadow-sm">
+        <Sparkles className="w-5 h-5 text-purple-700" />
         <div>
-          <h2 className="text-slate-800 font-semibold">AI-Powered Insights</h2>
-          <p className="text-xs text-slate-500">Data-driven recommendations</p>
+          <h2 className="text-slate-900 font-semibold">AI-Powered Insights</h2>
+          <p className="text-xs text-slate-600">Data-driven recommendations</p>
         </div>
       </div>
 
       {/* Insight Cards */}
       <div className="space-y-3">
         {insights.map((i: any) => {
-          const colors: Record<string, { bg: string; icon: string }> = {
-            opportunity: { bg: 'bg-emerald-50 border-emerald-200', icon: 'text-emerald-600' },
-            recommendation: { bg: 'bg-blue-50 border-blue-200', icon: 'text-blue-600' },
-            insight: { bg: 'bg-purple-50 border-purple-200', icon: 'text-purple-600' },
-            optimization: { bg: 'bg-amber-50 border-amber-200', icon: 'text-amber-600' },
+          const colors: Record<string, { bg: string; border: string; icon: string }> = {
+            opportunity: { bg: 'bg-emerald-50', border: 'border-emerald-300', icon: 'text-emerald-700' },
+            recommendation: { bg: 'bg-blue-50', border: 'border-blue-300', icon: 'text-blue-700' },
+            insight: { bg: 'bg-purple-50', border: 'border-purple-300', icon: 'text-purple-700' },
+            optimization: { bg: 'bg-amber-50', border: 'border-amber-300', icon: 'text-amber-700' },
           };
           const c = colors[i.type] || colors.insight;
           const icons: Record<string, any> = {
@@ -1058,23 +1060,23 @@ function InsightsSection({ aiInsights, csrData }: { aiInsights: any; csrData: CS
           const Icon = icons[i.type] || Info;
 
           return (
-            <div key={i.id} className={`${c.bg} border rounded-xl p-4 shadow-sm`}>
+            <div key={i.id} className={`${c.bg} ${c.border} border rounded-xl p-4 shadow-sm`}>
               <div className="flex items-start gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.bg}`}>
                   <Icon className={`w-4 h-4 ${c.icon}`} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-slate-800 font-medium text-sm">{i.title}</p>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${
-                      i.priority === 'high' ? 'bg-red-100 text-red-600' :
-                      i.priority === 'medium' ? 'bg-amber-100 text-amber-600' :
-                      'bg-emerald-100 text-emerald-600'
+                    <p className="text-slate-900 font-semibold text-sm">{i.title}</p>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${
+                      i.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      i.priority === 'medium' ? 'bg-amber-100 text-amber-700' :
+                      'bg-emerald-100 text-emerald-700'
                     }`}>
                       {i.priority}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500">{i.desc}</p>
+                  <p className="text-xs text-slate-600">{i.desc}</p>
                 </div>
               </div>
             </div>

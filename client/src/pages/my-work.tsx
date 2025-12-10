@@ -206,11 +206,12 @@ export default function MyWork() {
       const response = await fetch(`/api/tasks`);
       if (!response.ok) return [];
       const allTasks = await response.json();
-      // Filter tasks by organization's projects
-      const orgProjectIds = new Set(orgProjects.map((p: Project) => p.id));
-      return allTasks.filter((t: Task) => orgProjectIds.has(t.projectId ?? 0));
+      // Filter tasks by organization's projects - ensure orgProjects is an array
+      const projectsArray = Array.isArray(orgProjects) ? orgProjects : [];
+      const orgProjectIds = new Set(projectsArray.map((p: Project) => p.id));
+      return Array.isArray(allTasks) ? allTasks.filter((t: Task) => orgProjectIds.has(t.projectId ?? 0)) : [];
     },
-    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization' && orgProjects.length > 0
+    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization' && Array.isArray(orgProjects) && orgProjects.length > 0
   });
 
   // Fetch AI-matched opportunities for personalized recommendations
@@ -279,7 +280,11 @@ export default function MyWork() {
 
   const weekStart = getWeekStart();
   const weeklyHoursLogged = Array.isArray(volunteerActivities) ? volunteerActivities.reduce((sum, a) => {
+    // Guard against missing or invalid date
+    if (!a?.date) return sum;
     const activityDate = new Date(a.date);
+    // Check for Invalid Date
+    if (isNaN(activityDate.getTime())) return sum;
     return activityDate >= weekStart ? sum + (a.hours || 0) : sum;
   }, 0) : 0;
 
@@ -358,8 +363,9 @@ export default function MyWork() {
       }
 
       // Generate description that emphasizes why this is a good fit
-      const description = opportunity.description 
-        ? opportunity.description.substring(0, 100) + (opportunity.description.length > 100 ? "..." : "")
+      const descText = typeof opportunity.description === 'string' ? opportunity.description : '';
+      const description = descText
+        ? descText.substring(0, 100) + (descText.length > 100 ? "..." : "")
         : `This opportunity aligns well with your profile and current availability`;
 
       return {
@@ -396,18 +402,20 @@ export default function MyWork() {
 
   // Calculate Impact Leader (volunteer with most hours)
   const volunteerHoursMap = new Map<number, { hours: number; name: string }>();
-  orgActivities.forEach(activity => {
-    if (activity.userId) {
-      const volunteer = orgVolunteers.find((v: any) => v.id === activity.userId);
+  const safeOrgActivities = Array.isArray(orgActivities) ? orgActivities : [];
+  const safeOrgVolunteers = Array.isArray(orgVolunteers) ? orgVolunteers : [];
+  safeOrgActivities.forEach(activity => {
+    if (activity?.userId) {
+      const volunteer = safeOrgVolunteers.find((v: any) => v.id === activity.userId);
       const key = activity.userId;
-      if (volunteerHoursMap.has(key)) {
-        const current = volunteerHoursMap.get(key)!;
-        volunteerHoursMap.set(key, { 
-          hours: current.hours + (activity.hours || 0),
-          name: current.name 
+      const existingEntry = volunteerHoursMap.get(key);
+      if (existingEntry) {
+        volunteerHoursMap.set(key, {
+          hours: existingEntry.hours + (activity.hours || 0),
+          name: existingEntry.name
         });
       } else {
-        volunteerHoursMap.set(key, { 
+        volunteerHoursMap.set(key, {
           hours: activity.hours || 0,
           name: volunteer?.displayName || volunteer?.username || 'Unknown'
         });

@@ -108,7 +108,7 @@ export default function TeamOverview() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-900 mx-auto mb-4"></div>
           <p className="text-lg text-slate-600">Loading ML-Powered Team Overview...</p>
@@ -126,7 +126,7 @@ export default function TeamOverview() {
   const adminName = user?.displayName || user?.email?.split('@')[0] || "Admin";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
+    <div className="h-screen bg-[#faf9f7] flex flex-col overflow-hidden">
       {/* Header */}
       <div style={{ borderTop: "8px solid #1e3a8a", width: "100%" }} />
       <header className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-4 shadow-lg">
@@ -239,7 +239,7 @@ export default function TeamOverview() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 px-6 py-8 max-w-7xl mx-auto w-full">
+      <main className="flex-1 overflow-y-auto px-6 py-8 max-w-7xl mx-auto w-full">
         {/* Real-time KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <KPICard
@@ -405,9 +405,10 @@ export default function TeamOverview() {
             </div>
           </div>
         )}
+
+        <Footer />
       </main>
 
-      <Footer />
       <MobileBottomNav />
     </div>
   );

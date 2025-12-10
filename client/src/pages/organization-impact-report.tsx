@@ -736,7 +736,7 @@ export default function OrganizationImpactReport() {
   // Render access denied UI if not authorized
   if (!currentUser || !isOrganizationManager) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 p-4 md:p-8 flex items-center justify-center">
         <Card className="w-full max-w-md shadow-lg border-2 border-red-200 dark:border-red-900">
           <CardContent className="p-8 text-center">
             <div className="mb-4 text-4xl">🔒</div>
@@ -760,7 +760,7 @@ export default function OrganizationImpactReport() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
+    <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 relative overflow-hidden">
       <OrganizationHeader activeTab="reports" />
       {/* UN SDG Wheel Watermark */}
       <div className="fixed inset-0 pointer-events-none opacity-5 dark:opacity-3 flex items-center justify-center" style={{ zIndex: 0 }}>

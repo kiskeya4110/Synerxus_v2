@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import logoUrl from "@assets/Synerxus Modern Logo_1762068075617.png";
+import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import {
   LineChart,
   Line,
@@ -802,7 +802,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
                     >
                       <div className="text-2xl font-bold text-amber-600">
-                        {aiuSummary?.totalAiu?.toFixed(1) || '0.0'}
+                        {aiuSummary?.totalAiu?.toFixed(2) || '0.00'}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">AIUs</div>
                       <div className="text-[8px] text-slate-400">Impact Units</div>
@@ -1245,7 +1245,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="flex items-center gap-3 text-xs text-slate-500">
                       <div className="flex items-center gap-1">
                         <TrendingUp className="w-3 h-3" />
-                        <span>{getProjectAiu(project.id).toFixed(1)} AIUs</span>
+                        <span>{getProjectAiu(project.id).toFixed(2)} AIUs</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
@@ -1712,7 +1712,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 <div className="flex items-center gap-2">
                   <Target className="w-6 h-6 opacity-80" />
                   <div>
-                    <div className="text-3xl font-bold">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</div>
+                    <div className="text-3xl font-bold">{aiuSummary?.totalAiu?.toFixed(2) || '0.00'}</div>
                     <div className="text-xs opacity-80">Total AIU Earned</div>
                   </div>
                 </div>
@@ -2129,7 +2129,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">
                         <span>AIUs Earned:</span>
-                        <span className="text-emerald-600 font-semibold">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</span>
+                        <span className="text-emerald-600 font-semibold">{aiuSummary?.totalAiu?.toFixed(2) || '0.00'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Across Projects:</span>
@@ -2269,18 +2269,18 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               {showKpiModal === 'aiu' && (
                 <>
                   <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-amber-500 mb-2">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</div>
+                    <div className="text-5xl font-bold text-amber-500 mb-2">{aiuSummary?.totalAiu?.toFixed(2) || '0.00'}</div>
                     <div className="text-slate-500">Total Adjusted Impact Units</div>
                   </div>
                   <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 mb-4">
                     <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">
                         <span>Unique AIU:</span>
-                        <span className="text-amber-600 font-semibold">{aiuSummary?.aiuUnique?.toFixed(1) || '0.0'}</span>
+                        <span className="text-amber-600 font-semibold">{aiuSummary?.aiuUnique?.toFixed(2) || '0.00'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Session AIU:</span>
-                        <span className="text-amber-600 font-semibold">{aiuSummary?.aiuSessions?.toFixed(1) || '0.0'}</span>
+                        <span className="text-amber-600 font-semibold">{aiuSummary?.aiuSessions?.toFixed(2) || '0.00'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Verification Rate:</span>
@@ -2299,7 +2299,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         <div key={project.projectId} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                           <div className="flex items-center justify-between mb-1">
                             <div className="text-slate-800 font-medium text-sm truncate flex-1">{project.projectName}</div>
-                            <span className="text-amber-600 font-bold text-sm ml-2">{project.aiu?.toFixed(1) || '0.0'} AIU</span>
+                            <span className="text-amber-600 font-bold text-sm ml-2">{project.aiu?.toFixed(2) || '0.00'} AIU</span>
                           </div>
                           <div className="flex items-center gap-3 text-xs text-slate-500">
                             <span>{project.hours || 0} hours</span>
@@ -2397,7 +2397,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           </div>
                           <div className="flex items-center gap-1">
                             <TrendingUp className="w-3 h-3" />
-                            <span>{getProjectAiu(project.id).toFixed(1)} AIUs</span>
+                            <span>{getProjectAiu(project.id).toFixed(2)} AIUs</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <Users className="w-3 h-3" />
@@ -2475,7 +2475,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             </div>
                             <div className="flex items-center gap-1">
                               <TrendingUp className="w-3 h-3" />
-                              <span>{getProjectAiu(project.id).toFixed(1)} AIUs</span>
+                              <span>{getProjectAiu(project.id).toFixed(2)} AIUs</span>
                             </div>
                           </div>
                         </div>
@@ -2518,7 +2518,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-600">AIUs Earned:</span>
-                      <span className="text-emerald-600 font-semibold">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</span>
+                      <span className="text-emerald-600 font-semibold">{aiuSummary?.totalAiu?.toFixed(2) || '0.00'}</span>
                     </div>
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">

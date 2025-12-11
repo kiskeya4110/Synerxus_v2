@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
 import Logo from "@/components/ui/logo";
-import logoUrl from "@assets/Synerxus Modern Logo_1762068075617.png";
+import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import {
   Home,
   BarChart3,

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import logoImage from "@assets/Synerxus Modern Logo_1762068075617.png";
+import logoImage from "@assets/Synerxus_Logo_1765433966690.png";
+import logoWithTagline from "@assets/synerxus-logo-tagline.png";
 
 interface LogoProps {
   className?: string;
@@ -10,6 +11,7 @@ interface LogoProps {
   onClick?: () => void;
   isButton?: boolean;
   showMotto?: boolean;
+  showTagline?: boolean;
   clickable?: boolean;
 }
 
@@ -20,6 +22,7 @@ export default function Logo({
   onClick,
   isButton = false,
   showMotto = false,
+  showTagline = false,
   clickable = true,
 }: LogoProps) {
   const [, navigate] = useLocation();
@@ -32,18 +35,25 @@ export default function Logo({
   };
 
   const content = (
-    <div className="flex items-center">
+    <div className="flex flex-col items-center">
       {!imageError && (
-        <img
-          src={logoImage}
-          alt="Synerxus Logo"
-          className={cn(
-            sizes[size],
-            "w-auto object-contain flex-shrink-0",
+        <>
+          <img
+            src={showTagline ? logoWithTagline : logoImage}
+            alt="Synerxus Logo"
+            className={cn(
+              sizes[size],
+              "w-auto object-contain flex-shrink-0",
+            )}
+            loading="eager"
+            onError={() => setImageError(true)}
+          />
+          {showTagline && (
+            <span className="text-[8px] sm:text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-wide mt-0.5">
+              Connect. Collaborate. Impact Globally.
+            </span>
           )}
-          loading="eager"
-          onError={() => setImageError(true)}
-        />
+        </>
       )}
     </div>
   );

@@ -158,7 +158,7 @@ export default function ProjectCard({
         <div className="text-center border-l border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-center gap-1">
             <TrendingUp className="h-3 w-3 text-emerald-500" />
-            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{aiuEarned.toFixed(1)}</span>
+            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{aiuEarned.toFixed(2)}</span>
           </div>
           <span className="text-[10px] text-gray-500 dark:text-gray-400">AIU</span>
         </div>
@@ -305,7 +305,7 @@ export default function ProjectCard({
               </div>
               <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center border border-emerald-100 dark:border-emerald-800">
                 <TrendingUp className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
-                <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(1)}</div>
+                <div className="text-xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(2)}</div>
                 <div className="text-xs text-emerald-600/80">AIU Earned</div>
               </div>
               <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-center border border-purple-100 dark:border-purple-800">

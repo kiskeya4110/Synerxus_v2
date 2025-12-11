@@ -6,7 +6,7 @@ import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import logoImage from "@assets/Synerxus Modern Logo_1762068075617.png";
+import logoImage from "@assets/Synerxus_Logo_1765433966690.png";
 
 const VOLUNTEER_NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, description: "KPIs & Metrics" },
@@ -67,7 +67,7 @@ export default function VolunteerNav() {
           <div className="flex items-center gap-6">
             <button
               onClick={handleLogoClick}
-              className="flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer group"
+              className="flex flex-col items-center gap-0.5 hover:opacity-90 transition-opacity cursor-pointer group"
               title="Go to Home"
             >
               {!imageError ? (
@@ -82,9 +82,14 @@ export default function VolunteerNav() {
                   <span className="text-white font-bold text-lg">S</span>
                 </div>
               )}
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hidden lg:inline group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
-                SYNERXUS
-              </span>
+              <div className="flex flex-col items-center">
+                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hidden lg:inline group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
+                  SYNERXUS
+                </span>
+                <span className="text-[8px] text-gray-500 dark:text-gray-400 font-medium tracking-wide hidden lg:inline">
+                  Connect. Collaborate. Impact Globally.
+                </span>
+              </div>
             </button>
 
             {/* Nav Items */}

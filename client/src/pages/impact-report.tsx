@@ -614,11 +614,18 @@ export default function ImpactReport() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setLocation("/my-work")}
+            onClick={() => {
+              // Use browser history to go back to the previous page
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                setLocation("/dashboard");
+              }
+            }}
             className="w-full md:w-auto justify-start md:justify-center"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            <span className="hidden md:inline">Back to My Work</span>
+            <span className="hidden md:inline">Back</span>
             <span className="md:hidden">Back</span>
           </Button>
           
@@ -703,14 +710,48 @@ export default function ImpactReport() {
         </div>
 
         {/* Main Impact Report Card */}
-        <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black">
-          <CardContent className="p-3 md:p-6 lg:p-8 print:p-4">
+        <Card id="impact-report-content" className="bg-white dark:bg-slate-800 shadow-lg border-2 border-gray-200 dark:border-gray-700 print:shadow-none print:border-black relative overflow-hidden">
+          {/* UN SDG Wheel Watermark */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] print:opacity-[0.05]">
+            <svg viewBox="0 0 600 600" className="w-[800px] h-[800px] max-w-none">
+              {/* SDG Wheel background */}
+              {[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map((sdg, index) => {
+                const anglePerSegment = (2 * Math.PI) / 17;
+                const startAngle = index * anglePerSegment - Math.PI / 2;
+                const endAngle = startAngle + anglePerSegment;
+                const center = 300;
+                const outerRadius = 280;
+                const innerRadius = 90;
+                const colors: Record<number, string> = {
+                  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D", 5: "#FF3A21",
+                  6: "#26BDE2", 7: "#FCC30B", 8: "#A21942", 9: "#FD6925", 10: "#DD1367",
+                  11: "#FD9D24", 12: "#BF8B2E", 13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B",
+                  16: "#00689D", 17: "#19486A"
+                };
+                const x1 = center + innerRadius * Math.cos(startAngle);
+                const y1 = center + innerRadius * Math.sin(startAngle);
+                const x2 = center + outerRadius * Math.cos(startAngle);
+                const y2 = center + outerRadius * Math.sin(startAngle);
+                const x3 = center + outerRadius * Math.cos(endAngle);
+                const y3 = center + outerRadius * Math.sin(endAngle);
+                const x4 = center + innerRadius * Math.cos(endAngle);
+                const y4 = center + innerRadius * Math.sin(endAngle);
+                const path = `M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z`;
+                return <path key={sdg} d={path} fill={colors[sdg]} stroke="white" strokeWidth="2" />;
+              })}
+              <circle cx="300" cy="300" r="85" fill="white" />
+              <text x="300" y="290" textAnchor="middle" fontSize="24" fontWeight="bold" fill="#1e3a5f">SUSTAINABLE</text>
+              <text x="300" y="320" textAnchor="middle" fontSize="24" fontWeight="bold" fill="#1e3a5f">DEVELOPMENT</text>
+              <text x="300" y="350" textAnchor="middle" fontSize="20" fontWeight="bold" fill="#1e3a5f">GOALS</text>
+            </svg>
+          </div>
+          <CardContent className="p-3 md:p-6 lg:p-8 print:p-4 relative z-10">
             {/* Header Section - Split Layout */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 md:mb-8 pb-4 md:pb-6 border-b-2 border-gray-200 dark:border-gray-700 print:mb-4 print:pb-3 print:gap-4">
               {/* Left: Volunteer Info & Logo */}
               <div className="md:col-span-2">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-6 mb-4 md:mb-0 print:gap-4 print:mb-3">
-                  <Logo size="sm" className="print:scale-75" />
+                  <Logo size="md" showTagline={true} className="print:scale-75" />
                   {currentUser?.avatar && !avatarError && (
                     <div className="flex items-center">
                       <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">
@@ -741,17 +782,27 @@ export default function ImpactReport() {
                   )}
                 </div>
 
-                <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-1 print:text-2xl">
+                <p className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-1 print:text-2xl print:text-gray-900">
                   {currentUser?.displayName || currentUser?.username || 'Volunteer'}
                 </p>
-                
-                <h1 className="text-lg md:text-xl lg:text-2xl font-semibold italic text-gray-700 dark:text-gray-300 print:text-lg">
+
+                <h1 className="text-lg md:text-xl lg:text-2xl font-semibold text-gray-700 dark:text-gray-300 print:text-lg flex items-center gap-2">
+                  <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                    Verified
+                  </span>
                   SDG Impact Report
                 </h1>
 
-                <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-                  <span>•</span>
-                  <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                <div className="mt-3 flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                  <span className="flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </span>
+                  <span className="text-gray-300 dark:text-gray-600">|</span>
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Blockchain Verified
+                  </span>
                 </div>
               </div>
 
@@ -905,7 +956,7 @@ export default function ImpactReport() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</p>
+                      <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary?.totalAiu?.toFixed(2) || '0.00'}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">{aiuSummary?.verificationRate || 0}% verified</p>
                     </div>
                   </div>

@@ -471,7 +471,7 @@ export default function ProjectDetail() {
                   <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(1)}</div>
+                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(2)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">AIUs Earned</div>
                 </div>
               </div>
@@ -686,7 +686,7 @@ export default function ProjectDetail() {
                                     {assignment?.role || vol.role}
                                   </span>
                                 )}
-                                <span className="text-xs text-muted-foreground">{vol.hours.toFixed(1)}h • {vol.aiu.toFixed(1)} AIU</span>
+                                <span className="text-xs text-muted-foreground">{vol.hours.toFixed(1)}h • {vol.aiu.toFixed(2)} AIU</span>
                               </div>
                             </div>
                           </div>
@@ -785,7 +785,7 @@ export default function ProjectDetail() {
                     <TrendingUp className="h-4 w-4 text-emerald-600" />
                     <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">AIUs Earned</div>
                   </div>
-                  <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(1)}</div>
+                  <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(2)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-2">
                     {projectAIU?.sdgIndicator ? `${projectAIU.sdgIndicator} aligned` : 'Attributable Impact Units'}
                   </div>
@@ -845,7 +845,7 @@ export default function ProjectDetail() {
                       {projectAIU.volunteers.slice(0, 3).map((vol, idx) => (
                         <div key={idx} className="flex justify-between items-center text-sm">
                           <span className="text-gray-700 dark:text-gray-300">{vol.volunteerName}</span>
-                          <span className="font-semibold text-emerald-600">{vol.aiu.toFixed(1)} AIU</span>
+                          <span className="font-semibold text-emerald-600">{vol.aiu.toFixed(2)} AIU</span>
                         </div>
                       ))}
                     </div>

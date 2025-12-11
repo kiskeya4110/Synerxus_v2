@@ -67,7 +67,7 @@ import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
-import logoUrl from "@assets/Synerxus Modern Logo_1762068075617.png";
+import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
 // Error Boundary for lazy-loaded components
 interface ErrorBoundaryProps {
@@ -1132,7 +1132,7 @@ export default function CSRDashboard() {
                     </div>
                     <ChevronRight className="w-3 h-3 text-teal-400" />
                   </div>
-                  <div className="text-slate-900 text-xl font-bold mt-1">{(csrData?.totalImpact || 0).toFixed(1)}</div>
+                  <div className="text-slate-900 text-xl font-bold mt-1">{(csrData?.totalImpact || 0).toFixed(2)}</div>
                   <div className="text-teal-600 text-[9px] mt-0.5 flex items-center gap-0.5">
                     <Sparkles className="w-2.5 h-2.5" />
                     Impact units
@@ -1727,7 +1727,7 @@ export default function CSRDashboard() {
                 <div className="grid grid-cols-2 gap-2 text-[10px]">
                   <div className="bg-teal-50 rounded p-2 border border-teal-200">
                     <div className="text-slate-600 font-medium">Total AIUs Earned</div>
-                    <div className="text-teal-700 text-lg font-bold">{(csrData?.totalImpact || 0).toFixed(1)}</div>
+                    <div className="text-teal-700 text-lg font-bold">{(csrData?.totalImpact || 0).toFixed(2)}</div>
                   </div>
                   <div className="bg-blue-50 rounded p-2 border border-blue-200">
                     <div className="text-slate-600 font-medium">SDGs Addressed</div>
@@ -2175,7 +2175,7 @@ export default function CSRDashboard() {
                 {mobileKPIModal === 'aiu' && (
                   <>
                     <div className="text-center py-4">
-                      <div className="text-4xl font-bold text-teal-600">{(csrData?.totalImpact || 0).toFixed(4)}</div>
+                      <div className="text-4xl font-bold text-teal-600">{(csrData?.totalImpact || 0).toFixed(2)}</div>
                       <div className="text-slate-600 text-sm mt-1">Attributable Impact Units</div>
                     </div>
                     <div className="bg-teal-50 rounded-lg p-3 border border-teal-200">
@@ -4459,7 +4459,7 @@ export default function CSRDashboard() {
                     AIUs Earned
                   </p>
                   <p style={{ fontSize: "28px", fontWeight: "bold" }}>
-                    {(csrData?.totalImpact || 0).toFixed(1)}
+                    {(csrData?.totalImpact || 0).toFixed(2)}
                   </p>
                   <p style={{ fontSize: "10px", color: "#6ee7b7", marginTop: "4px" }}>
                     Attributable Impact Units
@@ -6168,7 +6168,7 @@ export default function CSRDashboard() {
                     marginBottom: "16px",
                   }}
                 >
-                  {(csrData?.totalImpact || 0).toFixed(1)} AIUs Earned
+                  {(csrData?.totalImpact || 0).toFixed(2)} AIUs Earned
                 </p>
                 <p
                   style={{

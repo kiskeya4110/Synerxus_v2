@@ -1269,7 +1269,7 @@ export default function Dashboard() {
             <StaggerItem>
               <StatsCard
               title="AIUs Earned"
-              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(1) : kpis.aiuEarned || 0}
+              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(2) : kpis.aiuEarned || 0}
               icon={<TrendingUp className="h-6 w-6" />}
               onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
               compact={true}
@@ -1327,7 +1327,7 @@ export default function Dashboard() {
             <StaggerItem>
               <StatsCard
               title="AIUs Earned"
-              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(1) : kpis.aiuEarned || 0}
+              value={typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(2) : kpis.aiuEarned || 0}
               icon={<TrendingUp className="h-6 w-6" />}
               onClick={() => handleKPIClick("AIUs Earned", kpis.aiuEarned)}
               compact={true}
@@ -1361,10 +1361,10 @@ export default function Dashboard() {
               <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {aiuSummary.totalAiu >= 10
-                    ? `🌟 Outstanding! You've earned ${aiuSummary.totalAiu?.toFixed(1)} Adjusted Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${aiuSummary.totalHours?.toFixed(0) || 0} hours are creating measurable change.`
+                    ? `🌟 Outstanding! You've earned ${aiuSummary.totalAiu?.toFixed(2)} Adjusted Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${aiuSummary.totalHours?.toFixed(0) || 0} hours are creating measurable change.`
                     : aiuSummary.totalAiu >= 5
-                    ? `✨ Great progress! You've accumulated ${aiuSummary.totalAiu?.toFixed(1)} AIUs. With ${aiuSummary.totalHours?.toFixed(0) || 0} hours invested, your impact is growing steadily.`
-                    : `🚀 You're building momentum with ${aiuSummary.totalAiu?.toFixed(1)} AIUs earned. Every hour you contribute amplifies your positive influence!`}
+                    ? `✨ Great progress! You've accumulated ${aiuSummary.totalAiu?.toFixed(2)} AIUs. With ${aiuSummary.totalHours?.toFixed(0) || 0} hours invested, your impact is growing steadily.`
+                    : `🚀 You're building momentum with ${aiuSummary.totalAiu?.toFixed(2)} AIUs earned. Every hour you contribute amplifies your positive influence!`}
                 </p>
               </div>
 
@@ -1376,7 +1376,7 @@ export default function Dashboard() {
                       <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary.totalAiu?.toFixed(1) || '0.0'}</span>
+                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary.totalAiu?.toFixed(2) || '0.00'}</span>
                       <p className="text-xs text-gray-500 dark:text-gray-400">Total AIUs Earned</p>
                     </div>
                   </div>
@@ -1442,7 +1442,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                           <div className="text-right ml-3">
-                            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{project.aiu?.toFixed(1) || '0.0'}</span>
+                            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{project.aiu?.toFixed(2) || '0.00'}</span>
                             <span className="text-xs text-gray-500 dark:text-gray-400 block">AIU</span>
                           </div>
                         </div>

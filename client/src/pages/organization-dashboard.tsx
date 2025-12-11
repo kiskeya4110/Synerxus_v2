@@ -824,7 +824,7 @@ export default function OrganizationDashboard() {
           <MetricCard
             icon={<Users size={24} />}
             label="AIUs Earned"
-            value={typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}
+            value={typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(2) : metrics.aiuEarned}
             color="#10b981"
             testId="metric-aiu"
             onClick={() => {

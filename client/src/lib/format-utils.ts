@@ -226,3 +226,38 @@ export function formatDuration(seconds: number): string {
 
   return parts.join(" ");
 }
+
+/**
+ * Format AIU (Adjusted Impact Units) value with precision
+ * @example formatAIU(1.23456) => "1.23"
+ * @example formatAIU(0) => "0.00"
+ */
+export function formatAIU(
+  value: number | undefined | null,
+  decimals: number = 2
+): string {
+  if (value === undefined || value === null || isNaN(value)) {
+    return "0.00";
+  }
+  return value.toFixed(decimals);
+}
+
+/**
+ * Format AIU for display (standard 2 decimal version)
+ * @example formatAIUShort(1.2345678901) => "1.23"
+ */
+export function formatAIUShort(
+  value: number | undefined | null,
+  decimals: number = 2
+): string {
+  if (value === undefined || value === null || isNaN(value)) return "0.00";
+  return value.toFixed(decimals);
+}
+
+/**
+ * Format AIU with standard precision for all views
+ * @example formatAIUFull(1.2345678901234) => "1.23"
+ */
+export function formatAIUFull(value: number | undefined | null): string {
+  return formatAIU(value, 2);
+}

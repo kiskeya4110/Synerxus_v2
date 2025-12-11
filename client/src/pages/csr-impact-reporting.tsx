@@ -7,7 +7,7 @@ import { getSDGName, getSDGFullName } from "@shared/sdg-goals";
 import Footer from "@/components/layout/footer";
 import Logo from "@/components/ui/logo";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
-import logoUrl from "@assets/Synerxus Modern Logo_1762068075617.png";
+import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell, PieChart as RechartsPie, Pie } from "recharts";
 
 interface ComplianceCalculation {

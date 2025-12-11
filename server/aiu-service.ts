@@ -463,8 +463,8 @@ export async function calculateVolunteerAIU(volunteerId: number): Promise<Volunt
   return {
     volunteerId,
     volunteerName: volunteer.displayName || `Volunteer ${volunteerId}`,
-    totalAiu: Math.round((totalAiuUnique + totalAiuSessions * 0.1) * 100) / 100,
-    aiuUnique: Math.round(totalAiuUnique * 100) / 100,
+    totalAiu: parseFloat((totalAiuUnique + totalAiuSessions * 0.1).toFixed(10)),
+    aiuUnique: parseFloat(totalAiuUnique.toFixed(10)),
     aiuSessions: totalAiuSessions,
     totalHours: Math.round(totalHours),
     projectCount: projectAius.length,
@@ -557,8 +557,8 @@ export async function calculateOrganizationAIU(organizationId: number): Promise<
   return {
     organizationId,
     organizationName: org.name,
-    totalAiu: Math.round((totalAiuUnique + totalAiuSessions * 0.1) * 100) / 100,
-    aiuUnique: Math.round(totalAiuUnique * 100) / 100,
+    totalAiu: parseFloat((totalAiuUnique + totalAiuSessions * 0.1).toFixed(10)),
+    aiuUnique: parseFloat(totalAiuUnique.toFixed(10)),
     aiuSessions: totalAiuSessions,
     projectCount: projectSummaries.length,
     volunteerCount: volunteerIds.size,
@@ -647,8 +647,8 @@ export async function generateCSRAIUReport(
     totalOrganizations: allOrgs.length,
     totalProjects: allProjects.length,
     totalVolunteers: volunteerIds.size,
-    totalAiu: Math.round((totalAiuUnique + totalAiuSessions * 0.1) * 100) / 100,
-    aiuUnique: Math.round(totalAiuUnique * 100) / 100,
+    totalAiu: parseFloat((totalAiuUnique + totalAiuSessions * 0.1).toFixed(10)),
+    aiuUnique: parseFloat(totalAiuUnique.toFixed(10)),
     aiuSessions: totalAiuSessions,
     totalHours: Math.round(totalHours),
     livesImpacted,
@@ -656,7 +656,7 @@ export async function generateCSRAIUReport(
       .map(([sdg, data]) => ({
         sdg,
         sdgName: SDG_NAMES[sdg] || `SDG ${sdg}`,
-        aiu: Math.round(data.aiu * 100) / 100,
+        aiu: parseFloat(data.aiu.toFixed(10)),
         projects: data.projects.size,
         volunteers: data.volunteers.size,
       }))
@@ -665,7 +665,7 @@ export async function generateCSRAIUReport(
       .map(([orgId, data]) => ({
         organizationId: orgId,
         organizationName: data.name,
-        aiu: Math.round(data.aiu * 100) / 100,
+        aiu: parseFloat(data.aiu.toFixed(10)),
         projects: data.projects,
       }))
       .filter(o => o.aiu > 0 || o.projects > 0)
@@ -701,7 +701,7 @@ export async function getVolunteerQuickAIUStats(volunteerId: number): Promise<{
   else if (summary.totalAiu >= 5) rank = 'Growing Impact';
 
   // Estimate this month's AIU (simplified - would need date filtering for accuracy)
-  const aiuThisMonth = Math.round(summary.totalAiu * 0.2 * 100) / 100; // Rough estimate
+  const aiuThisMonth = parseFloat((summary.totalAiu * 0.2).toFixed(10)); // Rough estimate
 
   return {
     totalAiu: summary.totalAiu,

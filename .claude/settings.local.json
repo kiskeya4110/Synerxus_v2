@@ -37,7 +37,8 @@
       "Bash(netstat:*)",
       "Bash(ss:*)",
       "Bash(timeout 20 npm run dev)",
-      "Bash(du:*)"
+      "Bash(du:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "ask": []

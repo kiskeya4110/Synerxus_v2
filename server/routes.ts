@@ -1960,7 +1960,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const messageData = insertMessageSchema.parse(req.body);
       const message = await storage.createMessage(messageData);
-      
+
+      // Create notification for the recipient
+      try {
+        const { notifyNewMessage } = await import("./notification-service");
+        await notifyNewMessage(
+          message.receiverId,
+          message.senderId,
+          message.subject || undefined
+        );
+      } catch (notifyErr) {
+        console.error("Failed to create message notification:", notifyErr);
+      }
+
       broadcastUpdate("message_created", message);
       res.status(201).json(message);
     } catch (err) {
@@ -2233,15 +2245,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastMessageAt: new Date()
       });
       
-      // Create notification
-      await storage.createNotification({
-        userId: receiverId,
-        type: 'message',
-        title: 'New Message',
-        message: `New message in "${thread.topic}"`,
-        relatedEntityType: 'thread',
-        relatedEntityId: threadId
-      });
+      // Create notification with sender info
+      try {
+        const { notifyThreadMessage } = await import("./notification-service");
+        await notifyThreadMessage(
+          receiverId,
+          parseInt(senderId),
+          threadId,
+          thread.topic
+        );
+      } catch (notifyErr) {
+        console.error("Failed to create thread message notification:", notifyErr);
+      }
       
       // Enrich message with sender info
       const sender = await storage.getUser(parseInt(senderId));

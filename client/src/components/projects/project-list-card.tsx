@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Link } from "wouter";
-import { Users, CheckSquare, Clock, TrendingUp, ChevronDown, ChevronRight, MapPin, Target, Calendar, Zap } from "lucide-react";
+import { Users, CheckSquare, Clock, TrendingUp, ChevronDown, ChevronRight, MapPin, Target, Calendar, Zap, Activity } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -19,10 +19,21 @@ const SDG_COLORS: { [key: number]: string } = {
   17: "#19486A"
 };
 
+// Helper to get engagement level color
+const getEngagementColor = (score: number) => {
+  if (score >= 80) return { bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-700 dark:text-emerald-400', border: 'border-emerald-200' };
+  if (score >= 60) return { bg: 'bg-green-50 dark:bg-green-900/20', text: 'text-green-700 dark:text-green-400', border: 'border-green-200' };
+  if (score >= 40) return { bg: 'bg-yellow-50 dark:bg-yellow-900/20', text: 'text-yellow-700 dark:text-yellow-400', border: 'border-yellow-200' };
+  if (score >= 20) return { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-700 dark:text-orange-400', border: 'border-orange-200' };
+  return { bg: 'bg-red-50 dark:bg-red-900/20', text: 'text-red-700 dark:text-red-400', border: 'border-red-200' };
+};
+
 interface ProjectMetrics {
   volunteers: number;
   totalCommitted: number;
   totalCompleted: number;
+  engagementScore?: number;
+  engagementLevel?: string;
 }
 
 interface ProjectListCardProps {
@@ -126,7 +137,7 @@ export const ProjectListCard = memo(function ProjectListCard({
           </div>
 
           {/* Metrics Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4 ml-0 md:ml-9">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mt-4 ml-0 md:ml-9">
             <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
               <Users className="h-4 w-4 text-blue-600" />
               <div>
@@ -137,7 +148,9 @@ export const ProjectListCard = memo(function ProjectListCard({
             <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
               <CheckSquare className="h-4 w-4 text-green-600" />
               <div>
-                <span className="text-sm font-semibold text-green-700 dark:text-green-400">{tasks.length}</span>
+                <span className="text-sm font-semibold text-green-700 dark:text-green-400">
+                  {tasks.filter(t => t.status?.toLowerCase() === 'completed').length}/{tasks.length}
+                </span>
                 <span className="text-xs text-green-600/70 ml-1 hidden sm:inline">tasks</span>
               </div>
             </div>
@@ -155,6 +168,20 @@ export const ProjectListCard = memo(function ProjectListCard({
                 <span className="text-xs text-orange-600/70 ml-1 hidden sm:inline">done</span>
               </div>
             </div>
+            {/* Engagement Score */}
+            {metrics.engagementScore !== undefined && (
+              <div className={`flex items-center gap-2 p-2 rounded-lg ${getEngagementColor(metrics.engagementScore).bg}`}>
+                <Activity className={`h-4 w-4 ${getEngagementColor(metrics.engagementScore).text}`} />
+                <div>
+                  <span className={`text-sm font-semibold ${getEngagementColor(metrics.engagementScore).text}`}>
+                    {metrics.engagementScore}%
+                  </span>
+                  <span className={`text-xs ml-1 hidden sm:inline opacity-70 ${getEngagementColor(metrics.engagementScore).text}`}>
+                    engagement
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Progress Bar */}

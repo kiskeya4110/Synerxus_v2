@@ -65,6 +65,18 @@ export default function Projects() {
     queryKey: ["/api/project-assignments"]
   });
 
+  // Fetch volunteer activities for engagement calculation
+  interface VolunteerActivity {
+    id: number;
+    projectId: number;
+    userId: number;
+    hours: number;
+    createdAt: string;
+  }
+  const { data: allActivities = [] } = useQuery<VolunteerActivity[]>({
+    queryKey: ["/api/volunteer-activities"]
+  });
+
   // Fetch opportunities for the organization
   const { data: opportunities = [] } = useQuery<Opportunity[]>({
     queryKey: ["/api/opportunities", userId],
@@ -99,32 +111,70 @@ export default function Projects() {
         totalCommitted: number;
         totalCompleted: number;
         volunteers: number;
+        engagementScore: number;
+        engagementLevel: string;
       };
     }>();
-    
+
+    // Calculate date for 30 days ago
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
     projects.forEach(project => {
       const projectTasks = allTasks.filter(task => task.projectId === project.id);
       const assignments = allAssignments.filter(assignment => assignment.projectId === project.id);
-      
+      const projectActivities = allActivities.filter(activity => activity.projectId === project.id);
+
       const completedTasks = projectTasks.filter(task => task.status === 'completed').length;
       const progress = projectTasks.length === 0 ? 0 : Math.round((completedTasks / projectTasks.length) * 100);
-      
+
       const totalCommitted = assignments.reduce((sum, a) => sum + (a.hoursCommitted || 0), 0);
       const totalCompleted = assignments.reduce((sum, a) => sum + (a.hoursCompleted || 0), 0);
-      
+
+      // Calculate unique volunteers from assignments and activities
+      const uniqueVolunteerIds = new Set([
+        ...assignments.map(a => a.volunteerId),
+        ...projectActivities.map(a => a.userId)
+      ]);
+      const volunteerCount = uniqueVolunteerIds.size;
+
+      // Calculate engagement score (0-100)
+      const volunteerScore = Math.min((volunteerCount / 10) * 25, 25);
+      const taskCompletionRate = projectTasks.length > 0 ? (completedTasks / projectTasks.length) * 100 : 0;
+      const taskScore = taskCompletionRate * 0.30;
+      const hoursScore = totalCommitted > 0
+        ? Math.min((totalCompleted / totalCommitted) * 25, 25)
+        : 0;
+
+      // Recent activity score
+      const recentActivities = projectActivities.filter(a => new Date(a.createdAt) >= thirtyDaysAgo);
+      const activityScore = Math.min((recentActivities.length / 10) * 20, 20);
+
+      const engagementScore = Math.round(volunteerScore + taskScore + hoursScore + activityScore);
+
+      // Determine engagement level
+      let engagementLevel: string;
+      if (engagementScore >= 80) engagementLevel = 'excellent';
+      else if (engagementScore >= 60) engagementLevel = 'good';
+      else if (engagementScore >= 40) engagementLevel = 'moderate';
+      else if (engagementScore >= 20) engagementLevel = 'low';
+      else engagementLevel = 'minimal';
+
       metricsMap.set(project.id, {
         tasks: projectTasks,
         progress,
         metrics: {
           totalCommitted,
           totalCompleted,
-          volunteers: assignments.length
+          volunteers: volunteerCount,
+          engagementScore,
+          engagementLevel
         }
       });
     });
-    
+
     return metricsMap;
-  }, [projects, allTasks, allAssignments]);
+  }, [projects, allTasks, allAssignments, allActivities]);
 
   const getProjectName = useCallback((projectId: number | null | undefined) => {
     if (!projectId) return null;

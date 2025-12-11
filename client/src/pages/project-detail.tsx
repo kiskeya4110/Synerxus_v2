@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3 } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -311,11 +311,35 @@ export default function ProjectDetail() {
   ]);
   const uniqueVolunteers = teamMemberIds.size;
 
-  const completionPercentage = project.completionPercentage ?? 
+  const completionPercentage = project.completionPercentage ??
     (projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0);
 
+  // Calculate engagement score (0-100) based on real metrics
+  const totalCommitted = activeAssignments.reduce((sum, a) => sum + ((a as any).hoursCommitted || 0), 0);
+  const totalCompleted = activeAssignments.reduce((sum, a) => sum + ((a as any).hoursCompleted || 0), 0);
+
+  // Engagement score components
+  const volunteerScore = Math.min((uniqueVolunteers / 10) * 25, 25); // Max 25 points
+  const taskCompletionRate = projectTasks.length > 0 ? (completedTasks / projectTasks.length) * 100 : 0;
+  const taskScore = taskCompletionRate * 0.30; // Max 30 points
+  const hoursScore = totalCommitted > 0
+    ? Math.min((totalCompleted / totalCommitted) * 25, 25)
+    : 0; // Max 25 points
+
+  // Recent activity score (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentActivities = projectActivities.filter(a => new Date(a.createdAt || '') >= thirtyDaysAgo);
+  const activityScore = Math.min((recentActivities.length / 10) * 20, 20); // Max 20 points
+
+  const engagementScore = Math.round(volunteerScore + taskScore + hoursScore + activityScore);
+  const engagementLevel = engagementScore >= 80 ? 'Excellent' :
+    engagementScore >= 60 ? 'Good' :
+    engagementScore >= 40 ? 'Moderate' :
+    engagementScore >= 20 ? 'Low' : 'Minimal';
+
   const isOrganization = currentUser?.userType === 'organization';
-  const canEditProject = currentUser?.userType === 'organization' && 
+  const canEditProject = currentUser?.userType === 'organization' &&
                         project?.organizationId === currentUser?.organizationId;
 
   const handleDeleteTask = (taskId: number) => {
@@ -769,6 +793,87 @@ export default function ProjectDetail() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Engagement Score Card */}
+            <Card className="border-blue-200 dark:border-blue-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Activity className="h-5 w-5 text-blue-600" />
+                  Engagement Score
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Main Score Display */}
+                <div className={`p-4 rounded-xl border ${
+                  engagementScore >= 80 ? 'bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-emerald-200 dark:border-emerald-800' :
+                  engagementScore >= 60 ? 'bg-gradient-to-br from-green-50 to-lime-50 dark:from-green-900/20 dark:to-lime-900/20 border-green-200 dark:border-green-800' :
+                  engagementScore >= 40 ? 'bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border-yellow-200 dark:border-yellow-800' :
+                  engagementScore >= 20 ? 'bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border-orange-200 dark:border-orange-800' :
+                  'bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-200 dark:border-red-800'
+                }`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Overall Score</span>
+                    <Badge className={
+                      engagementScore >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                      engagementScore >= 60 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+                      engagementScore >= 40 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                      engagementScore >= 20 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                      'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    }>
+                      {engagementLevel}
+                    </Badge>
+                  </div>
+                  <div className={`text-4xl font-bold ${
+                    engagementScore >= 80 ? 'text-emerald-700 dark:text-emerald-300' :
+                    engagementScore >= 60 ? 'text-green-700 dark:text-green-300' :
+                    engagementScore >= 40 ? 'text-yellow-700 dark:text-yellow-300' :
+                    engagementScore >= 20 ? 'text-orange-700 dark:text-orange-300' :
+                    'text-red-700 dark:text-red-300'
+                  }`}>{engagementScore}%</div>
+                  <Progress value={engagementScore} className="h-2 mt-3" />
+                </div>
+
+                {/* Engagement Breakdown */}
+                <div className="space-y-3 pt-2 border-t">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Breakdown</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <Users className="h-3.5 w-3.5 text-blue-500" />
+                        <span className="text-muted-foreground">Volunteer Participation</span>
+                      </span>
+                      <span className="font-medium">{Math.round(volunteerScore)}/25</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+                        <span className="text-muted-foreground">Task Completion</span>
+                      </span>
+                      <span className="font-medium">{Math.round(taskScore)}/30</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <Clock className="h-3.5 w-3.5 text-purple-500" />
+                        <span className="text-muted-foreground">Hours Utilization</span>
+                      </span>
+                      <span className="font-medium">{Math.round(hoursScore)}/25</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <Activity className="h-3.5 w-3.5 text-orange-500" />
+                        <span className="text-muted-foreground">Recent Activity</span>
+                      </span>
+                      <span className="font-medium">{Math.round(activityScore)}/20</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Activity Summary */}
+                <div className="pt-2 border-t text-xs text-muted-foreground">
+                  {recentActivities.length} activities in the last 30 days
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Impact Metrics Card */}
             <Card className="border-emerald-200 dark:border-emerald-800">

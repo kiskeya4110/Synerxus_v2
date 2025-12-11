@@ -751,7 +751,7 @@ export default function ImpactReport() {
               {/* Left: Volunteer Info & Logo */}
               <div className="md:col-span-2">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3 md:gap-6 mb-4 md:mb-0 print:gap-4 print:mb-3">
-                  <Logo size="md" showTagline={true} className="print:scale-75" />
+                  <Logo size="lg" className="print:scale-75" />
                   {currentUser?.avatar && !avatarError && (
                     <div className="flex items-center">
                       <div className="border-l-2 border-gray-300 dark:border-gray-600 pl-3 md:pl-6">

@@ -36,6 +36,7 @@ import {
   type AIUResult,
   type VolunteerAIU
 } from '@shared/aiu-calculations';
+import { isValidSdg } from './sdg-utils';
 
 // =====================================================
 // Types for AIU Service
@@ -403,9 +404,11 @@ export async function calculateVolunteerAIU(volunteerId: number): Promise<Volunt
   let totalAiuUnique = 0;
   let totalAiuSessions = 0;
   let totalHours = 0;
-  let verifiedCount = 0;
-  let totalCount = 0;
   const sdgsSet = new Set<number>();
+
+  // Enhanced verification tracking - weighted multi-factor approach
+  let totalVerificationScore = 0;
+  let maxPossibleScore = 0;
 
   for (const projectId of projectIds) {
     const projectSummary = await calculateProjectAIU(projectId);
@@ -413,9 +416,15 @@ export async function calculateVolunteerAIU(volunteerId: number): Promise<Volunt
 
     const volunteerData = projectSummary.volunteers.find(v => v.volunteerId === volunteerId);
     if (volunteerData) {
-      // Extract SDG number from indicator
-      const sdgMatch = projectSummary.sdgIndicator.match(/SDG (\d+)/);
-      if (sdgMatch) sdgsSet.add(parseInt(sdgMatch[1]));
+      // Get ALL SDGs from the project's sdgGoals array using shared utility
+      const project = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+      if (project.length > 0 && project[0].sdgGoals && Array.isArray(project[0].sdgGoals)) {
+        project[0].sdgGoals.forEach((goal: unknown) => {
+          if (isValidSdg(goal)) {
+            sdgsSet.add(goal);
+          }
+        });
+      }
 
       projectAius.push({
         projectId,
@@ -436,29 +445,70 @@ export async function calculateVolunteerAIU(volunteerId: number): Promise<Volunt
         ))
         .limit(1);
 
+      // Enhanced multi-factor verification calculation per project
+      // Maximum score per project: 100 points
+      maxPossibleScore += 100;
+      let projectVerificationScore = 0;
+
+      // Factor 1: Hours logged (40 points max)
+      // Volunteers with logged hours have verified participation
+      const hoursWeight = 40;
+      if (volunteerData.hours > 0) {
+        // Scale: 1+ hours = 20 points, 5+ hours = 30 points, 10+ hours = 40 points
+        if (volunteerData.hours >= 10) projectVerificationScore += hoursWeight;
+        else if (volunteerData.hours >= 5) projectVerificationScore += hoursWeight * 0.75;
+        else projectVerificationScore += hoursWeight * 0.5;
+      }
+
+      // Factor 2: Explicit verification status (35 points max)
+      const statusWeight = 35;
       if (aiuBreakdown.length > 0) {
         totalAiuUnique += aiuBreakdown[0].aiuUnique || 0;
         totalAiuSessions += aiuBreakdown[0].aiuSessions || 0;
-        totalCount++;
-        // Consider verified if: explicit verification, OR has logged hours (implicit verification)
-        if (aiuBreakdown[0].verificationStatus === 'verified' || volunteerData.hours > 0) {
-          verifiedCount++;
+
+        if (aiuBreakdown[0].verificationStatus === 'verified') {
+          projectVerificationScore += statusWeight; // Full points for verified
+        } else if (aiuBreakdown[0].verificationStatus === 'pending') {
+          projectVerificationScore += statusWeight * 0.5; // Half points for pending
         }
+        // Self-reported gets 0 points for status
       } else {
         // Estimate from project calculation
         const volunteerShare = projectSummary.totalAiuUnique * (volunteerData.weightPercentage / 100);
         totalAiuUnique += volunteerShare;
         totalAiuSessions += Math.ceil(volunteerData.hours / 2);
-        totalCount++;
-        // If volunteer has logged hours, consider it verified (hours were tracked/confirmed)
-        if (volunteerData.hours > 0) {
-          verifiedCount++;
-        }
+        // No AIU record = 0 points for status factor
       }
 
+      // Factor 3: Role-based verification (15 points max)
+      // Leadership roles imply more accountability/verification
+      const roleWeight = 15;
+      const role = volunteerData.role?.toLowerCase() || '';
+      if (role.includes('lead') || role.includes('manager') || role.includes('coordinator')) {
+        projectVerificationScore += roleWeight;
+      } else if (role.includes('specialist') || role.includes('expert') || role.includes('senior')) {
+        projectVerificationScore += roleWeight * 0.7;
+      } else if (volunteerData.hours > 0) {
+        projectVerificationScore += roleWeight * 0.4; // Basic role with hours logged
+      }
+
+      // Factor 4: Project completion status (10 points max)
+      const completionWeight = 10;
+      if (projectSummary.verificationStatus === 'verified') {
+        projectVerificationScore += completionWeight;
+      } else if (projectSummary.totalHours > 0) {
+        projectVerificationScore += completionWeight * 0.5;
+      }
+
+      totalVerificationScore += projectVerificationScore;
       totalHours += volunteerData.hours;
     }
   }
+
+  // Calculate final verification rate (0-100%), always capped at 100%
+  const verificationRate = maxPossibleScore > 0
+    ? Math.min(Math.round((totalVerificationScore / maxPossibleScore) * 100), 100)
+    : 0;
 
   return {
     volunteerId,
@@ -469,7 +519,7 @@ export async function calculateVolunteerAIU(volunteerId: number): Promise<Volunt
     totalHours: Math.round(totalHours),
     projectCount: projectAius.length,
     sdgsContributed: Array.from(sdgsSet).sort((a, b) => a - b),
-    verificationRate: totalCount > 0 ? Math.round((verifiedCount / totalCount) * 100) : 0,
+    verificationRate,
     projects: projectAius,
   };
 }
@@ -518,10 +568,12 @@ export async function calculateOrganizationAIU(organizationId: number): Promise<
   let totalAiuSessions = 0;
   let totalHours = 0;
   let livesImpacted = 0;
-  let verifiedCount = 0;
-  let totalCount = 0;
   const volunteerIds = new Set<number>();
   const sdgsSet = new Set<number>();
+
+  // Enhanced verification tracking - weighted multi-factor approach
+  let totalVerificationScore = 0;
+  let maxPossibleScore = 0;
 
   for (const project of orgProjects) {
     const projectSummary = await calculateProjectAIU(project.id);
@@ -543,16 +595,48 @@ export async function calculateOrganizationAIU(organizationId: number): Promise<
     // Track volunteers
     projectSummary.volunteers.forEach(v => volunteerIds.add(v.volunteerId));
 
-    // Track verification - consider verified if explicit status or has logged hours
-    totalCount++;
-    if (projectSummary.verificationStatus === 'verified' || projectSummary.totalHours > 0) {
-      verifiedCount++;
+    // Enhanced multi-factor verification for organization projects
+    // Maximum score per project: 100 points
+    maxPossibleScore += 100;
+    let projectVerificationScore = 0;
+
+    // Factor 1: Verification status (40 points max)
+    if (projectSummary.verificationStatus === 'verified') {
+      projectVerificationScore += 40;
+    } else if (projectSummary.verificationStatus === 'pending') {
+      projectVerificationScore += 20;
     }
+
+    // Factor 2: Hours logged (30 points max)
+    if (projectSummary.totalHours > 0) {
+      if (projectSummary.totalHours >= 100) projectVerificationScore += 30;
+      else if (projectSummary.totalHours >= 50) projectVerificationScore += 25;
+      else if (projectSummary.totalHours >= 20) projectVerificationScore += 20;
+      else projectVerificationScore += 15;
+    }
+
+    // Factor 3: Volunteer participation (20 points max)
+    const volunteerCount = projectSummary.volunteers.length;
+    if (volunteerCount >= 5) projectVerificationScore += 20;
+    else if (volunteerCount >= 3) projectVerificationScore += 15;
+    else if (volunteerCount >= 1) projectVerificationScore += 10;
+
+    // Factor 4: Impact reported (10 points max)
+    if (projectSummary.livesImpacted > 0) {
+      projectVerificationScore += 10;
+    }
+
+    totalVerificationScore += projectVerificationScore;
 
     // Track SDGs
     const sdgMatch = projectSummary.sdgIndicator.match(/SDG (\d+)/);
     if (sdgMatch) sdgsSet.add(parseInt(sdgMatch[1]));
   }
+
+  // Calculate final verification rate (0-100%), always capped at 100%
+  const verificationRate = maxPossibleScore > 0
+    ? Math.min(Math.round((totalVerificationScore / maxPossibleScore) * 100), 100)
+    : 0;
 
   return {
     organizationId,
@@ -565,7 +649,7 @@ export async function calculateOrganizationAIU(organizationId: number): Promise<
     totalHours: Math.round(totalHours),
     livesImpacted,
     sdgsCovered: Array.from(sdgsSet).sort((a, b) => a - b),
-    verificationRate: totalCount > 0 ? Math.round((verifiedCount / totalCount) * 100) : 0,
+    verificationRate,
     projects: projectSummaries,
   };
 }
@@ -674,7 +758,8 @@ export async function generateCSRAIUReport(
       verified: verifiedCount,
       pending: pendingCount,
       selfReported: selfReportedCount,
-      verificationRate: totalVerified > 0 ? Math.round((verifiedCount / totalVerified) * 100) : 0,
+      // Always cap at 100% for safety
+      verificationRate: totalVerified > 0 ? Math.min(Math.round((verifiedCount / totalVerified) * 100), 100) : 0,
     },
   };
 }

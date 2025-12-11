@@ -1070,24 +1070,111 @@ function ReportsSection({ csrData, navigate }: { csrData: CSRDashboardData | und
   );
 }
 
-// AI Insights Section
+// AI Insights Section - FACT-BASED insights generated from actual CSR data
 function InsightsSection({ aiInsights, csrData }: { aiInsights: any; csrData: CSRDashboardData | undefined }) {
-  const insights = aiInsights?.insights || [
-    { id: 1, title: 'Engagement Opportunity', desc: 'Team challenges could boost participation by 25%', type: 'opportunity', priority: 'high' },
-    { id: 2, title: 'SDG Focus', desc: 'Strong interest in SDG 13 (Climate Action) - expand related projects', type: 'recommendation', priority: 'medium' },
-    { id: 3, title: 'Industry Benchmark', desc: 'Engagement 15% above average - maintain with recognition programs', type: 'insight', priority: 'positive' },
-    { id: 4, title: 'Resource Optimization', desc: 'Consolidating projects could improve ROI by 20%', type: 'optimization', priority: 'high' },
-  ];
+  // Generate fact-based insights from actual CSR data
+  const insights = useMemo(() => {
+    if (!csrData) return [];
+
+    const factBasedInsights: Array<{ id: number; title: string; desc: string; type: string; priority: string }> = [];
+    let insightId = 1;
+
+    // Calculate actual metrics from CSRDashboardData interface
+    const totalHours = csrData.totalHours || 0;
+    const activeEmployees = csrData.activeEmployees || 0;
+    const totalEmployees = csrData.kpiBreakdown?.employees?.totalRoster || activeEmployees;
+    const projectsCompleted = csrData.projectsCompleted || 0;
+    const totalProjects = csrData.kpiBreakdown?.projects?.total || projectsCompleted;
+    const participationRate = totalEmployees > 0 ? Math.round((activeEmployees / totalEmployees) * 100) : 0;
+
+    // Get SDG data from sdgMetrics
+    const topSDGs = (csrData.sdgMetrics || [])
+      .sort((a, b) => (b.totalHours || 0) - (a.totalHours || 0))
+      .slice(0, 3);
+
+    // Employee participation insight
+    if (activeEmployees > 0) {
+      factBasedInsights.push({
+        id: insightId++,
+        title: 'Employee Participation',
+        desc: participationRate >= 50
+          ? `Strong participation: ${participationRate}% of employees (${activeEmployees} of ${totalEmployees}) are actively volunteering.`
+          : participationRate >= 20
+          ? `${participationRate}% participation rate (${activeEmployees} of ${totalEmployees} employees). Consider engagement initiatives to increase involvement.`
+          : `Currently ${activeEmployees} active employees${totalEmployees > activeEmployees ? ` out of ${totalEmployees}` : ''}. Opportunities exist to expand the volunteer program.`,
+        type: participationRate >= 50 ? 'insight' : 'opportunity',
+        priority: participationRate >= 50 ? 'positive' : participationRate >= 20 ? 'medium' : 'high'
+      });
+    }
+
+    // Hours contributed insight
+    if (totalHours > 0) {
+      const avgHoursPerEmployee = activeEmployees > 0 ? Math.round(totalHours / activeEmployees) : 0;
+      factBasedInsights.push({
+        id: insightId++,
+        title: 'Hours Contributed',
+        desc: `${totalHours.toLocaleString()} total hours logged${activeEmployees > 0 ? ` (average ${avgHoursPerEmployee} hours per active employee)` : ''}${totalProjects > 0 ? ` across ${totalProjects} project${totalProjects !== 1 ? 's' : ''}` : ''}.`,
+        type: 'insight',
+        priority: avgHoursPerEmployee >= 10 ? 'positive' : 'medium'
+      });
+    }
+
+    // SDG Focus insight
+    if (topSDGs.length > 0) {
+      const SDG_NAMES: Record<number, string> = {
+        1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
+        5: "Gender Equality", 6: "Clean Water", 7: "Affordable Energy", 8: "Decent Work",
+        9: "Innovation", 10: "Reduced Inequalities", 11: "Sustainable Cities", 12: "Responsible Consumption",
+        13: "Climate Action", 14: "Life Below Water", 15: "Life on Land", 16: "Peace & Justice", 17: "Partnerships"
+      };
+      const topSdg = topSDGs[0];
+      const topSdgName = topSdg.name || SDG_NAMES[topSdg.sdg] || `SDG ${topSdg.sdg}`;
+      factBasedInsights.push({
+        id: insightId++,
+        title: 'SDG Focus',
+        desc: `Your top SDG contribution is ${topSdgName} (SDG ${topSdg.sdg})${topSDGs.length > 1 ? `, followed by SDG ${topSDGs[1].sdg}` : ''}. ${Math.round(topSdg.totalHours || 0)} hours logged toward this goal.`,
+        type: 'recommendation',
+        priority: 'medium'
+      });
+    }
+
+    // Project diversity insight
+    if (totalProjects > 0) {
+      factBasedInsights.push({
+        id: insightId++,
+        title: 'Project Portfolio',
+        desc: totalProjects >= 5
+          ? `Diverse portfolio: Contributing to ${totalProjects} projects across multiple impact areas.`
+          : `Currently engaged with ${totalProjects} project${totalProjects !== 1 ? 's' : ''}. Consider expanding to additional SDG areas for broader impact.`,
+        type: totalProjects >= 5 ? 'insight' : 'opportunity',
+        priority: totalProjects >= 5 ? 'positive' : 'medium'
+      });
+    }
+
+    // If no data available
+    if (factBasedInsights.length === 0) {
+      factBasedInsights.push({
+        id: insightId++,
+        title: 'Getting Started',
+        desc: 'Start tracking employee volunteer hours to receive personalized insights based on your CSR activities.',
+        type: 'opportunity',
+        priority: 'medium'
+      });
+    }
+
+    return factBasedInsights;
+  }, [csrData]);
 
   return (
     <div className="p-4 space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2 bg-purple-100 rounded-xl p-4 border border-purple-300 shadow-sm">
         <Sparkles className="w-5 h-5 text-purple-700" />
-        <div>
+        <div className="flex-1">
           <h2 className="text-slate-900 font-semibold">AI-Powered Insights</h2>
-          <p className="text-xs text-slate-600">Data-driven recommendations</p>
+          <p className="text-xs text-slate-600">Based on your actual CSR data</p>
         </div>
+        <span className="text-[10px] bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full font-medium">Fact-Based</span>
       </div>
 
       {/* Insight Cards */}

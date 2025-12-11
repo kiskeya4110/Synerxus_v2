@@ -97,6 +97,24 @@ export default function ProjectDetailPWA() {
     (m: any) => m.name === "Lives Impacted" || m.category === "general"
   )?.id || 1;
 
+  // Fetch volunteer's AIU summary to get accurate project AIU
+  const { data: aiuSummary } = useQuery<{
+    totalAiu: number;
+    projects: Array<{ projectId: number; aiu: number; hours: number; role: string }>;
+  }>({
+    queryKey: ["/api/aiu/volunteer", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/aiu/volunteer/${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+
+  // Get project-specific AIU from volunteer's AIU summary (single source of truth)
+  const projectAiu = aiuSummary?.projects?.find(p => p.projectId === projectId)?.aiu || 0;
+  const projectHoursFromAiu = aiuSummary?.projects?.find(p => p.projectId === projectId)?.hours || 0;
+
   const applyMutation = useMutation({
     mutationFn: async () => {
       return apiRequest("POST", "/api/applications", {
@@ -366,19 +384,19 @@ export default function ProjectDetailPWA() {
                 </div>
               </div>
 
-              {/* AIU Metrics */}
+              {/* AIU Metrics - Using volunteer's AIU summary as single source of truth */}
               <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-3 border border-emerald-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs font-semibold text-slate-700">AIUs Earned</p>
+                      <p className="text-xs font-semibold text-slate-700">Your AIUs Earned</p>
                       <p className="text-xs text-slate-500">Attributable Impact Units</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-emerald-600">{(project?.aiuEarned || 0).toFixed(1)}</p>
-                    <p className="text-[10px] text-slate-500">Verified Impact</p>
+                    <p className="text-2xl font-bold text-emerald-600">{projectAiu.toFixed(2)}</p>
+                    <p className="text-[10px] text-slate-500">{projectHoursFromAiu > 0 ? `${projectHoursFromAiu} hrs logged` : 'Start contributing!'}</p>
                   </div>
                 </div>
               </div>

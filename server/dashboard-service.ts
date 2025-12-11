@@ -1,6 +1,11 @@
 import { storage } from "./storage";
 import { calculateMatchScore } from "./matching-algorithm";
 import { User, Opportunity } from "@shared/schema";
+import { isValidSdg, extractSdgsFromProjects } from "./sdg-utils";
+import { cache, cacheKeys, CACHE_TTL, invalidateCache } from "./cache";
+
+// Re-export invalidation helpers for use by routes
+export { invalidateCache };
 
 /**
  * Default match threshold for displaying projects to volunteers
@@ -241,8 +246,19 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
 /**
  * Get all dashboard data for an organization user
  * Strictly scoped to organization's own data with no cross-organization references
+ *
+ * CACHING: Results are cached for 30 seconds to improve response times
  */
-export async function getDashboardDataForOrganization(userId: number) {
+export async function getDashboardDataForOrganization(userId: number): Promise<any> {
+  // Check cache first
+  const cacheKey = cacheKeys.dashboardOrg(userId);
+  const cached = cache.get<any>(cacheKey);
+  if (cached) {
+    console.log(`[Dashboard] Cache HIT for organization ${userId}`);
+    return cached;
+  }
+  console.log(`[Dashboard] Cache MISS for organization ${userId}, fetching data...`);
+
   try {
     // Get the organization user
     const user = await storage.getUser(userId);
@@ -253,28 +269,23 @@ export async function getDashboardDataForOrganization(userId: number) {
     // Use organizationId if available, otherwise use userId (user IS the organization)
     const organizationId = user.organizationId || userId;
 
-    // Fetch ALL data (we'll filter below)
-    const allProjects = await storage.listProjects();
-    const allTasks = await storage.listTasks();
-    const allActivities = await storage.listVolunteerActivities();
-    const allImpacts = await storage.listProjectImpacts();
-    const allProjectAssignments = await storage.listProjectAssignments();
-    const allApplications = await storage.listApplications();
+    // OPTIMIZATION: Use targeted queries instead of fetching ALL data
+    // Step 1: Get organization's projects first (this is the filter key)
+    const organizationProjects = await storage.listProjectsByOrganization(organizationId);
+    const organizationProjectIds = new Set(organizationProjects.map(p => p.id));
+    const projectIdArray = Array.from(organizationProjectIds);
+
+    // Step 2: Fetch only data related to these projects using batch queries
+    const [organizationTasks, organizationActivities, organizationImpacts, organizationAssignments] = await Promise.all([
+      storage.listTasksByProjectIds(projectIdArray),
+      storage.listVolunteerActivitiesByProjectIds(projectIdArray),
+      storage.listProjectImpactsByProjectIds(projectIdArray),
+      storage.listProjectAssignmentsByProjectIds(projectIdArray),
+    ]);
+
+    // Step 3: Fetch users and metrics (these are needed for reference lookups)
     const allUsers = await storage.listUsers();
     const allImpactMetrics = await storage.listImpactMetrics();
-
-    // Filter to ONLY this organization's projects
-    const organizationProjects = allProjects.filter(p => p.organizationId === organizationId);
-    const organizationProjectIds = new Set(organizationProjects.map(p => p.id));
-
-    // Filter tasks to only those belonging to organization's projects
-    const organizationTasks = allTasks.filter(t => t.projectId && organizationProjectIds.has(t.projectId));
-
-    // Filter activities to only those on organization's projects
-    const organizationActivities = allActivities.filter(a => a.projectId && organizationProjectIds.has(a.projectId));
-
-    // Filter impacts to only organization's projects
-    const organizationImpacts = allImpacts.filter(i => i.projectId && organizationProjectIds.has(i.projectId));
 
     // Identify metrics that represent people/beneficiaries
     // Check unit, category, or name for people-related keywords
@@ -303,17 +314,12 @@ export async function getDashboardDataForOrganization(userId: number) {
         .map(m => m.id)
     );
 
-    // Filter project assignments to only organization's projects
-    const organizationAssignments = allProjectAssignments.filter(pa => organizationProjectIds.has(pa.projectId));
+    // organizationAssignments already fetched via batch query above
 
-    // Filter applications to only organization's opportunities
-    const organizationOpportunities = await storage.listOpportunities();
-    const orgOpportunityIds = new Set(
-      organizationOpportunities
-        .filter(opp => opp.organizationId === organizationId)
-        .map(opp => opp.id)
-    );
-    const organizationApplications = allApplications.filter(app => app.opportunityId && orgOpportunityIds.has(app.opportunityId));
+    // OPTIMIZATION: Filter applications using targeted query
+    const organizationOpportunities = await storage.listOpportunitiesByOrganization(organizationId);
+    const orgOpportunityIds = organizationOpportunities.map(opp => opp.id);
+    const organizationApplications = await storage.listApplicationsByOpportunityIds(orgOpportunityIds);
 
     // Get volunteers assigned to organization's projects
     const volunteerIds = new Set(organizationAssignments.map(pa => pa.volunteerId));
@@ -340,13 +346,9 @@ export async function getDashboardDataForOrganization(userId: number) {
     const completedTasks = organizationTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
     const totalTasks = organizationTasks.length;
 
-    // Count unique SDGs addressed
-    const uniqueSDGs = new Set<number>();
-    organizationProjects.forEach(project => {
-      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
-        project.sdgGoals.forEach(goal => uniqueSDGs.add(goal));
-      }
-    });
+    // Count unique SDGs addressed using shared utility
+    const uniqueSDGsArray = extractSdgsFromProjects(organizationProjects);
+    const uniqueSDGs = new Set(uniqueSDGsArray);
 
     // Calculate total people impacted for organizations (using same logic as monthly calculation)
     const totalPeopleImpacted = calculatePeopleImpacted(organizationImpacts, peopleMetricIds);
@@ -604,14 +606,11 @@ export async function getDashboardDataForOrganization(userId: number) {
       // Count unique volunteers (filter out null userIds)
       const volunteers = new Set(monthActivities.map(a => a.userId).filter((id): id is number => id !== null)).size;
 
-      // Count unique SDGs from projects with activities this month
+      // Count unique SDGs from projects with activities this month using shared utility
       const monthProjectIds = new Set(monthActivities.map(a => a.projectId).filter((id): id is number => id !== null));
-      const sdgs = new Set<number>();
-      organizationProjects.forEach(p => {
-        if (monthProjectIds.has(p.id) && p.sdgGoals) {
-          p.sdgGoals.forEach(sdg => sdgs.add(sdg));
-        }
-      });
+      const monthProjects = organizationProjects.filter(p => monthProjectIds.has(p.id));
+      const sdgsArray = extractSdgsFromProjects(monthProjects);
+      const sdgs = new Set(sdgsArray);
 
       return {
         month: monthKey,
@@ -726,13 +725,14 @@ export async function getDashboardDataForOrganization(userId: number) {
     });
 
     // Calculate impact by SDG from real project and activity data
+    // Use sdgGoals array only - consistent with other counting logic
     const impactBySDGMap = new Map<number, { sdgGoal: number; hours: number; projects: number; peopleImpacted: number }>();
 
     organizationProjects.forEach(project => {
-      if (!project.sdgGoals || !Array.isArray(project.sdgGoals)) return;
+      if (!project.sdgGoals || !Array.isArray(project.sdgGoals) || project.sdgGoals.length === 0) return;
 
       project.sdgGoals.forEach(sdgGoal => {
-        if (sdgGoal >= 1 && sdgGoal <= 17) {
+        if (typeof sdgGoal === 'number' && sdgGoal >= 1 && sdgGoal <= 17) {
           const sdgIndex = sdgGoal - 1;
 
           if (!impactBySDGMap.has(sdgGoal)) {
@@ -760,7 +760,7 @@ export async function getDashboardDataForOrganization(userId: number) {
 
     const impactBySDG = Array.from(impactBySDGMap.values()).sort((a, b) => b.hours - a.hours);
 
-    return {
+    const result = {
       summary: {
         activeVolunteers,
         totalHours,
@@ -792,6 +792,12 @@ export async function getDashboardDataForOrganization(userId: number) {
       impactBySDG, // Real impact aggregated by SDG for Impact by SDG chart
       totalPeopleImpacted, // Total people impacted across all projects
     };
+
+    // Cache the result for 30 seconds
+    cache.set(cacheKey, result, CACHE_TTL.DASHBOARD);
+    console.log(`[Dashboard] Cached organization ${userId} dashboard data`);
+
+    return result;
   } catch (error) {
     console.error("Error getting dashboard data for organization:", error);
     throw error;
@@ -801,8 +807,19 @@ export async function getDashboardDataForOrganization(userId: number) {
 /**
  * Get all dashboard data for a volunteer user
  * Includes AI-matched opportunities and volunteer's assigned projects
+ *
+ * CACHING: Results are cached for 30 seconds to improve response times
  */
-export async function getDashboardDataForVolunteer(userId: number, matchThreshold: number = DEFAULT_MATCH_THRESHOLD) {
+export async function getDashboardDataForVolunteer(userId: number, matchThreshold: number = DEFAULT_MATCH_THRESHOLD): Promise<any> {
+  // Check cache first
+  const cacheKey = cacheKeys.dashboardVolunteer(userId);
+  const cached = cache.get<any>(cacheKey);
+  if (cached) {
+    console.log(`[Dashboard] Cache HIT for volunteer ${userId}`);
+    return cached;
+  }
+  console.log(`[Dashboard] Cache MISS for volunteer ${userId}, fetching data...`);
+
   try {
     // Get the volunteer user
     const user = await storage.getUser(userId);
@@ -820,53 +837,60 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       interests: volunteerProfile?.interests?.slice(0, 2),
     }, null, 2));
 
-    // Fetch data
-    const allProjects = await storage.listProjects();
-    const allTasks = await storage.listTasks();
-    const allActivities = await storage.listVolunteerActivities();
-    const allImpacts = await storage.listProjectImpacts();
-    const allProjectAssignments = await storage.listProjectAssignments();
-    const allApplications = await storage.listApplications();
-    const allUsers = await storage.listUsers();
-    const allOrganizations = await storage.listOrganizations();
-    const allImpactMetrics = await storage.listImpactMetrics();
-
-    // Get visible project IDs using status-aware filtering
-    // Includes pending (invitations), active, completed, on-hold - excludes only declined
+    // OPTIMIZATION: Get visible project IDs first (this determines what data we need)
     const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userId, false, matchThreshold);
+    const visibleProjectIdArray = Array.from(visibleProjectIds);
+
+    // OPTIMIZATION: Use targeted queries instead of fetching ALL data
+    // Step 1: Fetch all projects (needed for reference), but filter assigned projects
+    const allProjects = await storage.listProjects();
     const assignedProjects = allProjects.filter(p => visibleProjectIds.has(p.id));
 
-    // Get volunteer's project assignments (excluding only declined)
-    const volunteerAssignments = allProjectAssignments.filter(pa => {
-      if (pa.volunteerId !== userId) return false;
+    // Step 2: Fetch volunteer-specific data using targeted queries
+    const [
+      volunteerAssignments,
+      volunteerActivities,
+      volunteerApplications,
+      volunteerImpacts,
+      volunteerAssignedTasks,
+      // For project enrichment, we need all activities/impacts/assignments for visible projects
+      allProjectActivities,
+      allProjectAssignments
+    ] = await Promise.all([
+      storage.listProjectAssignmentsByVolunteer(userId),
+      storage.listVolunteerActivitiesByUser(userId),
+      storage.listApplicationsByVolunteer(userId),
+      storage.listProjectImpactsByProjectIds(visibleProjectIdArray),
+      storage.listTasksByProjectIds(visibleProjectIdArray),
+      // Batch queries for project enrichment (needed for hours/volunteer counts)
+      storage.listVolunteerActivitiesByProjectIds(visibleProjectIdArray),
+      storage.listProjectAssignmentsByProjectIds(visibleProjectIdArray),
+    ]);
 
-      // Normalize status to handle database inconsistencies
+    // Create alias for project impacts (already fetched above)
+    const allImpacts = volunteerImpacts;
+    const allActivities = allProjectActivities;
+
+    // Step 3: Fetch reference data (needed for lookups)
+    const [allUsers, allOrganizations, allImpactMetrics] = await Promise.all([
+      storage.listUsers(),
+      storage.listOrganizations(),
+      storage.listImpactMetrics(),
+    ]);
+
+    // Filter assignments to only non-declined
+    const filteredAssignments = volunteerAssignments.filter(pa => {
       const status = pa.status?.toLowerCase() || '';
-      // Include pending assignments so volunteers see their invitations
       return status !== 'declined';
     });
 
-    // Filter activities to only this volunteer's
-    const volunteerActivities = allActivities.filter(a => a.userId === userId);
-
-    // Filter impacts to all impacts from projects where volunteer has accepted assignments
-    // This ensures volunteer's Impact Over Time graphs match organization view for shared projects
-    // Removed strict assignment window filtering to align with organization dashboard behavior
-    const volunteerImpacts = allImpacts.filter(i => {
-      return i.projectId && visibleProjectIds.has(i.projectId);
-    });
-
-    // Filter tasks: include tasks assigned to this volunteer OR tasks from assigned projects
-    // This gives volunteers visibility into project work even if specific tasks aren't assigned to them
-    const volunteerTasks = allTasks.filter(t =>
+    // Get tasks assigned to volunteer or from assigned projects
+    const volunteerTasks = volunteerAssignedTasks.filter(t =>
       t.assigneeId === userId || (t.projectId && visibleProjectIds.has(t.projectId))
     );
 
     // Get AI-matched opportunities above threshold
     const matchedOpportunities = await getProjectsForVolunteer(userId, matchThreshold);
-
-    // Filter applications to this volunteer's
-    const volunteerApplications = allApplications.filter(app => app.volunteerId === userId);
 
     // Calculate summary metrics - handle null/undefined hours safely
     const totalHours = volunteerActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
@@ -886,13 +910,9 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const completedTasks = volunteerTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
     const totalTasks = volunteerTasks.length;
 
-    // Count unique SDGs from assigned projects
-    const uniqueSDGs = new Set<number>();
-    assignedProjects.forEach(project => {
-      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
-        project.sdgGoals.forEach(goal => uniqueSDGs.add(goal));
-      }
-    });
+    // Count unique SDGs from assigned projects using shared utility
+    const uniqueSDGsArray = extractSdgsFromProjects(assignedProjects);
+    const uniqueSDGs = new Set(uniqueSDGsArray);
 
     // Calculate Impact Score - Updated weights with people impacted as major driver
     // Hours: 35%, People Impacted: 30%, Tasks: 20%, SDG: 10%, Match: 5%
@@ -1184,7 +1204,7 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     // Get skills from volunteer profile, or fall back to user.skills
     const volunteerSkills = volunteerProfile?.skills || user.skills || [];
 
-    return {
+    const result = {
       summary: {
         activeVolunteers: 1, // Only themselves
         totalHours,
@@ -1233,6 +1253,12 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       matchedOpportunities, // AI-filtered opportunities above threshold
       projectAssignments: volunteerAssignments,
     };
+
+    // Cache the result for 30 seconds
+    cache.set(cacheKey, result, CACHE_TTL.DASHBOARD);
+    console.log(`[Dashboard] Cached volunteer ${userId} dashboard data`);
+
+    return result;
   } catch (error) {
     console.error("Error getting dashboard data for volunteer:", error);
     throw error;
@@ -1278,10 +1304,11 @@ export async function getSDGContributionsForOrganization(userId: number) {
     });
 
     // Aggregate data for each SDG
+    // Use sdgGoals array only - consistent with other counting logic
     organizationProjects.forEach(project => {
-      if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+      if (project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.length > 0) {
         project.sdgGoals.forEach(sdgGoal => {
-          if (sdgGoal >= 1 && sdgGoal <= 17) {
+          if (typeof sdgGoal === 'number' && sdgGoal >= 1 && sdgGoal <= 17) {
             const sdgIndex = sdgGoal - 1;
 
             // Add project to this SDG

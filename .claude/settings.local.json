@@ -35,7 +35,9 @@
       "Bash(npx eslint:*)",
       "WebSearch",
       "Bash(netstat:*)",
-      "Bash(ss:*)"
+      "Bash(ss:*)",
+      "Bash(timeout 20 npm run dev)",
+      "Bash(du:*)"
     ],
     "deny": [],
     "ask": []

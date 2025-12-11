@@ -1,8 +1,26 @@
 import { useLocation } from "wouter";
-import { useState, useEffect } from "react";
-import EmployeeEngagementTab from "./employee-engagement-tab";
+import { useState, useEffect, lazy, Suspense } from "react";
 import Footer from "@/components/layout/footer";
 import CSRMobileNav, { CSRMobileHeader } from "@/components/layout/csr-mobile-nav";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Use dynamic import to match csr-dashboard.tsx and enable code splitting
+const EmployeeEngagementTab = lazy(() => import("./employee-engagement-tab"));
+
+// Loading fallback for Suspense
+function EngagementTabSkeleton() {
+  return (
+    <div className="space-y-4 p-4">
+      <Skeleton className="h-8 w-48" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
+        <Skeleton className="h-24" />
+      </div>
+      <Skeleton className="h-64" />
+    </div>
+  );
+}
 
 export default function EmployeeEngagementTabPage() {
   const [, setLocation] = useLocation();
@@ -27,7 +45,9 @@ export default function EmployeeEngagementTabPage() {
         />
 
         <main className="flex-1 overflow-y-auto pb-20 px-3 pt-3">
-          <EmployeeEngagementTab userId={userId} />
+          <Suspense fallback={<EngagementTabSkeleton />}>
+            <EmployeeEngagementTab userId={userId} />
+          </Suspense>
         </main>
 
         <CSRMobileNav activeTab="employees" />
@@ -86,7 +106,9 @@ export default function EmployeeEngagementTabPage() {
       {/* Content */}
       <main style={{ flex: 1, overflowY: "auto" }}>
         <div style={{ padding: "24px", maxWidth: "1400px", margin: "0 auto" }}>
-          <EmployeeEngagementTab userId={userId} />
+          <Suspense fallback={<EngagementTabSkeleton />}>
+            <EmployeeEngagementTab userId={userId} />
+          </Suspense>
         </div>
         <Footer />
       </main>

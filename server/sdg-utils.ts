@@ -1,10 +1,3 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
-}
-
 // SDG (Sustainable Development Goals) Utilities
 // SDGs are numbered 1-17, this validation ensures data integrity
 

@@ -205,7 +205,23 @@ export interface IStorage {
   listProjectAssignments(): Promise<ProjectAssignment[]>;
   listProjectAssignmentsByProject(projectId: number): Promise<ProjectAssignment[]>;
   listProjectAssignmentsByVolunteer(volunteerId: number): Promise<ProjectAssignment[]>;
+  listProjectAssignmentsByProjectIds(projectIds: number[]): Promise<ProjectAssignment[]>;
   deleteProjectAssignment(id: number): Promise<boolean>;
+
+  // === OPTIMIZED BATCH QUERY METHODS (Hyper-efficiency) ===
+  // These methods reduce N+1 queries by fetching filtered data in single queries
+
+  // Batch fetch tasks by multiple project IDs
+  listTasksByProjectIds(projectIds: number[]): Promise<Task[]>;
+
+  // Batch fetch activities by multiple project IDs
+  listVolunteerActivitiesByProjectIds(projectIds: number[]): Promise<VolunteerActivity[]>;
+
+  // Batch fetch impacts by multiple project IDs
+  listProjectImpactsByProjectIds(projectIds: number[]): Promise<ProjectImpact[]>;
+
+  // Batch fetch applications by multiple opportunity IDs
+  listApplicationsByOpportunityIds(opportunityIds: number[]): Promise<Application[]>;
 
   // Volunteer operations (matching system)
   getVolunteer(id: string): Promise<Volunteer | undefined>;
@@ -845,6 +861,34 @@ export class DatabaseStorage implements IStorage {
   async deleteProjectAssignment(id: number): Promise<boolean> {
     await db.delete(projectAssignments).where(eq(projectAssignments.id, id));
     return true;
+  }
+
+  async listProjectAssignmentsByProjectIds(projectIds: number[]): Promise<ProjectAssignment[]> {
+    if (projectIds.length === 0) return [];
+    return await db.select().from(projectAssignments).where(inArray(projectAssignments.projectId, projectIds));
+  }
+
+  // === OPTIMIZED BATCH QUERY IMPLEMENTATIONS (Hyper-efficiency) ===
+  // These methods reduce N+1 queries by fetching filtered data in single database queries
+
+  async listTasksByProjectIds(projectIds: number[]): Promise<Task[]> {
+    if (projectIds.length === 0) return [];
+    return await db.select().from(tasks).where(inArray(tasks.projectId, projectIds));
+  }
+
+  async listVolunteerActivitiesByProjectIds(projectIds: number[]): Promise<VolunteerActivity[]> {
+    if (projectIds.length === 0) return [];
+    return await db.select().from(volunteerActivities).where(inArray(volunteerActivities.projectId, projectIds));
+  }
+
+  async listProjectImpactsByProjectIds(projectIds: number[]): Promise<ProjectImpact[]> {
+    if (projectIds.length === 0) return [];
+    return await db.select().from(projectImpacts).where(inArray(projectImpacts.projectId, projectIds));
+  }
+
+  async listApplicationsByOpportunityIds(opportunityIds: number[]): Promise<Application[]> {
+    if (opportunityIds.length === 0) return [];
+    return await db.select().from(applications).where(inArray(applications.opportunityId, opportunityIds));
   }
 
   // Volunteer operations (matching system)

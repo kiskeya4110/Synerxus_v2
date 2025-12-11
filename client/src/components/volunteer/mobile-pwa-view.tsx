@@ -4,6 +4,7 @@ import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
+import { isValidSdg, filterValidSdgs, extractSdgsFromProjects, compareSdgArrays } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -133,9 +134,17 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesImpacted) || Number(p?.livesTouched) || 0), 0);
     const skills = Array.isArray(volunteerProfile?.skills) ? volunteerProfile.skills.length : 0;
 
-    // SDG Impact: Use server-calculated value for consistency
-    // Server counts unique SDGs from assigned projects only
-    const sdgsContributed = Number(dashboardData?.sdgsAddressed) || 0;
+    // SDG Commitments: SDGs the volunteer committed to in their profile using shared utility
+    const committedSdgs = filterValidSdgs(volunteerProfile?.preferredSdgs || []);
+    const sdgsCommitted = committedSdgs.length;
+
+    // SDG Contributions: Calculate from actual project data using shared utility
+    const contributedSdgs = extractSdgsFromProjects(safeProjects);
+    const sdgsContributed = contributedSdgs.length;
+
+    // SDG Comparison: Find alignment/differences using shared utility
+    const sdgComparison = compareSdgArrays(committedSdgs, contributedSdgs);
+    const { aligned: alignedSdgs, uncommittedWork, uncommittedContributions } = sdgComparison;
 
     // Calculate pending applications from dashboardData
     const pendingApplications = Array.isArray(dashboardData?.applications)
@@ -156,7 +165,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       totalProjects,
       livesImpacted,
       skills,
-      sdgsContributed,
+      sdgsContributed,          // Count of SDGs from actual work
+      sdgsCommitted,            // Count of SDGs from profile commitment
+      committedSdgs,            // Array of committed SDG numbers
+      contributedSdgs,          // Array of contributed SDG numbers
+      alignedSdgs,              // SDGs that are both committed AND contributed
+      uncommittedWork,          // Committed but NOT contributed (opportunities)
+      uncommittedContributions, // Contributed but NOT committed (bonus work)
       pendingApplications,
       impactScore,
       completedTasks,
@@ -254,9 +269,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     const projectSdgMap: { [projectId: number]: number[] } = {};
     safeProjects.forEach((p: any) => {
       if (p?.id && Array.isArray(p?.sdgGoals)) {
-        projectSdgMap[p.id] = p.sdgGoals.filter((sdg: number) =>
-          typeof sdg === 'number' && sdg >= 1 && sdg <= 17
-        );
+        projectSdgMap[p.id] = p.sdgGoals.filter(isValidSdg);
       }
     });
 
@@ -279,28 +292,24 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     // If no activities, use totalHoursLogged from enriched project data (real server-calculated hours)
     if (Object.keys(sdgHours).length === 0) {
       safeProjects.forEach((p: any) => {
-        const sdgGoals = Array.isArray(p?.sdgGoals) ? p.sdgGoals : [];
+        const sdgGoals = filterValidSdgs(p?.sdgGoals || []);
         // Use real hours from project data (totalHoursLogged comes from server)
         const projectHours = Number(p?.totalHoursLogged) || Number(p?.totalHours) || 0;
 
         if (sdgGoals.length > 0 && projectHours > 0) {
           const hoursPerSdg = projectHours / sdgGoals.length;
           sdgGoals.forEach((sdg: number) => {
-            if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
-              sdgHours[sdg] = (sdgHours[sdg] || 0) + hoursPerSdg;
-              if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
-              sdgProjects[sdg].add(p.id);
-            }
+            sdgHours[sdg] = (sdgHours[sdg] || 0) + hoursPerSdg;
+            if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+            sdgProjects[sdg].add(p.id);
           });
         } else if (sdgGoals.length > 0) {
           // Even if no hours, track projects per SDG (but don't inflate hours)
           sdgGoals.forEach((sdg: number) => {
-            if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
-              if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
-              sdgProjects[sdg].add(p.id);
-              // Only initialize if not already present
-              if (sdgHours[sdg] === undefined) sdgHours[sdg] = 0;
-            }
+            if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+            sdgProjects[sdg].add(p.id);
+            // Only initialize if not already present
+            if (sdgHours[sdg] === undefined) sdgHours[sdg] = 0;
           });
         }
       });
@@ -318,6 +327,98 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Show up to 8 SDGs
   }, [projects, volunteerActivities]);
+
+  // FACT-BASED AI Smart Summary Generator
+  // Generates insights based ONLY on actual data - no hallucinations or false claims
+  const factBasedInsights = useMemo(() => {
+    const safeProjects = Array.isArray(projects) ? projects : [];
+    const volunteerSkills = volunteerProfile?.skills || [];
+
+    // Find skills that are actually being used in assigned projects
+    const skillsUsedInProjects = new Set<string>();
+    const projectsBySkill: { [skill: string]: string[] } = {};
+
+    safeProjects.forEach((project: any) => {
+      const projectSkills = project.requiredSkills || project.skillsRequired || [];
+      const projectName = project.name || 'Unknown Project';
+
+      volunteerSkills.forEach((skill: string) => {
+        const isUsed = projectSkills.some((ps: string) =>
+          ps?.toLowerCase().includes(skill?.toLowerCase()) ||
+          skill?.toLowerCase().includes(ps?.toLowerCase())
+        );
+        if (isUsed) {
+          skillsUsedInProjects.add(skill);
+          if (!projectsBySkill[skill]) projectsBySkill[skill] = [];
+          projectsBySkill[skill].push(projectName);
+        }
+      });
+    });
+
+    const usedSkillsArray = Array.from(skillsUsedInProjects);
+
+    // Find the top contributing SDG (the one with most hours)
+    const topSdg = sdgDistribution[0];
+
+    // Calculate trend: compare last 2 months of activity
+    const recentMonths = impactOverTimeData.slice(-2);
+    const hasPositiveTrend = recentMonths.length === 2 && recentMonths[1]?.hours > recentMonths[0]?.hours;
+    const hasPerfectCompletion = kpis.completedTasks > 0 && kpis.completedTasks === kpis.totalTasks;
+
+    // SDG Alignment Analysis
+    const alignmentRate = kpis.sdgsCommitted > 0
+      ? Math.round((kpis.alignedSdgs.length / kpis.sdgsCommitted) * 100)
+      : 0;
+    const hasUncommittedWork = kpis.uncommittedWork.length > 0;
+    const hasBonusContributions = kpis.uncommittedContributions.length > 0;
+
+    // Generate fact-based summary with SDG alignment insights
+    let summary = '';
+    let sdgInsight = '';
+
+    if (kpis.totalHours === 0) {
+      // No activity yet - welcome message without false claims
+      if (kpis.sdgsCommitted > 0) {
+        summary = `Welcome! You've committed to ${kpis.sdgsCommitted} SDG${kpis.sdgsCommitted !== 1 ? 's' : ''}: ${kpis.committedSdgs.slice(0, 3).map((s: number) => `SDG ${s}`).join(', ')}. Find projects aligned with your goals to start making impact.`;
+      } else if (volunteerSkills.length > 0) {
+        summary = `Welcome! Your profile shows skills in ${volunteerSkills.slice(0, 2).join(' and ')}. Set your SDG commitments and browse opportunities to start your journey.`;
+      } else {
+        summary = `Welcome! Complete your profile with SDG commitments and skills to get personalized project recommendations.`;
+      }
+    } else {
+      // Has activity - build summary based on facts
+      const hoursInfo = `${kpis.totalHours} hours logged`;
+      const projectInfo = kpis.totalProjects > 0 ? ` across ${kpis.totalProjects} project${kpis.totalProjects !== 1 ? 's' : ''}` : '';
+
+      // SDG alignment insight
+      if (kpis.alignedSdgs.length > 0 && kpis.sdgsCommitted > 0) {
+        sdgInsight = ` You're aligned on ${kpis.alignedSdgs.length} of ${kpis.sdgsCommitted} committed SDGs (${alignmentRate}%).`;
+      }
+
+      if (hasBonusContributions && kpis.uncommittedContributions.length > 0) {
+        const bonusSdgs = kpis.uncommittedContributions.slice(0, 2).map((s: number) => `SDG ${s}`).join(', ');
+        sdgInsight += ` Bonus: You're also contributing to ${bonusSdgs} outside your commitments!`;
+      }
+
+      if (hasUncommittedWork && kpis.uncommittedWork.length > 0) {
+        const pendingSdgs = kpis.uncommittedWork.slice(0, 2).map((s: number) => `SDG ${s}`).join(', ');
+        sdgInsight += ` Opportunity: ${pendingSdgs} ${kpis.uncommittedWork.length === 1 ? 'is' : 'are'} committed but not yet started.`;
+      }
+
+      summary = `${hoursInfo}${projectInfo}.${sdgInsight}`;
+    }
+
+    return {
+      summary,
+      usedSkills: usedSkillsArray,
+      topSdg,
+      hasPositiveTrend,
+      hasPerfectCompletion,
+      alignmentRate,
+      hasUncommittedWork,
+      hasBonusContributions
+    };
+  }, [projects, volunteerProfile?.skills, sdgDistribution, impactOverTimeData, kpis]);
 
   // Calculate match score with reasons
   const calculateMatchScore = (project: any) => {
@@ -733,19 +834,19 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 className="bg-[#be185d] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
                 data-testid="kpi-sdgs"
               >
-                {/* SDG grid indicator */}
+                {/* SDG grid indicator - show committed SDGs */}
                 <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-[1px] opacity-40">
-                  {sdgDistribution.slice(0, 4).map((sdg, i) => (
+                  {kpis.committedSdgs.slice(0, 4).map((sdgNum: number, i: number) => (
                     <div
                       key={i}
                       className="w-2 h-2 rounded-sm"
-                      style={{ backgroundColor: sdg.color }}
+                      style={{ backgroundColor: SDG_COLORS[sdgNum] }}
                     />
                   ))}
                 </div>
                 <Target className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
-                <div className="text-xl font-bold relative z-10">{kpis.sdgsContributed}</div>
-                <div className="text-[10px] font-medium leading-tight relative z-10">SDGs</div>
+                <div className="text-xl font-bold relative z-10">{kpis.sdgsCommitted}</div>
+                <div className="text-[10px] font-medium leading-tight relative z-10">SDG Goals</div>
               </button>
             </div>
 
@@ -765,14 +866,14 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 {/* UN SDG Summary KPIs - Key Performance Indicators */}
                 <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100 shadow-sm mb-3">
                   <div className="grid grid-cols-4 gap-2 mb-4">
-                    {/* SDGs Contributed - Clickable */}
+                    {/* SDGs Committed (from profile) - User's commitment, not work done */}
                     <button
                       onClick={() => setShowKpiModal('sdgs')}
                       className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
                     >
-                      <div className="text-2xl font-bold text-blue-600">{kpis.sdgsContributed}</div>
-                      <div className="text-[9px] text-slate-600 font-medium">SDGs</div>
-                      <div className="text-[8px] text-slate-400">Active Goals</div>
+                      <div className="text-2xl font-bold text-blue-600">{kpis.sdgsCommitted}</div>
+                      <div className="text-[9px] text-slate-600 font-medium">SDG Goals</div>
+                      <div className="text-[8px] text-slate-400">Committed</div>
                     </button>
                     {/* Total Hours - Clickable, use actual kpis.totalHours */}
                     <button
@@ -809,26 +910,30 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </button>
                   </div>
 
-                  {/* UN SDG Coverage Indicator - Clickable Bars */}
+                  {/* UN SDG Coverage Indicator - Shows committed SDGs (goals) vs contributed (work done) */}
                   <div className="bg-white/70 rounded-lg p-2 mb-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] text-slate-600 font-medium">Global Goals Coverage</span>
+                      <span className="text-[10px] text-slate-600 font-medium">SDG Commitments</span>
                       <span className="text-[10px] text-blue-600 font-bold">
-                        {Math.round((kpis.sdgsContributed / 17) * 100)}% of 17 SDGs
+                        {kpis.sdgsCommitted} of 17 Goals ({Math.round((kpis.sdgsCommitted / 17) * 100)}%)
                       </span>
                     </div>
                     <div className="flex gap-[2px]">
                       {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
+                        // Check if this SDG is in the volunteer's committed goals (preferredSdgs)
+                        const isCommitted = kpis.committedSdgs.includes(sdgNum);
+                        // Check if volunteer has actually contributed hours to this SDG
                         const sdgData = sdgDistribution.find(s => s.sdg === sdgNum);
-                        const isActive = !!sdgData;
+                        const hasContributed = !!sdgData && sdgData.value > 0;
                         return (
                           <button
                             key={sdgNum}
-                            onClick={() => isActive && setShowSdgModal(sdgNum)}
-                            className={`flex-1 h-3 rounded-sm transition-all ${isActive ? 'hover:scale-y-150 cursor-pointer' : 'cursor-default'}`}
+                            onClick={() => (isCommitted || hasContributed) && setShowSdgModal(sdgNum)}
+                            className={`flex-1 h-3 rounded-sm transition-all ${(isCommitted || hasContributed) ? 'hover:scale-y-150 cursor-pointer' : 'cursor-default'}`}
                             style={{
-                              backgroundColor: isActive ? SDG_COLORS[sdgNum] : '#e5e7eb',
-                              opacity: isActive ? 1 : 0.4
+                              backgroundColor: isCommitted ? SDG_COLORS[sdgNum] : hasContributed ? SDG_COLORS[sdgNum] : '#e5e7eb',
+                              opacity: isCommitted ? 1 : hasContributed ? 0.5 : 0.3,
+                              border: hasContributed && !isCommitted ? `1px solid ${SDG_COLORS[sdgNum]}` : 'none'
                             }}
                             title={`SDG ${sdgNum}: ${SDG_NAMES[sdgNum]}${sdgData ? ` (${sdgData.value} hrs)` : ''}`}
                           />
@@ -1509,7 +1614,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 </div>
               </div>
 
-              {/* AI Smart Summary */}
+              {/* AI Smart Summary - Now uses fact-based insights */}
               <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 rounded-xl p-4 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 opacity-10">
                   <Sparkles className="w-full h-full" />
@@ -1517,21 +1622,14 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 <div className="flex items-center gap-2 mb-2">
                   <Sparkles className="w-5 h-5" />
                   <span className="font-semibold">AI Smart Summary</span>
-                  <span className="ml-auto text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Personalized</span>
+                  <span className="ml-auto text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Fact-Based</span>
                 </div>
                 <p className="text-sm opacity-95 leading-relaxed">
-                  {kpis.totalHours > 50
-                    ? `Outstanding performance! With ${kpis.totalHours} hours across ${kpis.totalProjects} projects, you're in the top 10% of volunteers. Your expertise in ${volunteerProfile?.skills?.[0] || 'your field'} is making measurable impact on ${sdgDistribution[0]?.name || 'sustainable development'}.`
-                    : kpis.totalHours > 20
-                    ? `Great momentum! You've logged ${kpis.totalHours} hours and contributed to ${kpis.sdgsContributed} SDGs. Focus on ${sdgDistribution[0]?.name || 'Climate Action'} to maximize your impact trajectory.`
-                    : kpis.totalHours > 0
-                    ? `You're building your impact story with ${kpis.totalHours} hours logged. Based on your skills in ${volunteerProfile?.skills?.slice(0, 2).join(' and ') || 'your areas'}, we recommend exploring projects in ${sdgDistribution[0]?.name || 'Quality Education'}.`
-                    : `Welcome to your impact journey! Based on your profile, we've identified high-potential opportunities in ${volunteerProfile?.skills?.length > 0 ? 'your skill areas' : 'various SDG categories'}. Start logging hours to unlock personalized AI insights.`
-                  }
+                  {factBasedInsights.summary}
                 </p>
                 <div className="mt-3 flex items-center gap-2 text-xs opacity-80">
                   <Clock className="w-3 h-3" />
-                  <span>Analysis updated in real-time</span>
+                  <span>Based on your actual activity data</span>
                 </div>
               </div>
 
@@ -1721,7 +1819,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 <Globe className="w-5 h-5 opacity-80" />
                 <span className="text-sm">Contributed to {kpis.sdgsContributed} SDGs</span>
                 <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                  {aiuSummary?.verificationRate || 0}% Verified
+                  {Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}% Verified
                 </span>
               </div>
             </div>
@@ -1889,19 +1987,15 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </div>
             </div>
 
-            {/* AI Insights Card */}
+            {/* AI Insights Card - Now uses fact-based insights */}
             <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="w-5 h-5" />
                 <span className="font-semibold">AI Impact Insights</span>
+                <span className="ml-auto text-[10px] bg-white/20 px-2 py-0.5 rounded-full">Fact-Based</span>
               </div>
               <p className="text-sm opacity-90">
-                {kpis.totalHours > 50 
-                  ? `Outstanding! You're in the top 10% of volunteers with ${kpis.totalHours} hours. Your focus on ${sdgDistribution[0]?.name || 'sustainable development'} is making real change.`
-                  : kpis.totalHours > 20
-                  ? `Great progress! With ${kpis.totalHours} hours logged across ${kpis.sdgsContributed} SDGs, you're building momentum.`
-                  : `Welcome! Start your impact journey by joining projects aligned with your skills and interests.`
-                }
+                {factBasedInsights.summary}
               </p>
             </div>
 
@@ -2244,26 +2338,103 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               )}
               {showKpiModal === 'sdgs' && (
                 <>
-                  <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-pink-500 mb-2">{kpis.sdgsContributed}</div>
-                    <div className="text-slate-500">UN Sustainable Development Goals</div>
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-blue-500">{kpis.sdgsCommitted}</div>
+                      <div className="text-slate-500 text-sm">Committed</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-emerald-500">{kpis.sdgsContributed}</div>
+                      <div className="text-slate-500 text-sm">Contributed</div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {sdgDistribution.map((sdg) => (
-                      <button
-                        key={sdg.sdg}
-                        onClick={() => {
-                          setShowKpiModal(null);
-                          setShowSdgModal(sdg.sdg);
-                        }}
-                        className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: sdg.color }}
-                      >
-                        <div className="text-white font-bold text-lg">SDG {sdg.sdg}</div>
-                        <div className="text-white/80 text-xs">{sdg.value} hrs</div>
-                      </button>
-                    ))}
-                  </div>
+
+                  {/* Aligned SDGs - Both committed AND contributed */}
+                  {kpis.alignedSdgs.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                        <h3 className="text-slate-800 font-semibold text-sm">Aligned ({kpis.alignedSdgs.length})</h3>
+                        <span className="text-xs text-slate-400">Committed & Contributing</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {kpis.alignedSdgs.map((sdgNum: number) => {
+                          const sdgData = sdgDistribution.find(s => s.sdg === sdgNum);
+                          return (
+                            <button
+                              key={sdgNum}
+                              onClick={() => { setShowKpiModal(null); setShowSdgModal(sdgNum); }}
+                              className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity ring-2 ring-emerald-400"
+                              style={{ backgroundColor: SDG_COLORS[sdgNum] }}
+                            >
+                              <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
+                              <div className="text-white/80 text-[10px]">{sdgData ? `${sdgData.value} hrs` : SDG_NAMES[sdgNum]?.split(' ').slice(0, 2).join(' ')}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Uncommitted Work - Committed but NOT contributed */}
+                  {kpis.uncommittedWork.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <h3 className="text-slate-800 font-semibold text-sm">Not Started ({kpis.uncommittedWork.length})</h3>
+                        <span className="text-xs text-slate-400">Committed, no work yet</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {kpis.uncommittedWork.map((sdgNum: number) => (
+                          <button
+                            key={sdgNum}
+                            onClick={() => { setShowKpiModal(null); setShowSdgModal(sdgNum); }}
+                            className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity border-2 border-dashed border-amber-400"
+                            style={{ backgroundColor: SDG_COLORS[sdgNum], opacity: 0.7 }}
+                          >
+                            <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
+                            <div className="text-white/80 text-[10px]">{SDG_NAMES[sdgNum]?.split(' ').slice(0, 2).join(' ')}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bonus Contributions - Contributed but NOT committed */}
+                  {kpis.uncommittedContributions.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                        <h3 className="text-slate-800 font-semibold text-sm">Bonus ({kpis.uncommittedContributions.length})</h3>
+                        <span className="text-xs text-slate-400">Contributing, not committed</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {kpis.uncommittedContributions.map((sdgNum: number) => {
+                          const sdgData = sdgDistribution.find(s => s.sdg === sdgNum);
+                          return (
+                            <button
+                              key={sdgNum}
+                              onClick={() => { setShowKpiModal(null); setShowSdgModal(sdgNum); }}
+                              className="rounded-lg p-2 text-center hover:opacity-90 transition-opacity ring-2 ring-purple-400"
+                              style={{ backgroundColor: SDG_COLORS[sdgNum] }}
+                            >
+                              <div className="text-white font-bold text-sm">SDG {sdgNum}</div>
+                              <div className="text-white/80 text-[10px]">{sdgData ? `${sdgData.value} hrs` : 'Bonus'}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No SDGs at all */}
+                  {kpis.sdgsCommitted === 0 && kpis.sdgsContributed === 0 && (
+                    <div className="text-center text-slate-400 py-8">
+                      <p>No SDG activity yet.</p>
+                      <p className="text-xs mt-2">Update your profile to set SDG goals, then find projects!</p>
+                    </div>
+                  )}
                 </>
               )}
               {showKpiModal === 'aiu' && (
@@ -2284,7 +2455,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       </div>
                       <div className="flex justify-between">
                         <span>Verification Rate:</span>
-                        <span className="text-emerald-600 font-semibold">{Math.round((aiuSummary?.verificationRate || 0) * 100)}%</span>
+                        <span className="text-emerald-600 font-semibold">{Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}%</span>
                       </div>
                       <div className="flex justify-between">
                         <span>Total Hours:</span>
@@ -2560,43 +2731,103 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               )}
               {showProjectStatsModal === 'sdgs' && (
                 <>
-                  <div className="text-center py-4">
-                    <div className="text-5xl font-bold text-pink-500 mb-2">{kpis.sdgsContributed}</div>
-                    <div className="text-slate-500">Sustainable Development Goals</div>
+                  {/* Summary Stats */}
+                  <div className="grid grid-cols-2 gap-4 py-4">
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-blue-500">{kpis.sdgsCommitted}</div>
+                      <div className="text-slate-500 text-sm">Committed</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-3xl font-bold text-emerald-500">{kpis.sdgsContributed}</div>
+                      <div className="text-slate-500 text-sm">Contributed</div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <h3 className="text-slate-800 font-semibold text-sm">SDG Distribution:</h3>
-                    {sdgDistribution.map((sdg) => (
-                      <div
-                        key={sdg.sdg}
-                        className="bg-slate-50 rounded-lg p-3 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors"
-                        onClick={() => {
-                          setShowProjectStatsModal(null);
-                          setShowSdgModal(sdg.sdg);
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold flex-shrink-0 text-xs"
-                            style={{ backgroundColor: sdg.color }}
-                          >
-                            SDG {sdg.sdg}
-                          </div>
-                          <div className="flex-1">
-                            <div className="text-slate-800 font-medium text-sm">{sdg.name}</div>
-                            <div className="text-xs text-slate-500 mt-1">
-                              {sdg.value} hrs
+
+                  {/* Aligned SDGs */}
+                  {kpis.alignedSdgs.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
+                        <h3 className="text-slate-800 font-semibold text-sm">Aligned ({kpis.alignedSdgs.length})</h3>
+                      </div>
+                      <div className="space-y-2">
+                        {kpis.alignedSdgs.map((sdgNum: number) => {
+                          const sdgData = sdgDistribution.find(s => s.sdg === sdgNum);
+                          return (
+                            <div key={sdgNum} className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: SDG_COLORS[sdgNum] }}>
+                                  {sdgNum}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="text-slate-800 font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                  <div className="text-xs text-emerald-600">{sdgData ? `${sdgData.value} hrs contributed` : 'Committed & Contributing'}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Not Started SDGs */}
+                  {kpis.uncommittedWork.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+                        <h3 className="text-slate-800 font-semibold text-sm">Not Started ({kpis.uncommittedWork.length})</h3>
+                      </div>
+                      <div className="space-y-2">
+                        {kpis.uncommittedWork.map((sdgNum: number) => (
+                          <div key={sdgNum} className="bg-amber-50 rounded-lg p-3 border border-amber-200 border-dashed">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs opacity-70" style={{ backgroundColor: SDG_COLORS[sdgNum] }}>
+                                {sdgNum}
+                              </div>
+                              <div className="flex-1">
+                                <div className="text-slate-800 font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                <div className="text-xs text-amber-600">Committed - find projects to start!</div>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-slate-400">→</div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  {kpis.sdgsContributed === 0 && (
+                    </div>
+                  )}
+
+                  {/* Bonus SDGs */}
+                  {kpis.uncommittedContributions.length > 0 && (
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                        <h3 className="text-slate-800 font-semibold text-sm">Bonus ({kpis.uncommittedContributions.length})</h3>
+                      </div>
+                      <div className="space-y-2">
+                        {kpis.uncommittedContributions.map((sdgNum: number) => {
+                          const sdgData = sdgDistribution.find(s => s.sdg === sdgNum);
+                          return (
+                            <div key={sdgNum} className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: SDG_COLORS[sdgNum] }}>
+                                  {sdgNum}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="text-slate-800 font-medium text-sm">{SDG_NAMES[sdgNum]}</div>
+                                  <div className="text-xs text-purple-600">{sdgData ? `${sdgData.value} hrs` : ''} - Extra impact!</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {kpis.sdgsCommitted === 0 && kpis.sdgsContributed === 0 && (
                     <div className="text-center text-slate-400 py-8">
-                      <p>No SDG contributions yet.</p>
-                      <p className="text-xs mt-2">Start volunteering to make an impact!</p>
+                      <p>No SDG activity yet.</p>
+                      <p className="text-xs mt-2">Update your profile to set SDG goals, then start volunteering!</p>
                     </div>
                   )}
                 </>

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import logoImage from "@assets/Synerxus_Logo_1765433966690.png";
-import logoWithTagline from "@assets/synerxus-logo-tagline.png";
 
 interface LogoProps {
   className?: string;
@@ -35,25 +34,18 @@ export default function Logo({
   };
 
   const content = (
-    <div className="flex flex-col items-center">
+    <div className="flex items-center">
       {!imageError && (
-        <>
-          <img
-            src={showTagline ? logoWithTagline : logoImage}
-            alt="Synerxus Logo"
-            className={cn(
-              sizes[size],
-              "w-auto object-contain flex-shrink-0",
-            )}
-            loading="eager"
-            onError={() => setImageError(true)}
-          />
-          {showTagline && (
-            <span className="text-[8px] sm:text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-wide mt-0.5">
-              Connect. Collaborate. Impact Globally.
-            </span>
+        <img
+          src={logoImage}
+          alt="Synerxus Logo"
+          className={cn(
+            sizes[size],
+            "w-auto object-contain flex-shrink-0",
           )}
-        </>
+          loading="eager"
+          onError={() => setImageError(true)}
+        />
       )}
     </div>
   );

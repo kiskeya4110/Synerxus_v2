@@ -67,14 +67,14 @@ export default function VolunteerNav() {
           <div className="flex items-center gap-6">
             <button
               onClick={handleLogoClick}
-              className="flex flex-col items-center gap-0.5 hover:opacity-90 transition-opacity cursor-pointer group"
+              className="flex items-center hover:opacity-90 transition-opacity cursor-pointer"
               title="Go to Home"
             >
               {!imageError ? (
                 <img
                   src={logoImage}
                   alt="Synerxus Logo"
-                  className="h-10 w-auto object-contain"
+                  className="h-12 w-auto object-contain"
                   onError={() => setImageError(true)}
                 />
               ) : (
@@ -82,14 +82,6 @@ export default function VolunteerNav() {
                   <span className="text-white font-bold text-lg">S</span>
                 </div>
               )}
-              <div className="flex flex-col items-center">
-                <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hidden lg:inline group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
-                  SYNERXUS
-                </span>
-                <span className="text-[8px] text-gray-500 dark:text-gray-400 font-medium tracking-wide hidden lg:inline">
-                  Connect. Collaborate. Impact Globally.
-                </span>
-              </div>
             </button>
 
             {/* Nav Items */}

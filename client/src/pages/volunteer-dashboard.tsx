@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { extractSdgsFromProjects } from "@/lib/utils";
 import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3 } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import { PageTransition } from "@/components/ui/page-transition";
@@ -483,13 +484,9 @@ export default function Dashboard() {
     // Show all filtered projects (not just active) for consistency
     const filteredProjectsCount = filteredData.projects.length;
 
-    // Calculate unique SDGs from filtered projects
-    const uniqueSDGs = new Set();
-    filteredData.projects.forEach((p: any) => {
-      if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
-        p.sdgGoals.forEach((sdg: number) => uniqueSDGs.add(sdg));
-      }
-    });
+    // Calculate unique SDGs from filtered projects using shared utility
+    const uniqueSDGsArray = extractSdgsFromProjects(filteredData.projects);
+    const uniqueSDGs = new Set(uniqueSDGsArray);
 
     // Filter AIU projects by selected project
     const selectedProjectId = parseInt(selectedProject);
@@ -813,12 +810,9 @@ export default function Dashboard() {
         const totalHours = filteredData.activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
         const totalTasks = filteredData.tasks.length;
         const completedTasks = filteredData.tasks.filter((t: any) => t.status === "Completed").length;
-        const uniqueSDGs = new Set<number>();
-        filteredData.projects.forEach((p: any) => {
-          if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
-            p.sdgGoals.forEach((goal: number) => uniqueSDGs.add(goal));
-          }
-        });
+        // Use shared utility for consistent SDG counting
+        const uniqueSDGsArray = extractSdgsFromProjects(filteredData.projects);
+        const uniqueSDGs = new Set(uniqueSDGsArray);
         const applications = filteredData.applications || [];
         const acceptedApplications = applications.filter((app: any) => app.status === 'accepted').length;
         

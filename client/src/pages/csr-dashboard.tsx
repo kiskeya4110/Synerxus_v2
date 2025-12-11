@@ -62,14 +62,60 @@ import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { useState, useEffect, useTransition } from "react";
 import { ConfirmDialog } from "@/components/ui/dialog-factory";
 import { safeArray, safeMap, safeFilter, safeReduce } from "@/lib/safe-array";
-import { lazy, Suspense, useMemo, useCallback, memo } from "react";
+import { lazy, Suspense, useMemo, useCallback, memo, Component, type ReactNode } from "react";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
 
+// Error Boundary for lazy-loaded components
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class LazyErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Lazy component failed to load:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="h-64 bg-slate-100 rounded-lg flex items-center justify-center">
+          <div className="text-center text-slate-500">
+            <p className="text-sm">Component failed to load</p>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="mt-2 text-xs text-blue-600 hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 // Lazy load heavy components for better initial load time
+// Error handling is done via LazyErrorBoundary wrapper at usage sites
 const MapContainer = lazy(() => import("react-leaflet").then(m => ({ default: m.MapContainer })));
 const TileLayer = lazy(() => import("react-leaflet").then(m => ({ default: m.TileLayer })));
 const Marker = lazy(() => import("react-leaflet").then(m => ({ default: m.Marker })));
@@ -290,6 +336,7 @@ export default function CSRDashboard() {
     data: csrData,
     isLoading,
     error,
+    refetch: refetchCSRData,
   } = useQuery<CSRDashboardData>({
     queryKey: ["/api/csr/dashboard", userId, dateRange],
     queryFn: async () => {
@@ -310,11 +357,11 @@ export default function CSRDashboard() {
     },
     enabled: isAuthenticated,
     refetchOnWindowFocus: true,
-    refetchInterval: 30000, // Poll every 30 seconds for real-time updates
+    refetchInterval: 30000, // Poll every 30 seconds for real-time volunteer updates
     staleTime: 10000, // Consider data stale after 10 seconds
   });
 
-  const { data: funnelData } = useQuery({
+  const { data: funnelData, refetch: refetchFunnel } = useQuery({
     queryKey: ["/api/csr/engagement-funnel", userId],
     queryFn: async () => {
       const response = await fetch(
@@ -324,11 +371,12 @@ export default function CSRDashboard() {
       return response.json();
     },
     enabled: isAuthenticated,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Poll every 30 seconds for volunteer updates
     staleTime: 10000,
   });
 
-  const { data: adminActionsData } = useQuery({
+  const { data: adminActionsData, refetch: refetchAdminActions } = useQuery({
     queryKey: ["/api/csr/pending-actions", userId],
     queryFn: async () => {
       const response = await fetch(`/api/csr/pending-actions?userId=${userId}`);
@@ -336,11 +384,12 @@ export default function CSRDashboard() {
       return response.json();
     },
     enabled: isAuthenticated,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Poll every 30 seconds for volunteer updates
     staleTime: 10000,
   });
 
-  const { data: funnelStageData } = useQuery({
+  const { data: funnelStageData, refetch: refetchFunnelStage } = useQuery({
     queryKey: ["/api/csr/engagement-funnel-stage", userId, selectedFunnelStage],
     queryFn: async () => {
       const response = await fetch(
@@ -350,6 +399,8 @@ export default function CSRDashboard() {
       return response.json();
     },
     enabled: isAuthenticated && selectedFunnelStage !== null,
+    refetchOnWindowFocus: true,
+    staleTime: 10000,
   });
 
   // ===== MEMOIZED COMPUTED VALUES FOR PERFORMANCE =====
@@ -1198,21 +1249,21 @@ export default function CSRDashboard() {
               {/* Quick Team Stats */}
               <div className="grid grid-cols-3 gap-2">
                 <button
-                  onClick={() => setMobileKPIModal('participation')}
+                  onClick={() => startTransition(() => setMobileKPIModal('participation'))}
                   className="bg-blue-50 rounded-lg p-2 border border-blue-200 text-center hover:bg-blue-100 transition-colors"
                 >
                   <div className="text-blue-700 text-lg font-bold">42%</div>
                   <div className="text-blue-600 text-[9px] font-medium">Participation</div>
                 </button>
                 <button
-                  onClick={() => setMobileKPIModal('retention')}
+                  onClick={() => startTransition(() => setMobileKPIModal('retention'))}
                   className="bg-emerald-50 rounded-lg p-2 border border-emerald-200 text-center hover:bg-emerald-100 transition-colors"
                 >
                   <div className="text-emerald-700 text-lg font-bold">78%</div>
                   <div className="text-emerald-600 text-[9px] font-medium">Retention</div>
                 </button>
                 <button
-                  onClick={() => setMobileKPIModal('satisfaction')}
+                  onClick={() => startTransition(() => setMobileKPIModal('satisfaction'))}
                   className="bg-amber-50 rounded-lg p-2 border border-amber-200 text-center hover:bg-amber-100 transition-colors"
                 >
                   <div className="text-amber-700 text-lg font-bold">4.6</div>
@@ -1640,7 +1691,7 @@ export default function CSRDashboard() {
         <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 via-sky-500 to-sky-300 border-t border-slate-200/30 px-1 py-1.5 max-w-[428px] mx-auto z-50 shadow-lg">
           <div className="flex justify-around items-center">
             <button
-              onClick={() => setMobileTab('overview')}
+              onClick={() => startTransition(() => setMobileTab('overview'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
                 mobileTab === 'overview' ? 'text-slate-900' : 'text-slate-700'
               }`}
@@ -1651,7 +1702,7 @@ export default function CSRDashboard() {
             </button>
 
             <button
-              onClick={() => setMobileTab('employees')}
+              onClick={() => startTransition(() => setMobileTab('employees'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
                 mobileTab === 'employees' ? 'text-slate-900' : 'text-slate-700'
               }`}
@@ -1662,7 +1713,7 @@ export default function CSRDashboard() {
             </button>
 
             <button
-              onClick={() => setMobileTab('sdgs')}
+              onClick={() => startTransition(() => setMobileTab('sdgs'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
                 mobileTab === 'sdgs' ? 'text-slate-900' : 'text-slate-700'
               }`}
@@ -1673,7 +1724,7 @@ export default function CSRDashboard() {
             </button>
 
             <button
-              onClick={() => setMobileTab('reports')}
+              onClick={() => startTransition(() => setMobileTab('reports'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
                 mobileTab === 'reports' ? 'text-slate-900' : 'text-slate-700'
               }`}
@@ -1684,7 +1735,7 @@ export default function CSRDashboard() {
             </button>
 
             <button
-              onClick={() => setMobileTab('settings')}
+              onClick={() => startTransition(() => setMobileTab('settings'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
                 mobileTab === 'settings' ? 'text-slate-900' : 'text-slate-700'
               }`}
@@ -1698,7 +1749,7 @@ export default function CSRDashboard() {
 
         {/* Mobile KPI Detail Modal */}
         {mobileKPIModal && (
-          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => setMobileKPIModal(null)}>
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => startTransition(() => setMobileKPIModal(null))}>
             <div
               className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
               onClick={(e) => e.stopPropagation()}
@@ -1715,7 +1766,7 @@ export default function CSRDashboard() {
                   {mobileKPIModal === 'satisfaction' && 'Satisfaction Score'}
                 </h2>
                 <button
-                  onClick={() => setMobileKPIModal(null)}
+                  onClick={() => startTransition(() => setMobileKPIModal(null))}
                   className="p-2 rounded-full hover:bg-slate-100"
                 >
                   <X className="w-5 h-5 text-slate-600" />
@@ -1733,7 +1784,7 @@ export default function CSRDashboard() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <button
-                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('employees'); }}
+                        onClick={() => startTransition(() => { setMobileKPIModal(null); setMobileKPIModal('employees'); })}
                         className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200 hover:bg-blue-100 hover:border-blue-300 active:scale-95 transition-all"
                       >
                         <div className="text-blue-700 text-xl font-bold">
@@ -1763,7 +1814,7 @@ export default function CSRDashboard() {
                             return (
                               <button
                                 key={metric.sdg}
-                                onClick={() => { setMobileKPIModal(null); setSelectedSDG(metric.sdg); }}
+                                onClick={() => startTransition(() => { setMobileKPIModal(null); setSelectedSDG(metric.sdg); })}
                                 className="flex items-center gap-2 w-full p-2 rounded-lg hover:bg-white active:scale-98 transition-all border border-transparent hover:border-slate-300"
                               >
                                 <div className="w-7 h-7 rounded flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: getSDGColor(metric.sdg) }}>
@@ -1797,7 +1848,7 @@ export default function CSRDashboard() {
                         View Report
                       </button>
                       <button
-                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('employees'); }}
+                        onClick={() => startTransition(() => { setMobileKPIModal(null); setMobileKPIModal('employees'); })}
                         className="bg-white text-blue-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-blue-300 hover:bg-blue-50 active:scale-95 transition-all"
                       >
                         <Users className="w-3.5 h-3.5" />
@@ -1851,7 +1902,7 @@ export default function CSRDashboard() {
                         {(csrData?.leaderboard || []).slice(0, 5).map((emp: any, i: number) => (
                           <button
                             key={emp.rank || i}
-                            onClick={() => { setMobileKPIModal(null); setSelectedEmployee({ ...emp, rank: i + 1 }); }}
+                            onClick={() => startTransition(() => { setMobileKPIModal(null); setSelectedEmployee({ ...emp, rank: i + 1 }); })}
                             className="flex items-center gap-2 w-full bg-white rounded-lg p-2.5 border border-slate-200 hover:bg-amber-50 hover:border-amber-300 active:scale-98 transition-all"
                           >
                             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : i === 2 ? 'bg-amber-700' : 'bg-emerald-600'}`}>
@@ -1873,14 +1924,14 @@ export default function CSRDashboard() {
                     {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-2 mt-3">
                       <button
-                        onClick={() => { setMobileKPIModal(null); setMobileTab('employees'); }}
+                        onClick={() => startTransition(() => { setMobileKPIModal(null); setMobileTab('employees'); })}
                         className="bg-emerald-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-emerald-700 active:scale-95 transition-all"
                       >
                         <Users className="w-3.5 h-3.5" />
                         Team Analytics
                       </button>
                       <button
-                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('hours'); }}
+                        onClick={() => startTransition(() => { setMobileKPIModal(null); setMobileKPIModal('hours'); })}
                         className="bg-white text-emerald-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-emerald-300 hover:bg-emerald-50 active:scale-95 transition-all"
                       >
                         <Clock className="w-3.5 h-3.5" />
@@ -1899,7 +1950,7 @@ export default function CSRDashboard() {
                     </div>
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <button
-                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('hours'); }}
+                        onClick={() => startTransition(() => { setMobileKPIModal(null); setMobileKPIModal('hours'); })}
                         className="bg-purple-50 rounded-lg p-3 text-center border border-purple-200 hover:bg-purple-100 active:scale-95 transition-all"
                       >
                         <div className="text-purple-700 text-xl font-bold">{csrData?.kpiBreakdown?.projects?.activeProjects || displayProjectsCompleted}</div>
@@ -1952,7 +2003,7 @@ export default function CSRDashboard() {
                         All Projects
                       </button>
                       <button
-                        onClick={() => { setMobileKPIModal(null); setMobileKPIModal('aiu'); }}
+                        onClick={() => startTransition(() => { setMobileKPIModal(null); setMobileKPIModal('aiu'); })}
                         className="bg-white text-purple-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-purple-300 hover:bg-purple-50 active:scale-95 transition-all"
                       >
                         <TrendingUp className="w-3.5 h-3.5" />
@@ -1976,10 +2027,10 @@ export default function CSRDashboard() {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <button
-                        onClick={() => {
+                        onClick={() => startTransition(() => {
                           setMobileKPIModal(null);
                           setMobileTab('sdgs');
-                        }}
+                        })}
                         className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200 hover:bg-blue-100 hover:border-blue-300 active:scale-95 transition-all"
                       >
                         <div className="text-blue-700 text-xl font-bold">{sdgMetrics.filter((m: any) => m.totalHours > 0).length}</div>
@@ -2014,10 +2065,10 @@ export default function CSRDashboard() {
                         View Impact Report
                       </button>
                       <button
-                        onClick={() => {
+                        onClick={() => startTransition(() => {
                           setMobileKPIModal(null);
                           setSelectedKPI('sdg');
-                        }}
+                        })}
                         className="bg-white text-teal-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-teal-300 hover:bg-teal-50 active:scale-95 transition-all"
                       >
                         <Target className="w-3.5 h-3.5" />
@@ -2089,7 +2140,7 @@ export default function CSRDashboard() {
         {showFunnelModal && selectedFunnelStage !== null && funnelData?.funnel && (
           <div
             className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center"
-            onClick={() => setShowFunnelModal(false)}
+            onClick={() => startTransition(() => setShowFunnelModal(false))}
           >
             <div
               className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
@@ -2106,7 +2157,7 @@ export default function CSRDashboard() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowFunnelModal(false)}
+                  onClick={() => startTransition(() => setShowFunnelModal(false))}
                   className="p-2 rounded-full hover:bg-white/20"
                 >
                   <X className="w-5 h-5 text-white" />
@@ -2202,7 +2253,7 @@ export default function CSRDashboard() {
                   </button>
                   <button
                     className="bg-white text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-lg border border-slate-300 flex items-center justify-center gap-2"
-                    onClick={() => setShowFunnelModal(false)}
+                    onClick={() => startTransition(() => setShowFunnelModal(false))}
                   >
                     <X className="w-4 h-4" />
                     Close
@@ -2374,7 +2425,7 @@ export default function CSRDashboard() {
               <span>Impact Reporting</span>
             </button>
             <button
-              onClick={() => setSelectedMainTab("engagement")}
+              onClick={() => startTransition(() => setSelectedMainTab("engagement"))}
               style={{
                 width: "100%",
                 display: "flex",
@@ -2536,7 +2587,11 @@ export default function CSRDashboard() {
                   Employee Engagement Hub
                 </h1>
               </div>
-              <EmployeeEngagementTab userId={userId} />
+              <LazyErrorBoundary fallback={<div className="p-4 text-slate-500">Employee engagement tab failed to load. <button onClick={() => window.location.reload()} className="text-blue-600 hover:underline">Refresh</button></div>}>
+                <Suspense fallback={<div className="p-8 flex items-center justify-center"><div className="animate-pulse text-slate-400">Loading employee engagement...</div></div>}>
+                  <EmployeeEngagementTab userId={userId} />
+                </Suspense>
+              </LazyErrorBoundary>
             </>
           )}
           {selectedMainTab === "overview" && (
@@ -3073,7 +3128,7 @@ export default function CSRDashboard() {
                 }}
               >
                 <button
-                  onClick={() => setSelectedKPI("hours")}
+                  onClick={() => startTransition(() => setSelectedKPI("hours"))}
                   style={{
                     backgroundColor: "#1e3a8a",
                     color: "white",
@@ -3120,7 +3175,7 @@ export default function CSRDashboard() {
                 </button>
 
                 <button
-                  onClick={() => setSelectedKPI("employees")}
+                  onClick={() => startTransition(() => setSelectedKPI("employees"))}
                   style={{
                     backgroundColor: "#1e3a8a",
                     color: "white",
@@ -3167,7 +3222,7 @@ export default function CSRDashboard() {
                 </button>
 
                 <button
-                  onClick={() => setSelectedKPI("projects")}
+                  onClick={() => startTransition(() => setSelectedKPI("projects"))}
                   style={{
                     backgroundColor: "#1e3a8a",
                     color: "white",
@@ -3214,7 +3269,7 @@ export default function CSRDashboard() {
                 </button>
 
                 <button
-                  onClick={() => setSelectedKPI("sdg")}
+                  onClick={() => startTransition(() => setSelectedKPI("sdg"))}
                   style={{
                     backgroundColor: "#1e3a8a",
                     color: "white",
@@ -3269,7 +3324,7 @@ export default function CSRDashboard() {
 
                 {/* 5th KPI: Total Volunteers */}
                 <button
-                  onClick={() => setSelectedKPI("volunteers")}
+                  onClick={() => startTransition(() => setSelectedKPI("volunteers"))}
                   style={{
                     backgroundColor: "#1e3a8a",
                     color: "white",
@@ -3314,7 +3369,7 @@ export default function CSRDashboard() {
 
                 {/* 6th KPI: AIUs Earned */}
                 <button
-                  onClick={() => setSelectedKPI("aiu")}
+                  onClick={() => startTransition(() => setSelectedKPI("aiu"))}
                   style={{
                     backgroundColor: "#0d5f52",
                     color: "white",
@@ -3408,7 +3463,7 @@ export default function CSRDashboard() {
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "16px" }}>
                     {/* Total Hours */}
                     <button
-                      onClick={() => setShowTotalHoursModal(true)}
+                      onClick={() => startTransition(() => setShowTotalHoursModal(true))}
                       style={{
                         backgroundColor: "#eff6ff",
                         borderRadius: "10px",
@@ -3431,7 +3486,7 @@ export default function CSRDashboard() {
 
                     {/* Employees Engaged */}
                     <button
-                      onClick={() => setShowEmployeesModal(true)}
+                      onClick={() => startTransition(() => setShowEmployeesModal(true))}
                       style={{
                         backgroundColor: "#f0fdf4",
                         borderRadius: "10px",
@@ -3454,7 +3509,7 @@ export default function CSRDashboard() {
 
                     {/* Active Projects */}
                     <button
-                      onClick={() => setShowActiveSDGsModal(true)}
+                      onClick={() => startTransition(() => setShowActiveSDGsModal(true))}
                       style={{
                         backgroundColor: "#fef3c7",
                         borderRadius: "10px",
@@ -3477,7 +3532,7 @@ export default function CSRDashboard() {
 
                     {/* Active SDGs - Enhanced with SDG numbers and titles */}
                     <button
-                      onClick={() => setShowActiveSDGsModal(true)}
+                      onClick={() => startTransition(() => setShowActiveSDGsModal(true))}
                       style={{
                         backgroundColor: "#fae8ff",
                         borderRadius: "10px",
@@ -3534,7 +3589,7 @@ export default function CSRDashboard() {
 
                     {/* Volunteers */}
                     <button
-                      onClick={() => setShowEmployeesModal(true)}
+                      onClick={() => startTransition(() => setShowEmployeesModal(true))}
                       style={{
                         backgroundColor: "#fef2f2",
                         borderRadius: "10px",
@@ -3652,7 +3707,7 @@ export default function CSRDashboard() {
                   <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
                     {/* AI Insight - Clickable */}
                     <button
-                      onClick={() => setShowActiveSDGsModal(true)}
+                      onClick={() => startTransition(() => setShowActiveSDGsModal(true))}
                       title="Click to view SDG activity details"
                       style={{ flex: 1, padding: "10px 12px", backgroundColor: "#f0f9ff", borderRadius: "8px", borderLeft: "3px solid #3b82f6", border: "1px solid #bfdbfe", cursor: "pointer", textAlign: "left", transition: "all 0.2s" }}
                       onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#dbeafe"; e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.15)"; }}
@@ -3674,7 +3729,7 @@ export default function CSRDashboard() {
                     {/* Expansion Opportunity */}
                     {employeeActivityOutsideCommitments.length > 0 && (
                       <button
-                        onClick={() => setShowExpansionInsightsModal(true)}
+                        onClick={() => startTransition(() => setShowExpansionInsightsModal(true))}
                         style={{
                           flex: 1,
                           padding: "10px 12px",
@@ -3728,7 +3783,7 @@ export default function CSRDashboard() {
                   {/* Map Stats Row - Interactive buttons */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "16px" }}>
                     <button
-                      onClick={() => setSelectedKPI("projects")}
+                      onClick={() => startTransition(() => setSelectedKPI("projects"))}
                       title="Click to view project details"
                       style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.2)"; }}
@@ -3740,7 +3795,7 @@ export default function CSRDashboard() {
                       <p style={{ fontSize: "9px", color: "#3b82f6", margin: "2px 0 0 0", fontWeight: "500" }}>PROJECTS</p>
                     </button>
                     <button
-                      onClick={() => setShowEmployeesModal(true)}
+                      onClick={() => startTransition(() => setShowEmployeesModal(true))}
                       title="Click to view volunteer details"
                       style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#22c55e"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(34,197,94,0.2)"; }}
@@ -3752,7 +3807,7 @@ export default function CSRDashboard() {
                       <p style={{ fontSize: "9px", color: "#22c55e", margin: "2px 0 0 0", fontWeight: "500" }}>VOLUNTEERS</p>
                     </button>
                     <button
-                      onClick={() => setShowTotalHoursModal(true)}
+                      onClick={() => startTransition(() => setShowTotalHoursModal(true))}
                       title="Click to view hours breakdown"
                       style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(245,158,11,0.2)"; }}
@@ -3764,7 +3819,7 @@ export default function CSRDashboard() {
                       <p style={{ fontSize: "9px", color: "#f59e0b", margin: "2px 0 0 0", fontWeight: "500" }}>HOURS</p>
                     </button>
                     <button
-                      onClick={() => setSelectedMapRegion("all")}
+                      onClick={() => startTransition(() => setSelectedMapRegion("all"))}
                       title="Click to view all regions"
                       style={{ backgroundColor: "#fae8ff", borderRadius: "8px", padding: "10px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
                       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#a855f7"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(168,85,247,0.2)"; }}
@@ -3817,7 +3872,7 @@ export default function CSRDashboard() {
                     </select>
                     {(selectedMapRegion !== "all" || selectedMapStatus !== "all") && (
                       <button
-                        onClick={() => { setSelectedMapRegion("all"); setSelectedMapStatus("all"); }}
+                        onClick={() => startTransition(() => { setSelectedMapRegion("all"); setSelectedMapStatus("all"); })}
                         style={{
                           padding: "6px 12px",
                           fontSize: "10px",
@@ -3857,16 +3912,18 @@ export default function CSRDashboard() {
                     }}
                   >
                     {filteredProjectLocations.length > 0 ? (
-                      <MapContainer
-                        center={[20, 0]}
-                        zoom={2}
-                        style={{ width: "100%", height: "100%" }}
-                        data-testid="geographic-map"
-                      >
-                        <TileLayer
-                          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                          attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
-                        />
+                      <LazyErrorBoundary fallback={<MapSkeleton />}>
+                        <Suspense fallback={<MapSkeleton />}>
+                          <MapContainer
+                            center={[20, 0]}
+                            zoom={2}
+                            style={{ width: "100%", height: "100%" }}
+                            data-testid="geographic-map"
+                          >
+                            <TileLayer
+                              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                              attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
+                            />
                         {filteredProjectLocations.map((project) => {
                           const statusColor =
                             project.status === "active"
@@ -3951,7 +4008,9 @@ export default function CSRDashboard() {
                             </Marker>
                           );
                         })}
-                      </MapContainer>
+                          </MapContainer>
+                        </Suspense>
+                      </LazyErrorBoundary>
                     ) : (
                       <div
                         style={{
@@ -3998,7 +4057,7 @@ export default function CSRDashboard() {
                       {/* Funnel Summary Stats - Interactive */}
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "16px" }}>
                         <button
-                          onClick={() => { setSelectedFunnelStage(0); setShowFunnelModal(true); }}
+                          onClick={() => startTransition(() => { setSelectedFunnelStage(0); setShowFunnelModal(true); })}
                           title="Click to view enrolled employees"
                           style={{ backgroundColor: "#f0fdf4", borderRadius: "8px", padding: "12px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
                           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#22c55e"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(34,197,94,0.2)"; }}
@@ -4010,7 +4069,7 @@ export default function CSRDashboard() {
                           <p style={{ fontSize: "9px", color: "#22c55e", margin: "2px 0 0 0", fontWeight: "500" }}>TOTAL ENROLLED</p>
                         </button>
                         <button
-                          onClick={() => { setSelectedFunnelStage(2); setShowFunnelModal(true); }}
+                          onClick={() => startTransition(() => { setSelectedFunnelStage(2); setShowFunnelModal(true); })}
                           title="Click to view active employees"
                           style={{ backgroundColor: "#eff6ff", borderRadius: "8px", padding: "12px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
                           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#3b82f6"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(59,130,246,0.2)"; }}
@@ -4022,7 +4081,7 @@ export default function CSRDashboard() {
                           <p style={{ fontSize: "9px", color: "#3b82f6", margin: "2px 0 0 0", fontWeight: "500" }}>TO ACTIVE</p>
                         </button>
                         <button
-                          onClick={() => { setSelectedFunnelStage(funnelData.funnel.length - 1); setShowFunnelModal(true); }}
+                          onClick={() => startTransition(() => { setSelectedFunnelStage(funnelData.funnel.length - 1); setShowFunnelModal(true); })}
                           title="Click to view top performers"
                           style={{ backgroundColor: "#fef3c7", borderRadius: "8px", padding: "12px", textAlign: "center", border: "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }}
                           onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#f59e0b"; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(245,158,11,0.2)"; }}
@@ -4164,7 +4223,7 @@ export default function CSRDashboard() {
 
                 {/* Row 2, Col 2: Pending Admin Actions */}
                 <div
-                  onClick={() => setShowAdminModal(true)}
+                  onClick={() => startTransition(() => setShowAdminModal(true))}
                   style={{
                     backgroundColor: "white",
                     border: "1px solid #e5e7eb",
@@ -4297,7 +4356,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 50,
           }}
-          onClick={() => setSelectedKPI(null)}
+          onClick={() => startTransition(() => setSelectedKPI(null))}
         >
           <div
             style={{
@@ -4335,7 +4394,7 @@ export default function CSRDashboard() {
                 {selectedKPI === "aiu" && "AIUs Earned"}
               </h2>
               <button
-                onClick={() => setSelectedKPI(null)}
+                onClick={() => startTransition(() => setSelectedKPI(null))}
                 style={{
                   background: "none",
                   border: "none",
@@ -4376,7 +4435,7 @@ export default function CSRDashboard() {
                 {/* Interactive KPI Grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                   <button
-                    onClick={() => { setSelectedKPI(null); setSelectedKPI("employees"); }}
+                    onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedKPI("employees"); })}
                     style={{
                       backgroundColor: "#eff6ff",
                       padding: "16px",
@@ -4428,7 +4487,7 @@ export default function CSRDashboard() {
                       .map((metric: SDGMetric) => (
                         <button
                           key={metric.sdg}
-                          onClick={() => { setSelectedKPI(null); setSelectedSDG(metric.sdg); }}
+                          onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedSDG(metric.sdg); })}
                           style={{
                             display: "flex",
                             justifyContent: "space-between",
@@ -4482,7 +4541,7 @@ export default function CSRDashboard() {
                     View Full Report
                   </button>
                   <button
-                    onClick={() => { setSelectedKPI(null); setSelectedKPI("employees"); }}
+                    onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedKPI("employees"); })}
                     style={{
                       backgroundColor: "white", color: "#1e3a8a", padding: "12px 16px",
                       borderRadius: "8px", border: "2px solid #1e3a8a", cursor: "pointer",
@@ -4525,7 +4584,7 @@ export default function CSRDashboard() {
                 {/* Interactive KPI Grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                   <button
-                    onClick={() => { setSelectedKPI(null); setSelectedKPI("hours"); }}
+                    onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedKPI("hours"); })}
                     style={{
                       backgroundColor: "#eff6ff", padding: "14px", borderRadius: "8px",
                       border: "1px solid #bfdbfe", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
@@ -4577,7 +4636,7 @@ export default function CSRDashboard() {
                     {(csrData?.leaderboard || []).slice(0, 8).map((volunteer: any, idx: number) => (
                       <button
                         key={volunteer.rank || idx}
-                        onClick={() => { setSelectedKPI(null); setSelectedEmployee({ ...volunteer, rank: idx + 1 }); }}
+                        onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedEmployee({ ...volunteer, rank: idx + 1 }); })}
                         style={{
                           display: "flex", alignItems: "center", justifyContent: "space-between",
                           width: "100%", padding: "10px 12px", marginBottom: "6px",
@@ -4626,7 +4685,7 @@ export default function CSRDashboard() {
                 {/* Action Buttons */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "16px" }}>
                   <button
-                    onClick={() => setSelectedMainTab("engagement")}
+                    onClick={() => startTransition(() => setSelectedMainTab("engagement"))}
                     style={{
                       backgroundColor: "#1e3a8a", color: "white", padding: "12px 16px",
                       borderRadius: "8px", border: "none", cursor: "pointer",
@@ -4641,7 +4700,7 @@ export default function CSRDashboard() {
                     View Engagement Tab
                   </button>
                   <button
-                    onClick={() => { setSelectedKPI(null); setSelectedKPI("hours"); }}
+                    onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedKPI("hours"); })}
                     style={{
                       backgroundColor: "white", color: "#1e3a8a", padding: "12px 16px",
                       borderRadius: "8px", border: "2px solid #1e3a8a", cursor: "pointer",
@@ -4684,7 +4743,7 @@ export default function CSRDashboard() {
                 {/* Interactive KPI Grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginBottom: "16px" }}>
                   <button
-                    onClick={() => { setSelectedKPI(null); setSelectedKPI("hours"); }}
+                    onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedKPI("hours"); })}
                     style={{
                       backgroundColor: "#eff6ff", padding: "14px", borderRadius: "8px",
                       border: "1px solid #bfdbfe", cursor: "pointer", textAlign: "center", transition: "all 0.2s",
@@ -4735,11 +4794,11 @@ export default function CSRDashboard() {
                     {(csrData?.projectLocations || []).slice(0, 8).map((project: any, idx: number) => (
                       <button
                         key={project.id || idx}
-                        onClick={() => {
+                        onClick={() => startTransition(() => {
                           setSelectedKPI(null);
                           setSelectedMapRegion(project.region || "all");
                           toast({ title: project.name || `Project ${idx + 1}`, description: `${project.hours || 0} hours • ${project.employees || 0} volunteers • ${project.region || "N/A"}` });
-                        }}
+                        })}
                         style={{
                           display: "flex", alignItems: "center", justifyContent: "space-between",
                           width: "100%", padding: "10px 12px", marginBottom: "6px",
@@ -4802,7 +4861,7 @@ export default function CSRDashboard() {
                     View All Projects
                   </button>
                   <button
-                    onClick={() => { setSelectedKPI(null); setSelectedKPI("aiu"); }}
+                    onClick={() => startTransition(() => { setSelectedKPI(null); setSelectedKPI("aiu"); })}
                     style={{
                       backgroundColor: "white", color: "#7c3aed", padding: "12px 16px",
                       borderRadius: "8px", border: "2px solid #7c3aed", cursor: "pointer",
@@ -5298,10 +5357,10 @@ export default function CSRDashboard() {
                         return (
                           <button
                             key={metric.sdg}
-                            onClick={() => {
+                            onClick={() => startTransition(() => {
                               setSelectedKPI(null);
                               setSelectedSDG(metric.sdg);
-                            }}
+                            })}
                             style={{
                               display: "flex",
                               justifyContent: "space-between",
@@ -5397,10 +5456,10 @@ export default function CSRDashboard() {
                     View Impact Report
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={() => startTransition(() => {
                       setSelectedKPI(null);
                       setSelectedKPI("sdg");
-                    }}
+                    })}
                     style={{
                       backgroundColor: "white",
                       color: "#0d5f52",
@@ -5934,7 +5993,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 50,
           }}
-          onClick={() => setShowAdminModal(false)}
+          onClick={() => startTransition(() => setShowAdminModal(false))}
         >
           <div
             style={{
@@ -5967,7 +6026,7 @@ export default function CSRDashboard() {
                 Admin Actions
               </h2>
               <button
-                onClick={() => setShowAdminModal(false)}
+                onClick={() => startTransition(() => setShowAdminModal(false))}
                 style={{
                   background: "none",
                   border: "none",
@@ -5994,7 +6053,7 @@ export default function CSRDashboard() {
               {["reviews", "insights", "flagged"].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setSelectedAdminTab(tab as any)}
+                  onClick={() => startTransition(() => setSelectedAdminTab(tab as any))}
                   style={{
                     padding: "8px 12px",
                     border: "none",
@@ -6222,7 +6281,7 @@ export default function CSRDashboard() {
               }}
             >
               <button
-                onClick={() => setShowAdminModal(false)}
+                onClick={() => startTransition(() => setShowAdminModal(false))}
                 style={{
                   padding: "8px 16px",
                   border: "1px solid #e5e7eb",
@@ -6272,7 +6331,7 @@ export default function CSRDashboard() {
               justifyContent: "center",
               zIndex: 50,
             }}
-            onClick={() => setShowFunnelModal(false)}
+            onClick={() => startTransition(() => setShowFunnelModal(false))}
           >
             <div
               style={{
@@ -6311,7 +6370,7 @@ export default function CSRDashboard() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowFunnelModal(false)}
+                  onClick={() => startTransition(() => setShowFunnelModal(false))}
                   style={{
                     background: "none",
                     border: "none",
@@ -6588,7 +6647,7 @@ export default function CSRDashboard() {
                     ALL ({funnelStageData?.employees?.length || 0})
                   </button>
                   <button
-                    onClick={() => setEngagementMode('selected')}
+                    onClick={() => startTransition(() => setEngagementMode('selected'))}
                     disabled={selectedEmployeesForEngagement.length === 0}
                     style={{
                       padding: "4px 12px",
@@ -6628,7 +6687,7 @@ export default function CSRDashboard() {
                   </button>
                   {selectedFunnelStage === 1 && (
                     <button
-                      onClick={() => setShowEngagementTipsDialog(true)}
+                      onClick={() => startTransition(() => setShowEngagementTipsDialog(true))}
                       style={{
                         padding: "8px 16px",
                         border: "none",
@@ -6676,7 +6735,7 @@ export default function CSRDashboard() {
               {selectedFunnelStage === 3 && (
                 <div style={{ marginTop: "12px", display: "flex", justifyContent: "flex-end" }}>
                   <button
-                    onClick={() => {
+                    onClick={() => startTransition(() => {
                       // If employees are selected, use first selected; otherwise use top performer
                       if (engagementMode === 'selected' && selectedEmployeesForEngagement.length > 0) {
                         const selectedEmp = funnelStageData?.employees?.find((emp: any) =>
@@ -6695,7 +6754,7 @@ export default function CSRDashboard() {
                           setShowFunnelModal(false);
                         }
                       }
-                    }}
+                    })}
                     style={{
                       padding: "8px 16px",
                       border: "none",
@@ -6736,7 +6795,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 60,
           }}
-          onClick={() => setShowRecognitionModal(false)}
+          onClick={() => startTransition(() => setShowRecognitionModal(false))}
         >
           <div
             style={{
@@ -6791,7 +6850,7 @@ export default function CSRDashboard() {
                 </div>
               </div>
               <button
-                onClick={() => setShowRecognitionModal(false)}
+                onClick={() => startTransition(() => setShowRecognitionModal(false))}
                 style={{
                   background: "none",
                   border: "none",
@@ -6901,7 +6960,7 @@ export default function CSRDashboard() {
                   return (
                     <button
                       key={badge.id}
-                      onClick={() => setRecognitionBadge(badge.id)}
+                      onClick={() => startTransition(() => setRecognitionBadge(badge.id))}
                       style={{
                         padding: "16px 12px",
                         border: recognitionBadge === badge.id ? `2px solid ${badge.color}` : "2px solid #e5e7eb",
@@ -6981,7 +7040,7 @@ export default function CSRDashboard() {
                 ].map((msg) => (
                   <button
                     key={msg}
-                    onClick={() => setRecognitionMessage(msg)}
+                    onClick={() => startTransition(() => setRecognitionMessage(msg))}
                     style={{
                       padding: "6px 12px",
                       backgroundColor: "#f3f4f6",
@@ -7062,7 +7121,7 @@ export default function CSRDashboard() {
             {/* Action Buttons */}
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
               <button
-                onClick={() => setShowRecognitionModal(false)}
+                onClick={() => startTransition(() => setShowRecognitionModal(false))}
                 style={{
                   padding: "12px 24px",
                   border: "1px solid #e5e7eb",
@@ -7098,9 +7157,11 @@ export default function CSRDashboard() {
 
                     const result = await response.json();
 
-                    setShowRecognitionModal(false);
-                    setRecognitionMessage("");
-                    setSelectedEmployee(null);
+                    startTransition(() => {
+                      setShowRecognitionModal(false);
+                      setRecognitionMessage("");
+                      setSelectedEmployee(null);
+                    });
 
                     // Show success notification
                     alert(`Recognition sent to ${selectedEmployee.employeeName}!`);
@@ -7155,7 +7216,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 60,
           }}
-          onClick={() => setShowActiveSDGsModal(false)}
+          onClick={() => startTransition(() => setShowActiveSDGsModal(false))}
         >
           <div
             style={{
@@ -7175,7 +7236,7 @@ export default function CSRDashboard() {
                 SDG Commitment Status ({activeCommittedSDGs}/{committedSDGs.length} Active)
               </h2>
               <button
-                onClick={() => setShowActiveSDGsModal(false)}
+                onClick={() => startTransition(() => setShowActiveSDGsModal(false))}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
               >
                 <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />
@@ -7268,7 +7329,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 60,
           }}
-          onClick={() => setShowTotalHoursModal(false)}
+          onClick={() => startTransition(() => setShowTotalHoursModal(false))}
         >
           <div
             style={{
@@ -7288,7 +7349,7 @@ export default function CSRDashboard() {
                 Hours by Committed SDG ({committedSDGHours.toLocaleString()} Total)
               </h2>
               <button
-                onClick={() => setShowTotalHoursModal(false)}
+                onClick={() => startTransition(() => setShowTotalHoursModal(false))}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
               >
                 <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />
@@ -7374,7 +7435,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 60,
           }}
-          onClick={() => setShowEmployeesModal(false)}
+          onClick={() => startTransition(() => setShowEmployeesModal(false))}
         >
           <div
             style={{
@@ -7394,7 +7455,7 @@ export default function CSRDashboard() {
                 Employees Contributing ({committedSDGEmployees} Active)
               </h2>
               <button
-                onClick={() => setShowEmployeesModal(false)}
+                onClick={() => startTransition(() => setShowEmployeesModal(false))}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
               >
                 <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />
@@ -7491,7 +7552,7 @@ export default function CSRDashboard() {
             justifyContent: "center",
             zIndex: 60,
           }}
-          onClick={() => setShowExpansionInsightsModal(false)}
+          onClick={() => startTransition(() => setShowExpansionInsightsModal(false))}
         >
           <div
             style={{
@@ -7516,7 +7577,7 @@ export default function CSRDashboard() {
                 </p>
               </div>
               <button
-                onClick={() => setShowExpansionInsightsModal(false)}
+                onClick={() => startTransition(() => setShowExpansionInsightsModal(false))}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: "8px" }}
               >
                 <X style={{ width: "20px", height: "20px", color: "#6b7280" }} />

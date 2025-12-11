@@ -32,7 +32,10 @@
       "Bash(tree:*)",
       "Bash(done)",
       "Bash(fuser:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "WebSearch",
+      "Bash(netstat:*)",
+      "Bash(ss:*)"
     ],
     "deny": [],
     "ask": []

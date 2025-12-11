@@ -451,17 +451,24 @@ export default function Dashboard() {
   // Use KPIs from backend - API returns summary data at top level
   // Use aiuSummary from dedicated AIU endpoint for accurate metrics
   const kpis = useMemo(() => {
+    // Get skills count - use skillsCount from summary, fallback to volunteerProfile.skills.length
+    const skillsCount = dashboardData?.skillsCount ?? dashboardData?.volunteerProfile?.skills?.length ?? 0;
+
     // When "all" is selected or no filter, use backend KPIs directly
     if (selectedProject === "all") {
+      // Use totalProjects (all assigned) for volunteer dashboard, not just activeProjects
+      // This gives volunteers visibility into all their project involvement
+      const projectCount = dashboardData?.totalProjects ?? dashboardData?.activeProjects ?? 0;
+
       return {
         volunteers: dashboardData?.activeVolunteers || 0,
         hours: Math.round(dashboardData?.totalHours || 0),
         tasks: dashboardData?.totalTasks || 0,
         completedTasks: dashboardData?.completedTasks || 0,
-        activeProjects: dashboardData?.activeProjects || 0,
+        activeProjects: projectCount,
         sdgs: dashboardData?.sdgsAddressed || 0,
         impactScore: dashboardData?.impactScore || 0,
-        skills: dashboardData?.volunteerProfile?.skills?.length || 0,
+        skills: skillsCount,
         // Use accurate AIU data from dedicated endpoint, fallback to dashboard data
         aiuEarned: aiuSummary?.totalAiu ?? dashboardData?.totalAiuEarned ?? 0,
         aiuVerificationRate: aiuSummary?.verificationRate ?? 0,
@@ -473,9 +480,8 @@ export default function Dashboard() {
     const filteredHours = filteredData.activities.reduce((sum: number, activity: any) => sum + (activity.hours || 0), 0);
     const filteredTotalTasks = filteredData.tasks.length;
     const filteredCompletedTasks = filteredData.tasks.filter((t: any) => t.status?.toLowerCase() === "completed").length;
-    const filteredActiveProjects = filteredData.projects.filter((p: any) =>
-      p.status?.toLowerCase() === "in progress" || p.status?.toLowerCase() === "active"
-    ).length;
+    // Show all filtered projects (not just active) for consistency
+    const filteredProjectsCount = filteredData.projects.length;
 
     // Calculate unique SDGs from filtered projects
     const uniqueSDGs = new Set();
@@ -497,10 +503,10 @@ export default function Dashboard() {
       hours: Math.round(filteredHours),
       tasks: filteredTotalTasks,
       completedTasks: filteredCompletedTasks,
-      activeProjects: filteredActiveProjects,
+      activeProjects: filteredProjectsCount,
       sdgs: uniqueSDGs.size,
       impactScore: dashboardData?.impactScore || 0,
-      skills: dashboardData?.volunteerProfile?.skills?.length || 0,
+      skills: skillsCount,
       livesTouched: dashboardData?.totalPeopleImpacted || 0,
       aiuEarned: filteredAiu || 0,
       aiuVerificationRate: aiuSummary?.verificationRate ?? 0,

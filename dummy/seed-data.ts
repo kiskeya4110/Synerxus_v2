@@ -2,7 +2,7 @@
 // Run with: tsx dummy/seed-data.ts
 
 import { db } from "../server/db";
-import { users, organizations, projects, tasks, volunteerActivities, impactMetrics, projectImpacts, calendarEvents, volunteers, matchableOrganizations } from "../shared/schema";
+import { users, organizations, projects, tasks, volunteerActivities, impactMetrics, projectImpacts, calendarEvents, volunteers, matchableOrganizations, projectAssignments, volunteerProfiles } from "../shared/schema";
 import { eq } from "drizzle-orm";
 
 async function seedDatabase() {
@@ -14,6 +14,8 @@ async function seedDatabase() {
       console.log("Clearing existing data...");
       await tx.delete(projectImpacts);
       await tx.delete(volunteerActivities);
+      await tx.delete(projectAssignments);
+      await tx.delete(volunteerProfiles);
       await tx.delete(calendarEvents);
       await tx.delete(tasks);
       await tx.delete(projects);
@@ -111,8 +113,49 @@ async function seedDatabase() {
         },
       ]).returning();
 
+      // Seed Volunteer Profiles for dashboard (linked to users table)
+      console.log("Creating volunteer profiles for dashboard...");
+      await tx.insert(volunteerProfiles).values([
+        {
+          userId: volunteer1.id,
+          volunteerName: "Sarah Johnson",
+          contactEmail: "sarah@volunteers.com",
+          skills: ["Teaching", "Engineering", "Project Management"],
+          availability: "weekends",
+          weeklyAvailability: 20,
+          preferredCauses: ["Clean Water", "Education", "Infrastructure"],
+          sdgGoals: [6, 4, 11],
+          location: "New York, NY",
+          isPublic: true,
+        },
+        {
+          userId: volunteer2.id,
+          volunteerName: "Michael Chen",
+          contactEmail: "michael@volunteers.com",
+          skills: ["Healthcare", "Training", "Logistics"],
+          availability: "flexible",
+          weeklyAvailability: 15,
+          preferredCauses: ["Healthcare", "Community Health"],
+          sdgGoals: [3, 10, 17],
+          location: "Los Angeles, CA",
+          isPublic: true,
+        },
+        {
+          userId: volunteer3.id,
+          volunteerName: "Emma Rodriguez",
+          contactEmail: "emma@volunteers.com",
+          skills: ["Environmental Science", "Community Organizing", "Data Analysis"],
+          availability: "evenings",
+          weeklyAvailability: 12,
+          preferredCauses: ["Environment", "Climate Action"],
+          sdgGoals: [13, 15, 7],
+          location: "Seattle, WA",
+          isPublic: true,
+        },
+      ]);
+
       // Seed Volunteer Profiles (for matching system)
-      console.log("Creating volunteer profiles...");
+      console.log("Creating volunteer profiles for matching...");
       await tx.insert(volunteers).values([
         {
           id: "vol-sarah-001",
@@ -262,6 +305,56 @@ async function seedDatabase() {
           coverImage: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09",
         },
       ]).returning();
+
+      // Seed Project Assignments (CRITICAL: This links volunteers to projects!)
+      console.log("Creating project assignments...");
+      await tx.insert(projectAssignments).values([
+        {
+          projectId: waterProject.id,
+          volunteerId: volunteer1.id,
+          role: "Team Lead",
+          status: "active",
+          hoursCommitted: 100,
+          hoursCompleted: 45,
+          notes: "Leading water system installation efforts",
+        },
+        {
+          projectId: healthProject.id,
+          volunteerId: volunteer2.id,
+          role: "Healthcare Volunteer",
+          status: "active",
+          hoursCommitted: 80,
+          hoursCompleted: 32,
+          notes: "Providing healthcare services at mobile clinics",
+        },
+        {
+          projectId: eduProject.id,
+          volunteerId: volunteer3.id,
+          role: "Instructor",
+          status: "active",
+          hoursCommitted: 60,
+          hoursCompleted: 28,
+          notes: "Teaching digital literacy courses",
+        },
+        {
+          projectId: envProject.id,
+          volunteerId: volunteer1.id,
+          role: "Contributor",
+          status: "active",
+          hoursCommitted: 40,
+          hoursCompleted: 15,
+          notes: "Supporting environmental initiatives",
+        },
+        {
+          projectId: envProject.id,
+          volunteerId: volunteer3.id,
+          role: "Contributor",
+          status: "active",
+          hoursCommitted: 30,
+          hoursCompleted: 10,
+          notes: "Climate action support",
+        },
+      ]);
 
       // Seed Tasks
       console.log("Creating tasks...");

@@ -11,12 +11,12 @@ const DEFAULT_MATCH_THRESHOLD = 40; // 40% match minimum
 /**
  * Get visible project IDs for a volunteer based on assignments and AI matches
  * Enforces status-aware visibility rules:
- * - Include projects with active, completed, or on-hold assignments (accepted assignments only)
- * - Exclude projects with pending or declined assignments
+ * - Include projects with pending (invitations), active, completed, or on-hold assignments
+ * - Exclude only declined assignments (rejected by volunteer)
  * - Optionally include AI-matched opportunities above threshold
  */
 export async function getVisibleProjectIdsForVolunteer(
-  volunteerId: number, 
+  volunteerId: number,
   includeAIMatches: boolean = false,
   matchThreshold: number = DEFAULT_MATCH_THRESHOLD
 ): Promise<Set<number>> {
@@ -25,12 +25,13 @@ export async function getVisibleProjectIdsForVolunteer(
   // OPTIMIZATION: Query only this volunteer's assignments instead of all assignments (N+1 fix)
   const volunteerAssignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
 
-  // Filter for accepted assignments only (active, completed, on-hold)
+  // Include all assignments except declined ones
+  // Pending assignments should be shown so volunteers can see their invitations
   volunteerAssignments.forEach(pa => {
     const status = pa.status?.toLowerCase() || '';
-    // Include: active, completed, on-hold (accepted assignments only)
-    // Exclude: pending (not yet accepted), declined (rejected)
-    if (status !== 'declined' && status !== 'pending') {
+    // Include: pending (invitations), active, completed, on-hold
+    // Exclude: only declined (rejected)
+    if (status !== 'declined') {
       visibleProjectIds.add(pa.projectId);
     }
   });
@@ -327,7 +328,7 @@ export async function getDashboardDataForOrganization(userId: number) {
     // activeVolunteers = all volunteers assigned to organization's projects
     const activeVolunteers = organizationVolunteers.length;
 
-    const totalHours = organizationActivities.reduce((sum, activity) => sum + activity.hours, 0);
+    const totalHours = organizationActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
 
     const activeProjects = organizationProjects.filter(
       project => {
@@ -558,7 +559,7 @@ export async function getDashboardDataForOrganization(userId: number) {
       });
 
       // Calculate monthly aggregates
-      const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
+      const hours = monthActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
       const beneficiaries = monthImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
       const completedTasks = monthTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
       const totalTasks = monthTasks.length;
@@ -727,11 +728,13 @@ export async function getDashboardDataForOrganization(userId: number) {
         activeVolunteers,
         totalHours,
         activeProjects,
+        totalProjects: organizationProjects.length, // Total number of projects (all statuses)
         completedTasks,
         totalTasks,
         sdgsAddressed: uniqueSDGs.size,
         impactScore,
         acceptedApplications,
+        totalPeopleImpacted, // Include people impacted for organization KPI display
         recentActivities: enrichedRecentActivities, // Last 10 activities with project/org names
         organizationPrimarySdgs, // Organization's selected SDGs from profile settings
       },
@@ -791,17 +794,18 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const allImpactMetrics = await storage.listImpactMetrics();
 
     // Get visible project IDs using status-aware filtering
-    // Excludes declined and pending assignments, includes only accepted assignments (active/completed/on-hold)
+    // Includes pending (invitations), active, completed, on-hold - excludes only declined
     const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userId, false, matchThreshold);
     const assignedProjects = allProjects.filter(p => visibleProjectIds.has(p.id));
 
-    // Get volunteer's project assignments (excluding declined and pending)
+    // Get volunteer's project assignments (excluding only declined)
     const volunteerAssignments = allProjectAssignments.filter(pa => {
       if (pa.volunteerId !== userId) return false;
 
       // Normalize status to handle database inconsistencies
       const status = pa.status?.toLowerCase() || '';
-      return status !== 'declined' && status !== 'pending';
+      // Include pending assignments so volunteers see their invitations
+      return status !== 'declined';
     });
 
     // Filter activities to only this volunteer's
@@ -814,9 +818,11 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       return i.projectId && visibleProjectIds.has(i.projectId);
     });
 
-    // Filter tasks to ONLY tasks directly assigned to this volunteer
-    // Strict data partitioning: volunteers only see tasks they're explicitly assigned to
-    const volunteerTasks = allTasks.filter(t => t.assigneeId === userId);
+    // Filter tasks: include tasks assigned to this volunteer OR tasks from assigned projects
+    // This gives volunteers visibility into project work even if specific tasks aren't assigned to them
+    const volunteerTasks = allTasks.filter(t =>
+      t.assigneeId === userId || (t.projectId && visibleProjectIds.has(t.projectId))
+    );
 
     // Get AI-matched opportunities above threshold
     const matchedOpportunities = await getProjectsForVolunteer(userId, matchThreshold);
@@ -824,14 +830,21 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     // Filter applications to this volunteer's
     const volunteerApplications = allApplications.filter(app => app.volunteerId === userId);
 
-    // Calculate summary metrics
-    const totalHours = volunteerActivities.reduce((sum, activity) => sum + activity.hours, 0);
+    // Calculate summary metrics - handle null/undefined hours safely
+    const totalHours = volunteerActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
     const activeProjects = assignedProjects.filter(
       project => {
         const status = project.status?.toLowerCase() || '';
         return status === 'in progress' || status === 'active';
       }
     ).length;
+
+    // Count pending project assignments (invitations awaiting response)
+    const pendingAssignments = volunteerAssignments.filter(pa => {
+      const status = pa.status?.toLowerCase() || '';
+      return status === 'pending';
+    }).length;
+
     const completedTasks = volunteerTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
     const totalTasks = volunteerTasks.length;
 
@@ -1127,16 +1140,27 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
     const monthlyImpactData = monthlyImpactSeries.monthly;
     const impactGrowthSeries = monthlyImpactSeries.cumulative;
 
+    // Calculate total projects (all assigned, not just active)
+    const totalProjects = assignedProjects.length;
+
+    // Get skills from volunteer profile, or fall back to user.skills
+    const volunteerSkills = volunteerProfile?.skills || user.skills || [];
+
     return {
       summary: {
         activeVolunteers: 1, // Only themselves
         totalHours,
         activeProjects,
+        totalProjects, // Include total projects count (all assigned, not just active)
+        pendingAssignments, // Number of project invitations awaiting volunteer response
         completedTasks,
         totalTasks,
+        skillsCount: volunteerSkills.length, // Number of skills for KPI display
         sdgsAddressed: uniqueSDGs.size,
         impactScore,
         totalPeopleImpacted, // Add people impacted to summary so frontend can display it
+        // Calculate total AIU from projects
+        totalAiuEarned: projectsWithOrganization.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0),
         recentActivities: volunteerActivities
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5),
@@ -1147,7 +1171,12 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         weeklyAvailability: volunteerProfile.weeklyAvailability,
         availability: volunteerProfile.availability,
         skillRatings: volunteerProfile.skillRatings,
-      } : null,
+        skills: volunteerSkills, // Ensure skills is always populated (fallback to user.skills)
+      } : {
+        // Minimal profile data when volunteer profile doesn't exist
+        skills: volunteerSkills,
+        profileCompleteness: 0,
+      },
       applicationStats: {
         total: volunteerApplications.length,
         pending: pendingApplications,
@@ -1234,7 +1263,7 @@ export async function getSDGContributionsForOrganization(userId: number) {
     });
 
     // Calculate total engagement hours
-    const totalHours = organizationActivities.reduce((sum, activity) => sum + activity.hours, 0);
+    const totalHours = organizationActivities.reduce((sum, activity) => sum + (activity.hours || 0), 0);
 
     // Format the result
     const result = sdgContributions

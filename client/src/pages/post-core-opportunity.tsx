@@ -17,7 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { sdgGoals } from "@shared/sdg-goals";
-import { Briefcase, MapPin, Clock, Target, TrendingUp, X } from "lucide-react";
+import { ROLE_WEIGHTS, ROLE_CATEGORIES, getRoleDisplayName } from "@shared/aiu-calculations";
+import { Briefcase, MapPin, Clock, Target, TrendingUp, X, Users, Plus, Trash2, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const skillOptions = [
   "Project Management", "Marketing", "Graphic Design", "Web Development", "Data Analysis",
@@ -25,6 +27,14 @@ const skillOptions = [
   "Healthcare", "Legal Advice", "Accounting", "Translation", "Photography",
   "Video Editing", "Public Speaking", "Grant Writing", "Research", "Mentoring"
 ];
+
+// Volunteer role schema for AIU calculation
+const volunteerRoleSchema = z.object({
+  role: z.string().min(1, "Role name is required"),
+  contributionPercent: z.coerce.number().min(1).max(100, "Contribution must be 1-100%"),
+  count: z.coerce.number().min(1, "At least 1 volunteer needed"),
+  description: z.string().optional()
+});
 
 const opportunitySchema = z.object({
   title: z.string().min(5, "Title must be at least 5 characters"),
@@ -41,7 +51,9 @@ const opportunitySchema = z.object({
   impactMetricUnit: z.string().min(1, "Define impact metric unit"),
   volunteersNeeded: z.coerce.number().min(1).optional(),
   requirements: z.string().optional(),
-  benefits: z.string().optional()
+  benefits: z.string().optional(),
+  // AIU Formula: Volunteer Roles with contribution percentages (role weights)
+  volunteerRoles: z.array(volunteerRoleSchema).min(1, "Define at least one volunteer role")
 }).refine(data => {
   if (data.commitmentType === "ongoing" && !data.ongoingHoursPerWeek) {
     return false;
@@ -55,6 +67,13 @@ const opportunitySchema = z.object({
   return true;
 }, {
   message: "Please fill in required fields based on your selections"
+}).refine(data => {
+  // Validate that volunteer role contribution percentages sum to 100%
+  const totalContribution = data.volunteerRoles.reduce((sum, role) => sum + role.contributionPercent, 0);
+  return totalContribution === 100;
+}, {
+  message: "Volunteer role contribution percentages must sum to exactly 100%",
+  path: ["volunteerRoles"]
 });
 
 type OpportunityForm = z.infer<typeof opportunitySchema>;
@@ -95,7 +114,11 @@ export default function PostCoreOpportunity() {
       impactMetricUnit: "",
       volunteersNeeded: 1,
       requirements: "",
-      benefits: ""
+      benefits: "",
+      volunteerRoles: [
+        { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
+        { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
+      ]
     }
   });
 
@@ -529,6 +552,222 @@ export default function PostCoreOpportunity() {
                     </FormItem>
                   )}
                 />
+              </CardContent>
+            </Card>
+
+            {/* Section 5: Volunteer Role Weight Configuration (AIU Formula) */}
+            <Card data-testid="card-role-weights">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Section 5: Volunteer Role Configuration
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <p className="text-sm">
+                          <strong>AIU Formula:</strong> Role weights (W_i) determine how impact is attributed to each volunteer.
+                          <br /><br />
+                          <code>AIU_i = ΔSynerxus × (w_i / Σw_j)</code>
+                          <br /><br />
+                          Where <code>w_i = roleWeight × hours × reliability</code>
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </CardTitle>
+                <CardDescription>
+                  Define volunteer roles and their contribution weight for impact attribution (AIU calculation).
+                  Percentages must sum to 100%.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="volunteerRoles"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="space-y-4">
+                        {/* Role Weight Header */}
+                        <div className="grid grid-cols-12 gap-2 text-sm font-medium text-gray-600 pb-2 border-b">
+                          <div className="col-span-3">Role Type</div>
+                          <div className="col-span-2">Weight %</div>
+                          <div className="col-span-2"># Needed</div>
+                          <div className="col-span-4">Description</div>
+                          <div className="col-span-1"></div>
+                        </div>
+
+                        {/* Role Rows */}
+                        {field.value?.map((role, index) => (
+                          <div key={index} className="grid grid-cols-12 gap-2 items-start">
+                            <div className="col-span-3">
+                              <Select
+                                value={role.role}
+                                onValueChange={(value) => {
+                                  const updated = [...field.value];
+                                  updated[index] = { ...updated[index], role: value };
+                                  field.onChange(updated);
+                                }}
+                              >
+                                <SelectTrigger data-testid={`select-role-${index}`}>
+                                  <SelectValue placeholder="Select role">
+                                    {role.role && `${getRoleDisplayName(role.role)} (${ROLE_WEIGHTS[role.role]}x)`}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent className="max-h-[300px]">
+                                  {Object.entries(ROLE_CATEGORIES).map(([categoryKey, category]) => (
+                                    <div key={categoryKey}>
+                                      <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 bg-gray-50">
+                                        {category.label}
+                                      </div>
+                                      {category.roles.map((roleKey) => (
+                                        <SelectItem key={roleKey} value={roleKey} className="pl-4">
+                                          {getRoleDisplayName(roleKey)} ({ROLE_WEIGHTS[roleKey]}x)
+                                        </SelectItem>
+                                      ))}
+                                    </div>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="col-span-2">
+                              <div className="relative">
+                                <Input
+                                  data-testid={`input-contribution-${index}`}
+                                  type="number"
+                                  min="1"
+                                  max="100"
+                                  value={role.contributionPercent}
+                                  onChange={(e) => {
+                                    const updated = [...field.value];
+                                    updated[index] = { ...updated[index], contributionPercent: Number(e.target.value) };
+                                    field.onChange(updated);
+                                  }}
+                                  className="pr-8"
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                              </div>
+                            </div>
+                            <div className="col-span-2">
+                              <Input
+                                data-testid={`input-count-${index}`}
+                                type="number"
+                                min="1"
+                                value={role.count}
+                                onChange={(e) => {
+                                  const updated = [...field.value];
+                                  updated[index] = { ...updated[index], count: Number(e.target.value) };
+                                  field.onChange(updated);
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-4">
+                              <Input
+                                data-testid={`input-description-${index}`}
+                                placeholder="Role description"
+                                value={role.description || ""}
+                                onChange={(e) => {
+                                  const updated = [...field.value];
+                                  updated[index] = { ...updated[index], description: e.target.value };
+                                  field.onChange(updated);
+                                }}
+                              />
+                            </div>
+                            <div className="col-span-1 flex justify-center">
+                              {field.value.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const updated = field.value.filter((_, i) => i !== index);
+                                    field.onChange(updated);
+                                  }}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {/* Add Role Button */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            field.onChange([
+                              ...field.value,
+                              { role: "support", contributionPercent: 0, count: 1, description: "" }
+                            ]);
+                          }}
+                          className="mt-2"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Role
+                        </Button>
+
+                        {/* Total Contribution Display */}
+                        <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-700">Total Contribution:</span>
+                            <span className={`text-lg font-bold ${
+                              field.value?.reduce((sum, r) => sum + r.contributionPercent, 0) === 100
+                                ? 'text-green-600'
+                                : 'text-red-600'
+                            }`}>
+                              {field.value?.reduce((sum, r) => sum + r.contributionPercent, 0) || 0}%
+                              {field.value?.reduce((sum, r) => sum + r.contributionPercent, 0) === 100
+                                ? ' ✓'
+                                : ' (must equal 100%)'}
+                            </span>
+                          </div>
+                          <div className="mt-2 text-xs text-gray-500">
+                            Total Volunteers: {field.value?.reduce((sum, r) => sum + r.count, 0) || 0}
+                          </div>
+                        </div>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* AIU Formula Explanation */}
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="text-sm font-semibold text-blue-800 mb-2">Role Weight Methodology (Industry-Aligned)</h4>
+                  <p className="text-xs text-blue-700 mb-3">
+                    Role weights are based on <strong>Taproot Foundation Pro Bono Valuation 2024</strong>, <strong>Independent Sector</strong>, and <strong>SROI methodology</strong>:
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-blue-700">
+                    <div className="font-semibold text-blue-800 col-span-2 mt-1">Executive & Strategic</div>
+                    <div>• Executive/C-Suite (4.0x)</div>
+                    <div>• Strategic Advisor (3.5x)</div>
+
+                    <div className="font-semibold text-blue-800 col-span-2 mt-2">Pro Bono Professional</div>
+                    <div>• Legal/Medical (3.0x)</div>
+                    <div>• Finance/Tech (2.5x)</div>
+                    <div>• Marketing (2.0x)</div>
+
+                    <div className="font-semibold text-blue-800 col-span-2 mt-2">Project Leadership</div>
+                    <div>• Project Lead (1.8x)</div>
+                    <div>• Team Lead/Captain (1.5x)</div>
+
+                    <div className="font-semibold text-blue-800 col-span-2 mt-2">Skilled & General</div>
+                    <div>• Mentor/Specialist (1.3-1.4x)</div>
+                    <div>• Support/Volunteer (1.0x)</div>
+
+                    <div className="font-semibold text-blue-800 col-span-2 mt-2">Administrative & Learning</div>
+                    <div>• Admin/Logistics (0.7-0.8x)</div>
+                    <div>• Trainee/Observer (0.3-0.5x)</div>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-3 italic">
+                    Sources: Taproot Foundation ($220/hr pro bono), Independent Sector ($34.79/hr baseline), BLS wage methodology
+                  </p>
+                </div>
               </CardContent>
             </Card>
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense, Component, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -10,8 +10,64 @@ import {
   Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical,
   Bell, Settings, User, LogOut, FileText
 } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+
+// Error Boundary for lazy-loaded components
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback?: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class LazyErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Lazy component failed to load:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="h-64 bg-slate-100 rounded-lg flex items-center justify-center">
+          <div className="text-center text-slate-500">
+            <p className="text-sm">Component failed to load</p>
+            <button
+              onClick={() => this.setState({ hasError: false })}
+              className="mt-2 text-xs text-blue-600 hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+// Lazy load map components for better PWA performance
+const MapContainer = lazy(() => import("react-leaflet").then(m => ({ default: m.MapContainer })));
+const TileLayer = lazy(() => import("react-leaflet").then(m => ({ default: m.TileLayer })));
+const Marker = lazy(() => import("react-leaflet").then(m => ({ default: m.Marker })));
+const Popup = lazy(() => import("react-leaflet").then(m => ({ default: m.Popup })));
+
+// Map skeleton for loading state
+const MapSkeleton = () => (
+  <div className="h-64 bg-slate-100 animate-pulse rounded-lg flex items-center justify-center">
+    <div className="text-slate-400 text-sm">Loading map...</div>
+  </div>
+);
 import { getSDGName, SDG_GOALS, getSDGColor } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
@@ -107,7 +163,7 @@ export default function OrganizationDashboard() {
   // Check if user is an organization user (used for query enabled flags)
   const isOrganizationUser = userType === 'organization';
 
-  const { data: dashboardData, isLoading } = useQuery<DashboardData>({
+  const { data: dashboardData, isLoading, refetch: refetchDashboard } = useQuery<DashboardData>({
     queryKey: ['/api/organization/dashboard', userId, projectFilter, timePeriod, sdgFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ userId: userId || '' });
@@ -119,6 +175,9 @@ export default function OrganizationDashboard() {
       return response.json();
     },
     enabled: !!userId && isOrganizationUser,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Poll every 30 seconds for real-time volunteer updates
+    staleTime: 10000, // Consider data stale after 10 seconds
   });
 
   const { data: currentUser } = useQuery({
@@ -154,7 +213,7 @@ export default function OrganizationDashboard() {
   });
 
   // Fetch pending applications for the organization
-  const { data: pendingApplications } = useQuery({
+  const { data: pendingApplications, refetch: refetchApplications } = useQuery({
     queryKey: ['/api/applications', currentUser?.organizationId, 'pending'],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
@@ -164,6 +223,9 @@ export default function OrganizationDashboard() {
       return allApplications.filter((app: any) => app.status === 'pending');
     },
     enabled: !!currentUser?.organizationId && isOrganizationUser,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000, // Poll every 30 seconds for new volunteer applications
+    staleTime: 10000,
   });
 
   // Memoized computed values - MUST be before any early returns
@@ -2057,33 +2119,37 @@ function ProjectMapComponent({ projectLocations }: { projectLocations: ProjectLo
   }, [projectLocations]);
 
   return (
-    <MapContainer
-      ref={mapRef}
-      center={[20, 0]}
-      zoom={2}
-      style={{ width: '100%', height: '100%' }}
-      data-testid="project-map"
-    >
-      <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
-      />
-      {projectLocations?.map((project) => {
-        const coords = getCoordinatesFromLocation(project.location);
-        if (!coords) return null;
-        return (
-          <Marker key={project.id} position={[coords.lat, coords.lng]}>
-            <Popup>
-              <strong>{project.name}</strong>
-              <br />
-              Status: {project.status}
-              <br />
-              SDGs: {project.sdgGoals.join(', ') || 'None'}
-            </Popup>
-          </Marker>
-        );
-      })}
-    </MapContainer>
+    <LazyErrorBoundary fallback={<MapSkeleton />}>
+      <Suspense fallback={<MapSkeleton />}>
+        <MapContainer
+          ref={mapRef}
+          center={[20, 0]}
+          zoom={2}
+          style={{ width: '100%', height: '100%' }}
+          data-testid="project-map"
+        >
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
+          />
+          {projectLocations?.map((project) => {
+            const coords = getCoordinatesFromLocation(project.location);
+            if (!coords) return null;
+            return (
+              <Marker key={project.id} position={[coords.lat, coords.lng]}>
+                <Popup>
+                  <strong>{project.name}</strong>
+                  <br />
+                  Status: {project.status}
+                  <br />
+                  SDGs: {project.sdgGoals.join(', ') || 'None'}
+                </Popup>
+              </Marker>
+            );
+          })}
+        </MapContainer>
+      </Suspense>
+    </LazyErrorBoundary>
   );
 }
 

@@ -57,11 +57,6 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   const [selectedProjectIdForStories, setSelectedProjectIdForStories] = useState<string>("all");
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Redirect non-organizations
-  if (userType !== 'organization') {
-    return null;
-  }
-
   // Get current user to filter their projects
   const userId = localStorage.getItem('currentUserId');
   const { data: currentUser } = useQuery<any>({
@@ -93,7 +88,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   const projects = dashboardData?.projects || [];
   const volunteerActivities = dashboardData?.activities || [];
   const projectImpacts = dashboardData?.impacts || [];
-    
+
   const { data: impactMetrics = [] } = useQuery<any[]>({ queryKey: ["/api/impact-metrics"] });
 
   // Calculate aggregated metrics from real data
@@ -376,6 +371,11 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
       }],
     };
   }, [projects, projectImpacts, dashboardData, currentUser]);
+
+  // Redirect non-organizations - MUST be after all hooks
+  if (userType !== 'organization') {
+    return null;
+  }
 
   // PDF Export Function
   const handleExportPDF = () => {

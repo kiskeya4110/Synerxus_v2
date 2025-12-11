@@ -16,15 +16,120 @@
  * where volunteer weight w_i = roleWeight × hours × reliabilityMultiplier
  */
 
-// Role weights for attribution calculation
+/**
+ * Role weights for attribution calculation
+ *
+ * Based on industry best practices:
+ * - Taproot Foundation Pro Bono Valuation 2024: $220/hr for skilled pro bono vs $34.79 general (~6.3x)
+ * - Independent Sector 2024: $34.79/hr national average for general volunteer time
+ * - Bureau of Labor Statistics: Recommends role-based wage rates + 15.7% overhead
+ * - SROI methodology: Skilled professional time valued 3-7x general volunteer time
+ *
+ * Weight tiers reflect responsibility level, skill requirements, and market value:
+ * - Executive/Strategic: 3.0-4.0x (C-suite, board-level strategic guidance)
+ * - Pro Bono Professional: 2.0-2.5x (licensed professionals: legal, medical, finance, IT)
+ * - Project Leadership: 1.5-1.8x (coordinators, managers with direct accountability)
+ * - Skilled/Technical: 1.2-1.4x (subject matter expertise, mentoring)
+ * - General Support: 1.0x (baseline for standard volunteer activities)
+ * - Administrative: 0.7-0.9x (clerical, data entry, logistics)
+ * - Trainee/Observer: 0.3-0.5x (learning capacity, limited direct contribution)
+ */
 export const ROLE_WEIGHTS: Record<string, number> = {
-  lead: 1.5,        // Project leads/coordinators
-  mentor: 1.3,      // Mentors/trainers
-  specialist: 1.2,  // Subject matter experts
-  support: 1.0,     // General support volunteers
-  observer: 0.5,    // Observers/trainees
-  admin: 0.8,       // Administrative support
+  // Executive & Strategic Leadership (highest impact, strategic decision-making)
+  executive: 4.0,       // C-suite executives, board advisors providing strategic guidance
+  strategic_advisor: 3.5, // Senior consultants, strategic planners
+
+  // Pro Bono Professionals (licensed/certified expertise - per Taproot Foundation valuation)
+  pro_bono_legal: 3.0,  // Attorneys, legal counsel (based on ~$220/hr pro bono rate)
+  pro_bono_medical: 3.0, // Doctors, nurses, healthcare professionals
+  pro_bono_finance: 2.5, // CPAs, financial advisors, auditors
+  pro_bono_tech: 2.5,   // Software engineers, IT architects, data scientists
+  pro_bono_marketing: 2.0, // Marketing strategists, brand consultants
+
+  // Project Leadership (accountability for outcomes)
+  project_lead: 1.8,    // Project managers with full accountability
+  lead: 1.5,            // Team leads, coordinators (legacy - retained for compatibility)
+  team_captain: 1.5,    // Shift/team supervisors
+
+  // Skilled Contributors (expertise without leadership responsibility)
+  mentor: 1.4,          // Mentors, trainers, coaches
+  specialist: 1.3,      // Subject matter experts (non-licensed)
+  facilitator: 1.2,     // Workshop facilitators, event hosts
+
+  // General Support (baseline tier)
+  support: 1.0,         // General volunteers - Independent Sector baseline
+  volunteer: 1.0,       // Alias for support (common terminology)
+
+  // Administrative & Logistics
+  admin: 0.8,           // Administrative support, data entry
+  logistics: 0.7,       // Setup, teardown, transportation
+
+  // Learning & Development
+  trainee: 0.5,         // Volunteers in training (learning focus)
+  observer: 0.3,        // Shadowing, observing only (minimal direct contribution)
 };
+
+/**
+ * Role categories for UI grouping and selection
+ */
+export const ROLE_CATEGORIES: Record<string, { label: string; roles: string[] }> = {
+  executive: {
+    label: "Executive & Strategic",
+    roles: ["executive", "strategic_advisor"]
+  },
+  pro_bono: {
+    label: "Pro Bono Professional",
+    roles: ["pro_bono_legal", "pro_bono_medical", "pro_bono_finance", "pro_bono_tech", "pro_bono_marketing"]
+  },
+  leadership: {
+    label: "Project Leadership",
+    roles: ["project_lead", "lead", "team_captain"]
+  },
+  skilled: {
+    label: "Skilled Contributors",
+    roles: ["mentor", "specialist", "facilitator"]
+  },
+  general: {
+    label: "General Support",
+    roles: ["support", "volunteer"]
+  },
+  administrative: {
+    label: "Administrative & Logistics",
+    roles: ["admin", "logistics"]
+  },
+  learning: {
+    label: "Learning & Development",
+    roles: ["trainee", "observer"]
+  }
+};
+
+/**
+ * Get display name for a role
+ */
+export function getRoleDisplayName(role: string): string {
+  const displayNames: Record<string, string> = {
+    executive: "Executive/C-Suite",
+    strategic_advisor: "Strategic Advisor",
+    pro_bono_legal: "Pro Bono Legal",
+    pro_bono_medical: "Pro Bono Medical",
+    pro_bono_finance: "Pro Bono Finance",
+    pro_bono_tech: "Pro Bono Tech/IT",
+    pro_bono_marketing: "Pro Bono Marketing",
+    project_lead: "Project Lead",
+    lead: "Team Lead",
+    team_captain: "Team Captain",
+    mentor: "Mentor/Trainer",
+    specialist: "Specialist",
+    facilitator: "Facilitator",
+    support: "General Support",
+    volunteer: "Volunteer",
+    admin: "Administrative",
+    logistics: "Logistics",
+    trainee: "Trainee",
+    observer: "Observer"
+  };
+  return displayNames[role] || role.charAt(0).toUpperCase() + role.slice(1).replace(/_/g, ' ');
+}
 
 // Reliability multipliers based on verification status
 export const RELIABILITY_MULTIPLIERS: Record<string, number> = {

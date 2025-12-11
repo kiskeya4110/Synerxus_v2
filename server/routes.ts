@@ -301,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api/applications", applicationsRouter);
   app.use("/api", messagesRouter); // Handles /messages and /conversation-threads
   app.use("/api/calendar-events", calendarRouter);
-  app.use("/api", volunteersRouter); // Handles /volunteers, /matchable-organizations, /matches
+  app.use("/api/volunteers", volunteersRouter); // Handles /volunteers/*, /matchable-organizations, /matches
   app.use("/api/project-assignments", projectAssignmentsRouter);
   app.use("/api/matchmaker", matchmakerRouter);
   app.use("/api", dashboardRouter); // Handles /dashboard and /organization/dashboard

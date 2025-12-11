@@ -250,3 +250,39 @@ export async function notifyVolunteerJoined(
     console.error("Error creating volunteer joined notification:", error);
   }
 }
+
+/**
+ * Notify user of a new message in a conversation thread
+ */
+export async function notifyThreadMessage(
+  receiverId: number,
+  senderId: number,
+  threadId: number,
+  threadTopic: string
+): Promise<void> {
+  try {
+    const sender = await storage.getUser(senderId);
+
+    if (!sender) {
+      console.error("Sender not found for thread message notification");
+      return;
+    }
+
+    const senderName = sender.displayName || sender.username || "Someone";
+
+    const notification: InsertNotification = {
+      userId: receiverId,
+      type: "new_message",
+      title: "New Message",
+      message: `${senderName} sent you a message in "${threadTopic}"`,
+      relatedEntityType: "thread",
+      relatedEntityId: threadId,
+      relatedUserId: senderId,
+      read: false,
+    };
+
+    await storage.createNotification(notification);
+  } catch (error) {
+    console.error("Error creating thread message notification:", error);
+  }
+}

@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertMessageSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
+import { notifyNewMessage, notifyThreadMessage } from "../notification-service";
 
 export const messagesRouter = Router();
 
@@ -66,6 +67,18 @@ messagesRouter.post("/", async (req: Request, res: Response) => {
   try {
     const messageData = insertMessageSchema.parse(req.body);
     const message = await storage.createMessage(messageData);
+
+    // Create notification for the recipient
+    try {
+      await notifyNewMessage(
+        message.receiverId,
+        message.senderId,
+        message.subject || undefined
+      );
+    } catch (notifyErr) {
+      // Log but don't fail the request if notification fails
+      console.error("Failed to create message notification:", notifyErr);
+    }
 
     broadcastUpdate("message_created", message);
     res.status(201).json(message);
@@ -349,14 +362,17 @@ messagesRouter.post("/conversation-threads/:threadId/messages", async (req: Requ
       lastMessageAt: new Date()
     });
 
-    await storage.createNotification({
-      userId: receiverId,
-      type: 'message',
-      title: 'New Message',
-      message: `New message in "${thread.topic}"`,
-      relatedEntityType: 'thread',
-      relatedEntityId: threadId
-    });
+    // Create notification for the recipient with sender info
+    try {
+      await notifyThreadMessage(
+        receiverId,
+        parseInt(senderId),
+        threadId,
+        thread.topic
+      );
+    } catch (notifyErr) {
+      console.error("Failed to create thread message notification:", notifyErr);
+    }
 
     const sender = await storage.getUser(parseInt(senderId));
     const enrichedMessage = {

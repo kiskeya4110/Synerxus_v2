@@ -1,17 +1,19 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Search, Briefcase, User, Settings, Menu, X, LogOut, Bell } from "lucide-react";
+import { Search, Briefcase, User, Settings, Menu, X, LogOut, Bell, LayoutDashboard, Clock, FileText, TrendingUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import logoImage from "@assets/Synerxus Modern Logo_1762068075617.png";
 
 const VOLUNTEER_NAV_ITEMS = [
-  { href: "/", label: "Home", icon: <Home className="w-4 h-4" /> },
-  { href: "/dashboard", label: "Dashboard", icon: <Home className="w-4 h-4" /> },
-  { href: "/discover-opportunities", label: "Discover", icon: <Search className="w-4 h-4" /> },
-  { href: "/my-work", label: "My Work", icon: <Briefcase className="w-4 h-4" /> },
+  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, description: "KPIs & Metrics" },
+  { href: "/log-activity", label: "Log Hours", icon: <Clock className="w-4 h-4" />, description: "Track Your Time" },
+  { href: "/discover-opportunities", label: "Discover", icon: <Search className="w-4 h-4" />, description: "Find Opportunities" },
+  { href: "/my-work", label: "My Work", icon: <Briefcase className="w-4 h-4" />, description: "Tasks & Projects" },
+  { href: "/impact-report", label: "Impact", icon: <TrendingUp className="w-4 h-4" />, description: "View Your Impact" },
 ];
 
 const MENU_ITEMS = [
@@ -50,34 +52,66 @@ export default function VolunteerNav() {
 
   const userInitial = (currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase();
 
+  const [imageError, setImageError] = useState(false);
+
+  // Navigate to landing page when logo is clicked
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
   return (
-    <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+    <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Nav Items */}
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
-            {VOLUNTEER_NAV_ITEMS.map((item) => {
-              const isActive = location === item.href ||
-                             (item.href === '/dashboard' && location.startsWith('/dashboard'));
+          {/* Logo and Brand */}
+          <div className="flex items-center gap-6">
+            <button
+              onClick={handleLogoClick}
+              className="flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer group"
+              title="Go to Home"
+            >
+              {!imageError ? (
+                <img
+                  src={logoImage}
+                  alt="Synerxus Logo"
+                  className="h-10 w-auto object-contain"
+                  onError={() => setImageError(true)}
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+                  <span className="text-white font-bold text-lg">S</span>
+                </div>
+              )}
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent hidden lg:inline group-hover:from-blue-700 group-hover:to-indigo-700 transition-all">
+                SYNERXUS
+              </span>
+            </button>
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors whitespace-nowrap text-sm sm:text-base font-medium min-h-[44px]",
-                    isActive
-                      ? "bg-blue-600 text-white dark:bg-blue-700"
-                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  )}
-                  data-testid={`volunteer-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  {item.icon}
-                  <span className="hidden sm:inline">{item.label}</span>
-                  <span className="sm:hidden text-xs">{item.label.charAt(0)}</span>
-                </Link>
-              );
-            })}
+            {/* Nav Items */}
+            <div className="flex items-center gap-1 overflow-x-auto border-l border-gray-200 dark:border-gray-700 pl-6">
+              {VOLUNTEER_NAV_ITEMS.map((item) => {
+                const isActive = location === item.href ||
+                               (item.href === '/dashboard' && location.startsWith('/dashboard'));
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all whitespace-nowrap text-sm font-medium min-h-[40px]",
+                      isActive
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-blue-900/30"
+                        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                    )}
+                    data-testid={`volunteer-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    title={item.description}
+                  >
+                    {item.icon}
+                    <span className="hidden xl:inline">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           {/* Right Section: Notifications + User Profile Menu */}

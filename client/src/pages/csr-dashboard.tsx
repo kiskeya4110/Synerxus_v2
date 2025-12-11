@@ -67,7 +67,7 @@ import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
-import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
+import logoUrl from "@assets/Synerxus Modern Logo_1762068075617.png";
 
 // Error Boundary for lazy-loaded components
 interface ErrorBoundaryProps {
@@ -114,17 +114,146 @@ class LazyErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 }
 
-// Lazy load heavy components for better initial load time
-// Error handling is done via LazyErrorBoundary wrapper at usage sites
-const MapContainer = lazy(() => import("react-leaflet").then(m => ({ default: m.MapContainer })));
-const TileLayer = lazy(() => import("react-leaflet").then(m => ({ default: m.TileLayer })));
-const Marker = lazy(() => import("react-leaflet").then(m => ({ default: m.Marker })));
-const Popup = lazy(() => import("react-leaflet").then(m => ({ default: m.Popup })));
-const EmployeeEngagementTab = lazy(() => import("./employee-engagement-tab"));
-
-// Import Leaflet for marker icon configuration
+// Import Leaflet for marker icon configuration - must be before react-leaflet
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+
+// Fix Leaflet default marker icon issue
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+// @ts-ignore - Leaflet icon fix
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+// Lazy load heavy components for better initial load time
+const EmployeeEngagementTab = lazy(() => import("./employee-engagement-tab"));
+
+// Global Impact Map Component - consolidated for better loading
+interface GlobalMapProps {
+  projectLocations: Array<{
+    id: number;
+    name: string;
+    lat: number;
+    lng: number;
+    region: string;
+    employees: number;
+    hours: number;
+    status: string;
+    sdgGoals?: number[];
+  }>;
+}
+
+const GlobalImpactMap = memo(({ projectLocations }: GlobalMapProps) => {
+  if (!projectLocations || projectLocations.length === 0) {
+    return (
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100%",
+        minHeight: "280px",
+        color: "#9ca3af",
+        fontSize: "13px",
+        backgroundColor: "#0f172a",
+        borderRadius: "8px",
+      }}>
+        No project locations mapped yet
+      </div>
+    );
+  }
+
+  return (
+    <MapContainer
+      center={[20, 0]}
+      zoom={2}
+      style={{ width: "100%", height: "100%", minHeight: "280px" }}
+      scrollWheelZoom={false}
+    >
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      />
+      {projectLocations.map((project) => {
+        const statusColor =
+          project.status === "active" || project.status === "Active"
+            ? "#3b82f6"
+            : project.status === "completed" || project.status === "Completed"
+              ? "#22c55e"
+              : project.status === "in-progress" || project.status === "In Progress"
+                ? "#f59e0b"
+                : "#6b7280";
+
+        const customIcon = L.divIcon({
+          html: `<div style="
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: ${statusColor};
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          ">${project.employees}</div>`,
+          className: "custom-map-marker",
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+          popupAnchor: [0, -18],
+        });
+
+        return (
+          <Marker
+            key={project.id}
+            position={[project.lat, project.lng]}
+            icon={customIcon}
+          >
+            <Popup>
+              <div style={{ fontSize: "12px", minWidth: "180px" }}>
+                <p style={{ fontWeight: "600", margin: "0 0 6px 0", color: "#111827", fontSize: "13px" }}>
+                  {project.name}
+                </p>
+                <p style={{ margin: "3px 0", color: "#6b7280", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span>📍</span> {project.region}
+                </p>
+                <p style={{ margin: "3px 0", color: "#6b7280", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span>👥</span> {project.employees} volunteer{project.employees !== 1 ? "s" : ""}
+                </p>
+                <p style={{ margin: "3px 0", color: "#6b7280", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <span>⏱️</span> {project.hours.toLocaleString()} hours
+                </p>
+                <p style={{
+                  margin: "6px 0 0 0",
+                  padding: "6px 0 0 0",
+                  borderTop: "1px solid #e5e7eb",
+                  color: statusColor,
+                  fontWeight: "600",
+                  textTransform: "capitalize",
+                  fontSize: "11px"
+                }}>
+                  Status: {project.status}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+    </MapContainer>
+  );
+});
+GlobalImpactMap.displayName = "GlobalImpactMap";
+
+// Lazy load the map component
+const LazyGlobalImpactMap = lazy(() => Promise.resolve({ default: GlobalImpactMap }));
 
 // Skeleton component for lazy-loaded sections
 const ChartSkeleton = memo(({ height = "h-64" }: { height?: string }) => (
@@ -312,6 +441,20 @@ export default function CSRDashboard() {
   const [showTotalHoursModal, setShowTotalHoursModal] = useState(false);
   const [showEmployeesModal, setShowEmployeesModal] = useState(false);
   const [showExpansionInsightsModal, setShowExpansionInsightsModal] = useState(false);
+
+  // AI Insight modal state
+  const [activeInsightModal, setActiveInsightModal] = useState<'engagement' | 'retention' | 'skills' | 'milestone' | null>(null);
+
+  // PWA AI Action states
+  const [showInitiativeLauncher, setShowInitiativeLauncher] = useState(false);
+  const [showChallengeMode, setShowChallengeMode] = useState(false);
+  const [showAIEngage, setShowAIEngage] = useState(false);
+  const [showProjectsBrowser, setShowProjectsBrowser] = useState(false);
+  const [showRallyTeam, setShowRallyTeam] = useState(false);
+  const [aiEngageProgress, setAiEngageProgress] = useState(0);
+  const [aiEngageStatus, setAiEngageStatus] = useState<'idle' | 'analyzing' | 'engaging' | 'complete'>('idle');
+  const [selectedInitiativeSDG, setSelectedInitiativeSDG] = useState<number | null>(null);
+  const [challengeConfig, setChallengeConfig] = useState({ hours: 127, days: 7, participants: 0 });
 
   // Engagement tips confirmation dialog
   const [showEngagementTipsDialog, setShowEngagementTipsDialog] = useState(false);
@@ -1155,10 +1298,13 @@ export default function CSRDashboard() {
                   </div>
                 </div>
 
-                {/* Key AI Insights */}
+                {/* Key AI Insights - All Interactive */}
                 <div className="space-y-2">
                   {/* Insight 1 - Engagement Prediction */}
-                  <div className="bg-white/80 rounded-lg p-2.5 border border-indigo-100">
+                  <button
+                    onClick={() => setActiveInsightModal('engagement')}
+                    className="w-full bg-white/80 rounded-lg p-2.5 border border-indigo-100 hover:bg-emerald-50 hover:border-emerald-200 active:scale-[0.98] transition-all text-left"
+                  >
                     <div className="flex items-start gap-2">
                       <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <TrendingUp className="w-3 h-3 text-emerald-600" />
@@ -1167,14 +1313,18 @@ export default function CSRDashboard() {
                         <div className="flex items-center gap-1.5">
                           <span className="text-[10px] font-bold text-emerald-700">Engagement Surge Predicted</span>
                           <span className="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">+23%</span>
+                          <ChevronRight className="w-3 h-3 text-emerald-400 ml-auto" />
                         </div>
                         <p className="text-[9px] text-slate-600 mt-0.5">Based on current momentum, expect 23% more volunteers next month. Consider launching new SDG 4 & 13 initiatives.</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
 
                   {/* Insight 2 - Risk Alert */}
-                  <div className="bg-white/80 rounded-lg p-2.5 border border-amber-100">
+                  <button
+                    onClick={() => setActiveInsightModal('retention')}
+                    className="w-full bg-white/80 rounded-lg p-2.5 border border-amber-100 hover:bg-amber-50 hover:border-amber-200 active:scale-[0.98] transition-all text-left"
+                  >
                     <div className="flex items-start gap-2">
                       <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <AlertTriangle className="w-3 h-3 text-amber-600" />
@@ -1183,14 +1333,18 @@ export default function CSRDashboard() {
                         <div className="flex items-center gap-1.5">
                           <span className="text-[10px] font-bold text-amber-700">Retention Risk Detected</span>
                           <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-medium">12 employees</span>
+                          <ChevronRight className="w-3 h-3 text-amber-400 ml-auto" />
                         </div>
                         <p className="text-[9px] text-slate-600 mt-0.5">12 active volunteers showing declining engagement. Recommend personalized outreach within 7 days.</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
 
                   {/* Insight 3 - Skills Match Opportunity */}
-                  <div className="bg-white/80 rounded-lg p-2.5 border border-blue-100">
+                  <button
+                    onClick={() => setActiveInsightModal('skills')}
+                    className="w-full bg-white/80 rounded-lg p-2.5 border border-blue-100 hover:bg-blue-50 hover:border-blue-200 active:scale-[0.98] transition-all text-left"
+                  >
                     <div className="flex items-start gap-2">
                       <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Lightbulb className="w-3 h-3 text-blue-600" />
@@ -1199,14 +1353,18 @@ export default function CSRDashboard() {
                         <div className="flex items-center gap-1.5">
                           <span className="text-[10px] font-bold text-blue-700">Skills-Based Opportunity</span>
                           <span className="text-[8px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">High Impact</span>
+                          <ChevronRight className="w-3 h-3 text-blue-400 ml-auto" />
                         </div>
                         <p className="text-[9px] text-slate-600 mt-0.5">8 employees with tech skills not yet matched. Pro bono tech mentoring could increase AIU by 340%.</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
 
                   {/* Insight 4 - Achievement Unlocked */}
-                  <div className="bg-white/80 rounded-lg p-2.5 border border-purple-100">
+                  <button
+                    onClick={() => setActiveInsightModal('milestone')}
+                    className="w-full bg-white/80 rounded-lg p-2.5 border border-purple-100 hover:bg-purple-50 hover:border-purple-200 active:scale-[0.98] transition-all text-left"
+                  >
                     <div className="flex items-start gap-2">
                       <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Award className="w-3 h-3 text-purple-600" />
@@ -1215,21 +1373,21 @@ export default function CSRDashboard() {
                         <div className="flex items-center gap-1.5">
                           <span className="text-[10px] font-bold text-purple-700">Milestone Approaching</span>
                           <span className="text-[8px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium">95% complete</span>
+                          <ChevronRight className="w-3 h-3 text-purple-400 ml-auto" />
                         </div>
                         <p className="text-[9px] text-slate-600 mt-0.5">Only 127 hours needed to unlock "Impact Champion" badge. Rally the team for a final push!</p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 </div>
 
                 {/* AI Actions */}
                 <div className="grid grid-cols-2 gap-2 mt-3">
                   <button
                     onClick={() => {
-                      toast({
-                        title: "Auto-Engage Initiated",
-                        description: "AI is sending personalized engagement messages to at-risk employees.",
-                      });
+                      setShowAIEngage(true);
+                      setAiEngageStatus('analyzing');
+                      setAiEngageProgress(0);
                     }}
                     className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 shadow-sm hover:from-indigo-600 hover:to-purple-700 active:scale-95 transition-all"
                   >
@@ -1237,11 +1395,11 @@ export default function CSRDashboard() {
                     Auto-Engage At-Risk
                   </button>
                   <button
-                    onClick={() => navigate('/csr-reports-exports')}
+                    onClick={() => setShowProjectsBrowser(true)}
                     className="bg-white text-indigo-700 text-[10px] font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-indigo-200 hover:bg-indigo-50 active:scale-95 transition-all"
                   >
                     <Brain className="w-3 h-3" />
-                    Generate Report
+                    Browse Projects
                   </button>
                 </div>
               </div>
@@ -1909,7 +2067,7 @@ export default function CSRDashboard() {
                               {i + 1}
                             </div>
                             <div className="flex-1 min-w-0 text-left">
-                              <div className="text-slate-900 text-sm font-medium truncate">{emp.employeeName || `Volunteer ${i + 1}`}</div>
+                              <div className="text-slate-900 text-sm font-medium truncate">{emp.employeeName || emp.name || `Volunteer ${i + 1}`}</div>
                               <div className="text-slate-500 text-[10px]">{emp.points || 0} points</div>
                             </div>
                             <div className="text-emerald-600 text-sm font-bold">{emp.hours || 0}h</div>
@@ -2259,6 +2417,902 @@ export default function CSRDashboard() {
                     Close
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Insight Detail Modal */}
+        {activeInsightModal && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => setActiveInsightModal(null)}>
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Engagement Surge Modal */}
+              {activeInsightModal === 'engagement' && (
+                <>
+                  <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-emerald-600 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Engagement Surge Predicted</h2>
+                      <p className="text-xs text-white/80">AI-powered forecast analysis</p>
+                    </div>
+                    <button onClick={() => setActiveInsightModal(null)} className="p-2 rounded-full hover:bg-white/20">
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="text-center py-4">
+                      <div className="text-5xl font-bold text-emerald-600">+23%</div>
+                      <div className="text-slate-600 text-sm mt-1">Predicted volunteer increase</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-200">
+                        <div className="text-emerald-700 text-xl font-bold">{Math.round(displayActiveEmployees * 1.23)}</div>
+                        <div className="text-emerald-600 text-xs">Expected Next Month</div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
+                        <div className="text-blue-700 text-xl font-bold">87%</div>
+                        <div className="text-blue-600 text-xs">Confidence Score</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Recommended SDG Initiatives</h4>
+                      <div className="space-y-2">
+                        <button onClick={() => { setActiveInsightModal(null); setSelectedSDG(4); }} className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all">
+                          <img src={getSDGIcon(4)} alt="SDG 4" className="w-8 h-8 rounded" />
+                          <div className="flex-1 text-left">
+                            <div className="text-sm font-medium text-slate-800">SDG 4: Quality Education</div>
+                            <div className="text-xs text-slate-500">High volunteer interest detected</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </button>
+                        <button onClick={() => { setActiveInsightModal(null); setSelectedSDG(13); }} className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all">
+                          <img src={getSDGIcon(13)} alt="SDG 13" className="w-8 h-8 rounded" />
+                          <div className="flex-1 text-left">
+                            <div className="text-sm font-medium text-slate-800">SDG 13: Climate Action</div>
+                            <div className="text-xs text-slate-500">Trending among employees</div>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-slate-400" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                      <h4 className="font-semibold text-emerald-800 text-sm mb-1">AI Recommendation</h4>
+                      <p className="text-xs text-slate-700">Launch a new SDG 4 or SDG 13 initiative within the next 2 weeks to capitalize on the predicted engagement surge. Consider team challenges to boost participation.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => { setActiveInsightModal(null); setShowInitiativeLauncher(true); }}
+                        className="bg-emerald-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-emerald-700 active:scale-95 transition-all"
+                      >
+                        <FolderKanban className="w-3.5 h-3.5" />
+                        Launch Initiative
+                      </button>
+                      <button
+                        onClick={() => setActiveInsightModal(null)}
+                        className="bg-white text-emerald-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-emerald-300 hover:bg-emerald-50 active:scale-95 transition-all"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Retention Risk Modal */}
+              {activeInsightModal === 'retention' && (
+                <>
+                  <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Retention Risk Detected</h2>
+                      <p className="text-xs text-white/80">Employees showing declining engagement</p>
+                    </div>
+                    <button onClick={() => setActiveInsightModal(null)} className="p-2 rounded-full hover:bg-white/20">
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="text-center py-4">
+                      <div className="text-5xl font-bold text-amber-600">12</div>
+                      <div className="text-slate-600 text-sm mt-1">At-risk employees identified</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-red-50 rounded-lg p-2 text-center border border-red-200">
+                        <div className="text-red-700 text-lg font-bold">3</div>
+                        <div className="text-red-600 text-[9px]">Critical</div>
+                      </div>
+                      <div className="bg-amber-50 rounded-lg p-2 text-center border border-amber-200">
+                        <div className="text-amber-700 text-lg font-bold">5</div>
+                        <div className="text-amber-600 text-[9px]">Warning</div>
+                      </div>
+                      <div className="bg-yellow-50 rounded-lg p-2 text-center border border-yellow-200">
+                        <div className="text-yellow-700 text-lg font-bold">4</div>
+                        <div className="text-yellow-600 text-[9px]">Watch</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">At-Risk Employees</h4>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {(csrData?.leaderboard || []).slice(0, 5).map((emp: any, i: number) => (
+                          <button
+                            key={i}
+                            onClick={() => { setActiveInsightModal(null); setSelectedEmployee({ ...emp, rank: i + 1 }); }}
+                            className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 hover:border-amber-300 hover:bg-amber-50 transition-all"
+                          >
+                            <div className={`w-2 h-2 rounded-full ${i < 2 ? 'bg-red-500' : i < 4 ? 'bg-amber-500' : 'bg-yellow-500'}`} />
+                            <div className="flex-1 text-left">
+                              <div className="text-sm font-medium text-slate-800">{emp.employeeName || emp.name || `Employee ${i + 1}`}</div>
+                              <div className="text-xs text-slate-500">Last active: {i + 2} weeks ago</div>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
+                      <h4 className="font-semibold text-amber-800 text-sm mb-1">AI Recommendation</h4>
+                      <p className="text-xs text-slate-700">Send personalized outreach within 7 days. Consider offering flexible volunteering options or new project matches based on their interests.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setActiveInsightModal(null);
+                          setShowAIEngage(true);
+                          setAiEngageStatus('analyzing');
+                          setAiEngageProgress(0);
+                        }}
+                        className="bg-amber-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-amber-700 active:scale-95 transition-all"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        Auto-Engage All
+                      </button>
+                      <button
+                        onClick={() => { setActiveInsightModal(null); setShowRallyTeam(true); }}
+                        className="bg-white text-amber-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-amber-300 hover:bg-amber-50 active:scale-95 transition-all"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        View Team
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Skills Opportunity Modal */}
+              {activeInsightModal === 'skills' && (
+                <>
+                  <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Skills-Based Opportunity</h2>
+                      <p className="text-xs text-white/80">Untapped potential detected</p>
+                    </div>
+                    <button onClick={() => setActiveInsightModal(null)} className="p-2 rounded-full hover:bg-white/20">
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="text-center py-4">
+                      <div className="text-5xl font-bold text-blue-600">+340%</div>
+                      <div className="text-slate-600 text-sm mt-1">Potential AIU increase</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
+                        <div className="text-blue-700 text-xl font-bold">8</div>
+                        <div className="text-blue-600 text-xs">Unmatched Tech Talent</div>
+                      </div>
+                      <div className="bg-indigo-50 rounded-lg p-3 text-center border border-indigo-200">
+                        <div className="text-indigo-700 text-xl font-bold">15</div>
+                        <div className="text-indigo-600 text-xs">Available Projects</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Skill Categories Available</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium">Software Development</span>
+                        <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full font-medium">Data Analysis</span>
+                        <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full font-medium">UX Design</span>
+                        <span className="bg-cyan-100 text-cyan-700 text-xs px-2 py-1 rounded-full font-medium">Project Management</span>
+                        <span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full font-medium">Digital Marketing</span>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Suggested Pro Bono Matches</h4>
+                      <div className="space-y-2">
+                        <button onClick={() => { setActiveInsightModal(null); navigate('/project-portfolio'); }} className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all">
+                          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <Briefcase className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="text-sm font-medium text-slate-800">Tech Mentoring Program</div>
+                            <div className="text-xs text-slate-500">3 employees × 4 projects</div>
+                          </div>
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">+120 AIU</span>
+                        </button>
+                        <button onClick={() => { setActiveInsightModal(null); navigate('/project-portfolio'); }} className="w-full flex items-center gap-2 p-2 bg-white rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <Lightbulb className="w-4 h-4 text-indigo-600" />
+                          </div>
+                          <div className="flex-1 text-left">
+                            <div className="text-sm font-medium text-slate-800">Digital Skills Workshop</div>
+                            <div className="text-xs text-slate-500">5 employees × 2 projects</div>
+                          </div>
+                          <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">+85 AIU</span>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                      <h4 className="font-semibold text-blue-800 text-sm mb-1">AI Recommendation</h4>
+                      <p className="text-xs text-slate-700">Match tech-skilled employees with digital literacy programs for maximum impact. Pro bono consulting can multiply your AIU by leveraging professional expertise.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setActiveInsightModal(null);
+                          setShowAIEngage(true);
+                          setAiEngageStatus('analyzing');
+                          setAiEngageProgress(0);
+                        }}
+                        className="bg-blue-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-blue-700 active:scale-95 transition-all"
+                      >
+                        <Zap className="w-3.5 h-3.5" />
+                        Auto-Match
+                      </button>
+                      <button
+                        onClick={() => { setActiveInsightModal(null); setShowProjectsBrowser(true); }}
+                        className="bg-white text-blue-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-blue-300 hover:bg-blue-50 active:scale-95 transition-all"
+                      >
+                        <FolderKanban className="w-3.5 h-3.5" />
+                        Browse Projects
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Milestone Modal */}
+              {activeInsightModal === 'milestone' && (
+                <>
+                  <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                    <div>
+                      <h2 className="text-lg font-bold text-white">Milestone Approaching</h2>
+                      <p className="text-xs text-white/80">Impact Champion badge almost unlocked</p>
+                    </div>
+                    <button onClick={() => setActiveInsightModal(null)} className="p-2 rounded-full hover:bg-white/20">
+                      <X className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    <div className="text-center py-4">
+                      <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center border-4 border-purple-200">
+                        <Trophy className="w-10 h-10 text-purple-600" />
+                      </div>
+                      <div className="text-2xl font-bold text-purple-600">Impact Champion</div>
+                      <div className="text-slate-600 text-sm mt-1">95% Complete</div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-semibold text-slate-700">Progress to Badge</span>
+                        <span className="text-sm font-bold text-purple-600">{displayTotalHours} / {displayTotalHours + 127} hours</span>
+                      </div>
+                      <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: '95%' }} />
+                      </div>
+                      <div className="text-xs text-slate-500 mt-2 text-center">Only <span className="font-bold text-purple-600">127 hours</span> needed!</div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-purple-50 rounded-lg p-2 text-center border border-purple-200">
+                        <div className="text-purple-700 text-lg font-bold">{displayActiveEmployees}</div>
+                        <div className="text-purple-600 text-[9px]">Active Team</div>
+                      </div>
+                      <div className="bg-pink-50 rounded-lg p-2 text-center border border-pink-200">
+                        <div className="text-pink-700 text-lg font-bold">~5</div>
+                        <div className="text-pink-600 text-[9px]">Hrs/Person</div>
+                      </div>
+                      <div className="bg-indigo-50 rounded-lg p-2 text-center border border-indigo-200">
+                        <div className="text-indigo-700 text-lg font-bold">7</div>
+                        <div className="text-indigo-600 text-[9px]">Days Left</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="font-semibold text-slate-800 text-sm mb-2">Badge Benefits</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          <span>Featured on company ESG report</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          <span>Exclusive Impact Champion certificate</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          <span>Priority access to high-impact projects</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          <span>LinkedIn badge integration</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                      <h4 className="font-semibold text-purple-800 text-sm mb-1">AI Recommendation</h4>
+                      <p className="text-xs text-slate-700">Rally the team with a quick volunteer sprint! Each team member contributing just 5 hours will unlock this milestone. Consider a team challenge announcement.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          setActiveInsightModal(null);
+                          setChallengeConfig({ hours: 127, days: 7, participants: displayActiveEmployees });
+                          setShowChallengeMode(true);
+                        }}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:from-purple-700 hover:to-pink-700 active:scale-95 transition-all"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        Launch Challenge
+                      </button>
+                      <button
+                        onClick={() => { setActiveInsightModal(null); setShowRallyTeam(true); }}
+                        className="bg-white text-purple-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-purple-300 hover:bg-purple-50 active:scale-95 transition-all"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                        Rally Team
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* PWA Initiative Launcher */}
+        {showInitiativeLauncher && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => setShowInitiativeLauncher(false)}>
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Launch New Initiative</h2>
+                  <p className="text-xs text-white/80">AI-recommended SDG programs</p>
+                </div>
+                <button onClick={() => setShowInitiativeLauncher(false)} className="p-2 rounded-full hover:bg-white/20">
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Brain className="w-5 h-5 text-emerald-600" />
+                    <span className="text-sm font-semibold text-emerald-800">AI Analysis Complete</span>
+                  </div>
+                  <p className="text-xs text-slate-700">Based on employee interests and skills, we recommend launching initiatives in these SDG areas for maximum engagement.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-slate-800">Select SDG Focus</h3>
+                  {[4, 13, 8, 3].map((sdg) => (
+                    <button
+                      key={sdg}
+                      onClick={() => setSelectedInitiativeSDG(sdg)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg border transition-all ${selectedInitiativeSDG === sdg ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white hover:border-emerald-300'}`}
+                    >
+                      <img src={getSDGIcon(sdg)} alt={`SDG ${sdg}`} className="w-12 h-12 rounded-lg" />
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-slate-800">{getSDGName(sdg)}</div>
+                        <div className="text-xs text-slate-500">
+                          {sdg === 4 && '23 employees interested • High skill match'}
+                          {sdg === 13 && '18 employees interested • Trending'}
+                          {sdg === 8 && '15 employees interested • Pro bono ready'}
+                          {sdg === 3 && '12 employees interested • Healthcare skills'}
+                        </div>
+                      </div>
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedInitiativeSDG === sdg ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'}`}>
+                        {selectedInitiativeSDG === sdg && <CheckCircle className="w-4 h-4 text-white" />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {selectedInitiativeSDG && (
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                    <h4 className="text-sm font-semibold text-slate-800 mb-2">Initiative Preview</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white rounded p-2 border border-slate-200">
+                        <div className="text-slate-500">Estimated Participants</div>
+                        <div className="text-emerald-700 font-bold text-lg">{selectedInitiativeSDG === 4 ? 23 : selectedInitiativeSDG === 13 ? 18 : 15}</div>
+                      </div>
+                      <div className="bg-white rounded p-2 border border-slate-200">
+                        <div className="text-slate-500">Projected AIU</div>
+                        <div className="text-teal-700 font-bold text-lg">+{selectedInitiativeSDG === 4 ? 156 : selectedInitiativeSDG === 13 ? 124 : 98}</div>
+                      </div>
+                      <div className="bg-white rounded p-2 border border-slate-200">
+                        <div className="text-slate-500">Available Projects</div>
+                        <div className="text-blue-700 font-bold text-lg">{selectedInitiativeSDG === 4 ? 8 : selectedInitiativeSDG === 13 ? 6 : 5}</div>
+                      </div>
+                      <div className="bg-white rounded p-2 border border-slate-200">
+                        <div className="text-slate-500">Engagement Boost</div>
+                        <div className="text-purple-700 font-bold text-lg">+23%</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      if (selectedInitiativeSDG) {
+                        setShowInitiativeLauncher(false);
+                        toast({
+                          title: "Initiative Launched!",
+                          description: `SDG ${selectedInitiativeSDG} initiative created. Invitations sent to ${selectedInitiativeSDG === 4 ? 23 : selectedInitiativeSDG === 13 ? 18 : 15} employees.`,
+                        });
+                      }
+                    }}
+                    disabled={!selectedInitiativeSDG}
+                    className={`text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all ${selectedInitiativeSDG ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-300 cursor-not-allowed'}`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Launch Initiative
+                  </button>
+                  <button
+                    onClick={() => setShowInitiativeLauncher(false)}
+                    className="bg-white text-slate-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PWA Challenge Mode */}
+        {showChallengeMode && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => setShowChallengeMode(false)}>
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Team Challenge Mode</h2>
+                  <p className="text-xs text-white/80">Rally your team for Impact Champion</p>
+                </div>
+                <button onClick={() => setShowChallengeMode(false)} className="p-2 rounded-full hover:bg-white/20">
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="text-center py-3">
+                  <div className="w-16 h-16 mx-auto mb-2 rounded-full bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center border-4 border-purple-200">
+                    <Trophy className="w-8 h-8 text-purple-600" />
+                  </div>
+                  <div className="text-xl font-bold text-purple-600">Impact Champion Challenge</div>
+                  <div className="text-slate-500 text-sm">Unlock the badge together!</div>
+                </div>
+
+                <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-semibold text-slate-700">Challenge Goal</span>
+                    <span className="text-sm font-bold text-purple-600">{challengeConfig.hours} hours in {challengeConfig.days} days</span>
+                  </div>
+                  <div className="h-3 bg-white rounded-full overflow-hidden border border-purple-200">
+                    <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: '0%' }} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-white rounded-lg p-3 text-center border border-slate-200">
+                    <div className="text-purple-700 text-xl font-bold">{challengeConfig.participants}</div>
+                    <div className="text-slate-500 text-[9px]">Participants</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-center border border-slate-200">
+                    <div className="text-pink-700 text-xl font-bold">{Math.ceil(challengeConfig.hours / Math.max(challengeConfig.participants, 1))}</div>
+                    <div className="text-slate-500 text-[9px]">Hrs/Person</div>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-center border border-slate-200">
+                    <div className="text-indigo-700 text-xl font-bold">{challengeConfig.days}</div>
+                    <div className="text-slate-500 text-[9px]">Days</div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <h4 className="text-sm font-semibold text-slate-800 mb-2">Challenge Rewards</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-xs text-slate-700">
+                      <Award className="w-4 h-4 text-amber-500" />
+                      <span>Team-wide Impact Champion badge</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-700">
+                      <Sparkles className="w-4 h-4 text-purple-500" />
+                      <span>Featured in company newsletter</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-slate-700">
+                      <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      <span>+{Math.round(challengeConfig.hours * 0.8)} bonus AIU for the team</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 border border-purple-200">
+                  <h4 className="text-sm font-semibold text-purple-800 mb-1">AI Challenge Strategy</h4>
+                  <p className="text-xs text-slate-700">Optimal approach: Each team member contributes {Math.ceil(challengeConfig.hours / Math.max(challengeConfig.participants, 1))} hours over {challengeConfig.days} days. AI will send daily progress updates and personalized project suggestions.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      setShowChallengeMode(false);
+                      toast({
+                        title: "Challenge Launched!",
+                        description: `Team challenge started! ${challengeConfig.participants} employees notified. Daily progress tracking enabled.`,
+                      });
+                    }}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:from-purple-700 hover:to-pink-700 active:scale-95 transition-all"
+                  >
+                    <Zap className="w-4 h-4" />
+                    Launch Challenge & Notify Team
+                  </button>
+                  <button
+                    onClick={() => setShowChallengeMode(false)}
+                    className="w-full bg-white text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PWA AI Auto-Engage with ML */}
+        {showAIEngage && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => aiEngageStatus === 'complete' && setShowAIEngage(false)}>
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-lg font-bold text-white">AI Auto-Engage</h2>
+                  <p className="text-xs text-white/80">ML-powered personalized outreach</p>
+                </div>
+                {aiEngageStatus === 'complete' && (
+                  <button onClick={() => { setShowAIEngage(false); setAiEngageStatus('idle'); }} className="p-2 rounded-full hover:bg-white/20">
+                    <X className="w-5 h-5 text-white" />
+                  </button>
+                )}
+              </div>
+              <div className="p-4 space-y-4">
+                {aiEngageStatus === 'analyzing' && (
+                  <>
+                    <div className="text-center py-6">
+                      <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-indigo-100 flex items-center justify-center animate-pulse">
+                        <Brain className="w-8 h-8 text-indigo-600" />
+                      </div>
+                      <div className="text-lg font-bold text-indigo-600">Analyzing Employee Data</div>
+                      <div className="text-slate-500 text-sm mt-1">ML model processing engagement patterns...</div>
+                    </div>
+                    <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                          <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                          <span>Analyzing activity patterns for 12 at-risk employees</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                          <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                          <span>Identifying optimal engagement channels</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-700">
+                          <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                          <span>Generating personalized recommendations</span>
+                        </div>
+                      </div>
+                    </div>
+                    {(() => {
+                      setTimeout(() => {
+                        if (aiEngageStatus === 'analyzing') {
+                          setAiEngageStatus('engaging');
+                          setAiEngageProgress(0);
+                        }
+                      }, 2000);
+                      return null;
+                    })()}
+                  </>
+                )}
+
+                {aiEngageStatus === 'engaging' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center">
+                        <Zap className="w-8 h-8 text-indigo-600 animate-pulse" />
+                      </div>
+                      <div className="text-lg font-bold text-indigo-600">Engaging Employees</div>
+                      <div className="text-slate-500 text-sm mt-1">Sending personalized outreach...</div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm font-semibold text-slate-700">Progress</span>
+                        <span className="text-sm font-bold text-indigo-600">{aiEngageProgress}/12 employees</span>
+                      </div>
+                      <div className="h-3 bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-500"
+                          style={{ width: `${(aiEngageProgress / 12) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {(csrData?.leaderboard || []).slice(0, aiEngageProgress).map((emp: any, i: number) => (
+                        <div key={i} className="flex items-center gap-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <CheckCircle className="w-4 h-4 text-emerald-500" />
+                          <div className="flex-1">
+                            <div className="text-xs font-medium text-slate-800">{emp.employeeName || emp.name || `Employee ${i + 1}`}</div>
+                            <div className="text-[10px] text-emerald-600">Personalized message sent via {['Email', 'Slack', 'Teams'][i % 3]}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {(() => {
+                      if (aiEngageProgress < 12) {
+                        setTimeout(() => {
+                          setAiEngageProgress(prev => Math.min(prev + 1, 12));
+                          if (aiEngageProgress >= 11) {
+                            setTimeout(() => setAiEngageStatus('complete'), 500);
+                          }
+                        }, 400);
+                      }
+                      return null;
+                    })()}
+                  </>
+                )}
+
+                {aiEngageStatus === 'complete' && (
+                  <>
+                    <div className="text-center py-4">
+                      <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <CheckCircle className="w-10 h-10 text-emerald-500" />
+                      </div>
+                      <div className="text-lg font-bold text-emerald-600">Engagement Complete!</div>
+                      <div className="text-slate-500 text-sm mt-1">12 employees contacted with personalized outreach</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-emerald-50 rounded-lg p-3 text-center border border-emerald-200">
+                        <div className="text-emerald-700 text-xl font-bold">12</div>
+                        <div className="text-emerald-600 text-xs">Employees Engaged</div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-3 text-center border border-blue-200">
+                        <div className="text-blue-700 text-xl font-bold">3</div>
+                        <div className="text-blue-600 text-xs">Channels Used</div>
+                      </div>
+                    </div>
+                    <div className="bg-slate-50 rounded-lg p-3">
+                      <h4 className="text-sm font-semibold text-slate-800 mb-2">ML Engagement Summary</h4>
+                      <div className="space-y-2 text-xs text-slate-700">
+                        <div className="flex justify-between"><span>Email outreach:</span><span className="font-semibold">5 employees</span></div>
+                        <div className="flex justify-between"><span>Slack notifications:</span><span className="font-semibold">4 employees</span></div>
+                        <div className="flex justify-between"><span>Teams messages:</span><span className="font-semibold">3 employees</span></div>
+                        <div className="flex justify-between border-t border-slate-200 pt-2 mt-2"><span>Projects suggested:</span><span className="font-semibold text-indigo-600">18 matches</span></div>
+                      </div>
+                    </div>
+                    <div className="bg-indigo-50 rounded-lg p-3 border border-indigo-200">
+                      <h4 className="text-sm font-semibold text-indigo-800 mb-1">Expected Outcomes</h4>
+                      <p className="text-xs text-slate-700">Based on historical data, expect 67% response rate within 48 hours. Predicted re-engagement: 8 employees returning to active volunteering.</p>
+                    </div>
+                    <button
+                      onClick={() => { setShowAIEngage(false); setAiEngageStatus('idle'); }}
+                      className="w-full bg-indigo-600 text-white text-sm font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-indigo-700 active:scale-95 transition-all"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Done
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PWA Projects Browser with Algorithm Matching */}
+        {showProjectsBrowser && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => setShowProjectsBrowser(false)}>
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-gradient-to-r from-blue-500 to-indigo-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-lg font-bold text-white">AI-Matched Projects</h2>
+                  <p className="text-xs text-white/80">Optimal opportunities for your team</p>
+                </div>
+                <button onClick={() => setShowProjectsBrowser(false)} className="p-2 rounded-full hover:bg-white/20">
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              <div className="p-4 space-y-3">
+                <div className="bg-blue-50 rounded-lg p-2 border border-blue-200 flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-blue-600" />
+                  <span className="text-xs text-blue-800">Ranked by skill match & SDG alignment</span>
+                </div>
+
+                {[
+                  { name: 'Digital Literacy Program', sdg: 4, match: 95, hours: 40, volunteers: 8, aiu: 120, skills: ['Teaching', 'Tech'] },
+                  { name: 'Climate Data Analysis', sdg: 13, match: 92, hours: 30, volunteers: 5, aiu: 85, skills: ['Data', 'Analytics'] },
+                  { name: 'Youth Mentorship Initiative', sdg: 8, match: 88, hours: 50, volunteers: 12, aiu: 156, skills: ['Mentoring', 'Career'] },
+                  { name: 'Healthcare App Development', sdg: 3, match: 85, hours: 60, volunteers: 4, aiu: 98, skills: ['Dev', 'UX'] },
+                  { name: 'Financial Education Workshop', sdg: 1, match: 82, hours: 25, volunteers: 6, aiu: 72, skills: ['Finance', 'Teaching'] },
+                ].map((project, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      setShowProjectsBrowser(false);
+                      setSelectedSDG(project.sdg);
+                    }}
+                    className="w-full bg-white rounded-lg p-3 border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-all text-left"
+                  >
+                    <div className="flex items-start gap-3">
+                      <img src={getSDGIcon(project.sdg)} alt={`SDG ${project.sdg}`} className="w-10 h-10 rounded-lg" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-slate-800 truncate">{project.name}</span>
+                          <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">{project.match}% match</span>
+                        </div>
+                        <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500">
+                          <span>{project.hours}h needed</span>
+                          <span>•</span>
+                          <span>{project.volunteers} volunteers</span>
+                          <span>•</span>
+                          <span className="text-emerald-600 font-medium">+{project.aiu} AIU</span>
+                        </div>
+                        <div className="flex gap-1 mt-1.5">
+                          {project.skills.map((skill, j) => (
+                            <span key={j} className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{skill}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400 mt-1" />
+                    </div>
+                  </button>
+                ))}
+
+                <div className="grid grid-cols-2 gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowProjectsBrowser(false);
+                      toast({ title: "Auto-Match Started", description: "AI is matching employees to optimal projects based on skills." });
+                    }}
+                    className="bg-blue-600 text-white text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 hover:bg-blue-700 active:scale-95 transition-all"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    Auto-Match All
+                  </button>
+                  <button
+                    onClick={() => setShowProjectsBrowser(false)}
+                    className="bg-white text-slate-700 text-[11px] font-semibold py-2.5 px-3 rounded-lg flex items-center justify-center gap-1.5 border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PWA Rally Team */}
+        {showRallyTeam && (
+          <div className="fixed inset-0 bg-black/50 z-[100] flex items-end justify-center" onClick={() => setShowRallyTeam(false)}>
+            <div
+              className="bg-white rounded-t-2xl w-full max-w-[428px] max-h-[90vh] overflow-y-auto animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Rally Your Team</h2>
+                  <p className="text-xs text-white/80">Engage and motivate employees</p>
+                </div>
+                <button onClick={() => setShowRallyTeam(false)} className="p-2 rounded-full hover:bg-white/20">
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-amber-50 rounded-lg p-3 text-center border border-amber-200">
+                    <div className="text-amber-700 text-xl font-bold">{displayActiveEmployees}</div>
+                    <div className="text-amber-600 text-xs">Active Volunteers</div>
+                  </div>
+                  <div className="bg-orange-50 rounded-lg p-3 text-center border border-orange-200">
+                    <div className="text-orange-700 text-xl font-bold">12</div>
+                    <div className="text-orange-600 text-xs">Need Re-engagement</div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 rounded-lg p-3">
+                  <h4 className="text-sm font-semibold text-slate-800 mb-2">Quick Actions</h4>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        setShowRallyTeam(false);
+                        toast({ title: "Announcement Sent!", description: "Team-wide volunteering announcement delivered to all employees." });
+                      }}
+                      className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-amber-300 hover:bg-amber-50 transition-all"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-slate-800">Send Team Announcement</div>
+                        <div className="text-xs text-slate-500">Notify all employees about volunteering opportunities</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowRallyTeam(false);
+                        setShowChallengeMode(true);
+                        setChallengeConfig({ hours: 100, days: 14, participants: displayActiveEmployees });
+                      }}
+                      className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <Trophy className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-slate-800">Start Team Challenge</div>
+                        <div className="text-xs text-slate-500">Create a competitive volunteering challenge</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowRallyTeam(false);
+                        setShowAIEngage(true);
+                        setAiEngageStatus('analyzing');
+                        setAiEngageProgress(0);
+                      }}
+                      className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                        <Brain className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-slate-800">AI Personalized Outreach</div>
+                        <div className="text-xs text-slate-500">Let AI engage at-risk employees individually</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setShowRallyTeam(false);
+                        toast({ title: "Recognition Sent!", description: "Top volunteers featured in team channel with appreciation message." });
+                      }}
+                      className="w-full flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                        <Award className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <div className="text-sm font-medium text-slate-800">Recognize Top Volunteers</div>
+                        <div className="text-xs text-slate-500">Share appreciation for leading contributors</div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowRallyTeam(false)}
+                  className="w-full bg-white text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 border border-slate-300 hover:bg-slate-50 active:scale-95 transition-all"
+                >
+                  Close
+                </button>
               </div>
             </div>
           </div>
@@ -3910,121 +4964,13 @@ export default function CSRDashboard() {
                       backgroundColor: "#0f172a",
                       minHeight: "280px",
                     }}
+                    data-testid="geographic-map-container"
                   >
-                    {filteredProjectLocations.length > 0 ? (
-                      <LazyErrorBoundary fallback={<MapSkeleton />}>
-                        <Suspense fallback={<MapSkeleton />}>
-                          <MapContainer
-                            center={[20, 0]}
-                            zoom={2}
-                            style={{ width: "100%", height: "100%" }}
-                            data-testid="geographic-map"
-                          >
-                            <TileLayer
-                              url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                              attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
-                            />
-                        {filteredProjectLocations.map((project) => {
-                          const statusColor =
-                            project.status === "active"
-                              ? "#1e3a8a"
-                              : project.status === "completed"
-                                ? "#22c55e"
-                                : "#f97316";
-
-                          // Create custom icon for each marker
-                          const customIcon = L.divIcon({
-                            html: `<div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background-color: ${statusColor}; color: white; font-weight: bold; font-size: 14px; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">
-                          ${project.employees}
-                        </div>`,
-                            className: "custom-marker",
-                            iconSize: [40, 40],
-                            iconAnchor: [20, 20],
-                            popupAnchor: [0, -20],
-                          });
-
-                          return (
-                            <Marker
-                              key={project.id}
-                              position={[project.lat, project.lng]}
-                              icon={customIcon}
-                              data-testid={`map-marker-${project.id}`}
-                            >
-                              <Popup>
-                                <div
-                                  style={{
-                                    fontSize: "12px",
-                                    minWidth: "200px",
-                                  }}
-                                >
-                                  <p
-                                    style={{
-                                      fontWeight: "600",
-                                      margin: "0 0 4px 0",
-                                      color: "#111827",
-                                    }}
-                                  >
-                                    {project.name}
-                                  </p>
-                                  <p
-                                    style={{
-                                      margin: "2px 0",
-                                      color: "#6b7280",
-                                    }}
-                                  >
-                                    📍 {project.region}
-                                  </p>
-                                  <p
-                                    style={{
-                                      margin: "2px 0",
-                                      color: "#6b7280",
-                                    }}
-                                  >
-                                    👥 {project.employees} employee
-                                    {project.employees !== 1 ? "s" : ""}
-                                  </p>
-                                  <p
-                                    style={{
-                                      margin: "2px 0",
-                                      color: "#6b7280",
-                                    }}
-                                  >
-                                    ⏱️ {project.hours.toLocaleString()} hours
-                                  </p>
-                                  <p
-                                    style={{
-                                      margin: "4px 0 0 0",
-                                      padding: "4px 0 0 0",
-                                      borderTop: "1px solid #e5e7eb",
-                                      color: "#1e3a8a",
-                                      fontWeight: "600",
-                                      textTransform: "capitalize",
-                                    }}
-                                  >
-                                    Status: {project.status}
-                                  </p>
-                                </div>
-                              </Popup>
-                            </Marker>
-                          );
-                        })}
-                          </MapContainer>
-                        </Suspense>
-                      </LazyErrorBoundary>
-                    ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          height: "100%",
-                          color: "#9ca3af",
-                          fontSize: "13px",
-                        }}
-                      >
-                        No project locations mapped yet
-                      </div>
-                    )}
+                    <LazyErrorBoundary fallback={<MapSkeleton />}>
+                      <Suspense fallback={<MapSkeleton />}>
+                        <LazyGlobalImpactMap projectLocations={filteredProjectLocations} />
+                      </Suspense>
+                    </LazyErrorBoundary>
                   </div>
                 </div>
 
@@ -4657,7 +5603,7 @@ export default function CSRDashboard() {
                           </div>
                           <div style={{ textAlign: "left" }}>
                             <div style={{ fontSize: "14px", fontWeight: "600", color: "#111827" }}>
-                              {volunteer.employeeName || `Volunteer ${idx + 1}`}
+                              {volunteer.employeeName || volunteer.name || `Volunteer ${idx + 1}`}
                             </div>
                             <div style={{ fontSize: "11px", color: "#6b7280" }}>
                               {volunteer.points || 0} points earned

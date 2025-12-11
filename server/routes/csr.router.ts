@@ -426,9 +426,13 @@ csrRouter.get("/csr/dashboard", async (req: Request, res: Response) => {
       .map(([userIdStr, hours]) => {
         const uid = parseInt(userIdStr);
         const profile = volunteerProfiles.find((vp: any) => vp.userId === uid);
+        const user = (users as any[]).find((u: any) => u.id === uid);
+        // Use volunteerName from profile, fallback to displayName from user, then to Employee ${uid}
+        const employeeName = profile?.volunteerName || user?.displayName || `Employee ${uid}`;
         return {
           userId: uid,
-          name: profile?.volunteerName || `Employee ${uid}`,
+          employeeName, // Match frontend expectation
+          name: employeeName, // Keep for backward compatibility
           hours,
           rank: 0
         };

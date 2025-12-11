@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3 } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import { PageTransition } from "@/components/ui/page-transition";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animated-container";
@@ -508,7 +508,8 @@ export default function Dashboard() {
       impactScore: dashboardData?.impactScore || 0,
       skills: skillsCount,
       livesTouched: dashboardData?.totalPeopleImpacted || 0,
-      aiuEarned: filteredAiu || 0,
+      // For organizations, use server-calculated totalAiuEarned; for volunteers, use filtered AIU
+      aiuEarned: dashboardData?.totalAiuEarned ?? filteredAiu ?? 0,
       aiuVerificationRate: aiuSummary?.verificationRate ?? 0,
       aiuProjects: filteredAiuProjects,
     };
@@ -988,21 +989,28 @@ export default function Dashboard() {
       {/* Volunteer Navigation - Only shown in web view */}
       <VolunteerNav />
 
-      <div className="h-screen overflow-y-auto space-y-4 md:space-y-6 px-4 md:px-24">
-      {/* Header - Mobile optimized */}
-      <div className="space-y-3 md:space-y-6">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-y-auto space-y-5 md:space-y-6 px-4 md:px-24 pb-8">
+      {/* Header - Enhanced PWA-style */}
+      <div className="space-y-4 md:space-y-6 pt-4 md:pt-6">
         <div className="flex items-center justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white truncate">
-              Welcome, {dashboardType === "volunteer" 
-                ? (currentUser?.displayName || currentUser?.name || "Volunteer")?.split(' ')[0]
-                : (orgProfile?.organization?.name || orgProfile?.user?.name || "Manager")}!
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 md:mt-2 hidden md:block">
-              {dashboardType === "volunteer" 
-                ? "Let's maximize your ripple effect today" 
-                : "Manage your impact and volunteers"}
-            </p>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="hidden md:block p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                <BarChart3 className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                  Welcome back, {dashboardType === "volunteer"
+                    ? (currentUser?.displayName || currentUser?.name || "Volunteer")?.split(' ')[0]
+                    : (orgProfile?.organization?.name || orgProfile?.user?.name || "Manager")}!
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {dashboardType === "volunteer"
+                    ? "Your dashboard to track impact and grow your contribution"
+                    : "Manage your impact and volunteers"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -1046,23 +1054,26 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Personal Profile Section - Only for Volunteers */}
+      {/* Personal Profile Section - Only for Volunteers - Enhanced PWA-style */}
       {dashboardType === "volunteer" && dashboardData?.volunteerProfile && (
-        <Card className="bg-gradient-to-r from-amber-50 via-green-50 to-blue-50 dark:from-gray-800 dark:via-gray-800 dark:to-gray-800 border-2 border-amber-200 dark:border-gray-700 shadow-md">
-          <CardContent className="p-4 md:p-6" style={{ minHeight: '12.5vh' }}>
-            <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full">
-              {/* Left: Profile Picture (1/4) */}
-              <div className="w-full md:w-1/4 flex items-center justify-center md:justify-start">
-                <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-amber-400 shadow-lg">
-                  <AvatarImage
-                    src={dashboardData.volunteerProfile.profilePhotoUrl || currentUser?.profilePicture}
-                    alt={currentUser?.displayName || 'Volunteer'}
-                  />
-                  <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-500 text-white text-3xl md:text-4xl font-bold">
-                    {(currentUser?.displayName || currentUser?.name || 'V').charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
+        <Card className="overflow-hidden bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 shadow-xl rounded-2xl">
+          <div className="relative">
+            {/* Gradient banner behind profile */}
+            <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-r from-amber-400 via-emerald-400 to-blue-500 opacity-90" />
+            <CardContent className="relative p-4 md:p-6" style={{ minHeight: '12.5vh' }}>
+              <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full">
+                {/* Left: Profile Picture (1/4) */}
+                <div className="w-full md:w-1/4 flex items-center justify-center md:justify-start -mt-2 md:mt-6">
+                  <Avatar className="h-28 w-28 md:h-36 md:w-36 border-4 border-white dark:border-gray-800 shadow-2xl ring-4 ring-amber-400/30">
+                    <AvatarImage
+                      src={dashboardData.volunteerProfile.profilePhotoUrl || currentUser?.profilePicture}
+                      alt={currentUser?.displayName || 'Volunteer'}
+                    />
+                    <AvatarFallback className="bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 text-white text-4xl md:text-5xl font-bold">
+                      {(currentUser?.displayName || currentUser?.name || 'V').charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
 
               {/* Right: Details (3/4) */}
               <div className="w-full md:w-3/4 flex flex-col justify-center space-y-3">
@@ -1119,9 +1130,36 @@ export default function Dashboard() {
                   )}
                 </div>
 
+                {/* SDGs You Support */}
+                {(aiuSummary?.sdgsContributed && aiuSummary.sdgsContributed.length > 0) ||
+                 (dashboardData.volunteerProfile.sdgs && dashboardData.volunteerProfile.sdgs.length > 0) ? (
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-emerald-600" />
+                      SDGs I Champion
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {(aiuSummary?.sdgsContributed || dashboardData.volunteerProfile.sdgs || []).slice(0, 8).map((sdg: number) => (
+                        <span
+                          key={sdg}
+                          className="px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-medium rounded-full shadow-sm hover:shadow-md transition-shadow"
+                          title={`Sustainable Development Goal ${sdg}`}
+                        >
+                          SDG {sdg}
+                        </span>
+                      ))}
+                      {((aiuSummary?.sdgsContributed || dashboardData.volunteerProfile.sdgs)?.length || 0) > 8 && (
+                        <span className="px-2.5 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full">
+                          +{((aiuSummary?.sdgsContributed || dashboardData.volunteerProfile.sdgs)?.length || 0) - 8} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
                 {/* Personal Statement / Motivations */}
                 {dashboardData.volunteerProfile.motivations && (
-                  <div>
+                  <div className="mt-2 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
                       <FileText className="h-4 w-4 text-purple-600" />
                       Why I Volunteer
@@ -1134,6 +1172,7 @@ export default function Dashboard() {
               </div>
             </div>
           </CardContent>
+          </div>
         </Card>
       )}
 
@@ -1302,68 +1341,135 @@ export default function Dashboard() {
 
       {/* AIU Project Breakdown - Shows impact per project using AIU endpoint data */}
       {dashboardType === "volunteer" && aiuSummary && aiuSummary.projects && aiuSummary.projects.length > 0 && (
-        <Card className="mb-6 border-emerald-200 dark:border-emerald-800">
+        <Card className="mb-6 border-emerald-200 dark:border-emerald-800 bg-gradient-to-br from-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/20">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
-              AIU Breakdown - By Project
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <span className="block">Your Impact Portfolio</span>
+                  <span className="text-xs font-normal text-gray-500 dark:text-gray-400">AIU measures your real-world contribution</span>
+                </div>
+              </CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {/* Summary stats */}
+            <div className="space-y-5">
+              {/* Verbal Impact Summary */}
+              <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {aiuSummary.totalAiu >= 10
+                    ? `🌟 Outstanding! You've earned ${aiuSummary.totalAiu?.toFixed(1)} Adjusted Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${aiuSummary.totalHours?.toFixed(0) || 0} hours are creating measurable change.`
+                    : aiuSummary.totalAiu >= 5
+                    ? `✨ Great progress! You've accumulated ${aiuSummary.totalAiu?.toFixed(1)} AIUs. With ${aiuSummary.totalHours?.toFixed(0) || 0} hours invested, your impact is growing steadily.`
+                    : `🚀 You're building momentum with ${aiuSummary.totalAiu?.toFixed(1)} AIUs earned. Every hour you contribute amplifies your positive influence!`}
+                </p>
+              </div>
+
+              {/* Summary stats - Enhanced visual hierarchy */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total AIU</span>
-                    <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary.totalAiu?.toFixed(1) || '0.0'}</span>
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-emerald-200 dark:border-emerald-800 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/40 rounded-lg">
+                      <Award className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{aiuSummary.totalAiu?.toFixed(1) || '0.0'}</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Total AIUs Earned</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">From {aiuSummary.projectCount} project{aiuSummary.projectCount !== 1 ? 's' : ''}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 italic">
+                    {aiuSummary.projectCount === 1 ? "Your dedication to this project is paying off!" : `Distributed across ${aiuSummary.projectCount} impactful projects`}
+                  </p>
                 </div>
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Verification</span>
-                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{aiuSummary.verificationRate || 0}%</span>
+                <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-blue-200 dark:border-blue-800 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+                      <CheckSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">{aiuSummary.verificationRate || 0}%</span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Verified Impact</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{aiuSummary.totalHours?.toFixed(1) || 0} hours logged</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2 italic">
+                    {aiuSummary.verificationRate >= 80 ? "Excellent verification rate!" : "Your contributions are being tracked"}
+                  </p>
                 </div>
               </div>
 
-              {/* SDGs contributed */}
+              {/* SDGs contributed - Enhanced */}
               {aiuSummary.sdgsContributed && aiuSummary.sdgsContributed.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <span className="text-xs text-gray-500 dark:text-gray-400">SDGs:</span>
-                  {aiuSummary.sdgsContributed.map((sdg: number) => (
-                    <span key={sdg} className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-full">
-                      SDG {sdg}
+                <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Globe className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                      Contributing to {aiuSummary.sdgsContributed.length} Sustainable Development Goal{aiuSummary.sdgsContributed.length !== 1 ? 's' : ''}
                     </span>
-                  ))}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {aiuSummary.sdgsContributed.map((sdg: number) => (
+                      <span key={sdg} className="px-2.5 py-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xs font-medium rounded-full shadow-sm">
+                        SDG {sdg}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Project breakdown */}
-              <div className="space-y-2">
-                {aiuSummary.projects.map((project: any, idx: number) => (
-                  <Link key={idx} href={`/projects/${project.projectId}`}>
-                    <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer border border-transparent hover:border-emerald-300 dark:hover:border-emerald-700">
-                      <div className="flex-1 min-w-0">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">{project.projectName}</span>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{project.role}</span>
-                          <span className="text-xs text-gray-400">•</span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">{project.hours?.toFixed(1) || 0}h</span>
-                          {project.sdgIndicator && (
-                            <>
-                              <span className="text-xs text-gray-400">•</span>
-                              <span className="text-xs text-emerald-600 dark:text-emerald-400">{project.sdgIndicator}</span>
-                            </>
-                          )}
+              {/* Project breakdown - Enhanced with progress bars */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <Target className="h-4 w-4 text-emerald-600" />
+                  Project-by-Project Breakdown
+                </h4>
+                {aiuSummary.projects.map((project: any, idx: number) => {
+                  const projectShare = aiuSummary.totalAiu > 0 ? ((project.aiu || 0) / aiuSummary.totalAiu) * 100 : 0;
+                  const hoursPerAiu = project.aiu > 0 ? (project.hours / project.aiu).toFixed(1) : '0';
+                  return (
+                    <Link key={idx} href={`/projects/${project.projectId}`}>
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-xl hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all cursor-pointer border border-gray-100 dark:border-gray-700 hover:border-emerald-300 dark:hover:border-emerald-600 shadow-sm hover:shadow-md">
+                        <div className="flex justify-between items-start mb-2">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white block">{project.projectName}</span>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">{project.role}</span>
+                              {project.sdgIndicator && (
+                                <span className="text-xs px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 rounded-full">{project.sdgIndicator}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right ml-3">
+                            <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{project.aiu?.toFixed(1) || '0.0'}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 block">AIU</span>
+                          </div>
+                        </div>
+                        {/* Progress bar showing project's share of total AIU */}
+                        <div className="mt-3">
+                          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
+                            <span>{project.hours?.toFixed(1) || 0}h invested</span>
+                            <span>{projectShare.toFixed(0)}% of your impact</span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${Math.min(projectShare, 100)}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 italic">
+                            {project.aiu >= 3
+                              ? `🎯 High-impact contributor • ${hoursPerAiu}h per AIU`
+                              : project.aiu >= 1
+                              ? `📈 Building momentum • ${hoursPerAiu}h per AIU`
+                              : `🌱 Growing your impact here`}
+                          </p>
                         </div>
                       </div>
-                      <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400 ml-2">{project.aiu?.toFixed(1) || '0.0'}</span>
-                    </div>
-                  </Link>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </CardContent>
@@ -1392,20 +1498,35 @@ export default function Dashboard() {
       <div>
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Active Projects</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {(projectsWithVolunteers.length > 0 ? projectsWithVolunteers : filteredData.projects).slice(0, 6).map((project: any) => (
-            <ProjectCard
-              key={project.id}
-              id={project.id.toString()}
-              title={project.name}
-              description={project.description || "No description available"}
-              status={project.status as any}
-              progress={project.completionPercentage || 0}
-              timeRemaining={getTimeRemaining(project.endDate)}
-              volunteers={project.volunteers || []}
-              organizationName={project.organizationName}
-              organizationId={project.organizationId}
-            />
-          ))}
+          {(projectsWithVolunteers.length > 0 ? projectsWithVolunteers : filteredData.projects).slice(0, 6).map((project: any) => {
+            // Calculate project-specific metrics
+            const projectTasks = filteredData.tasks.filter((t: any) => t.projectId === project.id);
+            const projectActivities = filteredData.activities.filter((a: any) => a.projectId === project.id);
+            const projectHours = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+            const completedTasks = projectTasks.filter((t: any) => t.status?.toLowerCase() === 'completed').length;
+            const projectAiu = aiuSummary?.projects?.find((p: any) => p.projectId === project.id)?.aiu || project.aiuEarned || 0;
+
+            return (
+              <ProjectCard
+                key={project.id}
+                id={project.id.toString()}
+                title={project.name}
+                description={project.description || "No description available"}
+                status={project.status as any}
+                progress={project.completionPercentage || 0}
+                timeRemaining={getTimeRemaining(project.endDate)}
+                volunteers={project.volunteers || []}
+                organizationName={project.organizationName}
+                organizationId={project.organizationId}
+                hoursLogged={Math.round(projectHours)}
+                tasksCompleted={completedTasks}
+                totalTasks={projectTasks.length}
+                aiuEarned={projectAiu}
+                sdgGoals={project.sdgGoals || []}
+                showQuickActions={true}
+              />
+            );
+          })}
           {filteredData.projects.length === 0 && (
             <Card className="col-span-full">
               <CardContent className="flex items-center justify-center py-12">

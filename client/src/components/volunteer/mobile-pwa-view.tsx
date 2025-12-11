@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import logoUrl from "@assets/2026_-_Synerxus_Modern_Logo_1765300918625.png";
+import logoUrl from "@assets/Synerxus Modern Logo_1762068075617.png";
 import {
   LineChart,
   Line,
@@ -133,12 +133,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       safeProjects.reduce((sum: number, p: any) => sum + (Number(p?.livesImpacted) || Number(p?.livesTouched) || 0), 0);
     const skills = Array.isArray(volunteerProfile?.skills) ? volunteerProfile.skills.length : 0;
 
-    // SDG Impact: Only count unique SDGs from actual projects (not profile commitments)
-    const projectSdgs = safeProjects
-      .filter((p: any) => p?.sdgGoals && Array.isArray(p.sdgGoals) && p.sdgGoals.length > 0)
-      .flatMap((p: any) => p.sdgGoals)
-      .filter((sdg: any) => sdg !== null && sdg !== undefined && typeof sdg === 'number' && Number.isInteger(sdg) && sdg >= 1 && sdg <= 17);
-    const sdgsContributed = Array.from(new Set(projectSdgs)).length;
+    // SDG Impact: Use server-calculated value for consistency
+    // Server counts unique SDGs from assigned projects only
+    const sdgsContributed = Number(dashboardData?.sdgsAddressed) || 0;
 
     // Calculate pending applications from dashboardData
     const pendingApplications = Array.isArray(dashboardData?.applications)
@@ -244,11 +241,16 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   }, [dashboardData?.monthlyImpactData, volunteerActivities]);
 
   // SDG Distribution data with real metrics (hours per SDG)
+  // Uses enriched project data from dashboard (totalHoursLogged) as primary source
   const sdgDistribution = useMemo(() => {
     const safeProjects = Array.isArray(projects) ? projects : [];
     const safeActivities = Array.isArray(volunteerActivities) ? volunteerActivities : [];
 
-    // Create a map of project ID to SDG goals
+    // Aggregate hours per SDG from projects and activities
+    const sdgHours: { [key: number]: number } = {};
+    const sdgProjects: { [key: number]: Set<number> } = {};
+
+    // First, try to use activities for detailed hour tracking
     const projectSdgMap: { [projectId: number]: number[] } = {};
     safeProjects.forEach((p: any) => {
       if (p?.id && Array.isArray(p?.sdgGoals)) {
@@ -258,16 +260,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       }
     });
 
-    // Aggregate hours per SDG from activities
-    const sdgHours: { [key: number]: number } = {};
-    const sdgProjects: { [key: number]: Set<number> } = {};
-
     safeActivities.forEach((activity: any) => {
       const projectId = activity?.projectId;
       const hours = Number(activity?.hours) || 0;
 
       if (projectId && projectSdgMap[projectId] && hours > 0) {
-        // Distribute hours equally across all SDGs for this project
         const sdgs = projectSdgMap[projectId];
         const hoursPerSdg = hours / sdgs.length;
 
@@ -279,17 +276,33 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       }
     });
 
-    // If no activities yet, fall back to counting projects per SDG
+    // If no activities, use totalHoursLogged from enriched project data (real server-calculated hours)
     if (Object.keys(sdgHours).length === 0) {
       safeProjects.forEach((p: any) => {
         const sdgGoals = Array.isArray(p?.sdgGoals) ? p.sdgGoals : [];
-        sdgGoals.forEach((sdg: number) => {
-          if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
-            sdgHours[sdg] = (sdgHours[sdg] || 0) + 1;
-            if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
-            sdgProjects[sdg].add(p.id);
-          }
-        });
+        // Use real hours from project data (totalHoursLogged comes from server)
+        const projectHours = Number(p?.totalHoursLogged) || Number(p?.totalHours) || 0;
+
+        if (sdgGoals.length > 0 && projectHours > 0) {
+          const hoursPerSdg = projectHours / sdgGoals.length;
+          sdgGoals.forEach((sdg: number) => {
+            if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
+              sdgHours[sdg] = (sdgHours[sdg] || 0) + hoursPerSdg;
+              if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+              sdgProjects[sdg].add(p.id);
+            }
+          });
+        } else if (sdgGoals.length > 0) {
+          // Even if no hours, track projects per SDG (but don't inflate hours)
+          sdgGoals.forEach((sdg: number) => {
+            if (typeof sdg === 'number' && sdg >= 1 && sdg <= 17) {
+              if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+              sdgProjects[sdg].add(p.id);
+              // Only initialize if not already present
+              if (sdgHours[sdg] === undefined) sdgHours[sdg] = 0;
+            }
+          });
+        }
       });
     }
 
@@ -301,6 +314,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         projectCount: sdgProjects[parseInt(sdg)]?.size || 0,
         color: SDG_COLORS[parseInt(sdg)] || '#6B7280'
       }))
+      .filter(item => item.projectCount > 0) // Only show SDGs with actual projects
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Show up to 8 SDGs
   }, [projects, volunteerActivities]);
@@ -751,58 +765,72 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 {/* UN SDG Summary KPIs - Key Performance Indicators */}
                 <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100 shadow-sm mb-3">
                   <div className="grid grid-cols-4 gap-2 mb-4">
-                    {/* SDGs Contributed */}
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{sdgDistribution.length}</div>
+                    {/* SDGs Contributed - Clickable */}
+                    <button
+                      onClick={() => setShowKpiModal('sdgs')}
+                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                    >
+                      <div className="text-2xl font-bold text-blue-600">{kpis.sdgsContributed}</div>
                       <div className="text-[9px] text-slate-600 font-medium">SDGs</div>
                       <div className="text-[8px] text-slate-400">Active Goals</div>
-                    </div>
-                    {/* Total Hours */}
-                    <div className="text-center">
+                    </button>
+                    {/* Total Hours - Clickable, use actual kpis.totalHours */}
+                    <button
+                      onClick={() => setShowKpiModal('hours')}
+                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                    >
                       <div className="text-2xl font-bold text-emerald-600">
-                        {Math.round(sdgDistribution.reduce((sum, s) => sum + s.value, 0))}
+                        {kpis.totalHours}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">Hours</div>
                       <div className="text-[8px] text-slate-400">Volunteered</div>
-                    </div>
-                    {/* Projects */}
-                    <div className="text-center">
+                    </button>
+                    {/* Projects - Clickable, use actual kpis.totalProjects */}
+                    <button
+                      onClick={() => setShowKpiModal('projects')}
+                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                    >
                       <div className="text-2xl font-bold text-purple-600">
-                        {sdgDistribution.reduce((sum, s) => sum + (s.projectCount || 0), 0)}
+                        {kpis.totalProjects}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">Projects</div>
                       <div className="text-[8px] text-slate-400">Contributing</div>
-                    </div>
-                    {/* Impact Score (AIU) - Using aiuSummary as single source of truth */}
-                    <div className="text-center">
+                    </button>
+                    {/* Impact Score (AIU) - Clickable, using aiuSummary as single source of truth */}
+                    <button
+                      onClick={() => setShowKpiModal('aiu')}
+                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                    >
                       <div className="text-2xl font-bold text-amber-600">
                         {aiuSummary?.totalAiu?.toFixed(1) || '0.0'}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">AIUs</div>
                       <div className="text-[8px] text-slate-400">Impact Units</div>
-                    </div>
+                    </button>
                   </div>
 
-                  {/* UN SDG Coverage Indicator */}
+                  {/* UN SDG Coverage Indicator - Clickable Bars */}
                   <div className="bg-white/70 rounded-lg p-2 mb-3">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] text-slate-600 font-medium">Global Goals Coverage</span>
                       <span className="text-[10px] text-blue-600 font-bold">
-                        {Math.round((sdgDistribution.length / 17) * 100)}% of 17 SDGs
+                        {Math.round((kpis.sdgsContributed / 17) * 100)}% of 17 SDGs
                       </span>
                     </div>
                     <div className="flex gap-[2px]">
                       {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
-                        const isActive = sdgDistribution.some(s => s.sdg === sdgNum);
+                        const sdgData = sdgDistribution.find(s => s.sdg === sdgNum);
+                        const isActive = !!sdgData;
                         return (
-                          <div
+                          <button
                             key={sdgNum}
-                            className="flex-1 h-2 rounded-sm transition-all"
+                            onClick={() => isActive && setShowSdgModal(sdgNum)}
+                            className={`flex-1 h-3 rounded-sm transition-all ${isActive ? 'hover:scale-y-150 cursor-pointer' : 'cursor-default'}`}
                             style={{
                               backgroundColor: isActive ? SDG_COLORS[sdgNum] : '#e5e7eb',
                               opacity: isActive ? 1 : 0.4
                             }}
-                            title={`SDG ${sdgNum}: ${SDG_NAMES[sdgNum]}`}
+                            title={`SDG ${sdgNum}: ${SDG_NAMES[sdgNum]}${sdgData ? ` (${sdgData.value} hrs)` : ''}`}
                           />
                         );
                       })}
@@ -2062,6 +2090,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 {showKpiModal === 'projects' && 'Total Projects'}
                 {showKpiModal === 'skills' && 'Skills Applied'}
                 {showKpiModal === 'sdgs' && 'SDG Contributions'}
+                {showKpiModal === 'aiu' && 'Adjusted Impact Units'}
               </h2>
               <button
                 onClick={() => setShowKpiModal(null)}
@@ -2235,6 +2264,57 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       </button>
                     ))}
                   </div>
+                </>
+              )}
+              {showKpiModal === 'aiu' && (
+                <>
+                  <div className="text-center py-4">
+                    <div className="text-5xl font-bold text-amber-500 mb-2">{aiuSummary?.totalAiu?.toFixed(1) || '0.0'}</div>
+                    <div className="text-slate-500">Total Adjusted Impact Units</div>
+                  </div>
+                  <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 mb-4">
+                    <div className="text-sm text-slate-700 space-y-2">
+                      <div className="flex justify-between">
+                        <span>Unique AIU:</span>
+                        <span className="text-amber-600 font-semibold">{aiuSummary?.aiuUnique?.toFixed(1) || '0.0'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Session AIU:</span>
+                        <span className="text-amber-600 font-semibold">{aiuSummary?.aiuSessions?.toFixed(1) || '0.0'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Verification Rate:</span>
+                        <span className="text-emerald-600 font-semibold">{Math.round((aiuSummary?.verificationRate || 0) * 100)}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total Hours:</span>
+                        <span className="text-blue-600 font-semibold">{aiuSummary?.totalHours || kpis.totalHours}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {aiuSummary?.projects && aiuSummary.projects.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-slate-800 font-semibold text-sm">AIU by Project:</h3>
+                      {aiuSummary.projects.slice(0, 5).map((project: any) => (
+                        <div key={project.projectId} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="text-slate-800 font-medium text-sm truncate flex-1">{project.projectName}</div>
+                            <span className="text-amber-600 font-bold text-sm ml-2">{project.aiu?.toFixed(1) || '0.0'} AIU</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-slate-500">
+                            <span>{project.hours || 0} hours</span>
+                            <span className="text-slate-300">•</span>
+                            <span>{project.role || 'Volunteer'}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(!aiuSummary?.projects || aiuSummary.projects.length === 0) && (
+                    <div className="text-center py-4 text-slate-500 text-sm">
+                      No project AIU data available yet. Keep volunteering to earn impact units!
+                    </div>
+                  )}
                 </>
               )}
             </div>

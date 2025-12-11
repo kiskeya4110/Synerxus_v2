@@ -440,13 +440,20 @@ export async function calculateVolunteerAIU(volunteerId: number): Promise<Volunt
         totalAiuUnique += aiuBreakdown[0].aiuUnique || 0;
         totalAiuSessions += aiuBreakdown[0].aiuSessions || 0;
         totalCount++;
-        if (aiuBreakdown[0].verificationStatus === 'verified') verifiedCount++;
+        // Consider verified if: explicit verification, OR has logged hours (implicit verification)
+        if (aiuBreakdown[0].verificationStatus === 'verified' || volunteerData.hours > 0) {
+          verifiedCount++;
+        }
       } else {
         // Estimate from project calculation
         const volunteerShare = projectSummary.totalAiuUnique * (volunteerData.weightPercentage / 100);
         totalAiuUnique += volunteerShare;
         totalAiuSessions += Math.ceil(volunteerData.hours / 2);
         totalCount++;
+        // If volunteer has logged hours, consider it verified (hours were tracked/confirmed)
+        if (volunteerData.hours > 0) {
+          verifiedCount++;
+        }
       }
 
       totalHours += volunteerData.hours;
@@ -536,9 +543,11 @@ export async function calculateOrganizationAIU(organizationId: number): Promise<
     // Track volunteers
     projectSummary.volunteers.forEach(v => volunteerIds.add(v.volunteerId));
 
-    // Track verification
+    // Track verification - consider verified if explicit status or has logged hours
     totalCount++;
-    if (projectSummary.verificationStatus === 'verified') verifiedCount++;
+    if (projectSummary.verificationStatus === 'verified' || projectSummary.totalHours > 0) {
+      verifiedCount++;
+    }
 
     // Track SDGs
     const sdgMatch = projectSummary.sdgIndicator.match(/SDG (\d+)/);

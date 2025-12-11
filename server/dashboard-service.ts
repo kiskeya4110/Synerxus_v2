@@ -370,6 +370,43 @@ export async function getDashboardDataForOrganization(userId: number) {
       matchScore * 0.05         // Application success rate (5%)
     );
 
+    // Calculate total AIU for organization from all volunteer contributions
+    // AIU formula: (livesImpacted × attributionFactor × verificationMultiplier) / hoursNormalization
+    let totalAiuEarned = 0;
+    organizationProjects.forEach(project => {
+      const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
+      const projectHours = projectActivities.reduce((sum, a) => sum + (Number(a.hours) || 0), 0);
+      const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
+
+      // Get people impacted (verified + pending with weighting)
+      const projectPeopleMetrics = projectImpacts.filter(i => i.metricId !== null && peopleMetricIds.has(i.metricId));
+      const verifiedPeople = projectPeopleMetrics
+        .filter(i => i.verificationStatus === 'verified')
+        .reduce((sum, i) => sum + (Number(i.value) || 0), 0);
+      const pendingPeople = projectPeopleMetrics
+        .filter(i => i.verificationStatus !== 'verified')
+        .reduce((sum, i) => sum + (Number(i.value) || 0) * 0.7, 0);
+      const livesImpacted = verifiedPeople + pendingPeople;
+
+      // Calculate attribution factor based on volunteers on this project
+      const projectVolunteerCount = organizationAssignments.filter(pa => pa.projectId === project.id).length;
+      const attributionFactor = projectVolunteerCount > 0 ? 1 / projectVolunteerCount : 1;
+
+      // Verification multiplier
+      const verificationMultiplier = verifiedPeople > 0 ? 1.0 : 0.8;
+
+      // Hours-based normalization
+      const hoursNormalization = Math.max(projectHours, 1) / 10;
+
+      // Calculate project AIU
+      const projectAiu = Math.round(
+        (livesImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
+      ) / 100;
+
+      totalAiuEarned += projectAiu;
+    });
+    totalAiuEarned = Math.round(totalAiuEarned * 100) / 100; // Round to 2 decimal places
+
     // Enrich projects with assigned volunteers and compute progress fallback
     const projectsWithVolunteers = organizationProjects.map(project => {
       // Get volunteers assigned to this project
@@ -735,6 +772,7 @@ export async function getDashboardDataForOrganization(userId: number) {
         impactScore,
         acceptedApplications,
         totalPeopleImpacted, // Include people impacted for organization KPI display
+        totalAiuEarned, // Total AIU earned from all volunteer contributions
         recentActivities: enrichedRecentActivities, // Last 10 activities with project/org names
         organizationPrimarySdgs, // Organization's selected SDGs from profile settings
       },

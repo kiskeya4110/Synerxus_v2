@@ -150,6 +150,56 @@ export default function ProjectDetail() {
     queryKey: ["/api/users"],
   });
 
+  // Fetch project AIU data for accurate metrics
+  interface ProjectAIUSummary {
+    projectId: number;
+    projectName: string;
+    totalAiu: number;
+    totalAiuUnique: number;
+    totalAiuSessions: number;
+    sdgIndicator: string;
+    livesImpacted: number;
+    totalHours: number;
+    verificationStatus: string;
+    volunteers: Array<{
+      volunteerId: number;
+      volunteerName: string;
+      hours: number;
+      aiu: number;
+      role: string;
+    }>;
+  }
+
+  const { data: projectAIU } = useQuery<ProjectAIUSummary>({
+    queryKey: ["/api/aiu/project", projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/aiu/project/${projectId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!projectId,
+  });
+
+  // Fetch project assignments for accurate team members list
+  interface ProjectAssignment {
+    id: number;
+    projectId: number;
+    volunteerId: number;
+    role: string;
+    status: string;
+    hoursLogged?: number;
+  }
+
+  const { data: projectAssignments = [] } = useQuery<ProjectAssignment[]>({
+    queryKey: ["/api/project-assignments", projectId],
+    queryFn: async () => {
+      const response = await fetch(`/api/project-assignments?projectId=${projectId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!projectId,
+  });
+
   const { toast } = useToast();
 
   // Delete task dialog state - moved to top for React Hooks rules
@@ -241,9 +291,25 @@ export default function ProjectDetail() {
   const completedTasks = projectTasks.filter((t) => t.status?.toLowerCase() === "completed").length;
   const inProgressTasks = projectTasks.filter((t) => t.status?.toLowerCase() === "in progress").length;
   const pendingTasks = projectTasks.filter((t) => t.status?.toLowerCase() === "pending" || t.status?.toLowerCase() === "todo").length;
-  const totalHours = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-  const uniqueVolunteers = new Set(projectActivities.map((a) => a.userId)).size;
+
+  // Use AIU endpoint data for accurate metrics, fallback to calculated values
+  const totalHours = projectAIU?.totalHours ?? projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const totalImpact = projectImpact.reduce((sum, i) => sum + (i.value || 0), 0);
+  const aiuEarned = projectAIU?.totalAiu ?? project.aiuEarned ?? 0;
+  const livesImpacted = projectAIU?.livesImpacted ?? project.livesImpacted ?? 0;
+
+  // Get team members from project assignments (active only) or from activities
+  const activeAssignments = projectAssignments.filter(pa =>
+    pa.status === 'active' || pa.status === 'accepted' || pa.status === 'completed'
+  );
+
+  // Combine team members from assignments and project AIU volunteers data
+  const teamMemberIds = new Set([
+    ...activeAssignments.map(pa => pa.volunteerId),
+    ...projectActivities.map(a => a.userId),
+    ...(projectAIU?.volunteers?.map(v => v.volunteerId) || [])
+  ]);
+  const uniqueVolunteers = teamMemberIds.size;
 
   const completionPercentage = project.completionPercentage ?? 
     (projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0);
@@ -405,7 +471,7 @@ export default function ProjectDetail() {
                   <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{(project.aiuEarned || 0).toFixed(1)}</div>
+                  <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(1)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">AIUs Earned</div>
                 </div>
               </div>
@@ -583,11 +649,11 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
 
-            {/* Team Members Card */}
-            <Card>
+            {/* Team Members Card - Enhanced with AIU data and assignments */}
+            <Card className="border-blue-200 dark:border-blue-800">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <Users className="h-5 w-5 text-slate-500" />
+                  <Users className="h-5 w-5 text-blue-600" />
                   Team Members ({uniqueVolunteers})
                 </CardTitle>
               </CardHeader>
@@ -598,27 +664,65 @@ export default function ProjectDetail() {
                     <p>No volunteers assigned yet</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {Array.from(new Set(projectActivities.map((a) => a.userId))).map((odUserId) => {
-                      const user = users.find((u) => u.id === odUserId);
-                      const userActivities = projectActivities.filter((a) => a.userId === odUserId);
-                      const userHours = userActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
-                      
-                      return (
-                        <div key={odUserId} className="flex items-center gap-3 p-3 border rounded-lg">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={user?.avatar} />
-                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-blue-500 text-white">
-                              {user?.displayName?.[0] || "V"}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">{user?.displayName || `Volunteer #${odUserId}`}</p>
-                            <p className="text-sm text-muted-foreground">{userHours} hours logged</p>
+                  <div className="space-y-3">
+                    {/* Show volunteers from AIU data first (has most complete info) */}
+                    {projectAIU?.volunteers && projectAIU.volunteers.length > 0 ? (
+                      projectAIU.volunteers.map((vol, idx) => {
+                        const user = users.find((u) => u.id === vol.volunteerId);
+                        const assignment = activeAssignments.find(a => a.volunteerId === vol.volunteerId);
+                        return (
+                          <div key={idx} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                            <Avatar className="h-11 w-11 ring-2 ring-blue-200 dark:ring-blue-700">
+                              <AvatarImage src={user?.avatar} />
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-semibold">
+                                {vol.volunteerName?.[0] || "V"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 dark:text-white truncate">{vol.volunteerName}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {(assignment?.role || vol.role) && (
+                                  <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                                    {assignment?.role || vol.role}
+                                  </span>
+                                )}
+                                <span className="text-xs text-muted-foreground">{vol.hours.toFixed(1)}h • {vol.aiu.toFixed(1)} AIU</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })
+                    ) : (
+                      /* Fallback to activity-based volunteers */
+                      Array.from(teamMemberIds).map((odUserId) => {
+                        const user = users.find((u) => u.id === odUserId);
+                        const userActivities = projectActivities.filter((a) => a.userId === odUserId);
+                        const userHours = userActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+                        const assignment = activeAssignments.find(a => a.volunteerId === odUserId);
+
+                        return (
+                          <div key={odUserId} className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                            <Avatar className="h-11 w-11 ring-2 ring-blue-200 dark:ring-blue-700">
+                              <AvatarImage src={user?.avatar} />
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-semibold">
+                                {user?.displayName?.[0] || "V"}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 dark:text-white truncate">{user?.displayName || `Volunteer #${odUserId}`}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {assignment?.role && (
+                                  <span className="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                                    {assignment.role}
+                                  </span>
+                                )}
+                                <span className="text-xs text-muted-foreground">{userHours} hours logged</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -667,50 +771,86 @@ export default function ProjectDetail() {
             )}
 
             {/* Impact Metrics Card */}
-            <Card>
+            <Card className="border-emerald-200 dark:border-emerald-800">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <BarChart3 className="h-5 w-5 text-slate-500" />
+                  <BarChart3 className="h-5 w-5 text-emerald-600" />
                   Impact Metrics
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* AIU Display */}
-                <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-lg">
-                  <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide mb-1">AIUs Earned</div>
-                  <div className="text-3xl font-bold text-emerald-700 dark:text-emerald-300">{(project.aiuEarned || 0).toFixed(1)}</div>
-                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-1">Attributable Impact Units</div>
+                {/* AIU Display - Enhanced */}
+                <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingUp className="h-4 w-4 text-emerald-600" />
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">AIUs Earned</div>
+                  </div>
+                  <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(1)}</div>
+                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-2">
+                    {projectAIU?.sdgIndicator ? `${projectAIU.sdgIndicator} aligned` : 'Attributable Impact Units'}
+                  </div>
+                  {projectAIU?.verificationStatus && (
+                    <div className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                      projectAIU.verificationStatus === 'verified'
+                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    }`}>
+                      <CheckCircle2 className="h-3 w-3" />
+                      {projectAIU.verificationStatus === 'verified' ? 'Verified Impact' : 'Pending Verification'}
+                    </div>
+                  )}
                 </div>
 
-                {/* Lives Impacted Input (for organizations) */}
-                <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg">
-                  <div className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-1">Lives Impacted</div>
-                  <div className="text-3xl font-bold text-orange-700 dark:text-orange-300">{project.livesImpacted || 0}</div>
+                {/* Lives Impacted - Enhanced */}
+                <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Heart className="h-4 w-4 text-orange-600" />
+                    <div className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide font-semibold">Lives Impacted</div>
+                  </div>
+                  <div className="text-4xl font-bold text-orange-700 dark:text-orange-300">{livesImpacted.toLocaleString()}</div>
                   {isOrganization && (
-                    <div className="mt-2">
+                    <div className="mt-3">
                       <input
                         type="number"
                         value={project.livesImpacted || 0}
                         onChange={(e) => updateLivesImpactedMutation.mutate(parseInt(e.target.value) || 0)}
-                        className="w-full px-3 py-1.5 text-sm border rounded-md"
+                        className="w-full px-3 py-2 text-sm border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Update lives impacted"
                         data-testid="input-lives-impacted"
                       />
-                      <p className="text-xs text-orange-600/70 mt-1">This value feeds into AIU calculations</p>
+                      <p className="text-xs text-orange-600/70 mt-1.5">This value feeds into AIU calculations</p>
                     </div>
                   )}
                 </div>
-                
+
+                {/* Additional Metrics Grid */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
-                    <div className="text-xl font-bold">{totalHours}</div>
-                    <div className="text-xs text-muted-foreground">Total Hours</div>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-center">
+                    <Clock className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+                    <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{Math.round(totalHours)}</div>
+                    <div className="text-xs text-blue-600/80 dark:text-blue-400/80">Total Hours</div>
                   </div>
-                  <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg text-center">
-                    <div className="text-xl font-bold">{totalImpact}</div>
-                    <div className="text-xs text-muted-foreground">Impact Score</div>
+                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800 text-center">
+                    <Zap className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+                    <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">{totalImpact}</div>
+                    <div className="text-xs text-purple-600/80 dark:text-purple-400/80">Impact Score</div>
                   </div>
                 </div>
+
+                {/* Volunteer Breakdown from AIU data */}
+                {projectAIU?.volunteers && projectAIU.volunteers.length > 0 && (
+                  <div className="pt-3 border-t">
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Top Contributors</div>
+                    <div className="space-y-2">
+                      {projectAIU.volunteers.slice(0, 3).map((vol, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-sm">
+                          <span className="text-gray-700 dark:text-gray-300">{vol.volunteerName}</span>
+                          <span className="font-semibold text-emerald-600">{vol.aiu.toFixed(1)} AIU</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 

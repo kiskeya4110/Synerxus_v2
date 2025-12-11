@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, Component, type ReactNode } from "react";
+import React, { lazy, Suspense, Component, type ReactNode, memo } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -56,11 +56,8 @@ class LazyErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 }
 
-// Lazy load map components for better PWA performance
-const MapContainer = lazy(() => import("react-leaflet").then(m => ({ default: m.MapContainer })));
-const TileLayer = lazy(() => import("react-leaflet").then(m => ({ default: m.TileLayer })));
-const Marker = lazy(() => import("react-leaflet").then(m => ({ default: m.Marker })));
-const Popup = lazy(() => import("react-leaflet").then(m => ({ default: m.Popup })));
+// Direct import of map components to prevent re-initialization issues
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 
 // Map skeleton for loading state
 const MapSkeleton = () => (
@@ -2096,7 +2093,7 @@ interface ProjectLocation {
   sdgGoals: number[];
 }
 
-function ProjectMapComponent({ projectLocations }: { projectLocations: ProjectLocation[] }) {
+const ProjectMapComponent = memo(function ProjectMapComponent({ projectLocations }: { projectLocations: ProjectLocation[] }) {
   const mapRef = useRef<L.Map>(null);
 
   useEffect(() => {
@@ -2119,39 +2116,36 @@ function ProjectMapComponent({ projectLocations }: { projectLocations: ProjectLo
   }, [projectLocations]);
 
   return (
-    <LazyErrorBoundary fallback={<MapSkeleton />}>
-      <Suspense fallback={<MapSkeleton />}>
-        <MapContainer
-          ref={mapRef}
-          center={[20, 0]}
-          zoom={2}
-          style={{ width: '100%', height: '100%' }}
-          data-testid="project-map"
-        >
-          <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-            attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
-          />
-          {projectLocations?.map((project) => {
-            const coords = getCoordinatesFromLocation(project.location);
-            if (!coords) return null;
-            return (
-              <Marker key={project.id} position={[coords.lat, coords.lng]}>
-                <Popup>
-                  <strong>{project.name}</strong>
-                  <br />
-                  Status: {project.status}
-                  <br />
-                  SDGs: {project.sdgGoals.join(', ') || 'None'}
-                </Popup>
-              </Marker>
-            );
-          })}
-        </MapContainer>
-      </Suspense>
-    </LazyErrorBoundary>
+    <MapContainer
+      key="project-map"
+      ref={mapRef}
+      center={[20, 0]}
+      zoom={2}
+      style={{ width: '100%', height: '100%' }}
+      data-testid="project-map"
+    >
+      <TileLayer
+        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        attribution="&copy; OpenStreetMap contributors, &copy; CartoDB"
+      />
+      {projectLocations?.map((project) => {
+        const coords = getCoordinatesFromLocation(project.location);
+        if (!coords) return null;
+        return (
+          <Marker key={project.id} position={[coords.lat, coords.lng]}>
+            <Popup>
+              <strong>{project.name}</strong>
+              <br />
+              Status: {project.status}
+              <br />
+              SDGs: {project.sdgGoals.join(', ') || 'None'}
+            </Popup>
+          </Marker>
+        );
+      })}
+    </MapContainer>
   );
-}
+});
 
 function getCoordinatesFromLocation(location: string): { lat: number; lng: number } | null {
   const locationCoords: Record<string, { lat: number; lng: number }> = {

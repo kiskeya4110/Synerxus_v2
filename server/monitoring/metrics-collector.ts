@@ -276,7 +276,8 @@ class MetricsCollector extends EventEmitter {
     const cutoff = Date.now() - ACTIVE_USER_TIMEOUT_MS;
     const activeUserIds: number[] = [];
 
-    for (const [userId, lastActive] of this.activeUsers.entries()) {
+    const entries = Array.from(this.activeUsers.entries());
+    for (const [userId, lastActive] of entries) {
       if (lastActive > cutoff) {
         activeUserIds.push(userId);
       }

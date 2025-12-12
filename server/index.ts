@@ -22,6 +22,14 @@ import {
   expensiveOpRateLimiter,
   getRateLimitInfo,
 } from "./middleware/tiered-rate-limit";
+import {
+  initializeMonitoring,
+  shutdownMonitoring,
+  requestMetricsMiddleware,
+  securityDetectionMiddleware,
+  prometheusRouter,
+  alertingEngine,
+} from "./monitoring";
 
 const app = express();
 
@@ -233,6 +241,12 @@ app.use('/api/', auditLog); // Audit logging for sensitive operations
 // API RESPONSE UTILITIES - Sparse fieldsets, pagination, ETags
 // =============================================================================
 app.use('/api/', apiResponseMiddleware);
+
+// =============================================================================
+// MONITORING - Request metrics and security detection
+// =============================================================================
+app.use(requestMetricsMiddleware);
+app.use(securityDetectionMiddleware);
 
 // =============================================================================
 // COMPRESSION MIDDLEWARE - OPTIMIZED for 95%+ performance
@@ -521,6 +535,51 @@ app.post("/api/metrics/reset", (req, res) => {
 });
 
 // =============================================================================
+// PROMETHEUS METRICS ENDPOINT - For monitoring stack integration
+// =============================================================================
+app.use("/metrics", prometheusRouter);
+
+// =============================================================================
+// ALERTING ENDPOINTS - Alert management
+// =============================================================================
+
+// Get active alerts
+app.get("/api/alerts", (req, res) => {
+  const alerts = alertingEngine.getActiveAlerts();
+  const summary = alertingEngine.getSummary();
+  res.json({
+    timestamp: new Date().toISOString(),
+    summary,
+    alerts,
+  });
+});
+
+// Get alert history
+app.get("/api/alerts/history", (req, res) => {
+  const limit = parseInt(req.query.limit as string) || 100;
+  const history = alertingEngine.getAlertHistory(limit);
+  res.json({
+    timestamp: new Date().toISOString(),
+    count: history.length,
+    history,
+  });
+});
+
+// Acknowledge an alert
+app.post("/api/alerts/:id/acknowledge", (req, res) => {
+  const { id } = req.params;
+  const { acknowledgedBy } = req.body;
+
+  const success = alertingEngine.acknowledgeAlert(id, acknowledgedBy || 'system');
+
+  if (success) {
+    res.json({ message: "Alert acknowledged" });
+  } else {
+    res.status(404).json({ message: "Alert not found or already acknowledged" });
+  }
+});
+
+// =============================================================================
 // JOB QUEUE ENDPOINTS - Background job management
 // =============================================================================
 
@@ -597,6 +656,10 @@ app.use((req, res, next) => {
     logger.error(`Job ${job.id} (${job.type}) failed: ${job.error}`);
   });
 
+  // Initialize monitoring system (metrics, alerting, anomaly detection)
+  initializeMonitoring();
+  logger.info('Monitoring system initialized');
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -618,6 +681,17 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
+
+  // Handle server errors
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      logger.error(`Port ${port} is already in use. Please stop the existing server first.`);
+      process.exit(1);
+    } else {
+      logger.error('Server error:', error);
+    }
+  });
+
   server.listen({
     port,
     host: "0.0.0.0",
@@ -629,7 +703,16 @@ app.use((req, res, next) => {
   // =============================================================================
   // GRACEFUL SHUTDOWN - Clean termination for zero-downtime deployments
   // =============================================================================
+  let isShuttingDown = false;
+
   const shutdown = async (signal: string) => {
+    // Prevent multiple shutdown calls
+    if (isShuttingDown) {
+      logger.info(`Shutdown already in progress, ignoring ${signal}`);
+      return;
+    }
+    isShuttingDown = true;
+
     logger.info(`Received ${signal}. Starting graceful shutdown...`);
 
     // Stop accepting new connections
@@ -637,17 +720,37 @@ app.use((req, res, next) => {
       logger.info('HTTP server closed');
 
       try {
+        // Stop monitoring system first (prevents further DB checks)
+        try {
+          shutdownMonitoring();
+          logger.info('Monitoring system stopped');
+        } catch (e) {
+          logger.warn('Error stopping monitoring:', e);
+        }
+
         // Stop job queue (allow current jobs to complete)
-        jobQueue.stop();
-        logger.info('Job queue stopped');
+        try {
+          jobQueue.stop();
+          logger.info('Job queue stopped');
+        } catch (e) {
+          logger.warn('Error stopping job queue:', e);
+        }
 
         // Close database connections
-        await closePool();
-        logger.info('Database pool closed');
+        try {
+          await closePool();
+          logger.info('Database pool closed');
+        } catch (e) {
+          logger.warn('Error closing database pool:', e);
+        }
 
         // Close Redis connection
-        await redisCache.close();
-        logger.info('Redis connection closed');
+        try {
+          await redisCache.close();
+          logger.info('Redis connection closed');
+        } catch (e) {
+          logger.warn('Error closing Redis:', e);
+        }
 
         // Clear memory cache
         cache.clear();
@@ -661,21 +764,37 @@ app.use((req, res, next) => {
       }
     });
 
-    // Force shutdown after 30 seconds if graceful shutdown fails
+    // Force shutdown after 10 seconds if graceful shutdown fails
     setTimeout(() => {
       logger.error('Forced shutdown after timeout');
       process.exit(1);
-    }, 30000);
+    }, 10000);
   };
 
   // Handle termination signals
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
 
-  // Handle uncaught exceptions and rejections
-  process.on('uncaughtException', (error) => {
+  // Handle uncaught exceptions - log but don't crash on all exceptions
+  process.on('uncaughtException', (error: Error & { code?: string }) => {
+    const errorMessage = error?.message || '';
+    const isDatabaseError =
+      errorMessage.includes('Connection terminated') ||
+      errorMessage.includes('endpoint has been disabled') ||
+      errorMessage.includes('connection terminated unexpectedly') ||
+      error?.code === 'XX000' ||
+      error?.code === '57P01';
+
+    if (isDatabaseError) {
+      logger.warn('Database connection error (non-fatal):', errorMessage);
+      return; // Don't crash on database connection issues
+    }
+
     logger.error('Uncaught Exception:', error);
-    shutdown('uncaughtException');
+    // Only shutdown for critical errors
+    if (errorMessage.includes('EADDRINUSE')) {
+      shutdown('uncaughtException');
+    }
   });
 
   process.on('unhandledRejection', (reason, promise) => {

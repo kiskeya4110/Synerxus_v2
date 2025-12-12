@@ -370,7 +370,10 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   constructor() {
-    this.initializeImpactMetrics();
+    // Initialize impact metrics with error handling - don't crash if DB is unavailable
+    this.initializeImpactMetrics().catch(error => {
+      console.warn('[Storage] Failed to initialize impact metrics - database may be unavailable:', error.message);
+    });
   }
 
   private async initializeImpactMetrics() {

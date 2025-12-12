@@ -19,17 +19,32 @@ export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Connection pool size - optimized for Replit limits
   max: 10, // Maximum number of connections in the pool
-  min: 2, // Minimum number of connections to maintain
+  min: 0, // Don't maintain minimum connections (allows graceful degradation when DB unavailable)
   // Timeouts
   idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
   connectionTimeoutMillis: 10000, // Connection timeout of 10 seconds
   // Keep-alive settings for serverless
-  allowExitOnIdle: false, // Don't close pool when idle
+  allowExitOnIdle: true, // Allow pool to be idle when database unavailable
 });
 
-// Pool error handling
-pool.on('error', (err) => {
-  console.error('[DB Pool] Unexpected error on idle client:', err);
+// Track database availability
+export let isDatabaseAvailable = false;
+
+// Pool error handling - handle connection termination gracefully
+pool.on('error', (err: Error & { code?: string }) => {
+  const errorMessage = err?.message || '';
+  const isEndpointDisabled =
+    errorMessage.includes('endpoint has been disabled') ||
+    errorMessage.includes('Connection terminated') ||
+    errorMessage.includes('connection terminated unexpectedly') ||
+    err?.code === 'XX000';
+
+  if (isEndpointDisabled) {
+    console.warn('[DB Pool] Database endpoint unavailable - operating in degraded mode');
+    isDatabaseAvailable = false;
+  } else {
+    console.error('[DB Pool] Unexpected error on idle client:', err.message);
+  }
 });
 
 // Pool connection monitoring (development only)
@@ -44,10 +59,20 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Graceful shutdown helper
+let poolClosed = false;
 export async function closePool(): Promise<void> {
+  if (poolClosed) {
+    console.log('[DB Pool] Pool already closed');
+    return;
+  }
+  poolClosed = true;
   console.log('[DB Pool] Closing connection pool...');
-  await pool.end();
-  console.log('[DB Pool] Connection pool closed');
+  try {
+    await pool.end();
+    console.log('[DB Pool] Connection pool closed');
+  } catch (error) {
+    console.error('[DB Pool] Error closing pool:', error);
+  }
 }
 
 // Health check function
@@ -58,19 +83,32 @@ export async function checkPoolHealth(): Promise<{
   waitingCount: number;
 }> {
   try {
-    // Test connection
+    // Test connection with timeout
     const client = await pool.connect();
     await client.query('SELECT 1');
     client.release();
 
+    isDatabaseAvailable = true;
     return {
       healthy: true,
       totalCount: pool.totalCount,
       idleCount: pool.idleCount,
       waitingCount: pool.waitingCount,
     };
-  } catch (error) {
-    console.error('[DB Pool] Health check failed:', error);
+  } catch (error: any) {
+    const errorMessage = error?.message || '';
+    const isEndpointDisabled =
+      errorMessage.includes('endpoint has been disabled') ||
+      errorMessage.includes('Connection terminated') ||
+      error?.code === 'XX000';
+
+    if (isEndpointDisabled) {
+      console.warn('[DB Pool] Database endpoint unavailable');
+    } else {
+      console.error('[DB Pool] Health check failed:', errorMessage);
+    }
+
+    isDatabaseAvailable = false;
     return {
       healthy: false,
       totalCount: pool.totalCount,

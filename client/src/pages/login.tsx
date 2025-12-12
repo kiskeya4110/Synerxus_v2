@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/ui/logo";
 import { DatabaseUnavailableAlert } from "@/components/ui/connection-status";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -44,7 +45,7 @@ export default function Login() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch('/health', { cache: 'no-store' });
+        const response = await fetch('/ready', { cache: 'no-store' });
         if (!response.ok) {
           setServiceUnavailable(true);
         }
@@ -57,49 +58,41 @@ export default function Login() {
 
   // Helper to handle backend sync errors
   const handleBackendSync = async (firebaseUser: any, userTypeOverride?: string) => {
-    const response = await fetch('/api/users/firebase-sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    try {
+      const response = await apiRequest('POST', '/api/users/firebase-sync', {
         firebaseUid: firebaseUser.uid,
         email: firebaseUser.email,
         displayName: firebaseUser.displayName,
         userType: userTypeOverride || userType || 'volunteer'
-      })
-    });
+      });
 
-    // Check for service unavailable
-    if (response.status === 503) {
-      const errorData = await response.json();
-      if (errorData.code === 'DATABASE_UNAVAILABLE') {
+      const userData = await response.json();
+
+      // Check if operating in degraded mode
+      if (userData._degradedMode) {
+        toast({
+          title: "Limited Mode",
+          description: userData._message || "Some features may be limited until full connectivity is restored.",
+          variant: "default",
+        });
+      }
+
+      return userData;
+    } catch (error: any) {
+      // Check for service unavailable (503) or database unavailable
+      if (error?.message?.includes('503') || error?.message?.includes('DATABASE_UNAVAILABLE')) {
         setServiceUnavailable(true);
         throw new Error('SERVICE_UNAVAILABLE');
       }
-    }
-
-    if (!response.ok) {
       throw new Error('Failed to sync with backend');
     }
-
-    const userData = await response.json();
-
-    // Check if operating in degraded mode
-    if (userData._degradedMode) {
-      toast({
-        title: "Limited Mode",
-        description: userData._message || "Some features may be limited until full connectivity is restored.",
-        variant: "default",
-      });
-    }
-
-    return userData;
   };
 
   // Retry connection check
   const handleRetryConnection = async () => {
     setRetrying(true);
     try {
-      const response = await fetch('/health', { cache: 'no-store' });
+      const response = await fetch('/ready', { cache: 'no-store' });
       if (response.ok) {
         setServiceUnavailable(false);
         toast({

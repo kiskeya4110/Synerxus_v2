@@ -692,7 +692,7 @@ export default function VolunteerIntake() {
                 </div>
 
                 <div className="space-y-3">
-                  {form.watch("availability").map((slot, index) => (
+                  {(form.watch("availability") || []).map((slot, index) => (
                     <div
                       key={index}
                       className="flex items-center gap-3 p-3 border rounded-lg"
@@ -766,7 +766,7 @@ export default function VolunteerIntake() {
                   ))}
                 </div>
 
-                {form.watch("availability").length === 0 && (
+                {(form.watch("availability") || []).length === 0 && (
                   <div className="text-center py-6 border-2 border-dashed rounded-lg">
                     <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                     <p className="text-sm text-muted-foreground">

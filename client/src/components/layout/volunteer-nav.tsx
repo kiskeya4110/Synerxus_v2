@@ -24,6 +24,7 @@ const MENU_ITEMS = [
 export default function VolunteerNav() {
   const [location, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { signOut } = useAuth();
   const userId = localStorage.getItem('currentUserId');
 
@@ -51,8 +52,6 @@ export default function VolunteerNav() {
   }
 
   const userInitial = (currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase();
-
-  const [imageError, setImageError] = useState(false);
 
   // Navigate to landing page when logo is clicked
   const handleLogoClick = () => {

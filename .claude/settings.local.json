@@ -50,7 +50,8 @@
       "Bash(timeout 10 npx tsx:*)",
       "Bash(timeout 30 npm run dev:*)",
       "Bash(pgrep:*)",
-      "Bash(1 echo \"\" echo \"=== Metrics JSON ===\" curl -s http://localhost:5000/metrics/json)"
+      "Bash(1 echo \"\" echo \"=== Metrics JSON ===\" curl -s http://localhost:5000/metrics/json)",
+      "Bash(sleep 3 curl -s -X POST http://localhost:5000/api/users/firebase-sync -H \"Content-Type: application/json\" -d '{\"\"\"\"firebaseUid\"\"\"\":\"\"\"\"test123\"\"\"\",\"\"\"\"email\"\"\"\":\"\"\"\"test@example.com\"\"\"\",\"\"\"\"displayName\"\"\"\":\"\"\"\"Test User\"\"\"\",\"\"\"\"userType\"\"\"\":\"\"\"\"volunteer\"\"\"\"}')"
     ],
     "deny": [],
     "ask": []

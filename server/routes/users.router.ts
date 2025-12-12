@@ -143,12 +143,34 @@ usersRouter.post("/firebase-sync", async (req: Request, res: Response) => {
       errorCode === '57P01'; // admin_shutdown
 
     if (isDatabaseUnavailable) {
-      console.error('[firebase-sync] Database unavailable:', errorMessage);
-      return res.status(503).json({
-        message: "Service temporarily unavailable. The database is currently offline. Please try again in a few moments.",
-        code: "DATABASE_UNAVAILABLE",
-        retryAfter: 30
-      });
+      console.warn('[firebase-sync] Database unavailable, returning degraded mode user');
+
+      // Extract user data from request body for degraded mode response
+      const { firebaseUid: fbUid, email: userEmail, displayName: dName, userType: uType } = req.body;
+
+      // Return a temporary user object for degraded mode operation
+      // This allows users to log in and navigate the app with limited functionality
+      const degradedUser = {
+        id: -1, // Negative ID indicates temporary/degraded user
+        firebaseUid: fbUid,
+        username: userEmail?.split('@')[0] || 'user',
+        email: userEmail,
+        displayName: dName || userEmail?.split('@')[0] || 'User',
+        userType: uType || 'volunteer',
+        bio: null,
+        avatarUrl: null,
+        skills: [],
+        causes: [],
+        location: null,
+        availableHours: null,
+        totalHoursLogged: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        _degradedMode: true, // Flag to indicate this is a degraded mode user
+        _message: "Operating in degraded mode. Some features may be limited until database connectivity is restored."
+      };
+
+      return res.status(200).json(degradedUser);
     }
 
     const error = handleValidationError(err);

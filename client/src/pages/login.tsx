@@ -81,7 +81,18 @@ export default function Login() {
       throw new Error('Failed to sync with backend');
     }
 
-    return response.json();
+    const userData = await response.json();
+
+    // Check if operating in degraded mode
+    if (userData._degradedMode) {
+      toast({
+        title: "Limited Mode",
+        description: userData._message || "Some features may be limited until full connectivity is restored.",
+        variant: "default",
+      });
+    }
+
+    return userData;
   };
 
   // Retry connection check
@@ -114,26 +125,31 @@ export default function Login() {
   };
   
   // Helper function to determine where to redirect after login
-  const getRedirectPath = async (userId: number, userType: string) => {
+  const getRedirectPath = async (userId: number, userType: string, isDegradedMode?: boolean) => {
+    // In degraded mode, skip profile check and go directly to dashboard
+    if (isDegradedMode || userId < 0) {
+      return '/dashboard';
+    }
+
     try {
       // Fetch user's profile completion status
       const profileResponse = await fetch(`/api/profile/${userType}?userId=${userId}`);
-      
+
       if (!profileResponse.ok) {
         console.error('Failed to fetch profile status');
         return '/dashboard'; // Default to dashboard if request fails
       }
-      
+
       const profileData = await profileResponse.json();
-      
+
       // Check if profile is complete
       const isProfileComplete = profileData?.user?.profileComplete || false;
-      
+
       if (!isProfileComplete) {
         // Redirect to intake form if profile not complete
         return userType === 'volunteer' ? '/volunteer-intake' : '/organization-intake';
       }
-      
+
       // Profile is complete, go to dashboard
       return '/dashboard';
     } catch (error) {
@@ -151,8 +167,11 @@ export default function Login() {
       // Sync with backend database
       if (firebaseUser) {
         const dbUser = await handleBackendSync(firebaseUser);
-        localStorage.setItem('currentUserId', dbUser.id);
+        localStorage.setItem('currentUserId', dbUser.id.toString());
         localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
+        if (dbUser._degradedMode) {
+          localStorage.setItem('degradedMode', 'true');
+        }
 
         // Store remember me preference
         if (rememberMe) {
@@ -163,12 +182,14 @@ export default function Login() {
         }
 
         // Determine redirect based on profile completion
-        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
+        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType, dbUser._degradedMode);
         setLocation(redirectPath);
 
         toast({
           title: "Welcome!",
-          description: "You have successfully signed in with Google.",
+          description: dbUser._degradedMode
+            ? "Signed in with limited functionality."
+            : "You have successfully signed in with Google.",
         });
       }
     } catch (error: any) {
@@ -208,8 +229,11 @@ export default function Login() {
       // Sync with backend database
       if (firebaseUser) {
         const dbUser = await handleBackendSync(firebaseUser);
-        localStorage.setItem('currentUserId', dbUser.id);
+        localStorage.setItem('currentUserId', dbUser.id.toString());
         localStorage.setItem('userType', dbUser.userType || userType || 'volunteer');
+        if (dbUser._degradedMode) {
+          localStorage.setItem('degradedMode', 'true');
+        }
 
         // Store remember me preference
         if (rememberMe) {
@@ -220,12 +244,14 @@ export default function Login() {
         }
 
         // Determine redirect based on profile completion
-        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType);
+        const redirectPath = await getRedirectPath(dbUser.id, dbUser.userType, dbUser._degradedMode);
         setLocation(redirectPath);
 
         toast({
           title: "Welcome back!",
-          description: "You have successfully signed in.",
+          description: dbUser._degradedMode
+            ? "Signed in with limited functionality."
+            : "You have successfully signed in.",
         });
       }
     } catch (error: any) {
@@ -274,24 +300,36 @@ export default function Login() {
       // Sync with backend database
       if (firebaseUser && userType) {
         const dbUser = await handleBackendSync(firebaseUser, userType);
-        localStorage.setItem('currentUserId', dbUser.id);
+        localStorage.setItem('currentUserId', dbUser.id.toString());
         localStorage.setItem('userType', userType || 'volunteer');
-
-        // Redirect to appropriate intake form based on user type
-        if (userType === 'volunteer') {
-          setLocation("/volunteer-intake");
-        } else if (userType === 'organization') {
-          setLocation("/organization-intake");
-        } else if (userType === 'corporate-partner') {
-          setLocation("/corporate-partner-intake");
-        } else {
-          setLocation("/dashboard");
+        if (dbUser._degradedMode) {
+          localStorage.setItem('degradedMode', 'true');
         }
 
-        toast({
-          title: "Account created",
-          description: "Please complete your profile to get started.",
-        });
+        // In degraded mode, redirect to dashboard
+        if (dbUser._degradedMode) {
+          setLocation("/dashboard");
+          toast({
+            title: "Account created (Limited Mode)",
+            description: "Some features may be limited. Please complete your profile when full connectivity is restored.",
+          });
+        } else {
+          // Redirect to appropriate intake form based on user type
+          if (userType === 'volunteer') {
+            setLocation("/volunteer-intake");
+          } else if (userType === 'organization') {
+            setLocation("/organization-intake");
+          } else if (userType === 'corporate-partner') {
+            setLocation("/corporate-partner-intake");
+          } else {
+            setLocation("/dashboard");
+          }
+
+          toast({
+            title: "Account created",
+            description: "Please complete your profile to get started.",
+          });
+        }
       } else {
         setLocation("/dashboard");
         toast({

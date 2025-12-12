@@ -128,7 +128,29 @@ usersRouter.post("/firebase-sync", async (req: Request, res: Response) => {
     user = await storage.createUser(userData);
     broadcastUpdate("user_created", user);
     res.status(201).json(user);
-  } catch (err) {
+  } catch (err: any) {
+    // Check for database connectivity issues
+    const errorMessage = err?.message || '';
+    const errorCode = err?.code || '';
+
+    const isDatabaseUnavailable =
+      errorMessage.includes('endpoint has been disabled') ||
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('connection terminated') ||
+      errorMessage.includes('timeout') ||
+      errorCode === 'XX000' ||
+      errorCode === 'ECONNRESET' ||
+      errorCode === '57P01'; // admin_shutdown
+
+    if (isDatabaseUnavailable) {
+      console.error('[firebase-sync] Database unavailable:', errorMessage);
+      return res.status(503).json({
+        message: "Service temporarily unavailable. The database is currently offline. Please try again in a few moments.",
+        code: "DATABASE_UNAVAILABLE",
+        retryAfter: 30
+      });
+    }
+
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }

@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { insertProjectSchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { getVisibleProjectIdsForVolunteer } from "../dashboard-service";
+import { verifyFirebaseToken } from "../middleware/firebase-auth";
 
 export const projectsRouter = Router();
 
@@ -14,38 +15,37 @@ export function setBroadcastFn(fn: BroadcastFn) {
 }
 
 // GET /api/projects - List projects with authorization
-projectsRouter.get("/", async (req: Request, res: Response) => {
+// Protected: Requires authentication
+projectsRouter.get("/", verifyFirebaseToken, async (req: Request, res: Response) => {
   try {
-    const { organizationId, userId } = req.query;
-
-    if (!organizationId && !userId) {
-      return res.status(401).json({
-        message: "Authentication required: userId must be provided"
-      });
+    const authenticatedUser = req.authenticatedUser;
+    if (!authenticatedUser) {
+      return res.status(401).json({ message: "Authentication required" });
     }
 
-    let projects;
+    const { organizationId } = req.query;
+    let projects: any[] = [];
+
     if (organizationId) {
-      projects = await storage.listProjectsByOrganization(parseInt(organizationId as string));
-    } else if (userId) {
-      const userIdNum = parseInt(userId as string);
-      const user = await storage.getUser(userIdNum);
-
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+      // IDOR protection: Only organization members can view their org's projects
+      if (authenticatedUser.organizationId !== parseInt(organizationId as string)) {
+        return res.status(403).json({
+          message: "Access denied. You can only view your organization's projects.",
+          code: "FORBIDDEN"
+        });
       }
-
-      if (user.userType === 'organization' && user.organizationId) {
-        projects = await storage.listProjectsByOrganization(user.organizationId);
-      } else if (user.userType === 'volunteer') {
-        const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
+      projects = await storage.listProjectsByOrganization(parseInt(organizationId as string));
+    } else {
+      // Return projects based on user type
+      if (authenticatedUser.userType === 'organization' && authenticatedUser.organizationId) {
+        projects = await storage.listProjectsByOrganization(authenticatedUser.organizationId);
+      } else if (authenticatedUser.userType === 'volunteer') {
+        const visibleProjectIds = await getVisibleProjectIdsForVolunteer(authenticatedUser.id, false);
         const allProjects = await storage.listProjects();
         projects = allProjects.filter(p => visibleProjectIds.has(p.id));
       } else {
         return res.status(400).json({ message: "Invalid user type" });
       }
-    } else {
-      return res.status(400).json({ message: "Missing required parameters" });
     }
 
     res.json(projects);
@@ -55,10 +55,15 @@ projectsRouter.get("/", async (req: Request, res: Response) => {
 });
 
 // GET /api/projects/:id - Get project by ID with authorization
-projectsRouter.get("/:id", async (req: Request, res: Response) => {
+// Protected: Requires authentication
+projectsRouter.get("/:id", verifyFirebaseToken, async (req: Request, res: Response) => {
   try {
     const projectId = parseInt(req.params.id);
-    const { userId } = req.query;
+    const authenticatedUser = req.authenticatedUser;
+
+    if (!authenticatedUser) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
 
     const project = await storage.getProject(projectId);
 
@@ -66,21 +71,21 @@ projectsRouter.get("/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    if (userId) {
-      const userIdNum = parseInt(userId as string);
-      const user = await storage.getUser(userIdNum);
-
-      if (user) {
-        if (user.userType === 'volunteer') {
-          const visibleProjectIds = await getVisibleProjectIdsForVolunteer(userIdNum, false);
-          if (!visibleProjectIds.has(projectId)) {
-            return res.status(404).json({ message: "Project not found" });
-          }
-        } else if (user.userType === 'organization' && user.organizationId) {
-          if (project.organizationId !== user.organizationId) {
-            return res.status(404).json({ message: "Project not found" });
-          }
-        }
+    // IDOR protection: Verify user has access to this project
+    if (authenticatedUser.userType === 'volunteer') {
+      const visibleProjectIds = await getVisibleProjectIdsForVolunteer(authenticatedUser.id, false);
+      if (!visibleProjectIds.has(projectId)) {
+        return res.status(403).json({
+          message: "Access denied. You do not have access to this project.",
+          code: "FORBIDDEN"
+        });
+      }
+    } else if (authenticatedUser.userType === 'organization' && authenticatedUser.organizationId) {
+      if (project.organizationId !== authenticatedUser.organizationId) {
+        return res.status(403).json({
+          message: "Access denied. This project belongs to a different organization.",
+          code: "FORBIDDEN"
+        });
       }
     }
 
@@ -91,13 +96,25 @@ projectsRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/projects - Create new project
-projectsRouter.post("/", async (req: Request, res: Response) => {
+// Protected: Requires authentication and organization membership
+projectsRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) => {
   try {
-    const user = await requireOrgUser(req);
+    const authenticatedUser = req.authenticatedUser;
+    if (!authenticatedUser || authenticatedUser.userType !== 'organization' || !authenticatedUser.organizationId) {
+      return res.status(403).json({
+        message: "Organization authorization required",
+        code: "ORG_REQUIRED"
+      });
+    }
+
     const projectData = insertProjectSchema.parse(req.body);
 
-    if (projectData.organizationId !== user.organizationId) {
-      return res.status(403).json({ message: "Resource not owned by your organization" });
+    // IDOR protection: Can only create projects for own organization
+    if (projectData.organizationId !== authenticatedUser.organizationId) {
+      return res.status(403).json({
+        message: "Access denied. You can only create projects for your own organization.",
+        code: "FORBIDDEN"
+      });
     }
 
     const project = await storage.createProject(projectData);
@@ -214,9 +231,17 @@ projectsRouter.get("/:id/metrics", async (req: Request, res: Response) => {
 });
 
 // PATCH /api/projects/:id - Update project
-projectsRouter.patch("/:id", async (req: Request, res: Response) => {
+// Protected: Requires authentication and organization ownership
+projectsRouter.patch("/:id", verifyFirebaseToken, async (req: Request, res: Response) => {
   try {
-    const user = await requireOrgUser(req);
+    const authenticatedUser = req.authenticatedUser;
+    if (!authenticatedUser || authenticatedUser.userType !== 'organization' || !authenticatedUser.organizationId) {
+      return res.status(403).json({
+        message: "Organization authorization required",
+        code: "ORG_REQUIRED"
+      });
+    }
+
     const projectId = parseInt(req.params.id);
 
     const existingProject = await storage.getProject(projectId);
@@ -224,7 +249,13 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    verifyOwnership(user, existingProject);
+    // IDOR protection: Can only update own organization's projects
+    if (existingProject.organizationId !== authenticatedUser.organizationId) {
+      return res.status(403).json({
+        message: "Access denied. This project belongs to a different organization.",
+        code: "FORBIDDEN"
+      });
+    }
 
     const projectData = insertProjectSchema.partial().parse(req.body);
     const updatedProject = await storage.updateProject(projectId, projectData);

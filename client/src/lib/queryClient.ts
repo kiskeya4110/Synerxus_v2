@@ -5,6 +5,55 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 // =============================================================================
 const etagCache = new Map<string, { etag: string; data: any }>();
 
+// =============================================================================
+// CSRF TOKEN MANAGEMENT - Secure state-changing requests
+// =============================================================================
+let csrfToken: string | null = null;
+let csrfTokenPromise: Promise<string | null> | null = null;
+
+/**
+ * Fetch CSRF token from the server
+ * Uses a singleton promise to prevent multiple concurrent fetches
+ */
+async function fetchCsrfToken(): Promise<string | null> {
+  if (csrfToken) return csrfToken;
+
+  if (csrfTokenPromise) return csrfTokenPromise;
+
+  csrfTokenPromise = (async () => {
+    try {
+      const res = await fetch('/api/csrf-token', {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        csrfToken = data.csrfToken;
+        return csrfToken;
+      }
+    } catch (error) {
+      console.warn('Failed to fetch CSRF token:', error);
+    }
+    return null;
+  })();
+
+  return csrfTokenPromise;
+}
+
+/**
+ * Clear CSRF token (call on logout)
+ */
+export function clearCsrfToken(): void {
+  csrfToken = null;
+  csrfTokenPromise = null;
+}
+
+/**
+ * Initialize CSRF token (call on app load)
+ */
+export async function initializeCsrfToken(): Promise<void> {
+  await fetchCsrfToken();
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok && res.status !== 304) {
     const text = (await res.text()) || res.statusText;
@@ -28,6 +77,14 @@ export async function apiRequest(
     headers["x-user-id"] = userId;
   }
 
+  // Add CSRF token for state-changing requests (POST, PUT, PATCH, DELETE)
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method.toUpperCase())) {
+    const token = await fetchCsrfToken();
+    if (token) {
+      headers["X-CSRF-Token"] = token;
+    }
+  }
+
   // Add ETag for conditional requests on GET
   if (method === 'GET') {
     const cached = etagCache.get(url);
@@ -42,6 +99,26 @@ export async function apiRequest(
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
+
+  // If CSRF token expired, refresh it and retry once
+  if (res.status === 403) {
+    const errorText = await res.clone().text();
+    if (errorText.includes('CSRF')) {
+      clearCsrfToken();
+      const newToken = await fetchCsrfToken();
+      if (newToken) {
+        headers["X-CSRF-Token"] = newToken;
+        const retryRes = await fetch(url, {
+          method,
+          headers,
+          body: data ? JSON.stringify(data) : undefined,
+          credentials: "include",
+        });
+        await throwIfResNotOk(retryRes);
+        return retryRes;
+      }
+    }
+  }
 
   await throwIfResNotOk(res);
   return res;
@@ -164,7 +241,13 @@ export const prefetchQueries = {
   },
 };
 
-// Clear ETag cache (call on logout)
+// Clear caches (call on logout)
 export const clearEtagCache = () => {
   etagCache.clear();
+};
+
+// Clear all security-related caches (call on logout)
+export const clearSecurityCaches = () => {
+  etagCache.clear();
+  clearCsrfToken();
 };

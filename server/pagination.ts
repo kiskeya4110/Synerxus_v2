@@ -208,3 +208,201 @@ export function getListQueryParams(
     filters: getFilterParams(req),
   };
 }
+
+// =============================================================================
+// CURSOR-BASED PAGINATION
+// Recommended for large datasets and real-time data
+// =============================================================================
+
+/**
+ * Cursor data structure for cursor-based pagination
+ */
+export interface CursorData {
+  id: number | string;
+  [key: string]: unknown;
+}
+
+/**
+ * Cursor pagination parameters
+ */
+export interface CursorPaginationParams {
+  cursor?: string;
+  limit: number;
+  direction: 'next' | 'prev';
+  sortBy: string;
+  sortOrder: 'asc' | 'desc';
+}
+
+/**
+ * Cursor-paginated response structure
+ */
+export interface CursorPaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    nextCursor: string | null;
+    previousCursor: string | null;
+    totalCount?: number;
+    pageSize: number;
+  };
+  meta: {
+    sortBy: string;
+    sortOrder: 'asc' | 'desc';
+    returnedCount: number;
+  };
+}
+
+/**
+ * Encode cursor data to a base64url string
+ */
+export function encodeCursor(data: CursorData): string {
+  const json = JSON.stringify(data);
+  return Buffer.from(json).toString('base64url');
+}
+
+/**
+ * Decode a cursor string back to cursor data
+ */
+export function decodeCursor(cursor: string): CursorData | null {
+  try {
+    const json = Buffer.from(cursor, 'base64url').toString('utf-8');
+    return JSON.parse(json) as CursorData;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extract cursor pagination parameters from request
+ */
+export function getCursorPaginationParams(
+  req: Request,
+  defaults: { sortBy?: string; sortOrder?: 'asc' | 'desc' } = {}
+): CursorPaginationParams {
+  const cursor = req.query.cursor as string | undefined;
+  let limit = parseInt(req.query.limit as string) || PAGINATION_DEFAULTS.DEFAULT_PAGE_SIZE;
+  limit = Math.min(PAGINATION_DEFAULTS.MAX_PAGE_SIZE, Math.max(PAGINATION_DEFAULTS.MIN_PAGE_SIZE, limit));
+
+  const direction = ((req.query.direction as string) || 'next').toLowerCase() as 'next' | 'prev';
+  const sortBy = (req.query.sortBy as string) || defaults.sortBy || 'createdAt';
+  const sortOrder = ((req.query.sortOrder as string) || defaults.sortOrder || 'desc').toLowerCase() as 'asc' | 'desc';
+
+  return { cursor, limit, direction, sortBy, sortOrder };
+}
+
+/**
+ * Build cursor-paginated response
+ */
+export function createCursorPaginatedResponse<T extends { id: number | string; [key: string]: unknown }>(
+  data: T[],
+  params: CursorPaginationParams,
+  totalCount?: number,
+  cursorFields: string[] = ['id']
+): CursorPaginatedResponse<T> {
+  const { limit, sortBy, sortOrder, cursor } = params;
+
+  // Check if there are more pages (we fetch limit + 1 to check)
+  const hasMore = data.length > limit;
+
+  // Trim to requested limit
+  const trimmedData = hasMore ? data.slice(0, limit) : data;
+
+  let nextCursor: string | null = null;
+  let previousCursor: string | null = null;
+
+  if (trimmedData.length > 0) {
+    const firstItem = trimmedData[0];
+    const lastItem = trimmedData[trimmedData.length - 1];
+
+    // Build cursor data including sort field
+    const buildCursorData = (item: T): CursorData => {
+      const cursorData: CursorData = { id: item.id };
+      for (const field of cursorFields) {
+        if (field !== 'id' && item[field] !== undefined) {
+          cursorData[field] = item[field];
+        }
+      }
+      if (sortBy !== 'id' && item[sortBy] !== undefined) {
+        cursorData[sortBy] = item[sortBy];
+      }
+      return cursorData;
+    };
+
+    if (hasMore) {
+      nextCursor = encodeCursor(buildCursorData(lastItem));
+    }
+
+    if (cursor) {
+      previousCursor = encodeCursor(buildCursorData(firstItem));
+    }
+  }
+
+  return {
+    data: trimmedData,
+    pagination: {
+      hasNextPage: hasMore,
+      hasPreviousPage: cursor !== undefined,
+      nextCursor,
+      previousCursor,
+      totalCount,
+      pageSize: limit,
+    },
+    meta: {
+      sortBy,
+      sortOrder,
+      returnedCount: trimmedData.length,
+    },
+  };
+}
+
+/**
+ * Build SQL WHERE clause for cursor pagination
+ * For use with raw SQL queries
+ */
+export function buildCursorWhereClause(
+  cursor: CursorData | null,
+  sortBy: string,
+  sortOrder: 'asc' | 'desc',
+  paramOffset: number = 0
+): {
+  whereClause: string;
+  params: unknown[];
+} {
+  if (!cursor) {
+    return { whereClause: '', params: [] };
+  }
+
+  const sortValue = cursor[sortBy];
+  const id = cursor.id;
+
+  // Determine comparison operator
+  // For DESC: we want items LESS than cursor (older)
+  // For ASC: we want items GREATER than cursor (newer)
+  const operator = sortOrder === 'desc' ? '<' : '>';
+
+  // Use tuple comparison for tie-breaking
+  const whereClause = `(${sortBy}, id) ${operator} ($${paramOffset + 1}, $${paramOffset + 2})`;
+  const params = [sortValue, id];
+
+  return { whereClause, params };
+}
+
+/**
+ * SQL helper for Drizzle ORM cursor pagination
+ * Returns conditions to apply to a query
+ */
+export interface DrizzleCursorResult {
+  cursorData: CursorData | null;
+  queryLimit: number;
+}
+
+export function prepareDrizzleCursor(
+  cursor: string | undefined,
+  limit: number
+): DrizzleCursorResult {
+  return {
+    cursorData: cursor ? decodeCursor(cursor) : null,
+    queryLimit: limit + 1, // Fetch extra to check for more pages
+  };
+}

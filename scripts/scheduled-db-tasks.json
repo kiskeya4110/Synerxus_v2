@@ -1,0 +1,198 @@
+{
+  "project": "Synerxus Database Optimization",
+  "generated": "2024-12-12",
+  "startDate": "2024-12-16",
+  "tasks": [
+    {
+      "id": "DB-001",
+      "title": "Run critical indexes migration",
+      "description": "Execute migrations/0004_critical_missing_indexes.sql to add 80+ missing indexes",
+      "priority": "high",
+      "week": 1,
+      "scheduledDate": "2024-12-16",
+      "estimatedHours": 1,
+      "commands": [
+        "psql $DATABASE_URL -f migrations/0004_critical_missing_indexes.sql"
+      ],
+      "verification": "SELECT COUNT(*) FROM pg_indexes WHERE schemaname = 'public' AND indexname LIKE 'idx_%';",
+      "expectedResult": "170+ indexes",
+      "status": "pending"
+    },
+    {
+      "id": "DB-002",
+      "title": "Update dashboard router with batch queries",
+      "description": "Replace individual queries in dashboard.router.ts with storage.getOrganizationDashboardData()",
+      "priority": "high",
+      "week": 1,
+      "scheduledDate": "2024-12-17",
+      "estimatedHours": 2,
+      "files": [
+        "server/routes/dashboard.router.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "DB-003",
+      "title": "Update dashboard service with batch queries",
+      "description": "Use storage.getVolunteerDashboardData() for volunteer dashboards",
+      "priority": "high",
+      "week": 1,
+      "scheduledDate": "2024-12-17",
+      "estimatedHours": 2,
+      "files": [
+        "server/dashboard-service.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "DB-004",
+      "title": "Parallelize AIU calculations",
+      "description": "Change sequential AIU loop to Promise.all pattern in dashboard.router.ts",
+      "priority": "high",
+      "week": 1,
+      "scheduledDate": "2024-12-18",
+      "estimatedHours": 1,
+      "files": [
+        "server/routes/dashboard.router.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "DB-005",
+      "title": "Add Redis cache keys for dashboards",
+      "description": "Implement cache patterns from DATABASE_ANALYSIS_REPORT.md section 2.3",
+      "priority": "high",
+      "week": 1,
+      "scheduledDate": "2024-12-18",
+      "estimatedHours": 2,
+      "files": [
+        "server/redis-cache.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "DB-006",
+      "title": "Performance testing - dashboards",
+      "description": "Run load tests on dashboard endpoints, measure p95 latency",
+      "priority": "high",
+      "week": 1,
+      "scheduledDate": "2024-12-19",
+      "estimatedHours": 3,
+      "targetMetric": "p95 < 200ms",
+      "status": "pending"
+    },
+    {
+      "id": "DB-007",
+      "title": "Week 1 review and documentation",
+      "description": "Document performance improvements, prepare Week 2 tasks",
+      "priority": "medium",
+      "week": 1,
+      "scheduledDate": "2024-12-20",
+      "estimatedHours": 2,
+      "status": "pending"
+    },
+    {
+      "id": "DB-008",
+      "title": "Add connection retry logic",
+      "description": "Create server/db-utils.ts with retry wrapper and exponential backoff",
+      "priority": "medium",
+      "week": 2,
+      "scheduledDate": "2024-12-23",
+      "estimatedHours": 2,
+      "files": [
+        "server/db-utils.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "DB-009",
+      "title": "Update opportunity enrichment service",
+      "description": "Use storage.getOpportunitiesWithOrganizations() to eliminate N+1",
+      "priority": "medium",
+      "week": 2,
+      "scheduledDate": "2024-12-24",
+      "estimatedHours": 2,
+      "files": [
+        "server/opportunity-enrichment-service.ts"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "DB-010",
+      "title": "Implement notification/message count caching",
+      "description": "Use optimized count methods with Redis caching (60s TTL)",
+      "priority": "medium",
+      "week": 2,
+      "scheduledDate": "2024-12-26",
+      "estimatedHours": 2,
+      "status": "pending"
+    },
+    {
+      "id": "DB-011",
+      "title": "Week 2 review and full audit",
+      "description": "Run full performance audit, compare against baseline",
+      "priority": "medium",
+      "week": 2,
+      "scheduledDate": "2024-12-27",
+      "estimatedHours": 3,
+      "status": "pending"
+    },
+    {
+      "id": "DB-012",
+      "title": "Create materialized view for activity summary",
+      "description": "Create mv_organization_activity_summary and set up refresh schedule",
+      "priority": "low",
+      "week": 3,
+      "scheduledDate": "2024-12-30",
+      "estimatedHours": 2,
+      "status": "pending"
+    },
+    {
+      "id": "DB-013",
+      "title": "Add denormalized cache columns",
+      "description": "Add cached_volunteer_count, cached_total_hours, cached_aiu to projects table",
+      "priority": "low",
+      "week": 3,
+      "scheduledDate": "2024-12-31",
+      "estimatedHours": 3,
+      "status": "pending"
+    },
+    {
+      "id": "DB-014",
+      "title": "Evaluate volunteer table consolidation",
+      "description": "Analyze volunteers vs volunteerProfiles usage, plan migration",
+      "priority": "low",
+      "week": 3,
+      "scheduledDate": "2025-01-02",
+      "estimatedHours": 3,
+      "status": "pending"
+    },
+    {
+      "id": "DB-015",
+      "title": "Final optimization review",
+      "description": "Full performance benchmark, update reports, plan Q1 2025",
+      "priority": "low",
+      "week": 3,
+      "scheduledDate": "2025-01-03",
+      "estimatedHours": 2,
+      "status": "pending"
+    }
+  ],
+  "milestones": [
+    {
+      "name": "Week 1 Complete",
+      "date": "2024-12-20",
+      "criteria": "Critical indexes deployed, dashboard queries optimized"
+    },
+    {
+      "name": "Week 2 Complete",
+      "date": "2024-12-27",
+      "criteria": "Connection retry logic, opportunity N+1 fixed, caching implemented"
+    },
+    {
+      "name": "Optimization Complete",
+      "date": "2025-01-03",
+      "criteria": "All tasks complete, p95 < 200ms achieved"
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { insertOpportunitySchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { getProjectsForVolunteer } from "../dashboard-service";
 import { deriveCategoryFromSDGs } from "../matching-algorithm";
+import { verifyFirebaseToken } from "../middleware/firebase-auth";
 
 export const opportunitiesRouter = Router();
 
@@ -79,8 +80,14 @@ opportunitiesRouter.get("/discover", async (req: Request, res: Response) => {
 });
 
 // GET /api/opportunities/status - Get opportunity status for volunteer
-opportunitiesRouter.get("/status", async (req: Request, res: Response) => {
+// Protected: Requires authentication and ownership verification
+opportunitiesRouter.get("/status", verifyFirebaseToken, async (req: Request, res: Response) => {
   try {
+    const authenticatedUser = req.authenticatedUser;
+    if (!authenticatedUser) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
     const volunteerId = req.query.volunteerId as string;
 
     if (!volunteerId) {
@@ -91,6 +98,14 @@ opportunitiesRouter.get("/status", async (req: Request, res: Response) => {
 
     if (isNaN(vid)) {
       return res.status(400).json({ message: "volunteerId must be a valid number" });
+    }
+
+    // IDOR protection: Volunteers can only view their own status
+    if (authenticatedUser.id !== vid) {
+      return res.status(403).json({
+        message: "Access denied. You can only view your own opportunity status.",
+        code: "FORBIDDEN"
+      });
     }
 
     const [saved, rejected, applications] = await Promise.all([
@@ -190,13 +205,25 @@ opportunitiesRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/opportunities - Create new opportunity
-opportunitiesRouter.post("/", async (req: Request, res: Response) => {
+// Protected: Requires authentication and organization membership
+opportunitiesRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) => {
   try {
-    const user = await requireOrgUser(req);
+    const authenticatedUser = req.authenticatedUser;
+    if (!authenticatedUser || authenticatedUser.userType !== 'organization' || !authenticatedUser.organizationId) {
+      return res.status(403).json({
+        message: "Organization authorization required",
+        code: "ORG_REQUIRED"
+      });
+    }
+
     const opportunityData = insertOpportunitySchema.parse(req.body);
 
-    if (opportunityData.organizationId !== user.organizationId) {
-      return res.status(403).json({ message: "Resource not owned by your organization" });
+    // IDOR protection: Can only create opportunities for own organization
+    if (opportunityData.organizationId !== authenticatedUser.organizationId) {
+      return res.status(403).json({
+        message: "Access denied. You can only create opportunities for your own organization.",
+        code: "FORBIDDEN"
+      });
     }
 
     if (!opportunityData.category && (opportunityData.sdgGoals || opportunityData.primarySdg)) {

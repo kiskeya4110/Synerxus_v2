@@ -39,7 +39,12 @@
       "Bash(timeout 20 npm run dev)",
       "Bash(du:*)",
       "Bash(python3:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm audit fix:*)",
+      "Bash(gh issue list:*)",
+      "Bash(npx tsx:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm outdated:*)"
     ],
     "deny": [],
     "ask": []

@@ -1662,6 +1662,194 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db.update(volunteerEmployerLinks).set(link).where(eq(volunteerEmployerLinks.id, id)).returning();
     return result || undefined;
   }
+
+  // ===========================================================================
+  // OPTIMIZED BATCH QUERIES - Eliminates N+1 patterns for dashboard
+  // ===========================================================================
+
+  /**
+   * Fetch all organization data in a single optimized query batch
+   * Eliminates N+1 queries in dashboard by using parallel batch fetches
+   * with proper WHERE clauses instead of fetching ALL data
+   */
+  async getOrganizationDashboardData(organizationId: number): Promise<{
+    projects: Project[];
+    tasks: Task[];
+    activities: VolunteerActivity[];
+    impacts: ProjectImpact[];
+    assignments: ProjectAssignment[];
+    users: User[];
+  }> {
+    // First get organization's projects
+    const orgProjects = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.organizationId, organizationId));
+
+    if (orgProjects.length === 0) {
+      return {
+        projects: [],
+        tasks: [],
+        activities: [],
+        impacts: [],
+        assignments: [],
+        users: [],
+      };
+    }
+
+    const projectIds = orgProjects.map(p => p.id);
+
+    // Parallel batch queries for related data (eliminates N+1)
+    const [orgTasks, orgActivities, orgImpacts, orgAssignments] = await Promise.all([
+      db.select().from(tasks).where(inArray(tasks.projectId, projectIds)),
+      db.select().from(volunteerActivities).where(inArray(volunteerActivities.projectId, projectIds)),
+      db.select().from(projectImpacts).where(inArray(projectImpacts.projectId, projectIds)),
+      db.select().from(projectAssignments).where(inArray(projectAssignments.projectId, projectIds)),
+    ]);
+
+    // Get unique volunteer IDs from activities and assignments
+    const volunteerIds = new Set<number>();
+    orgActivities.forEach(a => a.userId && volunteerIds.add(a.userId));
+    orgAssignments.forEach(a => volunteerIds.add(a.volunteerId));
+
+    // Fetch related volunteers
+    const relatedUsers = volunteerIds.size > 0
+      ? await db.select().from(users).where(inArray(users.id, Array.from(volunteerIds)))
+      : [];
+
+    return {
+      projects: orgProjects,
+      tasks: orgTasks,
+      activities: orgActivities,
+      impacts: orgImpacts,
+      assignments: orgAssignments,
+      users: relatedUsers,
+    };
+  }
+
+  /**
+   * Fetch all volunteer dashboard data in a single optimized query batch
+   */
+  async getVolunteerDashboardData(userId: number): Promise<{
+    activities: VolunteerActivity[];
+    assignments: ProjectAssignment[];
+    applications: Application[];
+    projects: Project[];
+    tasks: Task[];
+    savedOpportunities: SavedOpportunity[];
+  }> {
+    // Parallel fetch of all volunteer-related data
+    const [userActivities, userAssignments, userApplications, savedOpps] = await Promise.all([
+      db.select().from(volunteerActivities)
+        .where(eq(volunteerActivities.userId, userId))
+        .orderBy(desc(volunteerActivities.date))
+        .limit(50),
+      db.select().from(projectAssignments)
+        .where(eq(projectAssignments.volunteerId, userId)),
+      db.select().from(applications)
+        .where(eq(applications.volunteerId, userId))
+        .orderBy(desc(applications.appliedAt)),
+      db.select().from(savedOpportunities)
+        .where(eq(savedOpportunities.volunteerId, userId)),
+    ]);
+
+    // Get project IDs from activities and assignments
+    const projectIds = new Set<number>();
+    userActivities.forEach(a => a.projectId && projectIds.add(a.projectId));
+    userAssignments.forEach(a => projectIds.add(a.projectId));
+
+    const projectIdArray = Array.from(projectIds);
+
+    // Fetch related projects
+    const relatedProjects = projectIdArray.length > 0
+      ? await db.select().from(projects).where(inArray(projects.id, projectIdArray))
+      : [];
+
+    // Fetch tasks for assigned projects
+    const relatedTasks = projectIdArray.length > 0
+      ? await db.select().from(tasks)
+          .where(
+            and(
+              inArray(tasks.projectId, projectIdArray),
+              or(
+                eq(tasks.assigneeId, userId),
+                isNull(tasks.assigneeId)
+              )
+            )
+          )
+      : [];
+
+    return {
+      activities: userActivities,
+      assignments: userAssignments,
+      applications: userApplications,
+      projects: relatedProjects,
+      tasks: relatedTasks,
+      savedOpportunities: savedOpps,
+    };
+  }
+
+  /**
+   * Batch fetch multiple users by IDs
+   * Used to avoid N+1 when enriching lists
+   */
+  async getUsersByIds(ids: number[]): Promise<User[]> {
+    if (ids.length === 0) return [];
+    const uniqueIds = Array.from(new Set(ids));
+    return await db.select().from(users).where(inArray(users.id, uniqueIds));
+  }
+
+  /**
+   * Batch fetch opportunities with organization data
+   * Eliminates N+1 for opportunity listings
+   */
+  async getOpportunitiesWithOrganizations(opportunityIds: number[]): Promise<Array<Opportunity & { organization?: Organization }>> {
+    if (opportunityIds.length === 0) return [];
+
+    const opps = await db.select().from(opportunities).where(inArray(opportunities.id, opportunityIds));
+
+    // Get unique organization IDs
+    const orgIdSet = new Set(opps.map(o => o.organizationId).filter((id): id is number => id !== null));
+    const orgIds = Array.from(orgIdSet);
+
+    // Batch fetch organizations
+    const orgs = await this.getOrganizationsByIds(orgIds);
+    const orgMap = new Map(orgs.map(o => [o.id, o]));
+
+    // Enrich opportunities
+    return opps.map(opp => ({
+      ...opp,
+      organization: opp.organizationId ? orgMap.get(opp.organizationId) : undefined,
+    }));
+  }
+
+  /**
+   * Get notification count for user (optimized single query)
+   */
+  async getUnreadNotificationCount(userId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.read, false)
+      ));
+    return Number(result?.count || 0);
+  }
+
+  /**
+   * Get unread message count for user (optimized single query)
+   */
+  async getUnreadMessageCount(userId: number): Promise<number> {
+    const [result] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(messages)
+      .where(and(
+        eq(messages.receiverId, userId),
+        eq(messages.read, false)
+      ));
+    return Number(result?.count || 0);
+  }
 }
 
 export const storage = new DatabaseStorage();

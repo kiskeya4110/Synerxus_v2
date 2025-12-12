@@ -2,19 +2,237 @@ import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import crypto from "crypto";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import cors from "cors";
+import cookieParser from "cookie-parser";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDigestScheduler } from "./digest-scheduler";
 import { logger } from "./logger";
 import { cache } from "./cache";
+import { redisCache } from "./redis-cache";
+import { closePool } from "./db";
+import { csrfProtection, csrfTokenHandler } from "./middleware/csrf";
+import { verifyFirebaseToken, optionalFirebaseAuth } from "./middleware/firebase-auth";
+import { jobQueue } from "./jobs/job-queue";
+import { apiResponseMiddleware } from "./utils/api-response";
+import {
+  createTieredRateLimiter,
+  authRateLimiter as tieredAuthLimiter,
+  expensiveOpRateLimiter,
+  getRateLimitInfo,
+} from "./middleware/tiered-rate-limit";
 
 const app = express();
+
+// =============================================================================
+// SECURITY: HELMET - Enterprise-grade security headers
+// Target: A+ on securityheaders.com
+// =============================================================================
+app.use(helmet({
+  // Content Security Policy - Prevents XSS and injection attacks
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'", // Required for React in dev, consider removing in strict production
+        "https://apis.google.com",
+        "https://*.firebaseapp.com",
+        "https://*.firebase.com",
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'", // Required for Tailwind CSS inline styles
+        "https://fonts.googleapis.com",
+      ],
+      fontSrc: [
+        "'self'",
+        "https://fonts.gstatic.com",
+        "data:",
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        "https:",
+        "https://*.googleapis.com",
+        "https://*.gstatic.com",
+      ],
+      connectSrc: [
+        "'self'",
+        "https://*.firebaseio.com",
+        "https://*.googleapis.com",
+        "https://identitytoolkit.googleapis.com",
+        "https://securetoken.googleapis.com",
+        "wss://*.firebaseio.com",
+        "wss:",
+        "ws:",
+      ],
+      frameSrc: [
+        "'self'",
+        "https://*.firebaseapp.com",
+        "https://accounts.google.com",
+      ],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      workerSrc: ["'self'", "blob:"],
+      childSrc: ["blob:"],
+      formAction: ["'self'"],
+      frameAncestors: ["'self'"],
+      baseUri: ["'self'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  // Strict Transport Security - Forces HTTPS
+  strictTransportSecurity: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true,
+  },
+  // Prevent MIME type sniffing
+  xContentTypeOptions: true,
+  // Prevent clickjacking
+  xFrameOptions: { action: "deny" },
+  // Enable XSS filter in browsers
+  xXssProtection: true,
+  // Control referrer information
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  // Disable DNS prefetching
+  dnsPrefetchControl: { allow: false },
+  // IE no-open for downloads
+  ieNoOpen: true,
+  // Hide X-Powered-By header
+  hidePoweredBy: true,
+  // Permissions Policy (formerly Feature Policy)
+  permittedCrossDomainPolicies: { permittedPolicies: "none" },
+  crossOriginEmbedderPolicy: false, // Disabled for Firebase compatibility
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }, // Allow OAuth popups
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin resources
+}));
+
+// Custom Permissions-Policy header (not fully supported by helmet)
+app.use((req, res, next) => {
+  res.setHeader(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()'
+  );
+  next();
+});
+
+// =============================================================================
+// SECURITY: CORS - Cross-Origin Resource Sharing
+// Strict origin validation for production security
+// =============================================================================
+const ALLOWED_ORIGINS = [
+  // Production domains (add your actual domains here)
+  process.env.FRONTEND_URL,
+  // Development
+  'http://localhost:5000',
+  'http://localhost:3000',
+  'http://127.0.0.1:5000',
+  // Replit domains
+  /\.replit\.dev$/,
+  /\.repl\.co$/,
+  /\.replit\.app$/,
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Check against allowed origins
+    const isAllowed = ALLOWED_ORIGINS.some(allowed => {
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      logger.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Allow cookies for session auth
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-user-id',
+    'x-request-id',
+    'x-csrf-token',
+    'If-None-Match',
+    'Cache-Control',
+  ],
+  exposedHeaders: [
+    'ETag',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+    'X-RateLimit-Reset',
+    'X-RateLimit-Tier',
+    'X-RateLimit-Burst-Active',
+    'X-RateLimit-Burst-Remaining',
+    'Retry-After',
+  ],
+  maxAge: 86400, // Cache preflight for 24 hours
+}));
 
 // =============================================================================
 // SECURITY: REQUEST BODY LIMITS - Prevents payload attacks
 // =============================================================================
 app.use(express.json({ limit: '10mb' })); // 10MB limit for JSON
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// =============================================================================
+// SECURITY: COOKIE PARSER - Required for CSRF protection
+// =============================================================================
+app.use(cookieParser());
+
+// =============================================================================
+// SECURITY: CSRF PROTECTION - Prevents cross-site request forgery
+// Uses double-submit cookie pattern for stateless CSRF protection
+// =============================================================================
+// CSRF token endpoint (must be before CSRF protection middleware)
+app.get('/api/csrf-token', csrfTokenHandler);
+
+// Apply CSRF protection to all API routes except webhooks and health checks
+const CSRF_EXEMPT_PATHS = [
+  '/api/csrf-token',
+  '/api/webhooks',
+  '/health',
+  '/ready',
+];
+app.use('/api/', (req, res, next) => {
+  // Skip CSRF for exempt paths
+  if (CSRF_EXEMPT_PATHS.some(path => req.path.startsWith(path.replace('/api', '')))) {
+    return next();
+  }
+  return csrfProtection(req, res, next);
+});
+
+// =============================================================================
+// SECURITY: INPUT SANITIZATION - XSS and injection prevention
+// =============================================================================
+import { sanitizeRequest } from "./middleware/sanitize";
+app.use('/api/', sanitizeRequest);
+
+// =============================================================================
+// SECURITY: AUDIT LOGGING - Track sensitive operations
+// =============================================================================
+import { auditLog, addRequestId } from "./middleware/audit";
+app.use(addRequestId); // Add request ID to all requests
+app.use('/api/', auditLog); // Audit logging for sensitive operations
+
+// =============================================================================
+// API RESPONSE UTILITIES - Sparse fieldsets, pagination, ETags
+// =============================================================================
+app.use('/api/', apiResponseMiddleware);
 
 // =============================================================================
 // COMPRESSION MIDDLEWARE - OPTIMIZED for 95%+ performance
@@ -51,47 +269,149 @@ app.use((req, res, next) => {
 });
 
 // =============================================================================
-// RATE LIMITING - Prevents API abuse and DDoS
+// RATE LIMITING - Enterprise-grade API abuse prevention
+// Tiered rate limiting based on endpoint sensitivity
 // =============================================================================
 
-// General API rate limit: 100 requests per minute per IP
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 100, // 100 requests per window
-  message: { message: 'Too many requests, please try again later.' },
-  standardHeaders: true, // Return rate limit info in headers
+// Helper to create consistent rate limiter configurations
+const createRateLimiter = (options: {
+  windowMs: number;
+  max: number;
+  message: string;
+  skipPaths?: string[];
+}) => rateLimit({
+  windowMs: options.windowMs,
+  max: options.max,
+  message: { message: options.message, retryAfter: Math.ceil(options.windowMs / 1000) },
+  standardHeaders: true,
   legacyHeaders: false,
+  // Use default keyGenerator which handles IPv6 properly
+  // Trust X-Forwarded-For header for proxy support
+  validate: { xForwardedForHeader: false },
   skip: (req) => {
-    // Skip rate limiting for health checks and metrics
-    return req.path === '/api/metrics' || req.path === '/health';
+    const skipPaths = options.skipPaths || ['/api/metrics', '/health', '/ready'];
+    return skipPaths.includes(req.path);
+  },
+  handler: (req, res, next, options) => {
+    logger.warn(`Rate limit exceeded: ${req.ip} on ${req.method} ${req.path}`);
+    res.status(429).json(options.message);
   },
 });
 
+// General API rate limit: 100 requests per minute per IP
+const apiLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: 'Too many requests, please try again later.',
+});
+
 // Stricter limit for authentication endpoints: 10 requests per minute
-const authLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // 10 requests per window
-  message: { message: 'Too many authentication attempts, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
+const authLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: 'Too many authentication attempts, please try again later.',
 });
 
 // Stricter limit for expensive operations: 20 requests per minute
-const expensiveLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 20, // 20 requests per window
-  message: { message: 'Too many requests for this resource, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
+const expensiveLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: 'Too many requests for this resource, please try again later.',
+});
+
+// Mutation rate limit: 50 POST/PUT/PATCH/DELETE requests per minute
+const mutationLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 50,
+  message: 'Too many write operations, please try again later.',
+});
+
+// Upload rate limit: 10 uploads per minute
+const uploadLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: 'Too many uploads, please try again later.',
 });
 
 // Apply rate limiters to specific routes
 app.use('/api/users/login', authLimiter);
 app.use('/api/users/register', authLimiter);
+app.use('/api/users/firebase-sync', authLimiter);
 app.use('/api/dashboard', expensiveLimiter);
 app.use('/api/matchmaker', expensiveLimiter);
 app.use('/api/aiu', expensiveLimiter);
-app.use('/api/', apiLimiter); // General API limiter (applied last)
+app.use('/api/storage', uploadLimiter);
+
+// Apply mutation limiter to all POST/PUT/PATCH/DELETE requests
+app.use('/api/', (req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    return mutationLimiter(req, res, next);
+  }
+  next();
+});
+
+// General API limiter (applied last, catches remaining requests)
+app.use('/api/', apiLimiter);
+
+// =============================================================================
+// HEALTH CHECK ENDPOINTS - For load balancers and Kubernetes
+// =============================================================================
+import { checkPoolHealth } from "./db";
+
+// Liveness probe - Is the server running?
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
+// Readiness probe - Is the server ready to accept traffic?
+app.get('/ready', async (req, res) => {
+  try {
+    const dbHealth = await checkPoolHealth();
+    const memoryCacheStats = cache.getStats();
+    const redisCacheStats = redisCache.getStats();
+    const redisHealthy = await redisCache.isHealthy();
+
+    const isReady = dbHealth.healthy;
+
+    res.status(isReady ? 200 : 503).json({
+      status: isReady ? 'ready' : 'not_ready',
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: {
+          status: dbHealth.healthy ? 'healthy' : 'unhealthy',
+          connections: {
+            total: dbHealth.totalCount,
+            idle: dbHealth.idleCount,
+            waiting: dbHealth.waitingCount,
+          },
+        },
+        redis: {
+          status: redisHealthy ? 'healthy' : 'degraded',
+          mode: redisCacheStats.mode,
+          connected: redisCacheStats.connected,
+          hitRate: redisCacheStats.hitRate,
+          errors: redisCacheStats.errors,
+        },
+        memoryCache: {
+          status: 'healthy',
+          size: memoryCacheStats.size,
+          hitRate: memoryCacheStats.hitRate,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Readiness check failed:', error);
+    res.status(503).json({
+      status: 'not_ready',
+      timestamp: new Date().toISOString(),
+      error: 'Health check failed',
+    });
+  }
+});
 
 // =============================================================================
 // PERFORMANCE MONITORING MIDDLEWARE
@@ -200,6 +520,35 @@ app.post("/api/metrics/reset", (req, res) => {
   res.json({ message: "Metrics reset successfully" });
 });
 
+// =============================================================================
+// JOB QUEUE ENDPOINTS - Background job management
+// =============================================================================
+
+// Get job queue statistics
+app.get("/api/jobs/stats", (req, res) => {
+  const stats = jobQueue.getStats();
+  res.json({
+    timestamp: new Date().toISOString(),
+    ...stats,
+  });
+});
+
+// Get rate limit info for current user (without consuming request)
+app.get("/api/rate-limit/info", async (req, res) => {
+  try {
+    const info = await getRateLimitInfo(req);
+    res.json({
+      success: true,
+      data: info,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get rate limit info',
+    });
+  }
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -236,6 +585,18 @@ app.use((req, res, next) => {
   // Initialize digest scheduler for weekly email digests
   initializeDigestScheduler();
 
+  // Start background job queue
+  jobQueue.start();
+  logger.info('Background job queue started');
+
+  // Set up job queue event handlers for monitoring
+  jobQueue.on('job:completed', (job) => {
+    logger.info(`Job ${job.id} (${job.type}) completed successfully`);
+  });
+  jobQueue.on('job:failed', (job) => {
+    logger.error(`Job ${job.id} (${job.type}) failed: ${job.error}`);
+  });
+
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
@@ -263,5 +624,62 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+  });
+
+  // =============================================================================
+  // GRACEFUL SHUTDOWN - Clean termination for zero-downtime deployments
+  // =============================================================================
+  const shutdown = async (signal: string) => {
+    logger.info(`Received ${signal}. Starting graceful shutdown...`);
+
+    // Stop accepting new connections
+    server.close(async () => {
+      logger.info('HTTP server closed');
+
+      try {
+        // Stop job queue (allow current jobs to complete)
+        jobQueue.stop();
+        logger.info('Job queue stopped');
+
+        // Close database connections
+        await closePool();
+        logger.info('Database pool closed');
+
+        // Close Redis connection
+        await redisCache.close();
+        logger.info('Redis connection closed');
+
+        // Clear memory cache
+        cache.clear();
+        logger.info('Memory cache cleared');
+
+        logger.info('Graceful shutdown complete');
+        process.exit(0);
+      } catch (error) {
+        logger.error('Error during shutdown:', error);
+        process.exit(1);
+      }
+    });
+
+    // Force shutdown after 30 seconds if graceful shutdown fails
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 30000);
+  };
+
+  // Handle termination signals
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
+  // Handle uncaught exceptions and rejections
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception:', error);
+    shutdown('uncaughtException');
+  });
+
+  process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't shutdown on unhandled rejection, just log it
   });
 })();

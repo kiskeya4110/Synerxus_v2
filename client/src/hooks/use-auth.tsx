@@ -9,7 +9,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, clearSecurityCaches, queryClient } from "@/lib/queryClient";
 
 interface AuthContextType {
   user: User | null;
@@ -86,6 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await firebaseSignOut(auth);
       localStorage.removeItem('currentUserId');
+      // Clear security caches (CSRF token, ETags, query cache)
+      clearSecurityCaches();
+      queryClient.clear();
       // Redirect to landing page after sign out
       window.location.href = '/';
     } catch (error) {

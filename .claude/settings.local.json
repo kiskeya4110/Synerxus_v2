@@ -51,7 +51,12 @@
       "Bash(timeout 30 npm run dev:*)",
       "Bash(pgrep:*)",
       "Bash(1 echo \"\" echo \"=== Metrics JSON ===\" curl -s http://localhost:5000/metrics/json)",
-      "Bash(sleep 3 curl -s -X POST http://localhost:5000/api/users/firebase-sync -H \"Content-Type: application/json\" -d '{\"\"\"\"firebaseUid\"\"\"\":\"\"\"\"test123\"\"\"\",\"\"\"\"email\"\"\"\":\"\"\"\"test@example.com\"\"\"\",\"\"\"\"displayName\"\"\"\":\"\"\"\"Test User\"\"\"\",\"\"\"\"userType\"\"\"\":\"\"\"\"volunteer\"\"\"\"}')"
+      "Bash(sleep 3 curl -s -X POST http://localhost:5000/api/users/firebase-sync -H \"Content-Type: application/json\" -d '{\"\"\"\"firebaseUid\"\"\"\":\"\"\"\"test123\"\"\"\",\"\"\"\"email\"\"\"\":\"\"\"\"test@example.com\"\"\"\",\"\"\"\"displayName\"\"\"\":\"\"\"\"Test User\"\"\"\",\"\"\"\"userType\"\"\"\":\"\"\"\"volunteer\"\"\"\"}')",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(psql:*)",
+      "Bash(printenv:*)",
+      "Bash(DATABASE_URL='postgresql://neondb_owner:npg_igaXoG4y7SQn@ep-sweet-mode-afpgofnv-pooler.c-2.us-west-2.aws.neon.tech/neondb?sslmode=require' npm run dev:*)"
     ],
     "deny": [],
     "ask": []

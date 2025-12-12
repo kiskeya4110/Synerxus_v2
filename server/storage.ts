@@ -98,7 +98,36 @@ import {
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
-import { eq, and, or, asc, desc, inArray, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, or, asc, desc, inArray, isNull, isNotNull, sql } from "drizzle-orm";
+
+// =============================================================================
+// PAGINATION UTILITIES
+// =============================================================================
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedResult<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+}
+
+const DEFAULT_PAGE_SIZE = 50;
+const MAX_PAGE_SIZE = 100;
+
+function normalizePagination(params?: PaginationParams): { offset: number; limit: number; page: number } {
+  const page = Math.max(1, params?.page || 1);
+  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, params?.limit || DEFAULT_PAGE_SIZE));
+  const offset = (page - 1) * limit;
+  return { offset, limit, page };
+}
 
 // Custom error for duplicate project assignments
 export class DuplicateAssignmentError extends Error {
@@ -443,6 +472,27 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users);
   }
 
+  // Paginated list users
+  async listUsersPaginated(params?: PaginationParams): Promise<PaginatedResult<User>> {
+    const { offset, limit, page } = normalizePagination(params);
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
+    const total = Number(countResult?.count || 0);
+
+    const data = await db.select().from(users).limit(limit).offset(offset);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + data.length < total
+      }
+    };
+  }
+
   // Organization operations
   async getOrganization(id: number): Promise<Organization | undefined> {
     const [result] = await db.select().from(organizations).where(eq(organizations.id, id));
@@ -497,6 +547,27 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(projects);
   }
 
+  // Paginated list projects
+  async listProjectsPaginated(params?: PaginationParams): Promise<PaginatedResult<Project>> {
+    const { offset, limit, page } = normalizePagination(params);
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(projects);
+    const total = Number(countResult?.count || 0);
+
+    const data = await db.select().from(projects).orderBy(desc(projects.createdAt)).limit(limit).offset(offset);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + data.length < total
+      }
+    };
+  }
+
   async listProjectsByOrganization(organizationId: number): Promise<Project[]> {
     return await db.select().from(projects).where(eq(projects.organizationId, organizationId));
   }
@@ -519,6 +590,27 @@ export class DatabaseStorage implements IStorage {
 
   async listTasks(): Promise<Task[]> {
     return await db.select().from(tasks);
+  }
+
+  // Paginated list tasks
+  async listTasksPaginated(params?: PaginationParams): Promise<PaginatedResult<Task>> {
+    const { offset, limit, page } = normalizePagination(params);
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(tasks);
+    const total = Number(countResult?.count || 0);
+
+    const data = await db.select().from(tasks).orderBy(desc(tasks.createdAt)).limit(limit).offset(offset);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + data.length < total
+      }
+    };
   }
 
   async listTasksByProject(projectId: number): Promise<Task[]> {
@@ -656,6 +748,27 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(opportunities);
   }
 
+  // Paginated list opportunities
+  async listOpportunitiesPaginated(params?: PaginationParams): Promise<PaginatedResult<Opportunity>> {
+    const { offset, limit, page } = normalizePagination(params);
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(opportunities);
+    const total = Number(countResult?.count || 0);
+
+    const data = await db.select().from(opportunities).orderBy(desc(opportunities.createdAt)).limit(limit).offset(offset);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + data.length < total
+      }
+    };
+  }
+
   async listOpportunitiesByOrganization(organizationId: number): Promise<Opportunity[]> {
     return await db.select().from(opportunities).where(eq(opportunities.organizationId, organizationId));
   }
@@ -678,6 +791,27 @@ export class DatabaseStorage implements IStorage {
 
   async listApplications(): Promise<Application[]> {
     return await db.select().from(applications);
+  }
+
+  // Paginated list applications
+  async listApplicationsPaginated(params?: PaginationParams): Promise<PaginatedResult<Application>> {
+    const { offset, limit, page } = normalizePagination(params);
+
+    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(applications);
+    const total = Number(countResult?.count || 0);
+
+    const data = await db.select().from(applications).orderBy(desc(applications.appliedAt)).limit(limit).offset(offset);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + data.length < total
+      }
+    };
   }
 
   async listApplicationsByOpportunity(opportunityId: number): Promise<Application[]> {
@@ -1191,12 +1325,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNotifications(userId: number): Promise<Notification[]> {
-    const { desc } = await import("drizzle-orm");
     return await db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt));
+  }
+
+  // Paginated notifications
+  async getNotificationsPaginated(userId: number, params?: PaginationParams): Promise<PaginatedResult<Notification>> {
+    const { offset, limit, page } = normalizePagination(params);
+
+    const [countResult] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(notifications)
+      .where(eq(notifications.userId, userId));
+    const total = Number(countResult?.count || 0);
+
+    const data = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + data.length < total
+      }
+    };
   }
 
   async markNotificationRead(notificationId: number): Promise<Notification | undefined> {

@@ -13,10 +13,29 @@ export function setBroadcastFn(fn: BroadcastFn) {
   broadcastUpdate = fn;
 }
 
-// GET /api/users - List all users with optional filtering
+// GET /api/users - List all users with optional filtering and pagination
 usersRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const { userType } = req.query;
+    const { userType, page, limit } = req.query;
+
+    // If pagination params are provided, use paginated query
+    if (page || limit) {
+      const paginationParams = {
+        page: page ? parseInt(page as string) : undefined,
+        limit: limit ? parseInt(limit as string) : undefined
+      };
+
+      const result = await storage.listUsersPaginated(paginationParams);
+
+      // Apply userType filter if provided (in-memory for paginated results)
+      if (userType) {
+        result.data = result.data.filter((u: any) => u.userType === userType);
+      }
+
+      return res.json(result);
+    }
+
+    // Non-paginated (legacy behavior)
     const users = await storage.listUsers();
 
     if (userType) {

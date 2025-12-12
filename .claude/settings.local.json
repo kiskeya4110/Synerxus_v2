@@ -38,7 +38,8 @@
       "Bash(ss:*)",
       "Bash(timeout 20 npm run dev)",
       "Bash(du:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

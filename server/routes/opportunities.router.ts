@@ -110,10 +110,10 @@ opportunitiesRouter.get("/status", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/opportunities - List opportunities with authorization
+// GET /api/opportunities - List opportunities with authorization and optional pagination
 opportunitiesRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const { organizationId, userId } = req.query;
+    const { organizationId, userId, page, limit } = req.query;
 
     if (!organizationId && !userId) {
       return res.status(400).json({
@@ -121,9 +121,17 @@ opportunitiesRouter.get("/", async (req: Request, res: Response) => {
       });
     }
 
+    // If pagination params are provided and querying for volunteer (open opportunities)
+    const usePagination = page || limit;
+    const paginationParams = usePagination ? {
+      page: page ? parseInt(page as string) : undefined,
+      limit: limit ? parseInt(limit as string) : undefined
+    } : undefined;
+
     let opportunities;
     if (organizationId) {
       opportunities = await storage.listOpportunitiesByOrganization(parseInt(organizationId as string));
+      return res.json(opportunities);
     } else if (userId) {
       const userIdNum = parseInt(userId as string);
       const user = await storage.getUser(userIdNum);
@@ -134,17 +142,23 @@ opportunitiesRouter.get("/", async (req: Request, res: Response) => {
 
       if (user.userType === 'organization' && user.organizationId) {
         opportunities = await storage.listOpportunitiesByOrganization(user.organizationId);
+        return res.json(opportunities);
       } else if (user.userType === 'volunteer') {
+        // Use paginated query for volunteers browsing open opportunities
+        if (paginationParams) {
+          const result = await storage.listOpportunitiesPaginated(paginationParams);
+          result.data = result.data.filter(opp => opp.status === 'open');
+          return res.json(result);
+        }
         const allOpportunities = await storage.listOpportunities();
         opportunities = allOpportunities.filter(opp => opp.status === 'open');
+        return res.json(opportunities);
       } else {
         return res.status(400).json({ message: "Invalid user type" });
       }
     } else {
       return res.status(400).json({ message: "Missing required parameters" });
     }
-
-    res.json(opportunities);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch opportunities" });
   }

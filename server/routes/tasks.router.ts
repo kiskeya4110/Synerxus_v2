@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
+import { invalidateCache } from "../cache";
 import { insertTaskSchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { notifyTaskAssigned } from "../notification-service";
@@ -145,6 +146,17 @@ tasksRouter.post("/", async (req: Request, res: Response) => {
       }
     }
 
+    // OPTIMIZATION: Invalidate caches when task is created
+    if (task.projectId) {
+      const project = await storage.getProject(task.projectId);
+      if (project?.organizationId) {
+        invalidateCache.forOrganization(project.organizationId);
+      }
+    }
+    if (task.assigneeId) {
+      invalidateCache.forUser(task.assigneeId);
+    }
+
     broadcastUpdate("task_created", task);
     res.status(201).json(task);
   } catch (err) {
@@ -242,6 +254,17 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
       if (updatedProject) {
         broadcastUpdate("project_updated", updatedProject);
       }
+    }
+
+    // OPTIMIZATION: Invalidate caches when task is updated
+    if (updatedTask.projectId) {
+      const project = await storage.getProject(updatedTask.projectId);
+      if (project?.organizationId) {
+        invalidateCache.forOrganization(project.organizationId);
+      }
+    }
+    if (updatedTask.assigneeId) {
+      invalidateCache.forUser(updatedTask.assigneeId);
     }
 
     broadcastUpdate("task_updated", updatedTask);

@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
+import { invalidateCache } from "../cache";
 import {
   insertVolunteerActivitySchema,
   insertImpactMetricSchema,
@@ -185,6 +186,12 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
         console.error("Error updating employee engagement hours:", crsErr);
         // Non-critical, don't fail the activity creation
       }
+    }
+
+    // OPTIMIZATION: Invalidate dashboard caches when activity is logged
+    // This ensures fresh data is fetched for affected dashboards
+    if (activity.userId) {
+      invalidateCache.forActivity(activity.userId);
     }
 
     broadcastUpdate("volunteer_activity_created", activity);

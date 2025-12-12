@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3, Activity } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3, Activity, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -174,6 +174,28 @@ export default function ProjectDetail() {
     queryKey: ["/api/aiu/project", projectId],
     queryFn: async () => {
       const response = await fetch(`/api/aiu/project/${projectId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!projectId,
+  });
+
+  // Fetch AIU settings to check if KPIs are configured
+  interface AIUSettings {
+    id: number;
+    projectId: number;
+    sdgIndicator: string;
+    kpiName: string;
+    kpiUnit: string;
+    kpiBefore: number;
+    kpiAfter: number | null;
+    attributionFactor: number;
+  }
+
+  const { data: aiuSettings } = useQuery<AIUSettings | null>({
+    queryKey: ["/api/aiu/project", projectId, "settings"],
+    queryFn: async () => {
+      const response = await fetch(`/api/aiu/project/${projectId}/settings`);
       if (!response.ok) return null;
       return response.json();
     },
@@ -886,14 +908,50 @@ export default function ProjectDetail() {
               <CardContent className="space-y-4">
                 {/* AIU Display - Enhanced */}
                 <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-emerald-600" />
-                    <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">AIUs Earned</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-emerald-600" />
+                      <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">AIUs Earned</div>
+                    </div>
+                    {canEditProject && (
+                      <Link href={`/projects/${projectId}/edit`}>
+                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs text-emerald-600 hover:text-emerald-700 hover:bg-emerald-100">
+                          <Settings className="h-3 w-3 mr-1" />
+                          {aiuSettings ? 'Edit KPIs' : 'Configure KPIs'}
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                   <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(2)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-2">
-                    {projectAIU?.sdgIndicator ? `${projectAIU.sdgIndicator} aligned` : 'Attributable Impact Units'}
+                    {aiuSettings ? (
+                      <span>{aiuSettings.kpiName} ({aiuSettings.sdgIndicator})</span>
+                    ) : projectAIU?.sdgIndicator ? (
+                      `${projectAIU.sdgIndicator} aligned`
+                    ) : (
+                      'Attributable Impact Units'
+                    )}
                   </div>
+                  {/* KPI Progress Display */}
+                  {aiuSettings && aiuSettings.kpiAfter !== null && (
+                    <div className="mt-3 p-2 bg-white/50 dark:bg-gray-800/50 rounded-lg">
+                      <div className="flex justify-between text-xs text-emerald-700 dark:text-emerald-300 mb-1">
+                        <span>KPI Progress</span>
+                        <span>{aiuSettings.kpiBefore} → {aiuSettings.kpiAfter} {aiuSettings.kpiUnit === 'percentage' ? '%' : ''}</span>
+                      </div>
+                      <div className="text-xs text-emerald-600/70 dark:text-emerald-400/70">
+                        ΔKPI: {(aiuSettings.kpiAfter - aiuSettings.kpiBefore).toFixed(2)} | Attribution: {(aiuSettings.attributionFactor * 100).toFixed(0)}%
+                      </div>
+                    </div>
+                  )}
+                  {/* Show prompt to configure if no settings */}
+                  {canEditProject && !aiuSettings && (
+                    <div className="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                      <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                        Configure KPI settings for accurate AIU calculations based on your project's impact metrics.
+                      </p>
+                    </div>
+                  )}
                   {projectAIU?.verificationStatus && (
                     <div className={`mt-2 inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                       projectAIU.verificationStatus === 'verified'

@@ -269,23 +269,7 @@ export async function calculateProjectAIU(projectId: number): Promise<ProjectAIU
     });
   });
 
-  // Set up AIU calculation input from projectAiuSettings table
-  const kpiBefore = aiuSettings?.kpiBefore ?? 0;
-  const kpiAfter = aiuSettings?.kpiAfter ?? (kpiBefore + 0.05); // Default 5% improvement if not set
-  const attributionFactor = aiuSettings?.attributionFactor ?? 0.2; // Default 20% attribution
-  const sdgIndicator = aiuSettings?.sdgIndicator || `SDG ${project.primarySdg || project.sdgGoals?.[0] || 4}.1.1`;
-
-  const aiuInput: AIUCalculationInput = {
-    kpiBefore,
-    kpiAfter,
-    attributionFactor,
-    volunteers: volunteerContributions,
-  };
-
-  // Calculate AIUs
-  const aiuResult = calculateProjectAIUs(aiuInput);
-
-  // Calculate lives impacted (from impacts table)
+  // Calculate lives impacted (from impacts table) - needed for both KPI and fallback formulas
   const verifiedLivesImpacted = impacts
     .filter(i => i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
     .reduce((sum, i) => sum + (i.value || 0), 0);
@@ -293,6 +277,79 @@ export async function calculateProjectAIU(projectId: number): Promise<ProjectAIU
     .filter(i => i.verificationStatus === 'pending' || i.verificationStatus === 'self_reported' || !i.verificationStatus)
     .reduce((sum, i) => sum + (i.value || 0), 0);
   const livesImpacted = verifiedLivesImpacted + Math.round(pendingLivesImpacted * 0.7);
+
+  // Set up AIU calculation - use explicit settings if available, otherwise use livesImpacted-based formula
+  const attributionFactor = aiuSettings?.attributionFactor ?? 0.2; // Default 20% attribution
+  const sdgIndicator = aiuSettings?.sdgIndicator || `SDG ${project.primarySdg || project.sdgGoals?.[0] || 4}.1.1`;
+
+  let aiuResult: ReturnType<typeof calculateProjectAIUs>;
+  let kpiBefore: number;
+  let kpiAfter: number;
+
+  if (aiuSettings && (aiuSettings.kpiBefore !== null || aiuSettings.kpiAfter !== null)) {
+    // Use explicit KPI-based calculation when settings are configured
+    kpiBefore = aiuSettings.kpiBefore ?? 0;
+    kpiAfter = aiuSettings.kpiAfter ?? kpiBefore;
+
+    const aiuInput: AIUCalculationInput = {
+      kpiBefore,
+      kpiAfter,
+      attributionFactor,
+      volunteers: volunteerContributions,
+    };
+    aiuResult = calculateProjectAIUs(aiuInput);
+  } else {
+    // Fallback: Use livesImpacted-based formula when no explicit KPI settings
+    // AIU = livesImpacted × attributionFactor × verificationMultiplier / hoursNormalization
+    const totalProjectHours = volunteerContributions.reduce((sum, v) => sum + v.hours, 0);
+    const verificationMultiplier = verifiedLivesImpacted > 0 ? 1.0 : 0.8;
+    const hoursNormalization = Math.max(totalProjectHours, 1) / 10;
+    const totalProjectAiu = Math.round(
+      (livesImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
+    ) / 100;
+
+    // Distribute AIU among volunteers based on hours weighted by role
+    const totalWeight = volunteerContributions.reduce((sum, v) => {
+      const roleWeight = v.role === 'lead' ? 1.5 : v.role === 'specialist' ? 1.2 : 1.0;
+      return sum + (v.hours * roleWeight);
+    }, 0);
+
+    const volunteerAius = volunteerContributions.map(v => {
+      const roleWeight = v.role === 'lead' ? 1.5 : v.role === 'specialist' ? 1.2 : 1.0;
+      const volunteerWeight = v.hours * roleWeight;
+      const weightPercentage = totalWeight > 0 ? (volunteerWeight / totalWeight) * 100 : 0;
+      const aiuUnique = totalProjectAiu * (weightPercentage / 100);
+      const aiuSessions = v.sessionsCount || Math.ceil(v.hours / 2);
+
+      return {
+        volunteerId: v.volunteerId,
+        volunteerName: v.volunteerName,
+        role: v.role,
+        hours: v.hours,
+        roleWeight,
+        reliabilityMultiplier: 1.0,
+        volunteerWeight,
+        weightPercentage: Math.round(weightPercentage * 100) / 100,
+        aiuUnique: Math.round(aiuUnique * 100) / 100,
+        aiuSessions,
+        totalAiu: Math.round((aiuUnique + aiuSessions * 0.1) * 100) / 100,
+      };
+    });
+
+    kpiBefore = 0;
+    kpiAfter = 0;
+    aiuResult = {
+      deltaKpi: 0,
+      deltaSynerxus: 0,
+      attributionFactor,
+      totalWeight: Math.round(totalWeight * 100) / 100,
+      aiuUniqueTotal: totalProjectAiu,
+      aiuSessionsTotal: volunteerAius.reduce((sum, v) => sum + v.aiuSessions, 0),
+      volunteerAius,
+      calculatedAt: new Date(),
+      formulaVersion: '1.0.0-fallback',
+    };
+  }
 
   // Fetch organization name
   let organizationName: string | null = null;

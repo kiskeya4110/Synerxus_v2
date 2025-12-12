@@ -117,6 +117,12 @@ class MetricsCollector extends EventEmitter {
     super();
     this.startTime = Date.now();
     this.startCleanup();
+    
+    // Add default error listener to prevent ERR_UNHANDLED_ERROR crashes
+    // when emitting error events for 4xx/5xx responses
+    this.on('error', () => {
+      // Silently handle - errors are logged via the alerting system
+    });
   }
 
   // ===========================================================================

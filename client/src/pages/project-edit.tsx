@@ -18,7 +18,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrganizationHeader from "@/components/layout/organization-header";
 import Footer from "@/components/layout/footer";
-import AIUSettingsForm from "@/components/projects/aiu-settings-form";
 
 const projectEditSchema = z.object({
   name: z.string().min(1, "Project name is required"),
@@ -83,16 +82,6 @@ export default function ProjectEdit() {
     }
   }, [project, tasks, projectId, form]);
 
-  // Fetch current user - must be before any early returns to maintain hook order
-  const { data: currentUser } = useQuery({
-    queryKey: ["/api/users/me"],
-    queryFn: async () => {
-      const response = await fetch("/api/users/me");
-      if (!response.ok) return null;
-      return response.json();
-    },
-  });
-
   const updateMutation = useMutation({
     mutationFn: async (data: ProjectEditForm) => {
       const response = await apiRequest("PATCH", `/api/projects/${projectId}`, {
@@ -103,7 +92,7 @@ export default function ProjectEdit() {
     },
     onSuccess: () => {
       // Use predicate to invalidate all projects-related queries (handles all userId variants)
-      queryClient.invalidateQueries({
+      queryClient.invalidateQueries({ 
         predicate: (query) => {
           const key = query.queryKey[0];
           return typeof key === 'string' && (
@@ -130,8 +119,6 @@ export default function ProjectEdit() {
   const onSubmit = (data: ProjectEditForm) => {
     updateMutation.mutate(data);
   };
-
-  const isOrganization = currentUser?.userType === 'organization';
 
   if (!projectId) {
     return (
@@ -167,6 +154,17 @@ export default function ProjectEdit() {
   }
 
   const aiTrackingEnabled = form.watch("aiTrackingEnabled");
+
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me"],
+    queryFn: async () => {
+      const response = await fetch("/api/users/me");
+      if (!response.ok) return null;
+      return response.json();
+    },
+  });
+
+  const isOrganization = currentUser?.userType === 'organization';
 
   return (
     <>
@@ -354,12 +352,6 @@ export default function ProjectEdit() {
                   )}
                 </CardContent>
               </Card>
-
-              {/* AIU Settings Section */}
-              <AIUSettingsForm
-                projectId={projectId}
-                projectSdgs={project.sdgGoals || []}
-              />
 
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4 border-t">

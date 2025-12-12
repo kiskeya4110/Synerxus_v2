@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, DuplicateAssignmentError } from "./storage";
-import { WebSocketServer, WebSocket as WsWebSocket } from "ws";
+import { WebSocketServer } from "ws";
 import { 
   insertUserSchema, 
   insertOrganizationSchema, 
@@ -246,267 +246,36 @@ function verifyOwnership(user: any, resource: any) {
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
-  // =============================================================================
-  // ENHANCED WEBSOCKET SERVER WITH USER-SCOPED UPDATES
-  // =============================================================================
-
-  // Extended WebSocket interface with user context
-  interface AuthenticatedWebSocket extends WsWebSocket {
-    userId?: number;
-    userType?: string;
-    organizationId?: number;
-    isAlive: boolean;
-    lastActivity: Date;
-  }
-
-  // User connection tracking for targeted broadcasts
-  const userConnections = new Map<number, Set<AuthenticatedWebSocket>>();
-  const organizationConnections = new Map<number, Set<AuthenticatedWebSocket>>();
-
   let wss: WebSocketServer | null = null;
-
+  
   // Only set up WebSocket server in production to avoid conflicts with Vite's HMR
   if (process.env.NODE_ENV === "production") {
-    wss = new WebSocketServer({ server: httpServer, path: "/ws" });
-
-    // Heartbeat interval to detect dead connections
-    const HEARTBEAT_INTERVAL = 30000; // 30 seconds
-    const heartbeatInterval = setInterval(() => {
-      if (wss) {
-        wss.clients.forEach((ws) => {
-          const client = ws as AuthenticatedWebSocket;
-          if (!client.isAlive) {
-            // Connection is dead, terminate it
-            console.log(`[WebSocket] Terminating dead connection for user ${client.userId}`);
-            return client.terminate();
-          }
-          client.isAlive = false;
-          client.ping();
-        });
-      }
-    }, HEARTBEAT_INTERVAL);
-
-    // Clean up heartbeat interval on server close
-    wss.on("close", () => {
-      clearInterval(heartbeatInterval);
-    });
-
-    wss.on("connection", (ws: AuthenticatedWebSocket) => {
-      console.log("[WebSocket] New client connected");
-      ws.isAlive = true;
-      ws.lastActivity = new Date();
-
-      // Handle pong responses for heartbeat
-      ws.on("pong", () => {
-        ws.isAlive = true;
-        ws.lastActivity = new Date();
+    wss = new WebSocketServer({ server: httpServer });
+    
+    wss.on("connection", (ws) => {
+      console.log("WebSocket client connected");
+      
+      ws.on("message", (message) => {
+        console.log("Received message:", message);
       });
-
-      ws.on("message", (message: Buffer | string) => {
-        try {
-          const data = JSON.parse(message.toString());
-          ws.lastActivity = new Date();
-
-          // Handle authentication message
-          if (data.type === 'auth') {
-            const { userId, userType, organizationId } = data;
-
-            // Validate and store user context
-            if (userId && typeof userId === 'number') {
-              ws.userId = userId;
-              ws.userType = userType;
-              ws.organizationId = organizationId;
-
-              // Add to user connections map
-              if (!userConnections.has(userId)) {
-                userConnections.set(userId, new Set());
-              }
-              userConnections.get(userId)!.add(ws);
-
-              // Add to organization connections if applicable
-              if (organizationId && typeof organizationId === 'number') {
-                if (!organizationConnections.has(organizationId)) {
-                  organizationConnections.set(organizationId, new Set());
-                }
-                organizationConnections.get(organizationId)!.add(ws);
-              }
-
-              console.log(`[WebSocket] User ${userId} (${userType}) authenticated`);
-
-              // Send confirmation
-              ws.send(JSON.stringify({
-                type: 'auth_success',
-                userId,
-                timestamp: new Date().toISOString(),
-              }));
-            }
-          }
-
-          // Handle subscription requests
-          if (data.type === 'subscribe') {
-            const { channel } = data;
-            console.log(`[WebSocket] User ${ws.userId} subscribed to ${channel}`);
-            // Subscription handling can be extended here
-          }
-
-          // Handle ping from client
-          if (data.type === 'ping') {
-            ws.send(JSON.stringify({ type: 'pong', timestamp: Date.now() }));
-          }
-
-        } catch (err) {
-          console.error("[WebSocket] Error parsing message:", err);
-        }
-      });
-
+      
       ws.on("close", () => {
-        console.log(`[WebSocket] Client disconnected (user ${ws.userId})`);
-
-        // Remove from user connections
-        if (ws.userId) {
-          const connections = userConnections.get(ws.userId);
-          if (connections) {
-            connections.delete(ws);
-            if (connections.size === 0) {
-              userConnections.delete(ws.userId);
-            }
-          }
-        }
-
-        // Remove from organization connections
-        if (ws.organizationId) {
-          const connections = organizationConnections.get(ws.organizationId);
-          if (connections) {
-            connections.delete(ws);
-            if (connections.size === 0) {
-              organizationConnections.delete(ws.organizationId);
-            }
-          }
-        }
-      });
-
-      ws.on("error", (error: Error) => {
-        console.error(`[WebSocket] Error for user ${ws.userId}:`, error);
+        console.log("WebSocket client disconnected");
       });
     });
-
-    console.log("[WebSocket] Server initialized with user-scoped broadcasting");
   }
 
-  // =============================================================================
-  // BROADCAST FUNCTIONS
-  // =============================================================================
-
-  // Broadcast to a specific user
-  const broadcastToUser = (userId: number, type: string, data: any): void => {
-    if (!wss || process.env.NODE_ENV !== "production") return;
-
-    const connections = userConnections.get(userId);
-    if (connections && connections.size > 0) {
-      const message = JSON.stringify({ type, data, timestamp: Date.now() });
-      connections.forEach((ws) => {
-        if (ws.readyState === WsWebSocket.OPEN) {
-          ws.send(message);
-        }
-      });
-      console.log(`[WebSocket] Sent ${type} to user ${userId} (${connections.size} connections)`);
-    }
-  };
-
-  // Broadcast to all members of an organization
-  const broadcastToOrganization = (organizationId: number, type: string, data: any): void => {
-    if (!wss || process.env.NODE_ENV !== "production") return;
-
-    const connections = organizationConnections.get(organizationId);
-    if (connections && connections.size > 0) {
-      const message = JSON.stringify({ type, data, timestamp: Date.now() });
-      connections.forEach((ws) => {
-        if (ws.readyState === WsWebSocket.OPEN) {
-          ws.send(message);
-        }
-      });
-      console.log(`[WebSocket] Sent ${type} to organization ${organizationId} (${connections.size} connections)`);
-    }
-  };
-
-  // Broadcast to all connected clients (legacy behavior)
+  // Broadcast updates to all connected clients (only in production)
   const broadcastUpdate = (type: string, data: any) => {
     if (wss && process.env.NODE_ENV === "production") {
-      const message = JSON.stringify({ type, data, timestamp: Date.now() });
+      const message = JSON.stringify({ type, data });
       wss.clients.forEach((client) => {
-        if (client.readyState === WsWebSocket.OPEN) {
+        if (client.readyState === 1) { // OPEN
           client.send(message);
         }
       });
     }
   };
-
-  // Smart broadcast - targets specific users when IDs are provided
-  // OPTIMIZED: Stringify message once, then send to all targeted connections
-  const smartBroadcast = (type: string, data: any, targets?: { userIds?: number[]; organizationIds?: number[] }): void => {
-    if (!wss || process.env.NODE_ENV !== "production") return;
-
-    // Pre-stringify message once to avoid repeated JSON.stringify calls
-    const message = JSON.stringify({ type, data, timestamp: Date.now() });
-
-    if (targets?.userIds && targets.userIds.length > 0) {
-      // Send to specific users with pre-stringified message
-      let sentCount = 0;
-      targets.userIds.forEach(userId => {
-        const connections = userConnections.get(userId);
-        if (connections && connections.size > 0) {
-          connections.forEach((ws) => {
-            if (ws.readyState === WsWebSocket.OPEN) {
-              ws.send(message);
-              sentCount++;
-            }
-          });
-        }
-      });
-      if (sentCount > 0) {
-        console.log(`[WebSocket] Sent ${type} to ${targets.userIds.length} users (${sentCount} connections)`);
-      }
-    } else if (targets?.organizationIds && targets.organizationIds.length > 0) {
-      // Send to specific organizations with pre-stringified message
-      let sentCount = 0;
-      targets.organizationIds.forEach(orgId => {
-        const connections = organizationConnections.get(orgId);
-        if (connections && connections.size > 0) {
-          connections.forEach((ws) => {
-            if (ws.readyState === WsWebSocket.OPEN) {
-              ws.send(message);
-              sentCount++;
-            }
-          });
-        }
-      });
-      if (sentCount > 0) {
-        console.log(`[WebSocket] Sent ${type} to ${targets.organizationIds.length} organizations (${sentCount} connections)`);
-      }
-    } else {
-      // Fall back to broadcast to all (message already stringified)
-      wss.clients.forEach((client) => {
-        if (client.readyState === WsWebSocket.OPEN) {
-          client.send(message);
-        }
-      });
-    }
-  };
-
-  // WebSocket stats endpoint
-  app.get("/api/websocket/stats", (req, res) => {
-    const stats = {
-      enabled: process.env.NODE_ENV === "production" && wss !== null,
-      totalConnections: wss?.clients?.size || 0,
-      authenticatedUsers: userConnections.size,
-      organizationChannels: organizationConnections.size,
-      connectionsByUser: Array.from(userConnections.entries()).map(([userId, conns]) => ({
-        userId,
-        connections: conns.size,
-      })),
-    };
-    res.json(stats);
-  });
 
   // ===== MOUNT MODULAR ROUTERS =====
   // Set up broadcast functions for routers that need real-time updates

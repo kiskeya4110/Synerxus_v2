@@ -3,8 +3,6 @@ import { storage } from "../storage";
 import { insertMessageSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import { notifyNewMessage, notifyThreadMessage } from "../notification-service";
-import { verifyFirebaseToken } from "../middleware/firebase-auth";
-import { sanitizeUser } from "../utils/sanitize-response";
 
 export const messagesRouter = Router();
 
@@ -16,8 +14,7 @@ export function setBroadcastFn(fn: BroadcastFn) {
 }
 
 // GET /api/messages - Get all messages for a user
-// Protected: Requires authentication and ownership verification
-messagesRouter.get("/", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.get("/", async (req: Request, res: Response) => {
   try {
     const userIdParam = req.query.userId as string;
 
@@ -28,15 +25,6 @@ messagesRouter.get("/", verifyFirebaseToken, async (req: Request, res: Response)
     const userId = parseInt(userIdParam);
     if (isNaN(userId)) {
       return res.status(400).json({ message: "userId must be a valid number" });
-    }
-
-    // IDOR protection: Users can only access their own messages
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.id !== userId) {
-      return res.status(403).json({
-        message: "Access denied. You can only view your own messages.",
-        code: "FORBIDDEN"
-      });
     }
 
     const sentMessages = await storage.listMessagesBySender(userId);
@@ -53,8 +41,7 @@ messagesRouter.get("/", verifyFirebaseToken, async (req: Request, res: Response)
 });
 
 // GET /api/messages/conversation/:userId - Get conversation between two users
-// Protected: Requires authentication and ownership verification
-messagesRouter.get("/conversation/:userId", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.get("/conversation/:userId", async (req: Request, res: Response) => {
   try {
     const otherUserId = parseInt(req.params.userId);
     const currentUserIdParam = req.query.currentUserId as string;
@@ -68,15 +55,6 @@ messagesRouter.get("/conversation/:userId", verifyFirebaseToken, async (req: Req
       return res.status(400).json({ message: "User IDs must be valid numbers" });
     }
 
-    // IDOR protection: Users can only view their own conversations
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.id !== currentUserId) {
-      return res.status(403).json({
-        message: "Access denied. You can only view your own conversations.",
-        code: "FORBIDDEN"
-      });
-    }
-
     const conversation = await storage.listConversation(currentUserId, otherUserId);
     res.json(conversation);
   } catch (err) {
@@ -85,20 +63,9 @@ messagesRouter.get("/conversation/:userId", verifyFirebaseToken, async (req: Req
 });
 
 // POST /api/messages - Create new message
-// Protected: Requires authentication and sender verification
-messagesRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.post("/", async (req: Request, res: Response) => {
   try {
     const messageData = insertMessageSchema.parse(req.body);
-
-    // IDOR protection: Verify authenticated user is the sender
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.id !== messageData.senderId) {
-      return res.status(403).json({
-        message: "Access denied. You can only send messages as yourself.",
-        code: "FORBIDDEN"
-      });
-    }
-
     const message = await storage.createMessage(messageData);
 
     // Create notification for the recipient
@@ -122,25 +89,9 @@ messagesRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response
 });
 
 // PATCH /api/messages/:id/read - Mark message as read
-// Protected: Requires authentication and recipient verification
-messagesRouter.patch("/:id/read", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.patch("/:id/read", async (req: Request, res: Response) => {
   try {
     const messageId = parseInt(req.params.id);
-    const message = await storage.getMessage(messageId);
-
-    if (!message) {
-      return res.status(404).json({ message: "Message not found" });
-    }
-
-    // IDOR protection: Only the recipient can mark a message as read
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.id !== message.receiverId) {
-      return res.status(403).json({
-        message: "Access denied. You can only mark your own received messages as read.",
-        code: "FORBIDDEN"
-      });
-    }
-
     const updatedMessage = await storage.markMessageAsRead(messageId);
 
     if (!updatedMessage) {
@@ -155,21 +106,11 @@ messagesRouter.patch("/:id/read", verifyFirebaseToken, async (req: Request, res:
 });
 
 // GET /api/conversation-threads/organization/:organizationId - Get threads for organization
-// Protected: Requires authentication and organization ownership verification
-messagesRouter.get("/conversation-threads/organization/:organizationId", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.get("/conversation-threads/organization/:organizationId", async (req: Request, res: Response) => {
   try {
     const organizationId = parseInt(req.params.organizationId);
     if (isNaN(organizationId)) {
       return res.status(400).json({ message: "organizationId must be a valid number" });
-    }
-
-    // IDOR protection: Only organization members can view their threads
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.organizationId !== organizationId) {
-      return res.status(403).json({
-        message: "Access denied. You can only view your organization's conversation threads.",
-        code: "FORBIDDEN"
-      });
     }
 
     const threads = await storage.listConversationThreadsByOrganization(organizationId);
@@ -195,21 +136,11 @@ messagesRouter.get("/conversation-threads/organization/:organizationId", verifyF
 });
 
 // GET /api/conversation-threads/volunteer/:volunteerId - Get threads for volunteer
-// Protected: Requires authentication and ownership verification
-messagesRouter.get("/conversation-threads/volunteer/:volunteerId", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.get("/conversation-threads/volunteer/:volunteerId", async (req: Request, res: Response) => {
   try {
     const volunteerId = parseInt(req.params.volunteerId);
     if (isNaN(volunteerId)) {
       return res.status(400).json({ message: "volunteerId must be a valid number" });
-    }
-
-    // IDOR protection: Volunteers can only view their own threads
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.id !== volunteerId) {
-      return res.status(403).json({
-        message: "Access denied. You can only view your own conversation threads.",
-        code: "FORBIDDEN"
-      });
     }
 
     const threads = await storage.listConversationThreadsByVolunteer(volunteerId);
@@ -235,13 +166,22 @@ messagesRouter.get("/conversation-threads/volunteer/:volunteerId", verifyFirebas
 });
 
 // GET /api/conversation-threads/:threadId/messages - Get messages in a thread
-// Protected: Requires authentication and thread membership verification
-messagesRouter.get("/conversation-threads/:threadId/messages", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.get("/conversation-threads/:threadId/messages", async (req: Request, res: Response) => {
   try {
     const threadId = parseInt(req.params.threadId);
+    const userIdParam = req.query.userId as string;
 
     if (isNaN(threadId)) {
       return res.status(400).json({ message: "threadId must be a valid number" });
+    }
+
+    if (!userIdParam) {
+      return res.status(400).json({ message: "userId query parameter is required for authorization" });
+    }
+
+    const requestingUserId = parseInt(userIdParam);
+    if (isNaN(requestingUserId)) {
+      return res.status(400).json({ message: "userId must be a valid number" });
     }
 
     const thread = await storage.getConversationThread(threadId);
@@ -249,20 +189,16 @@ messagesRouter.get("/conversation-threads/:threadId/messages", verifyFirebaseTok
       return res.status(404).json({ message: "Thread not found" });
     }
 
-    // Use authenticated user instead of query param (IDOR protection)
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
+    const requestingUser = await storage.getUser(requestingUserId);
+    if (!requestingUser) {
+      return res.status(401).json({ message: "User not found" });
     }
 
-    const isVolunteerInThread = thread.volunteerId === authenticatedUser.id;
-    const isOrganizationMember = authenticatedUser.organizationId === thread.organizationId;
+    const isVolunteerInThread = thread.volunteerId === requestingUserId;
+    const isOrganizationMember = requestingUser.organizationId === thread.organizationId;
 
     if (!isVolunteerInThread && !isOrganizationMember) {
-      return res.status(403).json({
-        message: "Access denied. You are not authorized to view messages in this thread.",
-        code: "FORBIDDEN"
-      });
+      return res.status(403).json({ message: "Access denied. You are not authorized to view messages in this thread." });
     }
 
     const messages = await storage.listMessagesByThread(threadId);
@@ -286,29 +222,12 @@ messagesRouter.get("/conversation-threads/:threadId/messages", verifyFirebaseTok
 });
 
 // POST /api/conversation-threads - Create new conversation thread
-// Protected: Requires authentication and participant verification
-messagesRouter.post("/conversation-threads", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.post("/conversation-threads", async (req: Request, res: Response) => {
   try {
     const { organizationId, volunteerId, topic, projectId, initialMessage } = req.body;
 
     if (!organizationId || !volunteerId || !topic) {
       return res.status(400).json({ message: "organizationId, volunteerId, and topic are required" });
-    }
-
-    // IDOR protection: User must be either the volunteer or belong to the organization
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
-    const isVolunteer = authenticatedUser.id === parseInt(volunteerId);
-    const isOrganizationMember = authenticatedUser.organizationId === parseInt(organizationId);
-
-    if (!isVolunteer && !isOrganizationMember) {
-      return res.status(403).json({
-        message: "Access denied. You can only create threads you are a participant in.",
-        code: "FORBIDDEN"
-      });
     }
 
     const existingThread = await storage.getConversationThreadBetween(
@@ -393,18 +312,17 @@ messagesRouter.post("/conversation-threads", verifyFirebaseToken, async (req: Re
 });
 
 // POST /api/conversation-threads/:threadId/messages - Send message in thread
-// Protected: Requires authentication and thread membership verification
-messagesRouter.post("/conversation-threads/:threadId/messages", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.post("/conversation-threads/:threadId/messages", async (req: Request, res: Response) => {
   try {
     const threadId = parseInt(req.params.threadId);
-    const { content, messageType = 'text' } = req.body;
+    const { senderId, content, messageType = 'text' } = req.body;
 
     if (isNaN(threadId)) {
       return res.status(400).json({ message: "threadId must be a valid number" });
     }
 
-    if (!content) {
-      return res.status(400).json({ message: "content is required" });
+    if (!senderId || !content) {
+      return res.status(400).json({ message: "senderId and content are required" });
     }
 
     const thread = await storage.getConversationThread(threadId);
@@ -412,26 +330,19 @@ messagesRouter.post("/conversation-threads/:threadId/messages", verifyFirebaseTo
       return res.status(404).json({ message: "Thread not found" });
     }
 
-    // Use authenticated user instead of senderId from body (IDOR protection)
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
+    const senderUser = await storage.getUser(parseInt(senderId));
+    if (!senderUser) {
+      return res.status(401).json({ message: "Sender not found" });
     }
 
-    const isVolunteerInThread = thread.volunteerId === authenticatedUser.id;
-    const isOrganizationMember = authenticatedUser.organizationId === thread.organizationId;
+    const isVolunteerInThread = thread.volunteerId === parseInt(senderId);
+    const isOrganizationMember = senderUser.organizationId === thread.organizationId;
 
     if (!isVolunteerInThread && !isOrganizationMember) {
-      return res.status(403).json({
-        message: "Access denied. You are not authorized to send messages in this thread.",
-        code: "FORBIDDEN"
-      });
+      return res.status(403).json({ message: "Access denied. You are not authorized to send messages in this thread." });
     }
 
-    // Use authenticated user's ID as senderId
-    const senderId = authenticatedUser.id;
-
-    const receiverId = senderId === thread.volunteerId
+    const receiverId = parseInt(senderId) === thread.volunteerId
       ? (await storage.getUserByOrganizationId(thread.organizationId))?.id
       : thread.volunteerId;
 
@@ -440,7 +351,7 @@ messagesRouter.post("/conversation-threads/:threadId/messages", verifyFirebaseTo
     }
 
     const message = await storage.createMessage({
-      senderId,
+      senderId: parseInt(senderId),
       receiverId,
       content,
       messageType,
@@ -455,7 +366,7 @@ messagesRouter.post("/conversation-threads/:threadId/messages", verifyFirebaseTo
     try {
       await notifyThreadMessage(
         receiverId,
-        senderId,
+        parseInt(senderId),
         threadId,
         thread.topic
       );
@@ -463,7 +374,7 @@ messagesRouter.post("/conversation-threads/:threadId/messages", verifyFirebaseTo
       console.error("Failed to create thread message notification:", notifyErr);
     }
 
-    const sender = await storage.getUser(senderId);
+    const sender = await storage.getUser(parseInt(senderId));
     const enrichedMessage = {
       ...message,
       senderName: sender?.displayName || sender?.username || 'Unknown',
@@ -478,35 +389,13 @@ messagesRouter.post("/conversation-threads/:threadId/messages", verifyFirebaseTo
 });
 
 // PATCH /api/conversation-threads/:threadId - Update thread status
-// Protected: Requires authentication and thread membership verification
-messagesRouter.patch("/conversation-threads/:threadId", verifyFirebaseToken, async (req: Request, res: Response) => {
+messagesRouter.patch("/conversation-threads/:threadId", async (req: Request, res: Response) => {
   try {
     const threadId = parseInt(req.params.threadId);
     const { status } = req.body;
 
     if (isNaN(threadId)) {
       return res.status(400).json({ message: "threadId must be a valid number" });
-    }
-
-    const thread = await storage.getConversationThread(threadId);
-    if (!thread) {
-      return res.status(404).json({ message: "Thread not found" });
-    }
-
-    // IDOR protection: Only thread participants can update it
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
-    const isVolunteerInThread = thread.volunteerId === authenticatedUser.id;
-    const isOrganizationMember = authenticatedUser.organizationId === thread.organizationId;
-
-    if (!isVolunteerInThread && !isOrganizationMember) {
-      return res.status(403).json({
-        message: "Access denied. You are not authorized to update this thread.",
-        code: "FORBIDDEN"
-      });
     }
 
     const updatedThread = await storage.updateConversationThread(threadId, { status });

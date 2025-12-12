@@ -156,7 +156,6 @@ export default function OrganizationDashboard() {
   const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | 'aiu' | null>(null);
   const [hoveredSDG, setHoveredSDG] = useState<number | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [selectedSdgDetail, setSelectedSdgDetail] = useState<number | null>(null);
 
   // Check if user is an organization user (used for query enabled flags)
   const isOrganizationUser = userType === 'organization';
@@ -253,87 +252,6 @@ export default function OrganizationDashboard() {
     [dashboardData?.sdgDistribution]
   );
 
-  // Enhanced computed metrics for organization dashboard
-  const enhancedMetrics = useMemo(() => {
-    const projects = dashboardData?.projects || [];
-    const volunteers = dashboardData?.volunteerSummaries || [];
-    const impactData = dashboardData?.impactOverTime || [];
-
-    // People impacted (calculated from impactOverTime data)
-    const totalPeopleImpacted = impactData.reduce((sum: number, item: any) => sum + (item.peopleImpacted || 0), 0);
-
-    // Project health metrics
-    const activeProjects = projects.filter((p: any) =>
-      p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
-    );
-    const atRiskProjects = projects.filter((p: any) => {
-      const completion = p.completionPercentage || 0;
-      const isActive = p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress';
-      // Consider at-risk if active but low completion or has overdue tasks
-      return isActive && completion < 30 && completion > 0;
-    });
-    const completedProjects = projects.filter((p: any) =>
-      p.status?.toLowerCase() === 'completed'
-    );
-
-    // Volunteer engagement metrics
-    const topVolunteers = [...volunteers]
-      .sort((a: any, b: any) => (b.hours || 0) - (a.hours || 0))
-      .slice(0, 5);
-    const newVolunteersThisMonth = volunteers.filter((v: any) => {
-      if (!v.joinedDate) return false;
-      const joined = new Date(v.joinedDate);
-      const monthAgo = new Date();
-      monthAgo.setMonth(monthAgo.getMonth() - 1);
-      return joined > monthAgo;
-    }).length;
-
-    // Trend calculations (compare current month to previous)
-    const currentMonthData = impactData.length > 0 ? impactData[impactData.length - 1] : null;
-    const prevMonthData = impactData.length > 1 ? impactData[impactData.length - 2] : null;
-
-    const hoursTrend = currentMonthData && prevMonthData && prevMonthData.hours > 0
-      ? Math.round(((currentMonthData.hours - prevMonthData.hours) / prevMonthData.hours) * 100)
-      : 0;
-    const volunteersTrend = currentMonthData && prevMonthData && prevMonthData.volunteers > 0
-      ? Math.round(((currentMonthData.volunteers - prevMonthData.volunteers) / prevMonthData.volunteers) * 100)
-      : 0;
-
-    // Task metrics
-    const pendingTasks = dashboardData?.alerts?.filter((a: any) => a.type === 'task') || [];
-    const overdueTasks = pendingTasks.filter((t: any) => t.severity === 'high');
-
-    return {
-      totalPeopleImpacted,
-      activeProjects: activeProjects.length,
-      atRiskProjects,
-      completedProjects: completedProjects.length,
-      topVolunteers,
-      newVolunteersThisMonth,
-      hoursTrend,
-      volunteersTrend,
-      pendingTasksCount: pendingTasks.length,
-      overdueTasksCount: overdueTasks.length,
-      avgVolunteerHours: volunteers.length > 0
-        ? Math.round((metrics.totalHours || 0) / volunteers.length)
-        : 0,
-    };
-  }, [dashboardData, metrics.totalHours]);
-
-  // Organization's SDGs (from sdgDistribution - only SDGs the org is working on)
-  const organizationSdgs = useMemo(() => {
-    const sdgDist = dashboardData?.sdgDistribution || [];
-    return sdgDist.map((item: any) => ({
-      goal: item.goal,
-      name: getSDGName(item.goal),
-      hours: item.hours,
-      projects: item.projects,
-      volunteers: item.volunteers,
-      color: SDG_GOALS[item.goal]?.color || '#166534',
-      percentage: sdgTotalHours > 0 ? Math.round((item.hours / sdgTotalHours) * 100) : 0,
-    })).sort((a: any, b: any) => b.hours - a.hours);
-  }, [dashboardData?.sdgDistribution, sdgTotalHours]);
-
   // Memoized callbacks - MUST be before any early returns
   const handleQuickActionMemo = useCallback((actionId: string) => {
     if (actionId === 'create-project') {
@@ -385,11 +303,11 @@ export default function OrganizationDashboard() {
       {/* Reusable Organization Header Component */}
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
-      {/* Dashboard Title Banner - Desktop Only */}
+      {/* Welcome Banner - Desktop Only */}
       <div className="hidden md:block" style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 0' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: 0 }}>
-            Organization Dashboard
+            Welcome Back, {organization?.name || organizationProfile?.organizationName || 'Organization'}
           </h1>
           <button
             onClick={() => navigate('/overview')}
@@ -415,14 +333,15 @@ export default function OrganizationDashboard() {
       </div>
 
       {/* Mobile Dashboard Header with Three-Dot Menu */}
-      <div className="md:hidden" style={{ padding: '16px 24px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
-          Organization Dashboard
-        </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500' }}>
-            {organization?.name || organizationProfile?.organizationName || 'Organization'}
-          </span>
+      <div className="md:hidden" style={{ padding: '16px', backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: 0, marginBottom: '4px' }}>
+            Organization Dashboard
+          </h1>
+          <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>
+            Welcome to {organization?.name || organizationProfile?.organizationName || 'Synerxus'}
+          </p>
+        </div>
         {/* Three-Dot Menu Button */}
         <div style={{ position: 'relative' }}>
           <button
@@ -593,7 +512,6 @@ export default function OrganizationDashboard() {
               </div>
             </>
           )}
-        </div>
         </div>
       </div>
 
@@ -877,8 +795,8 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Desktop Key Metrics Section - 5 columns with trends */}
-        <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        {/* Desktop Key Metrics Section */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <MetricCard
             icon={<FolderOpen size={24} />}
             label="Active Projects"
@@ -889,20 +807,11 @@ export default function OrganizationDashboard() {
           />
           <MetricCard
             icon={<Clock size={24} />}
-            label="Total Hours"
+            label="Total Volunteer Hours"
             value={metrics.totalHours}
             color="#1e40af"
             testId="metric-total-hours"
             onClick={() => setActiveModal('hours')}
-            trend={enhancedMetrics.hoursTrend}
-          />
-          <MetricCard
-            icon={<Users size={24} />}
-            label="People Impacted"
-            value={enhancedMetrics.totalPeopleImpacted}
-            color="#f59e0b"
-            testId="metric-lives"
-            onClick={() => setActiveModal('lives')}
           />
           <MetricCard
             icon={<Target size={24} />}
@@ -913,323 +822,17 @@ export default function OrganizationDashboard() {
             onClick={() => setActiveModal('sdgs')}
           />
           <MetricCard
-            icon={<TrendingUp size={24} />}
+            icon={<Users size={24} />}
             label="AIUs Earned"
             value={typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(2) : metrics.aiuEarned}
             color="#10b981"
             testId="metric-aiu"
-            onClick={() => setActiveModal('aiu')}
-            tooltip="Attributable Impact Units (AIUs) measure verified impact."
+            onClick={() => {
+              setActiveModal('aiu');
+            }}
+            tooltip="Attributable Impact Units (AIUs) measure verified impact. Calculated as: AIU = KPI Change × Attribution Factor × (Volunteer Weight / Total Weights). Volunteer weight = Role Weight × Hours × Verification Multiplier."
           />
         </div>
-
-        {/* Organization SDGs - Interactive Section (Only SDGs the org is working on) */}
-        {organizationSdgs.length > 0 && (
-          <div className="hidden md:block" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0 }}>
-                Your SDG Focus Areas
-              </h3>
-              <span style={{ fontSize: '13px', color: '#6b7280', backgroundColor: '#f3f4f6', padding: '4px 12px', borderRadius: '16px' }}>
-                {organizationSdgs.length} Active SDG{organizationSdgs.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              {organizationSdgs.map((sdg: any) => (
-                <button
-                  key={sdg.goal}
-                  onClick={() => setSelectedSdgDetail(sdg.goal)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px 16px',
-                    backgroundColor: 'white',
-                    border: `2px solid ${sdg.color}`,
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    minWidth: '180px',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = sdg.color;
-                    (e.currentTarget as HTMLElement).style.color = 'white';
-                    (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-                    (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = 'white';
-                    (e.currentTarget as HTMLElement).style.color = 'inherit';
-                    (e.currentTarget as HTMLElement).style.transform = 'none';
-                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '8px',
-                      backgroundColor: sdg.color,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      fontWeight: '700',
-                      fontSize: '14px',
-                    }}
-                  >
-                    {sdg.goal}
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>{sdg.name}</div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                      {sdg.hours} hrs • {sdg.projects} project{sdg.projects !== 1 ? 's' : ''}
-                    </div>
-                  </div>
-                  <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: sdg.color }}>{sdg.percentage}%</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Team Performance & Project Health Row */}
-        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-          {/* Team Performance Widget */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Team Performance</h3>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <span style={{ fontSize: '11px', padding: '4px 8px', backgroundColor: '#dbeafe', color: '#1e40af', borderRadius: '12px' }}>
-                  {metrics.activeVolunteers || 0} Active
-                </span>
-                {enhancedMetrics.newVolunteersThisMonth > 0 && (
-                  <span style={{ fontSize: '11px', padding: '4px 8px', backgroundColor: '#dcfce7', color: '#166534', borderRadius: '12px' }}>
-                    +{enhancedMetrics.newVolunteersThisMonth} New
-                  </span>
-                )}
-              </div>
-            </div>
-            {/* Top Volunteers */}
-            <div style={{ marginBottom: '16px' }}>
-              <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '8px', fontWeight: '500' }}>Top Contributors</p>
-              {enhancedMetrics.topVolunteers.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {enhancedMetrics.topVolunteers.slice(0, 3).map((volunteer: any, idx: number) => (
-                    <button
-                      key={volunteer.id || idx}
-                      onClick={() => navigate('/volunteers')}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px 12px',
-                        backgroundColor: idx === 0 ? '#fef3c7' : '#f9fafb',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        width: '100%',
-                      }}
-                    >
-                      <div style={{
-                        width: '32px',
-                        height: '32px',
-                        borderRadius: '50%',
-                        backgroundColor: idx === 0 ? '#f59e0b' : idx === 1 ? '#9ca3af' : '#cd7f32',
-                        color: 'white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                      }}>
-                        {idx + 1}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>{volunteer.name}</div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{volunteer.projects || 0} projects</div>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#166534' }}>{volunteer.hours || 0}h</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p style={{ fontSize: '13px', color: '#9ca3af', textAlign: 'center', padding: '16px' }}>No volunteers yet</p>
-              )}
-            </div>
-            {/* Summary Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-              <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
-                <div style={{ fontSize: '20px', fontWeight: '700', color: '#166534' }}>{enhancedMetrics.avgVolunteerHours}</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>Avg Hours/Volunteer</div>
-              </div>
-              <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
-                <div style={{ fontSize: '20px', fontWeight: '700', color: '#1e40af' }}>
-                  {enhancedMetrics.volunteersTrend > 0 ? '+' : ''}{enhancedMetrics.volunteersTrend}%
-                </div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>vs Last Month</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Project Health Widget */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Project Health</h3>
-              <span style={{ fontSize: '11px', padding: '4px 8px', backgroundColor: '#f3f4f6', color: '#6b7280', borderRadius: '12px' }}>
-                {metrics.totalProjects || 0} Total
-              </span>
-            </div>
-            {/* Health Summary */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ textAlign: 'center', padding: '12px', backgroundColor: '#dcfce7', borderRadius: '8px' }}>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#166534' }}>{enhancedMetrics.activeProjects}</div>
-                <div style={{ fontSize: '11px', color: '#166534' }}>Active</div>
-              </div>
-              <div style={{ textAlign: 'center', padding: '12px', backgroundColor: enhancedMetrics.atRiskProjects.length > 0 ? '#fef3c7' : '#f3f4f6', borderRadius: '8px' }}>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: enhancedMetrics.atRiskProjects.length > 0 ? '#f59e0b' : '#9ca3af' }}>
-                  {enhancedMetrics.atRiskProjects.length}
-                </div>
-                <div style={{ fontSize: '11px', color: enhancedMetrics.atRiskProjects.length > 0 ? '#92400e' : '#6b7280' }}>At Risk</div>
-              </div>
-              <div style={{ textAlign: 'center', padding: '12px', backgroundColor: '#dbeafe', borderRadius: '8px' }}>
-                <div style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af' }}>{enhancedMetrics.completedProjects}</div>
-                <div style={{ fontSize: '11px', color: '#1e40af' }}>Completed</div>
-              </div>
-            </div>
-            {/* At-Risk Projects List */}
-            {enhancedMetrics.atRiskProjects.length > 0 && (
-              <div>
-                <p style={{ fontSize: '12px', color: '#f59e0b', marginBottom: '8px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <AlertTriangle size={14} /> Needs Attention
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {enhancedMetrics.atRiskProjects.slice(0, 2).map((project: any) => (
-                    <button
-                      key={project.id}
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 12px',
-                        backgroundColor: '#fffbeb',
-                        border: '1px solid #fde68a',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        width: '100%',
-                      }}
-                    >
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: '500', color: '#1f2937' }}>{project.name}</div>
-                        <div style={{ fontSize: '11px', color: '#92400e' }}>{project.completionPercentage}% complete</div>
-                      </div>
-                      <span style={{ fontSize: '11px', padding: '4px 8px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px' }}>
-                        Low Progress
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {/* Avg Completion */}
-            <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', color: '#6b7280' }}>Average Completion</span>
-                <span style={{ fontSize: '18px', fontWeight: '700', color: '#166534' }}>{avgProjectCompletion}%</span>
-              </div>
-              <div style={{ marginTop: '8px', height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${avgProjectCompletion}%`, backgroundColor: '#166534', borderRadius: '4px', transition: 'width 0.3s' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Volunteer Applications Pipeline - If there are pending applications */}
-        {pendingApplications && pendingApplications.length > 0 && (
-          <div className="hidden md:block" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '2px solid #dbeafe' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <UserPlus size={20} style={{ color: '#1e40af' }} />
-                Volunteer Applications
-                <span style={{
-                  backgroundColor: '#ef4444',
-                  color: 'white',
-                  fontSize: '12px',
-                  fontWeight: '600',
-                  padding: '2px 8px',
-                  borderRadius: '10px',
-                  marginLeft: '4px',
-                }}>
-                  {pendingApplications.length} Pending
-                </span>
-              </h3>
-              <button
-                onClick={() => navigate('/volunteers?tab=applications')}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#1e40af',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                }}
-              >
-                Review All
-              </button>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-              {pendingApplications.slice(0, 4).map((app: any) => (
-                <button
-                  key={app.id}
-                  onClick={() => navigate('/volunteers?tab=applications')}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '12px',
-                    backgroundColor: '#eff6ff',
-                    border: '1px solid #bfdbfe',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                  }}
-                >
-                  <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    backgroundColor: '#1e40af',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                  }}>
-                    {app.volunteerName?.[0]?.toUpperCase() || 'V'}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>{app.volunteerName || 'New Applicant'}</div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>{app.projectName || 'General Application'}</div>
-                  </div>
-                  <span style={{ fontSize: '11px', padding: '4px 8px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px' }}>
-                    Pending
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Middle Section (2/5): SDG + Map | Alerts - Desktop Only */}
         <div className="hidden md:grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
@@ -1914,216 +1517,6 @@ export default function OrganizationDashboard() {
         />
       )}
 
-      {activeModal === 'lives' && (
-        <MetricsModal
-          title="People Impacted"
-          onClose={() => setActiveModal(null)}
-          type="lives"
-          data={dashboardData?.projects || []}
-          color="#f59e0b"
-        />
-      )}
-
-      {/* SDG Detail Modal */}
-      {selectedSdgDetail && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '16px',
-          }}
-          onClick={() => setSelectedSdgDetail(null)}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '16px',
-              width: '100%',
-              maxWidth: '500px',
-              maxHeight: '80vh',
-              overflow: 'hidden',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header with SDG Color */}
-            <div style={{
-              padding: '20px 24px',
-              backgroundColor: SDG_GOALS[selectedSdgDetail]?.color || '#166534',
-              color: 'white',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{
-                  width: '48px',
-                  height: '48px',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
-                  fontWeight: '700',
-                }}>
-                  {selectedSdgDetail}
-                </div>
-                <div>
-                  <h2 style={{ fontSize: '18px', fontWeight: '600', margin: 0 }}>SDG {selectedSdgDetail}</h2>
-                  <p style={{ fontSize: '14px', opacity: 0.9, margin: 0 }}>{getSDGName(selectedSdgDetail)}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedSdgDetail(null)}
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                  padding: '8px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-            {/* Content */}
-            <div style={{ padding: '24px', overflow: 'auto', maxHeight: 'calc(80vh - 100px)' }}>
-              {(() => {
-                const sdgData = organizationSdgs.find((s: any) => s.goal === selectedSdgDetail);
-                const sdgProjects = dashboardData?.projects?.filter((p: any) =>
-                  p.sdgGoals?.includes(selectedSdgDetail)
-                ) || [];
-                const sdgVolunteers = dashboardData?.volunteerSummaries?.slice(0, 3) || [];
-
-                return (
-                  <>
-                    {/* Stats Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
-                      <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '12px' }}>
-                        <div style={{ fontSize: '28px', fontWeight: '700', color: '#166534' }}>{sdgData?.hours || 0}</div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>Hours</div>
-                      </div>
-                      <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#eff6ff', borderRadius: '12px' }}>
-                        <div style={{ fontSize: '28px', fontWeight: '700', color: '#1e40af' }}>{sdgData?.projects || 0}</div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>Projects</div>
-                      </div>
-                      <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#fef3c7', borderRadius: '12px' }}>
-                        <div style={{ fontSize: '28px', fontWeight: '700', color: '#f59e0b' }}>{sdgData?.volunteers || 0}</div>
-                        <div style={{ fontSize: '12px', color: '#6b7280' }}>Volunteers</div>
-                      </div>
-                    </div>
-
-                    {/* Contribution Share */}
-                    <div style={{ marginBottom: '24px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '14px', color: '#6b7280' }}>Share of Total Impact</span>
-                        <span style={{ fontSize: '16px', fontWeight: '700', color: SDG_GOALS[selectedSdgDetail]?.color }}>{sdgData?.percentage || 0}%</span>
-                      </div>
-                      <div style={{ height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div style={{
-                          height: '100%',
-                          width: `${sdgData?.percentage || 0}%`,
-                          backgroundColor: SDG_GOALS[selectedSdgDetail]?.color || '#166534',
-                          borderRadius: '4px',
-                          transition: 'width 0.3s',
-                        }} />
-                      </div>
-                    </div>
-
-                    {/* Projects List */}
-                    {sdgProjects.length > 0 && (
-                      <div style={{ marginBottom: '24px' }}>
-                        <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', marginBottom: '12px' }}>Related Projects</h4>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {sdgProjects.slice(0, 3).map((project: any) => (
-                            <button
-                              key={project.id}
-                              onClick={() => { setSelectedSdgDetail(null); navigate(`/projects/${project.id}`); }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '12px',
-                                backgroundColor: '#f9fafb',
-                                border: '1px solid #e5e7eb',
-                                borderRadius: '8px',
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                                width: '100%',
-                              }}
-                            >
-                              <div>
-                                <div style={{ fontSize: '14px', fontWeight: '500', color: '#1f2937' }}>{project.name}</div>
-                                <div style={{ fontSize: '12px', color: '#6b7280' }}>{project.completionPercentage || 0}% complete</div>
-                              </div>
-                              <span style={{
-                                fontSize: '11px',
-                                padding: '4px 8px',
-                                backgroundColor: project.status?.toLowerCase() === 'completed' ? '#dcfce7' : '#fef3c7',
-                                color: project.status?.toLowerCase() === 'completed' ? '#166534' : '#92400e',
-                                borderRadius: '12px',
-                              }}>
-                                {project.status}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button
-                        onClick={() => { setSelectedSdgDetail(null); navigate('/projects'); }}
-                        style={{
-                          flex: 1,
-                          padding: '12px',
-                          backgroundColor: SDG_GOALS[selectedSdgDetail]?.color || '#166534',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        View All Projects
-                      </button>
-                      <button
-                        onClick={() => { setSelectedSdgDetail(null); navigate('/impact-visualization'); }}
-                        style={{
-                          flex: 1,
-                          padding: '12px',
-                          backgroundColor: '#f3f4f6',
-                          color: '#374151',
-                          border: 'none',
-                          borderRadius: '8px',
-                          fontSize: '14px',
-                          fontWeight: '500',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        View Impact Report
-                      </button>
-                    </div>
-                  </>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Responsive Styles */}
       <style>{`
         @media (max-width: 1024px) {
@@ -2191,7 +1584,7 @@ export default function OrganizationDashboard() {
   );
 }
 
-function MetricCard({ icon, label, value, color, testId, onClick, tooltip, trend }: { icon: React.ReactNode; label: string; value: number | string; color: string; testId: string; onClick?: () => void; tooltip?: string; trend?: number }) {
+function MetricCard({ icon, label, value, color, testId, onClick, tooltip }: { icon: React.ReactNode; label: string; value: number | string; color: string; testId: string; onClick?: () => void; tooltip?: string }) {
   const [isHovered, setIsHovered] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const displayValue = typeof value === 'number' ? value.toLocaleString() : value;
@@ -2233,19 +1626,6 @@ function MetricCard({ icon, label, value, color, testId, onClick, tooltip, trend
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
           <p style={{ fontSize: '24px', fontWeight: 'bold', color, margin: 0 }}>{displayValue}</p>
           <p style={{ fontSize: '12px', color: '#6b7280', margin: 0, lineHeight: '1.2' }}>{label}</p>
-          {trend !== undefined && trend !== 0 && (
-            <p style={{
-              fontSize: '10px',
-              fontWeight: '600',
-              color: trend > 0 ? '#16a34a' : '#dc2626',
-              margin: 0,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px',
-            }}>
-              {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}% vs last month
-            </p>
-          )}
         </div>
       </button>
       {tooltip && showTooltip && (

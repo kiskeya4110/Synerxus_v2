@@ -24,7 +24,6 @@ const MENU_ITEMS = [
 export default function VolunteerNav() {
   const [location, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [imageError, setImageError] = useState(false);
   const { signOut } = useAuth();
   const userId = localStorage.getItem('currentUserId');
 
@@ -46,17 +45,19 @@ export default function VolunteerNav() {
     navigate('/');
   };
 
-  // Navigate to landing page when logo is clicked
-  const handleLogoClick = () => {
-    navigate('/');
-  };
-
   // Only show for volunteers on desktop (hide on mobile for PWA)
   if (currentUser?.userType !== 'volunteer') {
     return null;
   }
 
   const userInitial = (currentUser?.displayName || currentUser?.username || 'V').charAt(0).toUpperCase();
+
+  const [imageError, setImageError] = useState(false);
+
+  // Navigate to landing page when logo is clicked
+  const handleLogoClick = () => {
+    navigate('/');
+  };
 
   return (
     <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">

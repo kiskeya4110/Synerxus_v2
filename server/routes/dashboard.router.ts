@@ -1,61 +1,12 @@
 import { Router, type Request, type Response } from "express";
-import crypto from "crypto";
 import { storage } from "../storage";
 import {
   getDashboardDataForOrganization,
   getDashboardDataForVolunteer,
   getSDGContributionsForOrganization
 } from "../dashboard-service";
-import { calculateProjectAIU } from "../aiu-service";
 
 export const dashboardRouter = Router();
-
-// =============================================================================
-// ETAG SUPPORT FOR CONDITIONAL REQUESTS
-// =============================================================================
-
-/**
- * Generate ETag from response data
- * Uses MD5 hash for fast comparison
- */
-function generateETag(data: any): string {
-  const hash = crypto.createHash('md5')
-    .update(JSON.stringify(data))
-    .digest('hex');
-  return `"${hash}"`;
-}
-
-/**
- * Check if client has fresh data (304 Not Modified)
- * Returns true if we should return 304 status
- */
-function checkConditionalRequest(req: Request, etag: string): boolean {
-  const clientETag = req.headers['if-none-match'];
-  return clientETag === etag;
-}
-
-/**
- * Send JSON response with ETag support
- * Automatically handles conditional requests
- */
-function sendWithETag(req: Request, res: Response, data: any, maxAge: number = 30): void {
-  const etag = generateETag(data);
-
-  // Set caching headers
-  res.set({
-    'ETag': etag,
-    'Cache-Control': `private, max-age=${maxAge}`,
-    'Vary': 'Accept-Encoding',
-  });
-
-  // Check if client has fresh data
-  if (checkConditionalRequest(req, etag)) {
-    res.status(304).end();
-    return;
-  }
-
-  res.json(data);
-}
 
 // ===== HELPER FUNCTIONS =====
 
@@ -208,36 +159,19 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
       .reduce((sum, i) => sum + (i.value || 0), 0);
 
-    // Calculate total AIU earned using the proper calculateProjectAIU service
-    // This respects projectAiuSettings from the database for consistent calculations
-    let totalAiuEarned = 0;
-    const projectAiuMap: Map<number, number> = new Map();
-
-    for (const project of organizationProjects) {
-      try {
-        const aiuSummary = await calculateProjectAIU(project.id);
-        if (aiuSummary) {
-          projectAiuMap.set(project.id, aiuSummary.totalAiu);
-          totalAiuEarned += aiuSummary.totalAiu;
-        }
-      } catch (error) {
-        console.error(`Error calculating AIU for project ${project.id}:`, error);
-        // Fallback to basic calculation if AIU service fails
-        const projectHours = organizationActivities
-          .filter(a => a.projectId === project.id)
-          .reduce((sum, a) => sum + a.hours, 0);
-        const projectImpacts = organizationImpacts.filter(i => i.projectId === project.id);
-        const livesImpacted = projectImpacts
-          .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
-          .reduce((sum, i) => sum + (i.value || 0), 0);
-        const attributionFactor = 0.2;
-        const hoursNormalization = Math.max(projectHours, 1) / 10;
-        const fallbackAiu = Math.round((livesImpacted * attributionFactor) / Math.max(hoursNormalization, 1) * 100) / 100;
-        projectAiuMap.set(project.id, fallbackAiu);
-        totalAiuEarned += fallbackAiu;
-      }
-    }
-    totalAiuEarned = Math.round(totalAiuEarned * 100) / 100;
+    // Calculate total AIU earned using proper formula from aiu-calculations.ts
+    // AIU = livesImpacted × attributionFactor × verificationMultiplier / hoursNormalization
+    const attributionFactor = 0.2; // Standard 20% attribution
+    const verifiedImpacts = organizationImpacts.filter(i =>
+      i.metricId && peopleMetricIds.has(i.metricId) &&
+      (i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
+    );
+    const verifiedPeopleImpacted = verifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+    const verificationMultiplier = verifiedPeopleImpacted > 0 ? 1.0 : 0.8;
+    const hoursNormalization = Math.max(totalHours, 1) / 10;
+    const totalAiuEarned = Math.round(
+      (totalPeopleImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
+    ) / 100;
 
     // SDG Distribution
     const sdgDistribution: Record<number, { hours: number; projects: number; volunteers: number }> = {};
@@ -386,8 +320,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       { id: 'view-reports', label: 'View Reports', icon: 'bar-chart' },
     ];
 
-    // Build response data
-    const responseData = {
+    res.json({
       keyMetrics: {
         activeProjects,
         totalProjects: organizationProjects.length,
@@ -417,8 +350,17 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
           .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
           .reduce((sum, i) => sum + (i.value || 0), 0);
 
-        // Use AIU from proper calculation (already computed above)
-        const projectAiuEarned = projectAiuMap.get(p.id) || 0;
+        // Calculate AIU for this project using proper formula
+        const projectVerifiedImpacts = projectImpacts.filter(i =>
+          i.metricId && peopleMetricIds.has(i.metricId) &&
+          (i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
+        );
+        const projectVerifiedPeople = projectVerifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
+        const projectVerificationMultiplier = projectVerifiedPeople > 0 ? 1.0 : 0.8;
+        const projectHoursNorm = Math.max(projectHours, 1) / 10;
+        const projectAiuEarned = Math.round(
+          (projectLivesTouched * attributionFactor * projectVerificationMultiplier) / Math.max(projectHoursNorm, 1) * 100
+        ) / 100;
 
         return {
           id: p.id,
@@ -429,7 +371,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
           location: p.location,
           totalHours: projectHours,
           livesTouched: projectLivesTouched,
-          aiuEarned: projectAiuEarned,
+          aiuEarned: projectAiuEarned, // Add proper AIU calculation
         };
       }),
       volunteerSummaries: volunteerSummaries.slice(0, 10),
@@ -440,10 +382,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
         timePeriod: timePeriod || 'all',
         availableProjects: allProjects.filter(p => p.organizationId === organizationId).map(p => ({ id: p.id, name: p.name })),
       },
-    };
-
-    // OPTIMIZATION: Use ETag for conditional requests
-    sendWithETag(req, res, responseData, 30);
+    });
   } catch (err) {
     console.error("Error fetching organization dashboard:", err);
     res.status(500).json({ message: "Failed to fetch organization dashboard" });
@@ -452,7 +391,6 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
 
 // GET /api/dashboard/summary - General dashboard summary
 // Delegates to service layer based on user type (organization or volunteer)
-// OPTIMIZATION: Uses ETag for conditional requests (reduces bandwidth on repeat fetches)
 dashboardRouter.get("/summary", async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string | undefined;
@@ -476,7 +414,7 @@ dashboardRouter.get("/summary", async (req: Request, res: Response) => {
     if (user.userType === 'organization') {
       const dashboardData = await getDashboardDataForOrganization(userIdNum);
       // Return full dashboard data with enriched projects and volunteers
-      const responseData = {
+      res.json({
         ...dashboardData.summary,
         projectsWithVolunteers: dashboardData.projectsWithVolunteers,
         volunteerSummaries: dashboardData.volunteerSummaries,
@@ -489,13 +427,11 @@ dashboardRouter.get("/summary", async (req: Request, res: Response) => {
         projectHours: dashboardData.projectHours,
         totalPeopleImpacted: dashboardData.totalPeopleImpacted,
         projects: dashboardData.projects,
-      };
-      // Use ETag support for conditional requests
-      sendWithETag(req, res, responseData, 30);
+      });
     } else if (user.userType === 'volunteer') {
       const dashboardData = await getDashboardDataForVolunteer(userIdNum);
       // Return full dashboard data with all arrays needed for charts
-      const responseData = {
+      res.json({
         ...dashboardData.summary,
         volunteerProfile: dashboardData.volunteerProfile,
         applicationStats: dashboardData.applicationStats,
@@ -510,9 +446,7 @@ dashboardRouter.get("/summary", async (req: Request, res: Response) => {
         applications: dashboardData.applications,
         matchedOpportunities: dashboardData.matchedOpportunities,
         projectAssignments: dashboardData.projectAssignments,
-      };
-      // Use ETag support for conditional requests
-      sendWithETag(req, res, responseData, 30);
+      });
     } else {
       return res.status(400).json({ message: "Invalid user type" });
     }
@@ -524,7 +458,6 @@ dashboardRouter.get("/summary", async (req: Request, res: Response) => {
 
 // GET /api/dashboard/sdg-contributions - SDG contributions overview
 // Organization-only endpoint for SDG impact tracking
-// OPTIMIZATION: Added ETag support and caching for expensive SDG calculations
 dashboardRouter.get("/sdg-contributions", async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string | undefined;
@@ -550,9 +483,7 @@ dashboardRouter.get("/sdg-contributions", async (req: Request, res: Response) =>
     }
 
     const sdgData = await getSDGContributionsForOrganization(userIdNum);
-
-    // Use ETag for conditional requests (reduces bandwidth on repeat fetches)
-    sendWithETag(req, res, sdgData, 60); // 60 second max-age for SDG data
+    res.json(sdgData);
   } catch (err) {
     console.error("Error fetching SDG contributions:", err);
     res.status(500).json({ message: "Failed to fetch SDG contributions" });

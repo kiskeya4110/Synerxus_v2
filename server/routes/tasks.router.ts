@@ -1,10 +1,8 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { invalidateCache } from "../cache";
 import { insertTaskSchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { notifyTaskAssigned } from "../notification-service";
-import { verifyFirebaseToken } from "../middleware/firebase-auth";
 
 export const tasksRouter = Router();
 
@@ -16,60 +14,35 @@ export function setBroadcastFn(fn: BroadcastFn) {
 }
 
 // GET /api/tasks - List tasks with authorization
-// Protected: Requires authentication
-tasksRouter.get("/", verifyFirebaseToken, async (req: Request, res: Response) => {
+tasksRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    const { projectId, assigneeId, userId } = req.query;
 
-    const { projectId, assigneeId } = req.query;
-    let tasks: any[] = [];
-
+    let tasks;
     if (projectId) {
-      // IDOR protection: Verify user has access to this project's tasks
-      const project = await storage.getProject(parseInt(projectId as string));
-      if (!project) {
-        return res.status(404).json({ message: "Project not found" });
-      }
-
-      // Organizations can see their projects' tasks, volunteers only if assigned
-      if (authenticatedUser.userType === 'organization') {
-        if (authenticatedUser.organizationId !== project.organizationId) {
-          return res.status(403).json({
-            message: "Access denied. This project belongs to a different organization.",
-            code: "FORBIDDEN"
-          });
-        }
-      }
       tasks = await storage.listTasksByProject(parseInt(projectId as string));
-
-      // Filter for volunteers - only show tasks they're assigned to
-      if (authenticatedUser.userType === 'volunteer') {
-        tasks = tasks.filter(t => t.assigneeId === authenticatedUser.id);
-      }
     } else if (assigneeId) {
-      // IDOR protection: Users can only view their own assigned tasks
-      if (authenticatedUser.id !== parseInt(assigneeId as string)) {
-        return res.status(403).json({
-          message: "Access denied. You can only view your own assigned tasks.",
-          code: "FORBIDDEN"
-        });
-      }
       tasks = await storage.listTasksByAssignee(parseInt(assigneeId as string));
-    } else {
-      // Default: Return tasks based on user type
-      if (authenticatedUser.userType === 'organization' && authenticatedUser.organizationId) {
-        const orgProjects = await storage.listProjectsByOrganization(authenticatedUser.organizationId);
+    } else if (userId) {
+      const userIdNum = parseInt(userId as string);
+      const user = await storage.getUser(userIdNum);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (user.userType === 'organization' && user.organizationId) {
+        const orgProjects = await storage.listProjectsByOrganization(user.organizationId);
         const orgProjectIds = new Set(orgProjects.map(p => p.id));
         const allTasks = await storage.listTasks();
         tasks = allTasks.filter(t => t.projectId && orgProjectIds.has(t.projectId));
-      } else if (authenticatedUser.userType === 'volunteer') {
-        tasks = await storage.listTasksByAssignee(authenticatedUser.id);
+      } else if (user.userType === 'volunteer') {
+        tasks = await storage.listTasksByAssignee(userIdNum);
       } else {
         return res.status(400).json({ message: "Invalid user type" });
       }
+    } else {
+      tasks = await storage.listTasks();
     }
 
     res.json(tasks);
@@ -79,15 +52,10 @@ tasksRouter.get("/", verifyFirebaseToken, async (req: Request, res: Response) =>
 });
 
 // GET /api/tasks/:id - Get task by ID with authorization
-// Protected: Requires authentication
-tasksRouter.get("/:id", verifyFirebaseToken, async (req: Request, res: Response) => {
+tasksRouter.get("/:id", async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
-    const authenticatedUser = req.authenticatedUser;
-
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
+    const { userId } = req.query;
 
     const task = await storage.getTask(taskId);
 
@@ -95,22 +63,23 @@ tasksRouter.get("/:id", verifyFirebaseToken, async (req: Request, res: Response)
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // IDOR protection: Verify user has access to this task
-    if (authenticatedUser.userType === 'volunteer') {
-      if (task.assigneeId !== authenticatedUser.id) {
-        return res.status(403).json({
-          message: "Access denied. You are not assigned to this task.",
-          code: "FORBIDDEN"
-        });
-      }
-    } else if (authenticatedUser.userType === 'organization' && authenticatedUser.organizationId) {
-      if (task.projectId) {
-        const project = await storage.getProject(task.projectId);
-        if (!project || project.organizationId !== authenticatedUser.organizationId) {
-          return res.status(403).json({
-            message: "Access denied. This task belongs to a different organization.",
-            code: "FORBIDDEN"
-          });
+    if (userId) {
+      const userIdNum = parseInt(userId as string);
+      const user = await storage.getUser(userIdNum);
+
+      if (user) {
+        if (user.userType === 'volunteer') {
+          const isDirectlyAssigned = task.assigneeId === userIdNum;
+          if (!isDirectlyAssigned) {
+            return res.status(404).json({ message: "Task not found" });
+          }
+        } else if (user.userType === 'organization' && user.organizationId) {
+          if (task.projectId) {
+            const project = await storage.getProject(task.projectId);
+            if (!project || project.organizationId !== user.organizationId) {
+              return res.status(404).json({ message: "Task not found" });
+            }
+          }
         }
       }
     }
@@ -122,17 +91,9 @@ tasksRouter.get("/:id", verifyFirebaseToken, async (req: Request, res: Response)
 });
 
 // POST /api/tasks - Create new task
-// Protected: Requires authentication and organization ownership
-tasksRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) => {
+tasksRouter.post("/", async (req: Request, res: Response) => {
   try {
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.userType !== 'organization' || !authenticatedUser.organizationId) {
-      return res.status(403).json({
-        message: "Organization authorization required",
-        code: "ORG_REQUIRED"
-      });
-    }
-
+    const user = await requireOrgUser(req);
     const taskData = insertTaskSchema.parse(req.body);
 
     if (taskData.projectId) {
@@ -140,13 +101,7 @@ tasksRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) =
       if (!project) {
         return res.status(404).json({ message: "Project not found" });
       }
-      // IDOR protection: Can only create tasks for own organization's projects
-      if (project.organizationId !== authenticatedUser.organizationId) {
-        return res.status(403).json({
-          message: "Access denied. This project belongs to a different organization.",
-          code: "FORBIDDEN"
-        });
-      }
+      verifyOwnership(user, project);
     }
 
     const task = await storage.createTask(taskData);
@@ -190,17 +145,6 @@ tasksRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) =
       }
     }
 
-    // OPTIMIZATION: Invalidate caches when task is created
-    if (task.projectId) {
-      const project = await storage.getProject(task.projectId);
-      if (project?.organizationId) {
-        invalidateCache.forOrganization(project.organizationId);
-      }
-    }
-    if (task.assigneeId) {
-      invalidateCache.forUser(task.assigneeId);
-    }
-
     broadcastUpdate("task_created", task);
     res.status(201).json(task);
   } catch (err) {
@@ -210,41 +154,48 @@ tasksRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) =
 });
 
 // PATCH /api/tasks/:id - Update task
-// Protected: Requires authentication and authorization
-tasksRouter.patch("/:id", verifyFirebaseToken, async (req: Request, res: Response) => {
+tasksRouter.patch("/:id", async (req: Request, res: Response) => {
   try {
     const taskId = parseInt(req.params.id);
-    const authenticatedUser = req.authenticatedUser;
-
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
 
     const existingTask = await storage.getTask(taskId);
     if (!existingTask) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // IDOR protection: Check authorization based on user type
+    let currentUser;
+
+    try {
+      currentUser = await requireOrgUser(req);
+    } catch (err) {
+      const userIdFromQuery = req.query.userId ? parseInt(req.query.userId as string) : null;
+      const userIdFromBody = req.body.userId ? parseInt(req.body.userId) : null;
+      const currentUserId = userIdFromQuery || userIdFromBody;
+
+      if (currentUserId && !isNaN(currentUserId)) {
+        currentUser = await storage.getUser(currentUserId);
+      }
+    }
+
+    if (!currentUser) {
+      return res.status(401).json({ message: "Unauthorized - please log in" });
+    }
+
     let isAuthorized = false;
 
-    if (authenticatedUser.userType === 'organization' && existingTask.projectId) {
+    if (currentUser.userType === 'organization' && existingTask.projectId) {
       const project = await storage.getProject(existingTask.projectId);
-      if (project && project.organizationId === authenticatedUser.organizationId) {
+      if (project && project.organizationId === currentUser.organizationId) {
         isAuthorized = true;
       }
     }
 
-    // Volunteers can update tasks assigned to them
-    if (authenticatedUser.userType === 'volunteer' && existingTask.assigneeId === authenticatedUser.id) {
+    if (currentUser.userType === 'volunteer' && existingTask.assigneeId === currentUser.id) {
       isAuthorized = true;
     }
 
     if (!isAuthorized) {
-      return res.status(403).json({
-        message: "Access denied. You are not authorized to update this task.",
-        code: "FORBIDDEN"
-      });
+      return res.status(403).json({ message: "Not authorized to update this task" });
     }
 
     const taskData = insertTaskSchema.partial().parse(req.body);
@@ -291,17 +242,6 @@ tasksRouter.patch("/:id", verifyFirebaseToken, async (req: Request, res: Respons
       if (updatedProject) {
         broadcastUpdate("project_updated", updatedProject);
       }
-    }
-
-    // OPTIMIZATION: Invalidate caches when task is updated
-    if (updatedTask.projectId) {
-      const project = await storage.getProject(updatedTask.projectId);
-      if (project?.organizationId) {
-        invalidateCache.forOrganization(project.organizationId);
-      }
-    }
-    if (updatedTask.assigneeId) {
-      invalidateCache.forUser(updatedTask.assigneeId);
     }
 
     broadcastUpdate("task_updated", updatedTask);

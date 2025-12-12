@@ -2,41 +2,8 @@ import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { handleValidationError, calculateProfileCompletion } from "./utils";
 import { updateVolunteerProfileWithUser } from "../profile-service";
-import { verifyFirebaseToken, optionalFirebaseAuth } from "../middleware/firebase-auth";
-import { sanitizeUser, sanitizeOrganization } from "../utils/sanitize-response";
 
 export const profileRouter = Router();
-
-/**
- * Helper to verify the authenticated user matches the requested userId
- * Prevents IDOR attacks by ensuring users can only access their own data
- */
-function verifyUserOwnership(req: Request, res: Response): number | null {
-  const userIdParam = req.query.userId as string;
-
-  if (!userIdParam) {
-    res.status(400).json({ message: "userId parameter is required" });
-    return null;
-  }
-
-  const userId = parseInt(userIdParam);
-  if (isNaN(userId)) {
-    res.status(400).json({ message: "userId must be a valid number" });
-    return null;
-  }
-
-  // Verify authenticated user matches requested user (IDOR protection)
-  const authenticatedUser = req.authenticatedUser;
-  if (!authenticatedUser || authenticatedUser.id !== userId) {
-    res.status(403).json({
-      message: "Access denied. You can only access your own profile.",
-      code: "FORBIDDEN"
-    });
-    return null;
-  }
-
-  return userId;
-}
 
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
@@ -47,12 +14,18 @@ export function setBroadcastFn(fn: BroadcastFn) {
 
 // PATCH /api/profile/volunteer - Update volunteer profile
 // Updates both users table and volunteers matching table
-// Protected: Requires authentication and ownership verification
-profileRouter.patch("/volunteer", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.patch("/volunteer", async (req: Request, res: Response) => {
   try {
-    // Verify user can only update their own profile (IDOR protection)
-    const userId = verifyUserOwnership(req, res);
-    if (!userId) return;
+    const userIdParam = req.query.userId as string;
+
+    if (!userIdParam) {
+      return res.status(400).json({ message: "userId parameter is required" });
+    }
+
+    const userId = parseInt(userIdParam);
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "userId must be a valid number" });
+    }
 
     const user = await storage.getUser(userId);
 
@@ -135,9 +108,8 @@ profileRouter.patch("/volunteer", verifyFirebaseToken, async (req: Request, res:
     const updatedUser = await storage.getUser(userId);
     const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
 
-    // Sanitize response to remove sensitive fields
     res.json({
-      user: sanitizeUser(updatedUser),
+      user: updatedUser,
       volunteerProfile
     });
   } catch (err) {
@@ -149,12 +121,18 @@ profileRouter.patch("/volunteer", verifyFirebaseToken, async (req: Request, res:
 
 // PATCH /api/profile/organization - Update organization profile
 // Updates both users/organizations tables and matchable_organizations table
-// Protected: Requires authentication and ownership verification
-profileRouter.patch("/organization", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.patch("/organization", async (req: Request, res: Response) => {
   try {
-    // Verify user can only update their own profile (IDOR protection)
-    const userId = verifyUserOwnership(req, res);
-    if (!userId) return;
+    const userIdParam = req.query.userId as string;
+
+    if (!userIdParam) {
+      return res.status(400).json({ message: "userId parameter is required" });
+    }
+
+    const userId = parseInt(userIdParam);
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "userId must be a valid number" });
+    }
 
     const user = await storage.getUser(userId);
 
@@ -250,8 +228,7 @@ profileRouter.patch("/organization", verifyFirebaseToken, async (req: Request, r
     }
 
     const updatedUser = await storage.getUser(userId);
-    // Sanitize response to remove sensitive fields
-    res.json(sanitizeUser(updatedUser));
+    res.json(updatedUser);
   } catch (err) {
     console.error("Error updating organization profile:", err);
     const error = handleValidationError(err);
@@ -261,12 +238,18 @@ profileRouter.patch("/organization", verifyFirebaseToken, async (req: Request, r
 
 // GET /api/profile/volunteer - Get volunteer profile data
 // Combines user and volunteer matching data
-// Protected: Requires authentication and ownership verification
-profileRouter.get("/volunteer", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.get("/volunteer", async (req: Request, res: Response) => {
   try {
-    // Verify user can only access their own profile (IDOR protection)
-    const userId = verifyUserOwnership(req, res);
-    if (!userId) return;
+    const userIdParam = req.query.userId as string;
+
+    if (!userIdParam) {
+      return res.status(400).json({ message: "userId parameter is required" });
+    }
+
+    const userId = parseInt(userIdParam);
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "userId must be a valid number" });
+    }
 
     const user = await storage.getUser(userId);
 
@@ -293,10 +276,9 @@ profileRouter.get("/volunteer", verifyFirebaseToken, async (req: Request, res: R
     const profileCompletion = volunteerProfile ? calculateProfileCompletion(volunteerProfile) : 0;
     const profileComplete = profileCompletion === 100;
 
-    // Sanitize response to remove sensitive fields
     res.json({
       user: {
-        ...sanitizeUser(user),
+        ...user,
         profileComplete,
         profileCompletion
       },
@@ -310,12 +292,18 @@ profileRouter.get("/volunteer", verifyFirebaseToken, async (req: Request, res: R
 
 // GET /api/profile/organization - Get organization profile data
 // Combines user, organization, and matchable organization data
-// Protected: Requires authentication and ownership verification
-profileRouter.get("/organization", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.get("/organization", async (req: Request, res: Response) => {
   try {
-    // Verify user can only access their own profile (IDOR protection)
-    const userId = verifyUserOwnership(req, res);
-    if (!userId) return;
+    const userIdParam = req.query.userId as string;
+
+    if (!userIdParam) {
+      return res.status(400).json({ message: "userId parameter is required" });
+    }
+
+    const userId = parseInt(userIdParam);
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "userId must be a valid number" });
+    }
 
     const user = await storage.getUser(userId);
 
@@ -354,13 +342,12 @@ profileRouter.get("/organization", verifyFirebaseToken, async (req: Request, res
     // Add profileComplete field to user based on onboardingCompleted status
     const profileComplete = organizationProfile?.onboardingCompleted || false;
 
-    // Sanitize response to remove sensitive fields
     res.json({
       user: {
-        ...sanitizeUser(user),
+        ...user,
         profileComplete
       },
-      organization: sanitizeOrganization(organization),
+      organization,
       organizationProfile,
       matchableOrganization
     });
@@ -371,12 +358,18 @@ profileRouter.get("/organization", verifyFirebaseToken, async (req: Request, res
 });
 
 // GET /api/intake/volunteer-profile - Get volunteer profile for intake
-// Protected: Requires authentication and ownership verification
-profileRouter.get("/intake/volunteer-profile", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.get("/intake/volunteer-profile", async (req: Request, res: Response) => {
   try {
-    // Verify user can only access their own profile (IDOR protection)
-    const userId = verifyUserOwnership(req, res);
-    if (!userId) return;
+    const userIdParam = req.query.userId as string;
+
+    if (!userIdParam) {
+      return res.status(400).json({ message: "userId parameter is required" });
+    }
+
+    const userId = parseInt(userIdParam);
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "userId must be a valid number" });
+    }
 
     const user = await storage.getUser(userId);
     const volunteerProfile = await storage.getVolunteerProfileByUserId(userId);
@@ -385,9 +378,9 @@ profileRouter.get("/intake/volunteer-profile", verifyFirebaseToken, async (req: 
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Sanitize response to remove sensitive fields
+    // Return both user and volunteerProfile so frontend can access all data
     res.json({
-      user: sanitizeUser(user),
+      user,
       volunteerProfile
     });
   } catch (err) {
@@ -397,12 +390,18 @@ profileRouter.get("/intake/volunteer-profile", verifyFirebaseToken, async (req: 
 });
 
 // POST /api/intake/volunteer-profile - Create or update volunteer profile via intake
-// Protected: Requires authentication and ownership verification
-profileRouter.post("/intake/volunteer-profile", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.post("/intake/volunteer-profile", async (req: Request, res: Response) => {
   try {
-    // Verify user can only update their own profile (IDOR protection)
-    const userId = verifyUserOwnership(req, res);
-    if (!userId) return;
+    const userIdParam = req.query.userId as string;
+
+    if (!userIdParam) {
+      return res.status(400).json({ message: "userId parameter is required" });
+    }
+
+    const userId = parseInt(userIdParam);
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "userId must be a valid number" });
+    }
 
     console.log(`[Intake POST CRITICAL] ===== PROCESSING SAVE FOR USER ID: ${userId} =====`);
 
@@ -531,9 +530,8 @@ profileRouter.post("/intake/volunteer-profile", verifyFirebaseToken, async (req:
 
     // Return same structure as GET endpoint so frontend receives consistent data
     const updatedUser = await storage.getUser(userId);
-    // Sanitize response to remove sensitive fields
     res.json({
-      user: sanitizeUser(updatedUser),
+      user: updatedUser,
       volunteerProfile: profile
     });
   } catch (err) {
@@ -543,8 +541,7 @@ profileRouter.post("/intake/volunteer-profile", verifyFirebaseToken, async (req:
 });
 
 // GET /api/intake/organization-profile - Get organization profile for intake
-// Protected: Requires authentication and organization ownership verification
-profileRouter.get("/intake/organization-profile", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.get("/intake/organization-profile", async (req: Request, res: Response) => {
   try {
     const orgIdParam = req.query.organizationId as string;
 
@@ -557,15 +554,6 @@ profileRouter.get("/intake/organization-profile", verifyFirebaseToken, async (re
       return res.status(400).json({ message: "organizationId must be a valid number" });
     }
 
-    // Verify user owns this organization (IDOR protection)
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.organizationId !== organizationId) {
-      return res.status(403).json({
-        message: "Access denied. You can only access your own organization's profile.",
-        code: "FORBIDDEN"
-      });
-    }
-
     const profile = await storage.getOrganizationProfileByOrgId(organizationId);
     res.json(profile);
   } catch (err) {
@@ -575,8 +563,7 @@ profileRouter.get("/intake/organization-profile", verifyFirebaseToken, async (re
 });
 
 // POST /api/intake/organization-profile - Create or update organization profile via intake
-// Protected: Requires authentication and ownership verification
-profileRouter.post("/intake/organization-profile", verifyFirebaseToken, async (req: Request, res: Response) => {
+profileRouter.post("/intake/organization-profile", async (req: Request, res: Response) => {
   try {
     const userIdParam = req.query.organizationId as string;
 
@@ -587,15 +574,6 @@ profileRouter.post("/intake/organization-profile", verifyFirebaseToken, async (r
     const userId = parseInt(userIdParam);
     if (isNaN(userId)) {
       return res.status(400).json({ message: "organizationId must be a valid number" });
-    }
-
-    // Verify user can only update their own profile (IDOR protection)
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.id !== userId) {
-      return res.status(403).json({
-        message: "Access denied. You can only update your own profile.",
-        code: "FORBIDDEN"
-      });
     }
 
     // Get the user to access their email

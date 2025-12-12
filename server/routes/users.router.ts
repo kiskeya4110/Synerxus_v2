@@ -13,29 +13,10 @@ export function setBroadcastFn(fn: BroadcastFn) {
   broadcastUpdate = fn;
 }
 
-// GET /api/users - List all users with optional filtering and pagination
+// GET /api/users - List all users with optional filtering
 usersRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const { userType, page, limit } = req.query;
-
-    // If pagination params are provided, use paginated query
-    if (page || limit) {
-      const paginationParams = {
-        page: page ? parseInt(page as string) : undefined,
-        limit: limit ? parseInt(limit as string) : undefined
-      };
-
-      const result = await storage.listUsersPaginated(paginationParams);
-
-      // Apply userType filter if provided (in-memory for paginated results)
-      if (userType) {
-        result.data = result.data.filter((u: any) => u.userType === userType);
-      }
-
-      return res.json(result);
-    }
-
-    // Non-paginated (legacy behavior)
+    const { userType } = req.query;
     const users = await storage.listUsers();
 
     if (userType) {
@@ -128,51 +109,7 @@ usersRouter.post("/firebase-sync", async (req: Request, res: Response) => {
     user = await storage.createUser(userData);
     broadcastUpdate("user_created", user);
     res.status(201).json(user);
-  } catch (err: any) {
-    // Check for database connectivity issues
-    const errorMessage = err?.message || '';
-    const errorCode = err?.code || '';
-
-    const isDatabaseUnavailable =
-      errorMessage.includes('endpoint has been disabled') ||
-      errorMessage.includes('ECONNREFUSED') ||
-      errorMessage.includes('connection terminated') ||
-      errorMessage.includes('timeout') ||
-      errorCode === 'XX000' ||
-      errorCode === 'ECONNRESET' ||
-      errorCode === '57P01'; // admin_shutdown
-
-    if (isDatabaseUnavailable) {
-      console.warn('[firebase-sync] Database unavailable, returning degraded mode user');
-
-      // Extract user data from request body for degraded mode response
-      const { firebaseUid: fbUid, email: userEmail, displayName: dName, userType: uType } = req.body;
-
-      // Return a temporary user object for degraded mode operation
-      // This allows users to log in and navigate the app with limited functionality
-      const degradedUser = {
-        id: -1, // Negative ID indicates temporary/degraded user
-        firebaseUid: fbUid,
-        username: userEmail?.split('@')[0] || 'user',
-        email: userEmail,
-        displayName: dName || userEmail?.split('@')[0] || 'User',
-        userType: uType || 'volunteer',
-        bio: null,
-        avatarUrl: null,
-        skills: [],
-        causes: [],
-        location: null,
-        availableHours: null,
-        totalHoursLogged: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        _degradedMode: true, // Flag to indicate this is a degraded mode user
-        _message: "Operating in degraded mode. Some features may be limited until database connectivity is restored."
-      };
-
-      return res.status(200).json(degradedUser);
-    }
-
+  } catch (err) {
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }

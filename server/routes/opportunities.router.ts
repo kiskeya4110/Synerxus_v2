@@ -4,7 +4,6 @@ import { insertOpportunitySchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { getProjectsForVolunteer } from "../dashboard-service";
 import { deriveCategoryFromSDGs } from "../matching-algorithm";
-import { verifyFirebaseToken } from "../middleware/firebase-auth";
 
 export const opportunitiesRouter = Router();
 
@@ -80,14 +79,8 @@ opportunitiesRouter.get("/discover", async (req: Request, res: Response) => {
 });
 
 // GET /api/opportunities/status - Get opportunity status for volunteer
-// Protected: Requires authentication and ownership verification
-opportunitiesRouter.get("/status", verifyFirebaseToken, async (req: Request, res: Response) => {
+opportunitiesRouter.get("/status", async (req: Request, res: Response) => {
   try {
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser) {
-      return res.status(401).json({ message: "Authentication required" });
-    }
-
     const volunteerId = req.query.volunteerId as string;
 
     if (!volunteerId) {
@@ -98,14 +91,6 @@ opportunitiesRouter.get("/status", verifyFirebaseToken, async (req: Request, res
 
     if (isNaN(vid)) {
       return res.status(400).json({ message: "volunteerId must be a valid number" });
-    }
-
-    // IDOR protection: Volunteers can only view their own status
-    if (authenticatedUser.id !== vid) {
-      return res.status(403).json({
-        message: "Access denied. You can only view your own opportunity status.",
-        code: "FORBIDDEN"
-      });
     }
 
     const [saved, rejected, applications] = await Promise.all([
@@ -125,10 +110,10 @@ opportunitiesRouter.get("/status", verifyFirebaseToken, async (req: Request, res
   }
 });
 
-// GET /api/opportunities - List opportunities with authorization and optional pagination
+// GET /api/opportunities - List opportunities with authorization
 opportunitiesRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const { organizationId, userId, page, limit } = req.query;
+    const { organizationId, userId } = req.query;
 
     if (!organizationId && !userId) {
       return res.status(400).json({
@@ -136,17 +121,9 @@ opportunitiesRouter.get("/", async (req: Request, res: Response) => {
       });
     }
 
-    // If pagination params are provided and querying for volunteer (open opportunities)
-    const usePagination = page || limit;
-    const paginationParams = usePagination ? {
-      page: page ? parseInt(page as string) : undefined,
-      limit: limit ? parseInt(limit as string) : undefined
-    } : undefined;
-
     let opportunities;
     if (organizationId) {
       opportunities = await storage.listOpportunitiesByOrganization(parseInt(organizationId as string));
-      return res.json(opportunities);
     } else if (userId) {
       const userIdNum = parseInt(userId as string);
       const user = await storage.getUser(userIdNum);
@@ -157,23 +134,17 @@ opportunitiesRouter.get("/", async (req: Request, res: Response) => {
 
       if (user.userType === 'organization' && user.organizationId) {
         opportunities = await storage.listOpportunitiesByOrganization(user.organizationId);
-        return res.json(opportunities);
       } else if (user.userType === 'volunteer') {
-        // Use paginated query for volunteers browsing open opportunities
-        if (paginationParams) {
-          const result = await storage.listOpportunitiesPaginated(paginationParams);
-          result.data = result.data.filter(opp => opp.status === 'open');
-          return res.json(result);
-        }
         const allOpportunities = await storage.listOpportunities();
         opportunities = allOpportunities.filter(opp => opp.status === 'open');
-        return res.json(opportunities);
       } else {
         return res.status(400).json({ message: "Invalid user type" });
       }
     } else {
       return res.status(400).json({ message: "Missing required parameters" });
     }
+
+    res.json(opportunities);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch opportunities" });
   }
@@ -205,25 +176,13 @@ opportunitiesRouter.get("/:id", async (req: Request, res: Response) => {
 });
 
 // POST /api/opportunities - Create new opportunity
-// Protected: Requires authentication and organization membership
-opportunitiesRouter.post("/", verifyFirebaseToken, async (req: Request, res: Response) => {
+opportunitiesRouter.post("/", async (req: Request, res: Response) => {
   try {
-    const authenticatedUser = req.authenticatedUser;
-    if (!authenticatedUser || authenticatedUser.userType !== 'organization' || !authenticatedUser.organizationId) {
-      return res.status(403).json({
-        message: "Organization authorization required",
-        code: "ORG_REQUIRED"
-      });
-    }
-
+    const user = await requireOrgUser(req);
     const opportunityData = insertOpportunitySchema.parse(req.body);
 
-    // IDOR protection: Can only create opportunities for own organization
-    if (opportunityData.organizationId !== authenticatedUser.organizationId) {
-      return res.status(403).json({
-        message: "Access denied. You can only create opportunities for your own organization.",
-        code: "FORBIDDEN"
-      });
+    if (opportunityData.organizationId !== user.organizationId) {
+      return res.status(403).json({ message: "Resource not owned by your organization" });
     }
 
     if (!opportunityData.category && (opportunityData.sdgGoals || opportunityData.primarySdg)) {

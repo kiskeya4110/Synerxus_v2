@@ -98,36 +98,7 @@ import {
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
-import { eq, and, or, asc, desc, inArray, isNull, isNotNull, sql } from "drizzle-orm";
-
-// =============================================================================
-// PAGINATION UTILITIES
-// =============================================================================
-export interface PaginationParams {
-  page?: number;
-  limit?: number;
-}
-
-export interface PaginatedResult<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasMore: boolean;
-  };
-}
-
-const DEFAULT_PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 100;
-
-function normalizePagination(params?: PaginationParams): { offset: number; limit: number; page: number } {
-  const page = Math.max(1, params?.page || 1);
-  const limit = Math.min(MAX_PAGE_SIZE, Math.max(1, params?.limit || DEFAULT_PAGE_SIZE));
-  const offset = (page - 1) * limit;
-  return { offset, limit, page };
-}
+import { eq, and, or, asc, desc, inArray, isNull, isNotNull } from "drizzle-orm";
 
 // Custom error for duplicate project assignments
 export class DuplicateAssignmentError extends Error {
@@ -370,10 +341,7 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   constructor() {
-    // Initialize impact metrics with error handling - don't crash if DB is unavailable
-    this.initializeImpactMetrics().catch(error => {
-      console.warn('[Storage] Failed to initialize impact metrics - database may be unavailable:', error.message);
-    });
+    this.initializeImpactMetrics();
   }
 
   private async initializeImpactMetrics() {
@@ -475,27 +443,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users);
   }
 
-  // Paginated list users
-  async listUsersPaginated(params?: PaginationParams): Promise<PaginatedResult<User>> {
-    const { offset, limit, page } = normalizePagination(params);
-
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(users);
-    const total = Number(countResult?.count || 0);
-
-    const data = await db.select().from(users).limit(limit).offset(offset);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: offset + data.length < total
-      }
-    };
-  }
-
   // Organization operations
   async getOrganization(id: number): Promise<Organization | undefined> {
     const [result] = await db.select().from(organizations).where(eq(organizations.id, id));
@@ -550,27 +497,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(projects);
   }
 
-  // Paginated list projects
-  async listProjectsPaginated(params?: PaginationParams): Promise<PaginatedResult<Project>> {
-    const { offset, limit, page } = normalizePagination(params);
-
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(projects);
-    const total = Number(countResult?.count || 0);
-
-    const data = await db.select().from(projects).orderBy(desc(projects.createdAt)).limit(limit).offset(offset);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: offset + data.length < total
-      }
-    };
-  }
-
   async listProjectsByOrganization(organizationId: number): Promise<Project[]> {
     return await db.select().from(projects).where(eq(projects.organizationId, organizationId));
   }
@@ -593,27 +519,6 @@ export class DatabaseStorage implements IStorage {
 
   async listTasks(): Promise<Task[]> {
     return await db.select().from(tasks);
-  }
-
-  // Paginated list tasks
-  async listTasksPaginated(params?: PaginationParams): Promise<PaginatedResult<Task>> {
-    const { offset, limit, page } = normalizePagination(params);
-
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(tasks);
-    const total = Number(countResult?.count || 0);
-
-    const data = await db.select().from(tasks).orderBy(desc(tasks.createdAt)).limit(limit).offset(offset);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: offset + data.length < total
-      }
-    };
   }
 
   async listTasksByProject(projectId: number): Promise<Task[]> {
@@ -751,27 +656,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(opportunities);
   }
 
-  // Paginated list opportunities
-  async listOpportunitiesPaginated(params?: PaginationParams): Promise<PaginatedResult<Opportunity>> {
-    const { offset, limit, page } = normalizePagination(params);
-
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(opportunities);
-    const total = Number(countResult?.count || 0);
-
-    const data = await db.select().from(opportunities).orderBy(desc(opportunities.createdAt)).limit(limit).offset(offset);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: offset + data.length < total
-      }
-    };
-  }
-
   async listOpportunitiesByOrganization(organizationId: number): Promise<Opportunity[]> {
     return await db.select().from(opportunities).where(eq(opportunities.organizationId, organizationId));
   }
@@ -794,27 +678,6 @@ export class DatabaseStorage implements IStorage {
 
   async listApplications(): Promise<Application[]> {
     return await db.select().from(applications);
-  }
-
-  // Paginated list applications
-  async listApplicationsPaginated(params?: PaginationParams): Promise<PaginatedResult<Application>> {
-    const { offset, limit, page } = normalizePagination(params);
-
-    const [countResult] = await db.select({ count: sql<number>`count(*)` }).from(applications);
-    const total = Number(countResult?.count || 0);
-
-    const data = await db.select().from(applications).orderBy(desc(applications.appliedAt)).limit(limit).offset(offset);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: offset + data.length < total
-      }
-    };
   }
 
   async listApplicationsByOpportunity(opportunityId: number): Promise<Application[]> {
@@ -1328,41 +1191,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNotifications(userId: number): Promise<Notification[]> {
+    const { desc } = await import("drizzle-orm");
     return await db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt));
-  }
-
-  // Paginated notifications
-  async getNotificationsPaginated(userId: number, params?: PaginationParams): Promise<PaginatedResult<Notification>> {
-    const { offset, limit, page } = normalizePagination(params);
-
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(notifications)
-      .where(eq(notifications.userId, userId));
-    const total = Number(countResult?.count || 0);
-
-    const data = await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
-
-    return {
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasMore: offset + data.length < total
-      }
-    };
   }
 
   async markNotificationRead(notificationId: number): Promise<Notification | undefined> {
@@ -1664,194 +1498,6 @@ export class DatabaseStorage implements IStorage {
   async updateVolunteerEmployerLink(id: number, link: Partial<InsertVolunteerEmployerLink>): Promise<VolunteerEmployerLink | undefined> {
     const [result] = await db.update(volunteerEmployerLinks).set(link).where(eq(volunteerEmployerLinks.id, id)).returning();
     return result || undefined;
-  }
-
-  // ===========================================================================
-  // OPTIMIZED BATCH QUERIES - Eliminates N+1 patterns for dashboard
-  // ===========================================================================
-
-  /**
-   * Fetch all organization data in a single optimized query batch
-   * Eliminates N+1 queries in dashboard by using parallel batch fetches
-   * with proper WHERE clauses instead of fetching ALL data
-   */
-  async getOrganizationDashboardData(organizationId: number): Promise<{
-    projects: Project[];
-    tasks: Task[];
-    activities: VolunteerActivity[];
-    impacts: ProjectImpact[];
-    assignments: ProjectAssignment[];
-    users: User[];
-  }> {
-    // First get organization's projects
-    const orgProjects = await db
-      .select()
-      .from(projects)
-      .where(eq(projects.organizationId, organizationId));
-
-    if (orgProjects.length === 0) {
-      return {
-        projects: [],
-        tasks: [],
-        activities: [],
-        impacts: [],
-        assignments: [],
-        users: [],
-      };
-    }
-
-    const projectIds = orgProjects.map(p => p.id);
-
-    // Parallel batch queries for related data (eliminates N+1)
-    const [orgTasks, orgActivities, orgImpacts, orgAssignments] = await Promise.all([
-      db.select().from(tasks).where(inArray(tasks.projectId, projectIds)),
-      db.select().from(volunteerActivities).where(inArray(volunteerActivities.projectId, projectIds)),
-      db.select().from(projectImpacts).where(inArray(projectImpacts.projectId, projectIds)),
-      db.select().from(projectAssignments).where(inArray(projectAssignments.projectId, projectIds)),
-    ]);
-
-    // Get unique volunteer IDs from activities and assignments
-    const volunteerIds = new Set<number>();
-    orgActivities.forEach(a => a.userId && volunteerIds.add(a.userId));
-    orgAssignments.forEach(a => volunteerIds.add(a.volunteerId));
-
-    // Fetch related volunteers
-    const relatedUsers = volunteerIds.size > 0
-      ? await db.select().from(users).where(inArray(users.id, Array.from(volunteerIds)))
-      : [];
-
-    return {
-      projects: orgProjects,
-      tasks: orgTasks,
-      activities: orgActivities,
-      impacts: orgImpacts,
-      assignments: orgAssignments,
-      users: relatedUsers,
-    };
-  }
-
-  /**
-   * Fetch all volunteer dashboard data in a single optimized query batch
-   */
-  async getVolunteerDashboardData(userId: number): Promise<{
-    activities: VolunteerActivity[];
-    assignments: ProjectAssignment[];
-    applications: Application[];
-    projects: Project[];
-    tasks: Task[];
-    savedOpportunities: SavedOpportunity[];
-  }> {
-    // Parallel fetch of all volunteer-related data
-    const [userActivities, userAssignments, userApplications, savedOpps] = await Promise.all([
-      db.select().from(volunteerActivities)
-        .where(eq(volunteerActivities.userId, userId))
-        .orderBy(desc(volunteerActivities.date))
-        .limit(50),
-      db.select().from(projectAssignments)
-        .where(eq(projectAssignments.volunteerId, userId)),
-      db.select().from(applications)
-        .where(eq(applications.volunteerId, userId))
-        .orderBy(desc(applications.appliedAt)),
-      db.select().from(savedOpportunities)
-        .where(eq(savedOpportunities.volunteerId, userId)),
-    ]);
-
-    // Get project IDs from activities and assignments
-    const projectIds = new Set<number>();
-    userActivities.forEach(a => a.projectId && projectIds.add(a.projectId));
-    userAssignments.forEach(a => projectIds.add(a.projectId));
-
-    const projectIdArray = Array.from(projectIds);
-
-    // Fetch related projects
-    const relatedProjects = projectIdArray.length > 0
-      ? await db.select().from(projects).where(inArray(projects.id, projectIdArray))
-      : [];
-
-    // Fetch tasks for assigned projects
-    const relatedTasks = projectIdArray.length > 0
-      ? await db.select().from(tasks)
-          .where(
-            and(
-              inArray(tasks.projectId, projectIdArray),
-              or(
-                eq(tasks.assigneeId, userId),
-                isNull(tasks.assigneeId)
-              )
-            )
-          )
-      : [];
-
-    return {
-      activities: userActivities,
-      assignments: userAssignments,
-      applications: userApplications,
-      projects: relatedProjects,
-      tasks: relatedTasks,
-      savedOpportunities: savedOpps,
-    };
-  }
-
-  /**
-   * Batch fetch multiple users by IDs
-   * Used to avoid N+1 when enriching lists
-   */
-  async getUsersByIds(ids: number[]): Promise<User[]> {
-    if (ids.length === 0) return [];
-    const uniqueIds = Array.from(new Set(ids));
-    return await db.select().from(users).where(inArray(users.id, uniqueIds));
-  }
-
-  /**
-   * Batch fetch opportunities with organization data
-   * Eliminates N+1 for opportunity listings
-   */
-  async getOpportunitiesWithOrganizations(opportunityIds: number[]): Promise<Array<Opportunity & { organization?: Organization }>> {
-    if (opportunityIds.length === 0) return [];
-
-    const opps = await db.select().from(opportunities).where(inArray(opportunities.id, opportunityIds));
-
-    // Get unique organization IDs
-    const orgIdSet = new Set(opps.map(o => o.organizationId).filter((id): id is number => id !== null));
-    const orgIds = Array.from(orgIdSet);
-
-    // Batch fetch organizations
-    const orgs = await this.getOrganizationsByIds(orgIds);
-    const orgMap = new Map(orgs.map(o => [o.id, o]));
-
-    // Enrich opportunities
-    return opps.map(opp => ({
-      ...opp,
-      organization: opp.organizationId ? orgMap.get(opp.organizationId) : undefined,
-    }));
-  }
-
-  /**
-   * Get notification count for user (optimized single query)
-   */
-  async getUnreadNotificationCount(userId: number): Promise<number> {
-    const [result] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(notifications)
-      .where(and(
-        eq(notifications.userId, userId),
-        eq(notifications.read, false)
-      ));
-    return Number(result?.count || 0);
-  }
-
-  /**
-   * Get unread message count for user (optimized single query)
-   */
-  async getUnreadMessageCount(userId: number): Promise<number> {
-    const [result] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(messages)
-      .where(and(
-        eq(messages.receiverId, userId),
-        eq(messages.read, false)
-      ));
-    return Number(result?.count || 0);
   }
 }
 

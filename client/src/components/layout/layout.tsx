@@ -64,8 +64,7 @@ export default function Layout({ children }: LayoutProps) {
     "/csr-reports-exports", "/volunteers", "/sdg-mapping",
     "/impact-visualization", "/organization-messages",
     "/employee-engagement-tab", "/organization-profile-settings",
-    "/organization-impact-report", "/applications", "/opportunities",
-    "/my-work", "/projects", "/tasks", "/calendar", "/assignments"
+    "/organization-impact-report", "/applications"
   ];
 
   const isFullyStandalone = fullyStandaloneRoutes.some(route => location === route || location.startsWith(route + "/"));

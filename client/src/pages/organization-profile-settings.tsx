@@ -379,21 +379,21 @@ export default function OrganizationProfileSettings() {
           <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
           <p className="text-muted-foreground">
             Create or update your organization profile to get matched with volunteers who have the skills and passion to help your mission.
-        </p>
-      </div>
+          </p>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5" />
-            {existingProfile ? "Update Your Profile" : "Create Your Profile"}
-          </CardTitle>
-          <CardDescription>
-            This information will be used to match your organization with qualified volunteers
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              {existingProfile ? "Update Your Profile" : "Create Your Profile"}
+            </CardTitle>
+            <CardDescription>
+              This information will be used to match your organization with qualified volunteers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Email - Read-only, linked to user account */}
               <FormField
@@ -597,7 +597,7 @@ export default function OrganizationProfileSettings() {
           </Form>
         </CardContent>
       </Card>
-      </div>
+    </div>
     </>
   );
 }

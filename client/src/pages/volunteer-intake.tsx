@@ -560,7 +560,7 @@ export default function VolunteerIntake() {
                     <FormLabel>Timezone</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -614,7 +614,7 @@ export default function VolunteerIntake() {
                     <FormLabel>Preferred Commitment Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || ""}
                     >
                       <FormControl>
                         <SelectTrigger>

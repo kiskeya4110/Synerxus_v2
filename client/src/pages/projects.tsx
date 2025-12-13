@@ -10,7 +10,6 @@ import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import OrganizationHeader from "@/components/layout/organization-header";
-import Footer from "@/components/layout/footer";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
@@ -371,9 +370,6 @@ export default function Projects() {
         </Card>
       )}
       </div>
-      
-      {/* Footer */}
-      <Footer />
 
       {/* PWA Bottom Navigation for Volunteers on Mobile */}
       {isVolunteer && isMobile && (

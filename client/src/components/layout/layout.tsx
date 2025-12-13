@@ -18,22 +18,22 @@ export default function Layout({ children }: LayoutProps) {
   const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
   const { startOnboarding, isCompleted } = useOnboarding();
-  
+
   const publicRoutes = [
-    "/", 
-    "/login", 
-    "/sdg-mapping", 
-    "/impact-visualization", 
-    "/mobile-data-collection", 
-    "/impact-storytelling", 
+    "/",
+    "/login",
+    "/sdg-mapping",
+    "/impact-visualization",
+    "/mobile-data-collection",
+    "/impact-storytelling",
     "/field-specific-metrics"
   ];
-  
+
   const protectedRoutes = ["/dashboard"];
-  
+
   const isPublicRoute = publicRoutes.includes(location);
   const isProtectedRoute = protectedRoutes.some(route => location.startsWith(route));
-  
+
   useEffect(() => {
     if (!loading && !user && isProtectedRoute) {
       setLocation("/login");
@@ -55,16 +55,17 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [location, loading, user, isCompleted, startOnboarding]);
 
-  // Routes that have their own complete layout (defined outside LayoutRoute in App.tsx)
-  // These should return null to avoid rendering any Layout wrapper
+  // Routes that are completely standalone (public/login pages, or pages that handle their own layout entirely)
   const fullyStandaloneRoutes = [
-    "/", "/login", "/landing", "/dashboard",
+    "/", "/login", "/landing",
     "/csr-dashboard", "/csr-dashboard-pwa", "/team-overview",
-    "/volunteer-dashboard", "/organization-dashboard", "/overview",
+    "/organization-dashboard", "/overview",
     "/organization-my-work", "/csr-impact-reporting", "/project-portfolio",
-    "/csr-reports-exports", "/projects", "/volunteers", "/sdg-mapping",
+    "/csr-reports-exports", "/volunteers", "/sdg-mapping",
     "/impact-visualization", "/organization-messages",
-    "/discover-opportunities/pwa", "/opportunities"
+    "/employee-engagement-tab", "/organization-profile-settings",
+    "/organization-impact-report", "/applications", "/opportunities",
+    "/my-work", "/projects", "/tasks", "/calendar", "/assignments"
   ];
 
   const isFullyStandalone = fullyStandaloneRoutes.some(route => location === route || location.startsWith(route + "/"));
@@ -74,14 +75,14 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <VolunteerNav />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background">
-          <div className="safe-area-x px-3 sm:px-4 md:px-6 pt-[72px] md:pt-20 pb-24 md:pb-24">
-            <div className="max-w-7xl mx-auto pb-20 md:pb-0">
+        <main className="flex-1 flex flex-col bg-background">
+          <div className="flex-1 safe-area-x px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-24 md:pb-8">
+            <div className="max-w-7xl mx-auto">
               {children}
             </div>
           </div>

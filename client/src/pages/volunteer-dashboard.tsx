@@ -20,7 +20,6 @@ import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-moda
 import { VolunteerInsightsSection } from "@/components/dashboard/volunteer-insights";
 import ImpactStorytelling from "@/components/impact/impact-storytelling";
 import OrganizationNav from "@/components/layout/organization-nav";
-import VolunteerNav from "@/components/layout/volunteer-nav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -33,7 +32,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import Footer from "@/components/layout/footer";
 import MobilePWAView from "@/components/volunteer/mobile-pwa-view";
 interface Html2PdfInstance {
   set(options: Record<string, any>): { from(element: HTMLElement): { save(): void } };
@@ -980,9 +978,6 @@ export default function Dashboard() {
 
   return (
     <PageTransition>
-      {/* Volunteer Navigation - Only shown in web view */}
-      <VolunteerNav />
-
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950 overflow-y-auto space-y-5 md:space-y-6 px-4 md:px-24 pb-8">
       {/* Header - Enhanced PWA-style */}
       <div className="space-y-4 md:space-y-6 pt-4 md:pt-6">
@@ -1938,9 +1933,6 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
       </div>
-
-      {/* Footer */}
-      <Footer />
       </div>
     </PageTransition>
   );

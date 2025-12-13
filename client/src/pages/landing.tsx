@@ -614,9 +614,9 @@ export default function Landing() {
             ) : (
               <>
                 <Link href="/login" className="w-full sm:w-auto">
-                  <Button variant="ghost" size="sm" className="w-full sm:w-auto whitespace-nowrap text-slate-800 hover:bg-slate-200 touch-feedback" data-testid="button-login-nav">Log In</Button>
+                  <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-amber-500 hover:bg-amber-600 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-login-nav">Log In</Button>
                 </Link>
-                <Link href="/volunteer-intake" className="w-full sm:w-auto">
+                <Link href="/login?tab=register" className="w-full sm:w-auto">
                   <Button size="sm" className="w-full sm:w-auto min-h-[44px] sm:min-h-[40px] whitespace-nowrap bg-blue-900 hover:bg-blue-950 text-white font-semibold text-sm sm:text-sm px-4 sm:px-4 rounded-xl active:scale-95 transition-transform" data-testid="button-sign-up-nav">
                     Sign Up
                   </Button>
@@ -630,7 +630,7 @@ export default function Landing() {
       {/* Scrollable main content */}
       <main className="flex-1 overflow-y-auto">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24 lg:py-28 relative overflow-hidden" data-testid="section-hero">
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-20 lg:py-28 relative overflow-hidden" data-testid="section-hero">
         {/* Animated Background Elements - Floating SDG Icons - Hidden on mobile to prevent interference */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-0 md:opacity-[0.15]">
           {/* Animated Floating Items */}
@@ -652,7 +652,7 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 md:gap-12 items-center relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-10 md:gap-12 lg:gap-16 items-center relative z-10">
           {/* Left Content - Text with Globe */}
           <div className="flex flex-col justify-center order-2 md:order-1">
             {/* Header with Small Rotating Globe in front */}
@@ -674,25 +674,26 @@ export default function Landing() {
               </div>
 
               {/* Header Text */}
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight flex-1" data-testid="text-hero-title">
-                <span className="text-blue-900 whitespace-nowrap">Bridge Action</span><br />
-                <span className="text-amber-600 whitespace-nowrap">Impact, Globally</span>
+              <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold leading-tight flex-1 min-w-0" data-testid="text-hero-title">
+                <span className="text-blue-900 block sm:inline">Bridge Action</span>
+                <br className="hidden sm:block" />
+                <span className="text-amber-600 block sm:inline">Impact, Globally</span>
               </h1>
             </div>
-            <p className="text-base sm:text-lg md:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-slate-700 mb-6 sm:mb-10 leading-relaxed font-medium" data-testid="text-hero-description">
               Synerxus transforms volunteer action into measurable global impact.
             </p>
-            <ul className="text-sm sm:text-base md:text-lg text-slate-700 mb-6 sm:mb-10 space-y-3 leading-relaxed font-medium">
+            <ul className="text-xs sm:text-sm md:text-base lg:text-lg text-slate-700 mb-6 sm:mb-10 space-y-2 sm:space-y-3 leading-relaxed font-medium">
               <li className="flex items-start">
-                <span className="mr-2">•</span>
+                <span className="mr-2 flex-shrink-0">•</span>
                 <span>Unify nonprofits, volunteers, and CSR teams on one platform.</span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2">•</span>
+                <span className="mr-2 flex-shrink-0">•</span>
                 <span>Track outcomes in real time, align with SDGs, and automate reporting.</span>
               </li>
               <li className="flex items-start">
-                <span className="mr-2">•</span>
+                <span className="mr-2 flex-shrink-0">•</span>
                 <span>Show stakeholders the true value of service—without the spreadsheets.</span>
               </li>
             </ul>
@@ -706,14 +707,14 @@ export default function Landing() {
                 </Link>
               ) : (
                 <>
-                  <Link href="/volunteer-intake" className="w-full sm:w-auto">
-                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-white font-bold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-orange-600/25" data-testid="button-join-hero">
-                      Join
+                  <Link href="/login" className="w-full sm:w-auto">
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-white font-bold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-amber-500/25" data-testid="button-sign-in-hero">
+                      Log In
                     </Button>
                   </Link>
-                  <Link href="/login" className="w-full sm:w-auto">
-                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-bold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-sign-in-hero">
-                      Sign In
+                  <Link href="/login?tab=register" className="w-full sm:w-auto">
+                    <Button size="lg" className="min-h-[52px] w-full sm:w-auto bg-blue-900 hover:bg-blue-950 text-white font-bold text-base sm:text-lg px-6 sm:px-8 rounded-xl active:scale-[0.98] transition-transform shadow-lg shadow-blue-900/25" data-testid="button-join-hero">
+                      Sign Up
                     </Button>
                   </Link>
                 </>
@@ -722,10 +723,10 @@ export default function Landing() {
           </div>
 
           {/* Right Collage Image */}
-          <div className="flex flex-col items-center gap-4 sm:gap-6 order-1 md:order-2">
+          <div className="flex flex-col items-center gap-4 sm:gap-6 order-1 md:order-2 w-full max-w-sm sm:max-w-md md:max-w-none mx-auto">
             <Link href={isLoggedIn ? "/dashboard" : "/login"} className="flex justify-center cursor-pointer group w-full">
               <div className="relative w-full rounded-2xl shadow-2xl overflow-hidden group-hover:shadow-3xl transition-shadow bg-slate-100">
-                <img 
+                <img
                   src={collageImg}
                   alt="Volunteer Collage"
                   className="w-full h-auto object-contain"
@@ -734,7 +735,7 @@ export default function Landing() {
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
               </div>
             </Link>
-            <p className="text-xs sm:text-sm italic text-slate-600 text-center leading-relaxed px-2" data-testid="text-kofi-annan-quote">
+            <p className="text-xs sm:text-sm italic text-slate-600 text-center leading-relaxed px-2 max-w-xs sm:max-w-sm md:max-w-none" data-testid="text-kofi-annan-quote">
               "Knowledge is power. Information is liberating. Education is the premise of progress, in every society, in every family." — Kofi Annan
             </p>
           </div>

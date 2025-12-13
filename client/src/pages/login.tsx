@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useState, useEffect } from "react";
+import { useLocation, useSearch } from "wouter";
 import { UserCredential } from "firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +15,23 @@ import Logo from "@/components/ui/logo";
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const { signInWithGoogle, signInWithEmail, signUp } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [userType, setUserType] = useState<"volunteer" | "organization" | "corporate-partner" | null>(null);
+
+  // Get initial tab from URL parameter
+  const urlParams = new URLSearchParams(searchString);
+  const tabFromUrl = urlParams.get('tab') === 'register' ? 'register' : 'login';
+  const [activeTab, setActiveTab] = useState(tabFromUrl);
+
+  // Update active tab when URL changes
+  useEffect(() => {
+    const params = new URLSearchParams(searchString);
+    const tab = params.get('tab') === 'register' ? 'register' : 'login';
+    setActiveTab(tab);
+  }, [searchString]);
   
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -285,7 +298,7 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login" data-testid="tab-login">Login</TabsTrigger>
                 <TabsTrigger value="register" data-testid="tab-register">Register</TabsTrigger>
@@ -518,7 +531,7 @@ export default function Login() {
                         </div>
                       </div>
                       <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-submit-register">
-                        {isLoading ? "Creating account..." : `Create ${userType === "volunteer" ? "Volunteer" : userType === "corporate-partner" ? "Corporate" : "Organization"} Account`}
+                        {isLoading ? "Creating profile..." : "Create Profile"}
                       </Button>
                     </div>
                   </form>

@@ -10,7 +10,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import OrganizationHeader from "@/components/layout/organization-header";
-import Footer from "@/components/layout/footer";
 
 interface ITask {
   id: number;
@@ -182,9 +181,6 @@ export default function Tasks() {
         </TabsContent>
       </Tabs>
       </div>
-      
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }

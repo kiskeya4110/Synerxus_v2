@@ -110,6 +110,23 @@ export default function CorporatePartnerIntake() {
     enabled: !!userId
   });
 
+  // Fetch existing CSR partner profile
+  const { data: existingProfile } = useQuery<CorporatePartnerForm & { id?: number; logo?: string } | null>({
+    queryKey: ['/api/csr/partners', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      try {
+        const response = await fetch(`/api/csr/partners?userId=${userId}`);
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data || null;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!userId
+  });
+
   const form = useForm<CorporatePartnerForm>({
     resolver: zodResolver(corporatePartnerSchema),
     defaultValues: {
@@ -124,6 +141,27 @@ export default function CorporatePartnerIntake() {
       onboardingCompleted: true
     }
   });
+
+  // Populate form with existing profile data
+  useEffect(() => {
+    if (existingProfile) {
+      form.reset({
+        companyName: existingProfile.companyName || "",
+        contactEmail: existingProfile.contactEmail || "",
+        contactPhone: existingProfile.contactPhone || "",
+        industryType: existingProfile.industryType || "",
+        employeeCount: existingProfile.employeeCount || 0,
+        annualCSRBudget: existingProfile.annualCSRBudget || 0,
+        primarySdgs: existingProfile.primarySdgs || [],
+        vtoTrackingEnabled: existingProfile.vtoTrackingEnabled ?? true,
+        onboardingCompleted: true
+      });
+      setSelectedSdgs(existingProfile.primarySdgs || []);
+      if (existingProfile.logo) {
+        setLogoUrl(existingProfile.logo);
+      }
+    }
+  }, [existingProfile, form]);
 
   const createPartnerMutation = useMutation({
     mutationFn: async (data: CorporatePartnerForm) => {
@@ -160,6 +198,27 @@ export default function CorporatePartnerIntake() {
 
   async function onSubmit(data: CorporatePartnerForm) {
     createPartnerMutation.mutate({ ...data, primarySdgs: selectedSdgs });
+  }
+
+  // If profile is already completed, show message and redirect option
+  if (existingProfile?.onboardingCompleted) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="text-green-700">Profile Already Completed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-700 mb-4">
+              Your corporate partner profile has already been set up. You can now access all features or return to the dashboard.
+            </p>
+            <Button onClick={() => navigate("/csr-dashboard")} className="bg-primary">
+              Go to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -237,7 +296,7 @@ export default function CorporatePartnerIntake() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Industry</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select your industry" />

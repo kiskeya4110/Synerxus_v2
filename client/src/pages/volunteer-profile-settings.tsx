@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
@@ -183,6 +184,8 @@ const formSchema = insertVolunteerSchema
       "flexible",
     ]),
     preferredWorkStyle: z.enum(["remote", "in-person", "hybrid"]).optional(),
+    // Personal statement for volunteer ID card
+    personalStatement: z.string().max(200, "Personal statement must be 200 characters or less").optional(),
     // New matching priorities
     matchingPriorities: z
       .object({
@@ -384,6 +387,35 @@ const PersonalInfoSection = ({
 
     <FormField
       control={form.control}
+      name="personalStatement"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="flex items-center gap-2">
+            <Heart className="h-4 w-4" />
+            Personal Statement
+          </FormLabel>
+          <FormControl>
+            <Textarea
+              placeholder="Share your mission and what drives you to volunteer..."
+              className="min-h-[80px] resize-none"
+              maxLength={200}
+              {...field}
+              data-testid="input-volunteer-personal-statement"
+            />
+          </FormControl>
+          <FormDescription>
+            A short mission statement that will appear on your volunteer ID card (max 200 characters)
+          </FormDescription>
+          <div className="text-xs text-muted-foreground text-right">
+            {(field.value?.length || 0)}/200
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+
+    <FormField
+      control={form.control}
       name="location"
       render={({ field }) => (
         <FormItem>
@@ -498,7 +530,7 @@ const AvailabilitySection = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Timezone</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your timezone" />
@@ -526,7 +558,7 @@ const AvailabilitySection = ({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Preferred Commitment Type</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select commitment type" />
@@ -558,7 +590,7 @@ const AvailabilitySection = ({
               <Laptop className="h-4 w-4" />
               Preferred Work Style
             </FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value || ""}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Select work style" />
@@ -930,6 +962,7 @@ export default function VolunteerProfileSettings() {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       preferredCommitment: "flexible",
       preferredWorkStyle: "remote",
+      personalStatement: "",
       matchingPriorities: {
         skillsMatch: 3,
         causeAlignment: 3,
@@ -972,6 +1005,7 @@ export default function VolunteerProfileSettings() {
         preferredCommitment:
           existingProfile.preferredCommitment || "flexible",
         preferredWorkStyle: existingProfile.preferredWorkStyle || "remote",
+        personalStatement: existingProfile.personalStatement || "",
         matchingPriorities: existingProfile.matchingPriorities || {
           skillsMatch: 3,
           causeAlignment: 3,
@@ -1000,6 +1034,7 @@ export default function VolunteerProfileSettings() {
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         preferredCommitment: "flexible",
         preferredWorkStyle: "remote",
+        personalStatement: "",
         matchingPriorities: {
           skillsMatch: 3,
           causeAlignment: 3,
@@ -1045,6 +1080,7 @@ export default function VolunteerProfileSettings() {
           Intl.DateTimeFormat().resolvedOptions().timeZone,
         preferredCommitment: profileData.preferredCommitment || "flexible",
         preferredWorkStyle: profileData.preferredWorkStyle || "remote",
+        personalStatement: profileData.personalStatement || "",
         matchingPriorities: profileData.matchingPriorities || {
           skillsMatch: 3,
           causeAlignment: 3,
@@ -1132,6 +1168,7 @@ export default function VolunteerProfileSettings() {
         timezone: data.timezone,
         preferredCommitment: data.preferredCommitment,
         preferredWorkStyle: data.preferredWorkStyle,
+        personalStatement: data.personalStatement,
         matchingPriorities: data.matchingPriorities,
         experienceLevel: data.experienceLevel,
         profilePhotoUrl: profilePhotoUrl,

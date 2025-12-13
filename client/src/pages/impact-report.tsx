@@ -8,7 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Home, Briefcase, Lightbulb, User as UserIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Share2, Copy, Printer, ArrowLeft, TrendingUp, Users, Target, BarChart3, Layout, Rows3, Download, Twitter, Linkedin, Facebook, Home, Briefcase, Lightbulb, User as UserIcon, Calendar } from "lucide-react";
 import type { User, Task, ProjectAssignment, Organization } from "@shared/schema";
 import { sdgGoals, getSDGName } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
@@ -630,6 +631,22 @@ export default function ImpactReport() {
           </Button>
           
           <div className="flex gap-1.5 md:gap-2 flex-wrap justify-end w-full md:w-auto">
+            {/* Time Filter */}
+            <div className="flex items-center gap-1.5 print:hidden">
+              <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-gray-500" />
+              <Select value={timeFilter} onValueChange={(value: "all" | "month" | "quarter" | "year") => setTimeFilter(value)}>
+                <SelectTrigger className="h-7 md:h-8 w-[100px] md:w-[130px] text-[10px] md:text-sm">
+                  <SelectValue placeholder="Time Period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="quarter">This Quarter</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* View Mode Toggle - Compact on mobile */}
             <div className="flex gap-0.5 bg-gray-200 dark:bg-gray-700 rounded-lg p-0.5 md:p-1 print:hidden">
               <Button

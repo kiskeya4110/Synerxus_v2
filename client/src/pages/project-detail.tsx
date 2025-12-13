@@ -17,7 +17,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import OrganizationHeader from "@/components/layout/organization-header";
-import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 
 const SDG_COLORS: { [key: number]: string } = {
@@ -1028,9 +1027,6 @@ export default function ProjectDetail() {
           </div>
         </div>
       </div>
-
-      {/* Footer */}
-      <Footer />
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />

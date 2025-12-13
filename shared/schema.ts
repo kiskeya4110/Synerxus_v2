@@ -491,6 +491,7 @@ export const volunteerProfiles = pgTable("volunteer_profiles", {
   preferredWorkStyle: text("preferred_work_style"), // remote, in-person, hybrid
   preferredSdgs: integer("preferred_sdgs").array(), // SDG goals the volunteer cares about
   matchingPriorities: jsonb("matching_priorities"), // {skillsMatch: 5, causeAlignment: 5, timeFlexibility: 5, geographicPreference: 5, impactPotential: 5}
+  personalStatement: text("personal_statement"), // Mission statement displayed on volunteer ID card
   motivations: text("motivations"), // Why they want to volunteer
   achievements: text("achievements").array(),
   phoneNumber: text("phone_number"),

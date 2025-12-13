@@ -8,6 +8,7 @@ import { isValidSdg, filterValidSdgs, extractSdgsFromProjects, compareSdgArrays 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
@@ -84,6 +85,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
 
   // Handle logout using proper auth signOut
   const handleLogout = async () => {
@@ -106,6 +108,43 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const projects = dashboardData?.projects || [];
   const volunteerProfile = dashboardData?.volunteerProfile;
   const volunteerActivities = dashboardData?.activities || [];
+
+  // Filter activities by time period for impacts tab
+  const getFilteredActivities = () => {
+    const activities = Array.isArray(volunteerActivities) ? volunteerActivities : [];
+
+    const now = new Date();
+    let startDate = new Date(0); // All time
+
+    switch(timeFilter) {
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case 'quarter':
+        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+
+    return activities.filter((a: any) => {
+      if (!a?.date && !a?.createdAt) return true;
+      try {
+        const activityDate = new Date(a.date || a.createdAt);
+        return activityDate >= startDate;
+      } catch {
+        return true;
+      }
+    });
+  };
+
+  const filteredActivities = getFilteredActivities();
+
+  // Calculate filtered hours for time-filtered display
+  const filteredTotalHours = useMemo(() => {
+    return Math.round(filteredActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0));
+  }, [filteredActivities]);
 
   // Fetch AIU summary for volunteer
   const { data: aiuSummary } = useQuery<AIUSummary>({
@@ -327,6 +366,53 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Show up to 8 SDGs
   }, [projects, volunteerActivities]);
+
+  // Filtered SDG Distribution for time-filtered display
+  const filteredSdgDistribution = useMemo(() => {
+    if (timeFilter === 'all') return sdgDistribution;
+
+    const safeProjects = Array.isArray(projects) ? projects : [];
+
+    // Aggregate hours per SDG from filtered activities
+    const sdgHours: { [key: number]: number } = {};
+    const sdgProjects: { [key: number]: Set<number> } = {};
+
+    // Build project SDG map
+    const projectSdgMap: { [projectId: number]: number[] } = {};
+    safeProjects.forEach((p: any) => {
+      if (p?.id && Array.isArray(p?.sdgGoals)) {
+        projectSdgMap[p.id] = p.sdgGoals.filter(isValidSdg);
+      }
+    });
+
+    filteredActivities.forEach((activity: any) => {
+      const projectId = activity?.projectId;
+      const hours = Number(activity?.hours) || 0;
+
+      if (projectId && projectSdgMap[projectId] && hours > 0) {
+        const sdgs = projectSdgMap[projectId];
+        const hoursPerSdg = hours / sdgs.length;
+
+        sdgs.forEach((sdg: number) => {
+          sdgHours[sdg] = (sdgHours[sdg] || 0) + hoursPerSdg;
+          if (!sdgProjects[sdg]) sdgProjects[sdg] = new Set();
+          sdgProjects[sdg].add(projectId);
+        });
+      }
+    });
+
+    return Object.entries(sdgHours)
+      .map(([sdg, hours]) => ({
+        sdg: parseInt(sdg),
+        name: SDG_NAMES[parseInt(sdg)] || `SDG ${sdg}`,
+        value: Math.round(hours * 10) / 10,
+        projectCount: sdgProjects[parseInt(sdg)]?.size || 0,
+        color: SDG_COLORS[parseInt(sdg)] || '#6B7280'
+      }))
+      .filter(item => item.projectCount > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
+  }, [timeFilter, projects, filteredActivities, sdgDistribution]);
 
   // FACT-BASED AI Smart Summary Generator
   // Generates insights based ONLY on actual data - no hallucinations or false claims
@@ -1791,19 +1877,40 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
         {activeTab === 'impacts' && (
           <div className="space-y-4 p-4">
-            {/* Dashboard Title */}
-            <h1 className="text-slate-800 text-2xl font-bold">Dashboard</h1>
+            {/* Dashboard Title with Time Filter */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-slate-800 text-2xl font-bold">Dashboard</h1>
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-4 w-4 text-gray-500" />
+                <Select value={timeFilter} onValueChange={(value: "all" | "month" | "quarter" | "year") => setTimeFilter(value)}>
+                  <SelectTrigger className="h-8 w-[110px] text-xs">
+                    <SelectValue placeholder="Time Period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="quarter">This Quarter</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
             {/* SDG Impact Snapshot - Green Gradient Card with AIU */}
             <div className="bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-xl p-4 text-white shadow-lg">
               <h2 className="text-lg font-semibold mb-3">SDG Impact Snapshot</h2>
               <div className="grid grid-cols-2 gap-4 mb-3">
-                {/* Hours */}
+                {/* Hours - uses filtered data when time filter is active */}
                 <div className="flex items-center gap-2">
                   <Clock className="w-6 h-6 opacity-80" />
                   <div>
-                    <div className="text-3xl font-bold">{kpis.totalHours}</div>
-                    <div className="text-xs opacity-80">Volunteer Hours</div>
+                    <div className="text-3xl font-bold">{timeFilter === 'all' ? kpis.totalHours : filteredTotalHours}</div>
+                    <div className="text-xs opacity-80">
+                      {timeFilter === 'all' ? 'Volunteer Hours' :
+                       timeFilter === 'month' ? 'Hours This Month' :
+                       timeFilter === 'quarter' ? 'Hours This Quarter' :
+                       'Hours This Year'}
+                    </div>
                   </div>
                 </div>
                 {/* AIU Score */}
@@ -1817,16 +1924,19 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </div>
               <div className="flex items-center gap-2 border-t border-white/30 pt-2 mt-2">
                 <Globe className="w-5 h-5 opacity-80" />
-                <span className="text-sm">Contributed to {kpis.sdgsContributed} SDGs</span>
+                <span className="text-sm">
+                  Contributed to {timeFilter === 'all' ? kpis.sdgsContributed : filteredSdgDistribution.length} SDGs
+                  {timeFilter !== 'all' && <span className="opacity-80 ml-1">({timeFilter === 'month' ? 'this month' : timeFilter === 'quarter' ? 'this quarter' : 'this year'})</span>}
+                </span>
                 <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">
                   {Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}% Verified
                 </span>
               </div>
             </div>
 
-            {/* SDG Grid with Checkmarks */}
+            {/* SDG Grid with Checkmarks - uses filtered data when time filter is active */}
             <div className="grid grid-cols-4 gap-2">
-              {sdgDistribution.slice(0, 8).map((sdg, idx) => (
+              {filteredSdgDistribution.slice(0, 8).map((sdg, idx) => (
                 <div
                   key={`${sdg.sdg}-${idx}`}
                   className="relative rounded-lg p-3 flex items-center justify-center aspect-square"
@@ -1843,7 +1953,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 </div>
               ))}
               {/* Fill empty slots if less than 8 SDGs */}
-              {Array.from({ length: Math.max(0, 8 - sdgDistribution.length) }).map((_, idx) => (
+              {Array.from({ length: Math.max(0, 8 - filteredSdgDistribution.length) }).map((_, idx) => (
                 <div
                   key={`empty-${idx}`}
                   className="rounded-lg p-3 flex items-center justify-center aspect-square bg-slate-200 border border-gray-600"
@@ -1882,15 +1992,15 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </div>
             </div>
 
-            {/* Your Top SDGs - Bar Chart */}
+            {/* Your Top SDGs - Bar Chart - uses filtered data when time filter is active */}
             <div>
               <h2 className="text-slate-800 text-lg font-semibold mb-3">Your Top SDGS</h2>
               <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-                {sdgDistribution.length > 0 ? (
+                {filteredSdgDistribution.length > 0 ? (
                   <>
                     <div className="h-32" style={{ isolation: 'isolate' }}>
                       <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-tooltip-wrapper]:!z-[9999]">
-                        <BarChart data={sdgDistribution.slice(0, 4)} layout="horizontal">
+                        <BarChart data={filteredSdgDistribution.slice(0, 4)} layout="horizontal">
                           <XAxis type="category" dataKey="sdg" stroke="#9CA3AF" fontSize={10} tickFormatter={(val) => `SDG ${val}`} />
                           <YAxis type="number" stroke="#9CA3AF" fontSize={10} />
                           <Tooltip
@@ -1902,7 +2012,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             labelFormatter={(label) => `SDG ${label}`}
                           />
                           <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                            {sdgDistribution.slice(0, 4).map((entry, index) => (
+                            {filteredSdgDistribution.slice(0, 4).map((entry, index) => (
                               <Cell key={`bar-${index}`} fill={entry.color} />
                             ))}
                           </Bar>
@@ -1911,7 +2021,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </div>
                     {/* Legend */}
                     <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-200">
-                      {sdgDistribution.slice(0, 4).map((sdg) => (
+                      {filteredSdgDistribution.slice(0, 4).map((sdg) => (
                         <div key={sdg.sdg} className="flex items-center gap-2 text-xs">
                           <div className="w-3 h-3 rounded" style={{ backgroundColor: sdg.color }}></div>
                           <span className="text-slate-600">SDG {sdg.sdg} {sdg.name}</span>
@@ -1923,8 +2033,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   <div className="h-32 flex items-center justify-center text-gray-500">
                     <div className="text-center">
                       <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No SDG data yet</p>
-                      <p className="text-xs mt-1">Join projects to contribute to SDGs</p>
+                      <p className="text-sm">{timeFilter === 'all' ? 'No SDG data yet' : 'No SDG data for this period'}</p>
+                      <p className="text-xs mt-1">{timeFilter === 'all' ? 'Join projects to contribute to SDGs' : 'Try selecting a different time period'}</p>
                     </div>
                   </div>
                 )}

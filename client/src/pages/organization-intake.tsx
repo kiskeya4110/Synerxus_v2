@@ -420,7 +420,7 @@ export default function OrganizationIntake() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Organization Type</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger data-testid="select-org-type">
                                 <SelectValue placeholder="Select type" />
@@ -446,7 +446,7 @@ export default function OrganizationIntake() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Organization Size</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger data-testid="select-org-size">
                                 <SelectValue placeholder="Select size" />
@@ -485,7 +485,7 @@ export default function OrganizationIntake() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Geographic Scope</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger data-testid="select-geographic-scope">
                                 <SelectValue placeholder="Select scope" />

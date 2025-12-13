@@ -177,26 +177,24 @@ export default function App() {
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
-          <Route path="/dashboard" component={Dashboard} />
+          {/* CSR/Corporate Partner routes - standalone layout */}
           <Route path="/csr-dashboard" component={CSRDashboard} />
           <Route path="/csr-dashboard-pwa" component={CSRDashboardPWA} />
           <Route path="/employee-engagement-tab" component={EmployeeEngagementTabPage} />
           <Route path="/team-overview" component={TeamOverview} />
-          <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
-          <Route path="/organization-dashboard" component={OrganizationDashboard} />
-          <Route path="/overview" component={Overview} />
-          <Route path="/organization-my-work" component={MyWork} />
           <Route path="/csr-impact-reporting" component={CSRImpactReporting} />
           <Route path="/project-portfolio" component={ProjectPortfolio} />
           <Route path="/csr-reports-exports" component={CSRReportsExports} />
-          <Route path="/projects" component={Projects} />
-          <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
-          <Route path="/projects/:id" component={ProjectDetail} />
-          <Route path="/projects/:id/edit" component={ProjectEdit} />
+          {/* Organization routes - standalone layout */}
+          <Route path="/organization-dashboard" component={OrganizationDashboard} />
+          <Route path="/organization-my-work" component={MyWork} />
+          <Route path="/organization-messages" component={OrganizationMessages} />
+          <Route path="/overview" component={Overview} />
           <Route path="/volunteers" component={Volunteers} />
+          {/* Standalone utility routes */}
           <Route path="/sdg-mapping" component={SDGMapping} />
           <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>
-          <Route path="/organization-messages" component={OrganizationMessages} />
+          {/* All other routes go through Layout (includes VolunteerNav and Footer) */}
           <Route component={LayoutRoute} />
         </Router>
       </OnboardingProvider>
@@ -207,35 +205,52 @@ export default function App() {
 function LayoutRoute() {
   return (
     <Layout>
+      {/* Dashboards - volunteers get nav/footer via Layout */}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
+      {/* Projects */}
+      <Route path="/projects" component={Projects} />
+      <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
+      <Route path="/projects/:id/edit" component={ProjectEdit} />
+      <Route path="/projects/:id" component={ProjectDetail} />
+      {/* Profile & Settings */}
       <Route path="/profile" component={Profile} />
       <Route path="/volunteer-profile-settings" component={VolunteerProfileSettings} />
       <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
       <Route path="/corporate-partner-profile-settings" component={CorporatePartnerProfileSettings} />
+      {/* Work & Tasks */}
       <Route path="/my-work" component={MyWork} />
       <Route path="/log-activity" component={LogActivity} />
       <Route path="/tasks" component={Tasks} />
+      {/* Intake Forms */}
       <Route path="/volunteer-intake" component={VolunteerIntake} />
       <Route path="/organization-intake" component={OrganizationIntake} />
       <Route path="/corporate-partner-intake" component={CorporatePartnerIntake} />
+      {/* Opportunities */}
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
       <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
       <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
       <Route path="/opportunities/:id" component={OpportunityDetail} />
+      {/* Applications */}
       <Route path="/applications" component={Applications} />
       <Route path="/my-applications" component={MyApplications} />
       <Route path="/organizations" component={Organizations} />
+      {/* Calendar & Impact */}
       <Route path="/calendar" component={Calendar} />
       <Route path="/impact-report/:volunteerId?" component={ImpactReport} />
       <Route path="/organization-impact-report/:organizationId?" component={OrganizationImpactReport} />
       <Route path="/mobile-data-collection" component={MobileDataCollection} />
       <Route path="/impact-storytelling" component={ImpactStorytellingPage} />
+      {/* Assignments & Matching */}
       <Route path="/assignments" component={Assignments} />
       <Route path="/matched-volunteers" component={MatchedVolunteers} />
+      {/* Notifications & Achievements */}
       <Route path="/email-digests" component={EmailDigests} />
       <Route path="/achievements" component={Achievements} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
+      {/* Messages */}
       <Route path="/volunteer-messages" component={VolunteerMessages} />
       <Route path="/volunteer-messages/pwa" component={VolunteerMessagesPWA} />
     </Layout>

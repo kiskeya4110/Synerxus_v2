@@ -17,6 +17,7 @@ import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import { Link } from "wouter";
 import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -192,27 +193,34 @@ export default function Profile() {
     return Math.round(avgRating / 20); // Convert 0-100 to 0-5 star scale
   };
 
+  const isOrganization = currentUser?.userType === 'organization';
+
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <Skeleton className="h-64 w-full" />
-      </div>
+      <>
+        {isOrganization && <OrganizationHeader activeTab="profile" />}
+        <div className="container mx-auto px-4 py-8">
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </>
     );
   }
 
   const isVolunteer = currentUser?.userType === 'volunteer';
   const profile = isVolunteer ? volunteerProfile : organizationData;
-  
+
   // For organizations, use primarySdgs from organization data instead of sdgGoals
-  const sdgsToDisplay = isVolunteer 
-    ? volunteerProfile?.preferredSdgs 
+  const sdgsToDisplay = isVolunteer
+    ? volunteerProfile?.preferredSdgs
     : organizationData?.primarySdgs;
   const initials = currentUser?.displayName
     ? currentUser.displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase()
     : currentUser?.email?.[0].toUpperCase();
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <>
+      {isOrganization && <OrganizationHeader activeTab="profile" />}
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Header Section */}
         <Card>
@@ -780,5 +788,6 @@ export default function Profile() {
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
     </div>
+    </>
   );
 }

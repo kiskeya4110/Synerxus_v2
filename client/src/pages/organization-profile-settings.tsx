@@ -17,6 +17,7 @@ import { Loader2, Plus, X, Building2, MapPin, Target, Heart } from "lucide-react
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
+import OrganizationHeader from "@/components/layout/organization-header";
 
 // SDG options (1-17)
 const SDG_OPTIONS = [
@@ -290,34 +291,43 @@ export default function OrganizationProfileSettings() {
   // Show loading while user data is loading
   if (userLoading || loadingProfile) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Loading organization profile...</p>
-      </div>
+      <>
+        <OrganizationHeader activeTab="settings" />
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading organization profile...</p>
+        </div>
+      </>
     );
   }
 
   // Handle case when no userId is found
   if (!userId) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Building2 className="h-12 w-12 text-muted-foreground" />
-        <h2 className="text-xl font-semibold">Session Expired</h2>
-        <p className="text-muted-foreground">Please log in to access your organization profile.</p>
-        <Button onClick={() => setLocation("/login")}>Go to Login</Button>
-      </div>
+      <>
+        <OrganizationHeader activeTab="settings" />
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+          <Building2 className="h-12 w-12 text-muted-foreground" />
+          <h2 className="text-xl font-semibold">Session Expired</h2>
+          <p className="text-muted-foreground">Please log in to access your organization profile.</p>
+          <Button onClick={() => setLocation("/login")}>Go to Login</Button>
+        </div>
+      </>
     );
   }
 
   // Handle errors
   if (userError || profileError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Building2 className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-semibold">Unable to Load Profile</h2>
-        <p className="text-muted-foreground">There was an error loading your profile data.</p>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
-      </div>
+      <>
+        <OrganizationHeader activeTab="settings" />
+        <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+          <Building2 className="h-12 w-12 text-destructive" />
+          <h2 className="text-xl font-semibold">Unable to Load Profile</h2>
+          <p className="text-muted-foreground">There was an error loading your profile data.</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </>
     );
   }
 
@@ -362,11 +372,13 @@ export default function OrganizationProfileSettings() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
-        <p className="text-muted-foreground">
-          Create or update your organization profile to get matched with volunteers who have the skills and passion to help your mission.
+    <>
+      <OrganizationHeader activeTab="settings" />
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
+          <p className="text-muted-foreground">
+            Create or update your organization profile to get matched with volunteers who have the skills and passion to help your mission.
         </p>
       </div>
 
@@ -585,6 +597,7 @@ export default function OrganizationProfileSettings() {
           </Form>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

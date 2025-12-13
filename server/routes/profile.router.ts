@@ -636,9 +636,22 @@ profileRouter.post("/intake/organization-profile", async (req: Request, res: Res
       await storage.updateUser(user.id, userUpdates);
     }
 
-    // Update organization with logo if provided
+    // Update organization with logo and volunteer needs if provided
+    const orgUpdates: any = {};
     if (req.body.logo) {
-      await storage.updateOrganization(organizationId, { logo: req.body.logo });
+      orgUpdates.logo = req.body.logo;
+    }
+    if (req.body.volunteerNeeds) {
+      orgUpdates.needs = req.body.volunteerNeeds;
+    }
+    if (req.body.primarySdgs) {
+      orgUpdates.primarySdgs = req.body.primarySdgs;
+    }
+    if (req.body.missionStatement) {
+      orgUpdates.goals = req.body.missionStatement;
+    }
+    if (Object.keys(orgUpdates).length > 0) {
+      await storage.updateOrganization(organizationId, orgUpdates);
     }
 
     // Create or update matchable organization for algorithm
@@ -655,6 +668,12 @@ profileRouter.post("/intake/organization-profile", async (req: Request, res: Res
         sdgFocus: profile.primarySdgs || [],
         location: organization.address || ''
       };
+
+      console.log('[OrganizationIntake] Syncing volunteer needs to matchable org:', {
+        organizationId,
+        volunteerNeeds: profile.volunteerNeeds,
+        matchableOrgId
+      });
 
       if (existingMatchableOrg) {
         await storage.updateMatchableOrganization(matchableOrgId, matchableOrgData);

@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Search, Briefcase, User, Settings, Menu, X, LogOut, Bell, LayoutDashboard, Clock, FileText, TrendingUp } from "lucide-react";
+import { Home, Briefcase, User, Settings, Menu, X, LogOut, Bell, Lightbulb, BarChart3, ClipboardList } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
@@ -8,12 +8,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import logoImage from "@assets/Synerxus_Logo_1765433966690.png";
 
+// Desktop nav items match PWA bottom nav for consistent UX
 const VOLUNTEER_NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, description: "KPIs & Metrics" },
-  { href: "/log-activity", label: "Log Hours", icon: <Clock className="w-4 h-4" />, description: "Track Your Time" },
-  { href: "/discover-opportunities", label: "Discover", icon: <Search className="w-4 h-4" />, description: "Find Opportunities" },
-  { href: "/my-work", label: "My Work", icon: <Briefcase className="w-4 h-4" />, description: "Tasks & Projects" },
-  { href: "/impact-report", label: "Impact", icon: <TrendingUp className="w-4 h-4" />, description: "View Your Impact" },
+  { href: "/volunteer-dashboard", label: "Home", icon: <Home className="w-4 h-4" />, description: "Dashboard & Metrics" },
+  { href: "/projects", label: "Projects", icon: <Briefcase className="w-4 h-4" />, description: "Your Projects" },
+  { href: "/my-work", label: "My Work", icon: <ClipboardList className="w-4 h-4" />, description: "Tasks & Assignments" },
+  { href: "/discover-opportunities", label: "Insights", icon: <Lightbulb className="w-4 h-4" />, description: "Discover Opportunities" },
+  { href: "/impact-report", label: "Impact", icon: <BarChart3 className="w-4 h-4" />, description: "View Your Impact" },
 ];
 
 const MENU_ITEMS = [
@@ -87,7 +88,11 @@ export default function VolunteerNav() {
             <div className="flex items-center gap-1 overflow-x-auto border-l border-gray-200 dark:border-gray-700 pl-6">
               {VOLUNTEER_NAV_ITEMS.map((item) => {
                 const isActive = location === item.href ||
-                               (item.href === '/dashboard' && location.startsWith('/dashboard'));
+                               (item.href === '/volunteer-dashboard' && (location === '/dashboard' || location.startsWith('/volunteer-dashboard'))) ||
+                               (item.href === '/projects' && location.startsWith('/projects')) ||
+                               (item.href === '/my-work' && location.startsWith('/my-work')) ||
+                               (item.href === '/discover-opportunities' && location.includes('discover-opportunities')) ||
+                               (item.href === '/impact-report' && location.includes('impact-report'));
 
                 return (
                   <Link

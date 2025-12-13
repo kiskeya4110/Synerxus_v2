@@ -6,12 +6,15 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build:cluster": "vite build && esbuild server/index-cluster.ts server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.js",
+    "start:cluster": "NODE_ENV=production tsx server/index-cluster.ts",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "synerxus": "./start-synerxus.sh",
     "seed": "tsx dummy/seed-data.ts",
-    "test:python": "cd python_backend && source .venv/bin/activate && pytest test_main.py -v"
+    "test:python": "cd python_backend && source .venv/bin/activate && pytest test_main.py -v",
+    "test:load": "npx autocannon -c 1000 -d 20 http://localhost:5000/api/users"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

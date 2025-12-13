@@ -40,7 +40,18 @@
       "Bash(du:*)",
       "Bash(python3:*)",
       "Bash(npx tsx:*)",
-      "Bash(npx drizzle-kit:*)"
+      "Bash(npx drizzle-kit:*)",
+      "Bash(git tag:*)",
+      "Bash(npm install:*)",
+      "Bash(if [ -n \"$DATABASE_URL\" ])",
+      "Bash(then)",
+      "Bash(psql:*)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(NODE_ENV=production node:*)",
+      "Bash(npx autocannon:*)",
+      "Bash(RATE_LIMIT_MAX=100000 NODE_ENV=production node:*)",
+      "Bash(RATE_LIMIT_MAX=100000 npm run start:cluster:*)"
     ],
     "deny": [],
     "ask": []

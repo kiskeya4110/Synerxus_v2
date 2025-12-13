@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, Component } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,11 +52,57 @@ const formSchema = insertMatchableOrganizationSchema.extend({
 
 type FormData = z.infer<typeof formSchema>;
 
+// Error boundary to catch and prevent cascade failures
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+class OrganizationProfileErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Organization profile error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <>
+          <OrganizationHeader activeTab="settings" />
+          <div className="flex flex-col items-center justify-center min-h-screen gap-4">
+            <Building2 className="h-12 w-12 text-destructive" />
+            <h2 className="text-xl font-semibold">Something Went Wrong</h2>
+            <p className="text-muted-foreground">We encountered an error loading your profile.</p>
+            <Button onClick={() => this.setState({ hasError: false })}>Try Again</Button>
+          </div>
+        </>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function OrganizationProfileSettings() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [needInput, setNeedInput] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
+  
+  // Guard against repeated operations
+  const redirectAttemptedRef = useRef(false);
+  const formResetAttemptedRef = useRef(false);
 
   // Get userId from localStorage for proper data scoping
   const userId = localStorage.getItem("currentUserId");
@@ -105,11 +151,15 @@ export default function OrganizationProfileSettings() {
     (orgProfileData?.organizationName && o.name === orgProfileData.organizationName)
   );
 
-  // Redirect non-organization users
+  // Redirect non-organization users (with guard to prevent infinite loops)
   useEffect(() => {
+    if (redirectAttemptedRef.current) return; // Already attempted, don't repeat
+    
     if (currentUser?.userType === "volunteer") {
+      redirectAttemptedRef.current = true;
       setLocation("/volunteer-profile-settings");
     } else if (currentUser?.userType === "corporate-partner") {
+      redirectAttemptedRef.current = true;
       setLocation("/corporate-partner-profile-settings");
     }
   }, [currentUser?.userType, setLocation]);
@@ -127,48 +177,57 @@ export default function OrganizationProfileSettings() {
   });
 
   // Reset form when profile data loads (critical: useForm needs form.reset() for async data)
+  // Guard against repeated resets to prevent infinite loops
   useEffect(() => {
     if (userLoading || loadingProfile) return;
+    if (formResetAttemptedRef.current) return; // Prevent repeated form resets
 
-    const hasMatchableProfile = existingProfile && Object.keys(existingProfile).length > 0;
-    const hasOrgProfile = orgProfileData && Object.keys(orgProfileData).length > 0;
+    try {
+      const hasMatchableProfile = existingProfile && Object.keys(existingProfile).length > 0;
+      const hasOrgProfile = orgProfileData && Object.keys(orgProfileData).length > 0;
 
-    if (hasMatchableProfile) {
-      // Existing matchable organization profile - populate form with all data
-      form.reset({
-        email: existingProfile.email || currentUser?.email || "",
-        name: existingProfile.name || "",
-        mission: existingProfile.mission || "",
-        location: existingProfile.location || "",
-        needs: existingProfile.needs || [],
-        sdgFocus: existingProfile.sdgFocus || [],
-      });
-      if (existingProfile.logo) {
-        setLogoUrl(existingProfile.logo);
+      if (hasMatchableProfile) {
+        // Existing matchable organization profile - populate form with all data
+        form.reset({
+          email: existingProfile.email || currentUser?.email || "",
+          name: existingProfile.name || "",
+          mission: existingProfile.mission || "",
+          location: existingProfile.location || "",
+          needs: existingProfile.needs || [],
+          sdgFocus: existingProfile.sdgFocus || [],
+        });
+        if (existingProfile.logo) {
+          setLogoUrl(existingProfile.logo);
+        }
+      } else if (hasOrgProfile) {
+        // Fallback to organization profile data if no matchable org found
+        form.reset({
+          email: currentUser?.email || "",
+          name: orgProfileData.organizationName || currentUser?.displayName || "",
+          mission: orgProfileData.mission || "",
+          location: orgProfileData.location || "",
+          needs: orgProfileData.needs || [],
+          sdgFocus: orgProfileData.sdgFocus || orgProfileData.primarySdgs || [],
+        });
+        if (orgProfileData.profilePhotoUrl || orgProfileData.logo) {
+          setLogoUrl(orgProfileData.profilePhotoUrl || orgProfileData.logo);
+        }
+      } else if (currentUser?.email) {
+        // New profile - initialize with user data only
+        form.reset({
+          email: currentUser.email,
+          name: currentUser.displayName || "",
+          mission: "",
+          location: "",
+          needs: [],
+          sdgFocus: [],
+        });
       }
-    } else if (hasOrgProfile) {
-      // Fallback to organization profile data if no matchable org found
-      form.reset({
-        email: currentUser?.email || "",
-        name: orgProfileData.organizationName || currentUser?.displayName || "",
-        mission: orgProfileData.mission || "",
-        location: orgProfileData.location || "",
-        needs: orgProfileData.needs || [],
-        sdgFocus: orgProfileData.sdgFocus || orgProfileData.primarySdgs || [],
-      });
-      if (orgProfileData.profilePhotoUrl || orgProfileData.logo) {
-        setLogoUrl(orgProfileData.profilePhotoUrl || orgProfileData.logo);
-      }
-    } else if (currentUser?.email) {
-      // New profile - initialize with user data only
-      form.reset({
-        email: currentUser.email,
-        name: currentUser.displayName || "",
-        mission: "",
-        location: "",
-        needs: [],
-        sdgFocus: [],
-      });
+      
+      formResetAttemptedRef.current = true;
+    } catch (error) {
+      console.error("Form reset error:", error);
+      // Continue gracefully if form reset fails
     }
   }, [existingProfile, orgProfileData, loadingProfile, currentUser, userLoading, form]);
 
@@ -372,17 +431,18 @@ export default function OrganizationProfileSettings() {
   };
 
   return (
-    <>
-      <OrganizationHeader activeTab="settings" />
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
-        <div className="mb-8">
+    <OrganizationProfileErrorBoundary>
+      <>
+        <OrganizationHeader activeTab="settings" />
+        <div className="container mx-auto py-8 px-4 max-w-4xl">
+          <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Organization Profile Settings</h1>
           <p className="text-muted-foreground">
             Create or update your organization profile to get matched with volunteers who have the skills and passion to help your mission.
           </p>
-        </div>
+          </div>
 
-        <Card>
+          <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5" />
@@ -595,9 +655,10 @@ export default function OrganizationProfileSettings() {
               </div>
             </form>
           </Form>
-        </CardContent>
-      </Card>
-    </div>
-    </>
+          </CardContent>
+          </Card>
+        </div>
+      </>
+    </OrganizationProfileErrorBoundary>
   );
 }

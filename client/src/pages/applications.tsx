@@ -62,16 +62,16 @@ export default function ApplicationsPage() {
 
   // Fetch applications for this organization only
   const { data: applications = [], isLoading } = useQuery<Application[]>({
-    queryKey: ["/api/applications", organizationId],
+    queryKey: ["/api/applications", organizationId, userId],
     queryFn: async () => {
       // Fetch applications scoped to this organization's opportunities
-      const url = organizationId 
+      const url = organizationId
         ? `/api/applications?organizationId=${organizationId}`
-        : "/api/applications";
+        : `/api/applications?userId=${userId}`;
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch applications");
       const apps = await response.json();
-      
+
       // Enrich with opportunity and volunteer data
       const enrichedApps = await Promise.all(
         apps.map(async (app: Application) => {
@@ -80,7 +80,7 @@ export default function ApplicationsPage() {
               fetch(`/api/opportunities/${app.opportunityId}`),
               fetch(`/api/users/${app.volunteerId}`)
             ]);
-            
+
             return {
               ...app,
               opportunity: oppRes.ok ? await oppRes.json() : null,
@@ -91,10 +91,10 @@ export default function ApplicationsPage() {
           }
         })
       );
-      
+
       return enrichedApps;
     },
-    enabled: !!userId && !!organizationId
+    enabled: !!userId
   });
 
   // Fetch organization's projects for assignment

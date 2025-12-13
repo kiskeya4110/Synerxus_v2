@@ -1397,8 +1397,9 @@ function SDGModal({ sdg, csrData, onClose }: { sdg: number; csrData: any; onClos
   );
 }
 
-// Map Modal
+// Map Modal with auto-zoom to project clusters
 function MapModal({ csrData, filter, setFilter, onClose }: { csrData: any; filter: any; setFilter: any; onClose: () => void }) {
+  const mapRef = useRef<any>(null);
   const projects = csrData?.projectLocations || [];
   const regions: string[] = ['all', ...Array.from(new Set(projects.map((p: any) => p.region).filter(Boolean))) as string[]];
   const filtered = projects.filter((p: any) => {
@@ -1406,6 +1407,26 @@ function MapModal({ csrData, filter, setFilter, onClose }: { csrData: any; filte
     if (filter.status !== 'all' && p.status !== filter.status) return false;
     return true;
   });
+
+  // Auto-zoom to project location cluster
+  useEffect(() => {
+    if (!mapRef.current || filtered.length === 0) return;
+
+    const coords = filtered.map((p: any) => ({ lat: p.lat, lng: p.lng }));
+
+    // Small delay to ensure map is ready
+    setTimeout(() => {
+      if (coords.length === 1) {
+        mapRef.current?.setView([coords[0].lat, coords[0].lng], 6);
+      } else if (coords.length > 1) {
+        const L = (window as any).L;
+        if (L) {
+          const bounds = L.latLngBounds(coords.map((c: any) => [c.lat, c.lng]));
+          mapRef.current?.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
+        }
+      }
+    }, 100);
+  }, [filtered]);
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col">
@@ -1442,7 +1463,7 @@ function MapModal({ csrData, filter, setFilter, onClose }: { csrData: any; filte
 
       {/* Map */}
       <div className="flex-1">
-        <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
+        <MapContainer ref={mapRef} center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
           <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
           {filtered.map((p: any, idx: number) => (
             <CircleMarker

@@ -75,8 +75,19 @@ export default function Volunteers() {
     enabled: !!currentUser
   });
 
-  const { data: volunteerActivities = [] } = useQuery<any[]>({ 
-    queryKey: ["/api/volunteer-activities"] 
+  const { data: volunteerActivities = [] } = useQuery<any[]>({
+    queryKey: ["/api/volunteer-activities"]
+  });
+
+  // Fetch matching candidates from the algorithm for organizations
+  const { data: matchingCandidates = [], isLoading: loadingMatches } = useQuery<any[]>({
+    queryKey: ["/api/volunteers/matches", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/volunteers/matches?userId=${userId}&threshold=30`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!userId && isOrganization
   });
 
   // Fetch organization's projects for assignment
@@ -525,6 +536,204 @@ export default function Volunteers() {
         <Card className="p-12 text-center">
           <p className="text-gray-500 dark:text-gray-400">No volunteers found</p>
         </Card>
+      )}
+
+      {/* Matching Candidates Section - Only for Organizations */}
+      {isOrganization && (
+        <div className="mt-8">
+          <div className="mb-4 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2 flex items-center gap-2">
+              <Zap className="h-6 w-6 text-amber-500" />
+              Potential Matches
+            </h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              Volunteers matched to your organization's needs based on skills and SDG alignment
+            </p>
+          </div>
+
+          {loadingMatches ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="p-6">
+                  <div className="animate-pulse space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : matchingCandidates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {matchingCandidates.map((match: any) => (
+                <Card key={match.volunteerId || match.id} className="hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden group border-2 border-amber-200 dark:border-amber-700">
+                  {/* Match Score Indicator */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 group-hover:h-2 transition-all duration-300" />
+
+                  <CardHeader className="pb-3 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
+                    <div className="absolute top-3 right-3">
+                      <Badge className="gap-1 bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg">
+                        <Target className="h-3 w-3" />
+                        {match.matchScore || match.score || 0}% Match
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar className="h-14 w-14 ring-2 ring-amber-200 dark:ring-amber-700 shadow-md">
+                        <AvatarFallback className="bg-gradient-to-br from-amber-500 to-orange-600 text-white font-bold">
+                          {(match.volunteerName || match.name || match.email || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate text-slate-900 dark:text-white">
+                          {match.volunteerName || match.name || 'Unknown Volunteer'}
+                        </CardTitle>
+                        <CardDescription className="text-xs truncate text-slate-600 dark:text-slate-400">
+                          {match.email || 'No email'}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      {/* Matching Skills */}
+                      {match.matchingSkills && match.matchingSkills.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide flex items-center gap-1">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Matching Skills
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {match.matchingSkills.slice(0, 4).map((skill: string, idx: number) => (
+                              <Badge key={idx} className="text-xs bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {match.matchingSkills.length > 4 && (
+                              <Badge variant="outline" className="text-xs">+{match.matchingSkills.length - 4}</Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* All Skills */}
+                      {match.skills && match.skills.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">All Skills</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {match.skills.slice(0, 5).map((skill: string, idx: number) => (
+                              <Badge key={idx} className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                                {typeof skill === 'string' ? skill : (skill as any).name || skill}
+                              </Badge>
+                            ))}
+                            {match.skills.length > 5 && (
+                              <Badge variant="outline" className="text-xs">+{match.skills.length - 5}</Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* SDG Alignment */}
+                      {match.matchingSdgs && match.matchingSdgs.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 uppercase tracking-wide flex items-center gap-1">
+                            <Target className="h-3 w-3" />
+                            SDG Alignment
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {match.matchingSdgs.slice(0, 5).map((sdg: number) => (
+                              <div
+                                key={sdg}
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                                style={{ backgroundColor: `hsl(${(sdg * 20) % 360}, 70%, 50%)` }}
+                                title={`SDG ${sdg}`}
+                              >
+                                {sdg}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Match Reason */}
+                      {match.matchReason && (
+                        <div className="text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg">
+                          <span className="font-medium">Why matched:</span> {match.matchReason}
+                        </div>
+                      )}
+
+                      {/* Opportunity Match */}
+                      {match.opportunityTitle && (
+                        <div className="text-xs bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg">
+                          <span className="font-medium text-amber-700 dark:text-amber-400">Best fit for:</span>
+                          <span className="ml-1 text-slate-700 dark:text-slate-300">{match.opportunityTitle}</span>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 pt-3">
+                        <Button
+                          size="sm"
+                          className="flex-1 min-h-[40px] bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+                          onClick={() => {
+                            if (match.volunteerId) {
+                              openProfileDialog(match.volunteerId);
+                            }
+                          }}
+                          data-testid={`button-view-match-${match.volunteerId || match.id}`}
+                        >
+                          <User className="h-4 w-4 mr-2" />
+                          View Profile
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 min-h-[40px] border-2 border-green-500 text-green-700 hover:bg-green-50 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-950/20 font-semibold shadow-sm hover:shadow-md transition-all duration-300"
+                          onClick={() => {
+                            if (match.volunteerId && orgProjects.length > 0) {
+                              assignProjectMutation.mutate({
+                                volunteerId: match.volunteerId,
+                                projectId: orgProjects[0].id
+                              });
+                            } else {
+                              toast({
+                                title: "No Projects",
+                                description: "Create a project first to invite volunteers",
+                                variant: "destructive"
+                              });
+                            }
+                          }}
+                          data-testid={`button-invite-match-${match.volunteerId || match.id}`}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Invite
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="p-8 text-center border-2 border-dashed border-amber-200 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/10">
+              <Zap className="h-12 w-12 mx-auto mb-3 text-amber-400" />
+              <h3 className="font-semibold text-lg mb-2">No Matching Candidates Yet</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+                Post volunteer opportunities to attract matching candidates based on skills and SDG alignment.
+              </p>
+              <Link href="/post-core-opportunity">
+                <Button className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Post an Opportunity
+                </Button>
+              </Link>
+            </Card>
+          )}
+        </div>
       )}
 
       {/* Contact Volunteer Modal */}

@@ -62,7 +62,7 @@ import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { useState, useEffect, useTransition } from "react";
 import { ConfirmDialog } from "@/components/ui/dialog-factory";
 import { safeArray, safeMap, safeFilter, safeReduce } from "@/lib/safe-array";
-import { lazy, Suspense, useMemo, useCallback, memo, Component, type ReactNode } from "react";
+import { lazy, Suspense, useMemo, useCallback, memo, Component, useRef, type ReactNode } from "react";
 import Footer from "@/components/layout/footer";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
@@ -151,6 +151,24 @@ interface GlobalMapProps {
 }
 
 const GlobalImpactMap = memo(({ projectLocations }: GlobalMapProps) => {
+  const mapRef = useRef<L.Map>(null);
+
+  // Auto-zoom to project location cluster
+  useEffect(() => {
+    if (!mapRef.current || !projectLocations || projectLocations.length === 0) return;
+
+    const coords = projectLocations.map(p => ({ lat: p.lat, lng: p.lng }));
+
+    if (coords.length === 1) {
+      // Single project - zoom to that location
+      mapRef.current.setView([coords[0].lat, coords[0].lng], 6);
+    } else {
+      // Multiple projects - fit bounds to all with padding
+      const bounds = L.latLngBounds(coords.map(c => [c.lat, c.lng] as [number, number]));
+      mapRef.current.fitBounds(bounds, { padding: [50, 50], maxZoom: 8 });
+    }
+  }, [projectLocations]);
+
   if (!projectLocations || projectLocations.length === 0) {
     return (
       <div style={{
@@ -171,6 +189,7 @@ const GlobalImpactMap = memo(({ projectLocations }: GlobalMapProps) => {
 
   return (
     <MapContainer
+      ref={mapRef}
       center={[20, 0]}
       zoom={2}
       style={{ width: "100%", height: "100%", minHeight: "280px" }}

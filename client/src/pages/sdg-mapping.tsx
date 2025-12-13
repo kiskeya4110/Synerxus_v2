@@ -158,17 +158,18 @@ export default function SDGMapping() {
       description: string;
       color: string;
       projectCount: number;
+      avgCompletion: number;
       impactMetrics: any[];
     }>();
-    
+
     // Initialize ONLY organization's selected SDGs from Settings
     const sdgsToShow = organizationSDGs.length > 0 ? organizationSDGs : [];
-    
+
     // If organization hasn't selected SDGs yet, show empty state
     if (sdgsToShow.length === 0) {
       return [];
     }
-    
+
     sdgsToShow.forEach((sdgId: number) => {
       const metadata = SDG_METADATA[sdgId] || { title: `SDG ${sdgId}`, description: "" };
       sdgMap.set(sdgId, {
@@ -177,22 +178,37 @@ export default function SDGMapping() {
         description: metadata.description,
         color: getSDGColor(sdgId),
         projectCount: 0,
+        avgCompletion: 0,
         impactMetrics: []
       });
     });
-    
+
     // Create a Set of filtered project IDs for filtering
     const orgProjectIds = new Set(filteredProjects.map((p: any) => p.id));
-    
-    // Count projects per SDG (using filtered projects)
+
+    // Count projects per SDG and calculate average completion (using filtered projects)
+    const sdgCompletions = new Map<number, number[]>();
     filteredProjects.forEach((project: any) => {
       if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
         project.sdgGoals.forEach((sdg: number) => {
           const existing = sdgMap.get(sdg);
           if (existing) {
             existing.projectCount++;
+            // Track completion for average calculation
+            if (!sdgCompletions.has(sdg)) {
+              sdgCompletions.set(sdg, []);
+            }
+            sdgCompletions.get(sdg)!.push(project.completionPercentage || 0);
           }
         });
+      }
+    });
+
+    // Calculate average completion for each SDG
+    sdgCompletions.forEach((completions, sdgId) => {
+      const existing = sdgMap.get(sdgId);
+      if (existing && completions.length > 0) {
+        existing.avgCompletion = Math.round(completions.reduce((a, b) => a + b, 0) / completions.length);
       }
     });
     
@@ -459,99 +475,97 @@ export default function SDGMapping() {
     <div className="h-screen overflow-y-auto pb-24">
       <OfflineBanner />
       <OrganizationHeader activeTab="sdgs" />
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 24px' }}>
-        {/* Page Header */}
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold">SDG Mapping</h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-            Connect volunteer activities to Sustainable Development Goals and track impact
-          </p>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 16px' }}>
+        {/* Page Header with integrated filter */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold">SDG Mapping</h1>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+              Track SDG alignment and project impact
+            </p>
+          </div>
+          {/* Project Filter - Inline */}
+          {organizationProjects.length > 1 && (
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
+                <SelectTrigger className="w-48 sm:w-56 h-9" data-testid="select-project-filter">
+                  <SelectValue placeholder="Filter project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
+                  {organizationProjects.map((project: any) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
-
-        {/* Project Filter */}
-        {organizationProjects.length > 1 && (
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <Filter className="h-5 w-5 text-gray-500" />
-                <div className="flex-1">
-                  <label className="text-sm font-medium mb-2 block">Filter by Project</label>
-                  <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
-                    <SelectTrigger className="w-full sm:w-80" data-testid="select-project-filter">
-                      <SelectValue placeholder="Select project to filter" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
-                      {organizationProjects.map((project: any) => (
-                        <SelectItem key={project.id} value={project.id.toString()}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
         
-        {/* Spider Web Chart - SDG Comparison */}
+        {/* Spider Web Chart - SDG Comparison - Compact Layout */}
         {radarChartData && (
-          <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>SDG Focus vs. Project Distribution</CardTitle>
-            <CardDescription>
-              Compare your organization's selected SDG focus areas from Settings with your actual project distribution across {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'} {selectedProjectFilter !== 'all' ? '(filtered)' : ''}
+          <Card className="mb-4">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base sm:text-lg">SDG Focus vs. Project Distribution</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Compare SDG focus areas with actual project distribution ({filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'})
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-              <StatsCard
-                title="Total Projects"
-                value={filteredProjects.length}
-                icon={<FolderOpen className="h-5 w-5" />}
-                iconBgClass="bg-blue-50 dark:bg-blue-950"
-                iconColor="text-blue-600 dark:text-blue-400"
-                onClick={() => handleStatsClick("Total Projects")}
-                data-testid="stats-total-projects"
-              />
-              <StatsCard
-                title="Completed Projects"
-                value={filteredProjects.filter((p: any) => p.status?.toLowerCase() === 'completed').length}
-                icon={<CheckCircle2 className="h-5 w-5" />}
-                iconBgClass="bg-green-50 dark:bg-green-950"
-                iconColor="text-green-600 dark:text-green-400"
-                onClick={() => handleStatsClick("Completed Projects")}
-                data-testid="stats-completed-projects"
-              />
-              <StatsCard
-                title="Active Projects"
-                value={filteredProjects.filter((p: any) => 
-                  p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
-                ).length}
-                icon={<Target className="h-5 w-5" />}
-                iconBgClass="bg-orange-50 dark:bg-orange-950"
-                iconColor="text-orange-600 dark:text-orange-400"
-                onClick={() => handleStatsClick("Active Projects")}
-                data-testid="stats-active-projects"
-              />
-              <StatsCard
-                title="Avg. Completion"
-                value={`${filteredProjects.length > 0 
-                  ? Math.round(
-                      filteredProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / 
-                      filteredProjects.length
-                    )
-                  : 0}%`}
-                icon={<TrendingUp className="h-5 w-5" />}
-                iconBgClass="bg-purple-50 dark:bg-purple-950"
-                iconColor="text-purple-600 dark:text-purple-400"
-                onClick={() => handleStatsClick("Avg. Completion")}
-                data-testid="stats-avg-completion"
-              />
-            </div>
-            
-            <div className="w-full max-w-2xl mx-auto" style={{ height: '400px' }}>
+          <CardContent className="pt-2">
+            {/* Stats and Chart in side-by-side layout on larger screens */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Stats Cards - Compact 2x2 grid */}
+              <div className="grid grid-cols-2 gap-2">
+                <StatsCard
+                  title="Total"
+                  value={filteredProjects.length}
+                  icon={<FolderOpen className="h-4 w-4" />}
+                  iconBgClass="bg-blue-50 dark:bg-blue-950"
+                  iconColor="text-blue-600 dark:text-blue-400"
+                  onClick={() => handleStatsClick("Total Projects")}
+                  data-testid="stats-total-projects"
+                />
+                <StatsCard
+                  title="Completed"
+                  value={filteredProjects.filter((p: any) => p.status?.toLowerCase() === 'completed').length}
+                  icon={<CheckCircle2 className="h-4 w-4" />}
+                  iconBgClass="bg-green-50 dark:bg-green-950"
+                  iconColor="text-green-600 dark:text-green-400"
+                  onClick={() => handleStatsClick("Completed Projects")}
+                  data-testid="stats-completed-projects"
+                />
+                <StatsCard
+                  title="Active"
+                  value={filteredProjects.filter((p: any) =>
+                    p.status?.toLowerCase() === 'active' || p.status?.toLowerCase() === 'in progress'
+                  ).length}
+                  icon={<Target className="h-4 w-4" />}
+                  iconBgClass="bg-orange-50 dark:bg-orange-950"
+                  iconColor="text-orange-600 dark:text-orange-400"
+                  onClick={() => handleStatsClick("Active Projects")}
+                  data-testid="stats-active-projects"
+                />
+                <StatsCard
+                  title="Avg. %"
+                  value={`${filteredProjects.length > 0
+                    ? Math.round(
+                        filteredProjects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) /
+                        filteredProjects.length
+                      )
+                    : 0}%`}
+                  icon={<TrendingUp className="h-4 w-4" />}
+                  iconBgClass="bg-purple-50 dark:bg-purple-950"
+                  iconColor="text-purple-600 dark:text-purple-400"
+                  onClick={() => handleStatsClick("Avg. Completion")}
+                  data-testid="stats-avg-completion"
+                />
+              </div>
+
+              {/* Radar Chart - Compact */}
+              <div className="w-full" style={{ height: '280px' }}>
               <Radar
                 data={radarChartData}
                 options={{
@@ -618,210 +632,209 @@ export default function SDGMapping() {
                   },
                 }}
               />
+              </div>
             </div>
-            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
-              <p className="flex items-center justify-center gap-2">
-                <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#1e3a8a' }}></span>
-                Selected SDGs represent your organization's commitment from Settings
-              </p>
-              <p className="flex items-center justify-center gap-2 mt-2">
-                <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#b45309' }}></span>
-                Project Distribution shows where you're actually making impact
-              </p>
+            {/* Legend - Compact */}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: '#1e3a8a' }}></span>
+                Selected SDGs (Settings)
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: '#b45309' }}></span>
+                Actual Distribution
+              </span>
             </div>
           </CardContent>
         </Card>
       )}
       
-      {/* SDG Selection Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      {/* SDG Selection Grid - Compact with metrics */}
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2 sm:gap-3 mb-4">
         {sdgData.map((sdg: any) => (
           <button
             key={sdg.id}
             onClick={() => setSelectedSDG(sdg.id)}
-            className={`p-3 sm:p-4 rounded-lg border min-h-[120px] sm:min-h-auto active:scale-95 transition-all ${
-              effectiveSelectedSDG === sdg.id 
-                ? 'ring-2 ring-primary border-primary' 
+            className={`p-2 sm:p-3 rounded-lg border active:scale-95 transition-all ${
+              effectiveSelectedSDG === sdg.id
+                ? 'ring-2 ring-primary border-primary'
                 : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
             style={{ backgroundColor: effectiveSelectedSDG === sdg.id ? `${sdg.color}15` : '' }}
             data-testid={`button-sdg-${sdg.id}`}
           >
-            {UN_SDG_ICONS[sdg.id] ? 
+            {UN_SDG_ICONS[sdg.id] ?
               <div className="flex justify-center">
-                <img 
-                  src={UN_SDG_ICONS[sdg.id]} 
+                <img
+                  src={UN_SDG_ICONS[sdg.id]}
                   alt={`SDG ${sdg.id}`}
-                  className="w-12 h-12 sm:w-16 sm:h-16 rounded"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded"
                 />
               </div>
               :
-              <div 
-                className="w-12 h-12 sm:w-16 sm:h-16 mx-auto rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold"
+              <div
+                className="w-10 h-10 sm:w-12 sm:h-12 mx-auto rounded-full flex items-center justify-center text-white text-base sm:text-lg font-bold"
                 style={{ backgroundColor: sdg.color }}
               >
                 {sdg.id}
               </div>
             }
-            <p className="mt-2 text-xs sm:text-sm font-medium text-center line-clamp-2">{sdg.title}</p>
+            <p className="mt-1 text-[10px] sm:text-xs font-medium text-center line-clamp-1">{sdg.title}</p>
+            {/* Project count and completion percentage */}
+            <div className="mt-1 flex items-center justify-center gap-1">
+              <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
+                {sdg.projectCount} proj
+              </span>
+              {sdg.projectCount > 0 && (
+                <span
+                  className="text-[10px] sm:text-xs font-semibold px-1 rounded"
+                  style={{
+                    backgroundColor: `${sdg.color}20`,
+                    color: sdg.color
+                  }}
+                >
+                  {sdg.avgCompletion}%
+                </span>
+              )}
+            </div>
           </button>
         ))}
       </div>
       
-      {/* Selected SDG Detail View */}
+      {/* Selected SDG Detail View - Compact */}
       {selectedData && (
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* SDG Information */}
         <Card className="lg:col-span-2">
-          <CardHeader style={{ backgroundColor: `${selectedData.color}15` }} className="p-4 sm:p-6">
-            <div className="flex items-start sm:items-center flex-col sm:flex-row gap-3 sm:gap-0">
-              <div className="sm:mr-4">
-                {UN_SDG_ICONS[selectedData.id] ? 
-                  <img 
-                    src={UN_SDG_ICONS[selectedData.id]} 
+          <CardHeader style={{ backgroundColor: `${selectedData.color}15` }} className="p-3 sm:p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                {UN_SDG_ICONS[selectedData.id] ?
+                  <img
+                    src={UN_SDG_ICONS[selectedData.id]}
                     alt={`SDG ${selectedData.id}`}
-                    className="w-12 h-12 sm:w-16 sm:h-16 rounded"
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded"
                   />
-                  : 
-                  <div 
-                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white text-lg sm:text-xl font-bold"
+                  :
+                  <div
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white text-base sm:text-lg font-bold"
                     style={{ backgroundColor: selectedData.color }}
                   >
                     {selectedData.id}
                   </div>
                 }
               </div>
-              <div>
-                <Badge 
-                  className="mb-2 text-xs"
-                  style={{ 
-                    backgroundColor: selectedData.color,
-                    color: 'white'
-                  }}
-                >
-                  Goal {selectedData.id}
-                </Badge>
-                <CardTitle className="text-lg sm:text-xl">{selectedData.title}</CardTitle>
-                <CardDescription className="mt-1 text-sm">{selectedData.description}</CardDescription>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge
+                    className="text-[10px] px-1.5 py-0"
+                    style={{
+                      backgroundColor: selectedData.color,
+                      color: 'white'
+                    }}
+                  >
+                    Goal {selectedData.id}
+                  </Badge>
+                  <span className="text-xs font-semibold px-1.5 rounded" style={{ backgroundColor: `${selectedData.color}20`, color: selectedData.color }}>
+                    {selectedData.avgCompletion}% avg
+                  </span>
+                </div>
+                <CardTitle className="text-base sm:text-lg">{selectedData.title}</CardTitle>
+                <CardDescription className="text-xs line-clamp-1">{selectedData.description}</CardDescription>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Impact Metrics</h3>
-            {selectedData.impactMetrics.length > 0 ? (
-              <div className="space-y-3">
-                {selectedData.impactMetrics.map((metric, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <span className="text-sm font-medium">{metric.name}</span>
-                    <span className="text-lg font-bold text-primary">
-                      {metric.value.toLocaleString()} <span className="text-sm text-gray-500">{metric.unit}</span>
-                    </span>
+          <CardContent className="p-3 sm:p-4">
+            {/* Impact Metrics and Connected Projects side by side on larger screens */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Impact Metrics */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2">Impact Metrics</h3>
+                {selectedData.impactMetrics.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {selectedData.impactMetrics.map((metric, index) => (
+                      <div key={index} className="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded text-sm">
+                        <span className="font-medium text-xs">{metric.name}</span>
+                        <span className="font-bold text-primary text-sm">
+                          {metric.value.toLocaleString()} <span className="text-xs text-gray-500">{metric.unit}</span>
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-xs">
+                    No impact metrics recorded yet.
+                  </p>
+                )}
               </div>
-            ) : (
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                No impact metrics recorded for this SDG yet.
-              </p>
-            )}
-            
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">
-                Connected Projects ({relatedProjects.length})
-              </h3>
-              {relatedProjects.length > 0 ? (
-                <div className="space-y-3">
-                  {relatedProjects.map((project: any) => (
-                    <div 
-                      key={project.id} 
-                      className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary hover:shadow-md transition-all cursor-pointer group"
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                      data-testid={`project-${project.id}`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-base group-hover:text-primary transition-colors">
+
+              {/* Connected Projects */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2">
+                  Projects ({relatedProjects.length})
+                </h3>
+                {relatedProjects.length > 0 ? (
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {relatedProjects.map((project: any) => (
+                      <div
+                        key={project.id}
+                        className="border border-gray-200 dark:border-gray-700 rounded p-2 hover:border-primary transition-all cursor-pointer group"
+                        onClick={() => navigate(`/projects/${project.id}`)}
+                        data-testid={`project-${project.id}`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-xs group-hover:text-primary transition-colors truncate">
                               {project.name}
                             </h4>
-                            <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                            {project.location && (
+                              <p className="text-[10px] text-gray-500 truncate">📍 {project.location}</p>
+                            )}
                           </div>
-                          {project.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                              {project.description}
-                            </p>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span className="text-xs font-semibold" style={{ color: selectedData.color }}>
+                              {project.completionPercentage || 0}%
+                            </span>
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">
+                              {project.status}
+                            </Badge>
+                          </div>
                         </div>
-                        <Badge variant="outline" className="ml-2 whitespace-nowrap">
-                          {project.status}
-                        </Badge>
+                        <CompletionProgress value={project.completionPercentage || 0} className="h-1 mt-1" />
                       </div>
-                      
-                      <div className="mt-3 space-y-2">
-                        {project.location && (
-                          <p className="text-xs text-gray-500">📍 {project.location}</p>
-                        )}
-                        
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                            <span>Completion</span>
-                            <span className="font-semibold">{project.completionPercentage || 0}%</span>
-                          </div>
-                          <CompletionProgress value={project.completionPercentage || 0} className="h-2" />
-                        </div>
-                        
-                        {project.sdgGoals && project.sdgGoals.length > 1 && (
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <span className="text-xs text-gray-500">Also aligned with:</span>
-                            {project.sdgGoals
-                              .filter((sdg: number) => sdg !== effectiveSelectedSDG)
-                              .slice(0, 3)
-                              .map((sdg: number) => (
-                                <Badge 
-                                  key={sdg} 
-                                  variant="outline" 
-                                  className="text-xs px-1.5 py-0"
-                                  style={{ borderColor: getSDGColor(sdg) }}
-                                >
-                                  SDG {sdg}
-                                </Badge>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400 text-sm">
-                  No projects are currently aligned with SDG {effectiveSelectedSDG}.
-                </p>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-xs">
+                    No projects aligned with this SDG.
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
         
-        {/* Action Panel */}
-        <div className="space-y-6">
+        {/* Action Panel - Compact */}
+        <div className="space-y-3">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>SDG Alignment Tools</CardTitle>
-              <CardDescription>
-                Connect your projects and activities to SDGs
+            <CardHeader className="pb-2 p-3">
+              <CardTitle className="text-sm">SDG Alignment Tools</CardTitle>
+              <CardDescription className="text-xs">
+                Connect projects to SDGs
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 pt-0">
               <Tabs defaultValue="connect">
-                <TabsList className="grid grid-cols-2 mb-4">
-                  <TabsTrigger value="connect">Connect</TabsTrigger>
-                  <TabsTrigger value="report">Report</TabsTrigger>
+                <TabsList className="grid grid-cols-2 mb-2 h-8">
+                  <TabsTrigger value="connect" className="text-xs">Connect</TabsTrigger>
+                  <TabsTrigger value="report" className="text-xs">Report</TabsTrigger>
                 </TabsList>
-                
-                <TabsContent value="connect" className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Project</label>
-                    <select 
-                      className="w-full p-2 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
+
+                <TabsContent value="connect" className="space-y-2">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium">Project</label>
+                    <select
+                      className="w-full p-1.5 text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800"
                       value={selectedProjectId}
                       onChange={(e) => setSelectedProjectId(e.target.value)}
                       data-testid="select-project"
@@ -832,25 +845,24 @@ export default function SDGMapping() {
                       ))}
                     </select>
                   </div>
-                  
-                  {/* AI Recommendations */}
+
+                  {/* AI Recommendations - Compact */}
                   {selectedProjectId && recommendedSDGs.length > 0 && (
-                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                      <div className="flex items-start gap-2">
-                        <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded p-2">
+                      <div className="flex items-start gap-1.5">
+                        <Sparkles className="h-3 w-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
-                            AI-Recommended SDGs
+                          <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-1">
+                            AI Recommendations
                           </p>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="flex flex-wrap gap-1">
                             {recommendedSDGs.map(sdgId => (
-                              <Badge 
+                              <Badge
                                 key={sdgId}
-                                className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700"
+                                className="text-[10px] px-1 py-0 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200"
                                 style={{ borderColor: getSDGColor(sdgId) }}
                               >
-                                <span className="mr-1">✨</span>
-                                Goal {sdgId}: {SDG_GOALS[sdgId]?.shortName}
+                                {sdgId}: {SDG_GOALS[sdgId]?.shortName}
                               </Badge>
                             ))}
                           </div>

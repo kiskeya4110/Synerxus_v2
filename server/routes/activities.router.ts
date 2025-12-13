@@ -31,13 +31,20 @@ export function setBroadcastFn(fn: BroadcastFn) {
  */
 activitiesRouter.get("/volunteer-activities", async (req: Request, res: Response) => {
   try {
-    const { userId, projectId } = req.query;
+    const { userId, projectId, organizationId } = req.query;
 
     let activities;
     if (userId) {
       activities = await storage.listVolunteerActivitiesByUser(parseInt(userId as string));
     } else if (projectId) {
       activities = await storage.listVolunteerActivitiesByProject(parseInt(projectId as string));
+    } else if (organizationId) {
+      // Filter activities by organization: get org's projects, then filter activities by those project IDs
+      const orgId = parseInt(organizationId as string);
+      const orgProjects = await storage.listProjectsByOrganization(orgId);
+      const orgProjectIds = new Set(orgProjects.map(p => p.id));
+      const allActivities = await storage.listVolunteerActivities();
+      activities = allActivities.filter(a => a.projectId && orgProjectIds.has(a.projectId));
     } else {
       activities = await storage.listVolunteerActivities();
     }

@@ -673,6 +673,11 @@ export const insertOrganizationSchema = createInsertSchema(organizations).omit({
   updatedAt: true
 });
 
+// Valid enum values for project fields
+export const experienceLevelEnum = z.enum(["entry-level", "intermediate", "expert"]);
+export const engagementTypeEnum = z.enum(["remote", "in-person", "hybrid"]);
+export const commitmentTypeEnum = z.enum(["ongoing", "project-based", "event"]);
+
 export const insertProjectSchema = createInsertSchema(projects)
   .omit({
     id: true,
@@ -682,6 +687,23 @@ export const insertProjectSchema = createInsertSchema(projects)
   .extend({
     startDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
     endDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
+    // Enum field validation with null/undefined handling
+    experienceLevel: z.union([experienceLevelEnum, z.literal(""), z.null(), z.undefined()])
+      .optional()
+      .transform(val => val === "" ? null : val),
+    engagementType: z.union([engagementTypeEnum, z.literal(""), z.null(), z.undefined()])
+      .optional()
+      .transform(val => val === "" ? null : val),
+    commitmentType: z.union([commitmentTypeEnum, z.literal(""), z.null(), z.undefined()])
+      .optional()
+      .transform(val => val === "" ? null : val),
+    // Skills arrays with proper handling
+    requiredSkills: z.array(z.string()).optional().nullable(),
+    optionalSkills: z.array(z.string()).optional().nullable(),
+    // Hour fields with proper integer validation
+    ongoingHoursPerWeek: z.union([z.coerce.number().int().min(0), z.null(), z.undefined()]).optional(),
+    projectTotalHours: z.union([z.coerce.number().int().min(0), z.null(), z.undefined()]).optional(),
+    totalHoursLogged: z.union([z.coerce.number().int().min(0), z.null(), z.undefined()]).optional(),
     // AIU timestamp fields
     aiuKpiMeasurementDate: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
     aiuVerifiedAt: z.union([z.coerce.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => val === "" ? null : val),
@@ -744,6 +766,20 @@ export const insertOpportunitySchema = createInsertSchema(opportunities)
     updatedAt: true
   })
   .extend({
+    // Enum field validation (reuse enums from project schema)
+    engagementType: z.union([engagementTypeEnum, z.literal(""), z.null(), z.undefined()])
+      .optional()
+      .transform(val => val === "" ? null : val),
+    commitmentType: z.union([commitmentTypeEnum, z.literal(""), z.null(), z.undefined()])
+      .optional()
+      .transform(val => val === "" ? null : val),
+    // Skills arrays with proper handling
+    requiredSkills: z.array(z.string()).optional().nullable(),
+    optionalSkills: z.array(z.string()).optional().nullable(),
+    // Hour fields with proper integer validation
+    ongoingHoursPerWeek: z.union([z.coerce.number().int().min(0), z.null(), z.undefined()]).optional(),
+    projectTotalHours: z.union([z.coerce.number().int().min(0), z.null(), z.undefined()]).optional(),
+    // Date fields
     eventDate: z.union([z.string(), z.date(), z.literal(""), z.null(), z.undefined()]).optional().transform(val => {
       if (val === "" || val === null || val === undefined) return null;
       if (typeof val === 'string') return val; // Return string as-is for PostgreSQL
@@ -1009,6 +1045,19 @@ export type InsertOrganization = z.infer<typeof insertOrganizationSchema>;
 
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
+
+// Export enum types for frontend validation
+export type ExperienceLevel = z.infer<typeof experienceLevelEnum>;
+export type EngagementType = z.infer<typeof engagementTypeEnum>;
+export type CommitmentType = z.infer<typeof commitmentTypeEnum>;
+
+// Valid values arrays for dropdowns/selects
+export const EXPERIENCE_LEVELS: ExperienceLevel[] = ["entry-level", "intermediate", "expert"];
+export const ENGAGEMENT_TYPES: EngagementType[] = ["remote", "in-person", "hybrid"];
+export const COMMITMENT_TYPES: CommitmentType[] = ["ongoing", "project-based", "event"];
+
+// Update schema for partial updates (all fields optional)
+export const updateProjectSchema = insertProjectSchema.partial();
 
 export type Task = typeof tasks.$inferSelect;
 export type InsertTask = z.infer<typeof insertTaskSchema>;

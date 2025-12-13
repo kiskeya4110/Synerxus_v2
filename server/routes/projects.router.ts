@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { insertProjectSchema } from "@shared/schema";
+import { insertProjectSchema, updateProjectSchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { getVisibleProjectIdsForVolunteer } from "../dashboard-service";
 
@@ -226,7 +226,7 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
 
     verifyOwnership(user, existingProject);
 
-    const projectData = insertProjectSchema.partial().parse(req.body);
+    const projectData = updateProjectSchema.parse(req.body);
     const updatedProject = await storage.updateProject(projectId, projectData);
 
     if (!updatedProject) {

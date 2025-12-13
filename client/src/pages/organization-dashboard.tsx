@@ -677,7 +677,7 @@ export default function OrganizationDashboard() {
                       formatter={(value, entry: any) => {
                         const sdg = entry.payload;
                         const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                        const percent = Math.round((sdg.hours / total) * 100);
+                        const percent = total > 0 ? Math.round((sdg.hours / total) * 100) : 0;
                         return <span style={{ color: '#374151', fontSize: '9px', fontWeight: '500' }}>SDG {sdg.goal} ({percent}%)</span>;
                       }}
                     />
@@ -970,8 +970,8 @@ export default function OrganizationDashboard() {
                             return null;
                           }}
                         />
-                        <Legend 
-                          layout="horizontal" 
+                        <Legend
+                          layout="horizontal"
                           verticalAlign="bottom"
                           height={50}
                           wrapperStyle={{ paddingTop: '16px', overflow: 'visible' }}
@@ -979,7 +979,7 @@ export default function OrganizationDashboard() {
                             const sdg = entry.payload;
                             const sdgInfo = SDG_GOALS[sdg.goal];
                             const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                            const percent = Math.round((sdg.hours / total) * 100);
+                            const percent = total > 0 ? Math.round((sdg.hours / total) * 100) : 0;
                             return (
                               <span 
                                 style={{ 
@@ -1188,226 +1188,229 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Bottom Section (2/5): Impact Over Time | AI Insights - Desktop Only */}
+        {/* Bottom Section: Impact Over Time + Active Projects | AI Insights + Quick Actions - Desktop Only */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="bottom-section hidden md:grid">
-          {/* Left: Impact Over Time Chart - SDG Highlighted */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
-              Impact Over Time
-              {organizationProfile?.sdgGoals && organizationProfile.sdgGoals.length > 0 && (
-                <span style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginLeft: '4px' }}>
-                  ({organizationProfile.sdgGoals.slice(0, 2).map((g: number) => getSDGName(g)).join(', ')})
-                </span>
-              )}
-            </h3>
-            <div style={{ height: '250px' }}>
-              {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={dashboardData.impactOverTime}>
-                    <defs>
-                      <linearGradient id="desktopHoursGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="desktopPeopleGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
-                    <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          const sdgColor1 = organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534';
-                          const sdgColor2 = organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af';
-                          return (
-                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderTop: `3px solid ${sdgColor1}` }}>
-                              <p style={{ fontWeight: '600', marginBottom: '4px' }}>{label}</p>
-                              <p style={{ fontSize: '13px', color: sdgColor1 }}>Hours: {payload[0]?.value}</p>
-                              <p style={{ fontSize: '13px', color: sdgColor2 }}>People Impacted: {payload[1]?.value}</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Legend />
-                    <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#desktopHoursGradient)" strokeWidth={2} name="Hours" />
-                    <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#desktopPeopleGradient)" strokeWidth={2} name="People Impacted" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
-                  No impact data available
-                </div>
-              )}
+          {/* Left Column: Impact Over Time + Active Projects stacked */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Impact Over Time Chart - SDG Highlighted */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
+                Impact Over Time
+                {organizationProfile?.sdgGoals && organizationProfile.sdgGoals.length > 0 && (
+                  <span style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginLeft: '4px' }}>
+                    ({organizationProfile.sdgGoals.slice(0, 2).map((g: number) => getSDGName(g)).join(', ')})
+                  </span>
+                )}
+              </h3>
+              <div style={{ height: '220px' }}>
+                {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={dashboardData.impactOverTime}>
+                      <defs>
+                        <linearGradient id="desktopHoursGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="desktopPeopleGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
+                          <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            const sdgColor1 = organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534';
+                            const sdgColor2 = organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af';
+                            return (
+                              <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderTop: `3px solid ${sdgColor1}` }}>
+                                <p style={{ fontWeight: '600', marginBottom: '4px' }}>{label}</p>
+                                <p style={{ fontSize: '13px', color: sdgColor1 }}>Hours: {payload[0]?.value}</p>
+                                <p style={{ fontSize: '13px', color: sdgColor2 }}>People Impacted: {payload[1]?.value}</p>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                      <Legend />
+                      <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#desktopHoursGradient)" strokeWidth={2} name="Hours" />
+                      <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#desktopPeopleGradient)" strokeWidth={2} name="People Impacted" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
+                    No impact data available
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Right: AI Insights */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Lightbulb size={18} style={{ color: '#f59e0b' }} />
-              AI Insights
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {dashboardData?.aiInsights?.map((insight) => (
-                <div
-                  key={insight.id}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    backgroundColor: insight.sentiment === 'positive' ? '#f0fdf4' : insight.sentiment === 'warning' ? '#fffbeb' : '#f9fafb',
-                    borderLeft: `4px solid ${insight.sentiment === 'positive' ? '#166534' : insight.sentiment === 'warning' ? '#f59e0b' : '#6b7280'}`,
-                  }}
-                  data-testid={`insight-${insight.id}`}
-                >
-                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '4px' }}>{insight.title}</p>
-                  <p style={{ fontSize: '12px', color: '#6b7280' }}>{insight.message}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Below the Fold: Active Projects + Quick Actions */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }} className="below-fold">
-          {/* Active Projects List */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Active Projects</h3>
-              <button
-                onClick={() => navigate('/projects')}
-                onTouchEnd={(e) => { e.preventDefault(); navigate('/projects'); }}
-                data-testid="view-all-projects"
-                style={{ fontSize: '13px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '8px 12px', touchAction: 'manipulation' }}
-              >
-                View All →
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {dashboardData?.projects?.slice(0, 5).map((project) => (
+            {/* Active Projects List */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Active Projects</h3>
                 <button
-                  key={project.id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    backgroundColor: '#f9fafb',
-                    cursor: 'pointer',
-                    width: '100%',
-                    border: 'none',
-                    textAlign: 'left',
-                    touchAction: 'manipulation',
-                  }}
-                  onClick={() => navigate(`/projects/${project.id}`)}
-                  onTouchEnd={(e) => { e.preventDefault(); navigate(`/projects/${project.id}`); }}
-                  data-testid={`project-item-${project.id}`}
+                  onClick={() => navigate('/projects')}
+                  onTouchEnd={(e) => { e.preventDefault(); navigate('/projects'); }}
+                  data-testid="view-all-projects"
+                  style={{ fontSize: '13px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '8px 12px', touchAction: 'manipulation' }}
                 >
-                  <div>
-                    <p style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>{project.name}</p>
-                    <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                      SDGs: {project.sdgGoals.length > 0 ? project.sdgGoals.map(g => `SDG ${g}`).join(', ') : 'None'}
-                    </p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '12px',
-                      backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#e5e7eb',
-                      color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#6b7280',
-                    }}>
-                      {project.status}
-                    </span>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>{project.completionPercentage}% complete</p>
-                  </div>
+                  View All →
                 </button>
-              ))}
-              {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
-                <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
-                  <FolderOpen size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
-                  <p>No projects yet</p>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {dashboardData?.projects?.slice(0, 5).map((project) => (
                   <button
-                    onClick={() => navigate('/projects?create=true')}
-                    onTouchEnd={(e) => { e.preventDefault(); navigate('/projects?create=true'); }}
+                    key={project.id}
                     style={{
-                      marginTop: '12px',
-                      padding: '12px 20px',
-                      backgroundColor: '#166534',
-                      color: 'white',
-                      border: 'none',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '12px',
                       borderRadius: '8px',
-                      fontSize: '14px',
+                      backgroundColor: '#f9fafb',
                       cursor: 'pointer',
+                      width: '100%',
+                      border: 'none',
+                      textAlign: 'left',
                       touchAction: 'manipulation',
                     }}
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                    onTouchEnd={(e) => { e.preventDefault(); navigate(`/projects/${project.id}`); }}
+                    data-testid={`project-item-${project.id}`}
                   >
-                    Create First Project
+                    <div>
+                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>{project.name}</p>
+                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
+                        SDGs: {project.sdgGoals.length > 0 ? project.sdgGoals.map(g => `SDG ${g}`).join(', ') : 'None'}
+                      </p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{
+                        fontSize: '12px',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#e5e7eb',
+                        color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#6b7280',
+                      }}>
+                        {project.status}
+                      </span>
+                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>{project.completionPercentage}% complete</p>
+                    </div>
                   </button>
-                </div>
-              )}
+                ))}
+                {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
+                  <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
+                    <FolderOpen size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                    <p>No projects yet</p>
+                    <button
+                      onClick={() => navigate('/projects?create=true')}
+                      onTouchEnd={(e) => { e.preventDefault(); navigate('/projects?create=true'); }}
+                      style={{
+                        marginTop: '12px',
+                        padding: '12px 20px',
+                        backgroundColor: '#166534',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        cursor: 'pointer',
+                        touchAction: 'manipulation',
+                      }}
+                    >
+                      Create First Project
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>Quick Actions</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <QuickActionButton
-                icon={<Plus size={18} />}
-                label="Create Project"
-                onClick={() => navigate('/projects?create=true')}
-                testId="quick-create-project"
-              />
-              <QuickActionButton
-                icon={<UserPlus size={18} />}
-                label="Invite Volunteer"
-                onClick={() => navigate('/volunteers?invite=true')}
-                testId="quick-invite-volunteer"
-              />
-              <QuickActionButton
-                icon={<CheckSquare size={18} />}
-                label="Create Task"
-                onClick={() => navigate('/tasks?create=true')}
-                testId="quick-create-task"
-              />
-              <QuickActionButton
-                icon={<BarChart3 size={18} />}
-                label="View Reports"
-                onClick={() => navigate('/impact-visualization')}
-                testId="quick-view-reports"
-              />
+          {/* Right Column: AI Insights + Quick Actions stacked */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* AI Insights */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Lightbulb size={16} style={{ color: '#f59e0b' }} />
+                AI Insights
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {dashboardData?.aiInsights?.map((insight) => (
+                  <div
+                    key={insight.id}
+                    style={{
+                      padding: '10px',
+                      borderRadius: '8px',
+                      backgroundColor: insight.sentiment === 'positive' ? '#f0fdf4' : insight.sentiment === 'warning' ? '#fffbeb' : '#f9fafb',
+                      borderLeft: `3px solid ${insight.sentiment === 'positive' ? '#166534' : insight.sentiment === 'warning' ? '#f59e0b' : '#6b7280'}`,
+                    }}
+                    data-testid={`insight-${insight.id}`}
+                  >
+                    <p style={{ fontSize: '12px', fontWeight: '600', color: '#111827', marginBottom: '2px' }}>{insight.title}</p>
+                    <p style={{ fontSize: '11px', color: '#6b7280' }}>{insight.message}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Primary SDGs Summary */}
-            {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
-              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-                <p style={{ fontSize: '13px', fontWeight: '600', color: '#6b7280', marginBottom: '12px' }}>Top SDGs</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {dashboardData.sdgDistribution.slice(0, 3).map((sdg) => (
-                    <span
-                      key={sdg.goal}
-                      style={{
-                        padding: '6px 12px',
-                        backgroundColor: '#f0fdf4',
-                        borderRadius: '16px',
-                        fontSize: '12px',
-                        color: '#166534',
-                        fontWeight: '500',
-                      }}
-                    >
-                      SDG {sdg.goal}
-                    </span>
-                  ))}
-                </div>
+            {/* Quick Actions */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Quick Actions</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <QuickActionButton
+                  icon={<Plus size={16} />}
+                  label="Create Project"
+                  onClick={() => navigate('/projects?create=true')}
+                  testId="quick-create-project"
+                />
+                <QuickActionButton
+                  icon={<UserPlus size={16} />}
+                  label="Invite Volunteer"
+                  onClick={() => navigate('/volunteers?invite=true')}
+                  testId="quick-invite-volunteer"
+                />
+                <QuickActionButton
+                  icon={<CheckSquare size={16} />}
+                  label="Create Task"
+                  onClick={() => navigate('/tasks?create=true')}
+                  testId="quick-create-task"
+                />
+                <QuickActionButton
+                  icon={<BarChart3 size={16} />}
+                  label="View Reports"
+                  onClick={() => navigate('/impact-visualization')}
+                  testId="quick-view-reports"
+                />
               </div>
-            )}
+
+              {/* Primary SDGs Summary */}
+              {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Top SDGs</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {dashboardData.sdgDistribution.slice(0, 3).map((sdg) => (
+                      <span
+                        key={sdg.goal}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: '#f0fdf4',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          color: '#166534',
+                          fontWeight: '500',
+                        }}
+                      >
+                        SDG {sdg.goal}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </main>

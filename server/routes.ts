@@ -2,13 +2,14 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, DuplicateAssignmentError } from "./storage";
 import { WebSocketServer } from "ws";
-import { 
-  insertUserSchema, 
-  insertOrganizationSchema, 
-  insertProjectSchema, 
-  insertTaskSchema, 
-  insertVolunteerActivitySchema, 
-  insertImpactMetricSchema, 
+import {
+  insertUserSchema,
+  insertOrganizationSchema,
+  insertProjectSchema,
+  updateProjectSchema,
+  insertTaskSchema,
+  insertVolunteerActivitySchema,
+  insertImpactMetricSchema,
   insertProjectImpactSchema,
   insertVolunteerSchema,
   insertMatchableOrganizationSchema,
@@ -935,8 +936,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       verifyOwnership(user, existingProject);
       
-      const projectData = insertProjectSchema.partial().parse(req.body);
-      
+      const projectData = updateProjectSchema.parse(req.body);
+
       const updatedProject = await storage.updateProject(projectId, projectData);
       if (!updatedProject) {
         return res.status(404).json({ message: "Project not found" });

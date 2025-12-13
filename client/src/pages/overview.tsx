@@ -211,13 +211,21 @@ export default function Overview() {
               marginBottom: '20px',
             }}
           >
-            <div
+            <button
+              onClick={() => navigate('/impact-visualization')}
               style={{
                 background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
                 borderRadius: '16px',
                 padding: '16px',
                 color: 'white',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'transform 0.2s, box-shadow 0.2s',
               }}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              data-testid="button-total-hours"
             >
               <p style={{ fontSize: '12px', fontWeight: '500', marginBottom: '4px' }}>Total Volunteer Hours Logged</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px' }}>
@@ -227,20 +235,30 @@ export default function Overview() {
                   <p style={{ fontSize: '11px' }}>Employees Engaged</p>
                 </div>
               </div>
-            </div>
+              <p style={{ fontSize: '10px', marginTop: '8px', opacity: 0.8 }}>Tap to view details →</p>
+            </button>
 
-            <div
+            <button
+              onClick={() => navigate('/projects')}
               style={{
                 backgroundColor: 'white',
                 borderRadius: '16px',
                 padding: '16px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'transform 0.2s, box-shadow 0.2s',
               }}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              data-testid="button-projects-card"
             >
               <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>Projects</p>
               <span style={{ fontSize: '32px', fontWeight: '700', color: '#22c55e' }}>{metrics.activeProjects}</span>
               <p style={{ fontSize: '11px', color: '#6b7280' }}>Active</p>
-            </div>
+              <p style={{ fontSize: '10px', color: '#22c55e', marginTop: '4px' }}>View all →</p>
+            </button>
           </div>
 
           <div style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
@@ -253,16 +271,32 @@ export default function Overview() {
                 const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
                 const isActive = organizationSDGs.includes(sdgNum) || (contribution && contribution.hours > 0);
                 const sdgInfo = SDG_GOALS[sdgNum];
-                
+
                 return (
-                  <div
+                  <button
                     key={sdgNum}
+                    onClick={() => navigate(`/sdg-mapping?sdg=${sdgNum}`)}
                     style={{
                       position: 'relative',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      borderRadius: '8px',
+                      transition: 'transform 0.2s, background-color 0.2s',
                     }}
+                    onTouchStart={(e) => {
+                      e.currentTarget.style.transform = 'scale(0.95)';
+                      e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)';
+                    }}
+                    onTouchEnd={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                    data-testid={`sdg-button-${sdgNum}`}
                   >
                     <div
                       style={{
@@ -313,15 +347,15 @@ export default function Overview() {
                           borderRadius: '8px',
                         }}
                       >
-                        {contribution.hours}
+                        {contribution.hours}h
                       </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
 
-            {/* SDG Metrics Compilation */}
+            {/* SDG Metrics Compilation - Interactive */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
@@ -331,32 +365,93 @@ export default function Overview() {
               borderRadius: '12px',
               marginBottom: '12px',
             }}>
-              <div>
+              <button
+                onClick={() => navigate('/sdg-mapping')}
+                style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+                onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+                onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                data-testid="button-sdgs-addressed"
+              >
                 <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>SDGs Addressed</p>
                 <p style={{ fontSize: '24px', fontWeight: '700', color: '#22c55e' }}>{metrics.sdgsAddressed}</p>
-              </div>
-              <div>
+              </button>
+              <button
+                onClick={() => navigate('/volunteers')}
+                style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+                onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+                onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                data-testid="button-active-contributors"
+              >
                 <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>Active Contributors</p>
                 <p style={{ fontSize: '24px', fontWeight: '700', color: '#3b82f6' }}>
                   {sdgContributions.filter((c: any) => c.hours > 0).length}
                 </p>
-              </div>
-              <div>
+              </button>
+              <button
+                onClick={() => {
+                  const topSDG = sdgContributions.length > 0
+                    ? sdgContributions.reduce((max: any, curr: any) => (curr.hours > max.hours ? curr : max)).goal
+                    : 1;
+                  navigate(`/sdg-mapping?sdg=${topSDG}`);
+                }}
+                style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+                onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+                onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                data-testid="button-top-sdg"
+              >
                 <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>Top SDG Goal</p>
                 <p style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937' }}>
-                  {sdgContributions.length > 0 
-                    ? `SDG ${sdgContributions.reduce((max: any, curr: any) => 
+                  {sdgContributions.length > 0
+                    ? `SDG ${sdgContributions.reduce((max: any, curr: any) =>
                         (curr.hours > max.hours ? curr : max)).goal}`
                     : 'N/A'
                   }
                 </p>
-              </div>
-              <div>
+              </button>
+              <button
+                onClick={() => navigate('/impact-visualization')}
+                style={{
+                  background: 'white',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 0.2s',
+                }}
+                onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+                onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                data-testid="button-total-sdg-hours"
+              >
                 <p style={{ fontSize: '12px', fontWeight: '500', color: '#6b7280', marginBottom: '4px' }}>Total SDG Hours</p>
                 <p style={{ fontSize: '24px', fontWeight: '700', color: '#f59e0b' }}>
                   {sdgContributions.reduce((sum: number, c: any) => sum + (c.hours || 0), 0)}
                 </p>
-              </div>
+              </button>
             </div>
             
             <Button
@@ -462,9 +557,13 @@ export default function Overview() {
         
         <h1 className="text-3xl font-bold text-slate-900 mb-8">Team Overview</h1>
         
-        {/* Key Metrics Grid - 4 Columns */}
+        {/* Key Metrics Grid - 4 Columns - Interactive */}
         <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 shadow-sm border border-green-200">
+          <button
+            onClick={() => navigate('/impact-visualization')}
+            className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 shadow-sm border border-green-200 text-left hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+            data-testid="desktop-total-hours"
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-green-100 rounded-lg">
                 <Clock size={20} className="text-green-600" />
@@ -473,9 +572,13 @@ export default function Overview() {
             </div>
             <p className="text-4xl font-bold text-green-600 mb-1">{(metrics.totalHours || 0).toLocaleString()}</p>
             <p className="text-xs text-gray-600">Volunteer hours logged</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 shadow-sm border border-blue-200">
+          </button>
+
+          <button
+            onClick={() => navigate('/volunteers')}
+            className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 shadow-sm border border-blue-200 text-left hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+            data-testid="desktop-team-members"
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <Users size={20} className="text-blue-600" />
@@ -484,9 +587,13 @@ export default function Overview() {
             </div>
             <p className="text-4xl font-bold text-blue-600 mb-1">{metrics.volunteersEngaged || 0}</p>
             <p className="text-xs text-gray-600">Active volunteers</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-sm border border-purple-200">
+          </button>
+
+          <button
+            onClick={() => navigate('/projects')}
+            className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 shadow-sm border border-purple-200 text-left hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+            data-testid="desktop-active-projects"
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <FolderOpen size={20} className="text-purple-600" />
@@ -495,9 +602,13 @@ export default function Overview() {
             </div>
             <p className="text-4xl font-bold text-purple-600 mb-1">{metrics.activeProjects || 0}</p>
             <p className="text-xs text-gray-600">In progress</p>
-          </div>
-          
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 shadow-sm border border-amber-200">
+          </button>
+
+          <button
+            onClick={() => navigate('/sdg-mapping')}
+            className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 shadow-sm border border-amber-200 text-left hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+            data-testid="desktop-sdgs-addressed"
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-amber-100 rounded-lg">
                 <Target size={20} className="text-amber-600" />
@@ -506,12 +617,16 @@ export default function Overview() {
             </div>
             <p className="text-4xl font-bold text-amber-600 mb-1">{metrics.sdgsAddressed || 0}</p>
             <p className="text-xs text-gray-600">Sustainable goals</p>
-          </div>
+          </button>
         </div>
 
-        {/* Secondary Metrics Row */}
+        {/* Secondary Metrics Row - Interactive */}
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-6 shadow-sm border border-rose-200">
+          <button
+            onClick={() => navigate('/impact-visualization')}
+            className="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-6 shadow-sm border border-rose-200 text-left hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+            data-testid="desktop-aius-earned"
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-rose-100 rounded-lg">
                 <Award size={20} className="text-rose-600" />
@@ -519,9 +634,13 @@ export default function Overview() {
               <span className="text-sm font-medium text-gray-700">AIUs Earned</span>
             </div>
             <p className="text-3xl font-bold text-rose-600">{(dashboardData?.keyMetrics?.aiuEarned || dashboardData?.keyMetrics?.livesTouched || 0).toLocaleString()}</p>
-          </div>
+          </button>
 
-          <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 shadow-sm border border-teal-200">
+          <button
+            onClick={() => navigate('/projects')}
+            className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 shadow-sm border border-teal-200 text-left hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+            data-testid="desktop-completed-projects"
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-teal-100 rounded-lg">
                 <CheckSquare size={20} className="text-teal-600" />
@@ -529,9 +648,13 @@ export default function Overview() {
               <span className="text-sm font-medium text-gray-700">Completed Projects</span>
             </div>
             <p className="text-3xl font-bold text-teal-600">{metrics.projectsCompleted || 0}</p>
-          </div>
+          </button>
 
-          <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 shadow-sm border border-indigo-200">
+          <button
+            onClick={() => navigate('/impact-visualization')}
+            className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 shadow-sm border border-indigo-200 text-left hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+            data-testid="desktop-impact-trend"
+          >
             <div className="flex items-center gap-3 mb-3">
               <div className="p-2 bg-indigo-100 rounded-lg">
                 <TrendingUp size={20} className="text-indigo-600" />
@@ -539,19 +662,34 @@ export default function Overview() {
               <span className="text-sm font-medium text-gray-700">Impact Trend</span>
             </div>
             <p className="text-3xl font-bold text-indigo-600">↑ {Math.round(((dashboardData?.keyMetrics?.totalVolunteerHours || 1) / Math.max(1, (dashboardData?.keyMetrics?.totalVolunteerHours || 1) - 100)) * 10)}%</p>
-          </div>
+          </button>
         </div>
 
-        {/* SDG Contributions Section */}
+        {/* SDG Contributions Section - Interactive */}
         <div className="bg-white rounded-xl p-8 shadow-sm border mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">SDG Contributions</h2>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">SDG Contributions</h2>
+            <Button
+              onClick={() => navigate('/sdg-mapping')}
+              variant="outline"
+              size="sm"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+            >
+              View All SDGs <ChevronRight size={16} />
+            </Button>
+          </div>
           <div className="grid grid-cols-9 gap-4">
             {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
               const contribution = sdgContributions.find((c: any) => c.goal === sdgNum);
               const isActive = organizationSDGs.includes(sdgNum) || (contribution && contribution.hours > 0);
-              
+
               return (
-                <div key={sdgNum} className="flex flex-col items-center">
+                <button
+                  key={sdgNum}
+                  onClick={() => navigate(`/sdg-mapping?sdg=${sdgNum}`)}
+                  className="flex flex-col items-center cursor-pointer hover:scale-105 transition-transform"
+                  data-testid={`desktop-sdg-${sdgNum}`}
+                >
                   <div
                     className={`w-16 h-16 rounded-full overflow-hidden transition-all ${isActive ? 'ring-3 ring-green-500 shadow-lg' : 'opacity-40 ring-2 ring-gray-300'}`}
                   >
@@ -563,7 +701,7 @@ export default function Overview() {
                       {contribution.volunteers && <p className="text-xs text-gray-600">{contribution.volunteers} vol</p>}
                     </div>
                   )}
-                </div>
+                </button>
               );
             })}
           </div>

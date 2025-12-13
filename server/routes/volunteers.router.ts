@@ -104,17 +104,24 @@ volunteersRouter.get("/matches", async (req: Request, res: Response) => {
       return res.json([]);
     }
 
-    // Get all volunteers with their profiles
-    const allUsers = await storage.listUsers();
+    // Get all volunteers with their profiles - OPTIMIZED: batch query instead of N+1
+    const [allUsers, allVolunteers, allVolunteerProfiles] = await Promise.all([
+      storage.listUsers(),
+      storage.listVolunteers(),
+      storage.listVolunteerProfiles()
+    ]);
     const volunteers = allUsers.filter(u => u.userType === 'volunteer');
 
-    // Get volunteer profiles - pass full profile object to matching algorithm
-    const volunteersWithProfiles = await Promise.all(
-      volunteers.map(async (vol) => {
-        const profile = vol.email ? await storage.getVolunteerByEmail(vol.email) : null;
-        return { ...vol, profile } as any; // Type cast for flexibility
-      })
-    );
+    // Create lookup maps for O(1) access
+    const volunteerByEmail = new Map(allVolunteers.map(v => [v.email, v]));
+    const volunteerProfileByUserId = new Map(allVolunteerProfiles.map(p => [p.userId, p]));
+
+    // Get volunteer profiles - use in-memory lookups instead of N database calls
+    const volunteersWithProfiles = volunteers.map((vol) => {
+      const matchingVolunteer = vol.email ? volunteerByEmail.get(vol.email) : null;
+      const volunteerProfile = volunteerProfileByUserId.get(vol.id);
+      return { ...vol, profile: matchingVolunteer, volunteerProfile } as any;
+    });
 
     // Match volunteers against the organization's most representative opportunity
     // (using first open opportunity as baseline)
@@ -141,9 +148,52 @@ volunteersRouter.get("/matches", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/volunteers - List all volunteers
+// GET /api/volunteers - List volunteers, optionally filtered by organization
 volunteersRouter.get("/", async (req: Request, res: Response) => {
   try {
+    const organizationId = req.query.organizationId as string | undefined;
+
+    // If organizationId is provided, return only volunteers assigned to that organization's projects
+    if (organizationId) {
+      const orgId = parseInt(organizationId);
+      if (isNaN(orgId)) {
+        return res.status(400).json({ message: "Invalid organizationId" });
+      }
+
+      // Get organization's projects
+      const allProjects = await storage.listProjects();
+      const orgProjects = allProjects.filter((p: any) => p.organizationId === orgId);
+      const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
+
+      if (orgProjectIds.size === 0) {
+        // No projects = no volunteers
+        return res.json([]);
+      }
+
+      // Get all project assignments for org's projects
+      const allAssignments = await storage.listProjectAssignments();
+      const orgAssignments = allAssignments.filter((a: any) =>
+        orgProjectIds.has(a.projectId) &&
+        (a.status === 'active' || a.status === 'accepted')
+      );
+
+      // Get unique volunteer IDs from assignments
+      const volunteerIds = new Set(orgAssignments.map((a: any) => a.volunteerId));
+
+      if (volunteerIds.size === 0) {
+        return res.json([]);
+      }
+
+      // Get volunteer users
+      const allUsers = await storage.listUsers();
+      const volunteers = allUsers.filter((u: any) =>
+        volunteerIds.has(u.id) && u.userType === 'volunteer'
+      );
+
+      return res.json(volunteers);
+    }
+
+    // No filter - return all volunteers
     const volunteers = await storage.listVolunteers();
     res.json(volunteers);
   } catch (err) {

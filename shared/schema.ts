@@ -69,6 +69,13 @@ export const projects = pgTable("projects", {
   impactMetricName: text("impact_metric_name"), // e.g., "Students Tutored", "Trees Planted"
   impactMetricUnit: text("impact_metric_unit"), // e.g., "students", "trees"
   livesTouched: integer("lives_touched").default(0), // Total lives impacted by this project
+  // Volunteer Role Management with AIU Contribution Percentages
+  volunteersNeeded: integer("volunteers_needed").default(1), // Total volunteers needed for the project
+  volunteerRoles: jsonb("volunteer_roles"), // Array of {role, contributionPercent, count, description} for AIU tracking
+  // Total Volunteer Contribution: The percentage of the project's total impact attributed to volunteers
+  // Organization's paid staff carries (100 - totalVolunteerContribution)% of the impact
+  // The volunteerRoles.contributionPercent then divides this total among volunteer roles
+  totalVolunteerContribution: integer("total_volunteer_contribution").default(100), // 0-100%, default 100% (all volunteer)
 
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -188,6 +195,9 @@ export const opportunities = pgTable("opportunities", {
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),
   volunteersNeeded: integer("volunteers_needed").default(1),
+  volunteerRoles: jsonb("volunteer_roles"), // Array of {role, contributionPercent, count, description} for AIU tracking
+  // Total Volunteer Contribution: The percentage of the opportunity's total impact attributed to volunteers
+  totalVolunteerContribution: integer("total_volunteer_contribution").default(100), // 0-100%
   status: text("status").notNull().default("open"), // open, closed, filled
   category: text("category"), // healthcare, education, environment, etc.
   sdgGoals: integer("sdg_goals").array(),

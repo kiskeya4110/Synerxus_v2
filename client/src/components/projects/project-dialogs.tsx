@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, UserPlus, Upload, X, Image } from "lucide-react";
+import { Plus, Edit, Trash2, UserPlus, Upload, X, Image, UserCheck } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,6 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { uploadFile, deleteFile, extractStoragePath } from "@/lib/upload";
 import type { Project } from "@shared/schema";
+import { FormDescription } from "@/components/ui/form";
+
+// Volunteer role schema for AIU contribution tracking
+const volunteerRoleSchema = z.object({
+  role: z.string().min(1, "Role is required"),
+  contributionPercent: z.number().min(1).max(100),
+  count: z.number().min(1),
+  description: z.string().optional(),
+});
 
 const projectFormSchema = z.object({
   name: z.string().min(3, "Project name must be at least 3 characters"),
@@ -44,6 +53,8 @@ const projectFormSchema = z.object({
   // Legacy fields
   volunteersNeeded: z.string().optional(),
   impactGoals: z.string().optional(),
+  // Volunteer roles with AIU contribution percentages
+  volunteerRoles: z.array(volunteerRoleSchema).optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectFormSchema>;
@@ -146,7 +157,17 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
       totalHoursLogged: "",
       volunteersNeeded: "",
       impactGoals: "",
+      volunteerRoles: [
+        { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
+        { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
+      ],
     }
+  });
+
+  // Use field array for managing volunteer roles dynamically
+  const { fields: roleFields, append: appendRole, remove: removeRole } = useFieldArray({
+    control: form.control,
+    name: "volunteerRoles",
   });
 
   const createMutation = useMutation({
@@ -163,6 +184,10 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         ? data.optionalSkills.split(",").map(s => s.trim()).filter(s => s.length > 0)
         : [];
 
+      // Calculate total volunteers needed from role counts
+      const totalVolunteersNeeded = data.volunteerRoles?.reduce((sum, role) => sum + role.count, 0)
+        || (data.volunteersNeeded ? parseInt(data.volunteersNeeded) : 1);
+
       const payload: any = {
         name: data.name,
         description: data.description,
@@ -173,11 +198,14 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
         requiredSkills: requiredSkillsArray,
         optionalSkills: optionalSkillsArray,
         coverImage: coverImageUrl || null, // Add cover image for marketing purposes
+        // Volunteer roles with AIU contribution percentages
+        volunteerRoles: data.volunteerRoles || [],
+        volunteersNeeded: totalVolunteersNeeded,
       };
 
       if (data.startDate) payload.startDate = new Date(data.startDate).toISOString();
       if (data.endDate) payload.endDate = new Date(data.endDate).toISOString();
-      
+
       if (data.primarySdg) payload.primarySdg = parseInt(data.primarySdg);
       if (data.experienceLevel) payload.experienceLevel = data.experienceLevel;
       if (data.engagementType) payload.engagementType = data.engagementType;
@@ -188,11 +216,10 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
       if (data.impactMetricUnit) payload.impactMetricUnit = data.impactMetricUnit;
       if (data.completionPercentage) payload.completionPercentage = parseInt(data.completionPercentage);
       if (data.totalHoursLogged) payload.totalHoursLogged = parseInt(data.totalHoursLogged);
-      
+
       // Store legacy data in goals field as JSON
-      if (data.volunteersNeeded || data.impactGoals) {
+      if (data.impactGoals) {
         payload.goals = {
-          volunteersNeeded: data.volunteersNeeded ? parseInt(data.volunteersNeeded) : null,
           impactGoals: data.impactGoals || null,
         };
       }
@@ -564,24 +591,164 @@ export function CreateProjectDialog({ organizationId }: CreateProjectDialogProps
                 />
               </div>
               
-              <FormField
-                control={form.control}
-                name="volunteersNeeded"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Volunteers Needed</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="e.g., 10"
-                        {...field}
-                        data-testid="input-project-volunteers"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+            </div>
+
+            {/* Section: Volunteer Roles & AIU Contributions */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Volunteer Roles & AIU Contributions
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Define volunteer roles and their contribution percentages for AIU (Attributed Impact Unit) calculations.
+              </p>
+
+              {/* Total Volunteers Display */}
+              <div className="p-4 bg-muted rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Volunteers Needed:</span>
+                  <span className="text-lg font-bold text-primary">
+                    {roleFields.reduce((sum, _, idx) => {
+                      const count = form.watch(`volunteerRoles.${idx}.count`) || 0;
+                      return sum + count;
+                    }, 0)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-sm font-medium">Total Contribution:</span>
+                  <span className={`text-lg font-bold ${
+                    roleFields.reduce((sum, _, idx) => {
+                      return sum + (form.watch(`volunteerRoles.${idx}.contributionPercent`) || 0);
+                    }, 0) === 100 ? 'text-green-600' : 'text-orange-500'
+                  }`}>
+                    {roleFields.reduce((sum, _, idx) => {
+                      return sum + (form.watch(`volunteerRoles.${idx}.contributionPercent`) || 0);
+                    }, 0)}%
+                  </span>
+                </div>
+                {roleFields.reduce((sum, _, idx) => sum + (form.watch(`volunteerRoles.${idx}.contributionPercent`) || 0), 0) !== 100 && (
+                  <p className="text-xs text-orange-500 mt-1">Contribution percentages should total 100%</p>
                 )}
-              />
+              </div>
+
+              {/* Role List */}
+              <div className="space-y-3">
+                {roleFields.map((field, index) => (
+                  <div key={field.id} className="p-3 border rounded-lg bg-white dark:bg-slate-900 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm">Role {index + 1}</span>
+                      {roleFields.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeRole(index)}
+                          className="text-red-500 hover:text-red-700 h-7 w-7 p-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <FormField
+                        control={form.control}
+                        name={`volunteerRoles.${index}.role`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Role Name</FormLabel>
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <FormControl>
+                                <SelectTrigger className="h-9">
+                                  <SelectValue placeholder="Select role" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="lead">Project Lead</SelectItem>
+                                <SelectItem value="support">Support Volunteer</SelectItem>
+                                <SelectItem value="mentor">Mentor</SelectItem>
+                                <SelectItem value="specialist">Specialist</SelectItem>
+                                <SelectItem value="pro_bono_legal">Pro Bono Legal</SelectItem>
+                                <SelectItem value="pro_bono_medical">Pro Bono Medical</SelectItem>
+                                <SelectItem value="pro_bono_tech">Pro Bono Tech</SelectItem>
+                                <SelectItem value="admin">Administrative</SelectItem>
+                                <SelectItem value="trainee">Trainee</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`volunteerRoles.${index}.count`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs"># Volunteers</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                className="h-9"
+                                {...field}
+                                onChange={e => field.onChange(parseInt(e.target.value) || 1)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`volunteerRoles.${index}.contributionPercent`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">AIU Contribution %</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={100}
+                                className="h-9"
+                                {...field}
+                                onChange={e => field.onChange(parseInt(e.target.value) || 1)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`volunteerRoles.${index}.description`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs">Description</FormLabel>
+                            <FormControl>
+                              <Input className="h-9" {...field} placeholder="Role responsibilities" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => appendRole({ role: "support", contributionPercent: 10, count: 1, description: "" })}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Role
+              </Button>
             </div>
 
             {/* Section 4: The Purpose & Impact */}

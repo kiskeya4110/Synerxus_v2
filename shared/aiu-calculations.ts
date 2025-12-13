@@ -277,8 +277,21 @@ export interface AIUJsonExport {
 
 /**
  * Calculate AIUs for a project based on KPI change and volunteer contributions
+ *
+ * The calculation properly accounts for the volunteer contribution percentage:
+ * - Each role has a base weight from ROLE_WEIGHTS (e.g., lead=1.5, support=1.0)
+ * - The volunteer contribution percentage represents what portion of the role's work
+ *   is done by volunteers vs. organization's internal paid staff
+ * - Effective role weight = base weight × volunteer contribution percentage
+ *
+ * Example: A "lead" role (base weight 1.5) with 30% volunteer contribution
+ * means the organization's paid staff carry 70% of the role's work, while
+ * volunteers share the remaining 30%. Effective volunteer weight = 1.5 × 0.30 = 0.45
+ *
+ * @param input - AIU calculation input
+ * @param volunteerContributionPercents - Optional volunteer contribution percentages per role (0-1 scale)
  */
-export function calculateProjectAIUs(input: AIUCalculationInput): AIUResult {
+export function calculateProjectAIUs(input: AIUCalculationInput, volunteerContributionPercents?: Record<string, number>): AIUResult {
   const { kpiBefore, kpiAfter, attributionFactor, volunteers } = input;
 
   // Step 1: Calculate ΔKPI
@@ -288,8 +301,24 @@ export function calculateProjectAIUs(input: AIUCalculationInput): AIUResult {
   const deltaSynerxus = deltaKpi * attributionFactor;
 
   // Step 3: Calculate volunteer weights
+  // Combine base role weights with volunteer contribution percentages
   const volunteersWithWeights = volunteers.map(v => {
-    const roleWeight = ROLE_WEIGHTS[v.role] || ROLE_WEIGHTS.support;
+    // Get the base role weight from ROLE_WEIGHTS (reflects skill/impact level)
+    const baseRoleWeight = ROLE_WEIGHTS[v.role] || ROLE_WEIGHTS.support;
+
+    // Get the volunteer contribution percentage for this role (if specified)
+    // This represents what fraction of the role's work is done by volunteers
+    // vs. the organization's internal paid staff
+    const volunteerContributionPct = volunteerContributionPercents?.[v.role];
+
+    // Calculate effective role weight:
+    // - If contribution percentage is specified: base weight × contribution %
+    //   (volunteers only get credit for their share of the role's work)
+    // - If not specified: use full base weight (assumes 100% volunteer contribution)
+    const roleWeight = volunteerContributionPct !== undefined
+      ? baseRoleWeight * volunteerContributionPct
+      : baseRoleWeight;
+
     const reliabilityMultiplier = RELIABILITY_MULTIPLIERS[v.reliabilityStatus] || RELIABILITY_MULTIPLIERS.pending;
     const volunteerWeight = roleWeight * v.hours * reliabilityMultiplier;
 

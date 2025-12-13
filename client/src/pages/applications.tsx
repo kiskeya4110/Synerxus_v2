@@ -324,9 +324,24 @@ export default function ApplicationsPage() {
         <TabsContent value="pending" className="space-y-4">
           {pendingApplications.length === 0 ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <Clock className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No pending applications</p>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="w-20 h-20 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center mb-6">
+                  <Clock className="h-10 w-10 text-yellow-500" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Pending Applications</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-4">
+                  You're all caught up! When volunteers apply to your opportunities, their applications will appear here for review.
+                </p>
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={() => window.location.href = '/opportunities'}>
+                    <Briefcase className="w-4 h-4 mr-2" />
+                    View Opportunities
+                  </Button>
+                  <Button onClick={() => window.location.href = '/post-opportunity'}>
+                    <Target className="w-4 h-4 mr-2" />
+                    Post New Opportunity
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -418,9 +433,14 @@ export default function ApplicationsPage() {
         <TabsContent value="reviewed" className="space-y-4">
           {reviewedApplications.length === 0 ? (
             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <CheckCircle2 className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-gray-500 dark:text-gray-400">No reviewed applications</p>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
+                  <CheckCircle2 className="h-10 w-10 text-gray-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Reviewed Applications Yet</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
+                  Once you accept or reject applications, they will appear here for your records. Check the Pending tab to review new applications.
+                </p>
               </CardContent>
             </Card>
           ) : (

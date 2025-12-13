@@ -71,7 +71,7 @@ usersRouter.get("/:id", async (req: Request, res: Response) => {
 // POST /api/users/firebase-sync - Sync Firebase user with database
 usersRouter.post("/firebase-sync", async (req: Request, res: Response) => {
   try {
-    const { firebaseUid, email, displayName, userType } = req.body;
+    const { firebaseUid, email, displayName, userType, organizationName } = req.body;
 
     if (!firebaseUid || !email) {
       return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
@@ -98,12 +98,26 @@ usersRouter.post("/firebase-sync", async (req: Request, res: Response) => {
     }
 
     const username = email.split('@')[0] + '_' + Date.now();
+
+    // Create organization if organization name is provided for org/corporate users
+    let organizationId: number | undefined;
+    if ((userType === 'organization' || userType === 'corporate-partner') && organizationName) {
+      const organization = await storage.createOrganization({
+        name: organizationName,
+        contactEmail: email,
+        description: '',
+        address: ''
+      });
+      organizationId = organization.id;
+    }
+
     const userData = {
       firebaseUid,
       username,
       email,
       displayName: displayName || email.split('@')[0],
       userType,
+      organizationId,
     };
 
     user = await storage.createUser(userData);

@@ -214,6 +214,24 @@ export default function MyWork() {
     enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization' && Array.isArray(orgProjects) && orgProjects.length > 0
   });
 
+  // Fetch all project assignments for organization (to calculate project-specific volunteer counts)
+  const { data: orgProjectAssignments = [] } = useQuery<any[]>({
+    queryKey: ["/api/project-assignments", "org", currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch("/api/project-assignments");
+      if (!response.ok) return [];
+      const allAssignments = await response.json();
+      // Filter assignments by organization's projects
+      const projectsArray = Array.isArray(orgProjects) ? orgProjects : [];
+      const orgProjectIds = new Set(projectsArray.map((p: Project) => p.id));
+      return Array.isArray(allAssignments)
+        ? allAssignments.filter((a: any) => orgProjectIds.has(a.projectId))
+        : [];
+    },
+    enabled: !!currentUser?.organizationId && currentUser?.userType === 'organization' && Array.isArray(orgProjects) && orgProjects.length > 0
+  });
+
   // Fetch AI-matched opportunities for personalized recommendations
   const { data: matchedOpportunities = [] } = useQuery<any[]>({
     queryKey: ["/api/opportunities/matches", volunteerId],
@@ -386,10 +404,22 @@ export default function MyWork() {
 
   // Calculate organization KPIs for org managers
   const isOrganizationManager = currentUser?.userType === 'organization';
-  
+
   // Use organization-wide data sources for accuracy
-  const orgTotalVolunteers = isOrganizationManager ? orgVolunteers.length : 0;
-  
+  // orgVolunteers is now filtered by organizationId on the server, counting only
+  // volunteers who have active/accepted project assignments with this organization
+  // If that returns 0, fallback to calculating from project assignments directly
+  const uniqueVolunteerIds = isOrganizationManager
+    ? new Set(
+        orgProjectAssignments
+          .filter((a: any) => a.status === 'active' || a.status === 'accepted')
+          .map((a: any) => a.volunteerId)
+      )
+    : new Set();
+  const orgTotalVolunteers = isOrganizationManager
+    ? (orgVolunteers.length > 0 ? orgVolunteers.length : uniqueVolunteerIds.size)
+    : 0;
+
   const orgTotalProjects = isOrganizationManager ? orgProjects.length : 0;
   
   const orgTotalHours = isOrganizationManager 
@@ -611,8 +641,13 @@ export default function MyWork() {
           </p>
         </div>
         {isOrganizationManager ? (
-          <Link href={`/organization-impact-report/${currentUser?.organizationId}`}>
-            <Button variant="outline" size="sm" className="gap-2">
+          <Link href={`/organization-impact-report/${currentUser?.organizationId || ''}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 cursor-pointer"
+              data-testid="button-create-impact-report"
+            >
               <BarChart3 className="h-4 w-4" />
               <span className="hidden sm:inline">Create Impact Report</span>
               <span className="sm:hidden">Report</span>
@@ -629,63 +664,97 @@ export default function MyWork() {
         )}
       </div>
 
-      {/* Organization Impact KPIs */}
+      {/* Organization Impact KPIs - Interactive Cards */}
       {isOrganizationManager ? (
-        <div className="mx-4 sm:mx-6 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-6 gap-3 px-0 pb-4">
+        <div className="mx-4 sm:mx-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 px-0 pb-4">
           {/* Impact Score - Primary Metric */}
-          <Card className="lg:col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20" data-testid="card-impact-score">
-            <CardContent className="pt-6">
-              <div className="space-y-2">
+          <Card
+            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:scale-[1.02]"
+            data-testid="card-impact-score"
+            onClick={() => setLocation('/impact-visualization')}
+          >
+            <CardContent className="pt-4 pb-3">
+              <div className="space-y-1">
                 <p className="text-xs font-semibold text-primary/70 uppercase tracking-wide">Impact Score</p>
                 <div className="flex items-baseline gap-1">
-                  <p className="text-4xl font-bold text-primary">{dashboardData?.impactScore || 0}</p>
-                  <p className="text-sm text-primary/60">/100</p>
+                  <p className="text-3xl font-bold text-primary">{dashboardData?.impactScore || 0}</p>
+                  <p className="text-xs text-primary/60">/100</p>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400">Overall organizational impact</p>
+                <Progress value={dashboardData?.impactScore || 0} className="h-1 mt-1" />
+                <p className="text-xs text-gray-500 mt-1">View details →</p>
               </div>
             </CardContent>
           </Card>
 
           {/* People Impacted */}
-          <Card className="bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20" data-testid="card-people-impacted">
-            <CardContent className="pt-4">
+          <Card
+            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20 hover:scale-[1.02]"
+            data-testid="card-people-impacted"
+            onClick={() => setLocation('/impact-visualization')}
+          >
+            <CardContent className="pt-4 pb-3">
               <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">Lives Impacted</p>
               <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{(dashboardData?.totalPeopleImpacted || 0).toLocaleString()}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">30% impact weight</p>
+              <p className="text-xs text-gray-500 mt-1">30% weight • View →</p>
             </CardContent>
           </Card>
 
           {/* Volunteer Hours */}
-          <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20" data-testid="card-hours">
-            <CardContent className="pt-4">
+          <Card
+            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20 hover:scale-[1.02]"
+            data-testid="card-hours"
+            onClick={() => setLocation('/volunteers')}
+          >
+            <CardContent className="pt-4 pb-3">
               <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide">Total Hours</p>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{Math.round(dashboardData?.totalHours || 0)}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">35% impact weight</p>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{Math.round(dashboardData?.totalHours || orgTotalHours || 0).toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">35% weight • View →</p>
             </CardContent>
           </Card>
 
           {/* Task Completion */}
-          <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20" data-testid="card-task-completion">
-            <CardContent className="pt-4">
-              <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">Tasks Done</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-                {Math.round(((dashboardData?.completedTasks || 0) / (dashboardData?.totalTasks || 1)) * 100)}%
-              </p>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">20% impact weight</p>
+          <Card
+            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20 hover:scale-[1.02]"
+            data-testid="card-task-completion"
+            onClick={() => setLocation('/tasks')}
+          >
+            <CardContent className="pt-4 pb-3">
+              <p className="text-xs font-semibold text-green-600 dark:text-green-400 uppercase tracking-wide">Tasks</p>
+              <div className="flex items-baseline gap-1 mt-1">
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {dashboardData?.completedTasks || orgTasks.filter((t: Task) => t.status?.toLowerCase() === 'completed').length}
+                </p>
+                <p className="text-sm text-green-600/60">/{dashboardData?.totalTasks || orgTasks.length}</p>
+              </div>
+              <Progress
+                value={((dashboardData?.completedTasks || 0) / Math.max(dashboardData?.totalTasks || 1, 1)) * 100}
+                className="h-1 mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">Manage tasks →</p>
             </CardContent>
           </Card>
 
-          {/* Active Volunteers & Projects */}
-          <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20" data-testid="card-engagement">
-            <CardContent className="pt-4">
+          {/* Engagement - Real KPIs from database */}
+          <Card
+            className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20 hover:scale-[1.02]"
+            data-testid="card-engagement"
+            onClick={() => setLocation('/volunteers')}
+          >
+            <CardContent className="pt-4 pb-3">
               <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Engagement</p>
-              <div className="mt-2 space-y-1">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">{orgTotalVolunteers} volunteers</span>
-                  <span className="text-xs text-gray-500">{orgTotalProjects} projects</span>
+              <div className="mt-1 space-y-1">
+                <div className="flex items-center gap-2">
+                  <UsersIcon className="w-4 h-4 text-blue-500" />
+                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{orgTotalVolunteers}</span>
+                  <span className="text-xs text-gray-500">volunteers</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-blue-500" />
+                  <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{orgTotalProjects}</span>
+                  <span className="text-xs text-gray-500">projects</span>
                 </div>
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Active contributors</p>
+              <p className="text-xs text-gray-500 mt-1">View team →</p>
             </CardContent>
           </Card>
         </div>
@@ -825,16 +894,24 @@ export default function MyWork() {
                   const projectTasks = orgTasks.filter((t: Task) => t.projectId === project.id);
                   const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
                   const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
-                  
+
+                  // Calculate project-specific volunteer count from assignments
+                  const projectAssignments = orgProjectAssignments.filter((a: any) => a.projectId === project.id);
+                  const projectVolunteerCount = new Set(projectAssignments.map((a: any) => a.volunteerId)).size;
+
+                  // Calculate hours from assignments for this project
+                  const hoursCommitted = projectAssignments.reduce((sum: number, a: any) => sum + (a.hoursCommitted || 0), 0);
+                  const hoursCompleted = projectAssignments.reduce((sum: number, a: any) => sum + (a.hoursCompleted || 0), 0);
+
                   return (
                     <ProjectListCard
                       key={project.id}
                       project={project}
                       tasks={projectTasks}
                       metrics={{
-                        volunteers: orgVolunteers.length,
-                        totalCommitted: projectTasks.length,
-                        totalCompleted: completedTasks
+                        volunteers: projectVolunteerCount,
+                        totalCommitted: hoursCommitted,
+                        totalCompleted: hoursCompleted
                       }}
                       progress={project.completionPercentage ?? progress}
                       isExpanded={expandedProjects.has(project.id)}

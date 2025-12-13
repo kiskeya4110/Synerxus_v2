@@ -4,6 +4,25 @@ import { setupVite, serveStatic, log } from "./vite";
 import { initializeDigestScheduler } from "./digest-scheduler";
 import { logger } from "./logger";
 
+// Global error handlers to prevent crashes from unhandled rejections/exceptions
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  logger.error('Unhandled Promise Rejection:', {
+    reason: reason?.message || reason,
+    stack: reason?.stack
+  });
+  // Don't exit - log and continue
+});
+
+process.on('uncaughtException', (error: Error) => {
+  logger.error('Uncaught Exception:', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name
+  });
+  // For uncaught exceptions in critical paths, we may need to exit gracefully
+  // But for now, log and attempt to continue
+});
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -48,8 +67,19 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Log the error but don't re-throw it - re-throwing causes unhandled exceptions
+    // that crash the server
+    logger.error('Unhandled error:', {
+      status,
+      message,
+      stack: err.stack,
+      name: err.name
+    });
+
+    // Only send response if headers haven't been sent yet
+    if (!res.headersSent) {
+      res.status(status).json({ message });
+    }
   });
 
   // importantly only setup vite in development and after

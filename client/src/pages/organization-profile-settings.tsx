@@ -184,7 +184,11 @@ export default function OrganizationProfileSettings() {
 
     try {
       const hasMatchableProfile = existingProfile && Object.keys(existingProfile).length > 0;
-      const hasOrgProfile = orgProfileData && Object.keys(orgProfileData).length > 0;
+      // Extract nested data from the profile response: { user, organization, organizationProfile, matchableOrganization }
+      const intakeProfile = orgProfileData?.organizationProfile;
+      const orgData = orgProfileData?.organization;
+      const matchableOrg = orgProfileData?.matchableOrganization;
+      const hasOrgProfile = intakeProfile || orgData || matchableOrg;
 
       if (hasMatchableProfile) {
         // Existing matchable organization profile - populate form with all data
@@ -201,16 +205,20 @@ export default function OrganizationProfileSettings() {
         }
       } else if (hasOrgProfile) {
         // Fallback to organization profile data if no matchable org found
+        // Map field names from intake form (organizationName, missionStatement, organizationLocation, volunteerNeeds, primarySdgs)
+        // to profile settings form (name, mission, location, needs, sdgFocus)
+        // Priority: matchableOrg > intakeProfile > orgData
         form.reset({
           email: currentUser?.email || "",
-          name: orgProfileData.organizationName || currentUser?.displayName || "",
-          mission: orgProfileData.mission || "",
-          location: orgProfileData.location || "",
-          needs: orgProfileData.needs || [],
-          sdgFocus: orgProfileData.sdgFocus || orgProfileData.primarySdgs || [],
+          name: matchableOrg?.name || intakeProfile?.organizationName || orgData?.name || currentUser?.displayName || "",
+          mission: matchableOrg?.mission || intakeProfile?.missionStatement || orgData?.goals || "",
+          location: matchableOrg?.location || intakeProfile?.organizationLocation || orgData?.address || "",
+          needs: matchableOrg?.needs || intakeProfile?.volunteerNeeds || orgData?.needs || [],
+          sdgFocus: matchableOrg?.sdgFocus || intakeProfile?.primarySdgs || orgData?.primarySdgs || [],
         });
-        if (orgProfileData.profilePhotoUrl || orgProfileData.logo) {
-          setLogoUrl(orgProfileData.profilePhotoUrl || orgProfileData.logo);
+        const logoToUse = matchableOrg?.logo || intakeProfile?.logo || orgData?.logo;
+        if (logoToUse) {
+          setLogoUrl(logoToUse);
         }
       } else if (currentUser?.email) {
         // New profile - initialize with user data only

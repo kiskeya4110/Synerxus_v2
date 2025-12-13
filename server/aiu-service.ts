@@ -169,8 +169,11 @@ const SDG_NAMES: Record<number, string> = {
 
 /**
  * Calculate AIU for a specific project with all its volunteers
+ * @param projectId - The project ID to calculate AIU for
+ * @param useFullRoleWeights - If true, use 100% role weights (for organization reporting).
+ *                             If false/undefined, use volunteer contribution percentages.
  */
-export async function calculateProjectAIU(projectId: number): Promise<ProjectAIUSummary | null> {
+export async function calculateProjectAIU(projectId: number, useFullRoleWeights?: boolean): Promise<ProjectAIUSummary | null> {
   // Fetch project with AIU settings
   const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
   if (!project) return null;
@@ -275,6 +278,36 @@ export async function calculateProjectAIU(projectId: number): Promise<ProjectAIU
   const attributionFactor = aiuSettings?.attributionFactor ?? 0.2; // Default 20% attribution
   const sdgIndicator = aiuSettings?.sdgIndicator || `SDG ${project.primarySdg || project.sdgGoals?.[0] || 4}.1.1`;
 
+  // Extract custom role contribution percentages from project's volunteerRoles if set
+  //
+  // The calculation uses two levels of contribution:
+  // 1. totalVolunteerContribution: The total % of project impact attributed to ALL volunteers
+  //    (e.g., 30% means volunteers collectively get 30% of project impact)
+  // 2. volunteerRoles.contributionPercent: How the volunteer share is distributed among roles
+  //    (e.g., lead gets 40% of the 30% = 12% of total project impact)
+  //
+  // For organization reporting (useFullRoleWeights=true): Use 100% role weights
+  //   - Organizations get full credit for the project's impact
+  // For volunteer reporting (useFullRoleWeights=false/undefined): Use contribution percentages
+  //   - Volunteers only get credit for their share of the role's work
+  let volunteerContributionPercents: Record<string, number> | undefined;
+  if (!useFullRoleWeights && project.volunteerRoles && Array.isArray(project.volunteerRoles) && project.volunteerRoles.length > 0) {
+    volunteerContributionPercents = {};
+    // Get the total volunteer contribution (default to 100% if not set for backwards compatibility)
+    const totalVolunteerPct = (project.totalVolunteerContribution ?? 100) / 100;
+
+    (project.volunteerRoles as Array<{ role: string; contributionPercent: number }>).forEach(vr => {
+      // Calculate effective contribution for this role:
+      // effectivePercent = totalVolunteerContribution × roleContributionPercent
+      // Example: totalVolunteerContribution=30%, role contributionPercent=40%
+      // effectivePercent = 0.30 × 0.40 = 0.12 (12% of total project impact)
+      const roleShareOfVolunteerPct = (vr.contributionPercent || 0) / 100;
+      volunteerContributionPercents![vr.role] = totalVolunteerPct * roleShareOfVolunteerPct;
+    });
+  }
+  // When useFullRoleWeights is true, volunteerContributionPercents remains undefined
+  // This causes calculateProjectAIUs to use full base role weights (100% credit)
+
   const aiuInput: AIUCalculationInput = {
     kpiBefore,
     kpiAfter,
@@ -282,8 +315,10 @@ export async function calculateProjectAIU(projectId: number): Promise<ProjectAIU
     volunteers: volunteerContributions,
   };
 
-  // Calculate AIUs
-  const aiuResult = calculateProjectAIUs(aiuInput);
+  // Calculate AIUs:
+  // - With contribution percentages for volunteer reporting (reduced weights)
+  // - Without contribution percentages for organization reporting (full weights = 100% credit)
+  const aiuResult = calculateProjectAIUs(aiuInput, volunteerContributionPercents);
 
   // Calculate lives impacted (from impacts table)
   const verifiedLivesImpacted = impacts
@@ -526,6 +561,7 @@ export async function calculateVolunteerAIU(volunteerId: number): Promise<Volunt
 
 /**
  * Calculate AIU summary for an organization across all projects
+ * Organizations receive 100% credit for project impact (full role weights)
  */
 export async function calculateOrganizationAIU(organizationId: number): Promise<OrganizationAIUSummary | null> {
   // Fetch organization
@@ -576,7 +612,9 @@ export async function calculateOrganizationAIU(organizationId: number): Promise<
   let maxPossibleScore = 0;
 
   for (const project of orgProjects) {
-    const projectSummary = await calculateProjectAIU(project.id);
+    // Use full role weights (100% credit) for organization AIU calculation
+    // Organizations get full credit for the project's impact
+    const projectSummary = await calculateProjectAIU(project.id, true);
     if (!projectSummary) continue;
 
     projectSummaries.push({
@@ -656,6 +694,8 @@ export async function calculateOrganizationAIU(organizationId: number): Promise<
 
 /**
  * Generate comprehensive CSR AIU report
+ * CSR (Corporate Social Responsibility) reports use full role weights (100% credit)
+ * as this is organization-level reporting
  */
 export async function generateCSRAIUReport(
   reportingPeriod?: { start: Date; end: Date }
@@ -683,9 +723,9 @@ export async function generateCSRAIUReport(
   let selfReportedCount = 0;
   const volunteerIds = new Set<number>();
 
-  // Calculate AIU for each project
+  // Calculate AIU for each project using full role weights (100% credit for CSR reporting)
   for (const project of allProjects) {
-    const projectSummary = await calculateProjectAIU(project.id);
+    const projectSummary = await calculateProjectAIU(project.id, true);
     if (!projectSummary) continue;
 
     totalAiuUnique += projectSummary.totalAiuUnique;

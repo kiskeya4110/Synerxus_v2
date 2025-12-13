@@ -232,18 +232,25 @@ export default function Login() {
             firebaseUid: firebaseUser.uid,
             email: firebaseUser.email,
             displayName: registerName,
-            userType
+            userType,
+            // Pass organization name for org/corporate users - will be saved and used to pre-fill intake form
+            organizationName: (userType === 'organization' || userType === 'corporate-partner') ? organizationName : undefined
           })
         });
-        
+
         if (!response.ok) {
           throw new Error('Failed to sync with backend');
         }
-        
+
         const dbUser = await response.json();
         localStorage.setItem('currentUserId', dbUser.id);
         localStorage.setItem('userType', userType || 'volunteer');
-        
+
+        // Store organization name in localStorage for intake form to pre-fill (prevents asking twice)
+        if ((userType === 'organization' || userType === 'corporate-partner') && organizationName) {
+          localStorage.setItem('pendingOrganizationName', organizationName);
+        }
+
         // Redirect to appropriate intake form based on user type
         if (userType === 'volunteer') {
           setLocation("/volunteer-intake");

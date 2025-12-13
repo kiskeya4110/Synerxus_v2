@@ -54,17 +54,43 @@ export default function Projects() {
     enabled: !!currentUser && !!userId
   });
 
-  // Fetch all tasks
+  // Fetch tasks scoped to the organization
   const { data: allTasks = [] } = useQuery<Task[]>({
-    queryKey: ["/api/tasks"]
+    queryKey: ["/api/tasks", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/tasks?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!currentUser && !!userId
   });
 
-  // Fetch all assignments
+  // Fetch assignments scoped to the organization's projects
   const { data: allAssignments = [] } = useQuery<ProjectAssignment[]>({
-    queryKey: ["/api/project-assignments"]
+    queryKey: ["/api/project-assignments", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      // For organizations, fetch assignments for their projects
+      const projectIds = projects.map(p => p.id);
+      if (projectIds.length === 0) return [];
+      // Fetch assignments for each project
+      const allAssignments: ProjectAssignment[] = [];
+      for (const projectId of projectIds) {
+        const response = await fetch(`/api/project-assignments?projectId=${projectId}`);
+        if (response.ok) {
+          const assignments = await response.json();
+          allAssignments.push(...assignments);
+        }
+      }
+      return allAssignments;
+    },
+    enabled: !!currentUser && !!userId && projects.length > 0
   });
 
-  // Fetch volunteer activities for engagement calculation
+  // Fetch volunteer activities scoped to the organization's projects
   interface VolunteerActivity {
     id: number;
     projectId: number;
@@ -73,7 +99,23 @@ export default function Projects() {
     createdAt: string;
   }
   const { data: allActivities = [] } = useQuery<VolunteerActivity[]>({
-    queryKey: ["/api/volunteer-activities"]
+    queryKey: ["/api/volunteer-activities", userId, projects.map(p => p.id).join(',')],
+    queryFn: async () => {
+      // For organizations, fetch activities for their projects
+      const projectIds = projects.map(p => p.id);
+      if (projectIds.length === 0) return [];
+      // Fetch activities for each project
+      const allActivities: VolunteerActivity[] = [];
+      for (const projectId of projectIds) {
+        const response = await fetch(`/api/volunteer-activities?projectId=${projectId}`);
+        if (response.ok) {
+          const activities = await response.json();
+          allActivities.push(...activities);
+        }
+      }
+      return allActivities;
+    },
+    enabled: !!currentUser && !!userId && projects.length > 0
   });
 
   // Fetch opportunities for the organization

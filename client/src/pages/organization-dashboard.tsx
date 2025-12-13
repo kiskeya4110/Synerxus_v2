@@ -1024,254 +1024,244 @@ export default function OrganizationDashboard() {
             </div>
           </div>
 
-          {/* Right Column: Alerts & Tasks */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', height: 'fit-content' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertTriangle size={18} style={{ color: '#f59e0b' }} />
-                Alerts & Tasks
-              </h3>
-              <button
-                onClick={() => navigate('/tasks')}
-                onTouchEnd={(e) => { e.preventDefault(); navigate('/tasks'); }}
-                data-testid="view-all-tasks"
-                style={{ fontSize: '12px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '8px 12px', touchAction: 'manipulation' }}
-              >
-                View All →
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {dashboardData?.alerts && dashboardData.alerts.length > 0 ? (
-                dashboardData.alerts.slice(0, 6).map((alert) => (
-                  <button
-                    key={alert.id}
-                    type="button"
-                    className="alert-btn"
-                    onClick={() => {
-                      if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
-                        navigate('/tasks');
-                      } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
-                        navigate('/projects');
-                      } else if (alert.type === 'volunteer') {
-                        navigate('/volunteers');
-                      } else {
-                        navigate('/tasks');
-                      }
-                    }}
-                    onTouchEnd={(e) => {
-                      e.preventDefault();
-                      if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
-                        navigate('/tasks');
-                      } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
-                        navigate('/projects');
-                      } else if (alert.type === 'volunteer') {
-                        navigate('/volunteers');
-                      } else {
-                        navigate('/tasks');
-                      }
-                    }}
-                    style={{
-                      padding: '12px',
-                      borderRadius: '8px',
-                      backgroundColor: alert.severity === 'high' ? '#fef2f2' : '#fffbeb',
-                      borderLeft: `4px solid ${alert.severity === 'high' ? '#dc2626' : '#f59e0b'}`,
-                      border: 'none',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      transition: 'transform 0.15s, box-shadow 0.15s',
-                      width: '100%',
-                      touchAction: 'manipulation',
-                    }}
-                    data-testid={`alert-${alert.id}`}
-                  >
-                    <p style={{ fontSize: '13px', fontWeight: '500', color: '#111827', marginBottom: '2px' }}>{alert.title}</p>
-                    <p style={{ fontSize: '12px', color: '#6b7280' }}>{alert.message}</p>
-                  </button>
-                ))
-              ) : (
-                <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
-                  <CheckSquare size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
-                  <p style={{ fontSize: '14px' }}>All caught up!</p>
-                </div>
-              )}
-            </div>
-            {dashboardData?.pendingTasks && dashboardData.pendingTasks.length > 0 && (
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: '500', color: '#6b7280' }}>Pending Tasks</p>
-                </div>
-                {dashboardData.pendingTasks.slice(0, 3).map((task) => (
-                  <button
-                    key={task.id}
-                    type="button"
-                    className="task-btn"
-                    onClick={() => navigate(`/tasks?id=${task.id}`)}
-                    onTouchEnd={(e) => { e.preventDefault(); navigate(`/tasks?id=${task.id}`); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 8px',
-                      borderBottom: '1px solid #f3f4f6',
-                      width: '100%',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background-color 0.15s',
-                      touchAction: 'manipulation',
-                    }}
-                    data-testid={`task-${task.id}`}
-                  >
-                    <CheckSquare size={14} style={{ color: '#9ca3af', flexShrink: 0 }} />
-                    <span style={{ fontSize: '13px', color: '#374151' }}>{task.title}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {pendingApplications && pendingApplications.length > 0 && (
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px solid #059669' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#059669', margin: 0 }}>🔔 New Applications ({pendingApplications.length})</p>
-                  <button
-                    onClick={() => navigate('/applications')}
-                    onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
-                    style={{
-                      backgroundColor: '#059669',
-                      color: 'white',
-                      border: 'none',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.2s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#047857'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#059669'}
-                    data-testid="button-view-all-applications"
-                  >
-                    View All →
-                  </button>
-                </div>
-                {pendingApplications.slice(0, 3).map((app: any) => (
-                  <button
-                    key={app.id}
-                    type="button"
-                    onClick={() => navigate('/applications')}
-                    onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '12px 8px',
-                      borderBottom: '1px solid #f3f4f6',
-                      width: '100%',
-                      backgroundColor: '#f0fdf4',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'background-color 0.15s',
-                      touchAction: 'manipulation',
-                    }}
-                    data-testid={`application-${app.id}`}
-                  >
-                    <UserPlus size={14} style={{ color: '#059669', flexShrink: 0 }} />
-                    <span style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>New applicant awaiting review</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bottom Section: Impact Over Time + Active Projects | AI Insights + Quick Actions - Desktop Only */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }} className="bottom-section hidden md:grid">
-          {/* Left Column: Impact Over Time + Active Projects stacked */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* Impact Over Time Chart - SDG Highlighted */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
-                Impact Over Time
-                {organizationProfile?.sdgGoals && organizationProfile.sdgGoals.length > 0 && (
-                  <span style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginLeft: '4px' }}>
-                    ({organizationProfile.sdgGoals.slice(0, 2).map((g: number) => getSDGName(g)).join(', ')})
-                  </span>
-                )}
-              </h3>
-              <div style={{ height: '220px' }}>
-                {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={dashboardData.impactOverTime}>
-                      <defs>
-                        <linearGradient id="desktopHoursGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
-                          <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="desktopPeopleGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
-                          <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
-                      <YAxis tick={{ fontSize: 11 }} />
-                      <Tooltip
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            const sdgColor1 = organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534';
-                            const sdgColor2 = organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af';
-                            return (
-                              <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderTop: `3px solid ${sdgColor1}` }}>
-                                <p style={{ fontWeight: '600', marginBottom: '4px' }}>{label}</p>
-                                <p style={{ fontSize: '13px', color: sdgColor1 }}>Hours: {payload[0]?.value}</p>
-                                <p style={{ fontSize: '13px', color: sdgColor2 }}>People Impacted: {payload[1]?.value}</p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend />
-                      <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#desktopHoursGradient)" strokeWidth={2} name="Hours" />
-                      <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#desktopPeopleGradient)" strokeWidth={2} name="People Impacted" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
-                    No impact data available
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Active Projects List */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Active Projects</h3>
+          {/* Right Column: Alerts & Tasks + AI Insights + Quick Actions + Active Projects (Compressed) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Alerts & Tasks */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <AlertTriangle size={16} style={{ color: '#f59e0b' }} />
+                  Alerts & Tasks
+                </h3>
                 <button
-                  onClick={() => navigate('/projects')}
-                  onTouchEnd={(e) => { e.preventDefault(); navigate('/projects'); }}
-                  data-testid="view-all-projects"
-                  style={{ fontSize: '13px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '8px 12px', touchAction: 'manipulation' }}
+                  onClick={() => navigate('/tasks')}
+                  onTouchEnd={(e) => { e.preventDefault(); navigate('/tasks'); }}
+                  data-testid="view-all-tasks"
+                  style={{ fontSize: '11px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '4px 8px', touchAction: 'manipulation' }}
                 >
                   View All →
                 </button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {dashboardData?.projects?.slice(0, 5).map((project) => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {dashboardData?.alerts && dashboardData.alerts.length > 0 ? (
+                  dashboardData.alerts.slice(0, 4).map((alert) => (
+                    <button
+                      key={alert.id}
+                      type="button"
+                      className="alert-btn"
+                      onClick={() => {
+                        if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
+                          navigate('/tasks');
+                        } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
+                          navigate('/projects');
+                        } else if (alert.type === 'volunteer') {
+                          navigate('/volunteers');
+                        } else {
+                          navigate('/tasks');
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
+                          navigate('/tasks');
+                        } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
+                          navigate('/projects');
+                        } else if (alert.type === 'volunteer') {
+                          navigate('/volunteers');
+                        } else {
+                          navigate('/tasks');
+                        }
+                      }}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: alert.severity === 'high' ? '#fef2f2' : '#fffbeb',
+                        borderLeft: `3px solid ${alert.severity === 'high' ? '#dc2626' : '#f59e0b'}`,
+                        border: 'none',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        width: '100%',
+                        touchAction: 'manipulation',
+                      }}
+                      data-testid={`alert-${alert.id}`}
+                    >
+                      <p style={{ fontSize: '12px', fontWeight: '500', color: '#111827', marginBottom: '1px' }}>{alert.title}</p>
+                      <p style={{ fontSize: '11px', color: '#6b7280' }}>{alert.message}</p>
+                    </button>
+                  ))
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
+                    <CheckSquare size={24} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
+                    <p style={{ fontSize: '12px' }}>All caught up!</p>
+                  </div>
+                )}
+              </div>
+              {dashboardData?.pendingTasks && dashboardData.pendingTasks.length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
+                  <p style={{ fontSize: '11px', fontWeight: '500', color: '#6b7280', marginBottom: '6px' }}>Pending Tasks</p>
+                  {dashboardData.pendingTasks.slice(0, 2).map((task) => (
+                    <button
+                      key={task.id}
+                      type="button"
+                      className="task-btn"
+                      onClick={() => navigate(`/tasks?id=${task.id}`)}
+                      onTouchEnd={(e) => { e.preventDefault(); navigate(`/tasks?id=${task.id}`); }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px',
+                        width: '100%',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        touchAction: 'manipulation',
+                      }}
+                      data-testid={`task-${task.id}`}
+                    >
+                      <CheckSquare size={12} style={{ color: '#9ca3af', flexShrink: 0 }} />
+                      <span style={{ fontSize: '12px', color: '#374151' }}>{task.title}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {pendingApplications && pendingApplications.length > 0 && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '2px solid #059669' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <p style={{ fontSize: '12px', fontWeight: '600', color: '#059669', margin: 0 }}>🔔 Applications ({pendingApplications.length})</p>
+                    <button
+                      onClick={() => navigate('/applications')}
+                      onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
+                      style={{
+                        backgroundColor: '#059669',
+                        color: 'white',
+                        border: 'none',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '10px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                      }}
+                      data-testid="button-view-all-applications"
+                    >
+                      View →
+                    </button>
+                  </div>
+                  {pendingApplications.slice(0, 2).map((app: any) => (
+                    <button
+                      key={app.id}
+                      type="button"
+                      onClick={() => navigate('/applications')}
+                      onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 6px',
+                        width: '100%',
+                        backgroundColor: '#f0fdf4',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        marginBottom: '4px',
+                        touchAction: 'manipulation',
+                      }}
+                      data-testid={`application-${app.id}`}
+                    >
+                      <UserPlus size={12} style={{ color: '#059669', flexShrink: 0 }} />
+                      <span style={{ fontSize: '11px', color: '#374151', fontWeight: '500' }}>New applicant awaiting review</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* AI Insights */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Lightbulb size={14} style={{ color: '#f59e0b' }} />
+                AI Insights
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {dashboardData?.aiInsights?.slice(0, 2).map((insight) => (
+                  <div
+                    key={insight.id}
+                    style={{
+                      padding: '8px',
+                      borderRadius: '6px',
+                      backgroundColor: insight.sentiment === 'positive' ? '#f0fdf4' : insight.sentiment === 'warning' ? '#fffbeb' : '#f9fafb',
+                      borderLeft: `2px solid ${insight.sentiment === 'positive' ? '#166534' : insight.sentiment === 'warning' ? '#f59e0b' : '#6b7280'}`,
+                    }}
+                    data-testid={`insight-${insight.id}`}
+                  >
+                    <p style={{ fontSize: '11px', fontWeight: '600', color: '#111827', marginBottom: '1px' }}>{insight.title}</p>
+                    <p style={{ fontSize: '10px', color: '#6b7280' }}>{insight.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '10px' }}>Quick Actions</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                <button
+                  onClick={() => navigate('/projects?create=true')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
+                  data-testid="quick-create-project"
+                >
+                  <Plus size={12} /> Project
+                </button>
+                <button
+                  onClick={() => navigate('/volunteers?invite=true')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
+                  data-testid="quick-invite-volunteer"
+                >
+                  <UserPlus size={12} /> Volunteer
+                </button>
+                <button
+                  onClick={() => navigate('/tasks?create=true')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
+                  data-testid="quick-create-task"
+                >
+                  <CheckSquare size={12} /> Task
+                </button>
+                <button
+                  onClick={() => navigate('/impact-visualization')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
+                  data-testid="quick-view-reports"
+                >
+                  <BarChart3 size={12} /> Reports
+                </button>
+              </div>
+            </div>
+
+            {/* Compressed Active Projects */}
+            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <h3 style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>Active Projects</h3>
+                <button
+                  onClick={() => navigate('/projects')}
+                  onTouchEnd={(e) => { e.preventDefault(); navigate('/projects'); }}
+                  data-testid="view-all-projects"
+                  style={{ fontSize: '11px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', touchAction: 'manipulation' }}
+                >
+                  View All →
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {dashboardData?.projects?.slice(0, 4).map((project) => (
                   <button
                     key={project.id}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
-                      padding: '12px',
-                      borderRadius: '8px',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
                       backgroundColor: '#f9fafb',
                       cursor: 'pointer',
                       width: '100%',
@@ -1283,131 +1273,103 @@ export default function OrganizationDashboard() {
                     onTouchEnd={(e) => { e.preventDefault(); navigate(`/projects/${project.id}`); }}
                     data-testid={`project-item-${project.id}`}
                   >
-                    <div>
-                      <p style={{ fontSize: '14px', fontWeight: '500', color: '#111827' }}>{project.name}</p>
-                      <p style={{ fontSize: '12px', color: '#6b7280' }}>
-                        SDGs: {project.sdgGoals.length > 0 ? project.sdgGoals.map(g => `SDG ${g}`).join(', ') : 'None'}
-                      </p>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '12px', fontWeight: '500', color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.name}</p>
+                      <p style={{ fontSize: '10px', color: '#6b7280' }}>{project.completionPercentage}% complete</p>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{
-                        fontSize: '12px',
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#e5e7eb',
-                        color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#6b7280',
-                      }}>
-                        {project.status}
-                      </span>
-                      <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>{project.completionPercentage}% complete</p>
-                    </div>
+                    <span style={{
+                      fontSize: '10px',
+                      padding: '2px 6px',
+                      borderRadius: '10px',
+                      backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#e5e7eb',
+                      color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#6b7280',
+                      flexShrink: 0,
+                      marginLeft: '8px',
+                    }}>
+                      {project.status}
+                    </span>
                   </button>
                 ))}
                 {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
-                  <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
-                    <FolderOpen size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
-                    <p>No projects yet</p>
+                  <div style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
+                    <FolderOpen size={20} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
+                    <p style={{ fontSize: '11px' }}>No projects yet</p>
                     <button
                       onClick={() => navigate('/projects?create=true')}
-                      onTouchEnd={(e) => { e.preventDefault(); navigate('/projects?create=true'); }}
                       style={{
-                        marginTop: '12px',
-                        padding: '12px 20px',
+                        marginTop: '8px',
+                        padding: '6px 12px',
                         backgroundColor: '#166534',
                         color: 'white',
                         border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
                         cursor: 'pointer',
-                        touchAction: 'manipulation',
                       }}
                     >
-                      Create First Project
+                      Create Project
                     </button>
                   </div>
                 )}
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Right Column: AI Insights + Quick Actions stacked */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* AI Insights */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Lightbulb size={16} style={{ color: '#f59e0b' }} />
-                AI Insights
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {dashboardData?.aiInsights?.map((insight) => (
-                  <div
-                    key={insight.id}
-                    style={{
-                      padding: '10px',
-                      borderRadius: '8px',
-                      backgroundColor: insight.sentiment === 'positive' ? '#f0fdf4' : insight.sentiment === 'warning' ? '#fffbeb' : '#f9fafb',
-                      borderLeft: `3px solid ${insight.sentiment === 'positive' ? '#166534' : insight.sentiment === 'warning' ? '#f59e0b' : '#6b7280'}`,
-                    }}
-                    data-testid={`insight-${insight.id}`}
-                  >
-                    <p style={{ fontSize: '12px', fontWeight: '600', color: '#111827', marginBottom: '2px' }}>{insight.title}</p>
-                    <p style={{ fontSize: '11px', color: '#6b7280' }}>{insight.message}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', marginBottom: '12px' }}>Quick Actions</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <QuickActionButton
-                  icon={<Plus size={16} />}
-                  label="Create Project"
-                  onClick={() => navigate('/projects?create=true')}
-                  testId="quick-create-project"
-                />
-                <QuickActionButton
-                  icon={<UserPlus size={16} />}
-                  label="Invite Volunteer"
-                  onClick={() => navigate('/volunteers?invite=true')}
-                  testId="quick-invite-volunteer"
-                />
-                <QuickActionButton
-                  icon={<CheckSquare size={16} />}
-                  label="Create Task"
-                  onClick={() => navigate('/tasks?create=true')}
-                  testId="quick-create-task"
-                />
-                <QuickActionButton
-                  icon={<BarChart3 size={16} />}
-                  label="View Reports"
-                  onClick={() => navigate('/impact-visualization')}
-                  testId="quick-view-reports"
-                />
-              </div>
-
-              {/* Primary SDGs Summary */}
-              {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#6b7280', marginBottom: '8px' }}>Top SDGs</p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {dashboardData.sdgDistribution.slice(0, 3).map((sdg) => (
-                      <span
-                        key={sdg.goal}
-                        style={{
-                          padding: '4px 8px',
-                          backgroundColor: '#f0fdf4',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          color: '#166534',
-                          fontWeight: '500',
-                        }}
-                      >
-                        SDG {sdg.goal}
-                      </span>
-                    ))}
-                  </div>
+        {/* Bottom Section: Impact Over Time (Full Width) - Desktop Only */}
+        <div style={{ marginBottom: '24px' }} className="bottom-section hidden md:block">
+          {/* Impact Over Time Chart - SDG Highlighted - Full Width */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
+              Impact Over Time
+              {organizationProfile?.sdgGoals && organizationProfile.sdgGoals.length > 0 && (
+                <span style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginLeft: '4px' }}>
+                  ({organizationProfile.sdgGoals.slice(0, 2).map((g: number) => getSDGName(g)).join(', ')})
+                </span>
+              )}
+            </h3>
+            <div style={{ height: '280px' }}>
+              {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dashboardData.impactOverTime}>
+                    <defs>
+                      <linearGradient id="desktopHoursGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="desktopPeopleGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
+                        <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const sdgColor1 = organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534';
+                          const sdgColor2 = organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af';
+                          return (
+                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderTop: `3px solid ${sdgColor1}` }}>
+                              <p style={{ fontWeight: '600', marginBottom: '4px' }}>{label}</p>
+                              <p style={{ fontSize: '13px', color: sdgColor1 }}>Hours: {payload[0]?.value}</p>
+                              <p style={{ fontSize: '13px', color: sdgColor2 }}>People Impacted: {payload[1]?.value}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend />
+                    <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#desktopHoursGradient)" strokeWidth={2} name="Hours" />
+                    <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#desktopPeopleGradient)" strokeWidth={2} name="People Impacted" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#9ca3af' }}>
+                  No impact data available
                 </div>
               )}
             </div>

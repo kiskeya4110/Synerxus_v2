@@ -164,21 +164,6 @@ export default function OrganizationImpactReport() {
     enabled: !!currentUser?.organizationId,
   });
 
-  // Fetch organization's project assignments for volunteer info
-  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
-    queryKey: ["/api/project-assignments", "org", currentUser?.organizationId],
-    queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch("/api/project-assignments");
-      if (!response.ok) return [];
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
-    },
-    enabled: !!currentUser?.organizationId,
-  });
-  // Ensure projectAssignments is always an array
-  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
-
   // Fetch all users (needed for volunteer names in impact leader)
   const { data: users = [] } = useQuery<any[]>({
     queryKey: ["/api/users"],
@@ -188,6 +173,7 @@ export default function OrganizationImpactReport() {
     },
   });
 
+  // IMPORTANT: Projects query must be declared BEFORE queries that depend on it
   const { data: projects = [] } = useQuery<any[]>({
     queryKey: ["/api/projects", currentUser?.organizationId],
     queryFn: async () => {
@@ -202,14 +188,48 @@ export default function OrganizationImpactReport() {
     refetchOnMount: true,
   });
 
-  const { data: volunteerActivities = [] } = useQuery<any[]>({
-    queryKey: ["/api/volunteer-activities", currentUser?.organizationId],
+  // Fetch organization's project assignments for volunteer info (scoped to org projects)
+  // Note: This depends on 'projects' and must come AFTER the projects query
+  const { data: projectAssignmentsRaw = [] } = useQuery<any[]>({
+    queryKey: ["/api/project-assignments", "org", currentUser?.organizationId, projects.map(p => p.id).join(',')],
     queryFn: async () => {
-      if (!currentUser?.organizationId) return [];
-      const response = await fetch(`/api/volunteer-activities?organizationId=${currentUser.organizationId}`);
-      return response.ok ? response.json() : [];
+      if (!currentUser?.organizationId || projects.length === 0) return [];
+      // Fetch assignments for each project owned by this organization
+      const allAssignments: any[] = [];
+      for (const project of projects) {
+        const response = await fetch(`/api/project-assignments?projectId=${project.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            allAssignments.push(...data);
+          }
+        }
+      }
+      return allAssignments;
     },
-    enabled: !!currentUser?.organizationId,
+    enabled: !!currentUser?.organizationId && projects.length > 0,
+  });
+  // Ensure projectAssignments is always an array
+  const projectAssignments = Array.isArray(projectAssignmentsRaw) ? projectAssignmentsRaw : [];
+
+  const { data: volunteerActivities = [] } = useQuery<any[]>({
+    queryKey: ["/api/volunteer-activities", currentUser?.organizationId, projects.map(p => p.id).join(',')],
+    queryFn: async () => {
+      if (!currentUser?.organizationId || projects.length === 0) return [];
+      // Fetch activities for each project owned by this organization
+      const allActivities: any[] = [];
+      for (const project of projects) {
+        const response = await fetch(`/api/volunteer-activities?projectId=${project.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            allActivities.push(...data);
+          }
+        }
+      }
+      return allActivities;
+    },
+    enabled: !!currentUser?.organizationId && projects.length > 0,
   });
 
   // Access control: Both org managers and volunteers can view organization reports

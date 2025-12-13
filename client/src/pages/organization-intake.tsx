@@ -38,11 +38,25 @@ const organizationProfileSchema = z.object({
 
 type OrganizationProfileForm = z.infer<typeof organizationProfileSchema>;
 
+// Focus areas aligned with the 17 UN SDGs for consistency
 const focusAreaOptions = [
-  "Education", "Health & Wellness", "Environment", "Poverty Alleviation",
-  "Clean Water & Sanitation", "Gender Equality", "Economic Development",
-  "Climate Action", "Community Development", "Youth Empowerment",
-  "Animal Welfare", "Arts & Culture", "Technology", "Human Rights", "Disaster Relief"
+  "No Poverty (SDG 1)",
+  "Zero Hunger (SDG 2)",
+  "Good Health & Well-being (SDG 3)",
+  "Quality Education (SDG 4)",
+  "Gender Equality (SDG 5)",
+  "Clean Water & Sanitation (SDG 6)",
+  "Affordable & Clean Energy (SDG 7)",
+  "Decent Work & Economic Growth (SDG 8)",
+  "Industry, Innovation & Infrastructure (SDG 9)",
+  "Reduced Inequalities (SDG 10)",
+  "Sustainable Cities & Communities (SDG 11)",
+  "Responsible Consumption & Production (SDG 12)",
+  "Climate Action (SDG 13)",
+  "Life Below Water (SDG 14)",
+  "Life on Land (SDG 15)",
+  "Peace, Justice & Strong Institutions (SDG 16)",
+  "Partnerships for the Goals (SDG 17)"
 ];
 
 const volunteerNeedOptions = [
@@ -134,10 +148,13 @@ export default function OrganizationIntake() {
     }
   }, [currentUser]);
 
+  // Check for organization name from signup (stored in localStorage to prevent asking twice)
+  const pendingOrgName = typeof window !== 'undefined' ? localStorage.getItem('pendingOrganizationName') : null;
+
   const form = useForm<OrganizationProfileForm>({
     resolver: zodResolver(organizationProfileSchema),
     defaultValues: {
-      organizationName: "",
+      organizationName: pendingOrgName || "",
       organizationLocation: "",
       missionStatement: "",
       focusAreas: [],
@@ -153,6 +170,13 @@ export default function OrganizationIntake() {
       onboardingCompleted: true
     }
   });
+
+  // Clear pending org name after form loads (it's now in the form)
+  useEffect(() => {
+    if (pendingOrgName) {
+      localStorage.removeItem('pendingOrganizationName');
+    }
+  }, [pendingOrgName]);
 
   // Reset form when profile data loads - keeps database data visible and prevents duplication on re-entry
   useEffect(() => {
@@ -550,38 +574,62 @@ export default function OrganizationIntake() {
                   <FormField
                     control={form.control}
                     name="focusAreas"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Focus Areas</FormLabel>
-                        <FormDescription>What areas does your organization work in?</FormDescription>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {focusAreaOptions.map((area) => (
-                            <Badge
-                              key={area}
-                              data-testid={`badge-focus-${area.toLowerCase().replace(/\s+/g, '-')}`}
-                              variant={form.watch("focusAreas")?.includes(area) ? "default" : "outline"}
-                              className="cursor-pointer"
-                              onClick={() => toggleFocusArea(area)}
-                            >
-                              {area}
-                            </Badge>
-                          ))}
-                        </div>
-                        <div className="flex gap-2 mt-2">
-                          <Input
-                            data-testid="input-custom-focus-area"
-                            placeholder="Add custom focus area"
-                            value={customFocusArea}
-                            onChange={(e) => setCustomFocusArea(e.target.value)}
-                            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addCustomFocusArea())}
-                          />
-                          <Button data-testid="button-add-focus-area" type="button" onClick={addCustomFocusArea} variant="outline">
-                            Add
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={() => {
+                      const selectedAreas = form.watch("focusAreas") || [];
+                      // Find custom areas (areas that are selected but not in predefined options)
+                      const customAreas = selectedAreas.filter(area => !focusAreaOptions.includes(area));
+
+                      return (
+                        <FormItem>
+                          <FormLabel>Focus Areas</FormLabel>
+                          <FormDescription>Select the SDG-aligned areas your organization works in</FormDescription>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {focusAreaOptions.map((area) => (
+                              <Badge
+                                key={area}
+                                data-testid={`badge-focus-${area.toLowerCase().replace(/\s+/g, '-')}`}
+                                variant={selectedAreas.includes(area) ? "default" : "outline"}
+                                className="cursor-pointer"
+                                onClick={() => toggleFocusArea(area)}
+                              >
+                                {area}
+                              </Badge>
+                            ))}
+                          </div>
+                          {/* Display custom areas that have been added */}
+                          {customAreas.length > 0 && (
+                            <div className="mt-3">
+                              <p className="text-sm text-muted-foreground mb-2">Custom areas:</p>
+                              <div className="flex flex-wrap gap-2">
+                                {customAreas.map((area) => (
+                                  <Badge
+                                    key={area}
+                                    variant="default"
+                                    className="cursor-pointer bg-green-600 hover:bg-green-700"
+                                    onClick={() => toggleFocusArea(area)}
+                                  >
+                                    {area} ✕
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex gap-2 mt-3">
+                            <Input
+                              data-testid="input-custom-focus-area"
+                              placeholder="Add custom focus area (if not in list above)"
+                              value={customFocusArea}
+                              onChange={(e) => setCustomFocusArea(e.target.value)}
+                              onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), addCustomFocusArea())}
+                            />
+                            <Button data-testid="button-add-focus-area" type="button" onClick={addCustomFocusArea} variant="outline">
+                              Add
+                            </Button>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
                 </CardContent>
               </Card>

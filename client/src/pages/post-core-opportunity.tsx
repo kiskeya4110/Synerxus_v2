@@ -52,7 +52,9 @@ const opportunitySchema = z.object({
   volunteersNeeded: z.coerce.number().min(1).optional(),
   requirements: z.string().optional(),
   benefits: z.string().optional(),
-  // AIU Formula: Volunteer Roles with contribution percentages (role weights)
+  // Total volunteer contribution: percentage of project impact attributed to volunteers (vs paid staff)
+  totalVolunteerContribution: z.coerce.number().min(1).max(100).default(100),
+  // AIU Formula: Volunteer Roles with contribution percentages (how the volunteer share is divided)
   volunteerRoles: z.array(volunteerRoleSchema).min(1, "Define at least one volunteer role")
 }).refine(data => {
   if (data.commitmentType === "ongoing" && !data.ongoingHoursPerWeek) {
@@ -115,6 +117,7 @@ export default function PostCoreOpportunity() {
       volunteersNeeded: 1,
       requirements: "",
       benefits: "",
+      totalVolunteerContribution: 30, // Default 30% volunteer share, 70% organization staff
       volunteerRoles: [
         { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
         { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
@@ -124,11 +127,15 @@ export default function PostCoreOpportunity() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: OpportunityForm) => {
+      // Calculate total volunteers needed from role counts
+      const totalVolunteersNeeded = data.volunteerRoles?.reduce((sum, role) => sum + role.count, 0) || data.volunteersNeeded || 1;
+
       return await apiRequest("POST", "/api/opportunities", {
         ...data,
         organizationId: currentUser?.organizationId,
         isRemote: data.engagementType === "remote",
         sdgGoals: [data.primarySdg],
+        volunteersNeeded: totalVolunteersNeeded,
         status: "open",
         isUrgent: false
       });
@@ -568,22 +575,71 @@ export default function PostCoreOpportunity() {
                       </TooltipTrigger>
                       <TooltipContent className="max-w-sm">
                         <p className="text-sm">
-                          <strong>AIU Formula:</strong> Role weights (W_i) determine how impact is attributed to each volunteer.
+                          <strong>AIU Formula:</strong> Total Volunteer Contribution determines what percentage of the project's impact goes to volunteers.
                           <br /><br />
-                          <code>AIU_i = ΔSynerxus × (w_i / Σw_j)</code>
+                          <code>Volunteer AIU = Total Impact × Volunteer % × (role share)</code>
                           <br /><br />
-                          Where <code>w_i = roleWeight × hours × reliability</code>
+                          Organization staff receive the remaining percentage.
                         </p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </CardTitle>
                 <CardDescription>
-                  Define volunteer roles and their contribution weight for impact attribution (AIU calculation).
-                  Percentages must sum to 100%.
+                  Set the total volunteer contribution percentage and define how it's distributed among roles.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Total Volunteer Contribution Field */}
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+                  <FormField
+                    control={form.control}
+                    name="totalVolunteerContribution"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold text-blue-900">
+                          Total Volunteer Contribution (% of Project Impact)
+                        </FormLabel>
+                        <FormDescription className="text-blue-700">
+                          What percentage of the project's total impact is attributed to volunteers?
+                          The remaining {100 - (field.value || 0)}% goes to your organization's paid staff.
+                        </FormDescription>
+                        <div className="flex items-center gap-4 mt-2">
+                          <FormControl>
+                            <Input
+                              data-testid="input-total-volunteer-contribution"
+                              type="number"
+                              min="1"
+                              max="100"
+                              className="w-24 text-lg font-bold"
+                              {...field}
+                            />
+                          </FormControl>
+                          <span className="text-lg font-bold text-blue-800">%</span>
+                          <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-300"
+                              style={{ width: `${field.value || 0}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-between text-xs mt-2">
+                          <span className="text-blue-600">Volunteer Share: {field.value || 0}%</span>
+                          <span className="text-gray-500">Organization Staff: {100 - (field.value || 0)}%</span>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-medium text-sm mb-2">Role Distribution (within Volunteer Share)</h4>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Define how the {form.watch("totalVolunteerContribution") || 0}% volunteer share is distributed among different roles.
+                    These percentages must sum to 100%.
+                  </p>
+                </div>
                 <FormField
                   control={form.control}
                   name="volunteerRoles"
@@ -714,7 +770,7 @@ export default function PostCoreOpportunity() {
                         {/* Total Contribution Display */}
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg border">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-700">Total Contribution:</span>
+                            <span className="text-sm font-medium text-gray-700">Role Distribution Total:</span>
                             <span className={`text-lg font-bold ${
                               field.value?.reduce((sum, r) => sum + r.contributionPercent, 0) === 100
                                 ? 'text-green-600'
@@ -728,6 +784,27 @@ export default function PostCoreOpportunity() {
                           </div>
                           <div className="mt-2 text-xs text-gray-500">
                             Total Volunteers: {field.value?.reduce((sum, r) => sum + r.count, 0) || 0}
+                          </div>
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <div className="text-xs text-gray-600">
+                              <strong>Effective Project Impact Breakdown:</strong>
+                            </div>
+                            <div className="mt-1 space-y-1">
+                              {field.value?.map((role, idx) => {
+                                const totalVolunteer = form.watch("totalVolunteerContribution") || 0;
+                                const effectivePercent = (totalVolunteer * role.contributionPercent / 100).toFixed(1);
+                                return (
+                                  <div key={idx} className="flex justify-between text-xs">
+                                    <span className="text-gray-600">{role.role} ({role.count} volunteer{role.count > 1 ? 's' : ''}):</span>
+                                    <span className="font-medium text-blue-600">{effectivePercent}% of project</span>
+                                  </div>
+                                );
+                              })}
+                              <div className="flex justify-between text-xs pt-1 border-t border-gray-200 mt-1">
+                                <span className="text-gray-600">Organization Staff:</span>
+                                <span className="font-medium text-gray-700">{100 - (form.watch("totalVolunteerContribution") || 0)}% of project</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>

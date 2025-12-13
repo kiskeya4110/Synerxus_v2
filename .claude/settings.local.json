@@ -39,7 +39,8 @@
       "Bash(timeout 20 npm run dev)",
       "Bash(du:*)",
       "Bash(python3:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npx drizzle-kit:*)"
     ],
     "deny": [],
     "ask": []

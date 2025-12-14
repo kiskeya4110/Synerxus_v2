@@ -475,6 +475,35 @@ export const matchingWeights = pgTable("matching_weights", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Match Analytics - Track match quality and outcomes for feedback loop
+export const matchAnalytics = pgTable("match_analytics", {
+  id: serial("id").primaryKey(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  opportunityId: integer("opportunity_id").references(() => opportunities.id).notNull(),
+  matchScore: integer("match_score").notNull(), // 0-100
+  confidence: integer("confidence"), // 0-100, how confident we are in the match
+  dataCompleteness: integer("data_completeness"), // 0-100, volunteer profile completeness
+  matchCategory: text("match_category"), // 'nexus', 'strong', 'gap', 'no-match'
+  skillMatchScore: integer("skill_match_score"), // Individual breakdown scores
+  sdgMatchScore: integer("sdg_match_score"),
+  locationMatchScore: integer("location_match_score"),
+  availabilityMatchScore: integer("availability_match_score"),
+  interestMatchScore: integer("interest_match_score"),
+  experienceMatchScore: integer("experience_match_score"),
+  engagementBoost: integer("engagement_boost"),
+  // Outcome tracking (updated after volunteer action)
+  outcome: text("outcome"), // 'applied', 'saved', 'rejected', 'viewed', 'ignored'
+  applicationAccepted: boolean("application_accepted"), // True if volunteer was accepted for this opportunity
+  projectCompleted: boolean("project_completed"), // True if volunteer completed the project
+  // Feedback for algorithm tuning
+  volunteerFeedback: integer("volunteer_feedback"), // 1-5 rating of match quality
+  organizationFeedback: integer("organization_feedback"), // 1-5 rating of volunteer fit
+  // Metadata
+  weightsSnapshot: jsonb("weights_snapshot"), // Weights used at time of calculation
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Volunteer Profiles - Extended volunteer information
 export const volunteerProfiles = pgTable("volunteer_profiles", {
   id: serial("id").primaryKey(),
@@ -832,6 +861,12 @@ export const insertVolunteerProfileSchema = createInsertSchema(volunteerProfiles
   updatedAt: true
 });
 
+export const insertMatchAnalyticsSchema = createInsertSchema(matchAnalytics).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true
+});
+
 export const insertOrganizationProfileSchema = createInsertSchema(organizationProfiles).omit({
   id: true,
   createdAt: true,
@@ -1098,6 +1133,9 @@ export type InsertRejectedOpportunity = z.infer<typeof insertRejectedOpportunity
 
 export type VolunteerProfile = typeof volunteerProfiles.$inferSelect;
 export type InsertVolunteerProfile = z.infer<typeof insertVolunteerProfileSchema>;
+
+export type MatchAnalytics = typeof matchAnalytics.$inferSelect;
+export type InsertMatchAnalytics = z.infer<typeof insertMatchAnalyticsSchema>;
 
 export type OrganizationProfile = typeof organizationProfiles.$inferSelect;
 export type InsertOrganizationProfile = z.infer<typeof insertOrganizationProfileSchema>;

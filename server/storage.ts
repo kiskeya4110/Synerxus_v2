@@ -27,6 +27,8 @@ import {
   projectBudgetLinks,
   verifiedOutputs,
   volunteerEmployerLinks,
+  matchingWeights,
+  matchAnalytics,
   employeeCommitments,
   employeeActivityLogs,
   employeeMilestones,
@@ -87,6 +89,8 @@ import {
   type InsertVerifiedOutput,
   type VolunteerEmployerLink,
   type InsertVolunteerEmployerLink,
+  type MatchAnalytics,
+  type InsertMatchAnalytics,
   type EmployeeCommitment,
   type InsertEmployeeCommitment,
   type EmployeeActivityLog,
@@ -337,6 +341,20 @@ export interface IStorage {
   listVolunteerEmployerLinks(): Promise<VolunteerEmployerLink[]>;
   getVolunteerEmployerLink(volunteerId: number): Promise<VolunteerEmployerLink | undefined>;
   updateVolunteerEmployerLink(id: number, link: Partial<InsertVolunteerEmployerLink>): Promise<VolunteerEmployerLink | undefined>;
+
+  // Matching Weights operations (for dynamic weight tuning)
+  getLatestMatchingWeights(): Promise<{
+    skillWeight: number | null;
+    locationWeight: number | null;
+    sdgWeight: number | null;
+    availabilityWeight: number | null;
+  } | undefined>;
+
+  // Match Analytics operations (for feedback loop)
+  getMatchAnalytics(volunteerId: number, opportunityId: number): Promise<MatchAnalytics | undefined>;
+  createMatchAnalytics(analytics: InsertMatchAnalytics): Promise<MatchAnalytics>;
+  updateMatchAnalytics(id: number, analytics: Partial<InsertMatchAnalytics>): Promise<MatchAnalytics | undefined>;
+  listMatchAnalytics(): Promise<MatchAnalytics[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1498,6 +1516,58 @@ export class DatabaseStorage implements IStorage {
   async updateVolunteerEmployerLink(id: number, link: Partial<InsertVolunteerEmployerLink>): Promise<VolunteerEmployerLink | undefined> {
     const [result] = await db.update(volunteerEmployerLinks).set(link).where(eq(volunteerEmployerLinks.id, id)).returning();
     return result || undefined;
+  }
+
+  // Matching Weights - fetch the latest weights for dynamic tuning
+  async getLatestMatchingWeights(): Promise<{
+    skillWeight: number | null;
+    locationWeight: number | null;
+    sdgWeight: number | null;
+    availabilityWeight: number | null;
+  } | undefined> {
+    const [result] = await db
+      .select({
+        skillWeight: matchingWeights.skillWeight,
+        locationWeight: matchingWeights.locationWeight,
+        sdgWeight: matchingWeights.sdgWeight,
+        availabilityWeight: matchingWeights.availabilityWeight,
+      })
+      .from(matchingWeights)
+      .orderBy(desc(matchingWeights.updatedAt))
+      .limit(1);
+    return result || undefined;
+  }
+
+  // Match Analytics - track match quality and outcomes for feedback loop
+  async getMatchAnalytics(volunteerId: number, opportunityId: number): Promise<MatchAnalytics | undefined> {
+    const [result] = await db
+      .select()
+      .from(matchAnalytics)
+      .where(
+        and(
+          eq(matchAnalytics.volunteerId, volunteerId),
+          eq(matchAnalytics.opportunityId, opportunityId)
+        )
+      );
+    return result || undefined;
+  }
+
+  async createMatchAnalytics(analytics: InsertMatchAnalytics): Promise<MatchAnalytics> {
+    const [result] = await db.insert(matchAnalytics).values(analytics).returning();
+    return result;
+  }
+
+  async updateMatchAnalytics(id: number, analytics: Partial<InsertMatchAnalytics>): Promise<MatchAnalytics | undefined> {
+    const [result] = await db
+      .update(matchAnalytics)
+      .set({ ...analytics, updatedAt: new Date() })
+      .where(eq(matchAnalytics.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async listMatchAnalytics(): Promise<MatchAnalytics[]> {
+    return db.select().from(matchAnalytics).orderBy(desc(matchAnalytics.createdAt));
   }
 }
 

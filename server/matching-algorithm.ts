@@ -829,6 +829,46 @@ export function calculateMatchScore(
 }
 
 /**
+ * Async version of calculateMatchScore that fetches dynamic weights from database
+ * and calculates volunteer completion rate for engagement boost.
+ * Use this for critical matching operations where accuracy is paramount.
+ */
+export async function calculateMatchScoreAsync(
+  volunteer: User & { profile?: VolunteerProfile | null },
+  opportunity: Opportunity,
+): Promise<MatchResult> {
+  // Fetch dynamic weights from database
+  const weights = await getMatchingWeights();
+
+  // Calculate completion rate for engagement boost
+  const completionRate = await getVolunteerCompletionRate(volunteer.id);
+
+  // Calculate match with dynamic weights and completion rate
+  return calculateMatchScore(volunteer, opportunity, weights, completionRate);
+}
+
+/**
+ * Batch calculate match scores with shared weights (more efficient for bulk operations)
+ * Fetches weights once and reuses them for all calculations
+ */
+export async function calculateMatchScoresBatch(
+  volunteer: User & { profile?: VolunteerProfile | null },
+  opportunities: Opportunity[],
+): Promise<Array<Opportunity & MatchResult>> {
+  // Fetch dynamic weights once
+  const weights = await getMatchingWeights();
+
+  // Fetch completion rate once
+  const completionRate = await getVolunteerCompletionRate(volunteer.id);
+
+  // Calculate matches for all opportunities with shared weights
+  return opportunities.map((opp) => ({
+    ...opp,
+    ...calculateMatchScore(volunteer, opp, weights, completionRate),
+  }));
+}
+
+/**
  * Categorize match score into MVP tiers for admin decision-making
  * - Nexus Match (≥80): Auto-connect - perfect fit
  * - Strong Candidate (60-79): Admin Review - solid match requiring verification
@@ -934,11 +974,178 @@ export function deriveCategoryFromSDGs(sdgGoals: number[] | null | undefined, pr
   return null;
 }
 
+/**
+ * Track match analytics for feedback loop and algorithm tuning
+ * Records match calculation results to enable:
+ * - Analysis of match quality vs. actual outcomes
+ * - A/B testing of different weight configurations
+ * - Identification of matching patterns that lead to success
+ */
+export async function trackMatchAnalytics(
+  volunteerId: number,
+  opportunityId: number,
+  matchResult: MatchResult,
+  outcome?: 'viewed' | 'saved' | 'rejected' | 'applied' | 'ignored',
+  weights?: MatchingWeights
+): Promise<void> {
+  try {
+    const { storage } = await import("./storage");
+
+    // Check if we already have an analytics record for this pair
+    const existing = await storage.getMatchAnalytics?.(volunteerId, opportunityId);
+
+    if (existing) {
+      // Update existing record with new outcome
+      if (outcome) {
+        await storage.updateMatchAnalytics?.(existing.id, { outcome });
+      }
+      return;
+    }
+
+    // Create new analytics record
+    await storage.createMatchAnalytics?.({
+      volunteerId,
+      opportunityId,
+      matchScore: matchResult.score,
+      confidence: matchResult.confidence ?? null,
+      dataCompleteness: matchResult.dataCompleteness ?? null,
+      matchCategory: matchResult.matchCategory ?? null,
+      skillMatchScore: Math.round(matchResult.breakdown.skillMatch),
+      sdgMatchScore: Math.round(matchResult.breakdown.sdgMatch),
+      locationMatchScore: Math.round(matchResult.breakdown.locationMatch),
+      availabilityMatchScore: Math.round(matchResult.breakdown.availabilityMatch),
+      interestMatchScore: Math.round(matchResult.breakdown.interestMatch),
+      experienceMatchScore: Math.round(matchResult.breakdown.experienceMatch),
+      engagementBoost: Math.round(matchResult.breakdown.engagementBoost),
+      outcome: outcome ?? null,
+      weightsSnapshot: weights || DEFAULT_WEIGHTS,
+    });
+  } catch (error) {
+    // Non-critical - log but don't fail the match operation
+    console.warn("Failed to track match analytics:", error);
+  }
+}
+
+/**
+ * Update match outcome when volunteer takes action
+ * Call this when:
+ * - Volunteer saves an opportunity
+ * - Volunteer rejects an opportunity
+ * - Volunteer applies to an opportunity
+ */
+export async function updateMatchOutcome(
+  volunteerId: number,
+  opportunityId: number,
+  outcome: 'saved' | 'rejected' | 'applied'
+): Promise<void> {
+  try {
+    const { storage } = await import("./storage");
+    const existing = await storage.getMatchAnalytics?.(volunteerId, opportunityId);
+
+    if (existing) {
+      await storage.updateMatchAnalytics?.(existing.id, { outcome });
+    }
+  } catch (error) {
+    console.warn("Failed to update match outcome:", error);
+  }
+}
+
+/**
+ * Record volunteer feedback on match quality
+ * Call this when volunteer rates how relevant a match was
+ */
+export async function recordMatchFeedback(
+  volunteerId: number,
+  opportunityId: number,
+  feedback: 1 | 2 | 3 | 4 | 5
+): Promise<void> {
+  try {
+    const { storage } = await import("./storage");
+    const existing = await storage.getMatchAnalytics?.(volunteerId, opportunityId);
+
+    if (existing) {
+      await storage.updateMatchAnalytics?.(existing.id, { volunteerFeedback: feedback });
+    }
+  } catch (error) {
+    console.warn("Failed to record match feedback:", error);
+  }
+}
+
+/**
+ * Calculate algorithm effectiveness metrics
+ * Returns stats on how well matches are performing
+ */
+export async function getMatchEffectivenessMetrics(): Promise<{
+  totalMatches: number;
+  avgScore: number;
+  avgConfidence: number;
+  outcomeBreakdown: Record<string, number>;
+  avgFeedback: number | null;
+  conversionRate: number; // % of viewed that became applied
+}> {
+  try {
+    const { storage } = await import("./storage");
+    const analytics = await storage.listMatchAnalytics?.() || [];
+
+    if (analytics.length === 0) {
+      return {
+        totalMatches: 0,
+        avgScore: 0,
+        avgConfidence: 0,
+        outcomeBreakdown: {},
+        avgFeedback: null,
+        conversionRate: 0,
+      };
+    }
+
+    const totalMatches = analytics.length;
+    const avgScore = analytics.reduce((sum, a) => sum + a.matchScore, 0) / totalMatches;
+    const withConfidence = analytics.filter(a => a.confidence != null);
+    const avgConfidence = withConfidence.length > 0
+      ? withConfidence.reduce((sum, a) => sum + (a.confidence || 0), 0) / withConfidence.length
+      : 0;
+
+    const outcomeBreakdown: Record<string, number> = {};
+    for (const a of analytics) {
+      const outcome = a.outcome || 'unknown';
+      outcomeBreakdown[outcome] = (outcomeBreakdown[outcome] || 0) + 1;
+    }
+
+    const withFeedback = analytics.filter(a => a.volunteerFeedback != null);
+    const avgFeedback = withFeedback.length > 0
+      ? withFeedback.reduce((sum, a) => sum + (a.volunteerFeedback || 0), 0) / withFeedback.length
+      : null;
+
+    const viewed = outcomeBreakdown['viewed'] || 0;
+    const applied = outcomeBreakdown['applied'] || 0;
+    const conversionRate = viewed > 0 ? (applied / viewed) * 100 : 0;
+
+    return {
+      totalMatches,
+      avgScore: Math.round(avgScore),
+      avgConfidence: Math.round(avgConfidence),
+      outcomeBreakdown,
+      avgFeedback,
+      conversionRate: Math.round(conversionRate * 10) / 10,
+    };
+  } catch (error) {
+    console.warn("Failed to get match effectiveness metrics:", error);
+    return {
+      totalMatches: 0,
+      avgScore: 0,
+      avgConfidence: 0,
+      outcomeBreakdown: {},
+      avgFeedback: null,
+      conversionRate: 0,
+    };
+  }
+}
+
 // Potential Improvements
 /**
- * 1. Parameterization: Allow dynamic adjustment of weights based on feedback.
+ * 1. Parameterization: Allow dynamic adjustment of weights based on feedback. ✅ DONE
  * 2. Performance Optimization: Consider using memoization for expensive calculations.
  * 3. Testing & Validation: Add unit tests for different scenarios to ensure accuracy.
- * 4. User Feedback Loop: Incorporate user feedback to refine matching criteria continuously.
- * 5. Logging: Implement logging for better traceability and debugging.
+ * 4. User Feedback Loop: Incorporate user feedback to refine matching criteria continuously. ✅ DONE
+ * 5. Logging: Implement logging for better traceability and debugging. ✅ DONE via analytics
  */

@@ -48,7 +48,6 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 
 // Lazy load heavy chart components for better initial load
@@ -408,190 +407,9 @@ export default function CSRDashboardPWA() {
         </div>
       )}
 
-      {/* Compact Header - Cream to gold gradient for organization branding */}
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 shadow-md">
-        <div className="flex items-center justify-between px-4 py-3">
-          {/* Left: Logo & Title */}
-          <div className="flex items-center gap-3">
-            <img src={logoUrl} alt="Synerxus" className="h-12 w-auto object-contain" />
-            <div className="hidden sm:block">
-              <h1 className="text-sm font-semibold text-amber-900 leading-tight">{companyName}</h1>
-              <p className="text-[10px] text-amber-700">CSR Impact Dashboard</p>
-            </div>
-          </div>
-
-          {/* Right: Actions + Three-Dot Menu */}
-          <div className="flex items-center gap-1">
-            {/* Refresh Button */}
-            <button
-              onClick={handleRefresh}
-              className={`p-2 rounded-full hover:bg-amber-600/10 transition-colors ${refreshing ? 'animate-spin' : ''}`}
-              title="Refresh"
-            >
-              <RefreshCw className="w-4 h-4 text-amber-800" />
-            </button>
-
-            {/* Notifications */}
-            <button className="p-2 rounded-full hover:bg-amber-600/10 transition-colors relative" title="Notifications">
-              <Bell className="w-4 h-4 text-amber-800" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
-            </button>
-
-            {/* Three-Dot Menu */}
-            <div className="relative" ref={menuRef}>
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 rounded-full hover:bg-amber-600/10 transition-colors"
-                title="Menu"
-              >
-                <MoreVertical className="w-5 h-5 text-amber-800" />
-              </button>
-
-              {/* Dropdown Menu */}
-              {showMenu && (
-                <div className="absolute right-0 top-full mt-1 w-56 bg-slate-800 rounded-xl shadow-2xl border border-slate-700 overflow-hidden z-50">
-                  {/* User Info */}
-                  <div className="px-4 py-3 border-b border-slate-700 bg-slate-800/50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                        <span className="text-white font-semibold text-sm">{userInitials}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-white truncate">{user?.displayName || 'Admin'}</p>
-                        <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Navigation Items */}
-                  <div className="py-1">
-                    <button
-                      onClick={() => { startTransition(() => { setActiveTab('home'); setShowMenu(false); }); }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'home' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
-                    >
-                      <Home className="w-4 h-4" />
-                      <span>Dashboard Home</span>
-                    </button>
-                    <button
-                      onClick={() => { startTransition(() => { setActiveTab('sdgs'); setShowMenu(false); }); }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'sdgs' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
-                    >
-                      <Target className="w-4 h-4" />
-                      <span>SDG Goals</span>
-                    </button>
-                    <button
-                      onClick={() => { startTransition(() => { setActiveTab('projects'); setShowMenu(false); }); }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'projects' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
-                    >
-                      <Briefcase className="w-4 h-4" />
-                      <span>Projects</span>
-                    </button>
-                    <button
-                      onClick={() => { startTransition(() => { setActiveTab('reports'); setShowMenu(false); }); }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'reports' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
-                    >
-                      <FileText className="w-4 h-4" />
-                      <span>Reports</span>
-                    </button>
-                    <button
-                      onClick={() => { startTransition(() => { setActiveTab('insights'); setShowMenu(false); }); }}
-                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${activeTab === 'insights' ? 'bg-amber-500/10 text-amber-400' : 'text-gray-300 hover:bg-slate-700/50'}`}
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>AI Insights</span>
-                    </button>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-slate-700" />
-
-                  {/* Actions */}
-                  <div className="py-1">
-                    <button
-                      onClick={() => { setShowMapModal(true); setShowMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700/50 transition-colors"
-                    >
-                      <Globe className="w-4 h-4" />
-                      <span>Global Impact Map</span>
-                    </button>
-                    <button
-                      onClick={() => { navigate('/csr-reports-exports'); setShowMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700/50 transition-colors"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Export Reports</span>
-                    </button>
-                    <button
-                      onClick={toggleFullscreen}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700/50 transition-colors"
-                    >
-                      {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                      <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
-                    </button>
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-slate-700" />
-
-                  {/* Settings & Logout */}
-                  <div className="py-1">
-                    <button
-                      onClick={() => { navigate('/corporate-partner-profile-settings'); setShowMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700/50 transition-colors"
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Settings</span>
-                    </button>
-                    <button
-                      onClick={() => { navigate('/csr-dashboard'); setShowMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-slate-700/50 transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      <span>Desktop Dashboard</span>
-                    </button>
-                    <button
-                      onClick={() => { signOut(); navigate('/'); }}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Navigation - Pill Style */}
-        <div className="px-4 pb-3 overflow-x-auto scrollbar-hide">
-          <div className="flex gap-1 min-w-max">
-            {[
-              { id: 'home', label: 'Overview', icon: Home },
-              { id: 'sdgs', label: 'SDGs', icon: Target },
-              { id: 'projects', label: 'Projects', icon: Briefcase },
-              { id: 'reports', label: 'Reports', icon: FileText },
-              { id: 'insights', label: 'Insights', icon: Sparkles },
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => startTransition(() => setActiveTab(id as NavTab))}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  activeTab === id
-                    ? 'bg-amber-700 text-white'
-                    : 'bg-white/60 text-amber-800 hover:bg-white/80 border border-amber-300/50'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-6 bg-[#faf9f7]">
+      <main className="flex-1 overflow-y-auto pb-20 bg-[#faf9f7]">
         {/* Home Tab */}
         {activeTab === 'home' && (
           <div className="space-y-4 p-4">
@@ -1103,6 +921,50 @@ export default function CSRDashboardPWA() {
           <InsightsSection aiInsights={aiInsights} csrData={csrData} />
         )}
       </main>
+
+      {/* Bottom Tray Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex justify-around max-w-[428px] mx-auto z-50">
+        <button
+          onClick={() => startTransition(() => setActiveTab('home'))}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'home' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-home"
+        >
+          <Home className="w-5 h-5" />
+          <span className="text-xs font-medium">Home</span>
+        </button>
+        <button
+          onClick={() => startTransition(() => setActiveTab('sdgs'))}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'sdgs' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-sdgs"
+        >
+          <Target className="w-5 h-5" />
+          <span className="text-xs font-medium">SDGs</span>
+        </button>
+        <button
+          onClick={() => startTransition(() => setActiveTab('projects'))}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'projects' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-projects"
+        >
+          <Briefcase className="w-5 h-5" />
+          <span className="text-xs font-medium">Projects</span>
+        </button>
+        <button
+          onClick={() => startTransition(() => setActiveTab('reports'))}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'reports' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-reports"
+        >
+          <FileText className="w-5 h-5" />
+          <span className="text-xs font-medium">Reports</span>
+        </button>
+        <button
+          onClick={() => startTransition(() => setActiveTab('insights'))}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'insights' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-insights"
+        >
+          <Sparkles className="w-5 h-5" />
+          <span className="text-xs font-medium">Insights</span>
+        </button>
+      </nav>
 
       {/* Modals */}
       {selectedKPI && (

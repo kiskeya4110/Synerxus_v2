@@ -2430,6 +2430,101 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             </Button>
           </div>
         )}
+
+        {/* More Tab */}
+        {activeTab === 'more' && (
+          <div className="p-4 space-y-4 pb-24">
+            <h2 className="text-slate-800 text-xl font-bold">More Options</h2>
+
+            {/* Settings Section */}
+            <div className="space-y-2">
+              <h3 className="text-slate-700 font-semibold text-sm px-2 uppercase tracking-wider text-slate-600">Account</h3>
+              <button
+                onClick={() => navigate('/volunteer-profile-settings')}
+                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                data-testid="button-profile-settings"
+              >
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <Settings className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-slate-800 font-medium">Profile Settings</div>
+                  <div className="text-slate-500 text-xs">Edit your profile and preferences</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
+              </button>
+              <button
+                onClick={() => navigate('/volunteer-messages/pwa')}
+                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                data-testid="button-messages"
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <MessageCircle className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-slate-800 font-medium">Messages</div>
+                  <div className="text-slate-500 text-xs">View your conversations</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
+              </button>
+            </div>
+
+            {/* Help & Support Section */}
+            <div className="space-y-2">
+              <h3 className="text-slate-700 font-semibold text-sm px-2 uppercase tracking-wider text-slate-600">Support</h3>
+              <button
+                onClick={() => navigate('/impact-report/' + userId)}
+                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                data-testid="button-help"
+              >
+                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-purple-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-slate-800 font-medium">Help & Guidance</div>
+                  <div className="text-slate-500 text-xs">Learn more about features</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
+              </button>
+            </div>
+
+            {/* Account Information */}
+            <div className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm">
+              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+                <User className="w-4 h-4 text-slate-600" />
+                Account Info
+              </h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Email:</span>
+                  <span className="text-slate-800 font-medium">{user?.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Member:</span>
+                  <span className="text-slate-800 font-medium">Active</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Danger Zone - Logout */}
+            <div className="pt-4 border-t border-slate-200">
+              <button
+                onClick={handleLogout}
+                className="w-full bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-xl p-4 font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
+                data-testid="button-logout"
+              >
+                <LogOut className="w-5 h-5" />
+                Logout
+              </button>
+            </div>
+
+            {/* App Info */}
+            <div className="text-center text-slate-500 text-xs py-4">
+              <p>Synerxus v1.0.0</p>
+              <p className="mt-1">Making global impact locally</p>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* KPI Detail Modal */}

@@ -676,78 +676,94 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
-    <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
-      {/* Top App Bar - Blue to off-white/sky-blue gradient */}
-      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-        <button onClick={() => navigate('/landing')} className="flex items-center hover:opacity-80 transition-opacity">
-          <img src={logoUrl} alt="Synerxus" className="h-8 w-auto object-contain" />
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto">
+      {/* Top App Bar - Clean modern gradient header */}
+      <header className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl">
+        <button onClick={() => navigate('/landing')} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <img src={logoUrl} alt="Synerxus" className="h-9 w-auto object-contain brightness-0 invert" />
         </button>
-        {/* Three-Dot Menu */}
-        <div className="relative">
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-2 hover:bg-slate-800/10 rounded-full"
-              data-testid="mobile-menu-trigger"
-            >
-              <MoreVertical className="w-5 h-5 text-slate-700" />
-            </button>
 
-            {/* Dropdown Menu */}
-            {showMobileMenu && (
-              <>
-                {/* Backdrop to close menu */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowMobileMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a2e] border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
-                  <button
-                    onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <ClipboardList className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm">My Work</span>
-                  </button>
-                  <button
-                    onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm">Log Activity</span>
-                  </button>
-                  <button
-                    onClick={() => { navigate('/discover-opportunities'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <Search className="w-4 h-4 text-amber-400" />
-                    <span className="text-sm">Find Opportunities</span>
-                  </button>
-                  <button
-                    onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <Calendar className="w-4 h-4 text-green-400" />
-                    <span className="text-sm">Calendar</span>
-                  </button>
-                  <div className="border-t border-gray-700 my-1"></div>
-                  <button
-                    onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">Settings</span>
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span className="text-sm">Sign Out</span>
-                  </button>
+        {/* Menu Button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="p-2.5 hover:bg-white/20 rounded-xl transition-all duration-200"
+            data-testid="mobile-menu-trigger"
+          >
+            <MoreVertical className="w-5 h-5 text-white" />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showMobileMenu && (
+            <>
+              {/* Backdrop to close menu */}
+              <div
+                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+                onClick={() => setShowMobileMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 py-2 overflow-hidden">
+                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Quick Actions</p>
                 </div>
-              </>
-            )}
-          </div>
+                <button
+                  onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <ClipboardList className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="text-sm font-medium">My Work</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium">Log Activity</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/discover-opportunities'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                    <Search className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <span className="text-sm font-medium">Find Opportunities</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                    <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium">Calendar</span>
+                </button>
+                <div className="border-t border-slate-100 dark:border-slate-800 my-2"></div>
+                <button
+                  onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                  </div>
+                  <span className="text-sm font-medium">Settings</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                    <LogOut className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-medium">Sign Out</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Offline Banner */}
@@ -759,167 +775,140 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-20">
         {activeTab === 'dashboard' && (
-          <div className="space-y-3">
-            {/* Header Title */}
-            <div className="px-4 pt-3">
-              <h1 className="text-slate-800 text-lg font-bold">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'} Dashboard</h1>
-            </div>
-
-            {/* Personal Profile Section */}
+          <div className="space-y-4">
+            {/* Welcome Header - Integrated with profile */}
             {dashboardData?.volunteerProfile && (
-              <div className="px-4">
-                <div className="bg-gradient-to-r from-amber-100 via-green-100 to-blue-100 backdrop-blur-sm rounded-xl p-4 border border-amber-200/60 shadow-lg">
-                  <div className="flex gap-4">
-                    {/* Profile Picture (1/4) */}
-                    <div className="w-20 h-20 flex-shrink-0">
-                      <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-amber-400 shadow-lg">
-                        {dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture ? (
-                          <img
-                            src={dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture}
-                            alt={volunteerProfile?.volunteer_name || user?.displayName || 'Profile'}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white text-2xl font-bold">
-                            {(volunteerProfile?.volunteer_name || user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
+              <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6 -mt-0.5">
+                <div className="flex items-center gap-4">
+                  {/* Profile Picture */}
+                  <div className="relative">
+                    <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg ring-2 ring-white/20">
+                      {dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture ? (
+                        <img
+                          src={dashboardData.volunteerProfile.profilePhotoUrl || user?.profilePicture}
+                          alt={volunteerProfile?.volunteer_name || user?.displayName || 'Profile'}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center text-white text-xl font-bold">
+                          {(volunteerProfile?.volunteer_name || user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
-
-                    {/* Details (3/4) */}
-                    <div className="flex-1 space-y-2 min-w-0">
-                      {/* Skills */}
-                      {dashboardData.volunteerProfile.skills && dashboardData.volunteerProfile.skills.length > 0 && (
-                        <div>
-                          <h3 className="text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                            <Award className="h-3 w-3 text-amber-600" />
-                            Skills
-                          </h3>
-                          <div className="flex flex-wrap gap-1">
-                            {dashboardData.volunteerProfile.skills.slice(0, 4).map((skill: string, index: number) => (
-                              <span
-                                key={index}
-                                className="px-2 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-medium rounded-full"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                            {dashboardData.volunteerProfile.skills.length > 4 && (
-                              <span className="px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] font-medium rounded-full">
-                                +{dashboardData.volunteerProfile.skills.length - 4}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Availability & Role */}
-                      <div className="flex items-center gap-3 text-[10px]">
-                        {dashboardData.volunteerProfile.weeklyAvailability && (
-                          <div className="flex items-center gap-1 text-slate-700">
-                            <Clock className="h-3 w-3 text-green-600" />
-                            <span>{dashboardData.volunteerProfile.weeklyAvailability}h/wk</span>
-                          </div>
-                        )}
-                        {dashboardData.volunteerProfile.professionalTitle && (
-                          <div className="flex items-center gap-1 text-slate-700 truncate">
-                            <Briefcase className="h-3 w-3 text-blue-600 flex-shrink-0" />
-                            <span className="truncate">{dashboardData.volunteerProfile.professionalTitle}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Motivations */}
-                      {dashboardData.volunteerProfile.motivations && (
-                        <div>
-                          <p className="text-[10px] text-slate-600 line-clamp-1 italic">
-                            "{dashboardData.volunteerProfile.motivations}"
-                          </p>
-                        </div>
-                      )}
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white flex items-center justify-center">
+                      <CheckCircle className="w-3 h-3 text-white" />
                     </div>
                   </div>
+
+                  {/* Welcome Text */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-blue-100 text-xs font-medium">Welcome back,</p>
+                    <h1 className="text-white text-lg font-bold truncate">
+                      {(volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer').split(' ')[0]}!
+                    </h1>
+                    {dashboardData.volunteerProfile.professionalTitle && (
+                      <p className="text-blue-200 text-xs truncate mt-0.5">{dashboardData.volunteerProfile.professionalTitle}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quick Stats Row */}
+                <div className="flex items-center gap-2 mt-4">
+                  {dashboardData.volunteerProfile.weeklyAvailability && (
+                    <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Clock className="h-3.5 w-3.5 text-blue-200" />
+                      <span className="text-white text-xs font-medium">{dashboardData.volunteerProfile.weeklyAvailability}h/wk</span>
+                    </div>
+                  )}
+                  {kpis.activeProjects > 0 && (
+                    <div className="flex items-center gap-1.5 bg-white/15 backdrop-blur-sm px-3 py-1.5 rounded-full">
+                      <Briefcase className="h-3.5 w-3.5 text-blue-200" />
+                      <span className="text-white text-xs font-medium">{kpis.activeProjects} Active</span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* KPI Cards - Single Row with Mini Sparklines */}
+            {/* Skills Section - Card style */}
+            {dashboardData?.volunteerProfile?.skills && dashboardData.volunteerProfile.skills.length > 0 && (
+              <div className="px-4 -mt-3">
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                    <Award className="h-3.5 w-3.5 text-amber-500" />
+                    Your Skills
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dashboardData.volunteerProfile.skills.slice(0, 5).map((skill: string, index: number) => (
+                      <span
+                        key={index}
+                        className="px-2.5 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[11px] font-medium rounded-lg shadow-sm"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                    {dashboardData.volunteerProfile.skills.length > 5 && (
+                      <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[11px] font-medium rounded-lg">
+                        +{dashboardData.volunteerProfile.skills.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                  {dashboardData.volunteerProfile.motivations && (
+                    <p className="text-[11px] text-slate-500 mt-3 italic border-t border-slate-100 pt-3">
+                      "{dashboardData.volunteerProfile.motivations}"
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* KPI Cards - Modern card grid */}
             <div className="px-4 grid grid-cols-4 gap-2">
               <button
                 onClick={() => setShowKpiModal('hours')}
-                className="bg-[#2563eb] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
                 data-testid="kpi-hours"
               >
-                {/* Mini sparkline background */}
-                <div className="absolute bottom-0 left-0 right-0 h-6 flex items-end justify-center gap-[2px] opacity-30 px-1">
-                  {impactOverTimeData.slice(-6).map((d, i) => (
-                    <div
-                      key={i}
-                      className="bg-white w-1 rounded-t"
-                      style={{ height: `${Math.max(4, Math.min(20, (d.hours / Math.max(...impactOverTimeData.map(x => x.hours || 1))) * 20))}px` }}
-                    />
-                  ))}
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-blue-600" />
                 </div>
-                <Clock className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
-                <div className="text-xl font-bold relative z-10">{kpis.totalHours}</div>
-                <div className="text-[10px] font-medium leading-tight relative z-10">Hours</div>
+                <div className="text-xl font-bold text-slate-800">{kpis.totalHours}</div>
+                <div className="text-[10px] font-medium text-slate-500">Hours</div>
               </button>
               <button
                 onClick={() => setShowKpiModal('projects')}
-                className="bg-[#059669] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
                 data-testid="kpi-projects"
               >
-                {/* Mini donut indicator */}
-                <div className="absolute bottom-1 right-1 w-4 h-4 opacity-40">
-                  <svg viewBox="0 0 20 20" className="w-full h-full">
-                    <circle cx="10" cy="10" r="8" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
-                    <circle
-                      cx="10" cy="10" r="8" fill="none" stroke="white" strokeWidth="3"
-                      strokeDasharray={`${(kpis.activeProjects / Math.max(kpis.totalProjects, 1)) * 50.3} 50.3`}
-                      transform="rotate(-90 10 10)"
-                    />
-                  </svg>
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
                 </div>
-                <CheckCircle className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
-                <div className="text-xl font-bold relative z-10">{kpis.totalProjects}</div>
-                <div className="text-[10px] font-medium leading-tight relative z-10">Projects</div>
+                <div className="text-xl font-bold text-slate-800">{kpis.totalProjects}</div>
+                <div className="text-[10px] font-medium text-slate-500">Projects</div>
               </button>
               <button
                 onClick={() => setShowKpiModal('skills')}
-                className="bg-[#d97706] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
                 data-testid="kpi-skills"
               >
-                {/* Skill dots indicator */}
-                <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-[2px] opacity-40">
-                  {[...Array(Math.min(kpis.skills, 6))].map((_, i) => (
-                    <div key={i} className="w-1.5 h-1.5 bg-white rounded-full" />
-                  ))}
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <Award className="w-4 h-4 text-amber-600" />
                 </div>
-                <Award className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
-                <div className="text-xl font-bold relative z-10">{kpis.skills}</div>
-                <div className="text-[10px] font-medium leading-tight relative z-10">Skills</div>
+                <div className="text-xl font-bold text-slate-800">{kpis.skills}</div>
+                <div className="text-[10px] font-medium text-slate-500">Skills</div>
               </button>
               <button
                 onClick={() => setShowKpiModal('sdgs')}
-                className="bg-[#be185d] rounded-lg p-2 text-white text-center hover:brightness-110 transition-all active:scale-95 relative overflow-hidden"
+                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
                 data-testid="kpi-sdgs"
               >
-                {/* SDG grid indicator - show committed SDGs */}
-                <div className="absolute bottom-1 left-0 right-0 flex justify-center gap-[1px] opacity-40">
-                  {kpis.committedSdgs.slice(0, 4).map((sdgNum: number, i: number) => (
-                    <div
-                      key={i}
-                      className="w-2 h-2 rounded-sm"
-                      style={{ backgroundColor: SDG_COLORS[sdgNum] }}
-                    />
-                  ))}
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-pink-100 rounded-xl flex items-center justify-center">
+                  <Globe className="w-4 h-4 text-pink-600" />
                 </div>
-                <Target className="w-4 h-4 mx-auto mb-1 opacity-90 relative z-10" />
-                <div className="text-xl font-bold relative z-10">{kpis.sdgsCommitted}</div>
-                <div className="text-[10px] font-medium leading-tight relative z-10">SDG Goals</div>
+                <div className="text-xl font-bold text-slate-800">{kpis.sdgsCommitted}</div>
+                <div className="text-[10px] font-medium text-slate-500">SDGs</div>
               </button>
             </div>
 
@@ -2933,6 +2922,50 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           </div>
         </div>
       )}
+
+      {/* Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 z-40 flex justify-around items-center h-20 shadow-lg">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          data-testid="nav-home"
+        >
+          <Home className="w-6 h-6" />
+          <span className="text-xs font-medium">Home</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('projects')}
+          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'projects' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          data-testid="nav-projects"
+        >
+          <Briefcase className="w-6 h-6" />
+          <span className="text-xs font-medium">Projects</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('potential')}
+          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'potential' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          data-testid="nav-potential"
+        >
+          <Lightbulb className="w-6 h-6" />
+          <span className="text-xs font-medium">Potential</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('impacts')}
+          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'impacts' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          data-testid="nav-impacts"
+        >
+          <BarChart3 className="w-6 h-6" />
+          <span className="text-xs font-medium">Impacts</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'profile' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          data-testid="nav-profile"
+        >
+          <User className="w-6 h-6" />
+          <span className="text-xs font-medium">Profile</span>
+        </button>
+      </nav>
     </div>
   );
 }

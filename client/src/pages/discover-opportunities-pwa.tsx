@@ -315,7 +315,7 @@ export default function DiscoverOpportunitiesPWA() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pb-20">
         <div className="space-y-4 p-4">
           {/* Header */}
           <div>
@@ -614,6 +614,50 @@ export default function DiscoverOpportunitiesPWA() {
           onOpenChange={setApplicationDialogOpen}
         />
       )}
+
+      {/* Bottom Navigation Bar */}
+      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white border-t border-amber-200/60 z-40 flex justify-around items-center h-20 shadow-lg">
+        <button
+          onClick={() => navigate('/volunteer-dashboard')}
+          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
+          data-testid="nav-home"
+        >
+          <Home className="w-6 h-6" />
+          <span className="text-xs font-medium">Home</span>
+        </button>
+        <button
+          onClick={() => navigate('/volunteer-dashboard?tab=projects')}
+          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
+          data-testid="nav-projects"
+        >
+          <Briefcase className="w-6 h-6" />
+          <span className="text-xs font-medium">Projects</span>
+        </button>
+        <button
+          onClick={() => navigate('/discover-opportunities/pwa')}
+          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-blue-600"
+          data-testid="nav-discover"
+        >
+          <Sparkles className="w-6 h-6" />
+          <span className="text-xs font-medium">Discover</span>
+        </button>
+        <button
+          onClick={() => navigate('/volunteer-dashboard?tab=impacts')}
+          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
+          data-testid="nav-impacts"
+        >
+          <BarChart3 className="w-6 h-6" />
+          <span className="text-xs font-medium">Impacts</span>
+        </button>
+        <button
+          onClick={() => navigate('/volunteer-dashboard?tab=profile')}
+          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
+          data-testid="nav-profile"
+        >
+          <User className="w-6 h-6" />
+          <span className="text-xs font-medium">Profile</span>
+        </button>
+      </nav>
     </div>
   );
 }

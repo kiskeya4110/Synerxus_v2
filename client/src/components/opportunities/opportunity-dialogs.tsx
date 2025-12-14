@@ -657,10 +657,12 @@ export function DeleteOpportunityDialog({ opportunity }: DeleteOpportunityDialog
       return apiRequest("DELETE", `/api/opportunities/${opportunity.id}`);
     },
     onSuccess: () => {
-      const userId = localStorage.getItem('currentUserId');
-      queryClient.invalidateQueries({ queryKey: ["/api/opportunities", userId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/opportunities"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      // Use predicate-based invalidation to match all related queries
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/opportunities') ||
+        String(query.queryKey[0]).includes('/api/applications') ||
+        String(query.queryKey[0]).includes('/api/dashboard')
+      });
       toast({
         title: "Success",
         description: "Opportunity deleted successfully",

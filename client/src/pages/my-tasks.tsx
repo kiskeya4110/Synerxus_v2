@@ -233,7 +233,13 @@ export default function MyTasks({ embedded = false }: MyTasksProps) {
       return await apiRequest("DELETE", url, {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      // Use predicate-based invalidation to match all related queries
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/tasks') ||
+        String(query.queryKey[0]).includes('/api/projects') ||
+        String(query.queryKey[0]).includes('/api/dashboard') ||
+        String(query.queryKey[0]).includes('/api/project-assignments')
+      });
       toast({
         title: "Task deleted",
         description: "Task has been deleted successfully.",

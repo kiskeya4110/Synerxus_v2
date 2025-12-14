@@ -110,6 +110,29 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     };
   }, []);
 
+  // Refetch all PWA queries when tab changes to ensure fresh data
+  useEffect(() => {
+    // Use predicate-based invalidation to match queries by prefix
+    if (activeTab === 'projects') {
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/project-assignments') ||
+        String(query.queryKey[0]).includes('/api/applications')
+      });
+    } else if (activeTab === 'potential') {
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/opportunities')
+      });
+    } else if (activeTab === 'stories') {
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/stories')
+      });
+    } else if (activeTab === 'dashboard') {
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/dashboard')
+      });
+    }
+  }, [activeTab, queryClient]);
+
   const projects = dashboardData?.projects || [];
   const volunteerProfile = dashboardData?.volunteerProfile;
   const volunteerActivities = dashboardData?.activities || [];
@@ -591,7 +614,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       if (!response.ok) return [];
       return response.json();
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 30 * 1000, // Cache for 30 seconds only
   });
 
   // Fetch opportunity status (applied, saved, rejected)
@@ -612,7 +635,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       if (!response.ok) return [];
       return response.json();
     },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    staleTime: 30 * 1000, // Cache for 30 seconds only
   });
 
   // Fetch featured stories for discovery
@@ -623,7 +646,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       if (!response.ok) return [];
       return response.json();
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 30 * 1000, // Cache for 30 seconds only
   });
 
   // Check if user has applied for an opportunity

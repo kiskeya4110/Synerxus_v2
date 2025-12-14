@@ -450,7 +450,13 @@ export function DeleteTaskDialog({ task }: DeleteTaskDialogProps) {
       return apiRequest("DELETE", `/api/tasks/${task.id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      // Use predicate-based invalidation to match all related queries
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/tasks') ||
+        String(query.queryKey[0]).includes('/api/projects') ||
+        String(query.queryKey[0]).includes('/api/dashboard') ||
+        String(query.queryKey[0]).includes('/api/project-assignments')
+      });
       toast({
         title: "Success",
         description: "Task deleted successfully"

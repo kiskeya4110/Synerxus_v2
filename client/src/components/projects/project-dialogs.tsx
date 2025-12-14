@@ -1223,9 +1223,15 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
       return apiRequest("DELETE", `/api/projects/${project.id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/project-assignments"] });
+      // Use predicate-based invalidation to match all related queries
+      queryClient.invalidateQueries({ predicate: (query) => 
+        String(query.queryKey[0]).includes('/api/projects') ||
+        String(query.queryKey[0]).includes('/api/tasks') ||
+        String(query.queryKey[0]).includes('/api/project-assignments') ||
+        String(query.queryKey[0]).includes('/api/dashboard') ||
+        String(query.queryKey[0]).includes('/api/opportunities') ||
+        String(query.queryKey[0]).includes('/api/stories')
+      });
       toast({
         title: "Success",
         description: "Project deleted successfully"

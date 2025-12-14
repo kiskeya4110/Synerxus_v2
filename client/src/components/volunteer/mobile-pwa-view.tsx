@@ -677,20 +677,20 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto">
-      {/* Top App Bar - Clean modern gradient header */}
-      <header className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl">
+      {/* Top App Bar - Light blue to gold gradient header */}
+      <header className="bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl">
         <button onClick={() => navigate('/landing')} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <img src={logoUrl} alt="Synerxus" className="h-9 w-auto object-contain brightness-0 invert" />
+          <img src={logoUrl} alt="Synerxus" className="h-9 w-auto object-contain" />
         </button>
 
         {/* Menu Button */}
         <div className="relative">
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="p-2.5 hover:bg-white/20 rounded-xl transition-all duration-200"
+            className="p-2.5 hover:bg-slate-700/10 rounded-xl transition-all duration-200"
             data-testid="mobile-menu-trigger"
           >
-            <MoreVertical className="w-5 h-5 text-white" />
+            <MoreVertical className="w-5 h-5 text-slate-700" />
           </button>
 
           {/* Dropdown Menu */}

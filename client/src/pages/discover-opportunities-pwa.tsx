@@ -240,11 +240,11 @@ export default function DiscoverOpportunitiesPWA() {
 
   return (
     <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
-      {/* Top App Bar - Blue to off-white/sky-blue gradient */}
-      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+      {/* Top App Bar - Light blue to gold gradient */}
+      <header className="bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
         <button
           onClick={() => navigate("/landing")}
-          className="flex items-center hover:opacity-80 transition-opacity"
+          className="flex items-center hover:opacity-90 transition-opacity"
         >
           <img src={logoUrl} alt="Synerxus Logo" className="h-8 w-auto object-contain" />
         </button>
@@ -252,7 +252,7 @@ export default function DiscoverOpportunitiesPWA() {
         <div className="relative">
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-2 hover:bg-slate-800/10 rounded-full"
+              className="p-2 hover:bg-slate-700/20 rounded-full transition-colors"
               data-testid="mobile-menu-trigger"
             >
               <MoreVertical className="w-5 h-5 text-slate-700" />

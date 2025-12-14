@@ -194,6 +194,11 @@ export default function App() {
           {/* Standalone utility routes */}
           <Route path="/sdg-mapping" component={SDGMapping} />
           <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>
+          {/* PWA Routes - standalone (no Layout wrapper) */}
+          <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
+          <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
+          <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
+          <Route path="/volunteer-messages/pwa" component={VolunteerMessagesPWA} />
           {/* All other routes go through Layout (includes VolunteerNav and Footer) */}
           <Route component={LayoutRoute} />
         </Router>
@@ -210,7 +215,6 @@ function LayoutRoute() {
       <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
       {/* Projects */}
       <Route path="/projects" component={Projects} />
-      <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
       <Route path="/projects/:id/edit" component={ProjectEdit} />
       <Route path="/projects/:id" component={ProjectDetail} />
       {/* Profile & Settings */}
@@ -229,8 +233,6 @@ function LayoutRoute() {
       {/* Opportunities */}
       <Route path="/opportunities" component={Opportunities} />
       <Route path="/discover-opportunities" component={DiscoverOpportunities} />
-      <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
-      <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
       <Route path="/opportunities/:id" component={OpportunityDetail} />
       {/* Applications */}
       <Route path="/applications" component={Applications} />
@@ -252,7 +254,6 @@ function LayoutRoute() {
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
       {/* Messages */}
       <Route path="/volunteer-messages" component={VolunteerMessages} />
-      <Route path="/volunteer-messages/pwa" component={VolunteerMessagesPWA} />
     </Layout>
   );
 }

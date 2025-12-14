@@ -1373,3 +1373,56 @@ export type InsertVolunteerAiuRecord = z.infer<typeof insertVolunteerAiuRecordSc
 
 export type AiuExportLog = typeof aiuExportLogs.$inferSelect;
 export type InsertAiuExportLog = z.infer<typeof insertAiuExportLogSchema>;
+
+// =====================================================
+// Volunteer Stories Schema
+// =====================================================
+
+// Volunteer Stories - Allow volunteers to share their experiences with text and photos
+export const volunteerStories = pgTable("volunteer_stories", {
+  id: serial("id").primaryKey(),
+  volunteerId: integer("volunteer_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  photos: text("photos").array(), // Array of photo URLs from object storage
+  projectId: integer("project_id").references(() => projects.id), // Optional: linked project
+  organizationId: integer("organization_id").references(() => organizations.id), // Optional: linked org
+  sdgGoals: integer("sdg_goals").array(), // SDGs this story relates to
+  location: text("location"), // Where the story took place
+  impactHighlight: text("impact_highlight"), // Brief impact statement
+  isPublished: boolean("is_published").default(false), // Draft vs published
+  isFeatured: boolean("is_featured").default(false), // Featured on homepage
+  likesCount: integer("likes_count").default(0),
+  viewsCount: integer("views_count").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Story Likes - Track who liked which story
+export const storyLikes = pgTable("story_likes", {
+  id: serial("id").primaryKey(),
+  storyId: integer("story_id").references(() => volunteerStories.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas for stories
+export const insertVolunteerStorySchema = createInsertSchema(volunteerStories).omit({
+  id: true,
+  likesCount: true,
+  viewsCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStoryLikeSchema = createInsertSchema(storyLikes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for stories
+export type VolunteerStory = typeof volunteerStories.$inferSelect;
+export type InsertVolunteerStory = z.infer<typeof insertVolunteerStorySchema>;
+
+export type StoryLike = typeof storyLikes.$inferSelect;
+export type InsertStoryLike = z.infer<typeof insertStoryLikeSchema>;

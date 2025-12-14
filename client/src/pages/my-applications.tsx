@@ -87,7 +87,13 @@ function OpportunityMetrics({ opportunity }: { opportunity: any }) {
   );
 }
 
-export default function MyApplicationsPage() {
+interface MyApplicationsPageProps {
+  embedded?: boolean;
+  params?: any;
+}
+
+export default function MyApplicationsPage(props: MyApplicationsPageProps = {}) {
+  const { embedded = false } = props;
   const userId = localStorage.getItem('currentUserId');
   const [expandedApps, setExpandedApps] = useState<Set<number>>(new Set());
 
@@ -212,8 +218,8 @@ export default function MyApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">My Applications</h1>
+      <div className={embedded ? "" : "p-6"}>
+        {!embedded && <h1 className="text-3xl font-bold mb-6">My Applications</h1>}
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-32 w-full" />
@@ -228,13 +234,15 @@ export default function MyApplicationsPage() {
   const otherApps = enrichedApplications.filter(app => app.status !== "pending" && app.status !== "accepted");
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">My Applications</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Track the status of your volunteer applications
-        </p>
-      </div>
+    <div className={embedded ? "" : "p-6"}>
+      {!embedded && (
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">My Applications</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Track the status of your volunteer applications
+          </p>
+        </div>
+      )}
 
       {enrichedApplications.length === 0 ? (
         <Card>

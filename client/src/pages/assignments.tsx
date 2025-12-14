@@ -17,7 +17,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";
 
-export default function Assignments() {
+interface AssignmentsProps {
+  embedded?: boolean;
+  params?: any;
+}
+
+export default function Assignments(props: AssignmentsProps = {}) {
+  const { embedded = false } = props;
   const { toast } = useToast();
   const [expandedProjects, setExpandedProjects] = useState<Set<number>>(new Set());
 
@@ -143,9 +149,9 @@ export default function Assignments() {
   // Handle unauthenticated users - only check after query completes
   if (!userLoading && !currentUser) {
     return (
-      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
-        {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-        <div className="container mx-auto p-6">
+      <div className={embedded ? "" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+        {!embedded && isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+        <div className={embedded ? "" : "container mx-auto p-6"}>
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Authentication Required</AlertTitle>
@@ -160,9 +166,9 @@ export default function Assignments() {
 
   if (isLoading) {
     return (
-      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
-        {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-        <div className="container mx-auto p-6">
+      <div className={embedded ? "" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+        {!embedded && isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+        <div className={embedded ? "" : "container mx-auto p-6"}>
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">Loading assignments...</p>
           </div>
@@ -172,15 +178,17 @@ export default function Assignments() {
   }
 
   return (
-    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
-      {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-      <div className={isOrganizationUser ? "p-6 space-y-6" : "container mx-auto p-6 space-y-6"}>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Assignments</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Manage your project assignments and invitations
-          </p>
-        </div>
+    <div className={embedded ? "" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      {!embedded && isOrganizationUser && <OrganizationHeader activeTab="projects" />}
+      <div className={embedded ? "space-y-6" : isOrganizationUser ? "p-6 space-y-6" : "container mx-auto p-6 space-y-6"}>
+        {!embedded && (
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">My Assignments</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Manage your project assignments and invitations
+            </p>
+          </div>
+        )}
 
       {/* Pending Invitations */}
       <div>

@@ -174,9 +174,9 @@ export default function Calendar() {
 
   return (
     <div className={isPWAView ? "min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
-      {/* PWA Header for Volunteers on Mobile */}
+      {/* PWA Header for Volunteers on Mobile - Matching approved format */}
       {isPWAView && (
-        <header className="bg-[#2a4068] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => navigate("/landing")}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -186,16 +186,16 @@ export default function Calendar() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => navigate('/volunteer-messages/pwa')}
-              className="p-2 hover:bg-white/10 rounded-full"
+              className="p-2 hover:bg-slate-800/10 rounded-full"
             >
-              <MessageCircle className="w-5 h-5" />
+              <MessageCircle className="w-5 h-5 text-slate-700" />
             </button>
             <div className="relative">
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="p-2 hover:bg-white/10 rounded-full"
+                className="p-2 hover:bg-slate-800/10 rounded-full"
               >
-                <MoreVertical className="w-5 h-5" />
+                <MoreVertical className="w-5 h-5 text-slate-700" />
               </button>
               {showMobileMenu && (
                 <>

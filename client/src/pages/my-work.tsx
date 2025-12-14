@@ -458,10 +458,10 @@ export default function MyWork() {
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
 
   return (
-    <div className={`h-screen overflow-y-auto ${!isOrganizationManager && isMobile ? 'bg-[#1a1a2e] max-w-[428px] mx-auto' : ''}`}>
-      {/* PWA Header for Volunteers on Mobile */}
+    <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto' : 'overflow-y-auto'}`}>
+      {/* PWA Header for Volunteers on Mobile - Matching approved format */}
       {!isOrganizationManager && isMobile && (
-        <header className="bg-[#2a4068] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => setLocation("/")}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -471,9 +471,9 @@ export default function MyWork() {
           <div className="flex items-center gap-2 relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-white/10 rounded-full"
+              className="p-2 hover:bg-slate-800/10 rounded-full"
             >
-              <MoreVertical className="w-5 h-5" />
+              <MoreVertical className="w-5 h-5 text-slate-700" />
             </button>
 
             {/* Floating Menu */}
@@ -584,6 +584,8 @@ export default function MyWork() {
         </header>
       )}
 
+      {/* Main Content Wrapper */}
+      <main className={!isOrganizationManager && isMobile ? "flex-1 overflow-y-auto pb-20" : ""}>
       {isOrganizationManager && <OfflineBanner />}
       {isOrganizationManager && <OrganizationHeader activeTab="projects" />}
       {/* Top Navigation Buttons for Organization Managers */}
@@ -970,19 +972,19 @@ export default function MyWork() {
 
           <TabsContent value="applications" className="mt-2">
             <div className="w-full overflow-x-hidden">
-              <MyApplicationsPage />
+              <MyApplicationsPage embedded />
             </div>
           </TabsContent>
 
           <TabsContent value="assignments" className="mt-2">
             <div className="w-full overflow-x-hidden">
-              <AssignmentsPage />
+              <AssignmentsPage embedded />
             </div>
           </TabsContent>
 
           <TabsContent value="tasks" className="mt-2">
             <div className="w-full overflow-x-hidden">
-              <MyTasksPage />
+              <MyTasksPage embedded />
             </div>
           </TabsContent>
 
@@ -996,61 +998,14 @@ export default function MyWork() {
       
       {/* Mobile Metrics Grid - Organization Only */}
       {isOrganizationManager && <MobileMetricsGrid activeProjects={dashboardData?.activeProjects || 0} totalHours={dashboardData?.totalHours || 0} sdgsAddressed={dashboardData?.sdgsAddressed || 0} aiuEarned={dashboardData?.aiuEarned || 0} />}
+      </main>
 
       {/* Mobile Bottom Navigation - Organization Only */}
       {isOrganizationManager && <MobileBottomNav />}
 
-      {/* PWA Bottom Navigation for Volunteers on Mobile - Matching Dashboard Frame */}
+      {/* PWA Bottom Navigation for Volunteers on Mobile */}
       {!isOrganizationManager && isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
-          <div className="flex justify-around items-center">
-            <button
-              type="button"
-              onClick={() => setLocation('/volunteer-dashboard')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Home className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Home</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setLocation('/projects')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Briefcase className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Projects</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setLocation('/volunteer-dashboard')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <Lightbulb className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Insights</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setLocation(`/impact-report/${userId || ''}`)}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <BarChart3 className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Impact</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setLocation('/volunteer-profile-settings')}
-              className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            >
-              <UserIcon className="w-5 h-5 mb-1" />
-              <span className="text-[10px] font-medium">Profile</span>
-            </button>
-          </div>
-        </nav>
+        <VolunteerPWANav userId={userId || undefined} activeTab="mywork" />
       )}
     </div>
   );

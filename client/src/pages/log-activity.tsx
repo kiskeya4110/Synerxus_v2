@@ -273,9 +273,9 @@ export default function LogActivity() {
 
   return (
     <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-[#FDF8F3] max-w-[428px] mx-auto pb-24' : 'bg-background'}`}>
-      {/* PWA Header for Volunteers on Mobile */}
+      {/* PWA Header for Volunteers on Mobile - Matching approved format */}
       {isMobile && isVolunteer && (
-        <header className="bg-[#2a4068] text-white px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => setLocation("/")}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -285,9 +285,9 @@ export default function LogActivity() {
           <div className="flex items-center gap-2 relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-white/10 rounded-full"
+              className="p-2 hover:bg-slate-800/10 rounded-full"
             >
-              <MoreVertical className="w-5 h-5" />
+              <MoreVertical className="w-5 h-5 text-slate-700" />
             </button>
 
             {/* Floating Menu */}

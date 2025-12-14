@@ -52,7 +52,9 @@
       "Bash(npx autocannon:*)",
       "Bash(RATE_LIMIT_MAX=100000 NODE_ENV=production node:*)",
       "Bash(RATE_LIMIT_MAX=100000 npm run start:cluster:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(then echo \"DATABASE_URL is set\")",
+      "Bash(else echo \"DATABASE_URL not set\")"
     ],
     "deny": [],
     "ask": []

@@ -14,6 +14,7 @@ import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Targ
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
+import Footer from "@/components/layout/footer";
 
 interface Application {
   id: number;
@@ -286,9 +287,9 @@ export default function ApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
-        {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
-        <div className="p-6">
+      <div className={isOrganizationUser ? "min-h-screen flex flex-col" : ""}>
+        {isOrganizationUser && <OrganizationHeader activeTab="applications" />}
+        <div className="p-6 flex-1">
           <h1 className="text-3xl font-bold mb-6">Applications</h1>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
@@ -296,14 +297,15 @@ export default function ApplicationsPage() {
             ))}
           </div>
         </div>
+        {isOrganizationUser && <Footer />}
       </div>
     );
   }
 
   return (
-    <div className={isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
-      {isOrganizationUser && <OrganizationHeader activeTab="volunteers" />}
-      <div className={isOrganizationUser ? "p-6" : "p-6"}>
+    <div className={isOrganizationUser ? "min-h-screen flex flex-col" : ""}>
+      {isOrganizationUser && <OrganizationHeader activeTab="applications" />}
+      <div className={isOrganizationUser ? "p-6 flex-1" : "p-6"}>
         <div className="mb-6">
           <h1 className="text-3xl font-bold">Applications</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
@@ -817,6 +819,7 @@ export default function ApplicationsPage() {
         </DialogContent>
       </Dialog>
       </div>
+      {isOrganizationUser && <Footer />}
     </div>
   );
 }

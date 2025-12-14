@@ -70,7 +70,8 @@ export default function Layout({ children }: LayoutProps) {
   const isFullyStandalone = fullyStandaloneRoutes.some(route => location === route || location.startsWith(route + "/"));
 
   if (isFullyStandalone) {
-    return null; // Don't render anything - these routes have their own complete layout
+    // Render just the children - these routes have their own complete layout
+    return <>{children}</>;
   }
 
   return (

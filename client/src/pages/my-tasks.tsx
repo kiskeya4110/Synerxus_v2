@@ -17,7 +17,11 @@ interface TaskWithProject extends Task {
   project?: Project;
 }
 
-export default function MyTasks() {
+interface MyTasksProps {
+  embedded?: boolean;
+}
+
+export default function MyTasks({ embedded = false }: MyTasksProps) {
   const [activeTab, setActiveTab] = useState("tasks");
   const [taskHours, setTaskHours] = useState<{ [key: number]: string }>({});
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -305,11 +309,13 @@ export default function MyTasks() {
   }
 
   return (
-    <div className="px-4 sm:px-6 py-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">My Tasks</h1>
-        <p className="text-gray-600">Track your volunteer assignments and progress</p>
-      </div>
+    <div className={embedded ? "" : "px-4 sm:px-6 py-6"}>
+      {!embedded && (
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold mb-2">My Tasks</h1>
+          <p className="text-gray-600">Track your volunteer assignments and progress</p>
+        </div>
+      )}
 
       {/* Summary Cards with Live KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">

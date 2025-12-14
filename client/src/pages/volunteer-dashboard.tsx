@@ -1350,7 +1350,7 @@ export default function Dashboard() {
               <div className="p-4 bg-gradient-to-r from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-xl border border-emerald-200 dark:border-emerald-800">
                 <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                   {aiuSummary.totalAiu >= 10
-                    ? `🌟 Outstanding! You've earned ${aiuSummary.totalAiu?.toFixed(2)} Adjusted Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${aiuSummary.totalHours?.toFixed(0) || 0} hours are creating measurable change.`
+                    ? `🌟 Outstanding! You've earned ${aiuSummary.totalAiu?.toFixed(2)} Attributable Impact Units across ${aiuSummary.projectCount} project${aiuSummary.projectCount !== 1 ? 's' : ''}. Your ${aiuSummary.totalHours?.toFixed(0) || 0} hours are creating measurable change.`
                     : aiuSummary.totalAiu >= 5
                     ? `✨ Great progress! You've accumulated ${aiuSummary.totalAiu?.toFixed(2)} AIUs. With ${aiuSummary.totalHours?.toFixed(0) || 0} hours invested, your impact is growing steadily.`
                     : `🚀 You're building momentum with ${aiuSummary.totalAiu?.toFixed(2)} AIUs earned. Every hour you contribute amplifies your positive influence!`}

@@ -47,11 +47,21 @@ export default function VolunteerNav() {
     navigate('/');
   };
 
-  // Don't show on PWA routes - they have their own navigation
+  // Don't show on PWA routes or standalone routes - they have their own navigation
   const isPwaRoute = location.endsWith('/pwa');
+  const standaloneRoutes = [
+    '/volunteer-dashboard',
+    '/discover-opportunities',
+    '/landing',
+    '/login',
+    '/'
+  ];
+  const isStandaloneRoute = standaloneRoutes.some(route =>
+    location === route || location.startsWith(route + '/')
+  );
 
   // Only show for volunteers on desktop (hide on mobile for PWA)
-  if (currentUser?.userType !== 'volunteer' || isPwaRoute) {
+  if (currentUser?.userType !== 'volunteer' || isPwaRoute || isStandaloneRoute) {
     return null;
   }
 

@@ -36,7 +36,7 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 via-sky-500 to-sky-300 border-t border-slate-200/30 px-1 py-1.5 max-w-[428px] mx-auto z-50 shadow-lg">
+    <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-400 border-t border-amber-300/30 px-1 py-1.5 max-w-[428px] mx-auto z-50 shadow-lg">
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -47,11 +47,11 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
               key={item.id}
               onClick={() => handleNavClick(item)}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                isActive ? 'text-slate-900' : 'text-slate-700'
+                isActive ? 'text-amber-900' : 'text-amber-700'
               }`}
               data-testid={`csr-nav-${item.id}`}
             >
-              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-blue-900' : 'text-slate-600'}`} />
+              <Icon className={`w-4 h-4 mb-0.5 ${isActive ? 'text-amber-900' : 'text-amber-700'}`} />
               <span className="text-[9px] font-medium">{item.label}</span>
             </button>
           );
@@ -73,22 +73,22 @@ export function CSRMobileHeader({ title, companyName, showBackButton, onBack }: 
   const [, navigate] = useLocation();
 
   return (
-    <header className="bg-gradient-to-r from-blue-500 via-sky-400 to-sky-200 text-slate-800 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+    <header className="bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 text-amber-900 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
       <div className="flex items-center gap-2">
         {showBackButton && (
           <button
             onClick={onBack || (() => navigate('/csr-dashboard'))}
-            className="p-1 hover:bg-slate-800/10 rounded"
+            className="p-1 hover:bg-amber-600/10 rounded"
           >
-            <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
         )}
-        <span className="font-semibold text-sm truncate max-w-[180px] text-slate-800">{title}</span>
+        <span className="font-semibold text-sm truncate max-w-[180px] text-amber-900">{title}</span>
       </div>
       {companyName && (
-        <div className="text-[10px] text-slate-600 truncate max-w-[100px]">{companyName}</div>
+        <div className="text-[10px] text-amber-700 truncate max-w-[100px]">{companyName}</div>
       )}
     </header>
   );

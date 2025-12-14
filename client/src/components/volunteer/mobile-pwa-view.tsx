@@ -84,7 +84,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [showKpiModal, setShowKpiModal] = useState<string | null>(null);
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
 
   // Scroll to top on page load
@@ -727,95 +726,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto">
-      {/* Top App Bar - Light blue to gold gradient header */}
-      <header className="bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl">
-        <button onClick={() => navigate('/landing')} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <img src={logoUrl} alt="Synerxus" className="h-9 w-auto object-contain" />
-        </button>
-
-        {/* Menu Button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="p-2.5 hover:bg-slate-700/10 rounded-xl transition-all duration-200"
-            data-testid="mobile-menu-trigger"
-          >
-            <MoreVertical className="w-5 h-5 text-slate-700" />
-          </button>
-
-          {/* Dropdown Menu */}
-          {showMobileMenu && (
-            <>
-              {/* Backdrop to close menu */}
-              <div
-                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-                onClick={() => setShowMobileMenu(false)}
-              />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 py-2 overflow-hidden">
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Quick Actions</p>
-                </div>
-                <button
-                  onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <ClipboardList className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <span className="text-sm font-medium">My Work</span>
-                </button>
-                <button
-                  onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span className="text-sm font-medium">Log Activity</span>
-                </button>
-                <button
-                  onClick={() => { navigate('/discover-opportunities'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                    <Search className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <span className="text-sm font-medium">Find Opportunities</span>
-                </button>
-                <button
-                  onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                    <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <span className="text-sm font-medium">Calendar</span>
-                </button>
-                <div className="border-t border-slate-100 dark:border-slate-800 my-2"></div>
-                <button
-                  onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                  </div>
-                  <span className="text-sm font-medium">Settings</span>
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                >
-                  <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                    <LogOut className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-medium">Sign Out</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </header>
-
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500 text-gray-900 px-4 py-2 text-sm flex items-center gap-2">
@@ -2496,7 +2406,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 {showKpiModal === 'projects' && 'Total Projects'}
                 {showKpiModal === 'skills' && 'Skills Applied'}
                 {showKpiModal === 'sdgs' && 'SDG Contributions'}
-                {showKpiModal === 'aiu' && 'Adjusted Impact Units'}
+                {showKpiModal === 'aiu' && 'Attributable Impact Units'}
               </h2>
               <button
                 onClick={() => setShowKpiModal(null)}
@@ -2753,8 +2663,20 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 <>
                   <div className="text-center py-4">
                     <div className="text-5xl font-bold text-amber-500 mb-2">{aiuSummary?.totalAiu?.toFixed(2) || '0.00'}</div>
-                    <div className="text-slate-500">Total Adjusted Impact Units</div>
+                    <div className="text-slate-500">Total Attributable Impact Units</div>
                   </div>
+
+                  {/* AIU Description */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100 mb-4">
+                    <h4 className="font-semibold text-blue-800 text-sm mb-2">What is an AIU?</h4>
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      <strong>Attributable Impact Units (AIU)</strong> are auditable, SDG-mapped metrics that measure your real contribution to social impact. Unlike simple "hours logged", AIUs calculate your proportional share of project outcomes based on your role, hours, and the verified change in beneficiaries' lives.
+                    </p>
+                    <div className="mt-2 text-xs text-blue-600">
+                      <strong>Formula:</strong> AIU = ΔOutcome × Attribution × (Your Weight ÷ Total Weight)
+                    </div>
+                  </div>
+
                   <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 mb-4">
                     <div className="text-sm text-slate-700 space-y-2">
                       <div className="flex justify-between">

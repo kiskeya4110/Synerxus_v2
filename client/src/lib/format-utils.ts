@@ -228,7 +228,7 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
- * Format AIU (Adjusted Impact Units) value with precision
+ * Format AIU (Attributable Impact Units) value with precision
  * @example formatAIU(1.23456) => "1.23"
  * @example formatAIU(0) => "0.00"
  */

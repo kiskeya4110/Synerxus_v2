@@ -979,7 +979,7 @@ export default function CSRDashboard() {
     return (
       <div className="flex flex-col min-h-screen bg-[#faf9f7]">
         {/* Header Skeleton */}
-        <div className="h-16 bg-gradient-to-r from-blue-900 to-blue-800 flex-shrink-0 flex items-center px-6">
+        <div className="h-16 bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 flex-shrink-0 flex items-center px-6">
           <Skeleton className="h-8 w-32 bg-blue-700/50" />
           <div className="ml-auto flex items-center gap-4">
             <Skeleton className="h-8 w-24 bg-blue-700/50" />
@@ -1070,8 +1070,8 @@ export default function CSRDashboard() {
   if (isMobile) {
     return (
       <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
-        {/* Mobile Header - Compact with lighter gradient for logo contrast */}
-        <header className="bg-gradient-to-r from-blue-500 via-sky-400 to-sky-200 text-slate-800 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        {/* Mobile Header - Cream to gold gradient for organization branding */}
+        <header className="bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 text-amber-900 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
           <button
             onClick={() => navigate("/landing")}
             className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
@@ -1079,8 +1079,8 @@ export default function CSRDashboard() {
             <img src={logoUrl} alt="Synerxus" className="h-7 w-auto" />
           </button>
           <div className="flex items-center gap-1">
-            <span className="text-xs text-blue-900 font-bold truncate max-w-[100px]">{companyName}</span>
-            <span className="text-xs text-slate-800 font-medium">ESG Insights</span>
+            <span className="text-xs text-amber-900 font-bold truncate max-w-[100px]">{companyName}</span>
+            <span className="text-xs text-amber-800 font-medium">ESG Insights</span>
           </div>
         </header>
 
@@ -1864,61 +1864,61 @@ export default function CSRDashboard() {
           )}
         </main>
 
-        {/* Bottom Navigation - Compact with lighter gradient for contrast */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 via-sky-500 to-sky-300 border-t border-slate-200/30 px-1 py-1.5 max-w-[428px] mx-auto z-50 shadow-lg">
+        {/* Bottom Navigation - Cream to gold gradient for organization branding */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-100 via-amber-200 to-amber-400 border-t border-amber-300/30 px-1 py-1.5 max-w-[428px] mx-auto z-50 shadow-lg">
           <div className="flex justify-around items-center">
             <button
               onClick={() => startTransition(() => setMobileTab('overview'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'overview' ? 'text-slate-900' : 'text-slate-700'
+                mobileTab === 'overview' ? 'text-amber-900' : 'text-amber-700'
               }`}
               data-testid="nav-overview"
             >
-              <Home className={`w-4 h-4 mb-0.5 ${mobileTab === 'overview' ? 'text-blue-900' : 'text-slate-600'}`} />
+              <Home className={`w-4 h-4 mb-0.5 ${mobileTab === 'overview' ? 'text-amber-900' : 'text-amber-700'}`} />
               <span className="text-[9px] font-medium">Home</span>
             </button>
 
             <button
               onClick={() => startTransition(() => setMobileTab('employees'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'employees' ? 'text-slate-900' : 'text-slate-700'
+                mobileTab === 'employees' ? 'text-amber-900' : 'text-amber-700'
               }`}
               data-testid="nav-employees"
             >
-              <Users className={`w-4 h-4 mb-0.5 ${mobileTab === 'employees' ? 'text-blue-900' : 'text-slate-600'}`} />
+              <Users className={`w-4 h-4 mb-0.5 ${mobileTab === 'employees' ? 'text-amber-900' : 'text-amber-700'}`} />
               <span className="text-[9px] font-medium">Team</span>
             </button>
 
             <button
               onClick={() => startTransition(() => setMobileTab('sdgs'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'sdgs' ? 'text-slate-900' : 'text-slate-700'
+                mobileTab === 'sdgs' ? 'text-amber-900' : 'text-amber-700'
               }`}
               data-testid="nav-sdgs"
             >
-              <Target className={`w-4 h-4 mb-0.5 ${mobileTab === 'sdgs' ? 'text-blue-900' : 'text-slate-600'}`} />
+              <Target className={`w-4 h-4 mb-0.5 ${mobileTab === 'sdgs' ? 'text-amber-900' : 'text-amber-700'}`} />
               <span className="text-[9px] font-medium">SDGs</span>
             </button>
 
             <button
               onClick={() => startTransition(() => setMobileTab('reports'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'reports' ? 'text-slate-900' : 'text-slate-700'
+                mobileTab === 'reports' ? 'text-amber-900' : 'text-amber-700'
               }`}
               data-testid="nav-reports"
             >
-              <BarChart3 className={`w-4 h-4 mb-0.5 ${mobileTab === 'reports' ? 'text-blue-900' : 'text-slate-600'}`} />
+              <BarChart3 className={`w-4 h-4 mb-0.5 ${mobileTab === 'reports' ? 'text-amber-900' : 'text-amber-700'}`} />
               <span className="text-[9px] font-medium">Reports</span>
             </button>
 
             <button
               onClick={() => startTransition(() => setMobileTab('settings'))}
               className={`flex flex-col items-center py-1 px-2 rounded transition-all ${
-                mobileTab === 'settings' ? 'text-slate-900' : 'text-slate-700'
+                mobileTab === 'settings' ? 'text-amber-900' : 'text-amber-700'
               }`}
               data-testid="nav-settings"
             >
-              <Settings className={`w-4 h-4 mb-0.5 ${mobileTab === 'settings' ? 'text-blue-900' : 'text-slate-600'}`} />
+              <Settings className={`w-4 h-4 mb-0.5 ${mobileTab === 'settings' ? 'text-amber-900' : 'text-amber-700'}`} />
               <span className="text-[9px] font-medium">Settings</span>
             </button>
           </div>
@@ -3350,18 +3350,18 @@ export default function CSRDashboard() {
         overflow: "hidden",
       }}
     >
-      {/* Top Header Bar - Lighter gradient for logo contrast */}
+      {/* Top Header Bar - Cream to gold gradient for organization branding */}
       <header
         style={{
-          background: "linear-gradient(135deg, #3B82F6 0%, #38BDF8 50%, #7DD3FC 75%, #E0F2FE 100%)",
-          color: "#1e293b",
+          background: "linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)",
+          color: "#78350f",
           padding: "12px 24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexShrink: 0,
           height: "64px",
-          boxShadow: "0 2px 16px rgba(59, 130, 246, 0.3)",
+          boxShadow: "0 2px 16px rgba(245, 158, 11, 0.25)",
           position: "sticky",
           top: 0,
           zIndex: 50,
@@ -3375,7 +3375,7 @@ export default function CSRDashboard() {
             alignItems: "center",
             gap: "8px",
             paddingRight: "16px",
-            borderRight: "1px solid rgba(30, 41, 59, 0.2)",
+            borderRight: "1px solid rgba(180, 83, 9, 0.25)",
             backgroundColor: "transparent",
             border: "none",
             cursor: "pointer",
@@ -3403,12 +3403,12 @@ export default function CSRDashboard() {
           }}
         >
           <span
-            style={{ fontSize: "18px", fontWeight: "700", color: "#1e3a8a" }}
+            style={{ fontSize: "18px", fontWeight: "700", color: "#92400e" }}
           >
             {companyName}
           </span>
           <span
-            style={{ fontSize: "18px", fontWeight: "600", color: "#1e293b" }}
+            style={{ fontSize: "18px", fontWeight: "600", color: "#78350f" }}
           >
             ESG Insights
           </span>
@@ -3423,7 +3423,7 @@ export default function CSRDashboard() {
             minWidth: "fit-content",
           }}
         >
-          <span style={{ fontSize: "14px", color: "#334155" }}>
+          <span style={{ fontSize: "14px", color: "#92400e" }}>
             {currentDate}
           </span>
           <UserProfileDropdown />

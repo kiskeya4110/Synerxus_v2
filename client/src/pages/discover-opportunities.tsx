@@ -4,15 +4,14 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLocation } from "wouter";
 import {
   Search, MapPin, Clock, Users, Sparkles, Target,
-  ChevronDown, CheckCircle, Building2, Calendar, Filter,
-  Home, Briefcase, Lightbulb, BarChart3, User, MessageCircle, MoreVertical, Settings, ClipboardList, LogOut, TrendingUp
+  ChevronDown, CheckCircle, Building2, Filter,
+  Home, Briefcase, TrendingUp
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
-import { useAuth } from "@/hooks/use-auth";
 
 interface EnrichedOpportunity {
   id: number;
@@ -59,13 +58,11 @@ const SDG_COLORS: { [key: number]: string } = {
 
 export default function DiscoverOpportunities() {
   const [, navigate] = useLocation();
-  const { signOut } = useAuth();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [applyingToId, setApplyingToId] = useState<number | null>(null);
 
   const userId = localStorage.getItem('currentUserId');
@@ -74,13 +71,6 @@ export default function DiscoverOpportunities() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  // Handle logout
-  const handleLogout = async () => {
-    setShowMobileMenu(false);
-    await signOut();
-    navigate('/');
-  };
 
   // Fetch opportunities - using React Query's built-in retry and caching
   const { data: opportunities = [], isLoading, isError, refetch: refetchOpportunities } = useQuery<EnrichedOpportunity[]>({
@@ -251,96 +241,11 @@ export default function DiscoverOpportunities() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto">
-      {/* Top App Bar - Light blue to gold gradient (matching mobile PWA view) */}
-      <header className="bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl">
-        <button
-          onClick={() => navigate("/landing")}
-          className="flex items-center gap-2 hover:opacity-90 transition-opacity"
-        >
-          <img src={logoUrl} alt="Synerxus Logo" className="h-9 w-auto object-contain" />
+      {/* Top App Bar - Logo on left, clean header */}
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center shadow-xl">
+        <button onClick={() => navigate('/volunteer-dashboard')} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+          <img src={logoUrl} alt="Synerxus" className="h-9 w-auto object-contain" />
         </button>
-
-        {/* Menu Button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="p-2.5 hover:bg-slate-700/10 rounded-xl transition-all duration-200"
-            data-testid="mobile-menu-trigger"
-          >
-            <MoreVertical className="w-5 h-5 text-slate-700" />
-          </button>
-
-          {/* Dropdown Menu */}
-          {showMobileMenu && (
-            <>
-              {/* Backdrop to close menu */}
-              <div
-                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
-                onClick={() => setShowMobileMenu(false)}
-              />
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 py-2 overflow-hidden">
-                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Quick Actions</p>
-                </div>
-                <button
-                  onClick={() => { navigate('/volunteer-dashboard'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <span className="text-sm font-medium">Dashboard</span>
-                </button>
-                <button
-                  onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                    <ClipboardList className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <span className="text-sm font-medium">My Work</span>
-                </button>
-                <button
-                  onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                    <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <span className="text-sm font-medium">Log Activity</span>
-                </button>
-                <button
-                  onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                    <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <span className="text-sm font-medium">Calendar</span>
-                </button>
-                <div className="border-t border-slate-100 dark:border-slate-800 my-2"></div>
-                <button
-                  onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
-                    <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                  </div>
-                  <span className="text-sm font-medium">Settings</span>
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                >
-                  <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                    <LogOut className="w-4 h-4" />
-                  </div>
-                  <span className="text-sm font-medium">Sign Out</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
       </header>
 
       {/* Main Content */}

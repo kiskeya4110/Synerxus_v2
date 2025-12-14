@@ -25,7 +25,9 @@ export default function VolunteerBottomNav() {
     '/csr-dashboard-pwa',
     '/organization-dashboard',
     '/discover-opportunities/pwa',
+    '/discover-opportunities',
     '/projects/',  // PWA project detail pages
+    '/opportunities/',  // PWA opportunity detail pages
     '/landing',
     '/login',
     '/'

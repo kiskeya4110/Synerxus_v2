@@ -128,26 +128,26 @@ export default function TeamOverview() {
   return (
     <div className="h-screen bg-[#faf9f7] flex flex-col overflow-hidden">
       {/* Header */}
-      <div style={{ borderTop: "8px solid #1e3a8a", width: "100%" }} />
-      <header className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-4 shadow-lg">
+      <div style={{ borderTop: "8px solid #92400e", width: "100%" }} />
+      <header className="bg-gradient-to-r from-amber-50 via-amber-100 to-amber-400 text-amber-900 px-6 py-4 shadow-lg">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Logo size="sm" showIcon={true} className="invert" />
+            <Logo size="sm" showIcon={true} />
           </div>
 
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <h1 className="text-2xl font-bold">ML-Powered Team Overview</h1>
-              <p className="text-sm text-blue-200">Real-time Analytics & Predictions</p>
+              <h1 className="text-2xl font-bold text-amber-900">ML-Powered Team Overview</h1>
+              <p className="text-sm text-amber-700">Real-time Analytics & Predictions</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <p className="text-sm text-blue-200">{currentDate}</p>
+              <p className="text-sm text-amber-700">{currentDate}</p>
               <div className="flex items-center gap-2 justify-end">
-                <span className="text-sm">{adminName}</span>
-                <div className="w-8 h-8 bg-blue-700 rounded-full flex items-center justify-center">
+                <span className="text-sm text-amber-900">{adminName}</span>
+                <div className="w-8 h-8 bg-amber-600 rounded-full flex items-center justify-center">
                   👤
                 </div>
               </div>
@@ -157,7 +157,7 @@ export default function TeamOverview() {
       </header>
 
       {/* Auto-refresh indicator */}
-      <div className="bg-blue-50 border-b border-blue-200 px-6 py-2">
+      <div className="bg-amber-50 border-b border-amber-200 px-6 py-2">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-sm">
           <div className="flex items-center gap-4">
             <button

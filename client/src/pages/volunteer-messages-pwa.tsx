@@ -243,7 +243,7 @@ export default function VolunteerMessagesPWA() {
   const connectedProjects = projects.filter(p => connectedProjectIds.has(p.id));
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 pb-20 max-w-[428px] mx-auto">
+    <div className="fixed inset-0 h-screen w-screen bg-gradient-to-b from-sky-50 to-slate-100 flex flex-col overflow-hidden">
       {/* PWA Header */}
       <PWAHeader />
       
@@ -472,7 +472,7 @@ export default function VolunteerMessagesPWA() {
       {/* New Conversation Modal */}
       {showNewConversation && (
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="bg-white rounded-t-2xl w-full max-w-[428px] mx-auto max-h-[80vh] overflow-hidden">
+          <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-200">
               <h2 className="text-lg font-semibold text-slate-800">New Conversation</h2>
@@ -696,7 +696,7 @@ export default function VolunteerMessagesPWA() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-40">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 z-40">
         <div className="flex justify-around items-center">
           <button
             onClick={() => navigate('/volunteer-dashboard')}

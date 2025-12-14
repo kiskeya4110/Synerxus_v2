@@ -123,7 +123,7 @@ export default function OpportunityDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-24 max-w-[428px] mx-auto">
+    <div className="fixed inset-0 h-screen w-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-auto pb-24">
       {/* PWA Header */}
       <PWAHeader />
 

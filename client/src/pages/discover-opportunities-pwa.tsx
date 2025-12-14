@@ -204,7 +204,7 @@ export default function DiscoverOpportunitiesPWA() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto overflow-hidden">
+    <div className="fixed inset-0 h-screen w-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-hidden">
       {/* PWA Header */}
       <PWAHeader />
 
@@ -545,7 +545,7 @@ export default function DiscoverOpportunitiesPWA() {
       )}
 
       {/* Bottom Navigation Bar - Matching mobile PWA view */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
         <div className="flex justify-around items-center">
           <button
             onClick={() => navigate('/volunteer-dashboard')}

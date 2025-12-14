@@ -267,7 +267,7 @@ export default function ProjectDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-24 max-w-[428px] mx-auto">
+    <div className="fixed inset-0 h-screen w-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-auto pb-24">
       {/* PWA Header */}
       <PWAHeader />
 
@@ -617,7 +617,7 @@ export default function ProjectDetailPWA() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 z-50" style={{ touchAction: 'manipulation' }}>
         <div className="flex justify-around items-center">
           {[
             { path: '/volunteer-dashboard', icon: Home, label: 'Home' },

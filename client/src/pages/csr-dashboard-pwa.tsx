@@ -49,6 +49,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
+import PWAHeader from "@/components/pwa/pwa-header";
 
 // Lazy load heavy chart components for better initial load
 const LineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));
@@ -400,13 +401,15 @@ export default function CSRDashboardPWA() {
 
   return (
     <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40">
+      {/* PWA Header */}
+      <PWAHeader />
+
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">
           Offline Mode - Using Cached Data
         </div>
       )}
-
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20 bg-[#faf9f7]">
@@ -923,7 +926,7 @@ export default function CSRDashboardPWA() {
       </main>
 
       {/* Bottom Tray Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex justify-around max-w-[428px] mx-auto z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex justify-around z-50">
         <button
           onClick={() => startTransition(() => setActiveTab('home'))}
           className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'home' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}

@@ -116,7 +116,8 @@ export default function MyApplicationsPage() {
         }
         return response.json();
       } catch (error) {
-        console.error("Error fetching match scores:", error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error("Error fetching match scores:", errorMessage);
         return [];
       }
     },

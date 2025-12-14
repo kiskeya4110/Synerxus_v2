@@ -186,8 +186,20 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  // Initialize digest scheduler for weekly email digests
-  initializeDigestScheduler();
+  // Initialize digest scheduler for weekly email digests (production only, deferred)
+  // In development, skip to speed up server startup
+  if (process.env.NODE_ENV === 'production') {
+    // Defer scheduler initialization to avoid blocking server startup
+    setImmediate(() => {
+      try {
+        initializeDigestScheduler();
+      } catch (err) {
+        logger.error('Failed to initialize digest scheduler:', err);
+      }
+    });
+  } else {
+    logger.info('Skipping digest scheduler in development mode');
+  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

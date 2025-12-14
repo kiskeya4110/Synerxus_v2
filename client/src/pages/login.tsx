@@ -122,10 +122,11 @@ export default function Login() {
         });
       }
     } catch (error) {
-      console.error("Error signing in with Google:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("Error signing in with Google:", errorMessage);
       toast({
         title: "Error",
-        description: "Failed to sign in. Please try again.",
+        description: errorMessage || "Failed to sign in. Please try again.",
         variant: "destructive"
       });
     } finally {

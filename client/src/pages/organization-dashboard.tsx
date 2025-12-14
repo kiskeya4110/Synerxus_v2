@@ -615,7 +615,7 @@ export default function OrganizationDashboard() {
           <div style={{ height: '280px', position: 'relative' }}>
             {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
               <>
-                {/* Center Label - Average Completion */}
+                {/* Center Label - SDG Coverage */}
                 <div style={{
                   position: 'absolute',
                   top: '50%',
@@ -626,12 +626,13 @@ export default function OrganizationDashboard() {
                   pointerEvents: 'none'
                 }}>
                   <div style={{ fontSize: '28px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
-                    {dashboardData.projects && dashboardData.projects.length > 0 
-                      ? Math.round(dashboardData.projects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / dashboardData.projects.length)
-                      : 0}%
+                    {dashboardData.sdgDistribution?.length || 0}
                   </div>
                   <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: '500', marginTop: '2px' }}>
-                    Avg Completion
+                    Active SDGs
+                  </div>
+                  <div style={{ fontSize: '9px', color: '#9ca3af', marginTop: '1px' }}>
+                    of 17 goals
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height="100%">
@@ -849,7 +850,7 @@ export default function OrganizationDashboard() {
               <div style={{ height: '420px', position: 'relative' }}>
                 {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
                   <>
-                    {/* Center Label - Average Completion */}
+                    {/* Center Label - SDG Coverage */}
                     <div style={{
                       position: 'absolute',
                       top: '42%',
@@ -860,15 +861,13 @@ export default function OrganizationDashboard() {
                       pointerEvents: 'none'
                     }}>
                       <div style={{ fontSize: '48px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
-                        {dashboardData.projects && dashboardData.projects.length > 0 
-                          ? Math.round(dashboardData.projects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / dashboardData.projects.length)
-                          : 0}%
+                        {dashboardData.sdgDistribution?.length || 0}
                       </div>
                       <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500', marginTop: '4px' }}>
-                        Avg Completion
+                        Active SDGs
                       </div>
                       <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
-                        across {dashboardData.projects?.length || 0} projects
+                        of 17 UN goals
                       </div>
                     </div>
                     <ResponsiveContainer width="100%" height="100%">

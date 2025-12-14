@@ -1935,8 +1935,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <div className="h-32" style={{ isolation: 'isolate' }}>
                       <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-tooltip-wrapper]:!z-[9999]">
                         <BarChart data={filteredSdgDistribution.slice(0, 4)} layout="horizontal">
-                          <XAxis type="category" dataKey="sdg" stroke="#9CA3AF" fontSize={10} tickFormatter={(val) => `SDG ${val}`} />
-                          <YAxis type="number" stroke="#9CA3AF" fontSize={10} />
+                          <XAxis type="number" stroke="#9CA3AF" fontSize={10} />
+                          <YAxis type="category" dataKey="sdg" stroke="#9CA3AF" fontSize={10} tickFormatter={(val) => `SDG ${val}`} />
                           <Tooltip
                             wrapperStyle={{ zIndex: 9999 }}
                             allowEscapeViewBox={{ x: true, y: true }}

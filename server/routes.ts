@@ -183,30 +183,53 @@ async function calculateProjectProgress(projectId: number): Promise<number> {
     const activities = (await storage.listVolunteerActivities()).filter((a) => a.projectId === projectId);
     const impacts = await storage.listProjectImpactsByProject(projectId);
 
-    // Calculate three progress metrics (weighted)
-    let progressScore = 0;
+    const totalHoursLogged = activities.reduce((sum: number, a) => sum + (a.hours || 0), 0);
 
-    // **40% Weight: Task Completion Ratio**
+    // If project has expected hours defined, use hours-based calculation as primary
+    const expectedHours = project.projectTotalHours ||
+                          (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0); // 12 weeks = 3 months default
+
+    // Calculate three progress metrics (weighted based on available data)
+    let progressScore = 0;
+    let totalWeight = 0;
+
+    // **Weight 1: Task Completion Ratio (if tasks exist)**
     if (tasks.length > 0) {
       const completedTasks = tasks.filter((t) => t.status?.toLowerCase() === "completed").length;
       const taskProgress = (completedTasks / tasks.length) * 100;
-      progressScore += taskProgress * 0.4;
+      progressScore += taskProgress * 0.5; // 50% weight when tasks exist
+      totalWeight += 0.5;
     }
 
-    // **35% Weight: Hours Logged vs Expected Hours**
-    const totalHoursLogged = activities.reduce((sum: number, a) => sum + (a.hours || 0), 0);
-    if (project.projectTotalHours || (project.ongoingHoursPerWeek && project.ongoingHoursPerWeek > 0)) {
-      const expectedHours = project.projectTotalHours || (project.ongoingHoursPerWeek! * 4); // Assume 4 weeks
+    // **Weight 2: Hours Logged vs Expected Hours**
+    if (expectedHours > 0) {
+      // Use actual expected hours from project
       const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
-      progressScore += hoursProgress * 0.35;
-    } else {
-      // If no hours target set, assume logged hours indicate progress
-      progressScore += Math.min(totalHoursLogged * 5, 100) * 0.35; // Each hour = 5%
+      progressScore += hoursProgress * 0.4; // 40% weight for hours
+      totalWeight += 0.4;
+    } else if (totalHoursLogged > 0) {
+      // No target set - be very conservative: assume 200 hours as minimum reasonable project
+      const conservativeTarget = Math.max(200, totalHoursLogged * 10);
+      const hoursProgress = Math.min((totalHoursLogged / conservativeTarget) * 100, 30); // Cap at 30% without target
+      progressScore += hoursProgress * 0.4;
+      totalWeight += 0.4;
     }
 
-    // **25% Weight: Impact Metrics Logged**
-    const impactProgress = impacts.length > 0 ? 100 : Math.min(totalHoursLogged * 2, 50); // Activities contribute up to 50%
-    progressScore += impactProgress * 0.25;
+    // **Weight 3: Impact Metrics Logged (if impacts exist)**
+    if (impacts.length > 0) {
+      progressScore += 100 * 0.1; // 10% bonus for having impacts logged
+      totalWeight += 0.1;
+    }
+
+    // Normalize by actual weights used
+    if (totalWeight > 0) {
+      progressScore = progressScore / totalWeight;
+    }
+
+    // Apply project status override
+    if (project.status === 'completed') {
+      return 100;
+    }
 
     return Math.round(Math.min(progressScore, 100));
   } catch (err) {

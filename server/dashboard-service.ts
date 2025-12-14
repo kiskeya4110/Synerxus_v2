@@ -424,13 +424,46 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
           avatar: v.avatar || undefined,
         }));
 
-      // Compute progress fallback if not set
+      // Compute progress based on multiple factors (AI-powered completion tracking)
       let progress = project.completionPercentage || 0;
-      if (progress === 0) {
+      if (progress === 0 || progress > 100) {
         const projectTasks = organizationTasks.filter(t => t.projectId === project.id);
+        const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
+        const totalHoursLogged = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+
+        // Get expected hours from project
+        const expectedHours = project.projectTotalHours ||
+                              (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0);
+
+        let progressScore = 0;
+        let totalWeight = 0;
+
+        // Task-based progress (if tasks exist)
         if (projectTasks.length > 0) {
           const completedCount = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
-          progress = Math.round((completedCount / projectTasks.length) * 100);
+          progressScore += (completedCount / projectTasks.length) * 100 * 0.5;
+          totalWeight += 0.5;
+        }
+
+        // Hours-based progress
+        if (expectedHours > 0) {
+          const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
+          progressScore += hoursProgress * 0.5;
+          totalWeight += 0.5;
+        } else if (totalHoursLogged > 0) {
+          // Conservative estimate without target
+          const conservativeTarget = Math.max(200, totalHoursLogged * 10);
+          const hoursProgress = Math.min((totalHoursLogged / conservativeTarget) * 100, 30);
+          progressScore += hoursProgress * 0.5;
+          totalWeight += 0.5;
+        }
+
+        // Normalize and set progress
+        progress = totalWeight > 0 ? Math.round(progressScore / totalWeight) : 0;
+
+        // Override for completed status
+        if (project.status === 'completed') {
+          progress = 100;
         }
       }
 

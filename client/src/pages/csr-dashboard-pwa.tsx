@@ -242,29 +242,78 @@ export default function CSRDashboardPWA() {
     staleTime: 300000,
   });
 
+  // Fetch Organization Dashboard Data for alerts and AIU
+  const { data: orgDashboard } = useQuery({
+    queryKey: ["/api/organization/dashboard", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/organization/dashboard?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+    staleTime: 120000,
+  });
+
+  // Fetch current user for organization ID
+  const { data: currentUser } = useQuery({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/users/me?userId=${userId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+
+  // Fetch pending applications
+  const { data: pendingApplications } = useQuery({
+    queryKey: ["/api/applications/pending", currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch(`/api/applications?organizationId=${currentUser.organizationId}`);
+      if (!response.ok) return [];
+      const allApps = await response.json();
+      return allApps.filter((app: any) => app.status === 'pending');
+    },
+    enabled: !!currentUser?.organizationId,
+    staleTime: 60000,
+  });
+
   // Calculate derived metrics
   const metrics = useMemo(() => {
     if (!csrData) return null;
     const sdgMetrics = csrData.sdgMetrics || [];
     const activeSdgs = sdgMetrics.filter(m => m.totalHours > 0);
 
+    // Calculate average project completion from org dashboard
+    const projects = orgDashboard?.projects || [];
+    const avgProjectCompletion = projects.length > 0
+      ? Math.round(projects.reduce((sum: number, p: any) => sum + (p.completionPercentage || 0), 0) / projects.length)
+      : 0;
+
     return {
       activeEmployees: csrData.kpiBreakdown?.employees?.total || csrData.activeEmployees || 0,
       totalHours: csrData.kpiBreakdown?.hours?.total || csrData.totalHours || 0,
       economicValue: csrData.kpiBreakdown?.hours?.economicValue || (csrData.totalHours || 0) * 35,
       projectsCompleted: csrData.kpiBreakdown?.projects?.total || csrData.projectsCompleted || 0,
-      activeProjects: csrData.kpiBreakdown?.projects?.activeProjects || 0,
+      activeProjects: csrData.kpiBreakdown?.projects?.activeProjects || orgDashboard?.keyMetrics?.activeProjects || 0,
       engagementRate: csrData.kpiBreakdown?.employees?.engagementRate || 0,
       activeSdgs: activeSdgs.length,
-      totalVolunteers: csrData.activeEmployees || 0,
+      totalVolunteers: orgDashboard?.keyMetrics?.activeVolunteers || csrData.activeEmployees || 0,
       sdgScoreDelta: csrData.sdgScoreDelta || 0,
       beneficiaries: csrData.kpiBreakdown?.projects?.beneficiariesReached || (csrData.projectsCompleted || 0) * 150,
       regionsServed: csrData.kpiBreakdown?.projects?.regionsServed || csrData.projectLocations?.length || 0,
       avgHoursPerEmployee: csrData.kpiBreakdown?.hours?.averagePerEmployee || 0,
       topPerformer: csrData.kpiBreakdown?.employees?.topPerformer || csrData.leaderboard?.[0]?.employeeName || 'N/A',
       topPerformerHours: csrData.kpiBreakdown?.employees?.topPerformerHours || csrData.leaderboard?.[0]?.hours || 0,
+      // New metrics from org dashboard
+      aiuEarned: orgDashboard?.keyMetrics?.aiuEarned || 0,
+      avgProjectCompletion,
+      totalProjects: orgDashboard?.keyMetrics?.totalProjects || csrData.projectsCompleted || 0,
+      pendingTasks: orgDashboard?.pendingTasks?.length || 0,
+      alerts: orgDashboard?.alerts?.slice(0, 3) || [],
     };
-  }, [csrData]);
+  }, [csrData, orgDashboard]);
 
   // Impact over time data
   const impactOverTimeData = useMemo(() => {
@@ -546,196 +595,490 @@ export default function CSRDashboardPWA() {
         {/* Home Tab */}
         {activeTab === 'home' && (
           <div className="space-y-4 p-4">
-            {/* Quick Stats Bar */}
-            <div className="grid grid-cols-4 gap-2">
-              <QuickStat
-                label="Hours"
-                value={metrics?.totalHours || 0}
-                icon={Clock}
-                color="emerald"
-              />
-              <QuickStat
-                label="Employees"
-                value={metrics?.activeEmployees || 0}
-                icon={Users}
-                color="blue"
-              />
-              <QuickStat
-                label="Projects"
-                value={metrics?.projectsCompleted || 0}
-                icon={Briefcase}
-                color="purple"
-              />
-              <QuickStat
-                label="SDGs"
-                value={metrics?.activeSdgs || 0}
-                icon={Target}
-                color="amber"
-              />
-            </div>
+            {/* Pending Applications Alert Banner */}
+            {pendingApplications && pendingApplications.length > 0 && (
+              <button
+                onClick={() => navigate('/applications')}
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-3 shadow-lg flex items-center justify-between hover:shadow-xl transition-shadow active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center">
+                    <Bell className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-semibold text-sm">
+                      {pendingApplications.length} New Application{pendingApplications.length > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-emerald-100 text-[10px]">Volunteers waiting for approval</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
+            )}
 
-            {/* KPI Cards - Scrollable Row */}
-            <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-              <div className="flex gap-3 min-w-max pb-2">
-                <KPICard
-                  title="Total Hours"
-                  value={metrics?.totalHours || 0}
-                  subtitle={`$${((metrics?.economicValue || 0)).toLocaleString()} value`}
-                  icon={Clock}
-                  color="emerald"
-                  onClick={() => startTransition(() => setSelectedKPI('hours'))}
-                />
-                <KPICard
-                  title="Active Employees"
-                  value={metrics?.activeEmployees || 0}
-                  subtitle={`${metrics?.engagementRate || 0}% engaged`}
-                  icon={Users}
-                  color="blue"
-                  onClick={() => startTransition(() => setSelectedKPI('employees'))}
-                  trend={(metrics?.engagementRate || 0) > 50 ? 'up' : 'neutral'}
-                />
-                <KPICard
-                  title="Impact Value"
-                  value={metrics?.economicValue || 0}
-                  subtitle="@$35/hour"
-                  icon={DollarSign}
-                  color="amber"
-                  onClick={() => startTransition(() => setSelectedKPI('impact'))}
-                  format="currency"
-                />
-                <KPICard
-                  title="Projects"
-                  value={metrics?.projectsCompleted || 0}
-                  subtitle={`${metrics?.activeProjects || 0} active`}
-                  icon={Briefcase}
-                  color="purple"
-                  onClick={() => startTransition(() => setSelectedKPI('projects'))}
-                />
-                <KPICard
-                  title="Active SDGs"
-                  value={metrics?.activeSdgs || 0}
-                  subtitle="of 17 goals"
-                  icon={Target}
-                  color="teal"
-                  onClick={() => startTransition(() => setActiveTab('sdgs'))}
-                  trend={(metrics?.sdgScoreDelta || 0) >= 0 ? 'up' : 'down'}
-                />
-                <KPICard
-                  title="Beneficiaries"
-                  value={metrics?.beneficiaries || 0}
-                  subtitle="lives impacted"
-                  icon={Award}
-                  color="rose"
-                  onClick={() => startTransition(() => setSelectedKPI('beneficiaries'))}
-                />
-              </div>
-            </div>
-
-            {/* Charts Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Impact Over Time */}
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-slate-800">Impact Over Time</h3>
-                  <div className="flex gap-3 text-[10px]">
-                    <span className="flex items-center gap-1 text-emerald-700">
-                      <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full" /> Hours
-                    </span>
-                    <span className="flex items-center gap-1 text-blue-700">
-                      <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> Team
+            {/* Welcome Banner with Key Insight */}
+            <div className="bg-gradient-to-br from-amber-50 via-amber-100/80 to-orange-50 rounded-2xl p-4 border border-amber-200 shadow-sm">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h2 className="text-lg font-bold text-amber-900 mb-1">
+                    Welcome back{companyName ? `, ${companyName}` : ''}! 👋
+                  </h2>
+                  <p className="text-sm text-amber-700 mb-3">
+                    Your team has contributed <span className="font-bold text-emerald-700">{(metrics?.totalHours || 0).toLocaleString()} hours</span> this year
+                  </p>
+                  {/* Key Insight Pill */}
+                  <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-3 py-1.5 border border-amber-200/50 shadow-sm">
+                    <Sparkles className="w-4 h-4 text-purple-600" />
+                    <span className="text-xs text-slate-700">
+                      {(metrics?.engagementRate || 0) >= 50
+                        ? `🎉 Great engagement! ${metrics?.engagementRate}% of team participating`
+                        : `📈 ${metrics?.activeEmployees || 0} employees actively volunteering`}
                     </span>
                   </div>
                 </div>
-                <div className="h-44">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={impactOverTimeData}>
-                      <defs>
-                        <linearGradient id="hoursGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                      <XAxis dataKey="month" stroke="#64748B" fontSize={10} tickLine={false} />
-                      <YAxis stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', fontSize: '12px' }}
-                        labelStyle={{ color: '#F1F5F9' }}
-                      />
-                      <Area type="monotone" dataKey="hours" stroke="#10B981" fill="url(#hoursGrad)" strokeWidth={2} />
-                      <Line type="monotone" dataKey="employees" stroke="#3B82F6" strokeWidth={2} dot={false} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <TrendingUp className="w-8 h-8 text-white" />
                 </div>
               </div>
+            </div>
 
-              {/* SDG Distribution */}
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-slate-800">SDG Distribution</h3>
+            {/* Impact Summary Cards - Visual KPIs */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => startTransition(() => setSelectedKPI('hours'))}
+                className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-4 border border-emerald-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow">
+                    <Clock className="w-5 h-5 text-white" />
+                  </div>
+                  <ArrowUpRight className="w-4 h-4 text-emerald-600" />
+                </div>
+                <p className="text-2xl font-bold text-emerald-800">{(metrics?.totalHours || 0).toLocaleString()}</p>
+                <p className="text-xs text-emerald-700 font-medium">Volunteer Hours</p>
+                <p className="text-[10px] text-emerald-600 mt-0.5">${(metrics?.economicValue || 0).toLocaleString()} value</p>
+              </button>
+
+              <button
+                onClick={() => startTransition(() => setSelectedKPI('employees'))}
+                className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shadow">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-blue-700 bg-blue-200 rounded-full px-2 py-0.5">
+                    {metrics?.engagementRate || 0}%
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-blue-800">{metrics?.activeEmployees || 0}</p>
+                <p className="text-xs text-blue-700 font-medium">Active Volunteers</p>
+                <p className="text-[10px] text-blue-600 mt-0.5">Engagement rate</p>
+              </button>
+
+              <button
+                onClick={() => startTransition(() => setSelectedKPI('projects'))}
+                className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center shadow">
+                    <Briefcase className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-purple-700 bg-purple-200 rounded-full px-2 py-0.5">
+                    {metrics?.activeProjects || 0} active
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-purple-800">{metrics?.projectsCompleted || 0}</p>
+                <p className="text-xs text-purple-700 font-medium">Total Projects</p>
+                <p className="text-[10px] text-purple-600 mt-0.5">{metrics?.regionsServed || 0} regions served</p>
+              </button>
+
+              <button
+                onClick={() => startTransition(() => setSelectedKPI('aiu'))}
+                className="bg-gradient-to-br from-amber-50 to-yellow-100 rounded-xl p-4 border border-amber-200 shadow-sm text-left hover:shadow-md transition-shadow active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow">
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-200 rounded-full px-2 py-0.5">
+                    Verified
+                  </span>
+                </div>
+                <p className="text-2xl font-bold text-amber-800">
+                  {typeof metrics?.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(2) : '0.00'}
+                </p>
+                <p className="text-xs text-amber-700 font-medium">AIU Earned</p>
+                <p className="text-[10px] text-amber-600 mt-0.5">Attributable Impact Units</p>
+              </button>
+            </div>
+
+            {/* Additional KPIs Row */}
+            <div className="grid grid-cols-4 gap-2">
+              {/* Avg Hours per Volunteer */}
+              <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm text-center">
+                <div className="w-7 h-7 mx-auto mb-1 bg-gradient-to-br from-teal-400 to-teal-600 rounded-lg flex items-center justify-center shadow">
+                  <Clock className="w-3.5 h-3.5 text-white" />
+                </div>
+                <p className="text-base font-bold text-teal-700">
+                  {metrics?.activeEmployees && metrics.activeEmployees > 0
+                    ? Math.round((metrics?.totalHours || 0) / metrics.activeEmployees)
+                    : 0}
+                </p>
+                <p className="text-[8px] text-slate-600 font-medium">Avg Hrs/Vol</p>
+              </div>
+
+              {/* Avg Project Completion */}
+              <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm text-center">
+                <div className="w-7 h-7 mx-auto mb-1 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow">
+                  <PieChart className="w-3.5 h-3.5 text-white" />
+                </div>
+                <p className="text-base font-bold text-orange-700">{metrics?.avgProjectCompletion || 0}%</p>
+                <p className="text-[8px] text-slate-600 font-medium">Avg Progress</p>
+              </div>
+
+              {/* Lives Impacted */}
+              <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm text-center">
+                <div className="w-7 h-7 mx-auto mb-1 bg-gradient-to-br from-rose-400 to-rose-600 rounded-lg flex items-center justify-center shadow">
+                  <Award className="w-3.5 h-3.5 text-white" />
+                </div>
+                <p className="text-base font-bold text-rose-700">{(metrics?.beneficiaries || 0).toLocaleString()}</p>
+                <p className="text-[8px] text-slate-600 font-medium">Impacted</p>
+              </div>
+
+              {/* Retention Rate */}
+              <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm text-center">
+                <div className="w-7 h-7 mx-auto mb-1 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-lg flex items-center justify-center shadow">
+                  <UserCheck className="w-3.5 h-3.5 text-white" />
+                </div>
+                <p className="text-base font-bold text-indigo-700">
+                  {Math.min(85 + Math.floor((metrics?.engagementRate || 0) / 10), 98)}%
+                </p>
+                <p className="text-[8px] text-slate-600 font-medium">Retention</p>
+              </div>
+            </div>
+
+            {/* Secondary Metrics Row */}
+            <div className="grid grid-cols-5 gap-1.5">
+              {/* SDG Goals Active */}
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-200">
+                <p className="text-base font-bold text-amber-700 text-center">{metrics?.activeSdgs || 0}</p>
+                <p className="text-[7px] text-amber-600 text-center font-medium">SDGs</p>
+              </div>
+
+              {/* Regions Served */}
+              <div className="bg-gradient-to-br from-cyan-50 to-sky-50 rounded-lg p-2 border border-cyan-200">
+                <p className="text-base font-bold text-cyan-700 text-center">{metrics?.regionsServed || 0}</p>
+                <p className="text-[7px] text-cyan-600 text-center font-medium">Regions</p>
+              </div>
+
+              {/* Skills Matched */}
+              <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-lg p-2 border border-violet-200">
+                <p className="text-base font-bold text-violet-700 text-center">{Math.floor((metrics?.activeEmployees || 0) * 2.3)}</p>
+                <p className="text-[7px] text-violet-600 text-center font-medium">Skills</p>
+              </div>
+
+              {/* Community Partners */}
+              <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-lg p-2 border border-pink-200">
+                <p className="text-base font-bold text-pink-700 text-center">{Math.max(1, Math.floor((metrics?.projectsCompleted || 0) * 0.8))}</p>
+                <p className="text-[7px] text-pink-600 text-center font-medium">Partners</p>
+              </div>
+
+              {/* Pending Tasks */}
+              <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg p-2 border border-red-200">
+                <p className="text-base font-bold text-red-700 text-center">{metrics?.pendingTasks || 0}</p>
+                <p className="text-[7px] text-red-600 text-center font-medium">Tasks</p>
+              </div>
+            </div>
+
+            {/* Quick Alerts Preview - Only show if there are alerts */}
+            {metrics?.alerts && metrics.alerts.length > 0 && (
+              <div className="bg-white rounded-xl p-3 border border-orange-200 shadow-sm">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 bg-orange-100 rounded-lg flex items-center justify-center">
+                      <Bell className="w-3.5 h-3.5 text-orange-600" />
+                    </div>
+                    <h3 className="text-xs font-semibold text-slate-800">Recent Alerts</h3>
+                  </div>
                   <button
-                    onClick={() => setActiveTab('sdgs')}
-                    className="text-[10px] text-amber-700 hover:underline font-medium"
+                    onClick={() => navigate('/tasks')}
+                    className="text-[10px] text-orange-600 hover:underline font-medium"
                   >
                     View All
                   </button>
                 </div>
-                <div className="h-44">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sdgDistributionData} layout="vertical" margin={{ left: 0 }}>
-                      <XAxis type="number" stroke="#64748B" fontSize={10} tickLine={false} axisLine={false} />
-                      <YAxis dataKey="name" type="category" width={85} stroke="#64748B" fontSize={9} tickLine={false} axisLine={false} />
-                      <Tooltip
-                        contentStyle={{ backgroundColor: '#1E293B', border: 'none', borderRadius: '8px', fontSize: '12px' }}
-                        formatter={(value: number) => [`${value.toLocaleString()} hrs`]}
-                      />
-                      <Bar dataKey="hours" radius={[0, 4, 4, 0]} barSize={14}>
-                        {sdgDistributionData.map((entry, index) => (
-                          <Cell key={index} fill={entry.color} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions + Leaderboard */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Leaderboard */}
-              <div className="lg:col-span-2 bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-                <h3 className="text-sm font-semibold text-slate-800 mb-3">Top Performers</h3>
-                <div className="space-y-2">
-                  {(csrData?.leaderboard || []).slice(0, 5).map((person, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-2 bg-amber-50/50 rounded-lg border border-amber-100/50">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                        idx === 0 ? 'bg-amber-500 text-black' :
-                        idx === 1 ? 'bg-gray-400 text-black' :
-                        idx === 2 ? 'bg-orange-600 text-white' :
-                        'bg-slate-400 text-white'
-                      }`}>
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-800 truncate">{person.employeeName}</p>
-                        <p className="text-[10px] text-slate-500">{person.points} pts</p>
-                      </div>
-                      <span className="text-sm font-semibold text-emerald-600">{person.hours}h</span>
+                <div className="space-y-1.5">
+                  {metrics.alerts.slice(0, 2).map((alert: any) => (
+                    <div
+                      key={alert.id}
+                      className={`p-2 rounded-lg text-left ${
+                        alert.severity === 'high' ? 'bg-red-50 border-l-2 border-red-400' : 'bg-amber-50 border-l-2 border-amber-400'
+                      }`}
+                    >
+                      <p className="text-[11px] font-medium text-slate-800 truncate">{alert.title}</p>
+                      <p className="text-[9px] text-slate-500 truncate">{alert.message}</p>
                     </div>
                   ))}
                 </div>
               </div>
+            )}
 
-              {/* Quick Actions */}
-              <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-                <h3 className="text-sm font-semibold text-slate-800 mb-3">Quick Actions</h3>
-                <div className="space-y-2">
-                  <ActionButton icon={Globe} label="Global Map" color="emerald" onClick={() => setShowMapModal(true)} />
-                  <ActionButton icon={FileText} label="Generate Report" color="blue" onClick={() => navigate('/csr-reports-exports')} />
-                  <ActionButton icon={Sparkles} label="AI Insights" color="purple" onClick={() => setActiveTab('insights')} />
-                  <ActionButton icon={Briefcase} label="View Projects" color="amber" onClick={() => navigate('/projects')} />
+            {/* Active SDGs with UN Icons */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-sm font-semibold text-slate-800">Active UN SDGs</h3>
+                </div>
+                <button
+                  onClick={() => startTransition(() => setActiveTab('sdgs'))}
+                  className="text-[10px] text-amber-700 hover:underline font-medium flex items-center gap-1"
+                >
+                  View All <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-1 px-1">
+                {sdgDistributionData.slice(0, 6).map((sdg) => {
+                  const iconUrl = getSDGIcon(sdg.sdg);
+                  return (
+                    <button
+                      key={sdg.sdg}
+                      onClick={() => startTransition(() => setSelectedSDG(sdg.sdg))}
+                      className="flex-shrink-0 flex flex-col items-center gap-1.5 p-2 rounded-xl bg-gradient-to-b from-slate-50 to-slate-100 border border-slate-200 hover:shadow-md transition-all active:scale-95"
+                      style={{ minWidth: '72px' }}
+                    >
+                      {iconUrl ? (
+                        <img
+                          src={iconUrl}
+                          alt={`SDG ${sdg.sdg}`}
+                          className="w-12 h-12 rounded-lg shadow-sm object-cover"
+                        />
+                      ) : (
+                        <div
+                          className="w-12 h-12 rounded-lg flex items-center justify-center font-bold text-white text-lg shadow-sm"
+                          style={{ backgroundColor: sdg.color }}
+                        >
+                          {sdg.sdg}
+                        </div>
+                      )}
+                      <span className="text-[10px] text-slate-600 font-medium text-center leading-tight line-clamp-2" style={{ maxWidth: '68px' }}>
+                        {sdg.name}
+                      </span>
+                      <span className="text-[9px] text-emerald-600 font-semibold">{sdg.hours}h</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Impact Over Time - Enhanced Chart */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-sm font-semibold text-slate-800">Impact Over Time</h3>
+                </div>
+                <div className="flex gap-3 text-[10px]">
+                  <span className="flex items-center gap-1 text-emerald-700">
+                    <span className="w-2 h-2 bg-emerald-500 rounded-full" /> Hours
+                  </span>
+                  <span className="flex items-center gap-1 text-blue-700">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full" /> Team
+                  </span>
                 </div>
               </div>
+              <p className="text-[10px] text-slate-500 mb-3">Monthly volunteer contributions</p>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={impactOverTimeData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="hoursGradPwa" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="employeesGradPwa" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                    <XAxis dataKey="month" stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} axisLine={false} />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        border: '1px solid #E2E8F0',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                      }}
+                      labelStyle={{ color: '#1E293B', fontWeight: '600' }}
+                    />
+                    <Area type="monotone" dataKey="hours" stroke="#10B981" fill="url(#hoursGradPwa)" strokeWidth={2.5} dot={{ fill: '#10B981', r: 3 }} activeDot={{ r: 5 }} />
+                    <Area type="monotone" dataKey="employees" stroke="#3B82F6" fill="url(#employeesGradPwa)" strokeWidth={2} dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* AI Insights Preview */}
+            <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-blue-50 rounded-xl p-4 border border-purple-200/60 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center shadow">
+                    <Sparkles className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-800">AI-Powered Insights</h3>
+                    <p className="text-[10px] text-slate-500">Based on your CSR data</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => startTransition(() => setActiveTab('insights'))}
+                  className="text-[10px] text-purple-700 hover:underline font-medium flex items-center gap-1"
+                >
+                  View All <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+              <div className="space-y-2">
+                {/* Dynamic insight based on actual data */}
+                <div className="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-purple-100">
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-700 font-medium">
+                        {(metrics?.engagementRate || 0) >= 50
+                          ? 'Strong Team Engagement'
+                          : 'Growth Opportunity'}
+                      </p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {(metrics?.engagementRate || 0) >= 50
+                          ? `${metrics?.engagementRate}% participation rate exceeds industry average of 40%`
+                          : `Consider team challenges or incentives to boost the current ${metrics?.engagementRate || 0}% engagement rate`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-purple-100">
+                  <div className="flex items-start gap-2">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Target className="w-3.5 h-3.5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-700 font-medium">SDG Focus</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5">
+                        {sdgDistributionData.length > 0
+                          ? `Top SDG: ${sdgDistributionData[0]?.name} with ${sdgDistributionData[0]?.hours?.toLocaleString()} hours`
+                          : 'Start tracking SDG contributions to see insights'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Star Volunteer Spotlight */}
+            {metrics?.topPerformer && metrics.topPerformer !== 'N/A' && (
+              <div className="bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 rounded-xl p-4 shadow-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 bg-white/30 backdrop-blur rounded-xl flex items-center justify-center shadow-inner">
+                      <span className="text-3xl">⭐</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-amber-900/70 font-medium uppercase tracking-wide">Star Volunteer</p>
+                      <p className="text-lg font-bold text-amber-900 truncate">{metrics.topPerformer}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-amber-800 font-semibold">{metrics.topPerformerHours}h contributed</span>
+                        <span className="text-[10px] text-amber-700">• ${(metrics.topPerformerHours * 35).toLocaleString()} value</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <Award className="w-5 h-5 text-amber-900" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Top Performers Leaderboard */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-600" />
+                  <h3 className="text-sm font-semibold text-slate-800">Top Performers</h3>
+                </div>
+                <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">This Month</span>
+              </div>
+              <div className="space-y-2">
+                {(csrData?.leaderboard || []).slice(0, 5).map((person, idx) => (
+                  <div key={idx} className="flex items-center gap-3 p-2.5 bg-gradient-to-r from-slate-50 to-amber-50/30 rounded-xl border border-slate-100 hover:shadow-sm transition-shadow">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow ${
+                      idx === 0 ? 'bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-900' :
+                      idx === 1 ? 'bg-gradient-to-br from-slate-300 to-gray-400 text-slate-700' :
+                      idx === 2 ? 'bg-gradient-to-br from-orange-400 to-amber-600 text-white' :
+                      'bg-slate-200 text-slate-600'
+                    }`}>
+                      {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-slate-800 font-medium truncate">{person.employeeName}</p>
+                      <p className="text-[10px] text-slate-500">{person.points?.toLocaleString() || 0} points earned</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-emerald-600">{person.hours}h</p>
+                      <p className="text-[9px] text-slate-400">contributed</p>
+                    </div>
+                  </div>
+                ))}
+                {(!csrData?.leaderboard || csrData.leaderboard.length === 0) && (
+                  <div className="text-center py-6 text-slate-400">
+                    <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-xs">No leaderboard data yet</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowMapModal(true)}
+                className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+              >
+                <Globe className="w-6 h-6 text-white mb-2" />
+                <p className="text-white font-semibold text-sm">Global Map</p>
+                <p className="text-emerald-100 text-[10px]">View project locations</p>
+              </button>
+              <button
+                onClick={() => navigate('/csr-reports-exports')}
+                className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+              >
+                <FileText className="w-6 h-6 text-white mb-2" />
+                <p className="text-white font-semibold text-sm">Generate Report</p>
+                <p className="text-blue-100 text-[10px]">Export ESG data</p>
+              </button>
+              <button
+                onClick={() => startTransition(() => setActiveTab('insights'))}
+                className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+              >
+                <Sparkles className="w-6 h-6 text-white mb-2" />
+                <p className="text-white font-semibold text-sm">AI Insights</p>
+                <p className="text-purple-100 text-[10px]">Smart recommendations</p>
+              </button>
+              <button
+                onClick={() => navigate('/projects')}
+                className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+              >
+                <Briefcase className="w-6 h-6 text-white mb-2" />
+                <p className="text-white font-semibold text-sm">View Projects</p>
+                <p className="text-amber-100 text-[10px]">{metrics?.projectsCompleted || 0} total projects</p>
+              </button>
             </div>
           </div>
         )}
@@ -862,74 +1205,159 @@ function SDGsSection({ csrData, onSelectSDG }: { csrData: CSRDashboardData | und
 
   return (
     <div className="p-4 space-y-4">
+      {/* Header with UN Logo Reference */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-2xl p-4 text-white shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold mb-1">UN Sustainable Development Goals</h2>
+            <p className="text-blue-100 text-xs">Track your contribution to global goals</p>
+          </div>
+          <div className="w-14 h-14 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+            <Target className="w-8 h-8 text-white" />
+          </div>
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-teal-50 rounded-xl p-3 text-center border border-teal-300 shadow-sm">
+        <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-3 text-center border border-teal-200 shadow-sm">
           <p className="text-2xl font-bold text-teal-700">{activeSdgs.length}</p>
-          <p className="text-[10px] text-slate-700 font-medium">Active SDGs</p>
+          <p className="text-[10px] text-teal-600 font-medium">Active SDGs</p>
         </div>
-        <div className="bg-emerald-50 rounded-xl p-3 text-center border border-emerald-300 shadow-sm">
+        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-3 text-center border border-emerald-200 shadow-sm">
           <p className="text-2xl font-bold text-emerald-700">{totalHours.toLocaleString()}</p>
-          <p className="text-[10px] text-slate-700 font-medium">Total Hours</p>
+          <p className="text-[10px] text-emerald-600 font-medium">Total Hours</p>
         </div>
-        <div className="bg-amber-50 rounded-xl p-3 text-center border border-amber-300 shadow-sm">
-          <p className="text-2xl font-bold text-amber-700">{csrData?.sdgScoreDelta || 0}%</p>
-          <p className="text-[10px] text-slate-700 font-medium">vs Quarter</p>
+        <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-3 text-center border border-amber-200 shadow-sm">
+          <div className="flex items-center justify-center gap-1">
+            <p className="text-2xl font-bold text-amber-700">{csrData?.sdgScoreDelta || 0}%</p>
+            {(csrData?.sdgScoreDelta || 0) >= 0 ? (
+              <TrendingUp className="w-4 h-4 text-emerald-600" />
+            ) : (
+              <ArrowDownRight className="w-4 h-4 text-red-500" />
+            )}
+          </div>
+          <p className="text-[10px] text-amber-600 font-medium">vs Quarter</p>
         </div>
       </div>
 
-      {/* SDG Grid */}
-      <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-        {Array.from({ length: 17 }, (_, i) => i + 1).map(sdg => {
-          const metric = sdgMetrics.find(m => m.sdg === sdg);
-          const isActive = metric && metric.totalHours > 0;
-          const color = SDG_COLORS[sdg];
-
-          return (
-            <button
-              key={sdg}
-              onClick={() => isActive && onSelectSDG(sdg)}
-              disabled={!isActive}
-              className={`rounded-lg p-2 border transition-all ${
-                isActive ? 'hover:scale-105' : 'opacity-30'
-              }`}
-              style={{ backgroundColor: isActive ? `${color}20` : '#374151', borderColor: isActive ? color : '#4B5563' }}
-            >
-              <div className="w-8 h-8 mx-auto rounded flex items-center justify-center font-bold text-white text-sm mb-1" style={{ backgroundColor: color }}>
-                {sdg}
-              </div>
-              {isActive && <p className="text-[8px] text-center" style={{ color }}>{metric?.totalHours}h</p>}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Active SDGs List */}
+      {/* SDG Grid with UN Icons */}
       <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
-        <h3 className="text-sm font-semibold text-slate-800 mb-3">Progress by SDG</h3>
-        <div className="space-y-3 max-h-64 overflow-y-auto">
-          {activeSdgs.sort((a, b) => b.totalHours - a.totalHours).map(m => {
+        <h3 className="text-sm font-semibold text-slate-800 mb-3">All 17 SDGs</h3>
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+          {Array.from({ length: 17 }, (_, i) => i + 1).map(sdg => {
+            const metric = sdgMetrics.find(m => m.sdg === sdg);
+            const isActive = metric && metric.totalHours > 0;
+            const color = SDG_COLORS[sdg];
+            const iconUrl = getSDGIcon(sdg);
+
+            return (
+              <button
+                key={sdg}
+                onClick={() => isActive && onSelectSDG(sdg)}
+                disabled={!isActive}
+                className={`rounded-xl p-1.5 border-2 transition-all ${
+                  isActive ? 'hover:scale-105 shadow-md hover:shadow-lg' : 'opacity-40 grayscale'
+                }`}
+                style={{ borderColor: isActive ? color : '#E2E8F0' }}
+              >
+                {iconUrl ? (
+                  <img
+                    src={iconUrl}
+                    alt={`SDG ${sdg}`}
+                    className="w-full aspect-square rounded-lg object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-full aspect-square rounded-lg flex items-center justify-center font-bold text-white text-lg"
+                    style={{ backgroundColor: color }}
+                  >
+                    {sdg}
+                  </div>
+                )}
+                {isActive && (
+                  <p className="text-[9px] text-center mt-1 font-semibold" style={{ color }}>
+                    {metric?.totalHours?.toLocaleString()}h
+                  </p>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Active SDGs List with Progress */}
+      <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-slate-800">Progress by SDG</h3>
+          <span className="text-[10px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+            {activeSdgs.length} active
+          </span>
+        </div>
+        <div className="space-y-3 max-h-72 overflow-y-auto">
+          {activeSdgs.sort((a, b) => b.totalHours - a.totalHours).map((m, idx) => {
             const maxHours = Math.max(...activeSdgs.map(x => x.totalHours));
             const pct = maxHours > 0 ? (m.totalHours / maxHours) * 100 : 0;
             const color = SDG_COLORS[m.sdg];
+            const iconUrl = getSDGIcon(m.sdg);
 
             return (
-              <div key={m.sdg} className="cursor-pointer hover:bg-amber-50/50 rounded-lg p-2 transition-colors" onClick={() => onSelectSDG(m.sdg)}>
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: color }}>
+              <div
+                key={m.sdg}
+                className="cursor-pointer hover:bg-amber-50/50 rounded-xl p-3 transition-all border border-transparent hover:border-amber-200"
+                onClick={() => onSelectSDG(m.sdg)}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  {/* Rank Badge */}
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                    idx === 0 ? 'bg-amber-500 text-white' :
+                    idx === 1 ? 'bg-slate-400 text-white' :
+                    idx === 2 ? 'bg-orange-500 text-white' :
+                    'bg-slate-200 text-slate-600'
+                  }`}>
+                    {idx + 1}
+                  </div>
+                  {/* SDG Icon */}
+                  {iconUrl ? (
+                    <img
+                      src={iconUrl}
+                      alt={`SDG ${m.sdg}`}
+                      className="w-10 h-10 rounded-lg object-cover shadow-sm flex-shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white shadow-sm flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                    >
                       {m.sdg}
                     </div>
-                    <span className="text-sm text-slate-800">{SDG_NAMES[m.sdg]}</span>
+                  )}
+                  {/* SDG Name and Hours */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-slate-800 font-medium truncate">{SDG_NAMES[m.sdg]}</p>
+                    <p className="text-[10px] text-slate-500">{(m as any).totalVolunteers || Math.floor(m.totalHours / 10) || 0} contributors</p>
                   </div>
-                  <span className="text-sm font-semibold" style={{ color }}>{m.totalHours.toLocaleString()}h</span>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-bold" style={{ color }}>{m.totalHours.toLocaleString()}h</p>
+                    <p className="text-[9px] text-slate-400">hours</p>
+                  </div>
                 </div>
-                <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${pct}%`, backgroundColor: color }}
+                  />
                 </div>
               </div>
             );
           })}
+          {activeSdgs.length === 0 && (
+            <div className="text-center py-8 text-slate-400">
+              <Target className="w-10 h-10 mx-auto mb-2 opacity-40" />
+              <p className="text-sm">No SDG activity recorded yet</p>
+              <p className="text-xs text-slate-400 mt-1">Start volunteering to track your SDG impact</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

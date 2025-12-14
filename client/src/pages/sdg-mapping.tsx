@@ -140,11 +140,16 @@ export default function SDGMapping() {
   
   // Get organization's selected SDGs from their Settings
   const organizationSDGs = useMemo(() => {
-    // Try organization first (Settings), fallback to matchableOrganization
+    // Check organizationProfile first (most likely location for SDG settings)
+    if (orgProfile?.organizationProfile?.primarySdgs && orgProfile.organizationProfile.primarySdgs.length > 0) {
+      return orgProfile.organizationProfile.primarySdgs;
+    }
+    // Then try organization table
     if (orgProfile?.organization?.primarySdgs && orgProfile.organization.primarySdgs.length > 0) {
       return orgProfile.organization.primarySdgs;
     }
-    if (orgProfile?.matchableOrganization?.primarySdgs) {
+    // Finally fallback to matchableOrganization
+    if (orgProfile?.matchableOrganization?.primarySdgs && orgProfile.matchableOrganization.primarySdgs.length > 0) {
       return orgProfile.matchableOrganization.primarySdgs;
     }
     return [];

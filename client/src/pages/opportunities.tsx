@@ -14,8 +14,15 @@ export default function Opportunities() {
   const userId = localStorage.getItem('currentUserId');
   const userType = localStorage.getItem('userType');
   const isOrganizationUser = userType === 'organization';
+  const isVolunteer = userType === 'volunteer';
 
-  // Organizations cannot see opportunities page
+  // Volunteers should see the discover opportunities page
+  if (isVolunteer) {
+    navigate('/discover-opportunities');
+    return null;
+  }
+
+  // Organizations should go to their dashboard
   if (isOrganizationUser) {
     navigate('/organization-dashboard');
     return null;

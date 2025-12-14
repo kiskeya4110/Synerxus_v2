@@ -1,4 +1,5 @@
 import { Opportunity, VolunteerProfile, User } from "@shared/schema";
+import { normalizeSkillsWithSynonyms, normalizeSkillWithSynonyms, findPartialMatch } from "./skill-synonyms";
 
 interface MatchResult {
   score: number;
@@ -14,6 +15,229 @@ interface MatchResult {
   reasons: string[];
   matchCategory?: "nexus" | "strong" | "gap" | "no-match";
   dataQualityWarnings?: string[];
+  // Enhanced metrics for match certainty
+  confidence?: number; // 0-100: How confident we are in this match based on data quality
+  dataCompleteness?: number; // 0-100: Percentage of relevant data fields populated
+}
+
+interface MatchingWeights {
+  skillWeight: number;
+  locationWeight: number;
+  sdgWeight: number;
+  interestWeight: number;
+  availabilityWeight: number;
+  experienceWeight: number;
+}
+
+// Default weights (used if database weights not available)
+const DEFAULT_WEIGHTS: MatchingWeights = {
+  skillWeight: 0.35,
+  locationWeight: 0.10,
+  sdgWeight: 0.20,
+  interestWeight: 0.10,
+  availabilityWeight: 0.20,
+  experienceWeight: 0.05,
+};
+
+// Cache for matching weights from database
+let cachedWeights: MatchingWeights | null = null;
+let weightsCacheTime: number = 0;
+const WEIGHTS_CACHE_TTL = 60000; // 1 minute cache
+
+/**
+ * Get matching weights from database or use defaults
+ * Allows dynamic tuning without code deployment
+ */
+export async function getMatchingWeights(): Promise<MatchingWeights> {
+  const now = Date.now();
+
+  // Return cached weights if still valid
+  if (cachedWeights && (now - weightsCacheTime) < WEIGHTS_CACHE_TTL) {
+    return cachedWeights;
+  }
+
+  try {
+    // Dynamic import to avoid circular dependencies
+    const { storage } = await import("./storage");
+    const dbWeights = await storage.getLatestMatchingWeights?.();
+
+    if (dbWeights) {
+      cachedWeights = {
+        skillWeight: dbWeights.skillWeight ?? DEFAULT_WEIGHTS.skillWeight,
+        locationWeight: dbWeights.locationWeight ?? DEFAULT_WEIGHTS.locationWeight,
+        sdgWeight: dbWeights.sdgWeight ?? DEFAULT_WEIGHTS.sdgWeight,
+        interestWeight: DEFAULT_WEIGHTS.interestWeight, // Not in DB schema yet
+        availabilityWeight: dbWeights.availabilityWeight ?? DEFAULT_WEIGHTS.availabilityWeight,
+        experienceWeight: DEFAULT_WEIGHTS.experienceWeight, // Not in DB schema yet
+      };
+      weightsCacheTime = now;
+      return cachedWeights;
+    }
+  } catch (error) {
+    console.warn("Could not fetch matching weights from database, using defaults:", error);
+  }
+
+  return DEFAULT_WEIGHTS;
+}
+
+/**
+ * Calculate completion rate for a volunteer based on their project assignments
+ * Returns a value between 0 and 1
+ */
+export async function getVolunteerCompletionRate(volunteerId: number): Promise<number | undefined> {
+  try {
+    const { storage } = await import("./storage");
+    const assignments = await storage.listProjectAssignmentsByVolunteer(volunteerId);
+
+    if (!assignments || assignments.length === 0) {
+      return undefined; // No history to calculate from
+    }
+
+    // Count completed vs total (excluding pending/declined)
+    const relevantAssignments = assignments.filter(a =>
+      a.status && ['active', 'completed', 'on-hold'].includes(a.status.toLowerCase())
+    );
+
+    if (relevantAssignments.length === 0) {
+      return undefined;
+    }
+
+    const completed = relevantAssignments.filter(a =>
+      a.status?.toLowerCase() === 'completed'
+    ).length;
+
+    // Also factor in hours completion for active assignments
+    let hoursCompletionBonus = 0;
+    const activeAssignments = relevantAssignments.filter(a =>
+      a.status?.toLowerCase() === 'active' && a.hoursCommitted && a.hoursCommitted > 0
+    );
+
+    for (const assignment of activeAssignments) {
+      const committed = assignment.hoursCommitted || 0;
+      const completed_hrs = assignment.hoursCompleted || 0;
+      if (committed > 0) {
+        hoursCompletionBonus += Math.min(completed_hrs / committed, 1) * 0.5; // Partial credit
+      }
+    }
+
+    const baseRate = completed / relevantAssignments.length;
+    const adjustedRate = Math.min(baseRate + (hoursCompletionBonus / relevantAssignments.length), 1);
+
+    return adjustedRate;
+  } catch (error) {
+    console.warn("Could not calculate volunteer completion rate:", error);
+    return undefined;
+  }
+}
+
+/**
+ * Calculate data completeness score for a volunteer profile
+ * Returns percentage (0-100) of how complete their profile is for matching
+ */
+function calculateDataCompleteness(
+  volunteer: User & { profile?: VolunteerProfile | null },
+  opportunity: Opportunity
+): { score: number; missingFields: string[] } {
+  const missingFields: string[] = [];
+  let filledCount = 0;
+  let totalWeight = 0;
+
+  // Critical fields (high weight)
+  const criticalFields = [
+    { name: 'skills', weight: 3, check: () => volunteer.skills && volunteer.skills.length > 0 },
+    { name: 'weeklyAvailability', weight: 2, check: () => volunteer.profile?.weeklyAvailability != null },
+    { name: 'location', weight: 2, check: () => !!volunteer.profile?.location },
+  ];
+
+  // Important fields (medium weight)
+  const importantFields = [
+    { name: 'preferredWorkStyle', weight: 1.5, check: () => !!volunteer.profile?.preferredWorkStyle },
+    { name: 'preferredSdgs', weight: 1.5, check: () => Array.isArray(volunteer.profile?.preferredSdgs) && volunteer.profile!.preferredSdgs.length > 0 },
+    { name: 'skillRatings', weight: 1, check: () => volunteer.profile?.skillRatings && Object.keys(volunteer.profile.skillRatings as object).length > 0 },
+  ];
+
+  // Nice to have fields (low weight)
+  const niceToHaveFields = [
+    { name: 'yearsOfExperience', weight: 0.5, check: () => !!volunteer.profile?.yearsOfExperience },
+    { name: 'preferredCauses', weight: 0.5, check: () => Array.isArray(volunteer.profile?.preferredCauses) && volunteer.profile!.preferredCauses.length > 0 },
+    { name: 'interests', weight: 0.5, check: () => Array.isArray(volunteer.profile?.interests) && volunteer.profile!.interests.length > 0 },
+  ];
+
+  const allFields = [...criticalFields, ...importantFields, ...niceToHaveFields];
+
+  for (const field of allFields) {
+    totalWeight += field.weight;
+    if (field.check()) {
+      filledCount += field.weight;
+    } else {
+      missingFields.push(field.name);
+    }
+  }
+
+  // Check opportunity-specific requirements
+  if (opportunity.requiredSkills && opportunity.requiredSkills.length > 0) {
+    if (!volunteer.skills || volunteer.skills.length === 0) {
+      // Skills are especially important when opportunity requires them
+      totalWeight += 2; // Additional penalty weight
+    }
+  }
+
+  const score = Math.round((filledCount / totalWeight) * 100);
+  return { score, missingFields };
+}
+
+/**
+ * Calculate match confidence based on data quality and match characteristics
+ * Returns 0-100 where higher = more confident in the match accuracy
+ */
+function calculateMatchConfidence(
+  dataCompleteness: number,
+  breakdown: MatchResult['breakdown'],
+  volunteer: User & { profile?: VolunteerProfile | null },
+  opportunity: Opportunity
+): number {
+  let confidence = dataCompleteness; // Start with data completeness
+
+  // Boost confidence if we have strong signals in multiple dimensions
+  const strongSignals = [
+    breakdown.skillMatch >= 70,
+    breakdown.sdgMatch >= 70,
+    breakdown.availabilityMatch >= 70,
+    breakdown.locationMatch >= 70,
+  ].filter(Boolean).length;
+
+  if (strongSignals >= 3) {
+    confidence = Math.min(confidence + 15, 100);
+  } else if (strongSignals >= 2) {
+    confidence = Math.min(confidence + 10, 100);
+  }
+
+  // Reduce confidence for edge cases
+  if (!volunteer.profile) {
+    confidence = Math.max(confidence - 30, 10);
+  }
+
+  // Reduce confidence if opportunity has no required skills (hard to validate match)
+  if (!opportunity.requiredSkills || opportunity.requiredSkills.length === 0) {
+    confidence = Math.max(confidence - 10, 20);
+  }
+
+  // Reduce confidence for very polarized breakdowns (some high, some very low)
+  const scores = [
+    breakdown.skillMatch,
+    breakdown.sdgMatch,
+    breakdown.availabilityMatch,
+    breakdown.locationMatch,
+    breakdown.interestMatch,
+  ];
+  const maxScore = Math.max(...scores);
+  const minScore = Math.min(...scores);
+  if (maxScore - minScore > 60) {
+    // High variance indicates uncertainty
+    confidence = Math.max(confidence - 10, 20);
+  }
+
+  return Math.round(confidence);
 }
 
 /**
@@ -156,13 +380,13 @@ function calculateEngagementBoost(
 
 /**
  * Normalize and tokenize skills for better matching
+ * Uses synonym mapping to canonicalize skill names (e.g., "Programmer" -> "software developer")
+ * This improves matching between equivalent skills with different names
  */
 function normalizeSkills(skills: string[] | null | undefined): string[] {
   if (!skills || !Array.isArray(skills) || skills.length === 0) return [];
-  return skills
-    .filter((s) => s && typeof s === "string")
-    .map((s) => s.toLowerCase().trim())
-    .filter((s) => s.length > 0);
+  // Use synonym-aware normalization for improved matching
+  return normalizeSkillsWithSynonyms(skills);
 }
 
 /**
@@ -210,11 +434,20 @@ function normalizeLocation(location: string | null | undefined): {
 /**
  * AI-powered matching algorithm that calculates compatibility between
  * volunteers and opportunities using weighted scoring across multiple dimensions
+ *
+ * @param volunteer - Volunteer user with optional profile
+ * @param opportunity - Opportunity to match against
+ * @param weights - Optional custom weights (uses defaults if not provided)
+ * @param completionRate - Optional volunteer completion rate for engagement boost
  */
 export function calculateMatchScore(
   volunteer: User & { profile?: VolunteerProfile | null },
   opportunity: Opportunity,
+  weights?: MatchingWeights,
+  completionRate?: number,
 ): MatchResult {
+  // Use provided weights or defaults
+  const matchWeights = weights || DEFAULT_WEIGHTS;
   const breakdown = {
     skillMatch: 0,
     locationMatch: 0,
@@ -239,10 +472,13 @@ export function calculateMatchScore(
     (volunteer.profile?.skillRatings as Record<string, number>) || {};
 
   // Create normalized skill-to-rating map for efficient proficiency lookups
+  // Uses synonym-aware normalization so proficiency is found even if skill names differ
   const normalizedRatings: Record<string, number> = {};
   Object.keys(rawSkillRatings).forEach((skill) => {
-    const normalizedKey = skill.toLowerCase().trim();
-    normalizedRatings[normalizedKey] = rawSkillRatings[skill];
+    const normalizedKey = normalizeSkillWithSynonyms(skill);
+    if (normalizedKey) {
+      normalizedRatings[normalizedKey] = rawSkillRatings[skill];
+    }
   });
 
   if (volunteerSkills.length > 0 && requiredSkills.length > 0) {
@@ -264,7 +500,7 @@ export function calculateMatchScore(
         const proficiency =
           normalizedRatings[skill] !== undefined
             ? normalizedRatings[skill] / 100
-            : 0.7; // Default 70% if no rating
+            : 0.5; // Default 50% if no rating (conservative estimate)
         return proficiency;
       });
 
@@ -281,7 +517,7 @@ export function calculateMatchScore(
       const optionalProficiencies = matchingOptionalSkills.map((skill) => {
         return normalizedRatings[skill] !== undefined
           ? normalizedRatings[skill] / 100
-          : 0.7;
+          : 0.5; // Default 50% if no rating (conservative estimate)
       });
       const avgOptionalProficiency =
         optionalProficiencies.reduce((sum, p) => sum + p, 0) /
@@ -534,12 +770,13 @@ export function calculateMatchScore(
 
   // 7. Engagement Boost (0-10 bonus points)
   // Rewards active, reliable volunteers with complete profiles
-  const engagementResult = calculateEngagementBoost(volunteer);
+  // Uses completion rate if provided for reliability scoring
+  const engagementResult = calculateEngagementBoost(volunteer, undefined, completionRate);
   breakdown.engagementBoost = engagementResult.boost;
   reasons.push(...engagementResult.reasons);
 
   // Calculate weighted final score
-  // OPTIMIZED Matching Weights (Nov 2025):
+  // Uses dynamic weights from database (via matchWeights parameter) or defaults:
   // - Skill Match: 35% (critical for project success, proficiency-weighted)
   // - SDG/Mission Overlap: 20% (essential for alignment & satisfaction)
   // - Availability/Time Match: 20% (non-negotiable for retention & completion)
@@ -547,23 +784,15 @@ export function calculateMatchScore(
   // - Location Match: 10% (increased for hybrid work considerations)
   // - Experience Level: 5% (bonus factor for seniority)
   // + Engagement Boost: 0-10 bonus points for active, reliable volunteers
-  const weights = {
-    skillMatch: 0.35,
-    locationMatch: 0.10,
-    sdgMatch: 0.20,
-    interestMatch: 0.10, // Re-enabled for mission alignment
-    availabilityMatch: 0.20,
-    experienceMatch: 0.05,
-  };
 
   // Base weighted score (0-100) + Engagement boost (0-10 bonus)
-  const baseScore = 
-    breakdown.skillMatch * weights.skillMatch +
-    breakdown.locationMatch * weights.locationMatch +
-    breakdown.sdgMatch * weights.sdgMatch +
-    breakdown.interestMatch * weights.interestMatch +
-    breakdown.availabilityMatch * weights.availabilityMatch +
-    breakdown.experienceMatch * weights.experienceMatch;
+  const baseScore =
+    breakdown.skillMatch * matchWeights.skillWeight +
+    breakdown.locationMatch * matchWeights.locationWeight +
+    breakdown.sdgMatch * matchWeights.sdgWeight +
+    breakdown.interestMatch * matchWeights.interestWeight +
+    breakdown.availabilityMatch * matchWeights.availabilityWeight +
+    breakdown.experienceMatch * matchWeights.experienceWeight;
   
   // Final score capped at 100, includes engagement boost
   const finalScore = Math.min(Math.round(baseScore + breakdown.engagementBoost), 100);
@@ -579,12 +808,23 @@ export function calculateMatchScore(
     reasons.unshift("🤔 Consider other opportunities");
   }
 
+  // Calculate data completeness and match confidence for certainty metrics
+  const completenessResult = calculateDataCompleteness(volunteer, opportunity);
+  const confidence = calculateMatchConfidence(
+    completenessResult.score,
+    breakdown,
+    volunteer,
+    opportunity
+  );
+
   return {
     score: finalScore,
     breakdown,
     reasons,
     matchCategory: getMatchCategory(finalScore),
     dataQualityWarnings: dataQualityWarnings.length > 0 ? dataQualityWarnings : undefined,
+    confidence,
+    dataCompleteness: completenessResult.score,
   };
 }
 

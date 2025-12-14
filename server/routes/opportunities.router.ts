@@ -3,7 +3,7 @@ import { storage } from "../storage";
 import { insertOpportunitySchema } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { getProjectsForVolunteer } from "../dashboard-service";
-import { deriveCategoryFromSDGs } from "../matching-algorithm";
+import { deriveCategoryFromSDGs, calculateMatchScore } from "../matching-algorithm";
 
 export const opportunitiesRouter = Router();
 
@@ -150,10 +150,11 @@ opportunitiesRouter.get("/", async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/opportunities/:id - Get opportunity by ID
+// GET /api/opportunities/:id - Get opportunity by ID with optional match analysis
 opportunitiesRouter.get("/:id", async (req: Request, res: Response) => {
   try {
     const opportunityId = parseInt(req.params.id);
+    const userId = req.query.userId as string | undefined;
     const opportunity = await storage.getOpportunity(opportunityId);
 
     if (!opportunity) {
@@ -161,6 +162,8 @@ opportunitiesRouter.get("/:id", async (req: Request, res: Response) => {
     }
 
     let enrichedOpportunity: any = { ...opportunity };
+
+    // Add organization info
     if (opportunity.organizationId) {
       const organization = await storage.getOrganization(opportunity.organizationId);
       if (organization) {
@@ -169,8 +172,33 @@ opportunitiesRouter.get("/:id", async (req: Request, res: Response) => {
       }
     }
 
+    // Calculate match score if userId is provided (for volunteers)
+    if (userId) {
+      const userIdNum = parseInt(userId);
+      const user = await storage.getUser(userIdNum);
+
+      if (user && user.userType === 'volunteer') {
+        // Get volunteer profile for comprehensive matching
+        const volunteerProfile = await storage.getVolunteerProfile(userIdNum);
+        const volunteerWithProfile = {
+          ...user,
+          profile: volunteerProfile
+        };
+
+        // Calculate match score with full breakdown
+        const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
+
+        enrichedOpportunity.matchScore = matchResult.score;
+        enrichedOpportunity.matchReasons = matchResult.reasons;
+        enrichedOpportunity.matchCategory = matchResult.matchCategory;
+        enrichedOpportunity.matchBreakdown = matchResult.breakdown;
+        enrichedOpportunity.dataQualityWarnings = matchResult.dataQualityWarnings;
+      }
+    }
+
     res.json(enrichedOpportunity);
   } catch (err) {
+    console.error("Failed to fetch opportunity:", err);
     res.status(500).json({ message: "Failed to fetch opportunity" });
   }
 });

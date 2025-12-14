@@ -678,11 +678,10 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
       {/* Top App Bar - Blue to off-white/sky-blue gradient */}
-      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-3 py-1.5 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-        <div className="flex items-center gap-2">
-          <img src={logoUrl} alt="Synerxus" className="h-8 w-8 object-contain" />
-          <span className="text-sm font-bold text-slate-700">Synerxus</span>
-        </div>
+      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <button onClick={() => navigate('/landing')} className="flex items-center hover:opacity-80 transition-opacity">
+          <img src={logoUrl} alt="Synerxus" className="h-10 w-auto object-contain" />
+        </button>
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigate('/volunteer-messages/pwa')}

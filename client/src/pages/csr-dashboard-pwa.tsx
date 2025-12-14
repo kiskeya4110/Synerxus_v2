@@ -49,6 +49,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import { getSDGIcon } from "@/assets/un-sdg-icons";
 
 // Lazy load heavy chart components for better initial load
 const LineChart = lazy(() => import("recharts").then(m => ({ default: m.LineChart })));

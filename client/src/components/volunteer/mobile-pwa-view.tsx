@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, MoreVertical, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp } from "lucide-react";
+import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
@@ -11,7 +11,6 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import {
   LineChart,
   Line,
@@ -93,7 +92,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
   // Handle logout using proper auth signOut
   const handleLogout = async () => {
-    setShowMobileMenu(false);
     await signOut();
     navigate('/');
   };

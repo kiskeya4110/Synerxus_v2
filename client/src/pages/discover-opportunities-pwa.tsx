@@ -315,7 +315,7 @@ export default function DiscoverOpportunitiesPWA() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto">
         <div className="space-y-4 p-4">
           {/* Header */}
           <div>
@@ -614,65 +614,6 @@ export default function DiscoverOpportunitiesPWA() {
           onOpenChange={setApplicationDialogOpen}
         />
       )}
-
-      {/* Bottom Navigation - Matching Dashboard Frame */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-50" style={{ touchAction: 'manipulation' }}>
-        <div className="flex justify-around items-center">
-          <button
-            type="button"
-            onClick={() => navigate('/volunteer-dashboard')}
-            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            data-testid="nav-home"
-          >
-            <Home className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Home</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/projects')}
-            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            data-testid="nav-projects"
-          >
-            <Briefcase className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Projects</span>
-          </button>
-
-          <button
-            type="button"
-            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-emerald-400"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            data-testid="nav-insights"
-          >
-            <Lightbulb className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Insights</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate(userId ? `/impact-report/${userId}` : '/impact-report')}
-            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            data-testid="nav-impact"
-          >
-            <BarChart3 className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Impact</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate('/volunteer-profile-settings')}
-            className="flex flex-col items-center py-1 px-3 rounded-lg transition-all text-gray-400 hover:text-gray-200"
-            style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-            data-testid="nav-profile"
-          >
-            <User className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Profile</span>
-          </button>
-        </div>
-      </nav>
     </div>
   );
 }

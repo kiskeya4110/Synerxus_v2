@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
+import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
 interface EnrichedOpportunity {
   id: number;
@@ -240,7 +241,13 @@ export default function DiscoverOpportunitiesPWA() {
   return (
     <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
       {/* Top App Bar - Blue to off-white/sky-blue gradient */}
-      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-end sticky top-0 z-50 shadow-lg">
+      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <button
+          onClick={() => navigate("/landing")}
+          className="flex items-center hover:opacity-80 transition-opacity"
+        >
+          <img src={logoUrl} alt="Synerxus Logo" className="h-8 w-auto object-contain" />
+        </button>
         {/* Three-Dot Menu */}
         <div className="relative">
             <button

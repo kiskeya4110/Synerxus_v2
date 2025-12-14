@@ -1810,10 +1810,47 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         )}
 
         {activeTab === 'impacts' && (
-          <div className="space-y-4 p-4">
-            {/* Dashboard Title with Time Filter */}
-            <div className="flex items-center justify-between">
-              <h1 className="text-slate-800 text-2xl font-bold">Dashboard</h1>
+          <div className="space-y-4">
+            {/* Gradient Header */}
+            <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6 -mt-0.5">
+              <div className="flex items-center gap-4">
+                {/* Profile Picture */}
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl overflow-hidden border-2 border-white/30 shadow-lg ring-2 ring-white/20">
+                    {dashboardData.volunteerProfile?.profilePhotoUrl || user?.profilePicture ? (
+                      <img
+                        src={dashboardData.volunteerProfile?.profilePhotoUrl || user?.profilePicture}
+                        alt={volunteerProfile?.volunteer_name || user?.displayName || 'Profile'}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-white/20 to-white/10 flex items-center justify-center text-white text-xl font-bold">
+                        {(volunteerProfile?.volunteer_name || user?.displayName || user?.name || 'V').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full border-2 border-white flex items-center justify-center">
+                    <CheckCircle className="w-3 h-3 text-white" />
+                  </div>
+                </div>
+
+                {/* Welcome Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-blue-100 text-xs font-medium">Impact Dashboard</p>
+                  <h1 className="text-white text-lg font-bold truncate">
+                    {(volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer').split(' ')[0]}!
+                  </h1>
+                  {dashboardData.volunteerProfile?.professionalTitle && (
+                    <p className="text-blue-200 text-xs truncate mt-0.5">{dashboardData.volunteerProfile.professionalTitle}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4 p-4">
+              {/* Dashboard Title with Time Filter */}
+              <div className="flex items-center justify-between">
+                <h2 className="text-slate-800 text-xl font-bold">Your Impact</h2>
               <div className="flex items-center gap-1.5">
                 <Calendar className="h-4 w-4 text-gray-500" />
                 <Select value={timeFilter} onValueChange={(value: "all" | "month" | "quarter" | "year") => setTimeFilter(value)}>
@@ -2050,6 +2087,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               <FileText className="w-4 h-4 mr-2" />
               View Full Impact Report
             </Button>
+            </div>
           </div>
         )}
 

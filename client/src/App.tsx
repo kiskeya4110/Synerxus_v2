@@ -198,6 +198,7 @@ export default function App() {
           <Route path="/sdg-mapping" component={SDGMapping} />
           <Route path="/impact-visualization">{() => <ImpactVisualization />}</Route>
           {/* PWA Routes - standalone (no Layout wrapper) */}
+          <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
           <Route path="/projects/:id/pwa" component={ProjectDetailPWA} />
           <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
           <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
@@ -215,7 +216,6 @@ function LayoutRoute() {
     <Layout>
       {/* Dashboards - volunteers get nav/footer via Layout */}
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/volunteer-dashboard" component={VolunteerDashboard} />
       {/* Projects */}
       <Route path="/projects" component={Projects} />
       <Route path="/projects/:id/edit" component={ProjectEdit} />

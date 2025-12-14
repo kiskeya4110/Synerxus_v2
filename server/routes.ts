@@ -57,6 +57,7 @@ import { adminRouter } from "./routes/admin.router";
 import { storageRouter } from "./routes/storage.router";
 import { miscRouter } from "./routes/misc.router";
 import { aiuRouter } from "./routes/aiu.router";
+import { storiesRouter, setBroadcastFn as setStoriesBroadcast } from "./routes/stories.router";
 
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
 /**
@@ -291,6 +292,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setVolunteersBroadcast(broadcastUpdate);
   setProjectAssignmentsBroadcast(broadcastUpdate);
   setActivitiesBroadcast(broadcastUpdate);
+  setStoriesBroadcast(broadcastUpdate);
 
   // Mount modular routers (Phases 1-6: resource-specific paths, Phase 7: at /api level)
   // Phases 1-6 routers: mounted at resource-specific paths
@@ -315,6 +317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use("/api", storageRouter); // Handles /upload, /storage/:filePath
   app.use("/api", miscRouter); // Handles /saved-opportunities, /rejected-opportunities, /sdgs, /notifications, /invitations, /images, /ai
   app.use("/api/aiu", aiuRouter); // Handles /aiu/volunteer/:id, /aiu/project/:id, /aiu/organization/:id, /aiu/csr-report
+  app.use("/api", storiesRouter); // Handles /stories and story likes
 
   // ===== LEGACY ROUTES (To be deprecated) =====
   // The routes below are still defined inline but are now handled by the modular routers above.

@@ -3,7 +3,6 @@ import { storage } from "../storage";
 import { insertVolunteerStorySchema, insertStoryLikeSchema } from "@shared/schema";
 import { handleValidationError } from "./utils";
 import multer from "multer";
-import { Client as ReplicateObjectStorage } from "@replit/object-storage";
 
 export const storiesRouter = Router();
 
@@ -14,8 +13,15 @@ export function setBroadcastFn(fn: BroadcastFn) {
   broadcastUpdate = fn;
 }
 
-// Initialize object storage client
-const objectStorage = new ReplicateObjectStorage();
+// Lazy-load object storage client
+let objectStorageClient: any = null;
+async function getObjectStorage() {
+  if (!objectStorageClient) {
+    const { Client } = await import("@replit/object-storage");
+    objectStorageClient = new Client();
+  }
+  return objectStorageClient;
+}
 
 // Configure multer for memory storage (we'll upload to object storage)
 const upload = multer({
@@ -209,11 +215,12 @@ storiesRouter.post("/stories/:id/photos", upload.array("photos", 5), async (req:
     const uploadedUrls: string[] = [];
     
     for (const file of files) {
-      const fileName = `stories/${storyId}/${Date.now()}-${file.originalname}`;
+      const fileName = `public/stories/${storyId}/${Date.now()}-${file.originalname}`;
       
       try {
+        const objectStorage = await getObjectStorage();
         await objectStorage.uploadFromBytes(fileName, file.buffer);
-        const publicUrl = `https://objectstorage.replit.app/${process.env.REPL_ID}/${fileName}`;
+        const publicUrl = `/api/storage/${encodeURIComponent(fileName)}`;
         uploadedUrls.push(publicUrl);
       } catch (uploadErr) {
         console.error("Error uploading to object storage:", uploadErr);

@@ -59,6 +59,9 @@ import VolunteerMessages from "@/pages/volunteer-messages";
 import VolunteerMessagesPWA from "@/pages/volunteer-messages-pwa";
 import EmployeeEngagementTabPage from "@/pages/employee-engagement-tab-page";
 import NotFound from "@/pages/not-found";
+import Stories from "@/pages/stories";
+import CreateStory from "@/pages/create-story";
+import StoryDetail from "@/pages/story-detail";
 
 function RootRedirectRoute() {
   const { user } = useAuth();
@@ -254,6 +257,10 @@ function LayoutRoute() {
       <Route path="/organization-leaderboard" component={OrganizationLeaderboard} />
       {/* Messages */}
       <Route path="/volunteer-messages" component={VolunteerMessages} />
+      {/* Stories */}
+      <Route path="/stories" component={Stories} />
+      <Route path="/create-story" component={CreateStory} />
+      <Route path="/stories/:id" component={StoryDetail} />
     </Layout>
   );
 }

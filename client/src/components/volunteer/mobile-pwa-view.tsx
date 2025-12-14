@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, MoreVertical, ClipboardList, Calendar, LogOut, Building2 } from "lucide-react";
+import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, MoreVertical, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
@@ -35,7 +35,7 @@ interface MobilePWAViewProps {
   dashboardData: any;
 }
 
-type TabType = 'dashboard' | 'projects' | 'potential' | 'impacts' | 'more' | 'profile' | 'messages';
+type TabType = 'dashboard' | 'projects' | 'potential' | 'impacts' | 'stories' | 'more' | 'profile' | 'messages';
 
 // AIU Summary interface
 interface AIUSummary {
@@ -597,6 +597,28 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       if (!response.ok) return { savedIds: [], rejectedIds: [], appliedIds: [] };
       return response.json();
     },
+  });
+
+  // Fetch volunteer stories for the Stories tab
+  const { data: volunteerStories = [], isLoading: loadingStories } = useQuery({
+    queryKey: ['/api/stories', userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/stories?volunteerId=${userId}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+  });
+
+  // Fetch featured stories for discovery
+  const { data: featuredStories = [] } = useQuery({
+    queryKey: ['/api/stories/featured'],
+    queryFn: async () => {
+      const response = await fetch('/api/stories?featured=true&limit=5');
+      if (!response.ok) return [];
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   // Check if user has applied for an opportunity
@@ -2095,6 +2117,182 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           </div>
         )}
 
+        {/* Stories Tab */}
+        {activeTab === 'stories' && (
+          <div className="p-4 space-y-4 pb-24">
+            {/* Header with Create Story Button */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-slate-800 text-lg font-bold flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-purple-600" />
+                Volunteer Stories
+              </h2>
+              <Button
+                onClick={() => navigate('/create-story')}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white text-sm px-3 py-1"
+                data-testid="button-create-story"
+              >
+                Share Your Story
+              </Button>
+            </div>
+
+            {/* My Stories Section */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-purple-600" />
+                My Stories ({volunteerStories.length})
+              </h3>
+              
+              {loadingStories ? (
+                <div className="space-y-3">
+                  {[1, 2].map((i) => (
+                    <div key={i} className="animate-pulse bg-slate-100 rounded-lg h-24"></div>
+                  ))}
+                </div>
+              ) : volunteerStories.length > 0 ? (
+                <div className="space-y-3">
+                  {volunteerStories.slice(0, 5).map((story: any) => (
+                    <div
+                      key={story.id}
+                      onClick={() => navigate(`/stories/${story.id}`)}
+                      className="bg-slate-50 rounded-lg p-3 cursor-pointer hover:bg-slate-100 transition-colors border border-slate-200"
+                      data-testid={`card-story-${story.id}`}
+                    >
+                      <div className="flex gap-3">
+                        {story.photos && story.photos.length > 0 && (
+                          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                              src={`/api/storage/${encodeURIComponent(story.photos[0])}`}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-slate-800 font-medium text-sm truncate">{story.title}</h4>
+                          <p className="text-slate-500 text-xs line-clamp-2 mt-1">{story.content?.substring(0, 80)}...</p>
+                          <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
+                            <span className="flex items-center gap-1">
+                              <Eye className="w-3 h-3" />
+                              {story.viewsCount || 0}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <ThumbsUp className="w-3 h-3" />
+                              {story.likesCount || 0}
+                            </span>
+                            {story.isPublished ? (
+                              <span className="text-green-600">Published</span>
+                            ) : (
+                              <span className="text-amber-600">Draft</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <BookOpen className="w-10 h-10 mx-auto text-slate-300 mb-2" />
+                  <p className="text-slate-500 text-sm">No stories yet</p>
+                  <p className="text-slate-400 text-xs mt-1">Share your volunteer experience!</p>
+                  <Button
+                    onClick={() => navigate('/create-story')}
+                    variant="outline"
+                    className="mt-3 text-purple-600 border-purple-300"
+                    data-testid="button-create-first-story"
+                  >
+                    Create Your First Story
+                  </Button>
+                </div>
+              )}
+              
+              {volunteerStories.length > 5 && (
+                <Button
+                  onClick={() => navigate('/stories')}
+                  variant="ghost"
+                  className="w-full mt-3 text-purple-600"
+                >
+                  View All My Stories ({volunteerStories.length})
+                </Button>
+              )}
+            </div>
+
+            {/* Featured Stories Section */}
+            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
+              <h3 className="text-slate-800 font-semibold mb-3 flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                Featured Stories
+              </h3>
+              
+              {featuredStories.length > 0 ? (
+                <div className="space-y-3">
+                  {featuredStories.slice(0, 3).map((story: any) => (
+                    <div
+                      key={story.id}
+                      onClick={() => navigate(`/stories/${story.id}`)}
+                      className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-3 cursor-pointer hover:from-purple-100 hover:to-pink-100 transition-colors border border-purple-200"
+                      data-testid={`card-featured-story-${story.id}`}
+                    >
+                      <div className="flex gap-3">
+                        {story.photos && story.photos.length > 0 && (
+                          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                              src={`/api/storage/${encodeURIComponent(story.photos[0])}`}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-slate-800 font-medium text-sm truncate">{story.title}</h4>
+                          <p className="text-slate-600 text-xs mt-1">{story.authorName || 'Anonymous Volunteer'}</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            {story.sdgGoals?.slice(0, 3).map((sdg: number) => (
+                              <div
+                                key={sdg}
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold"
+                                style={{ backgroundColor: SDG_COLORS[sdg] }}
+                              >
+                                {sdg}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-slate-400 text-sm">
+                  No featured stories yet
+                </div>
+              )}
+              
+              <Button
+                onClick={() => navigate('/stories')}
+                variant="ghost"
+                className="w-full mt-3 text-purple-600"
+                data-testid="button-browse-stories"
+              >
+                Browse All Stories
+              </Button>
+            </div>
+
+            {/* Tips Card */}
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl p-4 text-white">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb className="w-5 h-5" />
+                <span className="font-semibold">Story Tips</span>
+              </div>
+              <ul className="text-sm opacity-90 space-y-1">
+                <li>• Share photos to make your story engaging</li>
+                <li>• Tag SDGs to connect with like-minded volunteers</li>
+                <li>• Highlight your impact to inspire others</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'profile' && (
           <div className="p-4 space-y-4 pb-24">
             {/* Profile Header */}
@@ -2927,43 +3125,51 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 z-40 flex justify-around items-center h-20 shadow-lg">
         <button
           onClick={() => setActiveTab('dashboard')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
           data-testid="nav-home"
         >
-          <Home className="w-6 h-6" />
-          <span className="text-xs font-medium">Home</span>
+          <Home className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Home</span>
         </button>
         <button
           onClick={() => setActiveTab('projects')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'projects' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'projects' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
           data-testid="nav-projects"
         >
-          <Briefcase className="w-6 h-6" />
-          <span className="text-xs font-medium">Projects</span>
+          <Briefcase className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Projects</span>
         </button>
         <button
           onClick={() => setActiveTab('potential')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'potential' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'potential' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
           data-testid="nav-potential"
         >
-          <Lightbulb className="w-6 h-6" />
-          <span className="text-xs font-medium">Potential</span>
+          <Lightbulb className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Potential</span>
         </button>
         <button
           onClick={() => setActiveTab('impacts')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'impacts' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'impacts' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
           data-testid="nav-impacts"
         >
-          <BarChart3 className="w-6 h-6" />
-          <span className="text-xs font-medium">Impacts</span>
+          <BarChart3 className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Impacts</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('stories')}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'stories' ? 'text-purple-600 dark:text-purple-400' : 'text-slate-600 dark:text-slate-400'}`}
+          data-testid="nav-stories"
+        >
+          <BookOpen className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Stories</span>
         </button>
         <button
           onClick={() => setActiveTab('profile')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${activeTab === 'profile' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
+          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'profile' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
           data-testid="nav-profile"
         >
-          <User className="w-6 h-6" />
-          <span className="text-xs font-medium">Profile</span>
+          <User className="w-5 h-5" />
+          <span className="text-[10px] font-medium">Profile</span>
         </button>
       </nav>
     </div>

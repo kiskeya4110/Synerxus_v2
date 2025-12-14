@@ -33,6 +33,8 @@ import {
   employeeActivityLogs,
   employeeMilestones,
   csrCommitmentGoals,
+  volunteerStories,
+  storyLikes,
   type User, 
   type InsertUser,
   type Organization,
@@ -98,7 +100,11 @@ import {
   type EmployeeMilestone,
   type InsertEmployeeMilestone,
   type CSRCommitmentGoal,
-  type InsertCSRCommitmentGoal
+  type InsertCSRCommitmentGoal,
+  type VolunteerStory,
+  type InsertVolunteerStory,
+  type StoryLike,
+  type InsertStoryLike
 } from "@shared/schema";
 import { calculateMatchScore } from "./matching-algorithm";
 import { db } from "./db";
@@ -355,6 +361,18 @@ export interface IStorage {
   createMatchAnalytics(analytics: InsertMatchAnalytics): Promise<MatchAnalytics>;
   updateMatchAnalytics(id: number, analytics: Partial<InsertMatchAnalytics>): Promise<MatchAnalytics | undefined>;
   listMatchAnalytics(): Promise<MatchAnalytics[]>;
+
+  // Volunteer Story operations
+  listVolunteerStories(): Promise<VolunteerStory[]>;
+  getVolunteerStory(id: number): Promise<VolunteerStory | undefined>;
+  createVolunteerStory(story: InsertVolunteerStory): Promise<VolunteerStory>;
+  updateVolunteerStory(id: number, story: Partial<InsertVolunteerStory>): Promise<VolunteerStory | undefined>;
+  deleteVolunteerStory(id: number): Promise<boolean>;
+
+  // Story Like operations
+  getStoryLike(storyId: number, userId: number): Promise<StoryLike | undefined>;
+  createStoryLike(like: InsertStoryLike): Promise<StoryLike>;
+  deleteStoryLike(storyId: number, userId: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1568,6 +1586,51 @@ export class DatabaseStorage implements IStorage {
 
   async listMatchAnalytics(): Promise<MatchAnalytics[]> {
     return db.select().from(matchAnalytics).orderBy(desc(matchAnalytics.createdAt));
+  }
+
+  // Volunteer Story operations
+  async listVolunteerStories(): Promise<VolunteerStory[]> {
+    return db.select().from(volunteerStories).orderBy(desc(volunteerStories.createdAt));
+  }
+
+  async getVolunteerStory(id: number): Promise<VolunteerStory | undefined> {
+    const [result] = await db.select().from(volunteerStories).where(eq(volunteerStories.id, id));
+    return result || undefined;
+  }
+
+  async createVolunteerStory(story: InsertVolunteerStory): Promise<VolunteerStory> {
+    const [result] = await db.insert(volunteerStories).values(story).returning();
+    return result;
+  }
+
+  async updateVolunteerStory(id: number, story: Partial<InsertVolunteerStory>): Promise<VolunteerStory | undefined> {
+    const [result] = await db.update(volunteerStories).set({ ...story, updatedAt: new Date() }).where(eq(volunteerStories.id, id)).returning();
+    return result || undefined;
+  }
+
+  async deleteVolunteerStory(id: number): Promise<boolean> {
+    const result = await db.delete(volunteerStories).where(eq(volunteerStories.id, id));
+    return true;
+  }
+
+  // Story Like operations
+  async getStoryLike(storyId: number, userId: number): Promise<StoryLike | undefined> {
+    const [result] = await db.select().from(storyLikes).where(
+      and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId))
+    );
+    return result || undefined;
+  }
+
+  async createStoryLike(like: InsertStoryLike): Promise<StoryLike> {
+    const [result] = await db.insert(storyLikes).values(like).returning();
+    return result;
+  }
+
+  async deleteStoryLike(storyId: number, userId: number): Promise<boolean> {
+    await db.delete(storyLikes).where(
+      and(eq(storyLikes.storyId, storyId), eq(storyLikes.userId, userId))
+    );
+    return true;
   }
 }
 

@@ -87,6 +87,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
 
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Handle logout using proper auth signOut
   const handleLogout = async () => {
     setShowMobileMenu(false);

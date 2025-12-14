@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
@@ -44,11 +44,17 @@ export default function ProjectDetailPWA() {
   const [taskNotes, setTaskNotes] = useState("");
   const { toast } = useToast();
 
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const handleBack = () => {
-    if (window.history.length > 1) {
+    // Use history back if available, otherwise navigate to volunteer dashboard
+    if (window.history.length > 2) {
       window.history.back();
     } else {
-      navigate("/discover-opportunities-pwa");
+      navigate("/volunteer-dashboard");
     }
   };
 
@@ -260,13 +266,13 @@ export default function ProjectDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 pb-24">
-      {/* Header - Blue to off-white/sky-blue gradient for logo contrast */}
-      <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center shadow-md">
+    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-24 max-w-[428px] mx-auto">
+      {/* Header - Light blue to gold gradient (matching mobile PWA view) */}
+      <div className="sticky top-0 z-10 bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center shadow-xl">
         <Button
           variant="ghost"
           size="sm"
-          className="text-slate-800 hover:bg-white/30 -ml-2"
+          className="text-slate-700 hover:bg-slate-700/10 -ml-2"
           onClick={handleBack}
         >
           <ArrowLeft className="h-5 w-5" />

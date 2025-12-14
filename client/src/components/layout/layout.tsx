@@ -65,10 +65,15 @@ export default function Layout({ children }: LayoutProps) {
     "/impact-visualization", "/organization-messages",
     "/employee-engagement-tab", "/organization-profile-settings",
     "/organization-impact-report", "/applications",
-    "/volunteer-dashboard", "/pwa"
+    "/volunteer-dashboard", "/pwa",
+    // PWA mobile pages - these have their own complete layouts
+    "/discover-opportunities/pwa",
+    "/discover-opportunities" // Updated with PWA layout
   ];
 
-  const isFullyStandalone = fullyStandaloneRoutes.some(route => location === route || location.startsWith(route + "/"));
+  // Check if route matches standalone patterns (including PWA pages like /opportunities/123/pwa)
+  const isPwaRoute = location.endsWith('/pwa');
+  const isFullyStandalone = isPwaRoute || fullyStandaloneRoutes.some(route => location === route || location.startsWith(route + "/"));
 
   if (isFullyStandalone) {
     // Render just the children - these routes have their own complete layout

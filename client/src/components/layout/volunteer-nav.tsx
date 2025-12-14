@@ -47,8 +47,11 @@ export default function VolunteerNav() {
     navigate('/');
   };
 
+  // Don't show on PWA routes - they have their own navigation
+  const isPwaRoute = location.endsWith('/pwa');
+
   // Only show for volunteers on desktop (hide on mobile for PWA)
-  if (currentUser?.userType !== 'volunteer') {
+  if (currentUser?.userType !== 'volunteer' || isPwaRoute) {
     return null;
   }
 

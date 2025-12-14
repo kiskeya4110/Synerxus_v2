@@ -2,7 +2,9 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { 
+import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import {
   FolderOpen, Users, Plus, MessageSquare,
   Target, BarChart3, FileText, Bell, Settings, CheckSquare, LogOut, User
 } from "lucide-react";
@@ -13,7 +15,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+
+// Helper function for relative time
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString();
+}
 const NAV_TABS = [
   { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/organization-dashboard' },
   { id: 'applications', label: 'Applications', icon: FileText, path: '/applications' },
@@ -34,6 +52,57 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const userId = localStorage.getItem('currentUserId');
+
+  // Fetch notifications for organization user
+  const { data: notifications = [] } = useQuery<any[]>({
+    queryKey: ["/api/notifications", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return [];
+      const response = await fetch(`/api/notifications?userId=${id}`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 10000,
+  });
+
+  const unreadCount = notifications.filter((n: any) => !n.read).length;
+
+  const handleNotificationClick = async (notification: any) => {
+    try {
+      // Mark notification as read on backend
+      const response = await fetch(`/api/notifications/${notification.id}/read`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to mark notification as read');
+      }
+
+      // Invalidate cache to refresh notification list
+      await queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+
+      // Navigate based on notification type
+      const notificationType = notification.type || '';
+      if (notificationType.includes('application') || notificationType === 'new_application') {
+        navigate('/applications');
+      } else if (notificationType.includes('project') || notificationType.includes('assignment')) {
+        navigate('/my-work');
+      } else if (notificationType.includes('message')) {
+        navigate('/organization-messages');
+      } else if (notificationType.includes('volunteer')) {
+        navigate('/volunteers');
+      } else {
+        // Default to dashboard for general notifications
+        navigate('/organization-dashboard');
+      }
+    } catch (error) {
+      console.error('Error handling notification:', error);
+    }
+  };
 
   const handleTabClick = (tab: typeof NAV_TABS[0]) => {
     if (tab.id === 'create') {
@@ -155,37 +224,96 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
 
         {/* Right: Notifications, Settings, Profile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Notifications Button - redirects to dashboard */}
-          <button
-            onClick={() => navigate('/organization-dashboard')}
-            data-testid="notifications-button"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.15)',
-              border: '1px solid rgba(255,255,255,0.35)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              transition: 'all 0.2s',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.28)';
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
-              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <Bell size={18} style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }} />
-          </button>
+          {/* Notifications Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                data-testid="notifications-button"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255,255,255,0.15)',
+                  border: '1px solid rgba(255,255,255,0.35)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#ffffff',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  position: 'relative',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.28)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                <Bell size={18} style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }} />
+                {unreadCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 min-h-5 min-w-5 h-5 w-5 flex items-center justify-center px-0 text-xs font-bold leading-none rounded-full"
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Badge>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
+              <div className="flex items-center justify-between p-3 border-b">
+                <h3 className="font-semibold">Notifications</h3>
+                <p className="text-xs text-gray-500">{unreadCount} unread</p>
+              </div>
+              {notifications.length === 0 ? (
+                <div className="p-8 text-center">
+                  <Bell className="h-12 w-12 mx-auto text-gray-300 mb-2" />
+                  <p className="text-sm text-gray-500">No notifications yet</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    You'll receive notifications about applications and project updates
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {notifications.slice(0, 10).map((notification: any) => {
+                    const timeAgo = notification.createdAt ?
+                      getRelativeTime(new Date(notification.createdAt)) : '';
+
+                    return (
+                      <DropdownMenuItem
+                        key={notification.id}
+                        className={`cursor-pointer p-3 flex flex-col items-start gap-1 ${!notification.read ? 'bg-blue-50' : ''}`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className="flex items-start justify-between w-full">
+                          <span className={`text-sm ${!notification.read ? 'font-semibold' : 'font-medium'}`}>
+                            {notification.title}
+                          </span>
+                          <span className="text-xs text-gray-400 ml-2">{timeAgo}</span>
+                        </div>
+                        <span className="text-xs text-gray-600 line-clamp-2">
+                          {notification.message}
+                        </span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="cursor-pointer justify-center text-sm text-primary"
+                    onClick={() => navigate('/applications')}
+                  >
+                    View all applications
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* Settings Button */}
           <button

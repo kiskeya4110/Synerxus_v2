@@ -286,3 +286,60 @@ export async function notifyThreadMessage(
     console.error("Error creating thread message notification:", error);
   }
 }
+
+/**
+ * Notify organization users when a new application is submitted
+ */
+export async function notifyNewApplication(
+  opportunityId: number,
+  volunteerId: number,
+  applicationId: number,
+  matchScore?: number | null
+): Promise<void> {
+  try {
+    const opportunity = await storage.getOpportunity(opportunityId);
+    const volunteer = await storage.getUser(volunteerId);
+
+    if (!opportunity || !volunteer) {
+      console.error("Opportunity or volunteer not found for notification");
+      return;
+    }
+
+    // Get the organization to find organization users to notify
+    const organization = await storage.getOrganization(opportunity.organizationId);
+    if (!organization) {
+      console.error("Organization not found for notification");
+      return;
+    }
+
+    // Find all users belonging to this organization
+    const orgUsers = await storage.listUsersByOrganization(opportunity.organizationId);
+
+    if (!orgUsers || orgUsers.length === 0) {
+      console.error("No organization users found for notification");
+      return;
+    }
+
+    const volunteerName = volunteer.displayName || volunteer.username || "A volunteer";
+    const scoreText = matchScore ? ` (${matchScore}% match)` : "";
+
+    // Create notification for each organization user
+    for (const orgUser of orgUsers) {
+      const notification: InsertNotification = {
+        userId: orgUser.id,
+        type: "new_application",
+        title: "New Application Received",
+        message: `${volunteerName} applied for "${opportunity.title}"${scoreText}. Review their application now.`,
+        relatedEntityType: "application",
+        relatedEntityId: applicationId,
+        relatedUserId: volunteerId,
+        ...(opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && { sdgGoals: opportunity.sdgGoals }),
+        read: false,
+      };
+
+      await storage.createNotification(notification);
+    }
+  } catch (error) {
+    console.error("Error creating new application notification:", error);
+  }
+}

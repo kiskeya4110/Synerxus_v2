@@ -33,7 +33,9 @@ export default function MobileNav() {
     '/'
   ];
 
-  const isStandaloneRoute = standaloneRoutes.some(route =>
+  // Check for PWA routes (any route ending in /pwa) or standalone routes
+  const isPwaRoute = location.endsWith('/pwa');
+  const isStandaloneRoute = isPwaRoute || standaloneRoutes.some(route =>
     location === route || location.startsWith(route + '/') || (route !== '/' && location.startsWith(route))
   );
 

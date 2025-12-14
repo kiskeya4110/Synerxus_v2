@@ -47,7 +47,7 @@ export default function Header() {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toggleSidebar } = useSidebarContext();
   const userId = useCurrentUserId();
 
@@ -100,8 +100,10 @@ export default function Header() {
     refetchInterval: 60000 // Refetch every minute
   });
 
-  // Hide header for organization users
-  if (currentUser?.userType === 'organization') {
+  // Hide header for organization users and PWA routes (which have their own headers)
+  const isPwaRoute = location.endsWith('/pwa');
+
+  if (currentUser?.userType === 'organization' || isPwaRoute) {
     return null;
   }
 

@@ -1,25 +1,34 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+import {
+  Search, MapPin, Clock, Users, Sparkles, Target,
+  ChevronDown, CheckCircle, Building2, Calendar, Filter,
+  Home, Briefcase, Lightbulb, BarChart3, User, MessageCircle, MoreVertical, Settings, ClipboardList, LogOut, TrendingUp
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { 
-  MapPin, Clock, Users, Calendar, Search, TrendingUp, Sparkles, Building2, CalendarDays, 
-  AlertCircle, Target, Lightbulb, ChevronDown, CheckCircle
-} from "lucide-react";
-import { Opportunity } from "@shared/schema";
-import ApplicationDialog from "@/components/opportunities/application-dialog";
-import { sdgGoals } from "@shared/sdg-goals";
-import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import { useAuth } from "@/hooks/use-auth";
 
-interface EnrichedOpportunity extends Opportunity {
+interface EnrichedOpportunity {
+  id: number;
+  title: string;
+  description?: string;
   organizationName?: string;
+  location?: string;
+  isRemote?: boolean;
+  timeCommitment?: string;
+  category?: string;
+  sdgGoals?: number[];
+  requiredSkills?: string[];
+  volunteersNeeded?: number;
+  startDate?: string;
+  endDate?: string;
   matchScore?: number;
-  matchPercentage?: number;
   matchReasons?: string[];
   matchBreakdown?: {
     skillMatch: number;
@@ -28,8 +37,10 @@ interface EnrichedOpportunity extends Opportunity {
     interestMatch: number;
     availabilityMatch: number;
     experienceMatch: number;
-    engagementBoost: number;
   };
+  isUrgent?: boolean;
+  benefits?: string;
+  requirements?: string;
 }
 
 interface OpportunityStatus {
@@ -38,81 +49,98 @@ interface OpportunityStatus {
   appliedIds: number[];
 }
 
+const SDG_COLORS: { [key: number]: string } = {
+  1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
+  5: "#FF3A21", 6: "#26BDE2", 7: "#FCC30B", 8: "#A21942",
+  9: "#FD6925", 10: "#DD1367", 11: "#FD9D24", 12: "#BF8B2E",
+  13: "#3F7E44", 14: "#0A97D9", 15: "#56C02B", 16: "#00689D",
+  17: "#19486A"
+};
+
 export default function DiscoverOpportunities() {
+  const [, navigate] = useLocation();
+  const { signOut } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [selectedOpportunity, setSelectedOpportunity] = useState<EnrichedOpportunity | null>(null);
-  const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [applyingToId, setApplyingToId] = useState<number | null>(null);
 
-  // Get current user ID from localStorage
   const userId = localStorage.getItem('currentUserId');
 
-  // Fetch opportunities with AI matches and organization data
-  const { data: opportunities = [], isLoading } = useQuery<EnrichedOpportunity[]>({
+  // Scroll to top on page load
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Handle logout
+  const handleLogout = async () => {
+    setShowMobileMenu(false);
+    await signOut();
+    navigate('/');
+  };
+
+  // Fetch opportunities - using React Query's built-in retry and caching
+  const { data: opportunities = [], isLoading, isError, refetch: refetchOpportunities } = useQuery<EnrichedOpportunity[]>({
     queryKey: [`/api/opportunities/discover`, userId],
     queryFn: async () => {
       if (!userId) return [];
-      try {
-        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
-        if (!response.ok) {
-          console.warn("Failed to fetch opportunities, showing empty list");
-          return [];
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching opportunities:", error);
-        return [];
+      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch opportunities: ${response.status}`);
       }
+      return response.json();
     },
     enabled: !!userId,
+    retry: 2, // Retry twice on failure
+    retryDelay: 1000, // Wait 1 second between retries
+    staleTime: 60000, // Cache for 60 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
-  // Fetch opportunity status (saved, rejected, applied)
-  const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] } } = useQuery<OpportunityStatus>({
+  // Fetch opportunity status
+  const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] }, refetch: refetchStatus } = useQuery<OpportunityStatus>({
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
       if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
-      try {
-        const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
-        if (!response.ok) {
-          console.warn("Failed to fetch opportunity status, continuing without status badges");
-          return { savedIds: [], rejectedIds: [], appliedIds: [] };
-        }
-        return response.json();
-      } catch (error) {
-        console.error("Error fetching opportunity status:", error);
+      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+      if (!response.ok) {
         return { savedIds: [], rejectedIds: [], appliedIds: [] };
       }
+      return response.json();
     },
     enabled: !!userId,
     retry: 1,
+    staleTime: 60000,
+    gcTime: 5 * 60 * 1000,
   });
 
-  // Extract unique categories and locations from actual opportunities data
+  // Redirect to login if not authenticated
+  if (!userId) {
+    return (
+      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
+        <div className="text-slate-800 text-center p-6">
+          <p className="mb-4">Please log in to discover opportunities</p>
+          <Button onClick={() => navigate('/login')} className="bg-emerald-500 hover:bg-emerald-600">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const availableCategories = useMemo(() => {
     if (!Array.isArray(opportunities)) return [];
-    const categories = new Set<string>();
-    opportunities.forEach(opp => {
-      if (opp?.category) {
-        categories.add(opp.category);
-      }
-    });
-    return Array.from(categories).sort();
+    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort();
   }, [opportunities]);
 
   const availableLocations = useMemo(() => {
     if (!Array.isArray(opportunities)) return [];
-    const locations = new Set<string>();
-    opportunities.forEach(opp => {
-      if (opp?.location) {
-        locations.add(opp.location);
-      }
-    });
-    return Array.from(locations).sort();
+    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort();
   }, [opportunities]);
 
-  // Filter opportunities based on search, filters, and status
   const filteredOpportunities = (opportunities || []).filter((opp) => {
     // Guard against malformed opportunity objects
     if (!opp || typeof opp.id !== 'number') return false;
@@ -126,617 +154,561 @@ export default function DiscoverOpportunities() {
     const matchesLocation = locationFilter === "all" ||
       (locationFilter === "remote" ? opp.isRemote : (opp.location || '').includes(locationFilter));
 
-    // Filter out rejected opportunities - use optional chaining with nullish coalescing
-    const isNotRejected = !(opportunityStatus?.rejectedIds?.includes(opp.id) ?? false);
+    const isNotRejected = !opportunityStatus?.rejectedIds?.includes(opp.id);
 
     return matchesSearch && matchesCategory && matchesLocation && isNotRejected;
   });
 
-  const getMatchBadge = (score?: number) => {
-    if (!score && score !== 0) return null;
-    
-    if (score >= 80) {
-      return <Badge className="bg-green-500 text-white"><Sparkles className="w-3 h-3 mr-1" />Excellent Match</Badge>;
-    } else if (score >= 60) {
-      return <Badge className="bg-blue-500 text-white"><TrendingUp className="w-3 h-3 mr-1" />Good Match</Badge>;
-    } else if (score >= 40) {
-      return <Badge variant="outline">Fair Match</Badge>;
-    }
-    return <Badge variant="outline" className="text-gray-500">Low Match</Badge>;
-  };
-
-  // Get match score color based on percentage
-  const getMatchScoreColor = (score?: number) => {
-    if (!score && score !== 0) return "text-gray-400";
-    if (score >= 80) return "text-green-600 dark:text-green-400";
-    if (score >= 60) return "text-blue-600 dark:text-blue-400";
-    if (score >= 40) return "text-yellow-600 dark:text-yellow-400";
-    return "text-gray-500 dark:text-gray-400";
-  };
-
-  // Get progress bar color
-  const getProgressColor = (score: number) => {
-    if (score >= 80) return "bg-green-500";
-    if (score >= 60) return "bg-blue-500";
-    if (score >= 40) return "bg-yellow-500";
-    return "bg-gray-400";
-  };
-
-  const getOpportunityStatusBadge = (opportunityId: number) => {
-    if (opportunityStatus?.appliedIds?.includes(opportunityId)) {
-      return <Badge variant="default" className="bg-green-600 text-white">Applied</Badge>;
-    }
-    if (opportunityStatus?.savedIds?.includes(opportunityId)) {
-      return <Badge variant="secondary">Saved</Badge>;
-    }
-    return null;
-  };
+  const topMatches = filteredOpportunities.filter(o => (o.matchScore ?? 0) >= 70).slice(0, 3);
 
   const hasApplied = (opportunityId: number) => {
     return opportunityStatus?.appliedIds?.includes(opportunityId) ?? false;
   };
 
+  // Apply mutation for direct application
+  const applyMutation = useMutation({
+    mutationFn: async (opportunityId: number) => {
+      const volunteerId = parseInt(userId || '0');
+      if (!volunteerId) {
+        throw new Error('Please log in to apply');
+      }
+      return apiRequest("POST", "/api/applications", {
+        opportunityId,
+        volunteerId,
+        coverLetter: "I am interested in this volunteer opportunity and would like to contribute my skills."
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/applications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/opportunities/status"] });
+      toast({ title: "Applied successfully!", description: "Your application has been submitted. The organization will review it soon." });
+      setApplyingToId(null);
+    },
+    onError: (error: Error) => {
+      toast({ title: "Application failed", description: error.message || "Failed to apply. Please try again.", variant: "destructive" });
+      setApplyingToId(null);
+    }
+  });
+
+  const handleApply = (opportunityId: number) => {
+    if (!userId) {
+      toast({ title: "Please log in", description: "You need to be logged in to apply.", variant: "destructive" });
+      navigate('/login');
+      return;
+    }
+    if (hasApplied(opportunityId)) {
+      toast({ title: "Already applied", description: "You have already applied to this opportunity." });
+      return;
+    }
+    setApplyingToId(opportunityId);
+    applyMutation.mutate(opportunityId);
+  };
+
+  // Show loading state
   if (isLoading) {
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Discover Opportunities</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-64 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg" />
-          ))}
+      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
+        <div className="text-slate-800 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+          <p>Loading opportunities...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state with retry option
+  if (isError) {
+    return (
+      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
+        <div className="text-slate-800 text-center p-6">
+          <div className="w-16 h-16 mx-auto mb-4 text-amber-500">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+          </div>
+          <p className="text-lg font-semibold mb-2">Unable to load opportunities</p>
+          <p className="text-sm text-slate-500 mb-4">
+            Please check your connection and try again.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button
+              onClick={() => {
+                refetchOpportunities();
+                refetchStatus();
+              }}
+              className="bg-emerald-500 hover:bg-emerald-600"
+            >
+              Try Again
+            </Button>
+            <Button onClick={() => navigate('/volunteer-dashboard')} variant="outline">
+              Go to Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Discover Opportunities</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-1">
-          Find volunteer opportunities matched to your skills and interests
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto">
+      {/* Top App Bar - Light blue to gold gradient (matching mobile PWA view) */}
+      <header className="bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl">
+        <button
+          onClick={() => navigate("/landing")}
+          className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+        >
+          <img src={logoUrl} alt="Synerxus Logo" className="h-9 w-auto object-contain" />
+        </button>
 
-      {/* Filters */}
-      <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
+        {/* Menu Button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="p-2.5 hover:bg-slate-700/10 rounded-xl transition-all duration-200"
+            data-testid="mobile-menu-trigger"
+          >
+            <MoreVertical className="w-5 h-5 text-slate-700" />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showMobileMenu && (
+            <>
+              {/* Backdrop to close menu */}
+              <div
+                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+                onClick={() => setShowMobileMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 py-2 overflow-hidden">
+                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Quick Actions</p>
+                </div>
+                <button
+                  onClick={() => { navigate('/volunteer-dashboard'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium">Dashboard</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <ClipboardList className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="text-sm font-medium">My Work</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                    <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium">Log Activity</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                    <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <span className="text-sm font-medium">Calendar</span>
+                </button>
+                <div className="border-t border-slate-100 dark:border-slate-800 my-2"></div>
+                <button
+                  onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                  </div>
+                  <span className="text-sm font-medium">Settings</span>
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                    <LogOut className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-medium">Sign Out</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto pb-24">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6">
+          <h1 className="text-white text-xl font-bold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-300" />
+            Discover Opportunities
+          </h1>
+          <p className="text-blue-100 text-sm mt-1">
+            {filteredOpportunities.length} opportunities matched to you
+          </p>
+
+          {/* Search Bar */}
+          <div className="relative mt-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
               placeholder="Search opportunities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-              data-testid="input-search-opportunities"
+              className="w-full pl-10 pr-4 py-3 bg-white/95 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-white/50 outline-none shadow-lg"
             />
           </div>
-        </div>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger data-testid="select-category-filter">
-            <SelectValue placeholder="Category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {availableCategories.length > 0 ? (
-              availableCategories.map(category => (
-                <SelectItem key={category} value={category}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </SelectItem>
-              ))
-            ) : (
-              <SelectItem value="none" disabled>No categories available</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-        <Select value={locationFilter} onValueChange={setLocationFilter}>
-          <SelectTrigger data-testid="select-location-filter">
-            <SelectValue placeholder="Location" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Locations</SelectItem>
-            {opportunities.some(opp => opp.isRemote) && (
-              <SelectItem value="remote">Remote Only</SelectItem>
-            )}
-            {availableLocations.length > 0 ? (
-              availableLocations.map(location => (
-                <SelectItem key={location} value={location}>
-                  {location}
-                </SelectItem>
-              ))
-            ) : (
-              <SelectItem value="none" disabled>No locations available</SelectItem>
-            )}
-          </SelectContent>
-        </Select>
-      </div>
 
-      {/* AI Recommendations Section */}
-      {opportunities.some(opp => (opp.matchScore ?? 0) >= 70) && (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <Sparkles className="w-5 h-5 mr-2 text-primary-500" />
-            Recommended for You
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {opportunities
-              .filter(opp => (opp.matchScore ?? 0) >= 70)
-              .slice(0, 3)
-              .map((opportunity) => (
-                <Card
-                  key={opportunity.id}
-                  className="hover:shadow-lg transition-shadow border-2 border-primary-200 dark:border-primary-800"
-                  data-testid={`card-recommended-${opportunity.id}`}
+          {/* Filter Toggle */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="mt-3 flex items-center gap-2 text-white/90 text-sm hover:text-white transition-colors"
+          >
+            <Filter className="w-4 h-4" />
+            <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        <div className="space-y-4 p-4 -mt-2">
+          {/* Filters */}
+          {showFilters && (
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3">
+              <h3 className="text-slate-800 font-semibold text-sm">Filters</h3>
+
+              {/* Category Filter */}
+              <div>
+                <label className="text-slate-500 text-xs mb-1 block">Category</label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 >
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2 mb-2">
+                  <option value="all">All Categories</option>
+                  {availableCategories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Location Filter */}
+              <div>
+                <label className="text-slate-500 text-xs mb-1 block">Location</label>
+                <select
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="all">All Locations</option>
+                  <option value="remote">Remote Only</option>
+                  {availableLocations.map(loc => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Top Matches */}
+          {topMatches.length > 0 && (
+            <div>
+              <h2 className="text-slate-800 text-lg font-semibold mb-3 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-blue-500" />
+                Top Matches for You
+              </h2>
+              <div className="space-y-3">
+                {topMatches.map((opp) => (
+                  <div
+                    key={opp.id}
+                    className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
+                    onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
+                  >
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{opportunity.title}</CardTitle>
-                      </div>
-                      <div className="flex flex-col gap-1 items-end">
-                        {getMatchBadge(opportunity.matchScore)}
-                        {getOpportunityStatusBadge(opportunity.id)}
-                      </div>
-                    </div>
-                    <CardDescription className="line-clamp-2">
-                      {opportunity.description}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
-                      <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-md">
-                        <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                          Why this matches:
-                        </p>
-                        <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                          {opportunity.matchReasons.slice(0, 2).map((reason, idx) => (
-                            <li key={idx}>• {reason}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    <div className="space-y-2 text-sm mb-4">
-                      {opportunity.location && (
-                        <div className="flex items-center text-gray-600 dark:text-gray-400">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          {opportunity.location}
-                          {opportunity.isRemote && (
-                            <Badge variant="outline" className="ml-2">Remote</Badge>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full font-medium">
+                            {opp.matchScore}% Match
+                          </span>
+                          {hasApplied(opp.id) && (
+                            <span className="text-xs px-2.5 py-1 bg-emerald-500 rounded-full font-medium">Applied</span>
                           )}
                         </div>
-                      )}
-                      {opportunity.timeCommitment && (
-                        <div className="flex items-center text-gray-600 dark:text-gray-400">
-                          <Clock className="w-4 h-4 mr-2" />
-                          {opportunity.timeCommitment}
-                        </div>
-                      )}
-                    </div>
-                    <Button 
-                      className="w-full" 
-                      data-testid={`button-apply-${opportunity.id}`}
-                      onClick={() => {
-                        if (!hasApplied(opportunity.id)) {
-                          setSelectedOpportunity(opportunity);
-                          setApplicationDialogOpen(true);
-                        }
-                      }}
-                      disabled={hasApplied(opportunity.id)}
-                      variant={hasApplied(opportunity.id) ? "secondary" : "default"}
-                    >
-                      {hasApplied(opportunity.id) ? "Already Applied" : "Apply Now"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
-        </div>
-      )}
-
-      {/* All Opportunities */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">
-          All Opportunities ({filteredOpportunities.length})
-        </h2>
-        {filteredOpportunities.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No opportunities found</h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Try adjusting your filters or search query
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredOpportunities.map((opportunity) => (
-              <Card
-                key={opportunity.id}
-                className="hover:shadow-lg transition-shadow overflow-hidden"
-                data-testid={`card-opportunity-${opportunity.id}`}
-              >
-                {/* Prominent Match Score Header */}
-                <div className={`px-4 py-3 ${
-                  (opportunity.matchScore ?? 0) >= 80 ? 'bg-gradient-to-r from-green-500 to-green-600' :
-                  (opportunity.matchScore ?? 0) >= 60 ? 'bg-gradient-to-r from-blue-500 to-blue-600' :
-                  (opportunity.matchScore ?? 0) >= 40 ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
-                  'bg-gradient-to-r from-gray-400 to-gray-500'
-                }`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white">
-                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                        <span className="text-lg font-bold">{opportunity.matchScore ?? 0}%</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold">AI Match Score</p>
-                        <p className="text-xs opacity-90">
-                          {(opportunity.matchScore ?? 0) >= 80 ? 'Excellent fit for you' :
-                           (opportunity.matchScore ?? 0) >= 60 ? 'Great opportunity' :
-                           (opportunity.matchScore ?? 0) >= 40 ? 'Worth exploring' :
-                           'Review details'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-1 items-end">
-                      {getOpportunityStatusBadge(opportunity.id)}
-                      {opportunity.isUrgent && (
-                        <Badge className="bg-red-600 text-white text-xs border-0">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Urgent
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <Link href={`/opportunities/${opportunity.id}`}>
-                        <CardTitle className="text-lg hover:text-primary cursor-pointer transition-colors">
-                          {opportunity.title}
-                        </CardTitle>
-                      </Link>
-                      {opportunity.organizationName && (
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 mt-1">
-                          <Building2 className="w-3.5 h-3.5 mr-1.5" />
-                          <span className="font-medium">{opportunity.organizationName}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <CardDescription className="line-clamp-2 mt-2">
-                    {opportunity.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 pt-0">
-                  {/* Basic Info */}
-                  <div className="space-y-1.5 text-sm">
-                    {opportunity.location && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{opportunity.location}</span>
-                        {opportunity.isRemote && (
-                          <Badge variant="outline" className="ml-2 text-xs">Remote</Badge>
+                        <h3 className="font-semibold text-base mt-2">{opp.title}</h3>
+                        {opp.organizationName && (
+                          <p className="text-xs text-blue-100 mt-1 flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {opp.organizationName}
+                          </p>
                         )}
                       </div>
-                    )}
-                    {opportunity.timeCommitment && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{opportunity.timeCommitment}</span>
-                        {opportunity.commitmentType && <span className="ml-1">({opportunity.commitmentType})</span>}
-                      </div>
-                    )}
-                    {opportunity.volunteersNeeded && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <Users className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{opportunity.volunteersNeeded} volunteer{opportunity.volunteersNeeded > 1 ? 's' : ''} needed</span>
-                      </div>
-                    )}
-                    {(opportunity.startDate || opportunity.endDate) && (
-                      <div className="flex items-center text-gray-600 dark:text-gray-400">
-                        <CalendarDays className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span className="text-xs">
-                          {opportunity.startDate && new Date(opportunity.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          {opportunity.startDate && opportunity.endDate && ' - '}
-                          {opportunity.endDate && new Date(opportunity.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* 2-Column Layout: AI Analysis & Details */}
-                  <div className="grid md:grid-cols-2 gap-3">
-                    {/* Column 1: AI Analysis, Requirements, Benefits */}
-                    <div className="space-y-3">
-                      {/* Match Reasons - Why this matches you */}
-                      {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
-                        <div className="p-2.5 bg-blue-50 dark:bg-blue-950 rounded-md">
-                          <p className="text-xs font-semibold text-blue-900 dark:text-blue-100 mb-1 flex items-center gap-1">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            Why this matches you
-                          </p>
-                          <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-0.5">
-                            {opportunity.matchReasons.slice(0, 3).map((reason, idx) => (
-                              <li key={idx} className="flex items-start">
-                                <span className="mr-1.5">•</span>
-                                <span>{reason}</span>
-                              </li>
-                            ))}
-                          </ul>
+                    {opp.matchReasons && opp.matchReasons.length > 0 && (
+                      <div className="my-3 text-xs bg-white/10 backdrop-blur-sm rounded-lg p-2">
+                        <p className="font-semibold mb-1 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Why this matches:
+                        </p>
+                        <p className="text-blue-100">• {opp.matchReasons[0]}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 text-xs mb-3 text-blue-100">
+                      {opp.location && (
+                        <div className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>{opp.location}</span>
                         </div>
                       )}
-
-                      {/* Requirements */}
-                      {opportunity.requirements && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Responsibilities:</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.requirements}</p>
-                        </div>
-                      )}
-
-                      {/* Benefits */}
-                      {opportunity.benefits && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">What You'll Gain:</p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{opportunity.benefits}</p>
+                      {opp.timeCommitment && (
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{opp.timeCommitment}</span>
                         </div>
                       )}
                     </div>
 
-                    {/* Column 2: SDG Goals & Skills */}
-                    <div className="space-y-3">
-                      {/* SDG Goals */}
-                      {opportunity.sdgGoals && opportunity.sdgGoals.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">SDG Goals:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {opportunity.sdgGoals.slice(0, 4).map((sdgId) => {
-                              const sdg = sdgGoals[sdgId];
-                              return sdg ? (
-                                <Badge 
-                                  key={sdgId} 
-                                  style={{ backgroundColor: sdg.color, color: '#fff' }}
-                                  className="text-xs px-2 py-0"
-                                >
-                                  SDG {sdgId}
-                                </Badge>
-                              ) : null;
-                            })}
-                            {opportunity.sdgGoals.length > 4 && (
-                              <Badge variant="outline" className="text-xs px-2 py-0">
-                                +{opportunity.sdgGoals.length - 4}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Required Skills */}
-                      {opportunity.requiredSkills && opportunity.requiredSkills.length > 0 && (
-                        <div>
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">Required Skills:</p>
-                          <div className="flex flex-wrap gap-1">
-                            {opportunity.requiredSkills.slice(0, 4).map((skill, idx) => (
-                              <Badge key={idx} variant="outline" className="text-xs px-2 py-0 truncate">
-                                {skill}
-                              </Badge>
-                            ))}
-                            {opportunity.requiredSkills.length > 4 && (
-                              <Badge variant="outline" className="text-xs px-2 py-0">
-                                +{opportunity.requiredSkills.length - 4}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Target Impact Metric */}
-                      {opportunity.impactMetricName && (
-                        <div className="p-2.5 bg-purple-50 dark:bg-purple-950 rounded-md">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Target className="w-3.5 h-3.5 text-purple-700 dark:text-purple-300" />
-                            <p className="text-xs font-semibold text-purple-900 dark:text-purple-100">
-                              Target Impact
-                            </p>
-                          </div>
-                          <p className="text-xs text-purple-800 dark:text-purple-200">
-                            {opportunity.impactMetricName}
-                            {opportunity.impactMetricUnit && ` (${opportunity.impactMetricUnit})`}
-                          </p>
-                        </div>
-                      )}
-                    </div>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApply(opp.id);
+                      }}
+                      disabled={hasApplied(opp.id) || applyingToId === opp.id}
+                      className="w-full bg-white text-blue-700 hover:bg-blue-50 font-semibold rounded-xl"
+                    >
+                      {hasApplied(opp.id) ? "Already Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
+                    </Button>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-                  {/* Category and Engagement Type */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {opportunity.category && (
-                      <Badge variant="secondary" className="text-xs">{opportunity.category}</Badge>
-                    )}
-                    {opportunity.engagementType && (
-                      <Badge variant="outline" className="text-xs capitalize">{opportunity.engagementType}</Badge>
-                    )}
-                  </div>
+          {/* All Opportunities */}
+          <div>
+            <h2 className="text-slate-800 text-lg font-semibold mb-3">
+              All Opportunities ({filteredOpportunities.length})
+            </h2>
 
-                  {/* AI Match Analysis - Always Visible */}
-                  {opportunity.matchBreakdown && (
-                    <div className="p-3 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-blue-950 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Sparkles className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">AI Match Analysis</span>
-                        {(opportunity.matchBreakdown.engagementBoost ?? 0) > 0 && (
-                          <Badge variant="outline" className="ml-auto text-xs bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">
-                            +{Math.round(opportunity.matchBreakdown.engagementBoost ?? 0)} Engagement Boost
+            {filteredOpportunities.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm">
+                <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                <p className="text-slate-600 font-medium">No opportunities found</p>
+                <p className="text-slate-400 text-sm mt-1">Try adjusting your filters</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredOpportunities.map((opp) => {
+                  const matchScore = opp.matchScore ?? 0;
+                  const matchGradient = matchScore >= 80 ? 'from-emerald-500 to-teal-500' :
+                                    matchScore >= 60 ? 'from-blue-500 to-indigo-500' :
+                                    matchScore >= 40 ? 'from-amber-500 to-orange-500' : 'from-slate-400 to-slate-500';
+
+                  return (
+                    <div
+                      key={opp.id}
+                      className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                      onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
+                    >
+                      {/* Match Score Header */}
+                      <div className={`bg-gradient-to-r ${matchGradient} px-4 py-3 flex items-center justify-between`}>
+                        <div className="flex items-center gap-3 text-white">
+                          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <span className="text-base font-bold">{matchScore}%</span>
+                          </div>
+                          <div>
+                            <span className="text-sm font-semibold block">
+                              {matchScore >= 80 ? 'Excellent Match' :
+                               matchScore >= 60 ? 'Good Match' :
+                               matchScore >= 40 ? 'Fair Match' : 'Explore'}
+                            </span>
+                            <span className="text-xs text-white/80">Compatibility Score</span>
+                          </div>
+                        </div>
+                        {hasApplied(opp.id) && (
+                          <Badge className="bg-white/20 text-white text-xs border-0 rounded-full px-3">
+                            Applied
                           </Badge>
                         )}
                       </div>
-                      
-                      {/* KPI Grid - 2 columns */}
-                      <div className="grid grid-cols-2 gap-2">
-                        {/* Skills - 35% weight */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                              <Target className="w-3 h-3" />Skills
-                            </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.skillMatch ?? 0)}`}>
-                              {Math.round(opportunity.matchBreakdown.skillMatch ?? 0)}%
-                            </span>
+
+                      <div className="p-4">
+                        {/* Title & Organization */}
+                        <h3 className="text-slate-800 font-semibold text-base mb-1">
+                          {opp.title}
+                        </h3>
+                        {opp.organizationName && (
+                          <div className="flex items-center gap-1 text-slate-500 text-xs mb-2">
+                            <Building2 className="w-3 h-3" />
+                            <span>{opp.organizationName}</span>
                           </div>
-                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.skillMatch ?? 0)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.skillMatch ?? 0}%` }}
-                            />
+                        )}
+
+                        {/* Description */}
+                        {opp.description && (
+                          <p className="text-slate-600 text-sm line-clamp-2 mb-3">
+                            {opp.description}
+                          </p>
+                        )}
+
+                        {/* SDG Goals */}
+                        {opp.sdgGoals && opp.sdgGoals.length > 0 && (
+                          <div className="flex gap-1.5 mb-3">
+                            {opp.sdgGoals.slice(0, 4).map((sdg) => (
+                              <div
+                                key={sdg}
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
+                                style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
+                              >
+                                {sdg}
+                              </div>
+                            ))}
+                            {opp.sdgGoals.length > 4 && (
+                              <div className="w-7 h-7 rounded-lg bg-slate-500 flex items-center justify-center text-white text-[10px] shadow-sm">
+                                +{opp.sdgGoals.length - 4}
+                              </div>
+                            )}
                           </div>
+                        )}
+
+                        {/* Match Reasons */}
+                        {opp.matchReasons && opp.matchReasons.length > 0 && (
+                          <div className="bg-blue-50 rounded-xl p-3 mb-3">
+                            <p className="text-blue-700 text-xs font-semibold mb-1 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Why this matches you
+                            </p>
+                            <p className="text-blue-600 text-xs">• {opp.matchReasons[0]}</p>
+                          </div>
+                        )}
+
+                        {/* Meta Info */}
+                        <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-3">
+                          {opp.location && (
+                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
+                              <MapPin className="w-3 h-3" />
+                              <span>{opp.location}</span>
+                            </div>
+                          )}
+                          {opp.timeCommitment && (
+                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
+                              <Clock className="w-3 h-3" />
+                              <span>{opp.timeCommitment}</span>
+                            </div>
+                          )}
+                          {opp.volunteersNeeded && (
+                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
+                              <Users className="w-3 h-3" />
+                              <span>{opp.volunteersNeeded} needed</span>
+                            </div>
+                          )}
                         </div>
 
-                        {/* SDG - 20% weight */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                              🎯 SDG
-                            </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.sdgMatch ?? 0)}`}>
-                              {Math.round(opportunity.matchBreakdown.sdgMatch ?? 0)}%
-                            </span>
+                        {/* Skills */}
+                        {opp.requiredSkills && opp.requiredSkills.length > 0 && (
+                          <div className="mb-3">
+                            <p className="text-slate-500 text-xs mb-1.5 font-medium">Required Skills:</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {opp.requiredSkills.slice(0, 3).map((skill, idx) => (
+                                <span key={idx} className="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-medium">
+                                  {skill}
+                                </span>
+                              ))}
+                              {opp.requiredSkills.length > 3 && (
+                                <span className="text-xs px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg">
+                                  +{opp.requiredSkills.length - 3}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.sdgMatch ?? 0)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.sdgMatch ?? 0}%` }}
-                            />
-                          </div>
-                        </div>
+                        )}
 
-                        {/* Availability - 20% weight */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                              <Clock className="w-3 h-3" />Time Fit
-                            </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.availabilityMatch ?? 0)}`}>
-                              {Math.round(opportunity.matchBreakdown.availabilityMatch ?? 0)}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.availabilityMatch ?? 0)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.availabilityMatch ?? 0}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Location - 10% weight */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />Location
-                            </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.locationMatch ?? 0)}`}>
-                              {Math.round(opportunity.matchBreakdown.locationMatch ?? 0)}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.locationMatch ?? 0)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.locationMatch ?? 0}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Interests - 10% weight */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                              <Lightbulb className="w-3 h-3" />Interests
-                            </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.interestMatch ?? 0)}`}>
-                              {Math.round(opportunity.matchBreakdown.interestMatch ?? 0)}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.interestMatch ?? 0)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.interestMatch ?? 0}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Experience - 5% weight */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400 flex items-center gap-1">
-                              <TrendingUp className="w-3 h-3" />Experience
-                            </span>
-                            <span className={`font-bold ${getMatchScoreColor(opportunity.matchBreakdown.experienceMatch ?? 0)}`}>
-                              {Math.round(opportunity.matchBreakdown.experienceMatch ?? 0)}%
-                            </span>
-                          </div>
-                          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full ${getProgressColor(opportunity.matchBreakdown.experienceMatch ?? 0)} transition-all duration-500`}
-                              style={{ width: `${opportunity.matchBreakdown.experienceMatch ?? 0}%` }}
-                            />
-                          </div>
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/opportunities/${opp.id}/pwa`);
+                            }}
+                            variant="outline"
+                            className="flex-1 rounded-xl border-slate-200"
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApply(opp.id);
+                            }}
+                            disabled={hasApplied(opp.id) || applyingToId === opp.id}
+                            className={`flex-1 rounded-xl ${hasApplied(opp.id) ? 'bg-slate-400' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white font-semibold`}
+                          >
+                            {hasApplied(opp.id) ? "Applied" : applyingToId === opp.id ? "Applying..." : "Apply Now"}
+                          </Button>
                         </div>
                       </div>
-
-                      {/* Match Reasons */}
-                      {opportunity.matchReasons && opportunity.matchReasons.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
-                          <p className="text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3 text-green-500" />
-                            Why this matches you
-                          </p>
-                          <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-0.5">
-                            {opportunity.matchReasons.slice(0, 3).map((reason, idx) => (
-                              <li key={idx} className="flex items-start">
-                                <span className="mr-1.5 text-green-500">✓</span>
-                                <span>{reason}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="pt-2">
-                    <Button 
-                      className="w-full" 
-                      data-testid={`button-view-${opportunity.id}`}
-                      onClick={() => {
-                        if (!hasApplied(opportunity.id)) {
-                          setSelectedOpportunity(opportunity);
-                          setApplicationDialogOpen(true);
-                        }
-                      }}
-                      disabled={hasApplied(opportunity.id)}
-                      variant={hasApplied(opportunity.id) ? "secondary" : "default"}
-                    >
-                      {hasApplied(opportunity.id) ? "Already Applied" : "Apply Now"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      </main>
 
-      {/* Application Dialog */}
-      {selectedOpportunity && (
-        <ApplicationDialog
-          opportunity={selectedOpportunity}
-          open={applicationDialogOpen}
-          onOpenChange={setApplicationDialogOpen}
-        />
-      )}
+      {/* Bottom Navigation Bar - Matching mobile PWA view */}
+      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
+        <div className="flex justify-around items-center">
+          <button
+            onClick={() => navigate('/volunteer-dashboard')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-home"
+          >
+            <Home className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Home</span>
+          </button>
+          <button
+            onClick={() => navigate('/volunteer-dashboard?tab=projects')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-projects"
+          >
+            <Briefcase className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Projects</span>
+          </button>
+          <button
+            onClick={() => navigate('/discover-opportunities')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-blue-600 bg-blue-50"
+            data-testid="nav-discover"
+          >
+            <Sparkles className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Discover</span>
+          </button>
+          <button
+            onClick={() => navigate('/volunteer-dashboard?tab=impacts')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-impacts"
+          >
+            <BarChart3 className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Impacts</span>
+          </button>
+          <button
+            onClick={() => navigate('/volunteer-dashboard?tab=profile')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-profile"
+          >
+            <User className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </button>
+        </div>
+      </nav>
     </div>
   );
 }

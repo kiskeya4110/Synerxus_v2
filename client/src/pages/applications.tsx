@@ -10,11 +10,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Target, Calendar } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, User, Briefcase, MapPin, Mail, Star, Target, Calendar, Brain } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
 import Footer from "@/components/layout/footer";
+import VolunteerInsightsPanel from "@/components/applications/volunteer-insights-panel";
 
 interface Application {
   id: number;
@@ -40,6 +41,7 @@ export default function ApplicationsPage() {
   const [selectedVolunteerId, setSelectedVolunteerId] = useState<number | null>(null);
   const [profileApplication, setProfileApplication] = useState<Application | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
+  const [showAiInsights, setShowAiInsights] = useState(false);
   const { toast } = useToast();
 
   // Get current user ID and type
@@ -254,6 +256,7 @@ export default function ApplicationsPage() {
     setProfileDialogOpen(false);
     setSelectedVolunteerId(null);
     setProfileApplication(null);
+    setShowAiInsights(false);
   };
 
   const getStatusBadge = (status: string) => {
@@ -583,13 +586,39 @@ export default function ApplicationsPage() {
                 )}
               </div>
 
-              {/* AI Match Analysis */}
+              {/* AI Insights Toggle */}
               {profileApplication && (
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                    <Target className="w-5 h-5 text-primary" />
-                    AI Match Analysis
-                  </h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-lg flex items-center gap-2">
+                      {showAiInsights ? (
+                        <>
+                          <Brain className="w-5 h-5 text-purple-500" />
+                          AI Background Insights
+                        </>
+                      ) : (
+                        <>
+                          <Target className="w-5 h-5 text-primary" />
+                          AI Match Analysis
+                        </>
+                      )}
+                    </h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAiInsights(!showAiInsights)}
+                      className={showAiInsights ? "bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100" : ""}
+                    >
+                      <Brain className="w-4 h-4 mr-2" />
+                      {showAiInsights ? "View Match Scores" : "View Deep Insights"}
+                    </Button>
+                  </div>
+
+                  {showAiInsights ? (
+                    <VolunteerInsightsPanel applicationId={profileApplication.id} />
+                  ) : (
+                    <>
+                      {/* Original AI Match Analysis content */}
                   {matchAnalysis ? (
                     <>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -637,6 +666,8 @@ export default function ApplicationsPage() {
                       <p className="text-sm text-muted-foreground">Loading match analysis...</p>
                     </div>
                   )}
+                  </>
+                )}
                 </div>
               )}
 

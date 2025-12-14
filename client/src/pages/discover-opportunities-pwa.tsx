@@ -66,76 +66,45 @@ export default function DiscoverOpportunitiesPWA() {
   const [selectedOpportunity, setSelectedOpportunity] = useState<EnrichedOpportunity | null>(null);
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [hasTimedOut, setHasTimedOut] = useState(false);
 
   const userId = localStorage.getItem('currentUserId');
 
-  // Immediately reset timeout when component mounts or userId changes
+  // Scroll to top on page load
   useEffect(() => {
-    setHasTimedOut(false);
-    
-    const timeoutId = setTimeout(() => {
-      setHasTimedOut(true);
-    }, 8000); // 8 second timeout
-
-    return () => clearTimeout(timeoutId);
+    window.scrollTo(0, 0);
   }, []);
 
-  // Fetch opportunities with error handling
-  const { data: opportunities = [], isLoading, isError, error, refetch: refetchOpportunities } = useQuery<EnrichedOpportunity[]>({
+  // Fetch opportunities - using React Query's built-in retry and caching
+  const { data: opportunities = [], isLoading, isError, refetch: refetchOpportunities } = useQuery<EnrichedOpportunity[]>({
     queryKey: [`/api/opportunities/discover`, userId],
     queryFn: async () => {
       if (!userId) return [];
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
-        
-        const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`, {
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch opportunities: ${response.status}`);
-        }
-        return response.json();
-      } catch (err) {
-        console.error('Opportunities fetch error:', err);
-        throw err;
+      const response = await fetch(`/api/opportunities/discover?userId=${userId}&threshold=0`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch opportunities: ${response.status}`);
       }
+      return response.json();
     },
     enabled: !!userId,
-    retry: 1,
+    retry: 2, // Retry twice on failure
+    retryDelay: 1000, // Wait 1 second between retries
     staleTime: 60000, // Cache for 60 seconds
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
-  // Fetch opportunity status with error handling
+  // Fetch opportunity status
   const { data: opportunityStatus = { savedIds: [], rejectedIds: [], appliedIds: [] }, refetch: refetchStatus } = useQuery<OpportunityStatus>({
     queryKey: ["/api/opportunities/status", userId],
     queryFn: async () => {
       if (!userId) return { savedIds: [], rejectedIds: [], appliedIds: [] };
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 7000);
-        
-        const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`, {
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          console.warn("Failed to fetch opportunity status, continuing with empty status");
-          return { savedIds: [], rejectedIds: [], appliedIds: [] };
-        }
-        return response.json();
-      } catch (err) {
-        console.warn('Status fetch error:', err);
+      const response = await fetch(`/api/opportunities/status?volunteerId=${userId}`);
+      if (!response.ok) {
         return { savedIds: [], rejectedIds: [], appliedIds: [] };
       }
+      return response.json();
     },
     enabled: !!userId,
-    retry: 0, // No retries for status
+    retry: 1,
     staleTime: 60000,
     gcTime: 5 * 60 * 1000,
   });
@@ -189,9 +158,9 @@ export default function DiscoverOpportunitiesPWA() {
   };
 
   // Show loading state
-  if (isLoading && !hasTimedOut) {
+  if (isLoading) {
     return (
-      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
+      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
         <div className="text-slate-800 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
           <p>Loading opportunities...</p>
@@ -200,34 +169,29 @@ export default function DiscoverOpportunitiesPWA() {
     );
   }
 
-  // Show error state or timeout recovery with retry option
-  if (isError || hasTimedOut) {
+  // Show error state with retry option
+  if (isError) {
     return (
-      <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
+      <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
         <div className="text-slate-800 text-center p-6">
-          <div className="w-16 h-16 mx-auto mb-4 text-red-500">
+          <div className="w-16 h-16 mx-auto mb-4 text-amber-500">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
             </svg>
           </div>
-          <p className="text-lg font-semibold mb-2">{hasTimedOut ? 'Loading took too long' : 'Failed to load opportunities'}</p>
+          <p className="text-lg font-semibold mb-2">Unable to load opportunities</p>
           <p className="text-sm text-slate-500 mb-4">
-            {hasTimedOut 
-              ? 'The page is taking longer than expected. Please retry.' 
-              : error instanceof Error 
-                ? error.message 
-                : 'Please try again'}
+            Please check your connection and try again.
           </p>
           <div className="flex gap-2 justify-center">
-            <Button 
+            <Button
               onClick={() => {
-                setHasTimedOut(false);
                 refetchOpportunities();
                 refetchStatus();
-              }} 
+              }}
               className="bg-emerald-500 hover:bg-emerald-600"
             >
-              Retry Now
+              Try Again
             </Button>
             <Button onClick={() => navigate('/volunteer-dashboard')} variant="outline">
               Go to Dashboard
@@ -239,110 +203,143 @@ export default function DiscoverOpportunitiesPWA() {
   }
 
   return (
-    <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
-      {/* Top App Bar - Light blue to gold gradient */}
-      <header className="bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+    <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto overflow-hidden">
+      {/* Top App Bar - Light blue to gold gradient (matching mobile PWA view) */}
+      <header className="bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-xl">
         <button
           onClick={() => navigate("/landing")}
-          className="flex items-center hover:opacity-90 transition-opacity"
+          className="flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
-          <img src={logoUrl} alt="Synerxus Logo" className="h-8 w-auto object-contain" />
+          <img src={logoUrl} alt="Synerxus Logo" className="h-9 w-auto object-contain" />
         </button>
-        {/* Three-Dot Menu */}
-        <div className="relative">
-            <button
-              onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-2 hover:bg-slate-700/20 rounded-full transition-colors"
-              data-testid="mobile-menu-trigger"
-            >
-              <MoreVertical className="w-5 h-5 text-slate-700" />
-            </button>
 
-            {/* Dropdown Menu */}
-            {showMobileMenu && (
-              <>
-                {/* Backdrop to close menu */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowMobileMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-1 w-48 bg-[#1a1a2e] border border-gray-700 rounded-lg shadow-xl z-50 py-1 overflow-hidden">
-                  <button
-                    onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <ClipboardList className="w-4 h-4 text-purple-400" />
-                    <span className="text-sm">My Work</span>
-                  </button>
-                  <button
-                    onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    <span className="text-sm">Log Activity</span>
-                  </button>
-                  <button
-                    onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <Calendar className="w-4 h-4 text-green-400" />
-                    <span className="text-sm">Calendar</span>
-                  </button>
-                  <div className="border-t border-gray-700 my-1"></div>
-                  <button
-                    onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-200 hover:bg-white/10 transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">Settings</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      localStorage.removeItem('currentUserId');
-                      localStorage.removeItem('userType');
-                      navigate('/login');
-                      setShowMobileMenu(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span className="text-sm">Logout</span>
-                  </button>
+        {/* Menu Button */}
+        <div className="relative">
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="p-2.5 hover:bg-slate-700/10 rounded-xl transition-all duration-200"
+            data-testid="mobile-menu-trigger"
+          >
+            <MoreVertical className="w-5 h-5 text-slate-700" />
+          </button>
+
+          {/* Dropdown Menu */}
+          {showMobileMenu && (
+            <>
+              {/* Backdrop to close menu */}
+              <div
+                className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm"
+                onClick={() => setShowMobileMenu(false)}
+              />
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-50 py-2 overflow-hidden">
+                <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Quick Actions</p>
                 </div>
-              </>
-            )}
-          </div>
+                <button
+                  onClick={() => { navigate('/volunteer-dashboard'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <Home className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium">Dashboard</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/my-work'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <ClipboardList className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <span className="text-sm font-medium">My Work</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/log-activity'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                    <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span className="text-sm font-medium">Log Activity</span>
+                </button>
+                <button
+                  onClick={() => { navigate('/calendar'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                    <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <span className="text-sm font-medium">Calendar</span>
+                </button>
+                <div className="border-t border-slate-100 dark:border-slate-800 my-2"></div>
+                <button
+                  onClick={() => { navigate('/volunteer-profile-settings'); setShowMobileMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                    <Settings className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                  </div>
+                  <span className="text-sm font-medium">Settings</span>
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('currentUserId');
+                    localStorage.removeItem('userType');
+                    navigate('/login');
+                    setShowMobileMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  <div className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                    <LogOut className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-medium">Sign Out</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
-        <div className="space-y-4 p-4">
-          {/* Header */}
-          <div>
-            <h1 className="text-slate-800 text-2xl font-bold flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-amber-500" />
-              Discover Opportunities
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">
-              {filteredOpportunities.length} opportunities matched to you
-            </p>
-          </div>
+      <main className="flex-1 overflow-y-auto pb-24">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6">
+          <h1 className="text-white text-xl font-bold flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-300" />
+            Discover Opportunities
+          </h1>
+          <p className="text-blue-100 text-sm mt-1">
+            {filteredOpportunities.length} opportunities matched to you
+          </p>
 
           {/* Search Bar */}
-          <div className="relative">
+          <div className="relative mt-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
               placeholder="Search opportunities..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-amber-200/60 rounded-lg text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none shadow-sm"
+              className="w-full pl-10 pr-4 py-3 bg-white/95 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-white/50 outline-none shadow-lg"
             />
           </div>
 
+          {/* Filter Toggle */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="mt-3 flex items-center gap-2 text-white/90 text-sm hover:text-white transition-colors"
+          >
+            <Filter className="w-4 h-4" />
+            <span>{showFilters ? 'Hide Filters' : 'Show Filters'}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
+        <div className="space-y-4 p-4 -mt-2">
           {/* Filters */}
           {showFilters && (
-            <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm space-y-3">
+            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3">
               <h3 className="text-slate-800 font-semibold text-sm">Filters</h3>
 
               {/* Category Filter */}
@@ -351,7 +348,7 @@ export default function DiscoverOpportunitiesPWA() {
                 <select
                   value={categoryFilter}
                   onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-amber-50/50 border border-amber-200/60 rounded-lg text-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="all">All Categories</option>
                   {availableCategories.map(cat => (
@@ -366,7 +363,7 @@ export default function DiscoverOpportunitiesPWA() {
                 <select
                   value={locationFilter}
                   onChange={(e) => setLocationFilter(e.target.value)}
-                  className="w-full px-3 py-2 bg-amber-50/50 border border-amber-200/60 rounded-lg text-slate-800 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                 >
                   <option value="all">All Locations</option>
                   <option value="remote">Remote Only</option>
@@ -382,40 +379,47 @@ export default function DiscoverOpportunitiesPWA() {
           {topMatches.length > 0 && (
             <div>
               <h2 className="text-slate-800 text-lg font-semibold mb-3 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-500" />
+                <Sparkles className="w-5 h-5 text-blue-500" />
                 Top Matches for You
               </h2>
               <div className="space-y-3">
                 {topMatches.map((opp) => (
                   <div
                     key={opp.id}
-                    className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl p-4 text-white"
+                    className="bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl p-4 text-white shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
+                    onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
                   >
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs px-2 py-0.5 bg-white/20 rounded">
+                          <span className="text-xs px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-full font-medium">
                             {opp.matchScore}% Match
                           </span>
                           {hasApplied(opp.id) && (
-                            <span className="text-xs px-2 py-0.5 bg-green-500 rounded">Applied</span>
+                            <span className="text-xs px-2.5 py-1 bg-emerald-500 rounded-full font-medium">Applied</span>
                           )}
                         </div>
-                        <h3 className="font-semibold text-base">{opp.title}</h3>
+                        <h3 className="font-semibold text-base mt-2">{opp.title}</h3>
                         {opp.organizationName && (
-                          <p className="text-xs opacity-90 mt-1">{opp.organizationName}</p>
+                          <p className="text-xs text-blue-100 mt-1 flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            {opp.organizationName}
+                          </p>
                         )}
                       </div>
                     </div>
 
                     {opp.matchReasons && opp.matchReasons.length > 0 && (
-                      <div className="my-3 text-xs opacity-90">
-                        <p className="font-semibold mb-1">Why this matches:</p>
-                        <p>• {opp.matchReasons[0]}</p>
+                      <div className="my-3 text-xs bg-white/10 backdrop-blur-sm rounded-lg p-2">
+                        <p className="font-semibold mb-1 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Why this matches:
+                        </p>
+                        <p className="text-blue-100">• {opp.matchReasons[0]}</p>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3 text-xs mb-3">
+                    <div className="flex items-center gap-3 text-xs mb-3 text-blue-100">
                       {opp.location && (
                         <div className="flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
@@ -431,16 +435,17 @@ export default function DiscoverOpportunitiesPWA() {
                     </div>
 
                     <Button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (!hasApplied(opp.id)) {
                           setSelectedOpportunity(opp);
                           setApplicationDialogOpen(true);
                         }
                       }}
                       disabled={hasApplied(opp.id)}
-                      className="w-full bg-white text-emerald-700 hover:bg-gray-100 font-semibold"
+                      className="w-full bg-white text-blue-700 hover:bg-blue-50 font-semibold rounded-xl"
                     >
-                      {hasApplied(opp.id) ? "Already Applied" : "Apply Now"}
+                      {hasApplied(opp.id) ? "✓ Already Applied" : "Apply Now"}
                     </Button>
                   </div>
                 ))}
@@ -455,39 +460,43 @@ export default function DiscoverOpportunitiesPWA() {
             </h2>
 
             {filteredOpportunities.length === 0 ? (
-              <div className="bg-white rounded-xl p-8 text-center border border-amber-200/60 shadow-sm">
-                <Search className="w-12 h-12 mx-auto text-slate-400 mb-3" />
-                <p className="text-slate-600">No opportunities found</p>
-                <p className="text-slate-500 text-sm mt-1">Try adjusting your filters</p>
+              <div className="bg-white rounded-2xl p-8 text-center border border-slate-100 shadow-sm">
+                <Search className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                <p className="text-slate-600 font-medium">No opportunities found</p>
+                <p className="text-slate-400 text-sm mt-1">Try adjusting your filters</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {filteredOpportunities.map((opp) => {
                   const matchScore = opp.matchScore ?? 0;
-                  const matchColor = matchScore >= 80 ? 'bg-emerald-500' :
-                                    matchScore >= 60 ? 'bg-blue-500' :
-                                    matchScore >= 40 ? 'bg-amber-500' : 'bg-gray-500';
+                  const matchGradient = matchScore >= 80 ? 'from-emerald-500 to-teal-500' :
+                                    matchScore >= 60 ? 'from-blue-500 to-indigo-500' :
+                                    matchScore >= 40 ? 'from-amber-500 to-orange-500' : 'from-slate-400 to-slate-500';
 
                   return (
                     <div
                       key={opp.id}
-                      className="bg-white rounded-xl border border-amber-200/60 overflow-hidden hover:border-amber-300 shadow-sm transition-all"
+                      className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                      onClick={() => navigate(`/opportunities/${opp.id}/pwa`)}
                     >
                       {/* Match Score Header */}
-                      <div className={`${matchColor} px-4 py-2 flex items-center justify-between`}>
-                        <div className="flex items-center gap-2 text-white">
-                          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                            <span className="text-sm font-bold">{matchScore}%</span>
+                      <div className={`bg-gradient-to-r ${matchGradient} px-4 py-3 flex items-center justify-between`}>
+                        <div className="flex items-center gap-3 text-white">
+                          <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                            <span className="text-base font-bold">{matchScore}%</span>
                           </div>
-                          <span className="text-xs font-medium">
-                            {matchScore >= 80 ? 'Excellent Match' :
-                             matchScore >= 60 ? 'Good Match' :
-                             matchScore >= 40 ? 'Fair Match' : 'Low Match'}
-                          </span>
+                          <div>
+                            <span className="text-sm font-semibold block">
+                              {matchScore >= 80 ? 'Excellent Match' :
+                               matchScore >= 60 ? 'Good Match' :
+                               matchScore >= 40 ? 'Fair Match' : 'Explore'}
+                            </span>
+                            <span className="text-xs text-white/80">Compatibility Score</span>
+                          </div>
                         </div>
                         {hasApplied(opp.id) && (
-                          <Badge className="bg-white/20 text-white text-xs border-0">
-                            Applied
+                          <Badge className="bg-white/20 text-white text-xs border-0 rounded-full px-3">
+                            ✓ Applied
                           </Badge>
                         )}
                       </div>
@@ -513,18 +522,18 @@ export default function DiscoverOpportunitiesPWA() {
 
                         {/* SDG Goals */}
                         {opp.sdgGoals && opp.sdgGoals.length > 0 && (
-                          <div className="flex gap-1 mb-3">
+                          <div className="flex gap-1.5 mb-3">
                             {opp.sdgGoals.slice(0, 4).map((sdg) => (
                               <div
                                 key={sdg}
-                                className="w-6 h-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
+                                className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
                                 style={{ backgroundColor: SDG_COLORS[sdg] || '#6B7280' }}
                               >
                                 {sdg}
                               </div>
                             ))}
                             {opp.sdgGoals.length > 4 && (
-                              <div className="w-6 h-6 rounded-full bg-gray-600 flex items-center justify-center text-white text-[10px]">
+                              <div className="w-7 h-7 rounded-lg bg-slate-500 flex items-center justify-center text-white text-[10px] shadow-sm">
                                 +{opp.sdgGoals.length - 4}
                               </div>
                             )}
@@ -533,31 +542,31 @@ export default function DiscoverOpportunitiesPWA() {
 
                         {/* Match Reasons */}
                         {opp.matchReasons && opp.matchReasons.length > 0 && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-3">
-                            <p className="text-blue-600 text-xs font-semibold mb-1 flex items-center gap-1">
+                          <div className="bg-blue-50 rounded-xl p-3 mb-3">
+                            <p className="text-blue-700 text-xs font-semibold mb-1 flex items-center gap-1">
                               <CheckCircle className="w-3 h-3" />
                               Why this matches you
                             </p>
-                            <p className="text-blue-500 text-xs">• {opp.matchReasons[0]}</p>
+                            <p className="text-blue-600 text-xs">• {opp.matchReasons[0]}</p>
                           </div>
                         )}
 
                         {/* Meta Info */}
-                        <div className="flex flex-wrap gap-3 text-xs text-slate-500 mb-3">
+                        <div className="flex flex-wrap gap-2 text-xs text-slate-500 mb-3">
                           {opp.location && (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
                               <MapPin className="w-3 h-3" />
                               <span>{opp.location}</span>
                             </div>
                           )}
                           {opp.timeCommitment && (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
                               <Clock className="w-3 h-3" />
                               <span>{opp.timeCommitment}</span>
                             </div>
                           )}
                           {opp.volunteersNeeded && (
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded-lg">
                               <Users className="w-3 h-3" />
                               <span>{opp.volunteersNeeded} needed</span>
                             </div>
@@ -567,15 +576,15 @@ export default function DiscoverOpportunitiesPWA() {
                         {/* Skills */}
                         {opp.requiredSkills && opp.requiredSkills.length > 0 && (
                           <div className="mb-3">
-                            <p className="text-slate-500 text-xs mb-1">Required Skills:</p>
-                            <div className="flex flex-wrap gap-1">
+                            <p className="text-slate-500 text-xs mb-1.5 font-medium">Required Skills:</p>
+                            <div className="flex flex-wrap gap-1.5">
                               {opp.requiredSkills.slice(0, 3).map((skill, idx) => (
-                                <span key={idx} className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded">
+                                <span key={idx} className="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-medium">
                                   {skill}
                                 </span>
                               ))}
                               {opp.requiredSkills.length > 3 && (
-                                <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded">
+                                <span className="text-xs px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg">
                                   +{opp.requiredSkills.length - 3}
                                 </span>
                               )}
@@ -583,19 +592,32 @@ export default function DiscoverOpportunitiesPWA() {
                           </div>
                         )}
 
-                        {/* Apply Button */}
-                        <Button
-                          onClick={() => {
-                            if (!hasApplied(opp.id)) {
-                              setSelectedOpportunity(opp);
-                              setApplicationDialogOpen(true);
-                            }
-                          }}
-                          disabled={hasApplied(opp.id)}
-                          className={`w-full ${hasApplied(opp.id) ? 'bg-gray-600' : 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'} text-white font-semibold`}
-                        >
-                          {hasApplied(opp.id) ? "Already Applied" : "Apply Now"}
-                        </Button>
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/opportunities/${opp.id}/pwa`);
+                            }}
+                            variant="outline"
+                            className="flex-1 rounded-xl border-slate-200"
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!hasApplied(opp.id)) {
+                                setSelectedOpportunity(opp);
+                                setApplicationDialogOpen(true);
+                              }
+                            }}
+                            disabled={hasApplied(opp.id)}
+                            className={`flex-1 rounded-xl ${hasApplied(opp.id) ? 'bg-slate-400' : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'} text-white font-semibold`}
+                          >
+                            {hasApplied(opp.id) ? "✓ Applied" : "Apply Now"}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   );
@@ -615,48 +637,50 @@ export default function DiscoverOpportunitiesPWA() {
         />
       )}
 
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white border-t border-amber-200/60 z-40 flex justify-around items-center h-20 shadow-lg">
-        <button
-          onClick={() => navigate('/volunteer-dashboard')}
-          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
-          data-testid="nav-home"
-        >
-          <Home className="w-6 h-6" />
-          <span className="text-xs font-medium">Home</span>
-        </button>
-        <button
-          onClick={() => navigate('/volunteer-dashboard?tab=projects')}
-          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
-          data-testid="nav-projects"
-        >
-          <Briefcase className="w-6 h-6" />
-          <span className="text-xs font-medium">Projects</span>
-        </button>
-        <button
-          onClick={() => navigate('/discover-opportunities/pwa')}
-          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-blue-600"
-          data-testid="nav-discover"
-        >
-          <Sparkles className="w-6 h-6" />
-          <span className="text-xs font-medium">Discover</span>
-        </button>
-        <button
-          onClick={() => navigate('/volunteer-dashboard?tab=impacts')}
-          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
-          data-testid="nav-impacts"
-        >
-          <BarChart3 className="w-6 h-6" />
-          <span className="text-xs font-medium">Impacts</span>
-        </button>
-        <button
-          onClick={() => navigate('/volunteer-dashboard?tab=profile')}
-          className="flex flex-col items-center justify-center w-full h-full gap-1 transition-colors text-slate-600 hover:text-blue-600"
-          data-testid="nav-profile"
-        >
-          <User className="w-6 h-6" />
-          <span className="text-xs font-medium">Profile</span>
-        </button>
+      {/* Bottom Navigation Bar - Matching mobile PWA view */}
+      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
+        <div className="flex justify-around items-center">
+          <button
+            onClick={() => navigate('/volunteer-dashboard')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-home"
+          >
+            <Home className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Home</span>
+          </button>
+          <button
+            onClick={() => navigate('/volunteer-dashboard?tab=projects')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-projects"
+          >
+            <Briefcase className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Projects</span>
+          </button>
+          <button
+            onClick={() => navigate('/discover-opportunities/pwa')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-blue-600 bg-blue-50"
+            data-testid="nav-discover"
+          >
+            <Sparkles className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Discover</span>
+          </button>
+          <button
+            onClick={() => navigate('/volunteer-dashboard?tab=impacts')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-impacts"
+          >
+            <BarChart3 className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Impacts</span>
+          </button>
+          <button
+            onClick={() => navigate('/volunteer-dashboard?tab=profile')}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+            data-testid="nav-profile"
+          >
+            <User className="w-5 h-5 mb-0.5" />
+            <span className="text-[10px] font-medium">Profile</span>
+          </button>
+        </div>
       </nav>
     </div>
   );

@@ -288,6 +288,148 @@ export const SKILL_MAP: Record<string, string[]> = {
     'interpreter', 'translation', 'language specialist', 'linguist',
     'translation services', 'language services', 'language professional',
     'translation professional', 'multilingual specialist', 'localization specialist'
+  ],
+
+  // ============ SOFT SKILLS (TRANSFERABLE) ============
+  'communication': [
+    'communicator', 'verbal communication', 'written communication', 'public speaking',
+    'presentation skills', 'interpersonal communication', 'communication skills',
+    'effective communication', 'articulate', 'eloquent'
+  ],
+  'teamwork': [
+    'team player', 'collaboration', 'collaborative', 'cooperative', 'team work',
+    'team collaboration', 'group work', 'working with others', 'team building'
+  ],
+  'leadership': [
+    'leader', 'leading', 'team leadership', 'management', 'supervisory',
+    'motivating others', 'delegation', 'leadership skills', 'people management',
+    'inspiring others', 'guiding teams'
+  ],
+  'problem-solving': [
+    'problem solving', 'analytical thinking', 'critical thinking', 'troubleshooting',
+    'solution-oriented', 'solutions', 'problem solver', 'analytical', 'analysis',
+    'strategic thinking', 'logical thinking', 'reasoning'
+  ],
+  'time management': [
+    'organization', 'organizational skills', 'prioritization', 'scheduling',
+    'deadline management', 'punctual', 'punctuality', 'efficient', 'efficiency',
+    'organized', 'planning', 'multitasking', 'multi-tasking'
+  ],
+  'adaptability': [
+    'flexible', 'flexibility', 'adaptable', 'versatile', 'versatility',
+    'adjustable', 'resilient', 'resilience', 'open to change', 'agile'
+  ],
+  'reliability': [
+    'dependable', 'dependability', 'trustworthy', 'responsible', 'responsibility',
+    'consistent', 'accountability', 'accountable', 'reliable', 'dedicated'
+  ],
+  'empathy': [
+    'compassion', 'compassionate', 'understanding', 'empathetic', 'caring',
+    'emotional intelligence', 'eq', 'sensitivity', 'supportive', 'patient'
+  ],
+  'work ethic': [
+    'hardworking', 'hard working', 'diligent', 'dedicated', 'commitment',
+    'committed', 'motivated', 'self-motivated', 'driven', 'persistent', 'perseverance'
+  ],
+  'creativity': [
+    'creative', 'innovative', 'innovation', 'creative thinking', 'imagination',
+    'inventive', 'original', 'artistic', 'out-of-the-box thinking', 'ideation'
+  ],
+  'interpersonal skills': [
+    'people skills', 'social skills', 'relationship building', 'networking',
+    'rapport building', 'customer service', 'client relations', 'stakeholder management'
+  ],
+
+  // ============ FIELDS & INDUSTRIES ============
+  // Social Impact
+  'youth development': [
+    'children', 'youth', 'child development', 'youth work', 'youth services',
+    'kids', 'teenagers', 'adolescents', 'child welfare', 'child care',
+    'children & youth', 'child advocacy', 'youth advocacy', 'pediatric'
+  ],
+  'community development': [
+    'community organizing', 'neighborhood development',
+    'grassroots', 'civic engagement', 'community building', 'local development',
+    'community empowerment', 'community services'
+  ],
+  'women empowerment': [
+    "women's empowerment", 'gender equality', 'women rights', "women's rights",
+    'female empowerment', 'gender equity', 'womens issues', 'maternal health',
+    'girls education', 'women leadership'
+  ],
+  'international aid': [
+    'humanitarian aid', 'disaster relief', 'emergency response', 'refugee services',
+    'international development', 'global development', 'foreign aid', 'crisis response',
+    'humanitarian work', 'relief work', 'ngo work'
+  ],
+
+  // Healthcare Fields
+  'hospital work': [
+    'hospitals', 'bedside care', 'hospital volunteer', 'medical facility', 'inpatient care'
+  ],
+  'holistic health': [
+    'wellness', 'alternative medicine', 'integrative health', 'holistic care',
+    'natural healing', 'complementary medicine', 'mind-body', 'holistic wellness'
+  ],
+
+  // Environment
+  'conservation': [
+    'environmental conservation', 'nature conservation', 'habitat preservation',
+    'ecosystem protection', 'natural resources', 'sustainability', 'environmental protection',
+    'green', 'eco-friendly', 'ecological'
+  ],
+  'wildlife': [
+    'wildlife rescue', 'wildlife rehabilitation', 'wildlife protection',
+    'endangered species', 'wildlife conservation', 'fauna'
+  ],
+  'agriculture': [
+    'farming', 'sustainable farming', 'organic farming', 'farm work', 'gardening',
+    'horticulture', 'urban farming', 'permaculture', 'agronomy', 'crops'
+  ],
+  'recycling': [
+    'waste management', 'waste reduction', 'composting', 'upcycling', 'zero waste',
+    'environmental cleanup', 'plastic reduction', 'circular economy'
+  ],
+
+  // Education Fields
+  'classroom assistance': [
+    'teaching assistant', 'classroom support', 'teacher aide', 'educational support',
+    'school volunteer', 'classroom volunteer', 'learning support'
+  ],
+
+  // Animals
+  'animal shelter': [
+    'pet shelter', 'animal care', 'pet care', 'shelter volunteer', 
+    'kennel', 'adoption center', 'pet adoption'
+  ],
+  'wildlife sanctuary': [
+    'animal sanctuary', 'nature reserve', 'wildlife reserve', 'wildlife center',
+    'conservation center', 'animal rehabilitation'
+  ],
+
+  // Arts & Culture
+  'museum work': [
+    'museums', 'gallery', 'art gallery', 'cultural heritage', 'curation',
+    'museum volunteer', 'exhibition', 'heritage', 'art history', 'cultural preservation'
+  ],
+  'performing arts': [
+    'theater', 'theatre', 'dance', 'music', 'performance', 'drama',
+    'acting', 'stage production', 'performing', 'entertainment'
+  ],
+
+  // Community/Local
+  'community center': [
+    'community hub', 'recreation center', 'neighborhood center', 'civic center',
+    'local community', 'community programs', 'community activities'
+  ],
+  'food bank': [
+    'food pantry', 'food distribution', 'hunger relief', 'meal programs',
+    'soup kitchen', 'feeding programs', 'food assistance', 'food security',
+    'food rescue', 'meals on wheels'
+  ],
+  'neighborhood initiatives': [
+    'local initiatives', 'neighborhood watch', 'block association', 'civic projects',
+    'local projects', 'community projects', 'neighborhood improvement'
   ]
 };
 

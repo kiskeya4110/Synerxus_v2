@@ -678,8 +678,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
       {/* Top App Bar - Blue to off-white/sky-blue gradient */}
-      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-        <div className="text-sm font-semibold text-slate-700">Synerxus</div>
+      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-3 py-1.5 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+        <div className="flex items-center gap-2">
+          <img src={logoUrl} alt="Synerxus" className="h-8 w-8 object-contain" />
+          <span className="text-sm font-bold text-slate-700">Synerxus</span>
+        </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => navigate('/volunteer-messages/pwa')}
@@ -769,10 +772,10 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto pb-20">
         {activeTab === 'dashboard' && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Header Title */}
-            <div className="px-4 pt-4">
-              <h1 className="text-slate-800 text-xl font-bold">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'} Synergy Dashboard</h1>
+            <div className="px-4 pt-3">
+              <h1 className="text-slate-800 text-lg font-bold">{volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer'} Dashboard</h1>
             </div>
 
             {/* Personal Profile Section */}

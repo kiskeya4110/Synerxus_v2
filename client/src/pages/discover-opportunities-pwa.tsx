@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
 interface EnrichedOpportunity {
   id: number;
@@ -240,31 +239,10 @@ export default function DiscoverOpportunitiesPWA() {
 
   return (
     <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">
-      {/* Top App Bar - Blue to off-white/sky-blue gradient for logo contrast */}
-      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-        <button
-          onClick={() => navigate("/landing")}
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-        >
-          <img src={logoUrl} alt="Synerxus Logo" className="h-12 w-auto object-contain" />
-        </button>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="p-2 hover:bg-slate-800/10 rounded-full"
-          >
-            <Filter className="w-5 h-5 text-slate-700" />
-          </button>
-          <button
-            onClick={() => navigate('/volunteer-messages/pwa')}
-            className="p-2 hover:bg-slate-800/10 rounded-full"
-            data-testid="btn-messages"
-          >
-            <MessageCircle className="w-5 h-5 text-slate-700" />
-          </button>
-
-          {/* Three-Dot Menu */}
-          <div className="relative">
+      {/* Top App Bar - Blue to off-white/sky-blue gradient */}
+      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-end sticky top-0 z-50 shadow-lg">
+        {/* Three-Dot Menu */}
+        <div className="relative">
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="p-2 hover:bg-slate-800/10 rounded-full"
@@ -327,7 +305,6 @@ export default function DiscoverOpportunitiesPWA() {
               </>
             )}
           </div>
-        </div>
       </header>
 
       {/* Main Content */}

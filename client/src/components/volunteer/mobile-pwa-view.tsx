@@ -11,7 +11,6 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import {
   LineChart,
   Line,
@@ -678,21 +677,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   return (
     <div className="min-h-screen bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto">
       {/* Top App Bar - Blue to off-white/sky-blue gradient */}
-      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-3 py-2 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-        <button onClick={() => navigate('/landing')} className="flex items-center hover:opacity-80 transition-opacity">
-          <img src={logoUrl} alt="Synerxus" className="h-10 w-auto object-contain" />
-        </button>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => navigate('/volunteer-messages/pwa')}
-            className="p-2 hover:bg-slate-800/10 rounded-full"
-            data-testid="btn-messages"
-          >
-            <MessageCircle className="w-5 h-5 text-slate-700" />
-          </button>
-
-          {/* Three-Dot Menu */}
-          <div className="relative">
+      <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-3 py-2 flex items-center justify-end sticky top-0 z-50 shadow-lg">
+        {/* Three-Dot Menu */}
+        <div className="relative">
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="p-2 hover:bg-slate-800/10 rounded-full"
@@ -757,7 +744,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
               </>
             )}
           </div>
-        </div>
       </header>
 
       {/* Offline Banner */}

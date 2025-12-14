@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp } from "lucide-react";
+import PWAHeader from "@/components/pwa/pwa-header";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
@@ -724,6 +725,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto pb-20">
+      {/* PWA Header */}
+      <PWAHeader />
+      
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500 text-gray-900 px-4 py-2 text-sm flex items-center gap-2">

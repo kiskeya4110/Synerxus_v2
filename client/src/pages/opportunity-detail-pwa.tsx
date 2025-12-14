@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle, Sparkles } from "lucide-react";
+import PWAHeader from "@/components/pwa/pwa-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -123,19 +124,8 @@ export default function OpportunityDetailPWA() {
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-24 max-w-[428px] mx-auto">
-      {/* Header - Light blue to gold gradient (matching mobile PWA view) */}
-      <div className="sticky top-0 z-10 bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center shadow-xl">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-slate-700 hover:bg-slate-700/10 -ml-2"
-          onClick={handleBack}
-          data-testid="button-back"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-base font-semibold ml-2">Opportunity Details</h1>
-      </div>
+      {/* PWA Header */}
+      <PWAHeader />
 
       {/* Hero Image Section */}
       <div className="relative w-full h-64 bg-gradient-to-br from-purple-400 via-pink-400 to-rose-400 flex items-center justify-center overflow-hidden">

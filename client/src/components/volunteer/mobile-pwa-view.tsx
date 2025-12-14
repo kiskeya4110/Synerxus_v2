@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp } from "lucide-react";
+import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp, MoreVertical } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
 import { getSDGColor, SDG_GOALS } from "@shared/sdg-goals";
@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import {
   LineChart,
   Line,
@@ -84,6 +85,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
+  const [showThreeDotMenu, setShowThreeDotMenu] = useState(false);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -724,6 +726,94 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto">
+      {/* Header with Logo and 3-Dot Menu */}
+      <header className="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+          <img src={logoUrl} alt="Synerxus Logo" className="h-8 w-auto" />
+          <span className="text-slate-800 font-semibold text-sm">Synerxus</span>
+        </div>
+        
+        <div className="relative">
+          <button
+            onClick={() => setShowThreeDotMenu(!showThreeDotMenu)}
+            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            data-testid="button-menu"
+          >
+            <MoreVertical className="w-5 h-5 text-slate-600" />
+          </button>
+          
+          {/* 3-Dot Menu Dropdown */}
+          {showThreeDotMenu && (
+            <div className="absolute right-0 mt-1 bg-white rounded-lg shadow-lg border border-slate-200 py-2 w-48 z-[100]">
+              <button
+                onClick={() => {
+                  setActiveTab('profile');
+                  setShowThreeDotMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                data-testid="menu-profile"
+              >
+                <User className="w-4 h-4" />
+                <span>Profile</span>
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/settings');
+                  setShowThreeDotMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                data-testid="menu-settings"
+              >
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/emails');
+                  setShowThreeDotMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                data-testid="menu-emails"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>Emails</span>
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/log-activity');
+                  setShowThreeDotMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                data-testid="menu-log-activity"
+              >
+                <Activity className="w-4 h-4" />
+                <span>Log Activity</span>
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/leaderboard');
+                  setShowThreeDotMenu(false);
+                }}
+                className="w-full px-4 py-2 text-left text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                data-testid="menu-leaderboard"
+              >
+                <Award className="w-4 h-4" />
+                <span>Leaderboard</span>
+              </button>
+              <div className="border-t border-slate-200 my-2"></div>
+              <button
+                onClick={handleLogout}
+                className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
+                data-testid="menu-logout"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500 text-gray-900 px-4 py-2 text-sm flex items-center gap-2">
@@ -733,7 +823,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto">
         {activeTab === 'dashboard' && (
           <div className="space-y-4">
             {/* Welcome Header - Integrated with profile */}
@@ -3107,56 +3197,45 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         </div>
       )}
 
-      {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 z-40 flex justify-around items-center h-20 shadow-lg">
-        <button
-          onClick={() => setActiveTab('dashboard')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'dashboard' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
-          data-testid="nav-home"
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Home</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('projects')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'projects' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
-          data-testid="nav-projects"
-        >
-          <Briefcase className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Projects</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('potential')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'potential' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
-          data-testid="nav-potential"
-        >
-          <Lightbulb className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Potential</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('impacts')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'impacts' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
-          data-testid="nav-impacts"
-        >
-          <BarChart3 className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Impacts</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('stories')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'stories' ? 'text-purple-600 dark:text-purple-400' : 'text-slate-600 dark:text-slate-400'}`}
-          data-testid="nav-stories"
-        >
-          <BookOpen className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Stories</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('profile')}
-          className={`flex flex-col items-center justify-center w-full h-full gap-0.5 transition-colors ${activeTab === 'profile' ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}
-          data-testid="nav-profile"
-        >
-          <User className="w-5 h-5" />
-          <span className="text-[10px] font-medium">Profile</span>
-        </button>
+      {/* Top Navigation Tabs */}
+      <nav className="bg-white border-b border-slate-200 sticky top-14 z-40 overflow-x-auto">
+        <div className="flex gap-2 px-4 py-3 whitespace-nowrap">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === 'dashboard' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-100'}`}
+            data-testid="nav-home"
+          >
+            Home
+          </button>
+          <button
+            onClick={() => setActiveTab('projects')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === 'projects' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-100'}`}
+            data-testid="nav-projects"
+          >
+            Projects
+          </button>
+          <button
+            onClick={() => setActiveTab('potential')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === 'potential' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-100'}`}
+            data-testid="nav-potential"
+          >
+            Potential
+          </button>
+          <button
+            onClick={() => setActiveTab('impacts')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === 'impacts' ? 'bg-blue-100 text-blue-700' : 'text-slate-600 hover:bg-slate-100'}`}
+            data-testid="nav-impacts"
+          >
+            Impacts
+          </button>
+          <button
+            onClick={() => setActiveTab('stories')}
+            className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${activeTab === 'stories' ? 'bg-purple-100 text-purple-700' : 'text-slate-600 hover:bg-slate-100'}`}
+            data-testid="nav-stories"
+          >
+            Stories
+          </button>
+        </div>
       </nav>
     </div>
   );

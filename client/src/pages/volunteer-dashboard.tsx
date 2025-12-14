@@ -968,11 +968,10 @@ export default function Dashboard() {
     return null;
   }
 
-  // Mobile PWA View for Volunteers
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  // Mobile PWA View for Volunteers - Always show PWA view for this route
   const isVolunteer = dashboardType === 'volunteer';
 
-  if (isMobile && isVolunteer && userId && currentUser) {
+  if (isVolunteer && userId && currentUser) {
     return <MobilePWAView userId={userId} user={currentUser} dashboardData={dashboardData} />;
   }
 

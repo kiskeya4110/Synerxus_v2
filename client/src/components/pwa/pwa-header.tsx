@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { MoreVertical, Home, Settings, MessageCircle, LogOut, X } from "lucide-react";
+import { MoreVertical, Home, Settings, MessageCircle, LogOut, X, ClipboardList } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
 interface PWAHeaderProps {
   showBackButton?: boolean;
   onBack?: () => void;
+  onLogActivity?: () => void;
 }
 
-export default function PWAHeader({ showBackButton = false, onBack }: PWAHeaderProps) {
+export default function PWAHeader({ showBackButton = false, onBack, onLogActivity }: PWAHeaderProps) {
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,8 +20,17 @@ export default function PWAHeader({ showBackButton = false, onBack }: PWAHeaderP
     navigate('/');
   };
 
+  const handleLogActivity = () => {
+    if (onLogActivity) {
+      onLogActivity();
+    } else {
+      navigate('/log-activity');
+    }
+  };
+
   const menuItems = [
     { icon: Home, label: "Home", action: () => navigate('/volunteer-dashboard') },
+    { icon: ClipboardList, label: "Log Activity", action: handleLogActivity, highlight: true },
     { icon: MessageCircle, label: "Messages", action: () => navigate('/volunteer-messages/pwa') },
     { icon: Settings, label: "Settings", action: () => navigate('/volunteer-profile-settings') },
     { icon: LogOut, label: "Logout", action: handleLogout, danger: true },
@@ -63,13 +73,15 @@ export default function PWAHeader({ showBackButton = false, onBack }: PWAHeaderP
                     item.action();
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                    item.danger 
-                      ? 'text-red-600 hover:bg-red-50' 
-                      : 'text-slate-700 hover:bg-slate-100'
+                    item.danger
+                      ? 'text-red-600 hover:bg-red-50'
+                      : item.highlight
+                        ? 'text-emerald-600 hover:bg-emerald-50 bg-emerald-50/50'
+                        : 'text-slate-700 hover:bg-slate-100'
                   }`}
-                  data-testid={`menu-${item.label.toLowerCase()}`}
+                  data-testid={`menu-${item.label.toLowerCase().replace(' ', '-')}`}
                 >
-                  <item.icon className="w-5 h-5" />
+                  <item.icon className={`w-5 h-5 ${item.highlight ? 'text-emerald-600' : ''}`} />
                   <span className="font-medium">{item.label}</span>
                 </button>
               ))}

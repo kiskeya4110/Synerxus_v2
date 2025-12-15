@@ -3,6 +3,7 @@ import { calculateMatchScore } from "./matching-algorithm";
 import { User, Opportunity } from "@shared/schema";
 import { isValidSdg, extractSdgsFromProjects } from "./sdg-utils";
 import { cache, cacheKeys, CACHE_TTL, invalidateCache } from "./cache";
+import { calculateVolunteerAIU, calculateOrganizationAIU } from "./aiu-service";
 
 // Re-export invalidation helpers for use by routes
 export { invalidateCache };
@@ -85,15 +86,16 @@ function calculatePeopleImpacted(impacts: any[], peopleMetricIds: Set<number>): 
  * Used by both volunteer and organization dashboards to ensure consistent calculations
  */
 interface MonthlyImpactSeries {
-  monthly: Array<{ month: string; hours: number; peopleImpacted: number }>;
-  cumulative: Array<{ month: string; cumulativeHours: number; cumulativePeople: number; monthlyHours: number; monthlyPeople: number }>;
+  monthly: Array<{ month: string; hours: number; peopleImpacted: number; aiu: number }>;
+  cumulative: Array<{ month: string; cumulativeHours: number; cumulativePeople: number; cumulativeAiu: number; monthlyHours: number; monthlyPeople: number; monthlyAiu: number }>;
 }
 
 function buildMonthlyImpactSeries(
   monthKeys: string[],
   scopedActivities: any[],
   scopedImpacts: any[],
-  peopleMetricIds: Set<number>
+  peopleMetricIds: Set<number>,
+  totalAiu: number = 0 // Server-calculated total AIU to distribute proportionally
 ): MonthlyImpactSeries {
   // OPTIMIZATION: Single pass - group activities and impacts by month instead of filtering multiple times
   const activitiesByMonth: Record<string, any[]> = {};
@@ -115,34 +117,48 @@ function buildMonthlyImpactSeries(
     impactsByMonth[monthKey].push(i);
   });
 
-  // Single pass through months to build all data
-  const monthlyImpactData = monthKeys.map(monthKey => {
+  // First pass: calculate total hours for proportional AIU distribution
+  let totalHoursAllMonths = 0;
+  const monthlyRawData = monthKeys.map(monthKey => {
     const monthActivities = activitiesByMonth[monthKey] || [];
     const hours = monthActivities.reduce((sum, a) => sum + a.hours, 0);
     const monthImpacts = impactsByMonth[monthKey] || [];
     const peopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
+    totalHoursAllMonths += hours;
+    return { month: monthKey, hours, peopleImpacted };
+  });
 
+  // Second pass: distribute total AIU proportionally by hours
+  // This ensures monthly AIU sums to the server-calculated total
+  const monthlyImpactData = monthlyRawData.map(data => {
+    const aiuProportion = totalHoursAllMonths > 0 ? data.hours / totalHoursAllMonths : 0;
+    const monthlyAiu = Math.round(totalAiu * aiuProportion * 100) / 100;
     return {
-      month: monthKey,
-      hours,
-      peopleImpacted,
+      month: data.month,
+      hours: data.hours,
+      peopleImpacted: data.peopleImpacted,
+      aiu: monthlyAiu,
     };
   });
 
   // Build cumulative growth series
   let cumulativeHours = 0;
   let cumulativePeople = 0;
+  let cumulativeAiu = 0;
 
   const impactGrowthSeries = monthlyImpactData.map(monthData => {
     cumulativeHours += monthData.hours;
     cumulativePeople += monthData.peopleImpacted;
+    cumulativeAiu += monthData.aiu;
 
     return {
       month: monthData.month,
       cumulativeHours,
       cumulativePeople,
+      cumulativeAiu: Math.round(cumulativeAiu * 100) / 100,
       monthlyHours: monthData.hours,
       monthlyPeople: monthData.peopleImpacted,
+      monthlyAiu: monthData.aiu,
     };
   });
 
@@ -702,7 +718,19 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
 
     const projectHours = Array.from(projectHoursMap.values()).sort((a, b) => b.hours - a.hours);
 
-    // Calculate real monthly impact data (hours and peopleImpacted) for Impact Over Time chart
+    // Calculate organization's official AIU using aiu-service for consistency
+    let organizationTotalAiu = 0;
+    try {
+      const orgAiuSummary = await calculateOrganizationAIU(organizationId);
+      organizationTotalAiu = orgAiuSummary?.totalAiu || 0;
+    } catch (error) {
+      console.error(`[Dashboard] Failed to calculate AIU for organization ${organizationId}:`, error);
+    }
+
+    // Calculate total hours for proportional AIU distribution
+    const totalHoursAllMonths = monthlyMetrics.reduce((sum, m) => sum + m.hours, 0);
+
+    // Calculate real monthly impact data (hours, peopleImpacted, and AIU) for Impact Over Time chart
     const monthlyImpactData = monthlyMetrics.map(metrics => {
       // Calculate people impacted from impacts table using helper
       const monthImpacts = organizationImpacts.filter(i => {
@@ -713,26 +741,35 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
 
       const peopleImpacted = calculatePeopleImpacted(monthImpacts, peopleMetricIds);
 
+      // Distribute AIU proportionally by hours
+      const aiuProportion = totalHoursAllMonths > 0 ? metrics.hours / totalHoursAllMonths : 0;
+      const monthlyAiu = Math.round(organizationTotalAiu * aiuProportion * 100) / 100;
+
       return {
         month: metrics.month,
         hours: metrics.hours,
         peopleImpacted,
+        aiu: monthlyAiu,
       };
     });
 
     // Build cumulative impact growth series for Impact Visualization
     let cumulativeHours = 0;
     let cumulativePeople = 0;
+    let cumulativeAiu = 0;
     const impactGrowthSeries = monthlyImpactData.map(monthData => {
       cumulativeHours += monthData.hours;
       cumulativePeople += monthData.peopleImpacted;
+      cumulativeAiu += monthData.aiu;
 
       return {
         month: monthData.month,
         cumulativeHours,
         cumulativePeople,
+        cumulativeAiu: Math.round(cumulativeAiu * 100) / 100,
         monthlyHours: monthData.hours,
         monthlyPeople: monthData.peopleImpacted,
+        monthlyAiu: monthData.aiu,
       };
     });
 
@@ -1221,12 +1258,24 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
       matchScore * 0.05
     );
 
-    // Compute real monthly impact data (hours and people impacted) using shared utility
+    // Calculate official AIU using the aiu-service for consistency
+    // This ensures the monthly AIU distribution matches the total shown in SDG Impact Report
+    let volunteerTotalAiu = 0;
+    try {
+      const aiuSummary = await calculateVolunteerAIU(userId);
+      volunteerTotalAiu = aiuSummary?.totalAiu || 0;
+    } catch (error) {
+      console.error(`[Dashboard] Failed to calculate AIU for volunteer ${userId}:`, error);
+    }
+
+    // Compute real monthly impact data (hours, people impacted, and AIU) using shared utility
+    // AIU is distributed proportionally by hours to ensure sum equals the official total
     const monthlyImpactSeries = buildMonthlyImpactSeries(
       months,
       volunteerActivities,
       volunteerImpacts,
-      peopleMetricIds
+      peopleMetricIds,
+      volunteerTotalAiu
     );
     const monthlyImpactData = monthlyImpactSeries.monthly;
     const impactGrowthSeries = monthlyImpactSeries.cumulative;

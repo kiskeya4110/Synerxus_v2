@@ -35,7 +35,7 @@ interface MobilePWAViewProps {
   dashboardData: any;
 }
 
-type TabType = 'dashboard' | 'projects' | 'potential' | 'impacts' | 'stories' | 'more' | 'profile' | 'messages';
+type TabType = 'dashboard' | 'projects' | 'log-activity' | 'potential' | 'impacts' | 'stories' | 'more' | 'profile' | 'messages';
 
 // AIU Summary interface
 interface AIUSummary {
@@ -85,6 +85,23 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
+
+  // Log Activity form state
+  const [logActivityProjectId, setLogActivityProjectId] = useState<string>("");
+  const [logActivityTaskId, setLogActivityTaskId] = useState<string>("");
+  const [logActivityDate, setLogActivityDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [logActivityHours, setLogActivityHours] = useState<string>("");
+  const [logActivityDescription, setLogActivityDescription] = useState<string>("");
+  const [logActivityType, setLogActivityType] = useState<string>("volunteering");
+  const [logFormTab, setLogFormTab] = useState<"activity" | "impact">("activity");
+
+  // Impact form state
+  const [impactProjectId, setImpactProjectId] = useState<string>("");
+  const [impactTaskId, setImpactTaskId] = useState<string>("");
+  const [impactDate, setImpactDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [peopleReached, setPeopleReached] = useState<string>("");
+  const [impactDescription, setImpactDescription] = useState<string>("");
+  const [impactCategory, setImpactCategory] = useState<string>("direct");
 
   // Scroll to top on page load
   useEffect(() => {
@@ -261,31 +278,26 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     return dashboardProject?.aiuEarned || 0;
   };
 
-  // Impact Over Time data - use pre-calculated monthlyImpactData from server
-  // AIU is calculated using the proper formula: (peopleImpacted * attributionFactor * verificationMultiplier) / hoursNormalization
+  // Impact Over Time data - use server-calculated monthlyImpactData with AIU
+  // AIU is now calculated on the server using the official aiu-service formula
+  // and distributed proportionally by hours to ensure consistency with SDG Impact Report
   const impactOverTimeData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const attributionFactor = 0.2; // Standard 20% attribution for volunteer contributions
-    const verificationMultiplier = 0.9; // Average multiplier (mix of verified and pending)
 
-    // Use server-calculated monthlyImpactData if available (format: { month: "YYYY-MM", hours, peopleImpacted })
+    // Use server-calculated monthlyImpactData if available (format: { month: "YYYY-MM", hours, peopleImpacted, aiu })
     const serverMonthlyData = dashboardData?.monthlyImpactData;
     if (Array.isArray(serverMonthlyData) && serverMonthlyData.length > 0) {
       return serverMonthlyData.map((item: any) => {
         // Parse month from "YYYY-MM" format
-        const [year, monthNum] = (item.month || '').split('-');
+        const [, monthNum] = (item.month || '').split('-');
         const monthIndex = parseInt(monthNum, 10) - 1;
         const monthLabel = monthNames[monthIndex] || item.month;
 
-        // Use actual peopleImpacted from server (already verification-weighted)
+        // Use server-calculated values directly
         const hours = Number(item.hours) || 0;
         const peopleImpacted = Number(item.peopleImpacted) || 0;
-
-        // Calculate AIU using proper formula matching dashboard-service.ts
-        const hoursNormalization = Math.max(hours, 1) / 10;
-        const aiu = Math.round(
-          (peopleImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
-        ) / 100;
+        // AIU is now provided by server using official aiu-service calculation
+        const aiu = Number(item.aiu) || 0;
 
         return {
           month: monthLabel,
@@ -699,6 +711,168 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     }
   });
 
+  // Fetch all tasks for log activity form
+  const { data: allTasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/tasks"],
+    queryFn: async () => {
+      const response = await fetch("/api/tasks");
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Get tasks for selected project in log activity form
+  const logActivityProjectTasks = logActivityProjectId
+    ? allTasks.filter((task: any) => task.projectId === parseInt(logActivityProjectId))
+    : [];
+
+  // Log activity mutation
+  const logActivityMutation = useMutation({
+    mutationFn: async (activityData: any) => {
+      const response = await fetch("/api/volunteer-activities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(activityData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to log activity");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Activity Logged!",
+        description: "Your volunteer activity has been recorded successfully.",
+      });
+      // Reset form
+      setLogActivityProjectId("");
+      setLogActivityTaskId("");
+      setLogActivityHours("");
+      setLogActivityDescription("");
+      setLogActivityDate(new Date().toISOString().split('T')[0]);
+      // Refetch data
+      queryClient.invalidateQueries({ queryKey: ["/api/volunteer-activities"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/aiu/volunteer"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Log Activity",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handle log activity form submission
+  const handleLogActivity = () => {
+    if (!logActivityProjectId || !logActivityHours) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a project and enter hours.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    logActivityMutation.mutate({
+      userId: parseInt(userId),
+      projectId: parseInt(logActivityProjectId),
+      taskId: logActivityTaskId ? parseInt(logActivityTaskId) : null,
+      date: logActivityDate,
+      hours: parseFloat(logActivityHours),
+      description: logActivityDescription,
+      activityType: logActivityType,
+    });
+  };
+
+  // Fetch impact metrics to get the default "Lives Impacted" metric ID
+  const { data: impactMetrics = [] } = useQuery<any[]>({
+    queryKey: ["/api/impact-metrics"],
+    queryFn: async () => {
+      const response = await fetch("/api/impact-metrics");
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Find the "Lives Impacted" metric ID
+  const livesImpactedMetricId = impactMetrics.find(
+    (m: any) => m.name === "Lives Impacted" || m.category === "general"
+  )?.id || 1;
+
+  // Get tasks for impact project
+  const impactProjectTasks = impactProjectId
+    ? allTasks.filter((task: any) => task.projectId === parseInt(impactProjectId))
+    : [];
+
+  // Record impact mutation
+  const recordImpactMutation = useMutation({
+    mutationFn: async (impactData: any) => {
+      const response = await fetch("/api/project-impacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(impactData),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to record impact");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Impact Recorded!",
+        description: "Your impact has been recorded successfully.",
+      });
+      // Reset form
+      setImpactProjectId("");
+      setImpactTaskId("");
+      setPeopleReached("");
+      setImpactDescription("");
+      setImpactCategory("direct");
+      setImpactDate(new Date().toISOString().split('T')[0]);
+      // Refetch data
+      queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/aiu/volunteer"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to Record Impact",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Handle impact form submission
+  const handleRecordImpact = () => {
+    if (!impactProjectId || !peopleReached) {
+      toast({
+        title: "Missing Information",
+        description: "Please select a project and enter people reached.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    recordImpactMutation.mutate({
+      projectId: parseInt(impactProjectId),
+      taskId: impactTaskId ? parseInt(impactTaskId) : null,
+      userId: parseInt(userId),
+      metricId: livesImpactedMetricId,
+      value: parseInt(peopleReached),
+      date: new Date(impactDate).toISOString(),
+      notes: impactDescription || null,
+      outcomeType: impactCategory === 'direct' ? 'individual' : impactCategory === 'community' ? 'shared' : 'individual',
+      role: 'lead',
+    });
+  };
+
   // Get personalized recommended projects
   const recommendedProjects = useMemo(() => {
     const safeProjects = Array.isArray(projects) ? projects : [];
@@ -726,7 +900,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   return (
     <div className="min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full pb-20 overflow-hidden">
       {/* PWA Header */}
-      <PWAHeader />
+      <PWAHeader onLogActivity={() => setActiveTab('log-activity')} />
 
       {/* Spacer for fixed header */}
       <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
@@ -2098,6 +2272,305 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
           </div>
         )}
 
+        {/* Log Activity Tab */}
+        {activeTab === 'log-activity' && (
+          <div className="p-4 space-y-4 pb-24">
+            {/* Header */}
+            <div className="bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 rounded-2xl p-4 text-white">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <ClipboardList className="w-5 h-5" />
+                Log Your Contributions
+              </h2>
+              <p className="text-emerald-100 text-sm mt-1">
+                Record your volunteer hours and impact
+              </p>
+            </div>
+
+            {/* Tab Switcher */}
+            <div className="flex bg-slate-100 rounded-xl p-1">
+              <button
+                onClick={() => setLogFormTab("activity")}
+                className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+                  logFormTab === "activity"
+                    ? "bg-white text-emerald-600 shadow-sm"
+                    : "text-slate-600 hover:text-slate-800"
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                Log Activity
+              </button>
+              <button
+                onClick={() => setLogFormTab("impact")}
+                className={`flex-1 py-2.5 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 ${
+                  logFormTab === "impact"
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-slate-600 hover:text-slate-800"
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Record Impact
+              </button>
+            </div>
+
+            {/* Activity Form */}
+            {logFormTab === "activity" && (
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-4">
+                {/* Project Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Project *
+                  </label>
+                  <select
+                    value={logActivityProjectId}
+                    onChange={(e) => {
+                      setLogActivityProjectId(e.target.value);
+                      setLogActivityTaskId("");
+                    }}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  >
+                    <option value="">Select a project</option>
+                    {projects.map((project: any) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Task Selection (Optional) */}
+                {logActivityProjectId && logActivityProjectTasks.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Task (Optional)
+                    </label>
+                    <select
+                      value={logActivityTaskId}
+                      onChange={(e) => setLogActivityTaskId(e.target.value)}
+                      className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    >
+                      <option value="">Select a task</option>
+                      {logActivityProjectTasks.map((task: any) => (
+                        <option key={task.id} value={task.id}>
+                          {task.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Date */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={logActivityDate}
+                    onChange={(e) => setLogActivityDate(e.target.value)}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                </div>
+
+                {/* Hours */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Hours *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0.5"
+                    max="24"
+                    value={logActivityHours}
+                    onChange={(e) => setLogActivityHours(e.target.value)}
+                    placeholder="e.g., 2.5"
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                </div>
+
+                {/* Activity Type */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Activity Type
+                  </label>
+                  <select
+                    value={logActivityType}
+                    onChange={(e) => setLogActivityType(e.target.value)}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  >
+                    <option value="volunteering">Volunteering</option>
+                    <option value="training">Training</option>
+                    <option value="meeting">Meeting</option>
+                    <option value="event">Event</option>
+                    <option value="outreach">Outreach</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    value={logActivityDescription}
+                    onChange={(e) => setLogActivityDescription(e.target.value)}
+                    placeholder="Describe what you did..."
+                    rows={3}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 resize-none"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  onClick={handleLogActivity}
+                  disabled={logActivityMutation.isPending || !logActivityProjectId || !logActivityHours}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold py-3 rounded-lg"
+                  data-testid="button-submit-activity"
+                >
+                  {logActivityMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 animate-spin" />
+                      Logging...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Log Activity
+                    </span>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Impact Form */}
+            {logFormTab === "impact" && (
+              <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-4">
+                {/* Project Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Project *
+                  </label>
+                  <select
+                    value={impactProjectId}
+                    onChange={(e) => {
+                      setImpactProjectId(e.target.value);
+                      setImpactTaskId("");
+                    }}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select a project</option>
+                    {projects.map((project: any) => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Task Selection (Optional) */}
+                {impactProjectId && impactProjectTasks.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Task (Optional)
+                    </label>
+                    <select
+                      value={impactTaskId}
+                      onChange={(e) => setImpactTaskId(e.target.value)}
+                      className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a task</option>
+                      {impactProjectTasks.map((task: any) => (
+                        <option key={task.id} value={task.id}>
+                          {task.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Date */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={impactDate}
+                    onChange={(e) => setImpactDate(e.target.value)}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* People Reached */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    People Reached / Lives Impacted *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={peopleReached}
+                    onChange={(e) => setPeopleReached(e.target.value)}
+                    placeholder="e.g., 50"
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                {/* Impact Category */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Impact Category
+                  </label>
+                  <select
+                    value={impactCategory}
+                    onChange={(e) => setImpactCategory(e.target.value)}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="direct">Direct (Individual)</option>
+                    <option value="community">Community (Shared)</option>
+                    <option value="indirect">Indirect</option>
+                  </select>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Impact Description (Optional)
+                  </label>
+                  <textarea
+                    value={impactDescription}
+                    onChange={(e) => setImpactDescription(e.target.value)}
+                    placeholder="Describe the impact you made..."
+                    rows={3}
+                    className="w-full p-3 border border-slate-300 rounded-lg text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  onClick={handleRecordImpact}
+                  disabled={recordImpactMutation.isPending || !impactProjectId || !peopleReached}
+                  className="w-full bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-semibold py-3 rounded-lg"
+                  data-testid="button-submit-impact"
+                >
+                  {recordImpactMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 animate-spin" />
+                      Recording...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Record Impact
+                    </span>
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Stories Tab */}
         {activeTab === 'stories' && (
           <div className="p-4 space-y-4 pb-24">
@@ -3230,10 +3703,10 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         <button
           onClick={() => setActiveTab('potential')}
           className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'potential' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-potential"
+          data-testid="nav-insights"
         >
           <Lightbulb className="w-5 h-5" />
-          <span className="text-xs font-medium">Potential</span>
+          <span className="text-xs font-medium">Insights</span>
         </button>
         <button
           onClick={() => setActiveTab('impacts')}

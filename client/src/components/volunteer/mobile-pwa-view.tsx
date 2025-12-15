@@ -724,7 +724,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
-    <div className="fixed inset-0 h-screen w-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto pb-20">
       {/* PWA Header */}
       <PWAHeader />
       
@@ -737,7 +737,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto">
         {activeTab === 'dashboard' && (
           <div className="space-y-4">
             {/* Welcome Header - Integrated with profile */}
@@ -3207,7 +3207,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       )}
 
       {/* Bottom Tray Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex justify-around z-50">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex justify-around max-w-[428px] mx-auto z-50">
         <button
           onClick={() => setActiveTab('dashboard')}
           className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}

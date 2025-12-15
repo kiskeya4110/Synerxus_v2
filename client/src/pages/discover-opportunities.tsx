@@ -5,7 +5,7 @@ import { useLocation } from "wouter";
 import {
   Search, MapPin, Clock, Users, Sparkles, Target,
   ChevronDown, CheckCircle, Building2, Filter,
-  Home, Briefcase, TrendingUp
+  Home, Briefcase, TrendingUp, BarChart3, User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -107,7 +107,18 @@ export default function DiscoverOpportunities() {
     gcTime: 5 * 60 * 1000,
   });
 
-  // Redirect to login if not authenticated
+  // These useMemo hooks must be before any early returns to maintain consistent hook order
+  const availableCategories = useMemo(() => {
+    if (!Array.isArray(opportunities)) return [];
+    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort();
+  }, [opportunities]);
+
+  const availableLocations = useMemo(() => {
+    if (!Array.isArray(opportunities)) return [];
+    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort();
+  }, [opportunities]);
+
+  // Redirect to login if not authenticated - must be after all hooks
   if (!userId) {
     return (
       <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex items-center justify-center overflow-hidden">
@@ -120,16 +131,6 @@ export default function DiscoverOpportunities() {
       </div>
     );
   }
-
-  const availableCategories = useMemo(() => {
-    if (!Array.isArray(opportunities)) return [];
-    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort();
-  }, [opportunities]);
-
-  const availableLocations = useMemo(() => {
-    if (!Array.isArray(opportunities)) return [];
-    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort();
-  }, [opportunities]);
 
   const filteredOpportunities = (opportunities || []).filter((opp) => {
     // Guard against malformed opportunity objects
@@ -240,7 +241,7 @@ export default function DiscoverOpportunities() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto">
+    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col w-full overflow-hidden">
       {/* Top App Bar - Logo on left, clean header */}
       <header className="sticky top-0 z-10 bg-gradient-to-r from-sky-200 via-sky-300 to-amber-300 text-slate-700 px-4 py-3 flex items-center shadow-xl">
         <button onClick={() => navigate('/volunteer-dashboard')} className="flex items-center gap-2 hover:opacity-90 transition-opacity">
@@ -249,7 +250,7 @@ export default function DiscoverOpportunities() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-24">
+      <main className="flex-1 overflow-y-auto pb-20">
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6">
           <h1 className="text-white text-xl font-bold flex items-center gap-2">
@@ -570,7 +571,7 @@ export default function DiscoverOpportunities() {
       </main>
 
       {/* Bottom Navigation Bar - Matching mobile PWA view */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
+      <nav className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
         <div className="flex justify-around items-center">
           <button
             onClick={() => navigate('/volunteer-dashboard')}

@@ -329,7 +329,7 @@ applicationsRouter.get("/:id/volunteer-insights", async (req: Request, res: Resp
     );
 
     // Get unique past volunteers and their profiles
-    const pastVolunteerIds = [...new Set(activeOrCompletedAssignments.map(a => a.volunteerId))];
+    const pastVolunteerIds = Array.from(new Set(activeOrCompletedAssignments.map(a => a.volunteerId)));
     const pastVolunteersData = await Promise.all(
       pastVolunteerIds.slice(0, 20).map(async (volunteerId) => {
         const user = await storage.getUser(volunteerId);
@@ -342,7 +342,7 @@ applicationsRouter.get("/:id/volunteer-insights", async (req: Request, res: Resp
           skills: profile?.skills || [],
           completedProjects: assignments.filter(a => a.status === "completed").length,
           totalHours,
-          sdgGoals: profile?.sdgGoals || []
+          sdgGoals: profile?.preferredSdgs || []
         };
       })
     );
@@ -369,13 +369,13 @@ applicationsRouter.get("/:id/volunteer-insights", async (req: Request, res: Resp
       name: volunteer.displayName || volunteer.username,
       skills: volunteerSkills,
       interests: volunteerProfile?.interests || [],
-      sdgGoals: volunteerProfile?.sdgGoals || [],
-      location: volunteerProfile?.location || volunteer.location,
+      sdgGoals: volunteerProfile?.preferredSdgs || [],
+      location: volunteerProfile?.location,
       availability: volunteerProfile?.weeklyAvailability,
       motivations: volunteerProfile?.motivations,
       languages: volunteerProfile?.languages || [],
-      workStyle: volunteerProfile?.workStyle,
-      linkedinUrl: volunteerProfile?.linkedinUrl,
+      workStyle: volunteerProfile?.preferredWorkStyle,
+      linkedinUrl: volunteerProfile?.linkedinProfile,
       pastProjectsCount: pastProjects.length,
       totalHoursVolunteered: volunteerActivities.reduce((sum, a) => sum + (a.hours || 0), 0),
       pastProjects: pastProjects.slice(0, 5)
@@ -414,7 +414,7 @@ VOLUNTEER PROFILE:
 - Name: ${volunteerContext.name}
 - Skills: ${volunteerContext.skills.join(", ") || "Not specified"}
 - Interests: ${volunteerContext.interests.join(", ") || "Not specified"}
-- SDG Goals: ${volunteerContext.sdgGoals.map(g => `SDG ${g}`).join(", ") || "Not specified"}
+- SDG Goals: ${volunteerContext.sdgGoals.map((g: number) => `SDG ${g}`).join(", ") || "Not specified"}
 - Location: ${volunteerContext.location || "Not specified"}
 - Weekly Availability: ${volunteerContext.availability ? `${volunteerContext.availability} hours` : "Not specified"}
 - Work Style: ${volunteerContext.workStyle || "Not specified"}
@@ -503,11 +503,11 @@ Focus on INSIGHTS, not just restating facts. Compare, analyze, and predict. Be b
         volunteerSkills.length > 3 ? `Diverse skill set with ${volunteerSkills.length} listed skills` : null,
         volunteerContext.availability && volunteerContext.availability >= 5 ? `Good availability (${volunteerContext.availability} hrs/week)` : null,
         volunteerContext.pastProjectsCount > 0 ? `Proven track record with ${volunteerContext.totalHoursVolunteered} volunteer hours` : null,
-        volunteerContext.sdgGoals.some(g => opportunityContext.sdgGoals.includes(g)) ? "SDG goals align with this opportunity" : null
+        volunteerContext.sdgGoals.some((g: number) => opportunityContext.sdgGoals.includes(g)) ? "SDG goals align with this opportunity" : null
       ].filter(Boolean),
       experienceInsights: pastProjects.length > 0 ? [
         `Previously worked on: ${pastProjects.slice(0, 2).map(p => p.projectName).join(", ")}`,
-        `Most experienced in roles: ${[...new Set(pastProjects.map(p => p.role))].join(", ")}`
+        `Most experienced in roles: ${Array.from(new Set(pastProjects.map(p => p.role))).join(", ")}`
       ] : ["First-time applicant on this platform - consider their external experience"],
       comparisonWithPastVolunteers: orgContext.totalPastVolunteers > 0
         ? `Your organization's past volunteers average ${orgContext.avgHoursPerVolunteer} hours. ${matchingSkills.length > 0 ? `This volunteer shares ${matchingSkills.length} skills with past successful volunteers.` : "This volunteer brings unique skills to your team."}`
@@ -544,7 +544,7 @@ Focus on INSIGHTS, not just restating facts. Compare, analyze, and predict. Be b
         totalProjects: pastProjects.length,
         totalHours: volunteerContext.totalHoursVolunteered,
         skills: volunteerSkills,
-        sdgAlignment: volunteerContext.sdgGoals.filter(g => opportunityContext.sdgGoals.includes(g)),
+        sdgAlignment: volunteerContext.sdgGoals.filter((g: number) => opportunityContext.sdgGoals.includes(g)),
         hasLinkedIn: !!volunteerContext.linkedinUrl,
         recentProjects: pastProjects.slice(0, 3)
       },

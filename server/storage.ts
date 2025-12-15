@@ -367,7 +367,7 @@ export interface IStorage {
   listVolunteerStories(): Promise<VolunteerStory[]>;
   getVolunteerStory(id: number): Promise<VolunteerStory | undefined>;
   createVolunteerStory(story: InsertVolunteerStory): Promise<VolunteerStory>;
-  updateVolunteerStory(id: number, story: Partial<InsertVolunteerStory>): Promise<VolunteerStory | undefined>;
+  updateVolunteerStory(id: number, story: Partial<InsertVolunteerStory> & { viewsCount?: number; likesCount?: number }): Promise<VolunteerStory | undefined>;
   deleteVolunteerStory(id: number): Promise<boolean>;
 
   // Story Like operations
@@ -1608,7 +1608,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async updateVolunteerStory(id: number, story: Partial<InsertVolunteerStory>): Promise<VolunteerStory | undefined> {
+  async updateVolunteerStory(id: number, story: Partial<InsertVolunteerStory> & { viewsCount?: number; likesCount?: number }): Promise<VolunteerStory | undefined> {
     const [result] = await db.update(volunteerStories).set({ ...story, updatedAt: new Date() }).where(eq(volunteerStories.id, id)).returning();
     return result || undefined;
   }

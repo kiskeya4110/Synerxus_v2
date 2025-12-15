@@ -243,11 +243,16 @@ export default function VolunteerMessagesPWA() {
   const connectedProjects = projects.filter(p => connectedProjectIds.has(p.id));
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-sky-50 to-slate-100 pb-20 max-w-[428px] mx-auto">
+    <div className="w-full min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 pb-20 overflow-hidden flex flex-col">
       {/* PWA Header */}
       <PWAHeader />
-      
-      {/* Thread Header - shows when viewing a conversation */}
+
+      {/* Spacer for fixed header */}
+      <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
+
+      {/* Main scrollable content */}
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-sky-50 to-slate-100">
+        {/* Thread Header - shows when viewing a conversation */}
       {selectedThread && (
         <div className="sticky top-16 z-10 bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200">
           <div className="flex items-center">
@@ -694,9 +699,10 @@ export default function VolunteerMessagesPWA() {
           </div>
         </div>
       )}
+      </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-40">
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 w-full z-40">
         <div className="flex justify-around items-center">
           <button
             onClick={() => navigate('/volunteer-dashboard')}

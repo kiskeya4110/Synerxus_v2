@@ -148,7 +148,8 @@ storiesRouter.post("/stories", async (req: Request, res: Response) => {
     broadcastUpdate("story_created", story);
     res.status(201).json(story);
   } catch (err) {
-    handleValidationError(err, res) || res.status(500).json({ message: "Failed to create story" });
+    const validationResult = handleValidationError(err);
+    res.status(validationResult.status).json({ message: validationResult.message });
   }
 });
 
@@ -169,7 +170,8 @@ storiesRouter.put("/stories/:id", async (req: Request, res: Response) => {
     broadcastUpdate("story_updated", updatedStory);
     res.json(updatedStory);
   } catch (err) {
-    handleValidationError(err, res) || res.status(500).json({ message: "Failed to update story" });
+    const validationResult = handleValidationError(err);
+    res.status(validationResult.status).json({ message: validationResult.message });
   }
 });
 
@@ -270,9 +272,10 @@ storiesRouter.post("/stories/:id/like", async (req: Request, res: Response) => {
     const updatedStory = await storage.updateVolunteerStory(storyId, {
       likesCount: (story.likesCount || 0) + 1,
     });
-    
-    broadcastUpdate("story_liked", { storyId, userId, likesCount: updatedStory.likesCount });
-    res.json({ likesCount: updatedStory.likesCount });
+
+    const newLikesCount = updatedStory?.likesCount ?? (story.likesCount || 0) + 1;
+    broadcastUpdate("story_liked", { storyId, userId, likesCount: newLikesCount });
+    res.json({ likesCount: newLikesCount });
   } catch (err) {
     console.error("Error liking story:", err);
     res.status(500).json({ message: "Failed to like story" });
@@ -309,9 +312,10 @@ storiesRouter.delete("/stories/:id/like", async (req: Request, res: Response) =>
     const updatedStory = await storage.updateVolunteerStory(storyId, {
       likesCount: Math.max((story.likesCount || 0) - 1, 0),
     });
-    
-    broadcastUpdate("story_unliked", { storyId, userId, likesCount: updatedStory.likesCount });
-    res.json({ likesCount: updatedStory.likesCount });
+
+    const newLikesCount = updatedStory?.likesCount ?? Math.max((story.likesCount || 0) - 1, 0);
+    broadcastUpdate("story_unliked", { storyId, userId, likesCount: newLikesCount });
+    res.json({ likesCount: newLikesCount });
   } catch (err) {
     console.error("Error unliking story:", err);
     res.status(500).json({ message: "Failed to unlike story" });

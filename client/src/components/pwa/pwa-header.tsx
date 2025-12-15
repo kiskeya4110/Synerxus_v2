@@ -28,7 +28,7 @@ export default function PWAHeader({ showBackButton = false, onBack }: PWAHeaderP
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 px-4 py-3 flex items-center justify-between">
+      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img 
             src={logoUrl} 

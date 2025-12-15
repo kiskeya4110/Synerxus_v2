@@ -110,7 +110,18 @@ export default function DiscoverOpportunitiesPWA() {
     gcTime: 5 * 60 * 1000,
   });
 
-  // Redirect to login if not authenticated
+  // These useMemo hooks must be before any early returns to maintain consistent hook order
+  const availableCategories = useMemo(() => {
+    if (!Array.isArray(opportunities)) return [];
+    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort();
+  }, [opportunities]);
+
+  const availableLocations = useMemo(() => {
+    if (!Array.isArray(opportunities)) return [];
+    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort();
+  }, [opportunities]);
+
+  // Redirect to login if not authenticated - must be after all hooks
   if (!userId) {
     return (
       <div className="h-screen bg-[#faf9f7] flex items-center justify-center overflow-hidden">
@@ -123,16 +134,6 @@ export default function DiscoverOpportunitiesPWA() {
       </div>
     );
   }
-
-  const availableCategories = useMemo(() => {
-    if (!Array.isArray(opportunities)) return [];
-    return Array.from(new Set(opportunities.map(o => o?.category).filter(Boolean))).sort();
-  }, [opportunities]);
-
-  const availableLocations = useMemo(() => {
-    if (!Array.isArray(opportunities)) return [];
-    return Array.from(new Set(opportunities.map(o => o?.location).filter(Boolean))).sort();
-  }, [opportunities]);
 
   const filteredOpportunities = (opportunities || []).filter((opp) => {
     // Guard against malformed opportunity objects
@@ -204,12 +205,15 @@ export default function DiscoverOpportunitiesPWA() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-[428px] mx-auto overflow-hidden">
+    <div className="h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader />
 
+      {/* Spacer for fixed header */}
+      <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
+
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-24">
+      <main className="flex-1 overflow-y-auto pb-24 bg-gradient-to-b from-slate-50 to-slate-100">
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6">
           <h1 className="text-white text-xl font-bold flex items-center gap-2">
@@ -545,7 +549,7 @@ export default function DiscoverOpportunitiesPWA() {
       )}
 
       {/* Bottom Navigation Bar - Matching mobile PWA view */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-[428px] mx-auto bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
+      <nav className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
         <div className="flex justify-around items-center">
           <button
             onClick={() => navigate('/volunteer-dashboard')}

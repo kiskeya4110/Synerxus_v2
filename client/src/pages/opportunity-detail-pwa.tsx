@@ -123,11 +123,16 @@ export default function OpportunityDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 pb-24 max-w-[428px] mx-auto">
+    <div className="w-full min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 pb-24 overflow-hidden flex flex-col">
       {/* PWA Header */}
       <PWAHeader />
 
-      {/* Hero Image Section */}
+      {/* Spacer for fixed header */}
+      <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
+
+      {/* Main scrollable content */}
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-slate-100">
+        {/* Hero Image Section */}
       <div className="relative w-full h-64 bg-gradient-to-br from-purple-400 via-pink-400 to-rose-400 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-black/10" />
         <Briefcase className="h-20 w-20 text-white opacity-20" />
@@ -264,6 +269,7 @@ export default function OpportunityDetailPWA() {
           organizationName={opportunity.organizationName}
         />
       )}
+      </div>
 
       {/* AI Match Analysis Modal */}
       <MatchAnalysisModal

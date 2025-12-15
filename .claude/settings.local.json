@@ -54,7 +54,8 @@
       "Bash(RATE_LIMIT_MAX=100000 npm run start:cluster:*)",
       "Bash(xargs:*)",
       "Bash(then echo \"DATABASE_URL is set\")",
-      "Bash(else echo \"DATABASE_URL not set\")"
+      "Bash(else echo \"DATABASE_URL not set\")",
+      "Bash(timeout 15 npm run dev:*)"
     ],
     "deny": [],
     "ask": []

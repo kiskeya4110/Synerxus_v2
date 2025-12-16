@@ -268,15 +268,15 @@ export default function ProjectDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 pb-20 flex flex-col">
+    <div className="w-full min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col max-w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader />
 
       {/* Spacer for fixed header */}
-      <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
+      <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
 
       {/* Main scrollable content */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-slate-100">
+      <div className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
         {/* Hero Image Section */}
       <div className="relative w-full h-64 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-black/10" />

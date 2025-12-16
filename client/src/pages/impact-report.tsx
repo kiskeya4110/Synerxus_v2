@@ -2101,7 +2101,7 @@ export default function ImpactReport() {
       
       {/* Mobile Bottom Navigation - Different for volunteers vs organizations */}
       {isVolunteer && isMobile ? (
-        <VolunteerPWANav userId={volunteerId?.toString()} activeTab="impact" />
+        <VolunteerPWANav userId={volunteerId?.toString()} activeTab="impacts" />
       ) : (
         <MobileBottomNav />
       )}

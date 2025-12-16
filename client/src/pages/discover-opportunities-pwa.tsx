@@ -206,15 +206,15 @@ export default function DiscoverOpportunitiesPWA() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full pb-16">
+    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col w-full max-w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader />
 
       {/* Spacer for fixed header */}
-      <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
+      <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-4 bg-gradient-to-b from-slate-50 to-slate-100">
+      <main className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6">
           <h1 className="text-white text-xl font-bold flex items-center gap-2">
@@ -550,7 +550,7 @@ export default function DiscoverOpportunitiesPWA() {
       )}
 
       {/* Bottom Navigation */}
-      <VolunteerPWANav userId={userId || undefined} activeTab="insights" />
+      <VolunteerPWANav userId={userId || undefined} activeTab="potentials" />
     </div>
   );
 }

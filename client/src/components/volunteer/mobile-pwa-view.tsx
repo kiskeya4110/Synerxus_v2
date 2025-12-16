@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp } from "lucide-react";
+import { Home, Search, Activity, User, MessageCircle, ChevronDown, MapPin, Clock, Users, Briefcase, TrendingUp, Lightbulb, BarChart3, Heart, Award, Target, Sparkles, FileText, Globe, Zap, CheckCircle, Settings, ClipboardList, Calendar, LogOut, Building2, BookOpen, Eye, ThumbsUp, MoreHorizontal } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
 import { useLocation, Link } from "wouter";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
@@ -404,6 +404,38 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Show up to 8 SDGs
   }, [projects, volunteerActivities]);
+
+  // Calculate AIU per SDG from aiuSummary projects
+  const aiuPerSdg = useMemo(() => {
+    const sdgAiu: { [key: number]: number } = {};
+    const safeProjects = Array.isArray(projects) ? projects : [];
+
+    // Build project SDG map
+    const projectSdgMap: { [projectId: number]: number[] } = {};
+    safeProjects.forEach((p: any) => {
+      if (p?.id && Array.isArray(p?.sdgGoals)) {
+        projectSdgMap[p.id] = p.sdgGoals.filter(isValidSdg);
+      }
+    });
+
+    // Calculate AIU per SDG from aiuSummary projects
+    if (aiuSummary?.projects) {
+      aiuSummary.projects.forEach((aiuProject: any) => {
+        const projectId = aiuProject.projectId;
+        const aiu = Number(aiuProject.aiu) || 0;
+        const sdgs = projectSdgMap[projectId] || [];
+
+        if (sdgs.length > 0 && aiu > 0) {
+          const aiuPerSdgVal = aiu / sdgs.length;
+          sdgs.forEach((sdg: number) => {
+            sdgAiu[sdg] = (sdgAiu[sdg] || 0) + aiuPerSdgVal;
+          });
+        }
+      });
+    }
+
+    return sdgAiu;
+  }, [projects, aiuSummary]);
 
   // Filtered SDG Distribution for time-filtered display
   const filteredSdgDistribution = useMemo(() => {
@@ -898,7 +930,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col w-full overflow-hidden">
+    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col w-full max-w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader onLogActivity={() => setActiveTab('log-activity')} />
 
@@ -907,14 +939,14 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
       {/* Offline Banner */}
       {isOffline && (
-        <div className="bg-amber-500 text-gray-900 px-4 py-2 text-sm flex items-center gap-2">
+        <div className="bg-amber-500 text-gray-900 px-4 py-2 text-sm flex items-center gap-2 justify-center">
           <span>⚠️</span>
           <span>Offline Mode - Data may be outdated</span>
         </div>
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20">
+      <main className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
         {activeTab === 'dashboard' && (
           <div className="space-y-4">
             {/* Welcome Header - Integrated with profile */}
@@ -1053,7 +1085,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
             {/* UN SDG Impact Report - Enhanced with UN-Compliant KPIs */}
             {sdgDistribution.length > 0 && (
-              <div className="px-4">
+              <div className="px-4 w-full max-w-full">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="text-slate-800 text-lg font-semibold flex items-center gap-2">
                     <Globe className="w-5 h-5 text-blue-600" />
@@ -1065,49 +1097,49 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 </div>
 
                 {/* UN SDG Summary KPIs - Key Performance Indicators */}
-                <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100 shadow-sm mb-3">
+                <div className="bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl p-4 border border-blue-100 shadow-sm mb-3 w-full">
                   <div className="grid grid-cols-4 gap-2 mb-4">
                     {/* SDGs Committed (from profile) - User's commitment, not work done */}
                     <button
                       onClick={() => setShowKpiModal('sdgs')}
-                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
                     >
                       <div className="text-2xl font-bold text-blue-600">{kpis.sdgsCommitted}</div>
                       <div className="text-[9px] text-slate-600 font-medium">SDG Goals</div>
-                      <div className="text-[8px] text-slate-400">Committed</div>
+                      <div className="text-[8px] text-blue-400 mt-0.5">Tap for details</div>
                     </button>
                     {/* Total Hours - Clickable, use actual kpis.totalHours */}
                     <button
                       onClick={() => setShowKpiModal('hours')}
-                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
                     >
                       <div className="text-2xl font-bold text-emerald-600">
                         {kpis.totalHours}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">Hours</div>
-                      <div className="text-[8px] text-slate-400">Volunteered</div>
+                      <div className="text-[8px] text-emerald-400 mt-0.5">Tap for details</div>
                     </button>
                     {/* Projects - Clickable, use actual kpis.totalProjects */}
                     <button
                       onClick={() => setShowKpiModal('projects')}
-                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
                     >
                       <div className="text-2xl font-bold text-purple-600">
                         {kpis.totalProjects}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">Projects</div>
-                      <div className="text-[8px] text-slate-400">Contributing</div>
+                      <div className="text-[8px] text-purple-400 mt-0.5">Tap for details</div>
                     </button>
                     {/* Impact Score (AIU) - Clickable, using aiuSummary as single source of truth */}
                     <button
                       onClick={() => setShowKpiModal('aiu')}
-                      className="text-center p-2 rounded-lg hover:bg-white/50 transition-all active:scale-95"
+                      className="text-center p-3 rounded-xl bg-white/60 hover:bg-white/80 transition-all active:scale-95 shadow-sm border border-white/50 cursor-pointer"
                     >
                       <div className="text-2xl font-bold text-amber-600">
                         {aiuSummary?.totalAiu?.toFixed(2) || '0.00'}
                       </div>
                       <div className="text-[9px] text-slate-600 font-medium">AIUs</div>
-                      <div className="text-[8px] text-slate-400">Impact Units</div>
+                      <div className="text-[8px] text-amber-400 mt-0.5">Tap for details</div>
                     </button>
                   </div>
 
@@ -1145,7 +1177,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 </div>
 
                 {/* Donut Chart with Center Stats */}
-                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm w-full">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-slate-600 text-xs font-medium">Hours Distribution by SDG</span>
                     <span className="text-emerald-700 text-[10px] px-2 py-0.5 bg-emerald-50 rounded-full font-medium">
@@ -1154,7 +1186,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   </div>
 
                   {/* Enhanced Pie Chart with center label showing average completion */}
-                  <div className="h-52 w-full relative" style={{ isolation: 'isolate' }}>
+                  <div className="h-52 w-full relative flex items-center justify-center" style={{ isolation: 'isolate' }}>
                     <ResponsiveContainer width="100%" height="100%" className="[&_.recharts-tooltip-wrapper]:!z-[9999] [&_.recharts-tooltip-wrapper]:!pointer-events-none">
                       <PieChart>
                         <Pie
@@ -1237,11 +1269,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     {sdgDistribution.slice(0, 6).map((sdg) => {
                       const totalHours = sdgDistribution.reduce((sum, s) => sum + s.value, 0);
                       const percentage = totalHours > 0 ? Math.round((sdg.value / totalHours) * 100) : 0;
+                      const sdgAiu = aiuPerSdg[sdg.sdg] || 0;
                       return (
                         <button
                           key={sdg.sdg}
                           onClick={() => setShowSdgModal(sdg.sdg)}
-                          className="flex items-center gap-2 p-2.5 rounded-xl hover:bg-slate-50 transition-all text-left border border-transparent hover:border-slate-200 hover:shadow-sm"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all text-left border border-slate-200 hover:border-slate-300 hover:shadow-md active:scale-98 cursor-pointer"
                         >
                           <div
                             className="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm"
@@ -1255,7 +1288,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                               <span className="text-slate-600 text-[10px] font-medium">{Math.round(sdg.value)} hrs</span>
                               <span className="text-blue-600 text-[9px] bg-blue-50 px-1.5 py-0.5 rounded font-medium">{percentage}%</span>
                             </div>
-                            <div className="text-emerald-600 text-[9px] mt-0.5">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-emerald-600 text-[9px]">{sdg.projectCount} project{sdg.projectCount !== 1 ? 's' : ''}</span>
+                              {sdgAiu > 0 && (
+                                <span className="text-amber-600 text-[9px] bg-amber-50 px-1.5 py-0.5 rounded font-medium">{sdgAiu.toFixed(2)} AIU</span>
+                              )}
+                            </div>
                           </div>
                         </button>
                       );
@@ -3009,8 +3047,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
       {/* KPI Detail Modal */}
       {showKpiModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-slate-800 text-lg font-semibold">
                 {showKpiModal === 'hours' && 'Total Hours Logged'}
@@ -3283,9 +3321,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     <p className="text-xs text-blue-700 leading-relaxed">
                       <strong>Attributable Impact Units (AIU)</strong> are auditable, SDG-mapped metrics that measure your real contribution to social impact. Unlike simple "hours logged", AIUs calculate your proportional share of project outcomes based on your role, hours, and the verified change in beneficiaries' lives.
                     </p>
-                    <div className="mt-2 text-xs text-blue-600">
-                      <strong>Formula:</strong> AIU = ΔOutcome × Attribution × (Your Weight ÷ Total Weight)
-                    </div>
                   </div>
 
                   <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 mb-4">
@@ -3340,8 +3375,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
       {/* SDG Projects Modal */}
       {showSdgModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-slate-800 text-lg font-semibold flex items-center gap-2">
                 <span>SDG {showSdgModal}</span>
@@ -3441,8 +3476,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
       {/* Project Stats Modal */}
       {showProjectStatsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
             <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
               <h2 className="text-slate-800 text-lg font-semibold">
                 {showProjectStatsModal === 'active' && 'Active Projects'}
@@ -3686,57 +3721,51 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         IMPORTANT: PWA Bottom Tray Navigation - DO NOT REPLACE
         This navigation uses internal setActiveTab() for tab switching within the PWA.
         It must NOT be replaced with URL-based navigation components like WebBottomNav.
-        Tabs: Home, Projects, Potential, Impacts, Stories, More
+        Tabs: Home, Projects, Potentials, Impacts, More
       */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-blue-100 px-4 py-3 flex justify-around max-w-[428px] mx-auto z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-        <button
-          onClick={() => setActiveTab('dashboard')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-home"
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-xs font-medium">Home</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('projects')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'projects' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-projects"
-        >
-          <Briefcase className="w-5 h-5" />
-          <span className="text-xs font-medium">Projects</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('potential')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'potential' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-potential"
-        >
-          <Lightbulb className="w-5 h-5" />
-          <span className="text-xs font-medium">Potential</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('impacts')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'impacts' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-impacts"
-        >
-          <BarChart3 className="w-5 h-5" />
-          <span className="text-xs font-medium">Impacts</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('stories')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'stories' ? 'text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-stories"
-        >
-          <FileText className="w-5 h-5" />
-          <span className="text-xs font-medium">Stories</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('more')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'more' ? 'text-slate-700' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-more"
-        >
-          <User className="w-5 h-5" />
-          <span className="text-xs font-medium">More</span>
-        </button>
+      <nav className="fixed bottom-0 left-0 right-0 bg-[#f8f7f4] border-t border-slate-200 px-2 py-2 z-50 shadow-lg">
+        <div className="flex justify-around items-center max-w-md mx-auto">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'dashboard' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            data-testid="nav-home"
+          >
+            <Home className={`w-5 h-5 mb-0.5 ${activeTab === 'dashboard' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium">Home</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('projects')}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'projects' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            data-testid="nav-projects"
+          >
+            <Briefcase className={`w-5 h-5 mb-0.5 ${activeTab === 'projects' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium">Projects</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('potential')}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'potential' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            data-testid="nav-potentials"
+          >
+            <Sparkles className={`w-5 h-5 mb-0.5 ${activeTab === 'potential' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium">Potentials</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('impacts')}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'impacts' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            data-testid="nav-impacts"
+          >
+            <BarChart3 className={`w-5 h-5 mb-0.5 ${activeTab === 'impacts' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium">Impacts</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('more')}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'more' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            data-testid="nav-more"
+          >
+            <MoreHorizontal className={`w-5 h-5 mb-0.5 ${activeTab === 'more' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium">More</span>
+          </button>
+        </div>
       </nav>
     </div>
   );

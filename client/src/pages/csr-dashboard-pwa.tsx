@@ -48,6 +48,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import CSRPWANav from "@/components/layout/csr-pwa-nav";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
@@ -1757,6 +1758,9 @@ function MapModal({ csrData, filter, setFilter, onClose }: { csrData: any; filte
           <span className="w-2 h-2 bg-blue-500 rounded-full" /> Completed
         </span>
       </div>
+
+      {/* Bottom Navigation */}
+      <CSRPWANav activeTab="home" />
     </div>
   );
 }

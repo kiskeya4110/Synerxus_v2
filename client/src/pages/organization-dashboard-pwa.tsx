@@ -36,6 +36,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
@@ -1412,6 +1413,9 @@ export default function OrganizationDashboardPWA() {
           </div>
         </div>
       )}
+
+      {/* Bottom Navigation */}
+      <OrganizationPWANav activeTab="home" />
     </div>
   );
 }

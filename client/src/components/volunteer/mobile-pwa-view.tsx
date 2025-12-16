@@ -85,6 +85,9 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
   const [showProjectStatsModal, setShowProjectStatsModal] = useState<'active' | 'total' | 'sdgs' | null>(null);
   const [timeFilter, setTimeFilter] = useState<"all" | "month" | "quarter" | "year">("all");
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  const [selectedMilestone, setSelectedMilestone] = useState<number | null>(null);
+  const [showReadinessModal, setShowReadinessModal] = useState(false);
 
   // Log Activity form state
   const [logActivityProjectId, setLogActivityProjectId] = useState<string>("");
@@ -1617,41 +1620,55 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             {/* AI Insights Cards */}
             <div className="space-y-3">
               {/* Impact Readiness Score - Competitor-level metric */}
-              <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-xl p-4 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-                  <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="white" strokeWidth="8" strokeDasharray="251.3" strokeDashoffset={251.3 - (251.3 * Math.min(75 + kpis.skills * 2 + kpis.sdgsContributed * 3, 99)) / 100} transform="rotate(-90 50 50)" />
-                  </svg>
-                </div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Lightbulb className="w-5 h-5" />
-                  <span className="font-semibold">Impact Readiness Score</span>
-                  <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">AI Calculated</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="text-5xl font-bold">{Math.min(75 + kpis.skills * 2 + kpis.sdgsContributed * 3, 99)}</div>
-                    <div className="text-xs opacity-75">out of 100</div>
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span>Skills Match</span>
-                      <span>{Math.min(85 + kpis.skills * 3, 98)}%</span>
+              {(() => {
+                // Calculate individual scores properly
+                const skillsMatch = Math.min(50 + kpis.skills * 10, 100);
+                const sdgAlignment = Math.min(40 + kpis.sdgsContributed * 12, 100);
+                const engagementLevel = Math.min(30 + kpis.totalHours * 2, 100);
+                // Calculate true average
+                const averageScore = Math.round((skillsMatch + sdgAlignment + engagementLevel) / 3);
+
+                return (
+                  <button
+                    onClick={() => setShowReadinessModal(true)}
+                    className="w-full text-left bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-xl p-4 text-white relative overflow-hidden active:scale-[0.98] transition-transform"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+                      <svg viewBox="0 0 100 100" className="w-full h-full">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="white" strokeWidth="8" strokeDasharray="251.3" strokeDashoffset={251.3 - (251.3 * averageScore) / 100} transform="rotate(-90 50 50)" />
+                      </svg>
                     </div>
-                    <Progress value={Math.min(85 + kpis.skills * 3, 98)} className="h-1.5 bg-white/20" />
-                    <div className="flex justify-between text-xs">
-                      <span>SDG Alignment</span>
-                      <span>{Math.min(70 + kpis.sdgsContributed * 5, 95)}%</span>
+                    <div className="flex items-center gap-2 mb-2">
+                      <Lightbulb className="w-5 h-5" />
+                      <span className="font-semibold">Impact Readiness Score</span>
+                      <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">Tap for details</span>
                     </div>
-                    <Progress value={Math.min(70 + kpis.sdgsContributed * 5, 95)} className="h-1.5 bg-white/20" />
-                    <div className="flex justify-between text-xs">
-                      <span>Engagement Level</span>
-                      <span>{Math.min(60 + kpis.totalHours, 100)}%</span>
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="text-5xl font-bold">{averageScore}</div>
+                        <div className="text-xs opacity-75">avg of 100</div>
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>Skills Match</span>
+                          <span>{skillsMatch}%</span>
+                        </div>
+                        <Progress value={skillsMatch} className="h-1.5 bg-white/20" />
+                        <div className="flex justify-between text-xs">
+                          <span>SDG Alignment</span>
+                          <span>{sdgAlignment}%</span>
+                        </div>
+                        <Progress value={sdgAlignment} className="h-1.5 bg-white/20" />
+                        <div className="flex justify-between text-xs">
+                          <span>Engagement Level</span>
+                          <span>{engagementLevel}%</span>
+                        </div>
+                        <Progress value={engagementLevel} className="h-1.5 bg-white/20" />
+                      </div>
                     </div>
-                    <Progress value={Math.min(60 + kpis.totalHours, 100)} className="h-1.5 bg-white/20" />
-                  </div>
-                </div>
-              </div>
+                  </button>
+                );
+              })()}
 
               {/* Skills Analysis with Expandable View */}
               <div className="bg-white rounded-xl p-4 border border-amber-200/60 shadow-sm">
@@ -1666,9 +1683,14 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 {/* Skills Grid - Show first 4 */}
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   {volunteerProfile?.skills?.slice(0, 4).map((skill: string, idx: number) => {
-                    const demandScore = Math.floor(70 + Math.random() * 25);
+                    // Use deterministic score based on skill name
+                    const demandScore = 70 + (skill.length * 3) % 25;
                     return (
-                      <div key={idx} className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-100/50 group cursor-pointer hover:shadow-md transition-all">
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedSkill(skill)}
+                        className="text-left bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-100/50 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
+                      >
                         <div className="text-slate-800 text-xs font-semibold truncate">{skill}</div>
                         <div className="flex items-center gap-1 mt-1">
                           <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
@@ -1676,8 +1698,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                           </div>
                           <span className="text-[10px] text-emerald-700">{demandScore}%</span>
                         </div>
-                        <div className="text-[9px] text-slate-500 mt-0.5">Market Demand</div>
-                      </div>
+                        <div className="text-[9px] text-blue-500 mt-0.5">Tap for insights</div>
+                      </button>
                     );
                   }) || (
                     <div className="col-span-2 text-slate-500 text-sm text-center py-4">
@@ -1696,9 +1718,13 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </summary>
                     <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
                       {volunteerProfile?.skills?.slice(4).map((skill: string, idx: number) => {
-                        const demandScore = Math.floor(70 + Math.random() * 25);
+                        const demandScore = 70 + (skill.length * 3) % 25;
                         return (
-                          <div key={idx + 4} className="bg-slate-50 rounded-lg p-2 border border-slate-100">
+                          <button
+                            key={idx + 4}
+                            onClick={() => setSelectedSkill(skill)}
+                            className="text-left bg-slate-50 rounded-lg p-2 border border-slate-100 hover:shadow-md active:scale-[0.98] transition-all"
+                          >
                             <div className="text-slate-700 text-xs font-medium truncate">{skill}</div>
                             <div className="flex items-center gap-1 mt-1">
                               <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
@@ -1706,7 +1732,8 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                               </div>
                               <span className="text-[10px] text-blue-600">{demandScore}%</span>
                             </div>
-                          </div>
+                            <div className="text-[9px] text-blue-500 mt-0.5">Tap for insights</div>
+                          </button>
                         );
                       })}
                     </div>
@@ -1817,13 +1844,17 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                       const progress = Math.min((milestone.current / milestone.target) * 100, 100);
                       const isComplete = progress >= 100;
                       return (
-                        <div key={idx} className="flex gap-3 relative">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 ${
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedMilestone(idx)}
+                          className="flex gap-3 relative w-full text-left hover:bg-slate-50/50 rounded-lg p-1 -m-1 transition-colors active:scale-[0.99]"
+                        >
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm z-10 flex-shrink-0 ${
                             isComplete ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'
                           }`}>
                             {isComplete ? <CheckCircle className="w-4 h-4" /> : milestone.icon}
                           </div>
-                          <div className="flex-1 pb-2">
+                          <div className="flex-1 pb-2 min-w-0">
                             <div className="flex items-center gap-2">
                               <span className={`text-sm font-semibold ${isComplete ? 'text-emerald-600' : 'text-slate-700'}`}>
                                 {milestone.title}
@@ -1843,10 +1874,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                                   }}
                                 />
                               </div>
-                              <span className="text-[10px] text-slate-500">{milestone.current}/{milestone.target}</span>
+                              <span className="text-[10px] text-slate-500">{Math.round(milestone.current)}/{milestone.target}</span>
                             </div>
+                            <div className="text-[9px] text-blue-500 mt-0.5">Tap for details</div>
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
@@ -3712,6 +3744,394 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                   )}
                 </>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Skill Detail Modal */}
+      {selectedSkill && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
+            <div className="sticky top-0 bg-gradient-to-r from-amber-500 to-orange-500 border-b border-amber-400 p-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-white text-lg font-semibold flex items-center gap-2">
+                <Award className="w-5 h-5" />
+                Skill Insights
+              </h2>
+              <button
+                onClick={() => setSelectedSkill(null)}
+                className="text-white/80 hover:text-white text-xl font-medium w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {(() => {
+                const demandScore = 70 + (selectedSkill.length * 3) % 25;
+                const growthTrend = demandScore > 80 ? 'High Growth' : demandScore > 70 ? 'Steady Growth' : 'Emerging';
+                const matchingOpportunities = Math.floor(demandScore / 10);
+
+                return (
+                  <>
+                    <div className="text-center py-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
+                      <div className="text-2xl font-bold text-amber-700 mb-1">{selectedSkill}</div>
+                      <div className="flex items-center justify-center gap-2 text-xs">
+                        <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">{growthTrend}</span>
+                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{demandScore}% Demand</span>
+                      </div>
+                    </div>
+
+                    {/* Market Demand */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-slate-700 font-medium text-sm">Market Demand</span>
+                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      </div>
+                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all"
+                          style={{ width: `${demandScore}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        This skill is in {demandScore >= 85 ? 'very high' : demandScore >= 75 ? 'high' : 'moderate'} demand across volunteer opportunities in your area.
+                      </p>
+                    </div>
+
+                    {/* Matching Opportunities */}
+                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                          <Briefcase className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="text-2xl font-bold text-blue-700">{matchingOpportunities}+</div>
+                          <div className="text-xs text-blue-600">Matching Opportunities</div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        Projects actively seeking volunteers with {selectedSkill} expertise.
+                      </p>
+                    </div>
+
+                    {/* Skill Tips */}
+                    <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Lightbulb className="w-4 h-4 text-purple-600" />
+                        <span className="text-slate-700 font-medium text-sm">Growth Tips</span>
+                      </div>
+                      <ul className="text-xs text-slate-600 space-y-1.5">
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-500 mt-0.5">•</span>
+                          <span>Apply this skill in different project types to build versatility</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-500 mt-0.5">•</span>
+                          <span>Document your achievements to showcase impact</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-purple-500 mt-0.5">•</span>
+                          <span>Mentor others to strengthen your expertise</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        setSelectedSkill(null);
+                        navigate('/discover-opportunities/pwa');
+                      }}
+                      className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      Find {selectedSkill} Opportunities
+                    </Button>
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Milestone Detail Modal */}
+      {selectedMilestone !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
+            {(() => {
+              const milestones = [
+                { title: 'Rising Star', desc: 'Complete 5 projects', fullDesc: 'Become a Rising Star by completing your first 5 volunteer projects. This milestone recognizes your dedication and commitment to making a difference.', target: 5, current: kpis.projectsCompleted, icon: '⭐', bgFrom: '#fbbf24', bgTo: '#f59e0b', reward: '500 Bonus AIUs' },
+                { title: 'Impact Leader', desc: 'Log 50 volunteer hours', fullDesc: 'Achieve Impact Leader status by contributing 50 hours of your time. Your sustained effort creates meaningful change in communities.', target: 50, current: kpis.totalHours, icon: '🏆', bgFrom: '#60a5fa', bgTo: '#3b82f6', reward: 'Leadership Badge' },
+                { title: 'Global Champion', desc: 'Contribute to 5 SDGs', fullDesc: 'Become a Global Champion by making contributions across 5 different Sustainable Development Goals. Your diverse impact spans multiple global challenges.', target: 5, current: kpis.sdgsContributed, icon: '🌍', bgFrom: '#4ade80', bgTo: '#22c55e', reward: 'Global Impact Certificate' },
+                { title: 'Community Builder', desc: 'Join 3 organizations', fullDesc: 'Earn Community Builder status by collaborating with 3 different organizations. Your network expands the reach of your positive impact.', target: 3, current: Math.min(projects.length, 3), icon: '🤝', bgFrom: '#c084fc', bgTo: '#a855f7', reward: 'Network Expansion Badge' }
+              ];
+              const milestone = milestones[selectedMilestone];
+              const progress = Math.min((milestone.current / milestone.target) * 100, 100);
+              const isComplete = progress >= 100;
+              const remaining = Math.max(0, milestone.target - milestone.current);
+
+              return (
+                <>
+                  <div
+                    className="sticky top-0 border-b p-4 flex items-center justify-between rounded-t-2xl"
+                    style={{ background: `linear-gradient(to right, ${milestone.bgFrom}, ${milestone.bgTo})` }}
+                  >
+                    <h2 className="text-white text-lg font-semibold flex items-center gap-2">
+                      <span className="text-2xl">{milestone.icon}</span>
+                      {milestone.title}
+                    </h2>
+                    <button
+                      onClick={() => setSelectedMilestone(null)}
+                      className="text-white/80 hover:text-white text-xl font-medium w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="p-4 space-y-4">
+                    {/* Status Badge */}
+                    <div className="text-center">
+                      {isComplete ? (
+                        <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full">
+                          <CheckCircle className="w-5 h-5" />
+                          <span className="font-semibold">Achievement Unlocked!</span>
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-700 px-4 py-2 rounded-full">
+                          <Clock className="w-5 h-5" />
+                          <span className="font-semibold">In Progress</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Description */}
+                    <p className="text-slate-600 text-sm text-center leading-relaxed">
+                      {milestone.fullDesc}
+                    </p>
+
+                    {/* Progress Card */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-slate-700 font-medium text-sm">Your Progress</span>
+                        <span className="text-slate-500 text-sm">{Math.round(progress)}%</span>
+                      </div>
+                      <div className="h-3 bg-slate-200 rounded-full overflow-hidden mb-3">
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${progress}%`,
+                            background: isComplete
+                              ? 'linear-gradient(to right, #4ade80, #22c55e)'
+                              : `linear-gradient(to right, ${milestone.bgFrom}, ${milestone.bgTo})`
+                          }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-600">Current: <span className="font-semibold text-slate-800">{Math.round(milestone.current)}</span></span>
+                        <span className="text-slate-600">Target: <span className="font-semibold text-slate-800">{milestone.target}</span></span>
+                      </div>
+                    </div>
+
+                    {/* Remaining or Reward */}
+                    {isComplete ? (
+                      <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <Award className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <div className="text-emerald-800 font-semibold">Reward Earned</div>
+                            <div className="text-emerald-600 text-sm">{milestone.reward}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-blue-600 mb-1">{remaining}</div>
+                          <div className="text-blue-600 text-sm">more to unlock this achievement</div>
+                          <div className="text-xs text-slate-500 mt-2">Reward: {milestone.reward}</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {!isComplete && (
+                      <Button
+                        onClick={() => {
+                          setSelectedMilestone(null);
+                          navigate('/discover-opportunities/pwa');
+                        }}
+                        className="w-full"
+                        style={{ background: `linear-gradient(to right, ${milestone.bgFrom}, ${milestone.bgTo})` }}
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Find Opportunities to Progress
+                      </Button>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Readiness Score Detail Modal */}
+      {showReadinessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4 py-6">
+          <div className="bg-white rounded-2xl max-w-sm w-full max-h-[85vh] overflow-y-auto shadow-2xl mx-auto transform transition-all duration-200 ease-out animate-in fade-in zoom-in-95">
+            <div className="sticky top-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 border-b p-4 flex items-center justify-between rounded-t-2xl">
+              <h2 className="text-white text-lg font-semibold flex items-center gap-2">
+                <Lightbulb className="w-5 h-5" />
+                Impact Readiness
+              </h2>
+              <button
+                onClick={() => setShowReadinessModal(false)}
+                className="text-white/80 hover:text-white text-xl font-medium w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              {(() => {
+                const skillsMatch = Math.min(50 + kpis.skills * 10, 100);
+                const sdgAlignment = Math.min(40 + kpis.sdgsContributed * 12, 100);
+                const engagementLevel = Math.min(30 + kpis.totalHours * 2, 100);
+                const averageScore = Math.round((skillsMatch + sdgAlignment + engagementLevel) / 3);
+
+                return (
+                  <>
+                    {/* Overall Score */}
+                    <div className="text-center py-6 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 rounded-xl">
+                      <div className="relative inline-block">
+                        <svg className="w-32 h-32" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+                          <circle
+                            cx="50" cy="50" r="40"
+                            fill="none"
+                            stroke="url(#scoreGradient)"
+                            strokeWidth="8"
+                            strokeDasharray="251.3"
+                            strokeDashoffset={251.3 - (251.3 * averageScore) / 100}
+                            transform="rotate(-90 50 50)"
+                            strokeLinecap="round"
+                          />
+                          <defs>
+                            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                              <stop offset="0%" stopColor="#9333ea" />
+                              <stop offset="50%" stopColor="#6366f1" />
+                              <stop offset="100%" stopColor="#3b82f6" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className="text-4xl font-bold text-slate-800">{averageScore}</span>
+                          <span className="text-xs text-slate-500">of 100</span>
+                        </div>
+                      </div>
+                      <div className="mt-2 text-slate-600 font-medium">
+                        {averageScore >= 80 ? 'Excellent Readiness!' :
+                         averageScore >= 60 ? 'Good Progress!' :
+                         averageScore >= 40 ? 'Building Momentum' : 'Getting Started'}
+                      </div>
+                    </div>
+
+                    {/* Score Breakdown */}
+                    <div className="space-y-3">
+                      <h3 className="text-slate-700 font-semibold text-sm">Score Breakdown</h3>
+
+                      {/* Skills Match */}
+                      <div className="bg-orange-50 rounded-xl p-3 border border-orange-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Award className="w-4 h-4 text-orange-600" />
+                            <span className="text-slate-700 font-medium text-sm">Skills Match</span>
+                          </div>
+                          <span className="text-orange-600 font-bold">{skillsMatch}%</span>
+                        </div>
+                        <div className="h-2 bg-orange-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-orange-400 to-amber-500 rounded-full" style={{ width: `${skillsMatch}%` }} />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Based on {kpis.skills} skills. Add more skills to improve this score.
+                        </p>
+                      </div>
+
+                      {/* SDG Alignment */}
+                      <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Globe className="w-4 h-4 text-emerald-600" />
+                            <span className="text-slate-700 font-medium text-sm">SDG Alignment</span>
+                          </div>
+                          <span className="text-emerald-600 font-bold">{sdgAlignment}%</span>
+                        </div>
+                        <div className="h-2 bg-emerald-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" style={{ width: `${sdgAlignment}%` }} />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          Contributing to {kpis.sdgsContributed} SDGs. Expand your impact across more goals.
+                        </p>
+                      </div>
+
+                      {/* Engagement Level */}
+                      <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-blue-600" />
+                            <span className="text-slate-700 font-medium text-sm">Engagement Level</span>
+                          </div>
+                          <span className="text-blue-600 font-bold">{engagementLevel}%</span>
+                        </div>
+                        <div className="h-2 bg-blue-100 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{ width: `${engagementLevel}%` }} />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                          {kpis.totalHours} hours logged. Keep volunteering to boost this score.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Tips */}
+                    <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-4 h-4 text-purple-600" />
+                        <span className="text-slate-700 font-medium text-sm">How to Improve</span>
+                      </div>
+                      <ul className="text-xs text-slate-600 space-y-1.5">
+                        {skillsMatch < 100 && (
+                          <li className="flex items-start gap-2">
+                            <span className="text-purple-500 mt-0.5">•</span>
+                            <span>Add more skills to your profile to increase Skills Match</span>
+                          </li>
+                        )}
+                        {sdgAlignment < 100 && (
+                          <li className="flex items-start gap-2">
+                            <span className="text-purple-500 mt-0.5">•</span>
+                            <span>Join projects targeting different SDGs to improve alignment</span>
+                          </li>
+                        )}
+                        {engagementLevel < 100 && (
+                          <li className="flex items-start gap-2">
+                            <span className="text-purple-500 mt-0.5">•</span>
+                            <span>Log more volunteer hours to boost engagement</span>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+
+                    <Button
+                      onClick={() => {
+                        setShowReadinessModal(false);
+                        navigate('/discover-opportunities/pwa');
+                      }}
+                      className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700"
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Find Opportunities to Improve
+                    </Button>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

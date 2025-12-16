@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3, Activity } from "lucide-react";
+import { ArrowLeft, Calendar, Edit, MapPin, Target, Users, TrendingUp, CheckCircle2, Clock, Share2, AlertCircle, Plus, Trash2, Briefcase, Award, Heart, Globe, Zap, BarChart3, Activity, X, Info, ChevronRight, Shield, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -205,9 +205,19 @@ export default function ProjectDetail() {
   const [deleteTaskDialogOpen, setDeleteTaskDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<number | null>(null);
 
+  // Interactive KPI modal states
+  const [activeKpiModal, setActiveKpiModal] = useState<'volunteers' | 'hours' | 'tasks' | 'aiu' | 'engagement' | 'team' | 'impact' | null>(null);
+
+  // AIU Adjustment mode state
+  const [isAdjusting, setIsAdjusting] = useState(false);
+  const [adjustmentValues, setAdjustmentValues] = useState({
+    livesImpacted: 0,
+    verificationNotes: ''
+  });
+
   const updateLivesImpactedMutation = useMutation({
-    mutationFn: async (livesImpacted: number) => {
-      return apiRequest("PATCH", `/api/projects/${projectId}`, { livesImpacted });
+    mutationFn: async (livesTouched: number) => {
+      return apiRequest("PATCH", `/api/projects/${projectId}`, { livesTouched });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
@@ -228,6 +238,54 @@ export default function ProjectDetail() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete task", variant: "destructive" });
+    }
+  });
+
+  // Verify AIU impact mutation
+  const verifyAiuMutation = useMutation({
+    mutationFn: async ({ status }: { status: 'verified' | 'rejected' }) => {
+      return apiRequest("POST", `/api/projects/${projectId}/verify-aiu`, { status });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/aiu/project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      toast({
+        title: variables.status === 'verified' ? "AIU Verified" : "AIU Rejected",
+        description: variables.status === 'verified'
+          ? "The impact has been verified and AIU credits confirmed."
+          : "The impact record has been rejected."
+      });
+      setActiveKpiModal(null);
+      setIsAdjusting(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to update verification status", variant: "destructive" });
+    }
+  });
+
+  // Adjust and verify AIU mutation - updates metrics and verifies
+  const adjustAndVerifyMutation = useMutation({
+    mutationFn: async ({ livesImpacted, verificationNotes }: { livesImpacted: number; verificationNotes: string }) => {
+      // Verify the AIU with adjusted values (backend will handle both update and verification)
+      return apiRequest("POST", `/api/projects/${projectId}/verify-aiu`, {
+        status: 'verified',
+        adjustedLivesImpacted: livesImpacted,
+        notes: verificationNotes
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/aiu/project", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
+      toast({
+        title: "AIU Adjusted & Verified",
+        description: "The impact metrics have been adjusted and verified successfully."
+      });
+      setActiveKpiModal(null);
+      setIsAdjusting(false);
+      setAdjustmentValues({ livesImpacted: 0, verificationNotes: '' });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to adjust and verify impact", variant: "destructive" });
     }
   });
 
@@ -295,7 +353,7 @@ export default function ProjectDetail() {
   const totalHours = projectAIU?.totalHours ?? projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
   const totalImpact = projectImpact.reduce((sum, i) => sum + (i.value || 0), 0);
   const aiuEarned = projectAIU?.totalAiu ?? project.aiuEarned ?? 0;
-  const livesImpacted = projectAIU?.livesImpacted ?? project.livesImpacted ?? 0;
+  const livesImpacted = projectAIU?.livesImpacted ?? project.livesTouched ?? 0;
 
   // Get team members from project assignments (active only) or from activities
   const activeAssignments = projectAssignments.filter(pa =>
@@ -443,60 +501,76 @@ export default function ProjectDetail() {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto w-full px-4 py-6 space-y-6">
         
-        {/* Key Metrics Grid */}
+        {/* Key Metrics Grid - Interactive Clickable KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
+          <Card
+            className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20 border-blue-200 dark:border-blue-700 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all"
+            onClick={() => setActiveKpiModal('volunteers')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-500/20">
                   <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{uniqueVolunteers}</div>
                   <div className="text-xs text-blue-600/80 dark:text-blue-400/80">Volunteers</div>
                 </div>
+                <ChevronRight className="h-4 w-4 text-blue-400" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 border-green-200 dark:border-green-700">
+          <Card
+            className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/20 border-green-200 dark:border-green-700 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all"
+            onClick={() => setActiveKpiModal('hours')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-green-500/20">
                   <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="text-2xl font-bold text-green-700 dark:text-green-300">{totalHours}</div>
                   <div className="text-xs text-green-600/80 dark:text-green-400/80">Hours Logged</div>
                 </div>
+                <ChevronRight className="h-4 w-4 text-green-400" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
+          <Card
+            className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20 border-purple-200 dark:border-purple-700 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all"
+            onClick={() => setActiveKpiModal('tasks')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-purple-500/20">
                   <CheckCircle2 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">{completedTasks}/{projectTasks.length}</div>
                   <div className="text-xs text-purple-600/80 dark:text-purple-400/80">Tasks Done</div>
                 </div>
+                <ChevronRight className="h-4 w-4 text-purple-400" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20 border-emerald-200 dark:border-emerald-700">
+          <Card
+            className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20 border-emerald-200 dark:border-emerald-700 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all"
+            onClick={() => setActiveKpiModal('aiu')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-500/20">
                   <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{aiuEarned.toFixed(2)}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">AIUs Earned</div>
                 </div>
+                <ChevronRight className="h-4 w-4 text-emerald-400" />
               </div>
             </CardContent>
           </Card>
@@ -673,11 +747,15 @@ export default function ProjectDetail() {
             </Card>
 
             {/* Team Members Card - Enhanced with AIU data and assignments */}
-            <Card className="border-blue-200 dark:border-blue-800">
+            <Card
+              className="border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-all"
+              onClick={() => setActiveKpiModal('team')}
+            >
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Users className="h-5 w-5 text-blue-600" />
                   Team Members ({uniqueVolunteers})
+                  <ChevronRight className="h-4 w-4 text-blue-400 ml-auto" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -793,12 +871,16 @@ export default function ProjectDetail() {
               </Card>
             )}
 
-            {/* Engagement Score Card */}
-            <Card className="border-blue-200 dark:border-blue-800">
+            {/* Engagement Score Card - Interactive */}
+            <Card
+              className="border-blue-200 dark:border-blue-800 cursor-pointer hover:shadow-lg transition-all"
+              onClick={() => setActiveKpiModal('engagement')}
+            >
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Activity className="h-5 w-5 text-blue-600" />
                   Engagement Score
+                  <ChevronRight className="h-4 w-4 text-blue-400 ml-auto" />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -874,12 +956,16 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
 
-            {/* Impact Metrics Card */}
-            <Card className="border-emerald-200 dark:border-emerald-800">
+            {/* Impact Metrics Card - Interactive */}
+            <Card
+              className="border-emerald-200 dark:border-emerald-800 cursor-pointer hover:shadow-lg transition-all"
+              onClick={() => setActiveKpiModal('impact')}
+            >
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <BarChart3 className="h-5 w-5 text-emerald-600" />
                   Impact Metrics
+                  <ChevronRight className="h-4 w-4 text-emerald-400 ml-auto" />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -916,7 +1002,7 @@ export default function ProjectDetail() {
                     <div className="mt-3">
                       <input
                         type="number"
-                        value={project.livesImpacted || 0}
+                        value={project.livesTouched || 0}
                         onChange={(e) => updateLivesImpactedMutation.mutate(parseInt(e.target.value) || 0)}
                         className="w-full px-3 py-2 text-sm border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Update lives impacted"
@@ -958,75 +1044,564 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
 
-            {/* Quick Actions Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-share-project">
-                  <Share2 className="h-4 w-4" />
-                  Share Project
-                </Button>
-                {!isOrganization && (
-                  <Button className="w-full justify-start gap-2 bg-green-600 hover:bg-green-700 text-white" data-testid="button-apply-project">
-                    <Plus className="h-4 w-4" />
-                    Apply to Volunteer
-                  </Button>
-                )}
-                {canEditProject && (
-                  <Link href={`/projects/${projectId}/edit`} className="block">
-                    <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-edit-project-sidebar">
-                      <Edit className="h-4 w-4" />
-                      Edit Project
-                    </Button>
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Project Info Card */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Globe className="h-5 w-5 text-slate-500" />
-                  Project Info
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <StatusBadge status={project.status} />
-                </div>
-                {project.startDate && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Start Date</span>
-                    <span className="font-medium">{format(new Date(project.startDate), "MMM d, yyyy")}</span>
-                  </div>
-                )}
-                {project.endDate && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">End Date</span>
-                    <span className="font-medium">{format(new Date(project.endDate), "MMM d, yyyy")}</span>
-                  </div>
-                )}
-                {project.location && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Location</span>
-                    <span className="font-medium">{project.location}</span>
-                  </div>
-                )}
-                {project.engagementType && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Engagement</span>
-                    <span className="font-medium capitalize">{project.engagementType}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Removed - moved to bottom row */}
           </div>
         </div>
+
+        {/* Quick Actions & Project Info - Bottom Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Quick Actions Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Zap className="h-5 w-5 text-amber-500" />
+                Quick Actions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-share-project">
+                <Share2 className="h-4 w-4" />
+                Share Project
+              </Button>
+              {!isOrganization && (
+                <Button className="w-full justify-start gap-2 bg-green-600 hover:bg-green-700 text-white" data-testid="button-apply-project">
+                  <Plus className="h-4 w-4" />
+                  Apply to Volunteer
+                </Button>
+              )}
+              {canEditProject && (
+                <Link href={`/projects/${projectId}/edit`} className="block">
+                  <Button className="w-full justify-start gap-2" variant="outline" data-testid="button-edit-project-sidebar">
+                    <Edit className="h-4 w-4" />
+                    Edit Project
+                  </Button>
+                </Link>
+              )}
+              {canEditProject && projectAIU?.verificationStatus === 'pending' && (
+                <Button
+                  className="w-full justify-start gap-2 bg-amber-500 hover:bg-amber-600 text-white"
+                  onClick={() => setActiveKpiModal('aiu')}
+                  data-testid="button-verify-aiu"
+                >
+                  <Shield className="h-4 w-4" />
+                  Verify Pending AIU
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Project Info Card */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Globe className="h-5 w-5 text-slate-500" />
+                Project Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Status</span>
+                <StatusBadge status={project.status} />
+              </div>
+              {project.startDate && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Start Date</span>
+                  <span className="font-medium">{format(new Date(project.startDate), "MMM d, yyyy")}</span>
+                </div>
+              )}
+              {project.endDate && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">End Date</span>
+                  <span className="font-medium">{format(new Date(project.endDate), "MMM d, yyyy")}</span>
+                </div>
+              )}
+              {project.location && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Location</span>
+                  <span className="font-medium">{project.location}</span>
+                </div>
+              )}
+              {project.engagementType && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Engagement</span>
+                  <span className="font-medium capitalize">{project.engagementType}</span>
+                </div>
+              )}
+              {project.commitmentType && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Commitment</span>
+                  <span className="font-medium capitalize">{project.commitmentType}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* KPI Detail Modals */}
+      {activeKpiModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setActiveKpiModal(null)}>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-slate-800 p-4 border-b flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                {activeKpiModal === 'volunteers' && 'Team Volunteers'}
+                {activeKpiModal === 'hours' && 'Hours Logged'}
+                {activeKpiModal === 'tasks' && 'Task Progress'}
+                {activeKpiModal === 'aiu' && 'AIU Impact Details'}
+                {activeKpiModal === 'engagement' && 'Engagement Score'}
+                {activeKpiModal === 'team' && 'Team Members'}
+                {activeKpiModal === 'impact' && 'Impact Metrics'}
+              </h2>
+              <button onClick={() => setActiveKpiModal(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 space-y-4">
+              {/* Volunteers Modal */}
+              {activeKpiModal === 'volunteers' && (
+                <>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-center">
+                    <div className="text-4xl font-bold text-blue-600">{uniqueVolunteers}</div>
+                    <div className="text-sm text-blue-600/80">Active Volunteers</div>
+                  </div>
+                  <div className="space-y-2">
+                    {projectAIU?.volunteers?.map((vol, idx) => (
+                      <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-blue-500 text-white">{vol.volunteerName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="font-medium">{vol.volunteerName}</div>
+                          <div className="text-xs text-muted-foreground">{vol.role} • {vol.hours}h logged</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-emerald-600">{vol.aiu.toFixed(2)}</div>
+                          <div className="text-xs text-muted-foreground">AIU</div>
+                        </div>
+                      </div>
+                    )) || <p className="text-center text-muted-foreground py-4">No volunteer data available</p>}
+                  </div>
+                </>
+              )}
+
+              {/* Hours Modal */}
+              {activeKpiModal === 'hours' && (
+                <>
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl text-center">
+                    <div className="text-4xl font-bold text-green-600">{totalHours}</div>
+                    <div className="text-sm text-green-600/80">Total Hours Logged</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg text-center">
+                      <div className="text-xl font-bold">{project.projectTotalHours || 0}</div>
+                      <div className="text-xs text-muted-foreground">Target Hours</div>
+                    </div>
+                    <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg text-center">
+                      <div className="text-xl font-bold">{project.projectTotalHours ? Math.round((totalHours / project.projectTotalHours) * 100) : 0}%</div>
+                      <div className="text-xs text-muted-foreground">Progress</div>
+                    </div>
+                  </div>
+                  {projectAIU?.volunteers && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm">Hours by Volunteer</h4>
+                      {projectAIU.volunteers.map((vol, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-700 rounded">
+                          <span>{vol.volunteerName}</span>
+                          <span className="font-medium">{vol.hours}h</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Tasks Modal */}
+              {activeKpiModal === 'tasks' && (
+                <>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-green-600">{completedTasks}</div>
+                      <div className="text-xs text-green-600/80">Completed</div>
+                    </div>
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-blue-600">{inProgressTasks}</div>
+                      <div className="text-xs text-blue-600/80">In Progress</div>
+                    </div>
+                    <div className="p-3 bg-slate-100 dark:bg-slate-700 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-slate-600">{pendingTasks}</div>
+                      <div className="text-xs text-slate-600/80">Pending</div>
+                    </div>
+                  </div>
+                  <Progress value={projectTasks.length > 0 ? (completedTasks / projectTasks.length) * 100 : 0} className="h-3" />
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {projectTasks.map(task => (
+                      <div key={task.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div>
+                          <div className="font-medium">{task.title}</div>
+                          {task.dueDate && <div className="text-xs text-muted-foreground">Due: {format(new Date(task.dueDate), "MMM d")}</div>}
+                        </div>
+                        <StatusBadge status={task.status} />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* AIU Modal with Verification */}
+              {activeKpiModal === 'aiu' && (
+                <>
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
+                    <div className="text-4xl font-bold text-emerald-600">{aiuEarned.toFixed(2)}</div>
+                    <div className="text-sm text-emerald-600/80">Total AIUs Earned</div>
+                    {projectAIU?.verificationStatus && (
+                      <Badge className={`mt-2 ${projectAIU.verificationStatus === 'verified' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                        {projectAIU.verificationStatus === 'verified' ? 'Verified' : 'Pending Verification'}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* AIU Explanation */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <Info className="h-4 w-4 text-blue-500 mt-0.5" />
+                      <div className="text-sm text-muted-foreground">
+                        <strong>AIU (Attributable Impact Units)</strong> measure real-world social impact. Calculated from volunteer hours, SDG alignment, and verified beneficiary data.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Per-volunteer AIU breakdown */}
+                  {projectAIU?.volunteers && projectAIU.volunteers.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm">AIU by Contributor</h4>
+                      {projectAIU.volunteers.map((vol, idx) => (
+                        <div key={idx} className="flex justify-between items-center p-2 bg-slate-50 dark:bg-slate-700 rounded">
+                          <span>{vol.volunteerName}</span>
+                          <span className="font-bold text-emerald-600">{vol.aiu.toFixed(2)} AIU</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Verification Actions for Org Admin */}
+                  {canEditProject && projectAIU?.verificationStatus === 'pending' && (
+                    <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200">
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-2 flex items-center gap-2">
+                        <Shield className="h-4 w-4" />
+                        Verify Impact
+                      </h4>
+                      <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
+                        As the organization admin, you can verify, adjust, or reject this impact data.
+                      </p>
+
+                      {/* Adjustment Form */}
+                      {isAdjusting ? (
+                        <div className="space-y-4 mb-4">
+                          <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                              Number of People Served / Lives Impacted
+                            </label>
+                            <input
+                              type="number"
+                              value={adjustmentValues.livesImpacted}
+                              onChange={(e) => setAdjustmentValues(prev => ({ ...prev, livesImpacted: parseInt(e.target.value) || 0 }))}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:bg-slate-700 dark:border-slate-600"
+                              placeholder="Enter adjusted number"
+                              min="0"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Current value: {livesImpacted}</p>
+                          </div>
+                          <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border">
+                            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                              Verification Notes (Optional)
+                            </label>
+                            <textarea
+                              value={adjustmentValues.verificationNotes}
+                              onChange={(e) => setAdjustmentValues(prev => ({ ...prev, verificationNotes: e.target.value }))}
+                              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:bg-slate-700 dark:border-slate-600"
+                              placeholder="Add notes about this adjustment..."
+                              rows={2}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              onClick={() => adjustAndVerifyMutation.mutate({
+                                livesImpacted: adjustmentValues.livesImpacted,
+                                verificationNotes: adjustmentValues.verificationNotes
+                              })}
+                              disabled={adjustAndVerifyMutation.isPending}
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              {adjustAndVerifyMutation.isPending ? 'Saving...' : 'Save & Verify'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setIsAdjusting(false);
+                                setAdjustmentValues({ livesImpacted: livesImpacted, verificationNotes: '' });
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {/* Current Values Display */}
+                          <div className="p-2 bg-white/50 dark:bg-slate-800/50 rounded-lg mb-3">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-600 dark:text-slate-400">Lives Impacted:</span>
+                              <span className="font-medium">{livesImpacted}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-600 dark:text-slate-400">Total Hours:</span>
+                              <span className="font-medium">{totalHours}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-slate-600 dark:text-slate-400">AIU Calculated:</span>
+                              <span className="font-medium text-emerald-600">{aiuEarned.toFixed(2)}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                              onClick={() => verifyAiuMutation.mutate({ status: 'verified' })}
+                              disabled={verifyAiuMutation.isPending}
+                            >
+                              <CheckCircle2 className="h-4 w-4 mr-2" />
+                              Verify
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex-1 border-amber-400 text-amber-700 hover:bg-amber-50"
+                              onClick={() => {
+                                setIsAdjusting(true);
+                                setAdjustmentValues({ livesImpacted: livesImpacted, verificationNotes: '' });
+                              }}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Adjust
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                              onClick={() => verifyAiuMutation.mutate({ status: 'rejected' })}
+                              disabled={verifyAiuMutation.isPending}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Reject
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Show verified status if already verified */}
+                  {canEditProject && projectAIU?.verificationStatus === 'verified' && (
+                    <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200">
+                      <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                        <CheckCircle2 className="h-5 w-5" />
+                        <span className="font-semibold">Impact Verified</span>
+                      </div>
+                      <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                        This project's impact has been verified by the organization.
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Engagement Score Modal */}
+              {activeKpiModal === 'engagement' && (
+                <>
+                  <div className={`p-4 rounded-xl text-center ${
+                    engagementScore >= 80 ? 'bg-emerald-50 dark:bg-emerald-900/20' :
+                    engagementScore >= 60 ? 'bg-green-50 dark:bg-green-900/20' :
+                    engagementScore >= 40 ? 'bg-yellow-50 dark:bg-yellow-900/20' :
+                    'bg-orange-50 dark:bg-orange-900/20'
+                  }`}>
+                    <div className={`text-5xl font-bold ${
+                      engagementScore >= 80 ? 'text-emerald-600' :
+                      engagementScore >= 60 ? 'text-green-600' :
+                      engagementScore >= 40 ? 'text-yellow-600' :
+                      'text-orange-600'
+                    }`}>{engagementScore}%</div>
+                    <div className="text-sm mt-1">{engagementLevel} Engagement</div>
+                  </div>
+
+                  {/* Industry Standard Explanation */}
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2 flex items-center gap-2">
+                      <Star className="h-4 w-4" />
+                      Industry-Standard Calculation
+                    </h4>
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      This score follows volunteer management best practices, weighted across four key dimensions used by leading nonprofit platforms.
+                    </p>
+                  </div>
+
+                  {/* Score Breakdown */}
+                  <div className="space-y-3">
+                    <h4 className="font-semibold text-sm">Score Breakdown</h4>
+                    <div className="space-y-2">
+                      <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium flex items-center gap-2">
+                            <Users className="h-4 w-4 text-blue-500" />
+                            Volunteer Participation (25%)
+                          </span>
+                          <span className="font-bold">{Math.round(volunteerScore)}/25</span>
+                        </div>
+                        <Progress value={(volunteerScore / 25) * 100} className="h-2" />
+                        <p className="text-xs text-muted-foreground mt-1">{uniqueVolunteers} volunteers • Target: 10+ for full score</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            Task Completion (30%)
+                          </span>
+                          <span className="font-bold">{Math.round(taskScore)}/30</span>
+                        </div>
+                        <Progress value={(taskScore / 30) * 100} className="h-2" />
+                        <p className="text-xs text-muted-foreground mt-1">{Math.round(taskCompletionRate)}% tasks completed</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-purple-500" />
+                            Hours Utilization (25%)
+                          </span>
+                          <span className="font-bold">{Math.round(hoursScore)}/25</span>
+                        </div>
+                        <Progress value={(hoursScore / 25) * 100} className="h-2" />
+                        <p className="text-xs text-muted-foreground mt-1">Committed vs completed hours ratio</p>
+                      </div>
+                      <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                        <div className="flex justify-between mb-1">
+                          <span className="text-sm font-medium flex items-center gap-2">
+                            <Activity className="h-4 w-4 text-orange-500" />
+                            Recent Activity (20%)
+                          </span>
+                          <span className="font-bold">{Math.round(activityScore)}/20</span>
+                        </div>
+                        <Progress value={(activityScore / 20) * 100} className="h-2" />
+                        <p className="text-xs text-muted-foreground mt-1">{recentActivities.length} activities in last 30 days</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Team Modal */}
+              {activeKpiModal === 'team' && (
+                <>
+                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-center">
+                    <div className="text-4xl font-bold text-blue-600">{uniqueVolunteers}</div>
+                    <div className="text-sm text-blue-600/80">Team Members</div>
+                  </div>
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {projectAIU?.volunteers?.map((vol, idx) => {
+                      const user = users.find(u => u.id === vol.volunteerId);
+                      return (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={user?.avatar} />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-bold">
+                              {vol.volunteerName?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="font-semibold">{vol.volunteerName}</div>
+                            <div className="text-sm text-muted-foreground">{vol.role}</div>
+                            <div className="flex gap-3 mt-1 text-xs">
+                              <span className="text-green-600">{vol.hours}h logged</span>
+                              <span className="text-emerald-600">{vol.aiu.toFixed(2)} AIU</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }) || Array.from(teamMemberIds).map(memberId => {
+                      const user = users.find(u => u.id === memberId);
+                      const assignment = activeAssignments.find(a => a.volunteerId === memberId);
+                      return (
+                        <div key={memberId} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage src={user?.avatar} />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white font-bold">
+                              {user?.displayName?.[0] || 'V'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="font-semibold">{user?.displayName || `Volunteer #${memberId}`}</div>
+                            {assignment?.role && <div className="text-sm text-muted-foreground">{assignment.role}</div>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {/* Impact Modal */}
+              {activeKpiModal === 'impact' && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
+                      <div className="text-3xl font-bold text-emerald-600">{aiuEarned.toFixed(2)}</div>
+                      <div className="text-xs text-emerald-600/80">AIUs Earned</div>
+                    </div>
+                    <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-center">
+                      <div className="text-3xl font-bold text-orange-600">{livesImpacted.toLocaleString()}</div>
+                      <div className="text-xs text-orange-600/80">Lives Impacted</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-blue-600">{Math.round(totalHours)}</div>
+                      <div className="text-xs text-blue-600/80">Total Hours</div>
+                    </div>
+                    <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
+                      <div className="text-2xl font-bold text-purple-600">{totalImpact}</div>
+                      <div className="text-xs text-purple-600/80">Impact Score</div>
+                    </div>
+                  </div>
+
+                  {/* Impact Explanation */}
+                  <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                    <h4 className="font-semibold text-sm mb-2">How Impact is Measured</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• <strong>AIUs:</strong> Calculated from hours, SDG alignment, and verified outcomes</li>
+                      <li>• <strong>Lives Impacted:</strong> Direct beneficiaries reported and verified</li>
+                      <li>• <strong>Impact Score:</strong> Aggregate of all project impact records</li>
+                    </ul>
+                  </div>
+
+                  {/* SDG Alignment */}
+                  {project.sdgGoals && project.sdgGoals.length > 0 && (
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm">SDG Alignment</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {project.sdgGoals.map(sdg => (
+                          <div key={sdg} className="px-3 py-1.5 rounded-full text-white text-sm font-medium" style={{ backgroundColor: SDG_COLORS[sdg] }}>
+                            SDG {sdg}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav />

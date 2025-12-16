@@ -6,9 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
   FolderOpen, Clock, Target, Users, Plus,
-  ChevronDown, AlertTriangle, CheckSquare, TrendingUp,
+  ChevronDown, ChevronRight, AlertTriangle, CheckSquare, TrendingUp,
   Lightbulb, MapPin, UserPlus, BarChart3, X, MoreVertical,
-  Bell, Settings, User, LogOut, FileText
+  Bell, Settings, User, LogOut, FileText, Award, Zap,
+  Activity, Shield, ShieldCheck, Eye, ThumbsUp, Info,
+  Sparkles, CircleDot
 } from "lucide-react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
@@ -153,14 +155,16 @@ export default function OrganizationDashboard() {
   const [timePeriod, setTimePeriod] = useState('all');
   const [sdgFilter, setSdgFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | 'aiu' | null>(null);
+  const [activeModal, setActiveModal] = useState<'projects' | 'hours' | 'sdgs' | 'lives' | 'aiu' | 'volunteers' | 'tasks' | 'engagement' | 'team' | 'impact' | 'verification' | null>(null);
   const [hoveredSDG, setHoveredSDG] = useState<number | null>(null);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showVolunteerManagement, setShowVolunteerManagement] = useState(false);
+  const [showEngagementDetails, setShowEngagementDetails] = useState(false);
 
   // Check if user is an organization user (used for query enabled flags)
   const isOrganizationUser = userType === 'organization';
 
-  const { data: dashboardData, isLoading, refetch: refetchDashboard } = useQuery<DashboardData>({
+  const { data: dashboardData, isLoading, isFetching, refetch: refetchDashboard } = useQuery<DashboardData>({
     queryKey: ['/api/organization/dashboard', userId, projectFilter, timePeriod, sdgFilter],
     queryFn: async () => {
       const params = new URLSearchParams({ userId: userId || '' });
@@ -225,11 +229,116 @@ export default function OrganizationDashboard() {
     staleTime: 10000,
   });
 
+  // Fetch tasks for the organization - filtered by selected project
+  const { data: tasksData } = useQuery({
+    queryKey: ['/api/tasks', currentUser?.organizationId, projectFilter],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const params = new URLSearchParams({ organizationId: String(currentUser.organizationId) });
+      if (projectFilter && projectFilter !== 'all') {
+        params.append('projectId', projectFilter);
+      }
+      const response = await fetch(`/api/tasks?${params}`);
+      if (!response.ok) return [];
+      const tasks = await response.json();
+      // Filter by project if specified
+      if (projectFilter && projectFilter !== 'all') {
+        return tasks.filter((t: any) => String(t.projectId) === projectFilter);
+      }
+      return tasks;
+    },
+    enabled: !!currentUser?.organizationId && isOrganizationUser,
+  });
+
+  // Fetch pending AIU verifications - filtered by selected project
+  const { data: pendingVerifications, refetch: refetchVerifications } = useQuery({
+    queryKey: ['/api/project-impacts/pending', currentUser?.organizationId, projectFilter],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      // Get all project impacts for organization projects that need verification
+      const response = await fetch(`/api/activities/project-impacts?organizationId=${currentUser.organizationId}`);
+      if (!response.ok) return [];
+      const allImpacts = await response.json();
+      let filteredImpacts = allImpacts.filter((impact: any) =>
+        impact.verificationStatus === 'pending' || impact.verificationStatus === 'self_reported'
+      );
+      // Filter by project if specified
+      if (projectFilter && projectFilter !== 'all') {
+        filteredImpacts = filteredImpacts.filter((i: any) => String(i.projectId) === projectFilter);
+      }
+      return filteredImpacts;
+    },
+    enabled: !!currentUser?.organizationId && isOrganizationUser,
+  });
+
+  // Fetch accurate AIU data from dedicated AIU endpoint (single source of truth)
+  interface OrganizationAIUSummary {
+    organizationId: number;
+    organizationName: string;
+    totalAiu: number;
+    aiuUnique: number;
+    aiuSessions: number;
+    projectCount: number;
+    volunteerCount: number;
+    totalHours: number;
+    livesImpacted: number;
+    sdgsCovered: number[];
+    verificationRate: number;
+    projects: Array<{
+      projectId: number;
+      projectName: string;
+      aiu: number;
+      sdgIndicator: string;
+      verificationStatus: string;
+    }>;
+  }
+
+  const { data: organizationAIU } = useQuery<OrganizationAIUSummary | null>({
+    queryKey: ['/api/aiu/organization', currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/aiu/organization/${currentUser.organizationId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId && isOrganizationUser,
+  });
+
   // Memoized computed values - MUST be before any early returns
-  const metrics = useMemo(() =>
+  const rawMetrics = useMemo(() =>
     dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, aiuEarned: 0, activeVolunteers: 0, totalProjects: 0 },
     [dashboardData?.keyMetrics]
   );
+
+  // Calculate AIU with fallback: prioritize dedicated AIU endpoint data
+  // 1 AIU = 50 hours of volunteer work × SDG multiplier (up to 2x)
+  const calculatedAiu = useMemo(() => {
+    // Priority 1: Use dedicated AIU endpoint data (most accurate)
+    if (organizationAIU?.totalAiu && organizationAIU.totalAiu > 0) {
+      return organizationAIU.totalAiu;
+    }
+    // Priority 2: Use dashboard keyMetrics if available
+    if (rawMetrics.aiuEarned && rawMetrics.aiuEarned > 0) {
+      return rawMetrics.aiuEarned;
+    }
+    // Fallback: calculate from hours with SDG bonus
+    if (rawMetrics.totalHours > 0) {
+      const sdgMultiplier = Math.min(1 + (rawMetrics.sdgsAddressed * 0.1), 2.0);
+      return Math.round((rawMetrics.totalHours / 50) * sdgMultiplier * 100) / 100;
+    }
+    // Also try summing from projects
+    if (dashboardData?.projects && dashboardData.projects.length > 0) {
+      const projectSum = dashboardData.projects.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0);
+      if (projectSum > 0) return projectSum;
+    }
+    return 0;
+  }, [organizationAIU?.totalAiu, rawMetrics.aiuEarned, rawMetrics.totalHours, rawMetrics.sdgsAddressed, dashboardData?.projects]);
+
+  // Enhanced metrics with calculated AIU
+  const metrics = useMemo(() => ({
+    ...rawMetrics,
+    aiuEarned: calculatedAiu
+  }), [rawMetrics, calculatedAiu]);
 
   const sdgTotalHours = useMemo(() =>
     dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0,
@@ -251,6 +360,77 @@ export default function OrganizationDashboard() {
     })) || [],
     [dashboardData?.sdgDistribution]
   );
+
+  // Task metrics
+  const taskMetrics = useMemo(() => {
+    const tasks = tasksData || dashboardData?.pendingTasks || [];
+    const completed = tasks.filter((t: any) => t.status?.toLowerCase() === 'completed' || t.status?.toLowerCase() === 'done').length;
+    const inProgress = tasks.filter((t: any) => t.status?.toLowerCase() === 'in progress' || t.status?.toLowerCase() === 'in_progress').length;
+    const total = tasks.length;
+    return { completed, inProgress, total, pending: total - completed - inProgress };
+  }, [tasksData, dashboardData?.pendingTasks]);
+
+  // Industry-Standard Engagement Score Calculation
+  // Based on volunteer engagement frameworks (VolunteerHub, Galaxy Digital, Points of Light)
+  // Weighted scoring: Activity (30%), Retention (25%), Impact (25%), Growth (20%)
+  const engagementScore = useMemo(() => {
+    const volunteers = dashboardData?.volunteerSummaries || [];
+    const totalVolunteers = volunteers.length;
+    const activeVolunteers = metrics.activeVolunteers || 0;
+
+    // 1. Activity Score (30% weight) - Based on hours logged relative to capacity
+    // Industry benchmark: 4-8 hours per volunteer per month is "engaged"
+    const avgHoursPerVolunteer = totalVolunteers > 0 ? metrics.totalHours / totalVolunteers : 0;
+    const targetHoursPerVolunteer = 20; // Target 20 hours total
+    const activityScore = Math.min(100, (avgHoursPerVolunteer / targetHoursPerVolunteer) * 100);
+
+    // 2. Retention Score (25% weight) - Active vs total volunteers
+    // Industry benchmark: 60-70% retention is good
+    const retentionRate = totalVolunteers > 0 ? (activeVolunteers / totalVolunteers) * 100 : 0;
+    const retentionScore = Math.min(100, (retentionRate / 70) * 100); // Normalize to 70% benchmark
+
+    // 3. Impact Score (25% weight) - Based on project completion and SDG alignment
+    const completionScore = avgProjectCompletion || 0;
+    const sdgCoverageScore = Math.min(100, (metrics.sdgsAddressed / 5) * 100); // 5 SDGs is excellent
+    const impactScore = (completionScore + sdgCoverageScore) / 2;
+
+    // 4. Growth Score (20% weight) - Based on task completion rate
+    const taskCompletionRate = taskMetrics.total > 0 ? (taskMetrics.completed / taskMetrics.total) * 100 : 0;
+    const growthScore = Math.min(100, taskCompletionRate);
+
+    // Weighted total
+    const totalScore = Math.round(
+      (activityScore * 0.30) +
+      (retentionScore * 0.25) +
+      (impactScore * 0.25) +
+      (growthScore * 0.20)
+    );
+
+    // Determine level
+    let level: 'excellent' | 'good' | 'moderate' | 'needs_attention' | 'critical';
+    if (totalScore >= 80) level = 'excellent';
+    else if (totalScore >= 60) level = 'good';
+    else if (totalScore >= 40) level = 'moderate';
+    else if (totalScore >= 20) level = 'needs_attention';
+    else level = 'critical';
+
+    return {
+      total: totalScore,
+      level,
+      breakdown: {
+        activity: Math.round(activityScore),
+        retention: Math.round(retentionScore),
+        impact: Math.round(impactScore),
+        growth: Math.round(growthScore),
+      },
+      details: {
+        avgHoursPerVolunteer: Math.round(avgHoursPerVolunteer * 10) / 10,
+        retentionRate: Math.round(retentionRate),
+        completionRate: avgProjectCompletion,
+        taskCompletionRate: Math.round(taskCompletionRate),
+      }
+    };
+  }, [dashboardData?.volunteerSummaries, metrics, avgProjectCompletion, taskMetrics]);
 
   // Memoized callbacks - MUST be before any early returns
   const handleQuickActionMemo = useCallback((actionId: string) => {
@@ -530,82 +710,241 @@ export default function OrganizationDashboard() {
       {/* Main Content */}
       <main style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 24px' }} className="md:p-6">
         {/* Filters Section - Desktop Only */}
-        <div className="hidden md:flex" style={{ flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>Project:</label>
-            <select
-              value={projectFilter}
-              onChange={(e) => setProjectFilter(e.target.value)}
-              data-testid="filter-project"
-              style={{
-                padding: '8px 32px 8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                fontSize: '14px',
-                cursor: 'pointer',
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 10px center',
-              }}
-            >
-              <option value="all">All Projects</option>
-              {dashboardData?.filters?.availableProjects?.map((p) => (
-                <option key={p.id} value={p.id.toString()}>{p.name}</option>
-              ))}
-            </select>
+        <div className="hidden md:flex" style={{ flexWrap: 'wrap', gap: '16px', marginBottom: '24px', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>Project:</label>
+              <select
+                value={projectFilter}
+                onChange={(e) => setProjectFilter(e.target.value)}
+                data-testid="filter-project"
+                style={{
+                  padding: '8px 32px 8px 12px',
+                  border: projectFilter !== 'all' ? '2px solid #166534' : '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  backgroundColor: projectFilter !== 'all' ? '#f0fdf4' : 'white',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 10px center',
+                  fontWeight: projectFilter !== 'all' ? '600' : '400',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <option value="all">All Projects</option>
+                {dashboardData?.filters?.availableProjects?.map((p) => (
+                  <option key={p.id} value={p.id.toString()}>{p.name}</option>
+                ))}
+              </select>
+              {/* Loading indicator when data is refreshing */}
+              {isFetching && !isLoading && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '4px 10px', backgroundColor: '#dbeafe', borderRadius: '6px' }}>
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    border: '2px solid #3b82f6',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  <span style={{ fontSize: '12px', color: '#1e40af', fontWeight: '500' }}>Updating...</span>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>Time Period:</label>
+              <select
+                value={timePeriod}
+                onChange={(e) => setTimePeriod(e.target.value)}
+                data-testid="filter-time-period"
+                style={{
+                  padding: '8px 32px 8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 10px center',
+                }}
+              >
+                {TIME_PERIODS.map((period) => (
+                  <option key={period.value} value={period.value}>{period.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>SDG:</label>
+              <select
+                value={sdgFilter}
+                onChange={(e) => setSdgFilter(e.target.value)}
+                data-testid="filter-sdg"
+                style={{
+                  padding: '8px 32px 8px 12px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  appearance: 'none',
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 10px center',
+                }}
+              >
+                <option value="">All SDGs</option>
+                {/* Show only organization's selected/committed SDGs */}
+                {(organizationProfile?.sdgGoals || dashboardData?.sdgDistribution?.map((s: any) => s.goal) || []).map((sdg: number) => (
+                  <option key={sdg} value={sdg.toString()}>SDG {sdg}: {getSDGName(sdg)}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>Time Period:</label>
-            <select
-              value={timePeriod}
-              onChange={(e) => setTimePeriod(e.target.value)}
-              data-testid="filter-time-period"
+          {/* Right side buttons */}
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button
+              onClick={() => setShowVolunteerManagement(!showVolunteerManagement)}
               style={{
-                padding: '8px 32px 8px 12px',
-                border: '1px solid #d1d5db',
+                padding: '10px 16px',
+                backgroundColor: showVolunteerManagement ? '#166534' : '#f0fdf4',
+                color: showVolunteerManagement ? 'white' : '#166534',
+                border: '1px solid #166534',
                 borderRadius: '8px',
-                backgroundColor: 'white',
-                fontSize: '14px',
+                fontSize: '13px',
+                fontWeight: '600',
                 cursor: 'pointer',
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 10px center',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s'
               }}
+              data-testid="button-volunteer-management"
             >
-              {TIME_PERIODS.map((period) => (
-                <option key={period.value} value={period.value}>{period.label}</option>
-              ))}
-            </select>
+              <Users size={16} />
+              Volunteer Management
+            </button>
+            <button
+              onClick={() => navigate('/impact-visualization')}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: '#166534',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              data-testid="button-impact-report"
+            >
+              <FileText size={16} />
+              Impact Visualization
+            </button>
           </div>
+        </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <label style={{ fontSize: '14px', color: '#374151', fontWeight: '500' }}>SDG Filter:</label>
-            <select
-              value={sdgFilter}
-              onChange={(e) => setSdgFilter(e.target.value)}
-              data-testid="filter-sdg"
-              style={{
-                padding: '8px 32px 8px 12px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                fontSize: '14px',
-                cursor: 'pointer',
-                appearance: 'none',
-                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 10px center',
-              }}
+        {/* Mobile Impact Metrics Card */}
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+              <Award size={16} style={{ color: '#7c3aed' }} />
+              Impact Metrics
+            </h3>
+            <button
+              onClick={() => navigate('/impact-visualization')}
+              style={{ fontSize: '11px', color: '#7c3aed', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              <option value="">All SDGs</option>
-              {Array.from({ length: 17 }, (_, i) => i + 1).map((sdg) => (
-                <option key={sdg} value={sdg.toString()}>SDG {sdg}</option>
-              ))}
-            </select>
+              Details →
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
+            <div style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '10px' }}>
+              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>SDGs Addressed</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{metrics.sdgsAddressed}</p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '10px' }}>
+              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Avg Completion</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: 0 }}>{avgProjectCompletion}%</p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '10px' }}>
+              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Active Projects</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{metrics.activeProjects}</p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '10px' }}>
+              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Total AIUs</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#d97706', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Impact Visualization Button */}
+        <button
+          className="md:hidden"
+          onClick={() => navigate('/impact-visualization')}
+          style={{
+            width: '100%',
+            background: 'linear-gradient(to right, #8b5cf6, #6366f1)',
+            borderRadius: '12px',
+            padding: '14px 16px',
+            marginBottom: '16px',
+            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FileText size={20} style={{ color: 'white' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <p style={{ color: 'white', fontWeight: '600', fontSize: '14px', margin: 0 }}>Impact Visualization</p>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', margin: 0 }}>View detailed impact analytics</p>
+            </div>
+          </div>
+          <ChevronRight size={20} style={{ color: 'white' }} />
+        </button>
+
+        {/* Mobile AI Insights Section */}
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+            <Lightbulb size={16} style={{ color: '#f59e0b' }} />
+            AI Insights & Suggestions
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {dashboardData?.aiInsights?.slice(0, 3).map((insight: any) => (
+              <div
+                key={insight.id}
+                style={{
+                  padding: '12px',
+                  borderRadius: '10px',
+                  backgroundColor: insight.sentiment === 'positive' ? '#f0fdf4' : insight.sentiment === 'warning' ? '#fffbeb' : '#f9fafb',
+                  borderLeft: `4px solid ${insight.sentiment === 'positive' ? '#166534' : insight.sentiment === 'warning' ? '#f59e0b' : '#6b7280'}`,
+                }}
+              >
+                <p style={{ fontSize: '12px', fontWeight: '600', color: '#111827', marginBottom: '4px' }}>{insight.title}</p>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>{insight.message}</p>
+              </div>
+            ))}
+            {(!dashboardData?.aiInsights || dashboardData.aiInsights.length === 0) && (
+              <div style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
+                <Lightbulb size={20} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                <p style={{ fontSize: '12px', margin: 0 }}>No insights available yet</p>
+                <p style={{ fontSize: '10px', marginTop: '4px' }}>Insights will appear as your projects progress</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -796,78 +1135,398 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Desktop Key Metrics Section */}
-        <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+        {/* Selected Project Banner - Shows when a specific project is selected */}
+        {projectFilter !== 'all' && (
+          <div className="hidden md:flex" style={{
+            marginBottom: '16px',
+            padding: '12px 20px',
+            backgroundColor: '#f0fdf4',
+            border: '2px solid #166534',
+            borderRadius: '10px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <FolderOpen size={20} style={{ color: '#166534' }} />
+              <div>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>Viewing data for:</p>
+                <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534', margin: 0 }}>
+                  {dashboardData?.filters?.availableProjects?.find(p => p.id.toString() === projectFilter)?.name || 'Selected Project'}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {isFetching && (
+                <span style={{ fontSize: '12px', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    width: '10px',
+                    height: '10px',
+                    border: '2px solid #3b82f6',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  Refreshing...
+                </span>
+              )}
+              <button
+                onClick={() => navigate(`/projects/${projectFilter}`)}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#166534',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                View Project Details →
+              </button>
+              <button
+                onClick={() => setProjectFilter('all')}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Clear Filter
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Key Metrics Section - Primary KPIs */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '24px' }}>
           <MetricCard
-            icon={<FolderOpen size={24} />}
-            label="Active Projects"
-            value={metrics.activeProjects}
+            icon={<Users size={24} />}
+            label="Volunteers"
+            value={metrics.activeVolunteers || dashboardData?.volunteerSummaries?.length || 0}
             color="#166534"
-            testId="metric-active-projects"
-            onClick={() => setActiveModal('projects')}
+            testId="metric-volunteers"
+            onClick={() => setActiveModal('team')}
+            tooltip="Active volunteers contributing to your organization's projects"
           />
           <MetricCard
             icon={<Clock size={24} />}
-            label="Total Volunteer Hours"
+            label="Hours Logged"
             value={metrics.totalHours}
             color="#1e40af"
             testId="metric-total-hours"
             onClick={() => setActiveModal('hours')}
+            tooltip="Total volunteer hours logged across all projects"
           />
           <MetricCard
-            icon={<Target size={24} />}
-            label="SDGs Addressed"
-            value={metrics.sdgsAddressed}
+            icon={<CheckSquare size={24} />}
+            label="Tasks Done"
+            value={taskMetrics.completed}
             color="#7c3aed"
-            testId="metric-sdgs"
-            onClick={() => setActiveModal('sdgs')}
+            testId="metric-tasks"
+            onClick={() => setActiveModal('tasks')}
+            tooltip={`${taskMetrics.completed} completed, ${taskMetrics.inProgress} in progress, ${taskMetrics.pending} pending`}
           />
           <MetricCard
-            icon={<Users size={24} />}
+            icon={<Zap size={24} />}
             label="AIUs Earned"
-            value={typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(2) : metrics.aiuEarned}
+            value={typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}
             color="#10b981"
             testId="metric-aiu"
-            onClick={() => {
-              setActiveModal('aiu');
-            }}
-            tooltip="Attributable Impact Units (AIUs) measure verified impact. Calculated as: AIU = KPI Change × Attribution Factor × (Volunteer Weight / Total Weights). Volunteer weight = Role Weight × Hours × Verification Multiplier."
+            onClick={() => setActiveModal('aiu')}
+            tooltip="Attributable Impact Units measure verified social impact"
+          />
+          <MetricCard
+            icon={<Activity size={24} />}
+            label="Engagement"
+            value={`${engagementScore.total}%`}
+            color={engagementScore.level === 'excellent' ? '#059669' : engagementScore.level === 'good' ? '#0369a1' : engagementScore.level === 'moderate' ? '#d97706' : '#dc2626'}
+            testId="metric-engagement"
+            onClick={() => setActiveModal('engagement')}
+            tooltip={`Engagement level: ${engagementScore.level.replace('_', ' ')}`}
           />
         </div>
 
-        {/* Middle Section (2/5): SDG + Map | Alerts - Desktop Only */}
+        {/* Secondary Row: Team Members, Impact Metrics, Pending Verifications */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+          {/* Team Members Card - Interactive */}
+          <button
+            onClick={() => setActiveModal('team')}
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '2px solid transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#166534'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }}
+            data-testid="card-team-members"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Users size={18} style={{ color: '#166534' }} />
+                Team Members
+              </h3>
+              <span style={{ fontSize: '12px', color: '#166534', fontWeight: '600' }}>View All →</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '-8px', marginBottom: '12px' }}>
+              {(dashboardData?.volunteerSummaries || []).slice(0, 5).map((vol: any, i: number) => (
+                <div
+                  key={vol.id}
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '50%',
+                    backgroundColor: ['#166534', '#1e40af', '#7c3aed', '#d97706', '#dc2626'][i % 5],
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    border: '2px solid white',
+                    marginLeft: i > 0 ? '-8px' : 0,
+                    zIndex: 5 - i,
+                  }}
+                  title={vol.name}
+                >
+                  {vol.name?.charAt(0).toUpperCase()}
+                </div>
+              ))}
+              {(dashboardData?.volunteerSummaries?.length || 0) > 5 && (
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  backgroundColor: '#f3f4f6',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#6b7280',
+                  fontSize: '11px',
+                  fontWeight: '600',
+                  border: '2px solid white',
+                  marginLeft: '-8px',
+                }}>
+                  +{(dashboardData?.volunteerSummaries?.length || 0) - 5}
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+              <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
+                <p style={{ fontSize: '18px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Active</p>
+              </div>
+              <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
+                <p style={{ fontSize: '18px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{dashboardData?.volunteerSummaries?.length || 0}</p>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Total</p>
+              </div>
+              <div style={{ textAlign: 'center', padding: '8px', backgroundColor: '#fef3c7', borderRadius: '8px' }}>
+                <p style={{ fontSize: '18px', fontWeight: '700', color: '#d97706', margin: 0 }}>{pendingApplications?.length || 0}</p>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Pending</p>
+              </div>
+            </div>
+          </button>
+
+          {/* Impact Metrics Card - Interactive */}
+          <button
+            onClick={() => setActiveModal('impact')}
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '12px',
+              padding: '20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: '2px solid transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }}
+            data-testid="card-impact-metrics"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <Award size={18} style={{ color: '#7c3aed' }} />
+                Impact Metrics
+              </h3>
+              <span style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600' }}>Details →</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+              <div style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '8px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>SDGs Addressed</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{metrics.sdgsAddressed}</p>
+              </div>
+              <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Avg Completion</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#166534', margin: 0 }}>{avgProjectCompletion}%</p>
+              </div>
+              <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Active Projects</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{metrics.activeProjects}</p>
+              </div>
+              <div style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0' }}>Total AIUs</p>
+                <p style={{ fontSize: '24px', fontWeight: '700', color: '#d97706', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
+              </div>
+            </div>
+          </button>
+
+          {/* Pending AIU Verification Card - Interactive */}
+          <button
+            onClick={() => setActiveModal('verification')}
+            style={{
+              backgroundColor: (pendingVerifications?.length || 0) > 0 ? '#fef3c7' : 'white',
+              borderRadius: '12px',
+              padding: '20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              border: (pendingVerifications?.length || 0) > 0 ? '2px solid #f59e0b' : '2px solid transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }}
+            data-testid="card-pending-verification"
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <ShieldCheck size={18} style={{ color: '#f59e0b' }} />
+                Pending Verification
+              </h3>
+              {(pendingVerifications?.length || 0) > 0 && (
+                <span style={{ backgroundColor: '#dc2626', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: '700' }}>
+                  {pendingVerifications?.length || 0}
+                </span>
+              )}
+            </div>
+            {(pendingVerifications?.length || 0) > 0 ? (
+              <>
+                <p style={{ fontSize: '13px', color: '#92400e', marginBottom: '12px' }}>
+                  {pendingVerifications?.length} impact record{(pendingVerifications?.length || 0) !== 1 ? 's' : ''} awaiting your review
+                </p>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <span style={{ padding: '6px 12px', backgroundColor: '#166534', color: 'white', borderRadius: '6px', fontSize: '12px', fontWeight: '600' }}>
+                    Review & Verify →
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                <ShieldCheck size={32} style={{ color: '#10b981', margin: '0 auto 8px' }} />
+                <p style={{ fontSize: '13px', color: '#6b7280', margin: 0 }}>All caught up! No pending verifications.</p>
+              </div>
+            )}
+          </button>
+        </div>
+
+        {/* Volunteer Management Panel - Collapsible - Desktop Only */}
+        {showVolunteerManagement && (
+          <div className="hidden md:block" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', border: '2px solid #166534' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#166534', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={20} />
+                Volunteer Management Metrics
+              </h3>
+              <button onClick={() => setShowVolunteerManagement(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+              <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Active Volunteers</p>
+              </div>
+              <div style={{ backgroundColor: '#eff6ff', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
+                  {dashboardData?.volunteerSummaries?.length || 0}
+                </p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Total Volunteers</p>
+              </div>
+              <div style={{ backgroundColor: '#fef3c7', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#d97706', margin: 0 }}>
+                  {Math.round((dashboardData?.volunteerSummaries?.length || 0) / Math.max(1, metrics.activeProjects))}
+                </p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg per Project</p>
+              </div>
+              <div style={{ backgroundColor: '#f0fdf4', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#059669', margin: 0 }}>
+                  {pendingApplications?.length || 0}
+                </p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Pending Applications</p>
+              </div>
+              <div style={{ backgroundColor: '#faf5ff', padding: '16px', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ fontSize: '28px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
+                  {metrics.totalHours > 0 && dashboardData?.volunteerSummaries?.length
+                    ? Math.round(metrics.totalHours / dashboardData.volunteerSummaries.length)
+                    : 0}h
+                </p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg Hours/Vol</p>
+              </div>
+            </div>
+            {/* Top Contributors */}
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #e5e7eb' }}>
+              <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>Top Contributors</h4>
+              <div style={{ display: 'flex', gap: '12px', overflowX: 'auto' }}>
+                {(dashboardData?.volunteerSummaries || []).slice(0, 5).map((vol: any) => (
+                  <div key={vol.id} style={{ flex: '0 0 auto', backgroundColor: '#f9fafb', padding: '12px', borderRadius: '8px', minWidth: '140px', textAlign: 'center' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#16653420', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 8px', fontSize: '16px', fontWeight: '600', color: '#166534' }}>
+                      {vol.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', margin: 0 }}>{vol.name}</p>
+                    <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: '4px 0 0 0' }}>{vol.hours}h</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Main Analytics Section - Desktop Only */}
+        {/* Row 1: SDG Chart (2/3) | Active Projects (1/3) */}
         <div className="hidden md:grid" style={{ gridTemplateColumns: '2fr 1fr', gap: '24px', marginBottom: '24px' }}>
-          {/* Left Column: SDG Distribution + Map */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {/* SDG Impact Distribution - Doughnut Chart with Average Completion */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>SDG Impact Distribution</h3>
+          {/* SDG Impact Distribution Chart - 2/3 Width */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827' }}>SDG Impact Distribution</h3>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: '500', backgroundColor: '#f3f4f6', padding: '6px 12px', borderRadius: '20px' }}>
                   {dashboardData?.sdgDistribution?.reduce((sum: number, item: any) => sum + item.hours, 0) || 0} total hours
                 </span>
+                <span style={{ fontSize: '12px', color: '#166534', fontWeight: '600', backgroundColor: '#f0fdf4', padding: '6px 12px', borderRadius: '20px' }}>
+                  {organizationProfile?.sdgGoals?.length || dashboardData?.sdgDistribution?.length || 0} of {organizationProfile?.sdgGoals?.length || 17} SDGs committed
+                </span>
               </div>
-              <div style={{ height: '420px', position: 'relative' }}>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              {/* Pie Chart */}
+              <div style={{ height: '350px', position: 'relative' }}>
                 {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
                   <>
-                    {/* Center Label - SDG Coverage */}
                     <div style={{
                       position: 'absolute',
-                      top: '42%',
+                      top: '45%',
                       left: '50%',
                       transform: 'translate(-50%, -50%)',
                       textAlign: 'center',
                       zIndex: 0,
                       pointerEvents: 'none'
                     }}>
-                      <div style={{ fontSize: '48px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
+                      <div style={{ fontSize: '42px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
                         {dashboardData.sdgDistribution?.length || 0}
                       </div>
-                      <div style={{ fontSize: '14px', color: '#6b7280', fontWeight: '500', marginTop: '4px' }}>
+                      <div style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500', marginTop: '4px' }}>
                         Active SDGs
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#9ca3af', marginTop: '2px' }}>
-                        of 17 UN goals
                       </div>
                     </div>
                     <ResponsiveContainer width="100%" height="100%">
@@ -880,18 +1539,18 @@ export default function OrganizationDashboard() {
                             color: SDG_GOALS[item.goal]?.color || '#166534'
                           }))}
                           cx="50%"
-                          cy="42%"
-                          innerRadius={80}
-                          outerRadius={140}
+                          cy="45%"
+                          innerRadius={70}
+                          outerRadius={120}
                           paddingAngle={2}
                           dataKey="hours"
                           nameKey="name"
                           stroke="white"
-                          strokeWidth={3}
+                          strokeWidth={2}
                         >
                           {dashboardData.sdgDistribution.map((entry) => (
-                            <Cell 
-                              key={`cell-${entry.goal}`} 
+                            <Cell
+                              key={`cell-${entry.goal}`}
                               fill={SDG_GOALS[entry.goal]?.color || '#166534'}
                               stroke={hoveredSDG === entry.goal ? '#111827' : 'white'}
                               strokeWidth={hoveredSDG === entry.goal ? 4 : 3}
@@ -1012,332 +1671,282 @@ export default function OrganizationDashboard() {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Project Locations Map */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>Project Locations</h3>
-              <div style={{ height: '250px', borderRadius: '8px', overflow: 'hidden' }}>
-                <ProjectMapComponent projectLocations={dashboardData?.projectLocations || []} />
+              {/* SDG Alignment Percentages */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '350px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>SDG Alignment</h4>
+                {dashboardData?.sdgDistribution?.map((sdg: any) => {
+                  const total = sdgTotalHours || 1;
+                  const percent = Math.round((sdg.hours / total) * 100);
+                  return (
+                    <div key={sdg.goal} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '6px', backgroundColor: SDG_GOALS[sdg.goal]?.color || '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px', fontWeight: '700', flexShrink: 0 }}>
+                        {sdg.goal}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getSDGName(sdg.goal)}</p>
+                        <div style={{ height: '6px', backgroundColor: '#e5e7eb', borderRadius: '3px', marginTop: '4px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', backgroundColor: SDG_GOALS[sdg.goal]?.color || '#166534', width: `${percent}%`, transition: 'width 0.3s' }} />
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: SDG_GOALS[sdg.goal]?.color || '#166534', minWidth: '40px', textAlign: 'right' }}>{percent}%</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {/* Right Column: Alerts & Tasks + AI Insights + Quick Actions + Active Projects (Compressed) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Alerts & Tasks */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertTriangle size={16} style={{ color: '#f59e0b' }} />
-                  Alerts & Tasks
-                </h3>
-                <button
-                  onClick={() => navigate('/tasks')}
-                  onTouchEnd={(e) => { e.preventDefault(); navigate('/tasks'); }}
-                  data-testid="view-all-tasks"
-                  style={{ fontSize: '11px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', padding: '4px 8px', touchAction: 'manipulation' }}
-                >
-                  View All →
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {dashboardData?.alerts && dashboardData.alerts.length > 0 ? (
-                  dashboardData.alerts.slice(0, 4).map((alert) => (
-                    <button
-                      key={alert.id}
-                      type="button"
-                      className="alert-btn"
-                      onClick={() => {
-                        if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
-                          navigate('/tasks');
-                        } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
-                          navigate('/projects');
-                        } else if (alert.type === 'volunteer') {
-                          navigate('/volunteers');
-                        } else {
-                          navigate('/tasks');
-                        }
-                      }}
-                      onTouchEnd={(e) => {
-                        e.preventDefault();
-                        if (alert.type === 'task_overdue' || alert.type === 'task_pending') {
-                          navigate('/tasks');
-                        } else if (alert.type === 'project_deadline' || alert.type === 'project_update') {
-                          navigate('/projects');
-                        } else if (alert.type === 'volunteer') {
-                          navigate('/volunteers');
-                        } else {
-                          navigate('/tasks');
-                        }
-                      }}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: '6px',
-                        backgroundColor: alert.severity === 'high' ? '#fef2f2' : '#fffbeb',
-                        borderLeft: `3px solid ${alert.severity === 'high' ? '#dc2626' : '#f59e0b'}`,
-                        border: 'none',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        width: '100%',
-                        touchAction: 'manipulation',
-                      }}
-                      data-testid={`alert-${alert.id}`}
-                    >
-                      <p style={{ fontSize: '12px', fontWeight: '500', color: '#111827', marginBottom: '1px' }}>{alert.title}</p>
-                      <p style={{ fontSize: '11px', color: '#6b7280' }}>{alert.message}</p>
-                    </button>
-                  ))
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
-                    <CheckSquare size={24} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
-                    <p style={{ fontSize: '12px' }}>All caught up!</p>
-                  </div>
-                )}
-              </div>
-              {dashboardData?.pendingTasks && dashboardData.pendingTasks.length > 0 && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e5e7eb' }}>
-                  <p style={{ fontSize: '11px', fontWeight: '500', color: '#6b7280', marginBottom: '6px' }}>Pending Tasks</p>
-                  {dashboardData.pendingTasks.slice(0, 2).map((task) => (
-                    <button
-                      key={task.id}
-                      type="button"
-                      className="task-btn"
-                      onClick={() => navigate(`/tasks?id=${task.id}`)}
-                      onTouchEnd={(e) => { e.preventDefault(); navigate(`/tasks?id=${task.id}`); }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px',
-                        width: '100%',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        touchAction: 'manipulation',
-                      }}
-                      data-testid={`task-${task.id}`}
-                    >
-                      <CheckSquare size={12} style={{ color: '#9ca3af', flexShrink: 0 }} />
-                      <span style={{ fontSize: '12px', color: '#374151' }}>{task.title}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-              {pendingApplications && pendingApplications.length > 0 && (
-                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '2px solid #059669' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <p style={{ fontSize: '12px', fontWeight: '600', color: '#059669', margin: 0 }}>🔔 Applications ({pendingApplications.length})</p>
-                    <button
-                      onClick={() => navigate('/applications')}
-                      onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
-                      style={{
-                        backgroundColor: '#059669',
-                        color: 'white',
-                        border: 'none',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '10px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                      }}
-                      data-testid="button-view-all-applications"
-                    >
-                      View →
-                    </button>
-                  </div>
-                  {pendingApplications.slice(0, 2).map((app: any) => (
-                    <button
-                      key={app.id}
-                      type="button"
-                      onClick={() => navigate('/applications')}
-                      onTouchEnd={(e) => { e.preventDefault(); navigate('/applications'); }}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '8px 6px',
-                        width: '100%',
-                        backgroundColor: '#f0fdf4',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        marginBottom: '4px',
-                        touchAction: 'manipulation',
-                      }}
-                      data-testid={`application-${app.id}`}
-                    >
-                      <UserPlus size={12} style={{ color: '#059669', flexShrink: 0 }} />
-                      <span style={{ fontSize: '11px', color: '#374151', fontWeight: '500' }}>New applicant awaiting review</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+          {/* Active Projects List - 1/3 Width */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', height: 'fit-content' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>Active Projects</h3>
+              <button
+                onClick={() => navigate('/projects')}
+                style={{ fontSize: '12px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}
+              >
+                View All →
+              </button>
             </div>
-
-            {/* AI Insights */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Lightbulb size={14} style={{ color: '#f59e0b' }} />
-                AI Insights
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {dashboardData?.aiInsights?.slice(0, 2).map((insight) => (
-                  <div
-                    key={insight.id}
-                    style={{
-                      padding: '8px',
-                      borderRadius: '6px',
-                      backgroundColor: insight.sentiment === 'positive' ? '#f0fdf4' : insight.sentiment === 'warning' ? '#fffbeb' : '#f9fafb',
-                      borderLeft: `2px solid ${insight.sentiment === 'positive' ? '#166534' : insight.sentiment === 'warning' ? '#f59e0b' : '#6b7280'}`,
-                    }}
-                    data-testid={`insight-${insight.id}`}
-                  >
-                    <p style={{ fontSize: '11px', fontWeight: '600', color: '#111827', marginBottom: '1px' }}>{insight.title}</p>
-                    <p style={{ fontSize: '10px', color: '#6b7280' }}>{insight.message}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '10px' }}>Quick Actions</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '450px', overflowY: 'auto' }}>
+              {dashboardData?.projects?.slice(0, 6).map((project) => (
                 <button
-                  onClick={() => navigate('/projects?create=true')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
-                  data-testid="quick-create-project"
+                  key={project.id}
+                  onClick={() => navigate(`/projects/${project.id}`)}
+                  style={{
+                    padding: '14px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.2s',
+                    width: '100%'
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4'; e.currentTarget.style.borderColor = '#166534'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f9fafb'; e.currentTarget.style.borderColor = '#e5e7eb'; }}
                 >
-                  <Plus size={12} /> Project
-                </button>
-                <button
-                  onClick={() => navigate('/volunteers?invite=true')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
-                  data-testid="quick-invite-volunteer"
-                >
-                  <UserPlus size={12} /> Volunteer
-                </button>
-                <button
-                  onClick={() => navigate('/tasks?create=true')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
-                  data-testid="quick-create-task"
-                >
-                  <CheckSquare size={12} /> Task
-                </button>
-                <button
-                  onClick={() => navigate('/impact-visualization')}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 10px', backgroundColor: '#f9fafb', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '500', color: '#374151' }}
-                  data-testid="quick-view-reports"
-                >
-                  <BarChart3 size={12} /> Reports
-                </button>
-              </div>
-            </div>
-
-            {/* Compressed Active Projects */}
-            <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '14px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <h3 style={{ fontSize: '13px', fontWeight: '600', color: '#111827' }}>Active Projects</h3>
-                <button
-                  onClick={() => navigate('/projects')}
-                  onTouchEnd={(e) => { e.preventDefault(); navigate('/projects'); }}
-                  data-testid="view-all-projects"
-                  style={{ fontSize: '11px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '500', touchAction: 'manipulation' }}
-                >
-                  View All →
-                </button>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {dashboardData?.projects?.slice(0, 4).map((project) => (
-                  <button
-                    key={project.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      backgroundColor: '#f9fafb',
-                      cursor: 'pointer',
-                      width: '100%',
-                      border: 'none',
-                      textAlign: 'left',
-                      touchAction: 'manipulation',
-                    }}
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                    onTouchEnd={(e) => { e.preventDefault(); navigate(`/projects/${project.id}`); }}
-                    data-testid={`project-item-${project.id}`}
-                  >
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '12px', fontWeight: '500', color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.name}</p>
-                      <p style={{ fontSize: '10px', color: '#6b7280' }}>{project.completionPercentage}% complete</p>
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{project.name}</p>
                     <span style={{
-                      fontSize: '10px',
-                      padding: '2px 6px',
-                      borderRadius: '10px',
-                      backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#e5e7eb',
-                      color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#6b7280',
-                      flexShrink: 0,
-                      marginLeft: '8px',
-                    }}>
-                      {project.status}
-                    </span>
-                  </button>
-                ))}
-                {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#9ca3af' }}>
-                    <FolderOpen size={20} style={{ margin: '0 auto 4px', opacity: 0.5 }} />
-                    <p style={{ fontSize: '11px' }}>No projects yet</p>
-                    <button
-                      onClick={() => navigate('/projects?create=true')}
-                      style={{
-                        marginTop: '8px',
-                        padding: '6px 12px',
-                        backgroundColor: '#166534',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Create Project
-                    </button>
+                      fontSize: '10px', padding: '3px 8px', borderRadius: '12px',
+                      backgroundColor: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#dcfce7' : '#fef3c7',
+                      color: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in progress' ? '#166534' : '#d97706'
+                    }}>{project.status}</span>
                   </div>
-                )}
-              </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 2px 0' }}>Completion</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ flex: 1, height: '6px', backgroundColor: '#e5e7eb', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ height: '100%', backgroundColor: '#166534', width: `${project.completionPercentage || 0}%` }} />
+                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: '#166534' }}>{project.completionPercentage || 0}%</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 2px 0' }}>Volunteers</p>
+                      <p style={{ fontSize: '13px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                        {(project as any).volunteerCount || (project as any).volunteers?.length || 0}
+                      </p>
+                    </div>
+                  </div>
+                  {project.sdgGoals?.length > 0 && (
+                    <div style={{ display: 'flex', gap: '4px', marginTop: '8px', flexWrap: 'wrap' }}>
+                      {project.sdgGoals.slice(0, 3).map((g: number) => (
+                        <span key={g} style={{ width: '20px', height: '20px', borderRadius: '4px', backgroundColor: SDG_GOALS[g]?.color || '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '9px', fontWeight: '700' }}>{g}</span>
+                      ))}
+                      {project.sdgGoals.length > 3 && <span style={{ fontSize: '10px', color: '#6b7280' }}>+{project.sdgGoals.length - 3}</span>}
+                    </div>
+                  )}
+                </button>
+              ))}
+              {(!dashboardData?.projects || dashboardData.projects.length === 0) && (
+                <div style={{ textAlign: 'center', padding: '24px', color: '#9ca3af' }}>
+                  <FolderOpen size={28} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                  <p style={{ fontSize: '13px', marginBottom: '12px' }}>No projects yet</p>
+                  <button onClick={() => navigate('/projects?create=true')} style={{ padding: '8px 16px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}>Create Project</button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Bottom Section: Impact Over Time (Full Width) - Desktop Only */}
-        <div style={{ marginBottom: '24px' }} className="bottom-section hidden md:block">
-          {/* Impact Over Time Chart - SDG Highlighted - Full Width */}
+        {/* AI Insights & Alerts Section - Full Width - Desktop Only */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          {/* AI Insights */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Lightbulb size={18} style={{ color: '#f59e0b' }} />
+              AI Insights & Suggestions
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {dashboardData?.aiInsights?.slice(0, 4).map((insight) => (
+                <div
+                  key={insight.id}
+                  style={{
+                    padding: '14px',
+                    borderRadius: '10px',
+                    backgroundColor: insight.sentiment === 'positive' ? '#f0fdf4' : insight.sentiment === 'warning' ? '#fffbeb' : '#f9fafb',
+                    borderLeft: `4px solid ${insight.sentiment === 'positive' ? '#166534' : insight.sentiment === 'warning' ? '#f59e0b' : '#6b7280'}`,
+                  }}
+                >
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '4px' }}>{insight.title}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{insight.message}</p>
+                </div>
+              ))}
+              {(!dashboardData?.aiInsights || dashboardData.aiInsights.length === 0) && (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#9ca3af' }}>
+                  <Lightbulb size={24} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                  <p style={{ fontSize: '13px' }}>No insights available</p>
+                </div>
+              )}
+              {/* Enhanced Engagement Score - Industry Standard Calculation */}
+              <button
+                onClick={() => setActiveModal('engagement')}
+                style={{
+                  marginTop: '8px',
+                  padding: '14px',
+                  backgroundColor: engagementScore.level === 'excellent' ? '#f0fdf4' : engagementScore.level === 'good' ? '#f0f9ff' : engagementScore.level === 'moderate' ? '#fef3c7' : '#fef2f2',
+                  borderRadius: '10px',
+                  border: `1px solid ${engagementScore.level === 'excellent' ? '#bbf7d0' : engagementScore.level === 'good' ? '#bae6fd' : engagementScore.level === 'moderate' ? '#fde68a' : '#fecaca'}`,
+                  cursor: 'pointer',
+                  width: '100%',
+                  textAlign: 'left',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                data-testid="engagement-score-card"
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '12px', color: engagementScore.level === 'excellent' ? '#059669' : engagementScore.level === 'good' ? '#0369a1' : engagementScore.level === 'moderate' ? '#d97706' : '#dc2626', fontWeight: '600', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Activity size={14} />
+                    Engagement Score
+                  </p>
+                  <span style={{
+                    fontSize: '10px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: engagementScore.level === 'excellent' ? '#059669' : engagementScore.level === 'good' ? '#0369a1' : engagementScore.level === 'moderate' ? '#d97706' : '#dc2626',
+                    color: 'white',
+                    fontWeight: '600',
+                    textTransform: 'capitalize'
+                  }}>
+                    {engagementScore.level.replace('_', ' ')}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '32px', fontWeight: '700', color: engagementScore.level === 'excellent' ? '#059669' : engagementScore.level === 'good' ? '#0369a1' : engagementScore.level === 'moderate' ? '#d97706' : '#dc2626' }}>{engagementScore.total}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ height: '8px', backgroundColor: engagementScore.level === 'excellent' ? '#bbf7d0' : engagementScore.level === 'good' ? '#e0f2fe' : engagementScore.level === 'moderate' ? '#fef3c7' : '#fecaca', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', backgroundColor: engagementScore.level === 'excellent' ? '#059669' : engagementScore.level === 'good' ? '#0369a1' : engagementScore.level === 'moderate' ? '#d97706' : '#dc2626', width: `${engagementScore.total}%`, transition: 'width 0.3s' }} />
+                    </div>
+                  </div>
+                </div>
+                {/* Mini breakdown */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+                  {[
+                    { label: 'Activity', value: engagementScore.breakdown.activity },
+                    { label: 'Retention', value: engagementScore.breakdown.retention },
+                    { label: 'Impact', value: engagementScore.breakdown.impact },
+                    { label: 'Growth', value: engagementScore.breakdown.growth },
+                  ].map((item) => (
+                    <div key={item.label} style={{ textAlign: 'center' }}>
+                      <div style={{
+                        height: '4px',
+                        backgroundColor: '#e5e7eb',
+                        borderRadius: '2px',
+                        overflow: 'hidden',
+                        marginBottom: '2px'
+                      }}>
+                        <div style={{ height: '100%', backgroundColor: item.value >= 70 ? '#059669' : item.value >= 40 ? '#0369a1' : '#d97706', width: `${item.value}%` }} />
+                      </div>
+                      <span style={{ fontSize: '9px', color: '#6b7280' }}>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: '10px', color: '#6b7280', margin: '8px 0 0 0', textAlign: 'right' }}>Click for details →</p>
+              </button>
+            </div>
+          </div>
+
+          {/* Alerts & Tasks */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={18} style={{ color: '#f59e0b' }} />
+                Alerts & Tasks
+              </h3>
+              <button onClick={() => navigate('/tasks')} style={{ fontSize: '12px', color: '#166534', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}>View All →</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {dashboardData?.alerts?.slice(0, 3).map((alert) => (
+                <button
+                  key={alert.id}
+                  onClick={() => navigate(alert.type.includes('task') ? '/tasks' : '/projects')}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    backgroundColor: alert.severity === 'high' ? '#fef2f2' : '#fffbeb',
+                    borderLeft: `4px solid ${alert.severity === 'high' ? '#dc2626' : '#f59e0b'}`,
+                    border: 'none',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    width: '100%'
+                  }}
+                >
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#111827', marginBottom: '2px' }}>{alert.title}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{alert.message}</p>
+                </button>
+              ))}
+              {(!dashboardData?.alerts || dashboardData.alerts.length === 0) && (
+                <div style={{ textAlign: 'center', padding: '20px', color: '#9ca3af' }}>
+                  <CheckSquare size={24} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                  <p style={{ fontSize: '13px' }}>All caught up!</p>
+                </div>
+              )}
+            </div>
+            {/* Pending Applications */}
+            {pendingApplications && pendingApplications.length > 0 && (
+              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '2px solid #059669' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#059669', margin: 0 }}>New Applications ({pendingApplications.length})</p>
+                  <button onClick={() => navigate('/applications')} style={{ backgroundColor: '#059669', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}>Review →</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Map & Impact Over Time - Desktop Only */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          {/* Project Locations Map */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin size={18} style={{ color: '#166534' }} />
+              Project Locations
+            </h3>
+            <div style={{ height: '300px', borderRadius: '10px', overflow: 'hidden' }}>
+              <ProjectMapComponent projectLocations={dashboardData?.projectLocations || []} />
+            </div>
+          </div>
+
+          {/* Impact Over Time */}
           <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <TrendingUp size={18} style={{ color: organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534' }} />
               Impact Over Time
-              {organizationProfile?.sdgGoals && organizationProfile.sdgGoals.length > 0 && (
-                <span style={{ fontSize: '12px', color: '#666', fontWeight: '400', marginLeft: '4px' }}>
-                  ({organizationProfile.sdgGoals.slice(0, 2).map((g: number) => getSDGName(g)).join(', ')})
-                </span>
-              )}
             </h3>
-            <div style={{ height: '280px' }}>
+            <div style={{ height: '300px' }}>
               {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={dashboardData.impactOverTime}>
                     <defs>
-                      <linearGradient id="desktopHoursGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="hoursGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0.3} />
                         <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} stopOpacity={0} />
                       </linearGradient>
-                      <linearGradient id="desktopPeopleGradient" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="peopleGradient" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0.3} />
                         <stop offset="95%" stopColor={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} stopOpacity={0} />
                       </linearGradient>
@@ -1345,25 +1954,10 @@ export default function OrganizationDashboard() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} tickFormatter={(v) => v.split('-')[1]} />
                     <YAxis tick={{ fontSize: 11 }} />
-                    <Tooltip
-                      content={({ active, payload, label }) => {
-                        if (active && payload && payload.length) {
-                          const sdgColor1 = organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534';
-                          const sdgColor2 = organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af';
-                          return (
-                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', borderTop: `3px solid ${sdgColor1}` }}>
-                              <p style={{ fontWeight: '600', marginBottom: '4px' }}>{label}</p>
-                              <p style={{ fontSize: '13px', color: sdgColor1 }}>Hours: {payload[0]?.value}</p>
-                              <p style={{ fontSize: '13px', color: sdgColor2 }}>People Impacted: {payload[1]?.value}</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
+                    <Tooltip />
                     <Legend />
-                    <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#desktopHoursGradient)" strokeWidth={2} name="Hours" />
-                    <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#desktopPeopleGradient)" strokeWidth={2} name="People Impacted" />
+                    <Area type="monotone" dataKey="hours" stroke={organizationProfile?.sdgGoals?.[0] ? getSDGColor(organizationProfile.sdgGoals[0]) : '#166534'} fill="url(#hoursGradient)" strokeWidth={2} name="Hours" />
+                    <Area type="monotone" dataKey="peopleImpacted" stroke={organizationProfile?.sdgGoals?.[1] ? getSDGColor(organizationProfile.sdgGoals[1]) : '#1e40af'} fill="url(#peopleGradient)" strokeWidth={2} name="People Impacted" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -1374,6 +1968,159 @@ export default function OrganizationDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Quick Actions & Project Info - Bottom Row - Desktop Only */}
+        <div className="hidden md:grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
+          {/* Quick Actions Card */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={18} style={{ color: '#f59e0b' }} />
+              Quick Actions
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+              <button
+                onClick={() => navigate('/projects?create=true')}
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#f0fdf4',
+                  border: '2px solid #bbf7d0',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#dcfce7'; e.currentTarget.style.borderColor = '#166534'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f0fdf4'; e.currentTarget.style.borderColor = '#bbf7d0'; }}
+                data-testid="quick-action-new-project"
+              >
+                <FolderOpen size={20} style={{ color: '#166534' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#166534', margin: 0 }}>New Project</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Start a new initiative</p>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate('/volunteers?invite=true')}
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#eff6ff',
+                  border: '2px solid #bfdbfe',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#dbeafe'; e.currentTarget.style.borderColor = '#1e40af'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#eff6ff'; e.currentTarget.style.borderColor = '#bfdbfe'; }}
+                data-testid="quick-action-invite-volunteer"
+              >
+                <UserPlus size={20} style={{ color: '#1e40af' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#1e40af', margin: 0 }}>Invite Volunteer</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Grow your team</p>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate('/tasks?create=true')}
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#faf5ff',
+                  border: '2px solid #e9d5ff',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#f3e8ff'; e.currentTarget.style.borderColor = '#7c3aed'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#faf5ff'; e.currentTarget.style.borderColor = '#e9d5ff'; }}
+                data-testid="quick-action-create-task"
+              >
+                <CheckSquare size={20} style={{ color: '#7c3aed' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#7c3aed', margin: 0 }}>Create Task</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Assign work</p>
+                </div>
+              </button>
+              <button
+                onClick={() => navigate('/impact-visualization')}
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#fef3c7',
+                  border: '2px solid #fde68a',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fde68a'; e.currentTarget.style.borderColor = '#d97706'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fef3c7'; e.currentTarget.style.borderColor = '#fde68a'; }}
+                data-testid="quick-action-view-reports"
+              >
+                <BarChart3 size={20} style={{ color: '#d97706' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ fontSize: '13px', fontWeight: '600', color: '#d97706', margin: 0 }}>View Reports</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Analyze impact</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Project Info Summary Card */}
+          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Info size={18} style={{ color: '#0369a1' }} />
+                Organization Summary
+              </h3>
+              <button
+                onClick={() => navigate('/organization-profile')}
+                style={{ fontSize: '12px', color: '#0369a1', background: 'none', border: 'none', cursor: 'pointer', fontWeight: '600' }}
+              >
+                Edit Profile →
+              </button>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+              <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Organization</p>
+                <p style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: 0 }}>{organization?.name || organizationProfile?.organizationName || 'Your Organization'}</p>
+              </div>
+              <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Projects</p>
+                <p style={{ fontSize: '16px', fontWeight: '700', color: '#111827', margin: 0 }}>{metrics.totalProjects || dashboardData?.projects?.length || 0}</p>
+              </div>
+              <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>SDGs Committed</p>
+                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                  {(organizationProfile?.sdgGoals || []).slice(0, 5).map((sdg: number) => (
+                    <span key={sdg} style={{ width: '24px', height: '24px', borderRadius: '4px', backgroundColor: SDG_GOALS[sdg]?.color || '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px', fontWeight: '700' }}>{sdg}</span>
+                  ))}
+                  {(organizationProfile?.sdgGoals?.length || 0) > 5 && (
+                    <span style={{ fontSize: '11px', color: '#6b7280', alignSelf: 'center' }}>+{(organizationProfile?.sdgGoals?.length || 0) - 5}</span>
+                  )}
+                  {(!organizationProfile?.sdgGoals || organizationProfile.sdgGoals.length === 0) && (
+                    <span style={{ fontSize: '13px', color: '#9ca3af' }}>Not set</span>
+                  )}
+                </div>
+              </div>
+              <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '10px' }}>
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '0 0 4px 0', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Impact Score</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
+                  <span style={{ fontSize: '11px', color: '#6b7280' }}>AIUs</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </main>
 
       {/* Create Modal */}
@@ -1477,8 +2224,292 @@ export default function OrganizationDashboard() {
           onClose={() => setActiveModal(null)}
           type="aiu"
           data={dashboardData?.projects?.slice(0, 10) || []}
+          totalAiu={metrics.aiuEarned}
+          organizationAIU={organizationAIU}
           color="#10b981"
         />
+      )}
+
+      {/* Tasks Modal */}
+      {activeModal === 'tasks' && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>Tasks Overview</h2>
+              <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={24} />
+              </button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '32px', fontWeight: '700', color: '#166534', margin: 0 }}>{taskMetrics.completed}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Completed</p>
+                </div>
+                <div style={{ padding: '16px', backgroundColor: '#eff6ff', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '32px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{taskMetrics.inProgress}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>In Progress</p>
+                </div>
+                <div style={{ padding: '16px', backgroundColor: '#fef3c7', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '32px', fontWeight: '700', color: '#d97706', margin: 0 }}>{taskMetrics.pending}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Pending</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setActiveModal(null); navigate('/tasks'); }}
+                style={{ width: '100%', padding: '12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Manage Tasks →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Engagement Score Modal */}
+      {activeModal === 'engagement' && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Activity size={20} />
+                Engagement Score Details
+              </h2>
+              <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={24} />
+              </button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              {/* Main Score */}
+              <div style={{ textAlign: 'center', marginBottom: '24px', padding: '24px', backgroundColor: engagementScore.level === 'excellent' ? '#f0fdf4' : engagementScore.level === 'good' ? '#f0f9ff' : engagementScore.level === 'moderate' ? '#fef3c7' : '#fef2f2', borderRadius: '12px' }}>
+                <p style={{ fontSize: '64px', fontWeight: '700', color: engagementScore.level === 'excellent' ? '#059669' : engagementScore.level === 'good' ? '#0369a1' : engagementScore.level === 'moderate' ? '#d97706' : '#dc2626', margin: 0 }}>{engagementScore.total}</p>
+                <p style={{ fontSize: '16px', fontWeight: '600', color: '#6b7280', margin: '8px 0 0 0', textTransform: 'capitalize' }}>{engagementScore.level.replace('_', ' ')} Engagement</p>
+              </div>
+
+              {/* Breakdown */}
+              <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>Score Breakdown</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                {[
+                  { label: 'Activity Score', value: engagementScore.breakdown.activity, weight: '30%', description: `${engagementScore.details.avgHoursPerVolunteer} avg hours per volunteer`, color: '#059669' },
+                  { label: 'Retention Score', value: engagementScore.breakdown.retention, weight: '25%', description: `${engagementScore.details.retentionRate}% volunteer retention rate`, color: '#0369a1' },
+                  { label: 'Impact Score', value: engagementScore.breakdown.impact, weight: '25%', description: `${engagementScore.details.completionRate}% avg project completion`, color: '#7c3aed' },
+                  { label: 'Growth Score', value: engagementScore.breakdown.growth, weight: '20%', description: `${engagementScore.details.taskCompletionRate}% task completion rate`, color: '#d97706' },
+                ].map((item) => (
+                  <div key={item.label} style={{ padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>{item.label}</span>
+                      <span style={{ fontSize: '12px', color: '#6b7280' }}>Weight: {item.weight}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ flex: 1, height: '8px', backgroundColor: '#e5e7eb', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', backgroundColor: item.color, width: `${item.value}%` }} />
+                      </div>
+                      <span style={{ fontSize: '14px', fontWeight: '700', color: item.color, minWidth: '40px' }}>{item.value}</span>
+                    </div>
+                    <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>{item.description}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Industry Benchmarks Explanation */}
+              <div style={{ padding: '16px', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                <p style={{ fontSize: '13px', fontWeight: '600', color: '#0369a1', margin: '0 0 8px 0' }}>Industry-Standard Calculation</p>
+                <p style={{ fontSize: '12px', color: '#6b7280', margin: 0, lineHeight: '1.5' }}>
+                  This engagement score follows volunteer management best practices from leading platforms.
+                  <strong> Activity</strong> measures volunteer participation, <strong>Retention</strong> tracks active vs total volunteers,
+                  <strong> Impact</strong> combines project completion and SDG alignment, and <strong>Growth</strong> reflects task completion rates.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Team Members Modal */}
+      {activeModal === 'team' && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>Team Members</h2>
+              <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={24} />
+              </button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Active</p>
+                </div>
+                <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{dashboardData?.volunteerSummaries?.length || 0}</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Total</p>
+                </div>
+                <div style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '24px', fontWeight: '700', color: '#d97706', margin: 0 }}>{pendingApplications?.length || 0}</p>
+                  <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>Pending</p>
+                </div>
+              </div>
+              <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '12px' }}>Top Contributors</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' }}>
+                {(dashboardData?.volunteerSummaries || []).map((vol: any) => (
+                  <div key={vol.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', backgroundColor: '#166534', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '600' }}>
+                        {vol.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{vol.name}</p>
+                        <p style={{ fontSize: '12px', color: '#6b7280', margin: 0 }}>{vol.projects || 0} projects</p>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534' }}>{vol.hours}h</p>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => { setActiveModal(null); navigate('/volunteers'); }}
+                style={{ width: '100%', marginTop: '16px', padding: '12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Manage Team →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Impact Metrics Modal */}
+      {activeModal === 'impact' && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827' }}>Impact Metrics</h2>
+              <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={24} />
+              </button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '24px' }}>
+                <div style={{ padding: '20px', backgroundColor: '#faf5ff', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{metrics.sdgsAddressed}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>SDGs Addressed</p>
+                </div>
+                <div style={{ padding: '20px', backgroundColor: '#f0fdf4', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#166534', margin: 0 }}>{avgProjectCompletion}%</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Avg Completion</p>
+                </div>
+                <div style={{ padding: '20px', backgroundColor: '#eff6ff', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{metrics.activeProjects}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Active Projects</p>
+                </div>
+                <div style={{ padding: '20px', backgroundColor: '#fef3c7', borderRadius: '10px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '36px', fontWeight: '700', color: '#d97706', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>Total AIUs</p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setActiveModal(null); navigate('/impact-visualization'); }}
+                style={{ width: '100%', padding: '12px', backgroundColor: '#7c3aed', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                View Full Impact Report →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending Verification Modal */}
+      {activeModal === 'verification' && (
+        <div className="modal-overlay" onClick={() => setActiveModal(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '700px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px', borderBottom: '1px solid #e5e7eb' }}>
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#111827', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={20} style={{ color: '#f59e0b' }} />
+                Pending AIU Verification
+              </h2>
+              <button onClick={() => setActiveModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}>
+                <X size={24} />
+              </button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              {(pendingVerifications?.length || 0) === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <ShieldCheck size={48} style={{ color: '#10b981', margin: '0 auto 16px' }} />
+                  <p style={{ fontSize: '16px', fontWeight: '600', color: '#111827', margin: '0 0 8px 0' }}>All Caught Up!</p>
+                  <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>No pending impact records to verify.</p>
+                </div>
+              ) : (
+                <>
+                  <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '16px' }}>
+                    Review and verify impact records submitted by volunteers. Verified records receive full AIU credit.
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '400px', overflowY: 'auto' }}>
+                    {(pendingVerifications || []).map((impact: any) => (
+                      <div key={impact.id} style={{ padding: '16px', backgroundColor: '#fef3c7', borderRadius: '10px', border: '1px solid #fde68a' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
+                          <div>
+                            <p style={{ fontSize: '14px', fontWeight: '600', color: '#111827', margin: 0 }}>{impact.metricName || 'Impact Record'}</p>
+                            <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
+                              Submitted by: {impact.userName || 'Volunteer'} • {new Date(impact.date).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <span style={{ fontSize: '18px', fontWeight: '700', color: '#d97706' }}>{impact.value}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await fetch(`/api/activities/project-impacts/${impact.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ verificationStatus: 'verified', userId: userId })
+                                });
+                                refetchVerifications();
+                                refetchDashboard();
+                                toast({ title: 'Impact verified', description: 'The impact record has been verified.' });
+                              } catch (err) {
+                                toast({ title: 'Error', description: 'Failed to verify impact', variant: 'destructive' });
+                              }
+                            }}
+                            style={{ flex: 1, padding: '8px 12px', backgroundColor: '#166534', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                          >
+                            <ThumbsUp size={14} />
+                            Verify
+                          </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                await fetch(`/api/activities/project-impacts/${impact.id}`, {
+                                  method: 'PATCH',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ verificationStatus: 'rejected', userId: userId })
+                                });
+                                refetchVerifications();
+                                toast({ title: 'Impact rejected', description: 'The impact record has been rejected.' });
+                              } catch (err) {
+                                toast({ title: 'Error', description: 'Failed to reject impact', variant: 'destructive' });
+                              }
+                            }}
+                            style={{ flex: 1, padding: '8px 12px', backgroundColor: '#dc2626', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                          >
+                            Reject
+                          </button>
+                          <button
+                            onClick={() => navigate(`/projects/${impact.projectId}`)}
+                            style={{ padding: '8px 12px', backgroundColor: '#f3f4f6', color: '#374151', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                          >
+                            <Eye size={14} />
+                            View
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Responsive Styles */}
@@ -1536,11 +2567,17 @@ export default function OrganizationDashboard() {
             opacity: 1;
           }
         }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
       `}</style>
 
 
-      {/* Footer */}
-      <Footer />
+      {/* Footer - Hidden on mobile */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
 
       {/* Mobile Bottom Navigation */}
       <MobileBottomNav onCreateClick={() => setShowCreateModal(true)} />
@@ -1728,11 +2765,21 @@ interface MetricsModalProps {
   type: 'projects' | 'hours' | 'sdgs' | 'lives' | 'aiu';
   data?: any[];
   totalHours?: number;
+  totalAiu?: number;
+  organizationAIU?: {
+    projects: Array<{
+      projectId: number;
+      projectName: string;
+      aiu: number;
+      sdgIndicator: string;
+      verificationStatus: string;
+    }>;
+  } | null;
   volunteers?: any[];
   color: string;
 }
 
-function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers = [], color }: MetricsModalProps) {
+function MetricsModal({ title, onClose, type, data = [], totalHours, totalAiu, organizationAIU, volunteers = [], color }: MetricsModalProps) {
   const [, navigate] = useLocation();
 
   return (
@@ -1951,7 +2998,46 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
             </div>
           )}
 
-          {type === 'aiu' && (
+          {type === 'aiu' && (() => {
+            // Use accurate AIU data from dedicated endpoint if available
+            const aiuProjects = organizationAIU?.projects || [];
+
+            // Create a map of accurate AIU values by project ID
+            const aiuByProjectId = new Map<number, number>();
+            aiuProjects.forEach(p => aiuByProjectId.set(p.projectId, p.aiu));
+
+            // Check if we have accurate AIU data
+            const hasAccurateAiu = aiuProjects.length > 0;
+
+            // Fallback: Check if projects have their own AIU values or if we need to distribute
+            const sumOfProjectAiu = hasAccurateAiu
+              ? aiuProjects.reduce((sum, p) => sum + (p.aiu || 0), 0)
+              : data.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0);
+            const projectTotalHours = data.reduce((sum: number, p: any) => sum + (p.totalHours || 0), 0);
+
+            // Only distribute proportionally if we don't have accurate AIU and all projects have 0 AIU
+            const needsDistribution = !hasAccurateAiu && sumOfProjectAiu === 0 && totalAiu && totalAiu > 0 && projectTotalHours > 0;
+
+            // Calculate AIU for each project - prioritize accurate AIU endpoint data
+            const getProjectAiu = (project: any) => {
+              // Priority 1: Use accurate AIU from dedicated endpoint
+              if (hasAccurateAiu && aiuByProjectId.has(project.id)) {
+                return aiuByProjectId.get(project.id) || 0;
+              }
+              // Priority 2: Use project's own aiuEarned if not distributing
+              if (!needsDistribution) {
+                return project.aiuEarned || 0;
+              }
+              // Fallback: Distribute total AIU proportionally based on hours
+              const projectHours = project.totalHours || 0;
+              return (projectHours / projectTotalHours) * (totalAiu || 0);
+            };
+
+            // Use the header's total AIU value for display (same as button)
+            // This ensures consistency between button and modal header
+            const displayedTotal = totalAiu || 0;
+
+            return (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* AIU Summary Card */}
               <div style={{ padding: '20px', backgroundColor: '#10b98110', borderRadius: '12px', border: '2px solid #10b981' }}>
@@ -1959,25 +3045,30 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                   <div>
                     <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Total AIUs Earned</p>
                     <p style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', margin: 0 }}>
-                      {data.reduce((sum, p: any) => sum + (p.aiuEarned || 0), 0).toFixed(1)}
+                      {displayedTotal.toFixed(1)}
                     </p>
                   </div>
                   <div>
-                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Active Projects</p>
+                    <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Completed Projects</p>
                     <p style={{ fontSize: '32px', fontWeight: '700', color: '#10b981', margin: 0 }}>
-                      {data.filter((p: any) => p.status === 'Active' || p.status === 'In Progress').length}
+                      {data.filter((p: any) => p.status?.toLowerCase() === 'completed').length}
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* AIU Formula Explanation */}
-              <div style={{ padding: '16px', backgroundColor: '#f9fafb', borderRadius: '8px', fontSize: '13px', color: '#4b5563' }}>
-                <p style={{ fontWeight: '600', marginBottom: '8px', color: '#111827' }}>How AIUs are Calculated:</p>
-                <p style={{ margin: '0 0 4px 0' }}>AIU = KPI Change x Attribution Factor x Volunteer Weight</p>
-                <p style={{ margin: '0', fontSize: '12px', color: '#6b7280' }}>
-                  Volunteer Weight = Role Weight x Hours x Verification Multiplier
+              {/* AIU Explanation - Conceptual, no formula */}
+              <div style={{ padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '8px', fontSize: '13px', color: '#166534', border: '1px solid #bbf7d0' }}>
+                <p style={{ fontWeight: '600', marginBottom: '8px', color: '#166534' }}>How AIUs are Calculated:</p>
+                <p style={{ margin: '0 0 8px 0', lineHeight: '1.5' }}>
+                  <strong>AIU (Attributable Impact Units)</strong> measure your organization's real-world social impact through volunteer activities.
                 </p>
+                <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px', color: '#15803d' }}>
+                  <li style={{ marginBottom: '4px' }}><strong>Hours Contributed:</strong> Volunteer time invested in projects</li>
+                  <li style={{ marginBottom: '4px' }}><strong>SDG Alignment:</strong> Impact across Sustainable Development Goals</li>
+                  <li style={{ marginBottom: '4px' }}><strong>Lives Touched:</strong> Direct beneficiaries of your projects</li>
+                  <li><strong>Verification:</strong> Validated impact records receive higher weight</li>
+                </ul>
               </div>
 
               {/* Project AIU Breakdown */}
@@ -1987,7 +3078,10 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                   {data.length === 0 ? (
                     <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No project data</p>
                   ) : (
-                    data.slice(0, 10).map((project: any) => (
+                    data.slice(0, 10).map((project: any) => {
+                      const projectAiu = getProjectAiu(project);
+                      const aiuPercentage = displayedTotal > 0 ? (projectAiu / displayedTotal) * 100 : 0;
+                      return (
                       <button
                         key={project.id}
                         onClick={() => {
@@ -2028,21 +3122,36 @@ function MetricsModal({ title, onClose, type, data = [], totalHours, volunteers 
                                 </span>
                               </>
                             )}
+                            {project.totalHours > 0 && (
+                              <>
+                                <span style={{ fontSize: '12px', color: '#9ca3af' }}>•</span>
+                                <span style={{ fontSize: '12px', color: '#6b7280' }}>{project.totalHours}h</span>
+                              </>
+                            )}
                           </div>
+                          {/* Progress bar showing project's share of total AIU */}
+                          {aiuPercentage > 0 && (
+                            <div style={{ marginTop: '8px', height: '4px', backgroundColor: '#e5e7eb', borderRadius: '2px', overflow: 'hidden' }}>
+                              <div style={{ height: '100%', backgroundColor: '#10b981', width: `${Math.min(aiuPercentage, 100)}%`, transition: 'width 0.3s' }} />
+                            </div>
+                          )}
                         </div>
                         <div style={{ marginLeft: '16px', textAlign: 'right' }}>
                           <p style={{ fontSize: '20px', fontWeight: '700', color: '#10b981', margin: 0 }}>
-                            {(project.aiuEarned || 0).toFixed(1)}
+                            {projectAiu.toFixed(1)}
                           </p>
                           <p style={{ fontSize: '11px', color: '#6b7280', margin: 0 }}>AIUs</p>
+                          {aiuPercentage > 0 && (
+                            <p style={{ fontSize: '10px', color: '#9ca3af', margin: 0 }}>{aiuPercentage.toFixed(0)}%</p>
+                          )}
                         </div>
                       </button>
-                    ))
+                    );})
                   )}
                 </div>
               </div>
             </div>
-          )}
+          );})()}
         </div>
       </div>
     </div>

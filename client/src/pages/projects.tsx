@@ -11,6 +11,7 @@ import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opp
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import OrganizationHeader from "@/components/layout/organization-header";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
@@ -245,7 +246,7 @@ export default function Projects() {
   return (
     <>
       {isOrganization && <OrganizationHeader activeTab="projects" />}
-      <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6" : "h-screen overflow-y-auto"}>
+      <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6 pb-24" : "h-screen overflow-y-auto pb-24"}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
         <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>
@@ -417,6 +418,9 @@ export default function Projects() {
       {isVolunteer && isMobile && (
         <VolunteerPWANav userId={userId || undefined} activeTab="projects" />
       )}
+
+      {/* Mobile Bottom Navigation for Organizations */}
+      {isOrganization && <MobileBottomNav />}
     </>
   );
 }

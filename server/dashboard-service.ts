@@ -389,8 +389,20 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
     );
 
     // Calculate total AIU for organization from all volunteer contributions
-    // AIU formula: (livesImpacted × attributionFactor × verificationMultiplier) / hoursNormalization
+    // Primary: AIU = (livesImpacted × attributionFactor × verificationMultiplier) / hoursNormalization
+    // Fallback: If no impacts, use hours-based calculation (1 AIU per 50 hours)
     let totalAiuEarned = 0;
+    const totalOrgHours = organizationActivities.reduce((sum, a) => sum + (Number(a.hours) || 0), 0);
+
+    // Count unique SDGs across all projects for multiplier
+    const orgSdgSet = new Set<number>();
+    organizationProjects.forEach(p => {
+      if (p.sdgGoals && Array.isArray(p.sdgGoals)) {
+        p.sdgGoals.forEach(g => orgSdgSet.add(g));
+      }
+    });
+
+    let hasAnyImpacts = false;
     organizationProjects.forEach(project => {
       const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
       const projectHours = projectActivities.reduce((sum, a) => sum + (Number(a.hours) || 0), 0);
@@ -406,23 +418,39 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
         .reduce((sum, i) => sum + (Number(i.value) || 0) * 0.7, 0);
       const livesImpacted = verifiedPeople + pendingPeople;
 
-      // Calculate attribution factor based on volunteers on this project
-      const projectVolunteerCount = organizationAssignments.filter(pa => pa.projectId === project.id).length;
-      const attributionFactor = projectVolunteerCount > 0 ? 1 / projectVolunteerCount : 1;
+      if (livesImpacted > 0) {
+        hasAnyImpacts = true;
+        // Calculate attribution factor based on volunteers on this project
+        const projectVolunteerCount = organizationAssignments.filter(pa => pa.projectId === project.id).length;
+        const attributionFactor = projectVolunteerCount > 0 ? 1 / projectVolunteerCount : 1;
 
-      // Verification multiplier
-      const verificationMultiplier = verifiedPeople > 0 ? 1.0 : 0.8;
+        // Verification multiplier
+        const verificationMultiplier = verifiedPeople > 0 ? 1.0 : 0.8;
 
-      // Hours-based normalization
-      const hoursNormalization = Math.max(projectHours, 1) / 10;
+        // Hours-based normalization
+        const hoursNormalization = Math.max(projectHours, 1) / 10;
 
-      // Calculate project AIU
-      const projectAiu = Math.round(
-        (livesImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
-      ) / 100;
+        // Calculate project AIU from impacts
+        const projectAiu = Math.round(
+          (livesImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
+        ) / 100;
 
-      totalAiuEarned += projectAiu;
+        totalAiuEarned += projectAiu;
+      } else if (projectHours > 0) {
+        // Fallback: hours-based AIU for projects without impact records
+        const projectSdgCount = (project.sdgGoals || []).length;
+        const projectSdgMultiplier = Math.min(1 + (projectSdgCount * 0.1), 2.0);
+        const projectAiu = Math.round((projectHours / 50) * projectSdgMultiplier * 100) / 100;
+        totalAiuEarned += projectAiu;
+      }
     });
+
+    // If no impacts recorded at all but have hours, use organization-wide fallback
+    if (!hasAnyImpacts && totalOrgHours > 0 && totalAiuEarned === 0) {
+      const sdgMultiplier = Math.min(1 + (orgSdgSet.size * 0.1), 2.0);
+      totalAiuEarned = Math.round((totalOrgHours / 50) * sdgMultiplier * 100) / 100;
+    }
+
     totalAiuEarned = Math.round(totalAiuEarned * 100) / 100; // Round to 2 decimal places
 
     // Enrich projects with assigned volunteers and compute progress fallback
@@ -440,47 +468,55 @@ export async function getDashboardDataForOrganization(userId: number): Promise<a
           avatar: v.avatar || undefined,
         }));
 
-      // Compute progress based on multiple factors (AI-powered completion tracking)
-      let progress = project.completionPercentage || 0;
-      if (progress === 0 || progress > 100) {
-        const projectTasks = organizationTasks.filter(t => t.projectId === project.id);
-        const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
-        const totalHoursLogged = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
+      // Calculate completion percentage using hours + milestones formula
+      // This ensures consistent calculation across all dashboards
+      const projectActivities = organizationActivities.filter(a => a.projectId === project.id);
+      const totalHoursLogged = projectActivities.reduce((sum, a) => sum + (a.hours || 0), 0);
 
-        // Get expected hours from project
-        const expectedHours = project.projectTotalHours ||
-                              (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0);
+      // Get expected hours from project
+      const expectedHours = project.projectTotalHours ||
+                            (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0);
+      const hoursWeight = (project as any).completionHoursWeight ?? 60;
+      const milestonesWeight = (project as any).completionMilestonesWeight ?? 40;
+      const milestones = (project as any).milestones as any[] | null | undefined;
 
-        let progressScore = 0;
-        let totalWeight = 0;
+      let hoursProgress = 0;
+      if (expectedHours > 0) {
+        hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
+      } else if (totalHoursLogged > 0) {
+        hoursProgress = Math.min((totalHoursLogged / 200) * 100, 50);
+      }
 
-        // Task-based progress (if tasks exist)
-        if (projectTasks.length > 0) {
-          const completedCount = projectTasks.filter(t => t.status?.toLowerCase() === 'completed').length;
-          progressScore += (completedCount / projectTasks.length) * 100 * 0.5;
-          totalWeight += 0.5;
+      let milestoneProgress = 0;
+      if (milestones && Array.isArray(milestones) && milestones.length > 0) {
+        const hasCustomWeights = milestones.some((m: any) => typeof m.weight === 'number' && m.weight > 0);
+        if (hasCustomWeights) {
+          const totalWeight = milestones.reduce((sum: number, m: any) => sum + (m.weight || 0), 0);
+          const completedWeight = milestones
+            .filter((m: any) => m.status === 'completed')
+            .reduce((sum: number, m: any) => sum + (m.weight || 0), 0);
+          milestoneProgress = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+        } else {
+          const completedMilestones = milestones.filter((m: any) => m.status === 'completed').length;
+          milestoneProgress = (completedMilestones / milestones.length) * 100;
         }
+      }
 
-        // Hours-based progress
-        if (expectedHours > 0) {
-          const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
-          progressScore += hoursProgress * 0.5;
-          totalWeight += 0.5;
-        } else if (totalHoursLogged > 0) {
-          // Conservative estimate without target
-          const conservativeTarget = Math.max(200, totalHoursLogged * 10);
-          const hoursProgress = Math.min((totalHoursLogged / conservativeTarget) * 100, 30);
-          progressScore += hoursProgress * 0.5;
-          totalWeight += 0.5;
-        }
-
-        // Normalize and set progress
-        progress = totalWeight > 0 ? Math.round(progressScore / totalWeight) : 0;
-
-        // Override for completed status
-        if (project.status === 'completed') {
-          progress = 100;
-        }
+      let progress = 0;
+      if (project.status === 'completed') {
+        // Completed projects are always 100%
+        progress = 100;
+      } else if (!milestones || !Array.isArray(milestones) || milestones.length === 0) {
+        // No milestones - hours get full weight
+        progress = Math.round(hoursProgress);
+      } else {
+        // Combined progress with weights
+        const totalWeight = hoursWeight + milestonesWeight;
+        const normalizedHoursWeight = (hoursWeight / totalWeight) * 100;
+        const normalizedMilestonesWeight = (milestonesWeight / totalWeight) * 100;
+        progress = Math.round(Math.min(
+          (normalizedHoursWeight / 100) * hoursProgress +
+          (normalizedMilestonesWeight / 100) * milestoneProgress, 100));
       }
 
       return {

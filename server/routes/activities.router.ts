@@ -9,7 +9,8 @@ import {
   handleValidationError,
   calculateProjectProgress,
   detectDuplicateImpact,
-  applyRoleBasedAttribution
+  applyRoleBasedAttribution,
+  updateAiuKpiFromImpacts
 } from "./utils";
 
 export const activitiesRouter = Router();
@@ -92,12 +93,12 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
       try {
         // Get activities for this project-volunteer pair using optimized query
         const userActivities = await storage.listVolunteerActivitiesByUser(activity.userId);
-        const projectActivities = userActivities.filter(
+        const userProjectActivities = userActivities.filter(
           (a: any) => a.projectId === activity.projectId
         );
 
-        // Calculate total hours logged
-        const totalHoursLogged = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        // Calculate user's total hours on this project (for assignment tracking)
+        const userHoursLogged = userProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
 
         // Find and update the assignment
         const assignments = await storage.listProjectAssignmentsByProject(activity.projectId);
@@ -105,17 +106,21 @@ activitiesRouter.post("/volunteer-activities", async (req: Request, res: Respons
 
         if (assignment) {
           await storage.updateProjectAssignment(assignment.id, {
-            hoursCompleted: totalHoursLogged,
+            hoursCompleted: userHoursLogged,
             // Auto-complete if hours reach commitment
-            status: totalHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
+            status: userHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
           });
         }
 
         // **AI Algorithm**: Auto-calculate and update project completion percentage
+        // Get ALL activities for this project (not just this user's) for accurate total
+        const allProjectActivities = await storage.listVolunteerActivitiesByProject(activity.projectId);
+        const totalProjectHours = allProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
         const progressPercentage = await calculateProjectProgress(activity.projectId);
         await storage.updateProject(activity.projectId, {
           completionPercentage: progressPercentage,
-          totalHoursLogged: totalHoursLogged
+          totalHoursLogged: totalProjectHours
         });
       } catch (updateErr) {
         console.error("Error updating assignment or project progress:", updateErr);
@@ -222,14 +227,14 @@ activitiesRouter.patch("/volunteer-activities/:id", async (req: Request, res: Re
     // **KPI Tracking**: Recalculate and update assignment hoursCompleted when activity is updated
     if (updatedActivity.projectId && updatedActivity.userId) {
       try {
-        // Get all activities for this project-volunteer pair
-        const allActivities = await storage.listVolunteerActivities();
-        const projectActivities = allActivities.filter(
-          (a: any) => a.projectId === updatedActivity.projectId && a.userId === updatedActivity.userId
+        // Get this user's activities for this project (for assignment tracking)
+        const userActivities = await storage.listVolunteerActivitiesByUser(updatedActivity.userId);
+        const userProjectActivities = userActivities.filter(
+          (a: any) => a.projectId === updatedActivity.projectId
         );
 
-        // Calculate total hours logged
-        const totalHoursLogged = projectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+        // Calculate user's total hours on this project
+        const userHoursLogged = userProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
 
         // Find and update the assignment
         const assignments = await storage.listProjectAssignmentsByProject(updatedActivity.projectId);
@@ -237,14 +242,25 @@ activitiesRouter.patch("/volunteer-activities/:id", async (req: Request, res: Re
 
         if (assignment) {
           await storage.updateProjectAssignment(assignment.id, {
-            hoursCompleted: totalHoursLogged,
+            hoursCompleted: userHoursLogged,
             // Auto-complete if hours reach commitment
-            status: totalHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
+            status: userHoursLogged >= (assignment.hoursCommitted || 0) ? "completed" : assignment.status
           });
         }
+
+        // **AI Algorithm**: Auto-calculate and update project completion percentage
+        // Get ALL activities for this project (not just this user's) for accurate total
+        const allProjectActivities = await storage.listVolunteerActivitiesByProject(updatedActivity.projectId);
+        const totalProjectHours = allProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+        const progressPercentage = await calculateProjectProgress(updatedActivity.projectId);
+        await storage.updateProject(updatedActivity.projectId, {
+          completionPercentage: progressPercentage,
+          totalHoursLogged: totalProjectHours
+        });
       } catch (updateErr) {
-        console.error("Error updating assignment hoursCompleted:", updateErr);
-        // Don't fail the activity update if assignment update fails
+        console.error("Error updating assignment or project progress:", updateErr);
+        // Don't fail the activity update if update fails
       }
     }
 
@@ -466,6 +482,14 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
         console.error("Error updating project progress:", updateErr);
         // Don't fail impact creation if progress update fails
       }
+
+      // **AIU Auto-Update**: Update AIU kpiAfter value from cumulative impacts
+      try {
+        await updateAiuKpiFromImpacts(impact.projectId);
+      } catch (aiuErr) {
+        console.error("Error updating AIU settings:", aiuErr);
+        // Don't fail impact creation if AIU update fails
+      }
     }
 
     broadcastUpdate("project_impact_created", {
@@ -484,6 +508,7 @@ activitiesRouter.post("/project-impacts", async (req: Request, res: Response) =>
 
 /**
  * PATCH /project-impacts/:id - Update an existing project impact
+ * Also recalculates AIU kpiAfter when verification status changes
  */
 activitiesRouter.patch("/project-impacts/:id", async (req: Request, res: Response) => {
   try {
@@ -493,6 +518,16 @@ activitiesRouter.patch("/project-impacts/:id", async (req: Request, res: Respons
     const updatedImpact = await storage.updateProjectImpact(impactId, impactData);
     if (!updatedImpact) {
       return res.status(404).json({ message: "Project impact not found" });
+    }
+
+    // **AIU Auto-Update**: Recalculate AIU when impact is updated (especially verification status changes)
+    if (updatedImpact.projectId) {
+      try {
+        await updateAiuKpiFromImpacts(updatedImpact.projectId);
+      } catch (aiuErr) {
+        console.error("Error updating AIU settings:", aiuErr);
+        // Don't fail impact update if AIU update fails
+      }
     }
 
     broadcastUpdate("project_impact_updated", updatedImpact);

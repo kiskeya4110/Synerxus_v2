@@ -43,9 +43,11 @@ import {
   ExternalLink,
   Maximize2,
   Minimize2,
-  PieChart
+  PieChart,
+  MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
 import { getSDGIcon } from "@/assets/un-sdg-icons";
@@ -399,7 +401,7 @@ export default function CSRDashboardPWA() {
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40">
+    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40 pb-16">
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">
@@ -409,7 +411,7 @@ export default function CSRDashboardPWA() {
 
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-20 bg-[#faf9f7]">
+      <main className="flex-1 overflow-y-auto pb-4 bg-[#faf9f7]">
         {/* Home Tab */}
         {activeTab === 'home' && (
           <div className="space-y-4 p-4">
@@ -866,6 +868,14 @@ export default function CSRDashboardPWA() {
             {/* Quick Actions Grid */}
             <div className="grid grid-cols-2 gap-3">
               <button
+                onClick={() => navigate('/csr-messages/pwa')}
+                className="bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
+              >
+                <MessageCircle className="w-6 h-6 text-white mb-2" />
+                <p className="text-white font-semibold text-sm">Messages</p>
+                <p className="text-cyan-100 text-[10px]">Contact partners</p>
+              </button>
+              <button
                 onClick={() => setShowMapModal(true)}
                 className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-left shadow-lg hover:shadow-xl transition-shadow active:scale-[0.98]"
               >
@@ -922,49 +932,8 @@ export default function CSRDashboardPWA() {
         )}
       </main>
 
-      {/* Bottom Tray Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex justify-around max-w-[428px] mx-auto z-50">
-        <button
-          onClick={() => startTransition(() => setActiveTab('home'))}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'home' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-home"
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-xs font-medium">Home</span>
-        </button>
-        <button
-          onClick={() => startTransition(() => setActiveTab('sdgs'))}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'sdgs' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-sdgs"
-        >
-          <Target className="w-5 h-5" />
-          <span className="text-xs font-medium">SDGs</span>
-        </button>
-        <button
-          onClick={() => startTransition(() => setActiveTab('projects'))}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'projects' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-projects"
-        >
-          <Briefcase className="w-5 h-5" />
-          <span className="text-xs font-medium">Projects</span>
-        </button>
-        <button
-          onClick={() => startTransition(() => setActiveTab('reports'))}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'reports' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-reports"
-        >
-          <FileText className="w-5 h-5" />
-          <span className="text-xs font-medium">Reports</span>
-        </button>
-        <button
-          onClick={() => startTransition(() => setActiveTab('insights'))}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'insights' ? 'text-amber-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-insights"
-        >
-          <Sparkles className="w-5 h-5" />
-          <span className="text-xs font-medium">Insights</span>
-        </button>
-      </nav>
+      {/* Bottom Navigation */}
+      <VolunteerPWANav userId={userId || undefined} activeTab="home" />
 
       {/* Modals */}
       {selectedKPI && (

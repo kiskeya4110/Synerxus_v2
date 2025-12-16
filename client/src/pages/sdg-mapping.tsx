@@ -20,7 +20,7 @@ import StatsCard from "@/components/dashboard/stats-card";
 import { getSDGName, getSDGColor, suggestSDGsFromText, SDG_GOALS } from "@shared/sdg-goals";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Radar } from "react-chartjs-2";
+import { Radar, Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -29,6 +29,9 @@ import {
   Filler,
   Tooltip,
   Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
 } from "chart.js";
 
 ChartJS.register(
@@ -37,7 +40,10 @@ ChartJS.register(
   LineElement,
   Filler,
   Tooltip,
-  Legend
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement
 );
 
 // SDG metadata (titles, descriptions)
@@ -148,9 +154,9 @@ export default function SDGMapping() {
     if (orgProfile?.organization?.primarySdgs && orgProfile.organization.primarySdgs.length > 0) {
       return orgProfile.organization.primarySdgs;
     }
-    // Finally fallback to matchableOrganization
-    if (orgProfile?.matchableOrganization?.primarySdgs && orgProfile.matchableOrganization.primarySdgs.length > 0) {
-      return orgProfile.matchableOrganization.primarySdgs;
+    // Finally fallback to matchableOrganization (uses sdgFocus field name)
+    if (orgProfile?.matchableOrganization?.sdgFocus && orgProfile.matchableOrganization.sdgFocus.length > 0) {
+      return orgProfile.matchableOrganization.sdgFocus;
     }
     return [];
   }, [orgProfile]);
@@ -369,16 +375,17 @@ export default function SDGMapping() {
     project.sdgGoals && Array.isArray(project.sdgGoals) && project.sdgGoals.includes(effectiveSelectedSDG)
   ) : [];
   
-  // Radar chart data: Compare organization's selected SDGs vs actual project distribution
-  const radarChartData = useMemo(() => {
+  // Chart data: Compare organization's selected SDGs vs actual project distribution
+  // Adapts to use Bar chart for 1-2 SDGs, Radar for 3+ SDGs
+  const chartData = useMemo(() => {
     if (organizationSDGs.length === 0) return null;
-    
+
     // Calculate project distribution across SDGs
     const projectDistribution = new Map<number, number>();
     organizationSDGs.forEach((sdgId: number) => {
       projectDistribution.set(sdgId, 0);
     });
-    
+
     // Count projects per SDG (1 per each, using filtered projects)
     filteredProjects.forEach((project: any) => {
       if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
@@ -389,31 +396,72 @@ export default function SDGMapping() {
         });
       }
     });
-    
+
     // Find max for baseline reference (keeping selectedData at this max)
     const maxProjects = Math.max(...Array.from(projectDistribution.values()), 1);
-    
+
     const labels = organizationSDGs.map((sdgId: number) => {
       const metadata = SDG_METADATA[sdgId];
       return metadata ? metadata.title : `SDG ${sdgId}`;
     });
-    
-    // Apply log transformation for better visibility when values differ greatly
-    // Using log10(x + 1) to handle zero values
-    const selectedData = organizationSDGs.map(() => Math.log10(maxProjects + 1));
-    
-    // Actual project distribution with log transformation (counts as 1 per each)
-    const actualData = organizationSDGs.map((sdgId: number) => {
+
+    // Get SDG colors for bar charts
+    const sdgColors = organizationSDGs.map((sdgId: number) => getSDGColor(sdgId));
+
+    // Actual project distribution counts (raw numbers for bar chart)
+    const actualCounts = organizationSDGs.map((sdgId: number) => {
+      return projectDistribution.get(sdgId) || 0;
+    });
+
+    // For radar chart, apply log transformation for better visibility
+    const selectedDataLog = organizationSDGs.map(() => Math.log10(maxProjects + 1));
+    const actualDataLog = organizationSDGs.map((sdgId: number) => {
       const count = projectDistribution.get(sdgId) || 0;
       return Math.log10(count + 1);
     });
-    
+
+    const sdgCount = organizationSDGs.length;
+
+    // Bar chart data for 1-2 SDGs
+    if (sdgCount <= 2) {
+      return {
+        type: 'bar' as const,
+        sdgCount,
+        labels,
+        datasets: [
+          {
+            label: 'Focus Target',
+            data: organizationSDGs.map(() => maxProjects),
+            backgroundColor: sdgColors.map((c: string) => `${c}40`), // 25% opacity
+            borderColor: sdgColors,
+            borderWidth: 2,
+            borderRadius: 8,
+            barPercentage: sdgCount === 1 ? 0.5 : 0.8,
+            categoryPercentage: sdgCount === 1 ? 0.6 : 0.9,
+          },
+          {
+            label: 'Actual Projects',
+            data: actualCounts,
+            backgroundColor: sdgColors,
+            borderColor: sdgColors.map((c: string) => `${c}cc`),
+            borderWidth: 2,
+            borderRadius: 8,
+            barPercentage: sdgCount === 1 ? 0.5 : 0.8,
+            categoryPercentage: sdgCount === 1 ? 0.6 : 0.9,
+          },
+        ],
+      };
+    }
+
+    // Radar chart data for 3+ SDGs
     return {
+      type: 'radar' as const,
+      sdgCount,
       labels,
       datasets: [
         {
           label: 'Selected SDG Focus Areas (Settings)',
-          data: selectedData,
+          data: selectedDataLog,
           backgroundColor: 'rgba(30, 58, 138, 0.2)', // SYNER blue with transparency
           borderColor: '#1e3a8a', // SYNER blue
           borderWidth: 2,
@@ -424,7 +472,7 @@ export default function SDGMapping() {
         },
         {
           label: 'Actual Project Distribution',
-          data: actualData,
+          data: actualDataLog,
           backgroundColor: 'rgba(180, 83, 9, 0.2)', // XUS orange-gold with transparency
           borderColor: '#b45309', // XUS orange-gold
           borderWidth: 2,
@@ -510,11 +558,18 @@ export default function SDGMapping() {
           )}
         </div>
         
-        {/* Spider Web Chart - SDG Comparison - Compact Layout */}
-        {radarChartData && (
+        {/* SDG Chart - Adapts based on SDG count: Bar for 1-2 SDGs, Radar for 3+ */}
+        {chartData && (
           <Card className="mb-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base sm:text-lg">SDG Focus vs. Project Distribution</CardTitle>
+            <CardTitle className="text-base sm:text-lg">
+              SDG Focus vs. Project Distribution
+              {chartData.sdgCount <= 2 && (
+                <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                  ({chartData.sdgCount} SDG{chartData.sdgCount > 1 ? 's' : ''})
+                </span>
+              )}
+            </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               Compare SDG focus areas with actual project distribution ({filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'})
             </CardDescription>
@@ -569,86 +624,169 @@ export default function SDGMapping() {
                 />
               </div>
 
-              {/* Radar Chart - Compact */}
-              <div className="w-full" style={{ height: '280px' }}>
-              <Radar
-                data={radarChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    r: {
-                      beginAtZero: true,
-                      ticks: {
-                        color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
-                        callback: function(value: any) {
-                          // Convert log scale back to actual project count for display
-                          const actualValue = Math.round(Math.pow(10, value) - 1);
-                          return actualValue;
+              {/* Adaptive Chart - Bar for 1-2 SDGs, Radar for 3+ */}
+              <div className="w-full" style={{ height: chartData.type === 'bar' ? '240px' : '280px' }}>
+                {chartData.type === 'bar' ? (
+                  <Bar
+                    data={{
+                      labels: chartData.labels,
+                      datasets: chartData.datasets,
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      indexAxis: chartData.sdgCount === 1 ? 'y' as const : 'x' as const,
+                      scales: {
+                        x: {
+                          grid: {
+                            color: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                          },
+                          ticks: {
+                            color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
+                            font: { size: 11 },
+                          },
+                        },
+                        y: {
+                          beginAtZero: true,
+                          grid: {
+                            color: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                          },
+                          ticks: {
+                            color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
+                            stepSize: 1,
+                            font: { size: 11 },
+                          },
+                          title: {
+                            display: chartData.sdgCount === 1,
+                            text: 'Projects',
+                            color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
+                            font: { size: 12 },
+                          },
+                        },
+                      },
+                      plugins: {
+                        legend: {
+                          position: 'top' as const,
+                          labels: {
+                            color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
+                            padding: 16,
+                            font: { size: 12 },
+                            usePointStyle: true,
+                            pointStyle: 'rectRounded',
+                          },
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const label = context.dataset.label || '';
+                              const value = context.parsed.y ?? context.parsed.x;
+                              return `${label}: ${value} project${value !== 1 ? 's' : ''}`;
+                            },
+                          },
+                        },
+                      },
+                    }}
+                  />
+                ) : (
+                  <Radar
+                    data={{
+                      labels: chartData.labels,
+                      datasets: chartData.datasets,
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: {
+                        r: {
+                          beginAtZero: true,
+                          ticks: {
+                            color: theme === 'dark' ? '#9CA3AF' : '#4B5563',
+                            callback: function(value: any) {
+                              // Convert log scale back to actual project count for display
+                              const actualValue = Math.round(Math.pow(10, value) - 1);
+                              return actualValue;
+                            }
+                          },
+                          grid: {
+                            color: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                          },
+                          pointLabels: {
+                            color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
+                            font: {
+                              size: 12,
+                            },
+                            callback: function(label: string) {
+                              // Wrap labels to max 2 words per line for better visibility
+                              const words = label.split(' ');
+                              if (words.length <= 2) return label;
+
+                              const lines: string[] = [];
+                              for (let i = 0; i < words.length; i += 2) {
+                                lines.push(words.slice(i, i + 2).join(' '));
+                              }
+                              return lines;
+                            },
+                          },
+                        },
+                      },
+                      plugins: {
+                        legend: {
+                          position: 'top' as const,
+                          labels: {
+                            color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
+                            padding: 20,
+                            font: {
+                              size: 14,
+                            },
+                          },
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              let label = context.dataset.label || '';
+                              if (label) {
+                                label += ': ';
+                              }
+                              if (context.parsed.r !== null) {
+                                // Convert log scale back to project count
+                                const actualValue = Math.round(Math.pow(10, context.parsed.r) - 1);
+                                label += actualValue + ' project' + (actualValue !== 1 ? 's' : '');
+                              }
+                              return label;
+                            }
+                          }
                         }
                       },
-                      grid: {
-                        color: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-                      },
-                      pointLabels: {
-                        color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
-                        font: {
-                          size: 12,
-                        },
-                        callback: function(label: string) {
-                          // Wrap labels to max 2 words per line for better visibility
-                          const words = label.split(' ');
-                          if (words.length <= 2) return label;
-                          
-                          const lines: string[] = [];
-                          for (let i = 0; i < words.length; i += 2) {
-                            lines.push(words.slice(i, i + 2).join(' '));
-                          }
-                          return lines;
-                        },
-                      },
-                    },
-                  },
-                  plugins: {
-                    legend: {
-                      position: 'top' as const,
-                      labels: {
-                        color: theme === 'dark' ? '#D1D5DB' : '#1F2937',
-                        padding: 20,
-                        font: {
-                          size: 14,
-                        },
-                      },
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(context) {
-                          let label = context.dataset.label || '';
-                          if (label) {
-                            label += ': ';
-                          }
-                          if (context.parsed.r !== null) {
-                            label += Math.round(context.parsed.r) + '%';
-                          }
-                          return label;
-                        }
-                      }
-                    }
-                  },
-                }}
-              />
+                    }}
+                  />
+                )}
               </div>
             </div>
             {/* Legend - Compact */}
             <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: '#1e3a8a' }}></span>
-                Selected SDGs (Settings)
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: '#b45309' }}></span>
-                Actual Distribution
-              </span>
+              {chartData.type === 'bar' ? (
+                <>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: organizationSDGs.length > 0 ? `${getSDGColor(organizationSDGs[0])}40` : '#1e3a8a40', border: `2px solid ${organizationSDGs.length > 0 ? getSDGColor(organizationSDGs[0]) : '#1e3a8a'}` }}></span>
+                    Focus Target
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-3 h-3 rounded" style={{ backgroundColor: organizationSDGs.length > 0 ? getSDGColor(organizationSDGs[0]) : '#b45309' }}></span>
+                    Actual Projects
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: '#1e3a8a' }}></span>
+                    Selected SDGs (Settings)
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: '#b45309' }}></span>
+                    Actual Distribution
+                  </span>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

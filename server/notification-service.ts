@@ -343,3 +343,95 @@ export async function notifyNewApplication(
     console.error("Error creating new application notification:", error);
   }
 }
+
+/**
+ * Notify volunteers about AIU verification status changes
+ */
+export async function notifyAiuVerification(
+  volunteerId: number,
+  projectId: number,
+  status: 'verified' | 'rejected' | 'adjusted',
+  projectName: string,
+  aiuAmount?: number,
+  adjustmentNotes?: string
+): Promise<void> {
+  try {
+    let title: string;
+    let message: string;
+
+    switch (status) {
+      case 'verified':
+        title = "AIU Impact Verified";
+        message = `Your impact contribution on "${projectName}" has been verified by the organization.${aiuAmount ? ` You earned ${aiuAmount.toFixed(2)} AIUs.` : ''}`;
+        break;
+      case 'rejected':
+        title = "AIU Impact Needs Review";
+        message = `Your impact submission for "${projectName}" requires adjustments. Please review and resubmit your contribution data.`;
+        break;
+      case 'adjusted':
+        title = "AIU Impact Adjusted & Verified";
+        message = `Your impact contribution on "${projectName}" has been adjusted and verified by the organization.${aiuAmount ? ` Updated AIU: ${aiuAmount.toFixed(2)}.` : ''}${adjustmentNotes ? ` Note: ${adjustmentNotes}` : ''}`;
+        break;
+    }
+
+    const notification: InsertNotification = {
+      userId: volunteerId,
+      type: "aiu_verification",
+      title,
+      message,
+      relatedEntityType: "project",
+      relatedEntityId: projectId,
+      read: false,
+    };
+
+    await storage.createNotification(notification);
+  } catch (error) {
+    console.error("Error creating AIU verification notification:", error);
+  }
+}
+
+/**
+ * Notify all volunteers on a project about AIU verification
+ */
+export async function notifyProjectVolunteersAiuVerification(
+  projectId: number,
+  status: 'verified' | 'rejected' | 'adjusted',
+  projectName: string,
+  volunteerAius?: Array<{ volunteerId: number; aiu: number }>,
+  adjustmentNotes?: string
+): Promise<void> {
+  try {
+    // Get all project assignments (volunteers)
+    const assignments = await storage.listProjectAssignmentsByProject(projectId);
+    const activeVolunteerIds: number[] = assignments
+      .filter(a => a.status === 'active' || a.status === 'accepted' || a.status === 'completed')
+      .map(a => a.volunteerId)
+      .filter((id): id is number => id !== null);
+
+    // Also get volunteers from activities
+    const activities = await storage.listVolunteerActivitiesByProject(projectId);
+    const activityUserIds = activities
+      .map(a => a.userId)
+      .filter((id): id is number => id !== null);
+
+    // Combine unique volunteer IDs
+    const combinedIds = [...activeVolunteerIds, ...activityUserIds];
+    const uniqueSet = new Set(combinedIds);
+    const allVolunteerIds = Array.from(uniqueSet);
+
+    // Notify each volunteer
+    for (const volunteerId of allVolunteerIds) {
+      const volunteerAiu = volunteerAius?.find(v => v.volunteerId === volunteerId)?.aiu;
+      await notifyAiuVerification(
+        volunteerId,
+        projectId,
+        status,
+        projectName,
+        volunteerAiu,
+        adjustmentNotes
+      );
+    }
+  } catch (error) {
+    console.error("Error notifying project volunteers about AIU verification:", error);
+  }
+}

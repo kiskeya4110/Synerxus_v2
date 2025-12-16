@@ -333,7 +333,7 @@ profileRouter.get("/organization", async (req: Request, res: Response) => {
     let organizationProfile = null;
     if (user.organizationId) {
       try {
-        organizationProfile = await storage.getOrganizationProfile(user.organizationId);
+        organizationProfile = await storage.getOrganizationProfileByOrgId(user.organizationId);
       } catch (err) {
         console.error("Error fetching organization profile:", err);
       }

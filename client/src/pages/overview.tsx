@@ -65,6 +65,20 @@ export default function Overview() {
     enabled: !!userId && currentUser?.userType === 'organization'
   });
 
+  // Fetch real leaderboard data from the organization
+  const { data: leaderboardData } = useQuery<any[]>({
+    queryKey: ["/api/organization-leaderboard", currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return [];
+      const response = await fetch(
+        `/api/organization-leaderboard?organizationId=${currentUser.organizationId}&type=hours&limit=3`
+      );
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
   const metrics = {
     totalHours: dashboardData?.keyMetrics?.totalHours || 0,
     volunteersEngaged: dashboardData?.keyMetrics?.activeVolunteers || 0,
@@ -175,15 +189,29 @@ export default function Overview() {
                 <Trophy size={18} style={{ color: '#fbbf24' }} />
               </div>
               <p style={{ fontSize: '14px', fontWeight: '700', marginBottom: '12px' }}>
-                Soar to the Top!
+                Top Volunteers
               </p>
-              
+
               <div style={{ marginBottom: '12px' }}>
-                <p style={{ fontSize: '11px', marginBottom: '4px' }}>• Top Teams:</p>
-                <p style={{ fontSize: '11px', paddingLeft: '12px' }}>1. Alpha Squad</p>
-                <p style={{ fontSize: '11px', paddingLeft: '12px' }}>2. Impact Heroes</p>
+                {leaderboardData && leaderboardData.length > 0 ? (
+                  <>
+                    <p style={{ fontSize: '11px', marginBottom: '4px' }}>• Top Performers:</p>
+                    {leaderboardData.slice(0, 2).map((volunteer: any, index: number) => (
+                      <p key={volunteer.userId} style={{ fontSize: '11px', paddingLeft: '12px' }}>
+                        {index + 1}. {volunteer.displayName || 'Volunteer'} ({volunteer.totalHours}h)
+                      </p>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <p style={{ fontSize: '11px', marginBottom: '4px' }}>• No data yet</p>
+                    <p style={{ fontSize: '11px', paddingLeft: '12px', opacity: 0.7 }}>
+                      Log volunteer activities to see rankings
+                    </p>
+                  </>
+                )}
               </div>
-              
+
               <Button
                 size="sm"
                 onClick={() => navigate('/organization-leaderboard')}
@@ -198,6 +226,131 @@ export default function Overview() {
               >
                 View Leaderboard
               </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Impact Insights - Enhanced Panel */}
+        <div style={{ margin: '16px 24px 0' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '16px',
+            padding: '16px',
+            color: 'white',
+            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px'
+              }}>
+                ✨
+              </div>
+              <div>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '2px' }}>AI Impact Insights</h3>
+                <p style={{ fontSize: '10px', opacity: 0.8 }}>Personalized recommendations</p>
+              </div>
+            </div>
+
+            <div style={{
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '12px',
+              padding: '12px',
+              marginBottom: '12px'
+            }}>
+              {sdgContributions.length > 0 ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '16px' }}>📊</span>
+                    <p style={{ fontSize: '12px', fontWeight: '600' }}>Performance Analysis</p>
+                  </div>
+                  <p style={{ fontSize: '11px', lineHeight: '1.5', opacity: 0.95, marginBottom: '8px' }}>
+                    Your team is excelling in SDG {sdgContributions.reduce((max: any, curr: any) => (curr.hours > max.hours ? curr : max)).goal} with {Math.round(sdgContributions.reduce((max: any, curr: any) => (curr.hours > max.hours ? curr : max)).hours)} hours contributed.
+                    {metrics.volunteersEngaged > 5
+                      ? ` With ${metrics.volunteersEngaged} active volunteers, you're building strong momentum.`
+                      : ` Consider recruiting more volunteers to amplify your impact.`
+                    }
+                  </p>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', marginTop: '12px' }}>
+                    <span style={{ fontSize: '16px' }}>💡</span>
+                    <p style={{ fontSize: '12px', fontWeight: '600' }}>Suggestions</p>
+                  </div>
+                  <ul style={{ fontSize: '11px', lineHeight: '1.6', opacity: 0.95, paddingLeft: '20px', margin: 0 }}>
+                    {metrics.totalHours < 100 && (
+                      <li style={{ marginBottom: '4px' }}>Increase volunteer engagement to reach 100+ hours this quarter</li>
+                    )}
+                    {metrics.sdgsAddressed < 3 && (
+                      <li style={{ marginBottom: '4px' }}>Expand focus to additional SDGs to diversify your impact</li>
+                    )}
+                    {metrics.completedProjects < metrics.activeProjects && (
+                      <li style={{ marginBottom: '4px' }}>Prioritize completing {metrics.activeProjects - metrics.completedProjects} ongoing projects</li>
+                    )}
+                    <li>Consider logging impact metrics regularly for better tracking</li>
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '16px' }}>🚀</span>
+                    <p style={{ fontSize: '12px', fontWeight: '600' }}>Get Started</p>
+                  </div>
+                  <p style={{ fontSize: '11px', lineHeight: '1.5', opacity: 0.95 }}>
+                    Start contributing to SDGs to unlock personalized insights about your team's performance and impact recommendations.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => navigate('/impact-report')}
+                style={{
+                  flex: 1,
+                  backgroundColor: 'white',
+                  color: '#667eea',
+                  fontWeight: '600',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                }}
+                data-testid="button-view-analysis"
+              >
+                View Full Analysis <ChevronRight size={14} />
+              </button>
+              <button
+                onClick={() => navigate('/volunteer-leaderboard/pwa')}
+                style={{
+                  flex: 1,
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: '600',
+                  borderRadius: '8px',
+                  padding: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
+                }}
+                data-testid="button-team-rankings"
+              >
+                <Trophy size={14} /> Rankings
+              </button>
             </div>
           </div>
         </div>
@@ -468,65 +621,106 @@ export default function Overview() {
             </Button>
           </div>
 
-          {/* AI Insights Panel */}
-          <div style={{
-            marginTop: '16px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '16px',
-            padding: '16px',
-            color: 'white',
-            boxShadow: '0 4px 12px rgba(102, 126, 234, 0.2)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'start', gap: '12px', marginBottom: '12px' }}>
-              <div style={{ fontSize: '24px' }}>✨</div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '4px' }}>AI Impact Insights</h3>
-                <p style={{ fontSize: '12px', opacity: 0.95, lineHeight: '1.4', marginBottom: '8px' }}>
-                  {sdgContributions.length > 0 
-                    ? `You're making a significant impact on ${metrics.sdgsAddressed} goals! Your focus on SDG ${sdgContributions.reduce((max: any, curr: any) => (curr.hours > max.hours ? curr : max)).goal} is strong with ${Math.round(sdgContributions.reduce((max: any, curr: any) => (curr.hours > max.hours ? curr : max)).hours)} hours contributed.`
-                    : 'Start contributing to SDGs to unlock personalized insights about your impact.'
-                  }
-                </p>
-                <Button
-                  onClick={() => navigate('/impact-report')}
-                  size="sm"
-                  style={{
-                    backgroundColor: 'white',
-                    color: '#667eea',
-                    fontWeight: '600',
-                    borderRadius: '8px',
-                  }}
-                  className="hover:shadow-lg transition-all"
-                  data-testid="button-ai-insights"
-                >
-                  View Analysis <ChevronRight size={14} />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <Button
+          {/* Quick Action Buttons */}
+          <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+            <button
               onClick={() => navigate('/impact-visualization')}
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              style={{ borderColor: '#22c55e', color: '#16a34a' }}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '14px 8px',
+                border: '1px solid #e5e7eb',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
               data-testid="button-view-impact"
             >
-              <TrendingUp size={24} />
-              <span>View Impact</span>
-            </Button>
-            
-            <Button
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <TrendingUp size={18} style={{ color: 'white' }} />
+              </div>
+              <span style={{ fontSize: '11px', fontWeight: '600', color: '#374151' }}>View Impact</span>
+            </button>
+
+            <button
+              onClick={() => navigate('/volunteer-leaderboard/pwa')}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '14px 8px',
+                border: '1px solid #e5e7eb',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              data-testid="button-leaderboard"
+            >
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Trophy size={18} style={{ color: 'white' }} />
+              </div>
+              <span style={{ fontSize: '11px', fontWeight: '600', color: '#374151' }}>Leaderboard</span>
+            </button>
+
+            <button
               onClick={() => navigate('/volunteers')}
-              variant="outline"
-              className="h-auto py-4 flex flex-col items-center gap-2"
-              style={{ borderColor: '#3b82f6', color: '#2563eb' }}
+              style={{
+                backgroundColor: 'white',
+                borderRadius: '12px',
+                padding: '14px 8px',
+                border: '1px solid #e5e7eb',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+              }}
+              onTouchStart={(e) => e.currentTarget.style.transform = 'scale(0.98)'}
+              onTouchEnd={(e) => e.currentTarget.style.transform = 'scale(1)'}
               data-testid="button-manage-team"
             >
-              <Users size={24} />
-              <span>Manage Team</span>
-            </Button>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Users size={18} style={{ color: 'white' }} />
+              </div>
+              <span style={{ fontSize: '11px', fontWeight: '600', color: '#374151' }}>Manage Team</span>
+            </button>
           </div>
         </div>
       </div>
@@ -708,9 +902,13 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Footer and Navigation */}
-      <Footer />
+      {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
+
+      {/* Footer - Hidden on mobile when navigation is shown */}
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 }

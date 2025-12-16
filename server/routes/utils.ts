@@ -118,41 +118,95 @@ export function extractUserId(req: Request): number | null {
 }
 
 /**
- * Calculate project completion percentage based on multiple factors
+ * Milestone type for project completion tracking
+ */
+interface ProjectMilestone {
+  id: string | number;
+  name: string;
+  targetDate?: string;
+  completedDate?: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  weight?: number; // Optional custom weight (percentage)
+}
+
+/**
+ * Calculate project completion percentage based on hours + milestones
+ *
+ * Formula: (hoursWeight% × hoursProgress) + (milestonesWeight% × milestoneProgress)
+ * Default weights: 60% hours, 40% milestones (configurable per project)
+ *
+ * - Hours Progress: (hours logged / expected hours) × 100
+ * - Milestone Progress: (completed milestones / total milestones) × 100
+ *   OR weighted: Σ(completed milestone weights) / Σ(all milestone weights) × 100
  */
 export async function calculateProjectProgress(projectId: number): Promise<number> {
   try {
     const project = await storage.getProject(projectId);
     if (!project) return 0;
 
-    const tasks = (await storage.listTasks()).filter((t) => t.projectId === projectId);
+    // If project is marked as completed, return 100%
+    if (project.status === 'completed') {
+      return 100;
+    }
+
+    // Get configurable weights (default: 60% hours, 40% milestones)
+    const hoursWeight = (project as any).completionHoursWeight ?? 60;
+    const milestonesWeight = (project as any).completionMilestonesWeight ?? 40;
+
+    // ===== HOURS PROGRESS (default 60% weight) =====
     const activities = (await storage.listVolunteerActivities()).filter((a) => a.projectId === projectId);
-    const impacts = await storage.listProjectImpactsByProject(projectId);
-
-    let progressScore = 0;
-
-    // 40% Weight: Task Completion Ratio
-    if (tasks.length > 0) {
-      const completedTasks = tasks.filter((t) => t.status?.toLowerCase() === "completed").length;
-      const taskProgress = (completedTasks / tasks.length) * 100;
-      progressScore += taskProgress * 0.4;
-    }
-
-    // 35% Weight: Hours Logged vs Expected Hours
     const totalHoursLogged = activities.reduce((sum: number, a) => sum + (a.hours || 0), 0);
-    if (project.projectTotalHours || (project.ongoingHoursPerWeek && project.ongoingHoursPerWeek > 0)) {
-      const expectedHours = project.projectTotalHours || (project.ongoingHoursPerWeek! * 4);
-      const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
-      progressScore += hoursProgress * 0.35;
-    } else {
-      progressScore += Math.min(totalHoursLogged * 5, 100) * 0.35;
+
+    const expectedHours = project.projectTotalHours ||
+                          (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0);
+
+    let hoursProgress = 0;
+    if (expectedHours > 0) {
+      hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
+    } else if (totalHoursLogged > 0) {
+      // No expected hours - use conservative estimate, cap at 50%
+      hoursProgress = Math.min((totalHoursLogged / 200) * 100, 50);
     }
 
-    // 25% Weight: Impact Metrics Logged
-    const impactProgress = impacts.length > 0 ? 100 : Math.min(totalHoursLogged * 2, 50);
-    progressScore += impactProgress * 0.25;
+    // ===== MILESTONE PROGRESS (default 40% weight) =====
+    const milestones = (project as any).milestones as ProjectMilestone[] | null | undefined;
+    let milestoneProgress = 0;
 
-    return Math.round(Math.min(progressScore, 100));
+    if (milestones && Array.isArray(milestones) && milestones.length > 0) {
+      // Check if milestones have custom weights
+      const hasCustomWeights = milestones.some(m => typeof m.weight === 'number' && m.weight > 0);
+
+      if (hasCustomWeights) {
+        // Weighted milestone calculation
+        const totalWeight = milestones.reduce((sum, m) => sum + (m.weight || 0), 0);
+        const completedWeight = milestones
+          .filter(m => m.status === 'completed')
+          .reduce((sum, m) => sum + (m.weight || 0), 0);
+
+        milestoneProgress = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+      } else {
+        // Equal weight milestone calculation
+        const completedMilestones = milestones.filter(m => m.status === 'completed').length;
+        milestoneProgress = (completedMilestones / milestones.length) * 100;
+      }
+    } else {
+      // No milestones defined - hours get full weight
+      // Redistribute milestone weight to hours
+      const adjustedHoursWeight = hoursWeight + milestonesWeight;
+      return Math.round(Math.min((hoursProgress * adjustedHoursWeight) / 100, 100));
+    }
+
+    // ===== COMBINED PROGRESS =====
+    // Normalize weights to ensure they sum to 100
+    const totalWeight = hoursWeight + milestonesWeight;
+    const normalizedHoursWeight = (hoursWeight / totalWeight) * 100;
+    const normalizedMilestonesWeight = (milestonesWeight / totalWeight) * 100;
+
+    const combinedProgress =
+      (normalizedHoursWeight / 100) * hoursProgress +
+      (normalizedMilestonesWeight / 100) * milestoneProgress;
+
+    return Math.round(Math.min(combinedProgress, 100));
   } catch (err) {
     console.error("Error calculating project progress:", err);
     return 0;
@@ -190,5 +244,75 @@ export async function requireOrgUser(req: Request) {
 export function verifyOwnership(user: any, resource: any) {
   if (resource.organizationId !== user.organizationId) {
     throw { status: 403, message: "Resource not owned by your organization" };
+  }
+}
+
+/**
+ * Auto-update AIU kpiAfter value based on cumulative project impacts
+ * Called when a new impact is logged
+ */
+export async function updateAiuKpiFromImpacts(projectId: number): Promise<void> {
+  try {
+    // Import dynamically to avoid circular dependencies
+    const { db } = await import("../db");
+    const { projectAiuSettings, projectImpacts } = await import("@shared/schema");
+    const { eq, desc, and } = await import("drizzle-orm");
+
+    // Check if project has AIU settings
+    const [aiuSettings] = await db
+      .select()
+      .from(projectAiuSettings)
+      .where(eq(projectAiuSettings.projectId, projectId))
+      .orderBy(desc(projectAiuSettings.createdAt))
+      .limit(1);
+
+    if (!aiuSettings) {
+      // No AIU settings configured for this project - skip
+      return;
+    }
+
+    // Get all non-duplicated impacts for this project
+    const allImpacts = await storage.listProjectImpacts();
+    const projectImpactsList = allImpacts.filter(
+      (i: any) => i.projectId === projectId && !i.isDuplicated
+    );
+
+    // Calculate total impact value (sum of all verified and pending impacts)
+    // Verified impacts get full credit, pending get 70%
+    let totalImpactValue = 0;
+    for (const impact of projectImpactsList) {
+      const value = impact.value || 0;
+      const status = impact.verificationStatus || 'pending';
+
+      if (status === 'verified' || status === 'approved') {
+        totalImpactValue += value;
+      } else if (status === 'pending' || status === 'self_reported') {
+        totalImpactValue += value * 0.7; // 70% credit for pending
+      }
+      // Rejected impacts don't count
+    }
+
+    // Round to reasonable precision
+    totalImpactValue = Math.round(totalImpactValue * 100) / 100;
+
+    // Update kpiAfter if the new value is higher (progressive tracking)
+    const newKpiAfter = aiuSettings.kpiBefore + totalImpactValue;
+
+    // Only update if new value is higher (progress should not go backwards)
+    if (!aiuSettings.kpiAfter || newKpiAfter > aiuSettings.kpiAfter) {
+      await db
+        .update(projectAiuSettings)
+        .set({
+          kpiAfter: newKpiAfter,
+          kpiMeasurementDate: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(projectAiuSettings.id, aiuSettings.id));
+
+      console.log(`[AIU Auto-Update] Project ${projectId}: kpiAfter updated to ${newKpiAfter}`);
+    }
+  } catch (err) {
+    console.error("Error auto-updating AIU kpiAfter:", err);
+    // Don't throw - this is a background operation that shouldn't fail the main request
   }
 }

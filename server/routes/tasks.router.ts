@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
 import { insertTaskSchema } from "@shared/schema";
-import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
+import { handleValidationError, requireOrgUser, verifyOwnership, calculateProjectProgress } from "./utils";
 import { notifyTaskAssigned } from "../notification-service";
 
 export const tasksRouter = Router();
@@ -115,13 +115,10 @@ tasksRouter.post("/", async (req: Request, res: Response) => {
       );
     }
 
+    // Recalculate project completion using hours-based calculation (not tasks)
     if (task.projectId) {
       const project = await storage.getProject(task.projectId);
-      const projectTasks = await storage.listTasksByProject(task.projectId);
-      const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
-      const completionPercentage = projectTasks.length > 0
-        ? Math.round((completedTasks / projectTasks.length) * 100)
-        : 0;
+      const completionPercentage = await calculateProjectProgress(task.projectId);
 
       let newStatus = project?.status;
       if (project && ["Planning", "In Progress", "Completed"].includes(project.status)) {
@@ -129,7 +126,7 @@ tasksRouter.post("/", async (req: Request, res: Response) => {
           newStatus = "Planning";
         } else if (completionPercentage === 100) {
           newStatus = "Completed";
-        } else {
+        } else if (completionPercentage > 0) {
           newStatus = "In Progress";
         }
       }
@@ -214,13 +211,10 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
       );
     }
 
+    // Recalculate project completion using hours-based calculation (not tasks)
     if (taskData.status && updatedTask.projectId) {
       const project = await storage.getProject(updatedTask.projectId);
-      const projectTasks = await storage.listTasksByProject(updatedTask.projectId);
-      const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
-      const completionPercentage = projectTasks.length > 0
-        ? Math.round((completedTasks / projectTasks.length) * 100)
-        : 0;
+      const completionPercentage = await calculateProjectProgress(updatedTask.projectId);
 
       let newStatus = project?.status;
       if (project && ["Planning", "In Progress", "Completed"].includes(project.status)) {
@@ -228,7 +222,7 @@ tasksRouter.patch("/:id", async (req: Request, res: Response) => {
           newStatus = "Planning";
         } else if (completionPercentage === 100) {
           newStatus = "Completed";
-        } else {
+        } else if (completionPercentage > 0) {
           newStatus = "In Progress";
         }
       }

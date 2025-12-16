@@ -5,6 +5,7 @@ import {
   getDashboardDataForVolunteer,
   getSDGContributionsForOrganization
 } from "../dashboard-service";
+import { calculateOrganizationAIU, calculateProjectAIU } from "../aiu-service";
 
 export const dashboardRouter = Router();
 
@@ -53,8 +54,15 @@ function safeNumber(value: any, defaultValue: number = 0): number {
 // - Volunteer summaries
 dashboardRouter.get("/organization", async (req: Request, res: Response) => {
   try {
-    // Cache dashboard data for 30 seconds to improve performance
-    res.set('Cache-Control', 'private, max-age=30');
+    // Check if client is requesting fresh data (bypass cache)
+    const forceRefresh = req.query.refresh === 'true' || req.headers['cache-control'] === 'no-cache';
+
+    // Cache dashboard data for 30 seconds to improve performance (skip if refresh requested)
+    if (!forceRefresh) {
+      res.set('Cache-Control', 'private, max-age=30');
+    } else {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
 
     const userId = req.query.userId as string | undefined;
     const projectFilter = req.query.projectId as string | undefined;
@@ -146,6 +154,11 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       return status === 'in progress' || status === 'active';
     }).length;
 
+    const completedProjects = organizationProjects.filter(p => {
+      const status = p.status?.toLowerCase();
+      return status === 'completed';
+    }).length;
+
     const totalHours = organizationActivities.reduce((sum, a) => sum + a.hours, 0);
 
     const uniqueSDGs = new Set<number>();
@@ -159,19 +172,25 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
       .reduce((sum, i) => sum + (i.value || 0), 0);
 
-    // Calculate total AIU earned using proper formula from aiu-calculations.ts
-    // AIU = livesImpacted × attributionFactor × verificationMultiplier / hoursNormalization
-    const attributionFactor = 0.2; // Standard 20% attribution
-    const verifiedImpacts = organizationImpacts.filter(i =>
-      i.metricId && peopleMetricIds.has(i.metricId) &&
-      (i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
-    );
-    const verifiedPeopleImpacted = verifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
-    const verificationMultiplier = verifiedPeopleImpacted > 0 ? 1.0 : 0.8;
-    const hoursNormalization = Math.max(totalHours, 1) / 10;
-    const totalAiuEarned = Math.round(
-      (totalPeopleImpacted * attributionFactor * verificationMultiplier) / Math.max(hoursNormalization, 1) * 100
-    ) / 100;
+    // Calculate total AIU using the proper AIU service with 100% organization credit
+    // Organizations get full credit for all volunteer + staff contributions to their projects
+    let totalAiuEarned = 0;
+    try {
+      const orgAiuSummary = await calculateOrganizationAIU(organizationId);
+      if (orgAiuSummary && orgAiuSummary.totalAiu > 0) {
+        totalAiuEarned = orgAiuSummary.totalAiu;
+      }
+    } catch (aiuError) {
+      console.error("Error calculating organization AIU:", aiuError);
+    }
+
+    // Fallback: If no AIU from service, use hours-based calculation
+    // This ensures organizations always see meaningful AIU based on their work
+    if (totalAiuEarned === 0 && totalHours > 0) {
+      // Formula: 1 AIU per 50 hours of volunteer work × SDG multiplier (10% bonus per SDG, max 2x)
+      const sdgMultiplier = Math.min(1 + (uniqueSDGs.size * 0.1), 2.0);
+      totalAiuEarned = Math.round((totalHours / 50) * sdgMultiplier * 100) / 100;
+    }
 
     // SDG Distribution
     const sdgDistribution: Record<number, { hours: number; projects: number; volunteers: number }> = {};
@@ -323,6 +342,7 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
     res.json({
       keyMetrics: {
         activeProjects,
+        completedProjects,
         totalProjects: organizationProjects.length,
         totalHours,
         sdgsAddressed: uniqueSDGs.size,
@@ -339,10 +359,61 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
       impactOverTime,
       aiInsights,
       projects: organizationProjects.map(p => {
-        // Calculate hours for this project
+        // Calculate hours for this project from activities
         const projectHours = organizationActivities
           .filter(a => a.projectId === p.id)
           .reduce((sum, a) => sum + a.hours, 0);
+
+        // Get configurable weights (default: 60% hours, 40% milestones)
+        const hoursWeight = (p as any).completionHoursWeight ?? 60;
+        const milestonesWeight = (p as any).completionMilestonesWeight ?? 40;
+
+        // Calculate hours progress
+        const expectedHours = p.projectTotalHours ||
+                              (p.ongoingHoursPerWeek ? p.ongoingHoursPerWeek * 12 : 0);
+
+        let hoursProgress = 0;
+        if (expectedHours > 0) {
+          hoursProgress = Math.min((projectHours / expectedHours) * 100, 100);
+        } else if (projectHours > 0) {
+          hoursProgress = Math.min((projectHours / 200) * 100, 50);
+        }
+
+        // Calculate milestone progress
+        const milestones = (p as any).milestones as Array<{status: string; weight?: number}> | null;
+        let milestoneProgress = 0;
+
+        if (milestones && Array.isArray(milestones) && milestones.length > 0) {
+          const hasCustomWeights = milestones.some(m => typeof m.weight === 'number' && m.weight > 0);
+          if (hasCustomWeights) {
+            const totalWeight = milestones.reduce((sum, m) => sum + (m.weight || 0), 0);
+            const completedWeight = milestones
+              .filter(m => m.status === 'completed')
+              .reduce((sum, m) => sum + (m.weight || 0), 0);
+            milestoneProgress = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+          } else {
+            const completedMilestones = milestones.filter(m => m.status === 'completed').length;
+            milestoneProgress = (completedMilestones / milestones.length) * 100;
+          }
+        }
+
+        // Calculate combined completion percentage
+        let calculatedCompletion = 0;
+        if (p.status === 'completed') {
+          calculatedCompletion = 100;
+        } else if (milestones && milestones.length > 0) {
+          // Use weighted combination of hours + milestones
+          const totalWeight = hoursWeight + milestonesWeight;
+          const normalizedHoursWeight = (hoursWeight / totalWeight) * 100;
+          const normalizedMilestonesWeight = (milestonesWeight / totalWeight) * 100;
+          calculatedCompletion = Math.round(
+            (normalizedHoursWeight / 100) * hoursProgress +
+            (normalizedMilestonesWeight / 100) * milestoneProgress
+          );
+        } else {
+          // No milestones - use hours only
+          calculatedCompletion = Math.round(hoursProgress);
+        }
 
         // Calculate people impacted for this project
         const projectImpacts = organizationImpacts.filter(i => i.projectId === p.id);
@@ -350,28 +421,48 @@ dashboardRouter.get("/organization", async (req: Request, res: Response) => {
           .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
           .reduce((sum, i) => sum + (i.value || 0), 0);
 
-        // Calculate AIU for this project using proper formula
-        const projectVerifiedImpacts = projectImpacts.filter(i =>
-          i.metricId && peopleMetricIds.has(i.metricId) &&
-          (i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
-        );
-        const projectVerifiedPeople = projectVerifiedImpacts.reduce((sum, i) => sum + (i.value || 0), 0);
-        const projectVerificationMultiplier = projectVerifiedPeople > 0 ? 1.0 : 0.8;
-        const projectHoursNorm = Math.max(projectHours, 1) / 10;
-        const projectAiuEarned = Math.round(
-          (projectLivesTouched * attributionFactor * projectVerificationMultiplier) / Math.max(projectHoursNorm, 1) * 100
-        ) / 100;
+        // Calculate AIU for this project using 100% organization credit
+        // Organizations get full credit for all impact from their projects
+        let projectAiuEarned = 0;
+        if (projectLivesTouched > 0) {
+          // Primary: AIU based on people impacted (100% credit to organization)
+          // 1 AIU = 10 people impacted, with verification bonus
+          const projectVerifiedImpacts = projectImpacts.filter(i =>
+            i.metricId && peopleMetricIds.has(i.metricId) &&
+            (i.verificationStatus === 'verified' || i.verificationStatus === 'approved')
+          );
+          const verificationBonus = projectVerifiedImpacts.length > 0 ? 1.2 : 1.0;
+          projectAiuEarned = Math.round((projectLivesTouched / 10) * verificationBonus * 100) / 100;
+        } else if (projectHours > 0) {
+          // Fallback: hours-based with SDG multiplier (100% credit)
+          // 1 AIU = 50 hours of work × SDG multiplier
+          const projectSdgCount = (p.sdgGoals || []).length;
+          const projectSdgMultiplier = Math.min(1 + (projectSdgCount * 0.1), 2.0);
+          projectAiuEarned = Math.round((projectHours / 50) * projectSdgMultiplier * 100) / 100;
+        }
 
         return {
           id: p.id,
           name: p.name,
           status: p.status,
-          completionPercentage: p.completionPercentage || 0,
+          completionPercentage: calculatedCompletion, // Hours + milestones weighted calculation
+          expectedHours: expectedHours,
           sdgGoals: p.sdgGoals || [],
           location: p.location,
           totalHours: projectHours,
           livesTouched: projectLivesTouched,
-          aiuEarned: projectAiuEarned, // Add proper AIU calculation
+          aiuEarned: projectAiuEarned,
+          // Milestone tracking data
+          milestones: milestones || [],
+          milestonesCompleted: milestones ? milestones.filter(m => m.status === 'completed').length : 0,
+          milestonesTotal: milestones ? milestones.length : 0,
+          // Completion breakdown for transparency
+          completionBreakdown: {
+            hoursProgress: Math.round(hoursProgress),
+            milestoneProgress: Math.round(milestoneProgress),
+            hoursWeight,
+            milestonesWeight,
+          },
         };
       }),
       volunteerSummaries: volunteerSummaries.slice(0, 10),

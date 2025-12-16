@@ -5299,8 +5299,8 @@ export default function CSRDashboard() {
             </div>
           )}
           
-          {/* Footer inside main content for scrolling */}
-          <div style={{ marginTop: "48px" }}>
+          {/* Footer inside main content for scrolling - Hidden on mobile */}
+          <div className="hidden md:block" style={{ marginTop: "48px" }}>
             <Footer />
           </div>
         </main>

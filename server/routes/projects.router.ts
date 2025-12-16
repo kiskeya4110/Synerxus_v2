@@ -1,8 +1,12 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { insertProjectSchema, updateProjectSchema } from "@shared/schema";
+import { insertProjectSchema, updateProjectSchema, projectAiuSettings } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { getVisibleProjectIdsForVolunteer } from "../dashboard-service";
+import { db } from "../db";
+import { eq, desc } from "drizzle-orm";
+import { notifyProjectVolunteersAiuVerification } from "../notification-service";
+import { calculateProjectAIU } from "../aiu-service";
 
 export const projectsRouter = Router();
 
@@ -236,6 +240,228 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
     broadcastUpdate("project_updated", updatedProject);
     res.json(updatedProject);
   } catch (err) {
+    const error = handleValidationError(err);
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// GET /api/projects/:id/aiu-settings - Get AIU settings for a project
+projectsRouter.get("/:id/aiu-settings", async (req: Request, res: Response) => {
+  try {
+    const projectId = parseInt(req.params.id);
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ message: "Invalid project ID" });
+    }
+
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    // Get the most recent AIU settings for this project
+    const [settings] = await db
+      .select()
+      .from(projectAiuSettings)
+      .where(eq(projectAiuSettings.projectId, projectId))
+      .orderBy(desc(projectAiuSettings.createdAt))
+      .limit(1);
+
+    if (!settings) {
+      return res.status(404).json({ message: "AIU settings not found for this project" });
+    }
+
+    res.json(settings);
+  } catch (err) {
+    console.error("Error fetching AIU settings:", err);
+    res.status(500).json({ message: "Failed to fetch AIU settings" });
+  }
+});
+
+// POST /api/projects/:id/aiu-settings - Create or update AIU settings for a project
+projectsRouter.post("/:id/aiu-settings", async (req: Request, res: Response) => {
+  try {
+    const user = await requireOrgUser(req);
+    const projectId = parseInt(req.params.id);
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ message: "Invalid project ID" });
+    }
+
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    verifyOwnership(user, project);
+
+    const {
+      kpiName,
+      kpiUnit,
+      kpiBefore,
+      kpiAfter,
+      attributionFactor, // Comes as 0-100 percentage from frontend
+      attributionMethodology,
+    } = req.body;
+
+    // Validate required fields
+    if (!kpiName || !kpiUnit || kpiBefore === undefined) {
+      return res.status(400).json({
+        message: "Missing required fields: kpiName, kpiUnit, kpiBefore"
+      });
+    }
+
+    // Build SDG indicator from project's primary SDG
+    const primarySdg = project.primarySdg || (project.sdgGoals && project.sdgGoals[0]) || 1;
+    const sdgIndicator = `SDG ${primarySdg}.1.1`;
+
+    // Convert attribution factor from percentage (0-100) to decimal (0-1)
+    const attributionFactorDecimal = typeof attributionFactor === 'number'
+      ? attributionFactor / 100
+      : 0.2;
+
+    // Check if settings already exist
+    const [existingSettings] = await db
+      .select()
+      .from(projectAiuSettings)
+      .where(eq(projectAiuSettings.projectId, projectId))
+      .orderBy(desc(projectAiuSettings.createdAt))
+      .limit(1);
+
+    let result;
+    if (existingSettings) {
+      // Update existing settings
+      [result] = await db
+        .update(projectAiuSettings)
+        .set({
+          sdgIndicator,
+          kpiName,
+          kpiUnit,
+          kpiBefore: parseFloat(kpiBefore),
+          kpiAfter: kpiAfter !== undefined ? parseFloat(kpiAfter) : null,
+          attributionFactor: attributionFactorDecimal,
+          attributionMethodology: attributionMethodology || null,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectAiuSettings.id, existingSettings.id))
+        .returning();
+    } else {
+      // Create new settings
+      [result] = await db
+        .insert(projectAiuSettings)
+        .values({
+          projectId,
+          sdgIndicator,
+          kpiName,
+          kpiUnit,
+          kpiBefore: parseFloat(kpiBefore),
+          kpiAfter: kpiAfter !== undefined ? parseFloat(kpiAfter) : null,
+          attributionFactor: attributionFactorDecimal,
+          attributionMethodology: attributionMethodology || null,
+          verificationStatus: 'pending',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+    }
+
+    res.json(result);
+  } catch (err) {
+    const error = handleValidationError(err);
+    res.status(error.status).json({ message: error.message });
+  }
+});
+
+// POST /api/projects/:id/verify-aiu - Verify, reject, or adjust AIU for a project
+projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
+  try {
+    const user = await requireOrgUser(req);
+    const projectId = parseInt(req.params.id);
+
+    if (isNaN(projectId)) {
+      return res.status(400).json({ message: "Invalid project ID" });
+    }
+
+    const project = await storage.getProject(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    verifyOwnership(user, project);
+
+    const { status, adjustedLivesImpacted, notes } = req.body;
+
+    if (!status || !['verified', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: "Invalid status. Must be 'verified' or 'rejected'" });
+    }
+
+    // Get AIU settings if they exist
+    const [aiuSettings] = await db
+      .select()
+      .from(projectAiuSettings)
+      .where(eq(projectAiuSettings.projectId, projectId))
+      .orderBy(desc(projectAiuSettings.createdAt))
+      .limit(1);
+
+    // Update AIU settings verification status if they exist
+    if (aiuSettings) {
+      await db
+        .update(projectAiuSettings)
+        .set({
+          verificationStatus: status,
+          updatedAt: new Date(),
+        })
+        .where(eq(projectAiuSettings.id, aiuSettings.id));
+    }
+
+    // If lives touched was adjusted, update the project
+    if (adjustedLivesImpacted !== undefined && adjustedLivesImpacted !== project.livesTouched) {
+      await storage.updateProject(projectId, {
+        livesTouched: adjustedLivesImpacted,
+      });
+    }
+
+    // Get the calculated AIU data to include in notifications
+    const projectAIU = await calculateProjectAIU(projectId);
+
+    // Prepare volunteer AIU data for notifications
+    const volunteerAius = projectAIU?.volunteers?.map(v => ({
+      volunteerId: v.volunteerId,
+      aiu: v.aiu
+    })) || [];
+
+    // Determine notification status
+    const notificationStatus = adjustedLivesImpacted !== undefined && adjustedLivesImpacted !== project.livesTouched
+      ? 'adjusted'
+      : status as 'verified' | 'rejected';
+
+    // Notify all volunteers on this project
+    await notifyProjectVolunteersAiuVerification(
+      projectId,
+      notificationStatus,
+      project.name,
+      volunteerAius,
+      notes
+    );
+
+    // Broadcast update
+    broadcastUpdate("aiu_verification", {
+      projectId,
+      status: notificationStatus,
+      projectName: project.name,
+      totalAiu: projectAIU?.totalAiu || 0,
+    });
+
+    res.json({
+      success: true,
+      message: `AIU ${notificationStatus === 'adjusted' ? 'adjusted and verified' : notificationStatus}`,
+      projectId,
+      status: notificationStatus,
+      totalAiu: projectAIU?.totalAiu || 0,
+      livesTouched: adjustedLivesImpacted ?? project.livesTouched,
+    });
+  } catch (err) {
+    console.error("Error verifying AIU:", err);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
   }

@@ -54,6 +54,14 @@ export const projects = pgTable("projects", {
   completionPercentage: integer("completion_percentage").default(0),
   aiTrackingEnabled: boolean("ai_tracking_enabled").default(false),
   completionPreferences: jsonb("completion_preferences"),
+  // Milestone tracking for completion calculation
+  // Array of {id, name, targetDate, completedDate, status, weight}
+  // status: 'pending' | 'in_progress' | 'completed'
+  // weight: percentage weight for completion calculation (default: equal distribution)
+  milestones: jsonb("milestones"),
+  // Completion formula weights (default: 60% hours, 40% milestones)
+  completionHoursWeight: integer("completion_hours_weight").default(60),
+  completionMilestonesWeight: integer("completion_milestones_weight").default(40),
   // Matching algorithm fields (from Core Opportunity Form)
   requiredSkills: text("required_skills").array(), // Skills needed (35% weight in matching)
   optionalSkills: text("optional_skills").array(), // Nice to have skills

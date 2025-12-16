@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, Home, Sparkles, BarChart3, User, MessageCircle, CheckCircle, Circle, Play, Plus, X, Users, TrendingUp } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -267,7 +268,7 @@ export default function ProjectDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 pb-24 overflow-hidden flex flex-col">
+    <div className="w-full min-h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 pb-20 flex flex-col">
       {/* PWA Header */}
       <PWAHeader />
 
@@ -624,38 +625,7 @@ export default function ProjectDetailPWA() {
       </div>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 w-full z-50" style={{ touchAction: 'manipulation' }}>
-        <div className="flex justify-around items-center">
-          {[
-            { path: '/volunteer-dashboard', icon: Home, label: 'Home' },
-            { path: '/discover-opportunities/pwa', icon: Briefcase, label: 'Projects' },
-            { path: '/volunteer-dashboard', icon: Sparkles, label: 'Potential' },
-            { path: '/volunteer-dashboard', icon: BarChart3, label: 'Impacts' },
-            { path: '/volunteer-profile-settings', icon: User, label: 'Profile' },
-          ].map((tab) => (
-            <button
-              key={tab.label}
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                navigate(tab.path);
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                navigate(tab.path);
-              }}
-              className="flex flex-col items-center justify-center px-3 py-1 rounded-lg hover:bg-gray-700/50 transition-colors"
-              style={{ touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent' }}
-              data-testid={`nav-${tab.label.toLowerCase()}`}
-            >
-              <tab.icon className="w-5 h-5 text-gray-400" />
-              <span className="text-[10px] text-gray-400 mt-0.5">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </nav>
+      <VolunteerPWANav userId={userId || undefined} activeTab="projects" />
     </div>
   );
 }

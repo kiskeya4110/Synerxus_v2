@@ -898,7 +898,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full pb-20 overflow-hidden">
+    <div className="min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader onLogActivity={() => setActiveTab('log-activity')} />
 
@@ -2274,7 +2274,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
         {/* Log Activity Tab */}
         {activeTab === 'log-activity' && (
-          <div className="p-4 space-y-4 pb-24">
+          <div className="p-4 space-y-4 pb-4">
             {/* Header */}
             <div className="bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 rounded-2xl p-4 text-white">
               <h2 className="text-lg font-bold flex items-center gap-2">
@@ -2573,7 +2573,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
         {/* Stories Tab */}
         {activeTab === 'stories' && (
-          <div className="p-4 space-y-4 pb-24">
+          <div className="p-4 space-y-4 pb-4">
             {/* Header with Create Story Button */}
             <div className="flex items-center justify-between">
               <h2 className="text-slate-800 text-lg font-bold flex items-center gap-2">
@@ -2748,7 +2748,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         )}
 
         {activeTab === 'profile' && (
-          <div className="p-4 space-y-4 pb-24">
+          <div className="p-4 space-y-4 pb-4">
             {/* Profile Header */}
             <div className="text-center py-4">
               <Avatar className="w-20 h-20 mx-auto border-4 border-amber-400">
@@ -2913,7 +2913,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
 
         {/* More Tab */}
         {activeTab === 'more' && (
-          <div className="p-4 space-y-4 pb-24">
+          <div className="p-4 space-y-4 pb-4">
             <h2 className="text-slate-800 text-xl font-bold">More Options</h2>
 
             {/* Settings Section */}
@@ -3682,57 +3682,6 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         </div>
       )}
 
-      {/* Bottom Tray Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-3 flex justify-around w-full z-50">
-        <button
-          onClick={() => setActiveTab('dashboard')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-home"
-        >
-          <Home className="w-5 h-5" />
-          <span className="text-xs font-medium">Home</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('projects')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'projects' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-projects"
-        >
-          <Briefcase className="w-5 h-5" />
-          <span className="text-xs font-medium">Projects</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('potential')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'potential' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-insights"
-        >
-          <Lightbulb className="w-5 h-5" />
-          <span className="text-xs font-medium">Insights</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('impacts')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'impacts' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-impacts"
-        >
-          <BarChart3 className="w-5 h-5" />
-          <span className="text-xs font-medium">Impacts</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('stories')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'stories' ? 'text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-stories"
-        >
-          <FileText className="w-5 h-5" />
-          <span className="text-xs font-medium">Stories</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('more')}
-          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'more' ? 'text-slate-700' : 'text-slate-500 hover:text-slate-700'}`}
-          data-testid="nav-more"
-        >
-          <User className="w-5 h-5" />
-          <span className="text-xs font-medium">More</span>
-        </button>
-      </nav>
     </div>
   );
 }

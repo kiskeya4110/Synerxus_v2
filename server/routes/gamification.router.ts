@@ -38,7 +38,8 @@ gamificationRouter.get("/leaderboard-stats", async (req: Request, res: Response)
     const completedAssignments = assignments.filter((a: any) => a.status === 'completed');
     const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 
-    const totalHours = activities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
+    // Use 'hours' field (correct field name from schema)
+    const totalHours = activities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
     const weeklyActivities = activities.filter((a: any) => {
       const actDate = new Date(a.date);
       const weekAgo = new Date();
@@ -54,7 +55,7 @@ gamificationRouter.get("/leaderboard-stats", async (req: Request, res: Response)
       impactsLogged: userImpacts.length,
       weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
       maxStreak: 52,
-      totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50)),
+      totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50) + (assignments.length * 5)),
       badgesEarned: 0,
       lastActivityDate: activities.length > 0 ? activities[activities.length - 1].date : null,
     });
@@ -97,7 +98,8 @@ gamificationRouter.get("/leaderboard", async (req: Request, res: Response) => {
           const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
           const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 
-          const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
+          // Use 'hours' field (correct field name from schema)
+          const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
           const weeklyActivities = userActivities.filter((a: any) => {
             const actDate = new Date(a.date);
             const weekAgo = new Date();
@@ -114,7 +116,7 @@ gamificationRouter.get("/leaderboard", async (req: Request, res: Response) => {
             impactsLogged: userImpacts.length,
             weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
             maxStreak: 52,
-            totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50)),
+            totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50) + (userAssignments.length * 5)),
             badgesEarned: 0,
           };
         })
@@ -164,21 +166,62 @@ gamificationRouter.get("/organization-leaderboard", async (req: Request, res: Re
       return res.status(404).json({ message: "Organization not found" });
     }
 
+    // Get all projects belonging to this organization
+    const allProjects = await storage.listProjects();
+    const orgProjects = allProjects.filter((p: any) => p.organizationId === organizationId);
+    const orgProjectIds = new Set(orgProjects.map((p: any) => p.id));
+
+    // Get all data
     const allUsers = await storage.listUsers();
-    const orgVolunteers = allUsers.filter((u: any) => u.organizationId === organizationId && u.userType === 'volunteer');
     const allActivities = await storage.listVolunteerActivities();
     const allAssignments = await storage.listProjectAssignments();
     const allImpacts = await storage.listProjectImpacts();
 
-    const leaderboardData = orgVolunteers.map((user: any) => {
-      const userActivities = allActivities.filter((a: any) => a.userId === user.id);
-      const userAssignments = allAssignments.filter((a: any) => a.volunteerId === user.id);
-      const userImpacts = allImpacts.filter((i: any) => i.volunteerId === user.id);
+    // Find volunteers through multiple sources:
+    // 1. Direct organizationId association
+    // 2. Through project assignments to org's projects
+    // 3. Through volunteer activities on org's projects
+    const volunteerUserIds = new Set<number>();
+
+    // Volunteers directly linked to organization
+    allUsers.filter((u: any) => u.organizationId === organizationId && u.userType === 'volunteer')
+      .forEach((u: any) => volunteerUserIds.add(u.id));
+
+    // Volunteers assigned to organization's projects
+    allAssignments.filter((a: any) => orgProjectIds.has(a.projectId))
+      .forEach((a: any) => volunteerUserIds.add(a.volunteerId));
+
+    // Volunteers who logged activities on organization's projects
+    allActivities.filter((a: any) => orgProjectIds.has(a.projectId))
+      .forEach((a: any) => volunteerUserIds.add(a.userId));
+
+    // Build leaderboard for all identified volunteers
+    const leaderboardData = Array.from(volunteerUserIds).map((volunteerId) => {
+      const user = allUsers.find((u: any) => u.id === volunteerId);
+      if (!user) return null;
+
+      // Get activities for this volunteer (both on org projects and all their activities)
+      const userActivities = allActivities.filter((a: any) => a.userId === volunteerId);
+      const orgProjectActivities = userActivities.filter((a: any) => orgProjectIds.has(a.projectId));
+
+      // Get assignments for this volunteer on org projects
+      const userAssignments = allAssignments.filter((a: any) =>
+        a.volunteerId === volunteerId && orgProjectIds.has(a.projectId)
+      );
+
+      // Get impacts logged by this volunteer on org projects
+      const userImpacts = allImpacts.filter((i: any) =>
+        i.volunteerId === volunteerId && orgProjectIds.has(i.projectId)
+      );
+
       const completedAssignments = userAssignments.filter((a: any) => a.status === 'completed');
       const uniqueProjects = new Set(completedAssignments.map((a: any) => a.projectId));
 
-      const totalHours = userActivities.reduce((sum: number, a: any) => sum + (a.hoursLogged || 0), 0);
-      const weeklyActivities = userActivities.filter((a: any) => {
+      // Use 'hours' field (correct field name from schema) - count hours from org project activities
+      const totalHours = orgProjectActivities.reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+
+      // Calculate weekly streak based on recent activity
+      const weeklyActivities = orgProjectActivities.filter((a: any) => {
         const actDate = new Date(a.date);
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
@@ -186,18 +229,18 @@ gamificationRouter.get("/organization-leaderboard", async (req: Request, res: Re
       });
 
       return {
-        userId: user.id,
-        displayName: user.displayName || user.email,
+        userId: volunteerId,
+        displayName: user.displayName || user.email || `Volunteer ${volunteerId}`,
         totalHours: Math.round(totalHours),
         tasksCompleted: userAssignments.length,
         projectsCompleted: uniqueProjects.size,
         impactsLogged: userImpacts.length,
         weeklyStreak: Math.min(Math.max(1, Math.ceil(weeklyActivities.length / 2)), 52),
         maxStreak: 52,
-        totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50)),
+        totalPoints: Math.round((totalHours * 10) + (userImpacts.length * 50) + (userAssignments.length * 5)),
         badgesEarned: 0,
       };
-    });
+    }).filter(Boolean);
 
     const sorted = leaderboardData.sort((a: any, b: any) => {
       if (type === "hours") return b.totalHours - a.totalHours;

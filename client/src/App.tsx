@@ -55,8 +55,12 @@ import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-s
 import TeamOverview from "@/pages/team-overview";
 import Overview from "@/pages/overview";
 import OrganizationMessages from "@/pages/organization-messages";
+import OrganizationMessagesPWA from "@/pages/organization-messages-pwa";
+import OrganizationDashboardPWA from "@/pages/organization-dashboard-pwa";
 import VolunteerMessages from "@/pages/volunteer-messages";
 import VolunteerMessagesPWA from "@/pages/volunteer-messages-pwa";
+import CSRMessagesPWA from "@/pages/csr-messages-pwa";
+import VolunteerLeaderboardPWA from "@/pages/volunteer-leaderboard-pwa";
 import EmployeeEngagementTabPage from "@/pages/employee-engagement-tab-page";
 import NotFound from "@/pages/not-found";
 import Stories from "@/pages/stories";
@@ -203,6 +207,10 @@ export default function App() {
           <Route path="/discover-opportunities/pwa" component={DiscoverOpportunitiesPWA} />
           <Route path="/opportunities/:id/pwa" component={OpportunityDetailPWA} />
           <Route path="/volunteer-messages/pwa" component={VolunteerMessagesPWA} />
+          <Route path="/organization-messages/pwa" component={OrganizationMessagesPWA} />
+          <Route path="/organization-dashboard/pwa" component={OrganizationDashboardPWA} />
+          <Route path="/volunteer-leaderboard/pwa" component={VolunteerLeaderboardPWA} />
+          <Route path="/csr-messages/pwa" component={CSRMessagesPWA} />
           {/* All other routes go through Layout (includes VolunteerNav and Footer) */}
           <Route component={LayoutRoute} />
         </Router>

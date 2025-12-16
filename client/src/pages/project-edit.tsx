@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, Save, TrendingUp, Calendar, MapPin, Target, Users, Clock, Briefcase, BarChart3, Heart, Plus, Trash2, UserCheck } from "lucide-react";
+import { ArrowLeft, Save, TrendingUp, Calendar, MapPin, Target, Users, Clock, Briefcase, BarChart3, Heart, Plus, Trash2, UserCheck, Zap, Info } from "lucide-react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -58,6 +58,16 @@ const volunteerRoleSchema = z.object({
   description: z.string().optional(),
 });
 
+// Milestone schema for project completion tracking
+const milestoneSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Milestone name is required"),
+  targetDate: z.string().optional(),
+  completedDate: z.string().optional(),
+  status: z.enum(['pending', 'in_progress', 'completed']),
+  weight: z.number().min(0).max(100).optional(), // Custom weight percentage
+});
+
 const projectEditSchema = z.object({
   name: z.string().min(1, "Project name is required"),
   description: z.string().optional(),
@@ -89,6 +99,18 @@ const projectEditSchema = z.object({
   volunteersNeeded: z.number().min(1).optional(),
   totalVolunteerContribution: z.number().min(1).max(100).optional(), // % of project impact for volunteers
   volunteerRoles: z.array(volunteerRoleSchema).optional(),
+  // Milestone tracking for completion calculation
+  milestones: z.array(milestoneSchema).optional(),
+  completionHoursWeight: z.number().min(0).max(100).optional(), // Default 60%
+  completionMilestonesWeight: z.number().min(0).max(100).optional(), // Default 40%
+  // AIU Settings for proper impact attribution calculation
+  aiuEnabled: z.boolean().optional(),
+  aiuKpiName: z.string().optional(),
+  aiuKpiUnit: z.string().optional(),
+  aiuKpiBefore: z.number().optional(),
+  aiuKpiAfter: z.number().optional(),
+  aiuAttributionFactor: z.number().min(0).max(100).optional(), // Percentage (will convert to 0-1)
+  aiuAttributionMethodology: z.string().optional(),
 });
 
 type ProjectEditForm = z.infer<typeof projectEditSchema>;
@@ -124,6 +146,17 @@ export default function ProjectEdit() {
     },
   });
 
+  // Fetch AIU settings for this project
+  const { data: aiuSettings } = useQuery({
+    queryKey: ["/api/aiu/project", projectId, "settings"],
+    queryFn: async () => {
+      const response = await fetch(`/api/projects/${projectId}/aiu-settings`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!projectId,
+  });
+
   const isOrganization = currentUser?.userType === 'organization';
 
   const form = useForm<ProjectEditForm>({
@@ -156,6 +189,18 @@ export default function ProjectEdit() {
         { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
         { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
       ],
+      // Milestone tracking defaults
+      milestones: [],
+      completionHoursWeight: 60, // 60% hours weight
+      completionMilestonesWeight: 40, // 40% milestones weight
+      // AIU Settings defaults
+      aiuEnabled: false,
+      aiuKpiName: "",
+      aiuKpiUnit: "",
+      aiuKpiBefore: 0,
+      aiuKpiAfter: 0,
+      aiuAttributionFactor: 20, // Default 20% attribution
+      aiuAttributionMethodology: "",
     },
   });
 
@@ -163,6 +208,12 @@ export default function ProjectEdit() {
   const { fields: roleFields, append: appendRole, remove: removeRole } = useFieldArray({
     control: form.control,
     name: "volunteerRoles",
+  });
+
+  // Use field array for managing milestones dynamically
+  const { fields: milestoneFields, append: appendMilestone, remove: removeMilestone, update: updateMilestone } = useFieldArray({
+    control: form.control,
+    name: "milestones",
   });
 
   // Update form when project data loads
@@ -202,9 +253,21 @@ export default function ProjectEdit() {
           { role: "lead", contributionPercent: 40, count: 1, description: "Project coordinator/lead" },
           { role: "support", contributionPercent: 60, count: 2, description: "General support volunteers" }
         ],
+        // Milestone tracking
+        milestones: project.milestones || [],
+        completionHoursWeight: project.completionHoursWeight ?? 60,
+        completionMilestonesWeight: project.completionMilestonesWeight ?? 40,
+        // AIU Settings - load from aiuSettings query if available
+        aiuEnabled: !!aiuSettings,
+        aiuKpiName: aiuSettings?.kpiName || project.impactMetricName || "",
+        aiuKpiUnit: aiuSettings?.kpiUnit || project.impactMetricUnit || "",
+        aiuKpiBefore: aiuSettings?.kpiBefore || 0,
+        aiuKpiAfter: aiuSettings?.kpiAfter || project.livesTouched || 0,
+        aiuAttributionFactor: aiuSettings?.attributionFactor ? Math.round(aiuSettings.attributionFactor * 100) : 20,
+        aiuAttributionMethodology: aiuSettings?.attributionMethodology || "",
       });
     }
-  }, [project, tasks, projectId, form]);
+  }, [project, tasks, projectId, form, aiuSettings]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: ProjectEditForm) => {
@@ -219,7 +282,23 @@ export default function ProjectEdit() {
         updatedAt: new Date(),
       };
       const response = await apiRequest("PATCH", `/api/projects/${projectId}`, payload);
-      return response.json();
+      const projectResult = await response.json();
+
+      // If AIU is enabled, save AIU settings
+      if (data.aiuEnabled && data.aiuKpiName && data.aiuKpiUnit) {
+        const aiuPayload = {
+          userId: currentUser?.id,
+          kpiName: data.aiuKpiName,
+          kpiUnit: data.aiuKpiUnit,
+          kpiBefore: data.aiuKpiBefore || 0,
+          kpiAfter: data.aiuKpiAfter || 0,
+          attributionFactor: data.aiuAttributionFactor || 20,
+          attributionMethodology: data.aiuAttributionMethodology || "",
+        };
+        await apiRequest("POST", `/api/projects/${projectId}/aiu-settings`, aiuPayload);
+      }
+
+      return projectResult;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -227,7 +306,8 @@ export default function ProjectEdit() {
           const key = query.queryKey[0];
           return typeof key === 'string' && (
             key.startsWith('/api/projects') ||
-            key.startsWith('/api/dashboard/summary')
+            key.startsWith('/api/dashboard/summary') ||
+            key.startsWith('/api/aiu')
           );
         }
       });
@@ -856,6 +936,443 @@ export default function ProjectEdit() {
                     </FormItem>
                   )}
                 />
+              </CardContent>
+            </Card>
+
+            {/* AIU Settings - Impact Attribution Configuration */}
+            <Card className="border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Zap className="h-5 w-5 text-amber-600" />
+                      AIU Settings (Impact Attribution)
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Configure how Attributable Impact Units are calculated for this project
+                    </CardDescription>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="aiuEnabled"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            data-testid="switch-aiu-enabled"
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {!form.watch("aiuEnabled") ? (
+                  <div className="rounded-lg bg-white/50 dark:bg-slate-900/50 p-4 border border-amber-200 dark:border-amber-800">
+                    <div className="flex items-start gap-3">
+                      <Info className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-amber-800 dark:text-amber-200">
+                        <p className="font-medium mb-1">AIU Calculation Disabled</p>
+                        <p className="text-amber-700 dark:text-amber-300">
+                          When disabled, AIU is calculated using a fallback formula: <strong>1 AIU per 50 hours logged</strong>.
+                          Enable AIU settings to use the full formula based on KPI changes and attribution factors.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* KPI Configuration */}
+                    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-amber-200 dark:border-amber-700">
+                      <h4 className="font-semibold text-sm mb-3 text-amber-900 dark:text-amber-100">
+                        Key Performance Indicator (KPI)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="aiuKpiName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>KPI Name</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="e.g., Students Reached, Trees Planted"
+                                  data-testid="input-aiu-kpi-name"
+                                />
+                              </FormControl>
+                              <FormDescription>What outcome are you measuring?</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="aiuKpiUnit"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>KPI Unit</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  placeholder="e.g., students, trees, meals"
+                                  data-testid="input-aiu-kpi-unit"
+                                />
+                              </FormControl>
+                              <FormDescription>Unit of measurement</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* KPI Before/After Values */}
+                    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-amber-200 dark:border-amber-700">
+                      <h4 className="font-semibold text-sm mb-3 text-amber-900 dark:text-amber-100">
+                        KPI Measurement (Before → After)
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="aiuKpiBefore"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Baseline Value (Before)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  value={field.value || 0}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  data-testid="input-aiu-kpi-before"
+                                />
+                              </FormControl>
+                              <FormDescription>Starting point before intervention</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="aiuKpiAfter"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target/Actual Value (After)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  {...field}
+                                  value={field.value || 0}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  placeholder="0"
+                                  data-testid="input-aiu-kpi-after"
+                                />
+                              </FormControl>
+                              <FormDescription>Target or measured outcome</FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Delta KPI Display */}
+                      {(form.watch("aiuKpiAfter") || 0) > (form.watch("aiuKpiBefore") || 0) && (
+                        <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/30 rounded-md border border-green-200 dark:border-green-800">
+                          <p className="text-sm text-green-800 dark:text-green-200">
+                            <strong>ΔKPI:</strong> {(form.watch("aiuKpiAfter") || 0) - (form.watch("aiuKpiBefore") || 0)} {form.watch("aiuKpiUnit") || "units"} improvement
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Attribution Factor */}
+                    <div className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-amber-200 dark:border-amber-700">
+                      <h4 className="font-semibold text-sm mb-1 text-amber-900 dark:text-amber-100">
+                        Attribution Factor
+                      </h4>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        What percentage of the KPI change can be attributed to volunteer contributions vs. external factors?
+                      </p>
+                      <FormField
+                        control={form.control}
+                        name="aiuAttributionFactor"
+                        render={({ field }) => (
+                          <FormItem>
+                            <div className="flex items-center gap-4">
+                              <FormControl>
+                                <Slider
+                                  value={[field.value || 20]}
+                                  onValueChange={([value]) => field.onChange(value)}
+                                  max={100}
+                                  min={5}
+                                  step={5}
+                                  className="flex-1"
+                                  data-testid="slider-aiu-attribution"
+                                />
+                              </FormControl>
+                              <span className="text-lg font-bold text-amber-700 dark:text-amber-300 w-16 text-right">
+                                {field.value || 20}%
+                              </span>
+                            </div>
+                            <FormDescription className="mt-2">
+                              <span className="flex justify-between text-xs">
+                                <span>5% (Low attribution)</span>
+                                <span>100% (Full attribution)</span>
+                              </span>
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Methodology */}
+                    <FormField
+                      control={form.control}
+                      name="aiuAttributionMethodology"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Attribution Methodology (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="Describe how you determined the attribution factor. E.g., 'Based on comparison group analysis showing 20% of student improvement attributable to tutoring intervention.'"
+                              rows={3}
+                              data-testid="input-aiu-methodology"
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Document your reasoning for transparency and reporting
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* AIU Preview Calculation */}
+                    <div className="p-4 bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 rounded-lg border border-amber-300 dark:border-amber-700">
+                      <h4 className="font-semibold text-sm mb-2 text-amber-900 dark:text-amber-100">
+                        AIU Calculation Preview
+                      </h4>
+                      {(() => {
+                        const kpiBefore = form.watch("aiuKpiBefore") || 0;
+                        const kpiAfter = form.watch("aiuKpiAfter") || 0;
+                        const attributionFactor = (form.watch("aiuAttributionFactor") || 20) / 100;
+                        const deltaKpi = Math.max(0, kpiAfter - kpiBefore);
+                        const totalAiu = deltaKpi * attributionFactor;
+
+                        return (
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-amber-800 dark:text-amber-200">ΔKPI (Change):</span>
+                              <span className="font-medium">{deltaKpi.toLocaleString()} {form.watch("aiuKpiUnit") || "units"}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-amber-800 dark:text-amber-200">× Attribution Factor:</span>
+                              <span className="font-medium">{(attributionFactor * 100).toFixed(0)}%</span>
+                            </div>
+                            <div className="border-t border-amber-300 dark:border-amber-700 pt-2 mt-2">
+                              <div className="flex justify-between text-base">
+                                <span className="font-semibold text-amber-900 dark:text-amber-100">Total Project AIU:</span>
+                                <span className="font-bold text-amber-700 dark:text-amber-300">
+                                  {totalAiu.toLocaleString(undefined, { maximumFractionDigits: 2 })} AIU
+                                </span>
+                              </div>
+                              <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                                This will be distributed among volunteers based on their roles and contributions
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Milestones & Completion Tracking Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Target className="h-5 w-5" />
+                  Milestones & Completion Tracking
+                </CardTitle>
+                <CardDescription>
+                  Define project milestones and configure how completion is calculated
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Completion Weight Configuration */}
+                <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950 dark:to-indigo-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-100 mb-3">
+                    Completion Calculation Weights
+                  </h4>
+                  <p className="text-xs text-purple-700 dark:text-purple-300 mb-4">
+                    Configure how hours logged and milestones contribute to the overall completion percentage.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="completionHoursWeight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Hours Weight (%)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={100}
+                              className="text-center"
+                              {...field}
+                              onChange={e => {
+                                const val = parseInt(e.target.value) || 0;
+                                field.onChange(val);
+                                form.setValue('completionMilestonesWeight', 100 - val);
+                              }}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="completionMilestonesWeight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm">Milestones Weight (%)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={100}
+                              className="text-center"
+                              {...field}
+                              onChange={e => {
+                                const val = parseInt(e.target.value) || 0;
+                                field.onChange(val);
+                                form.setValue('completionHoursWeight', 100 - val);
+                              }}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-2">
+                    Current: {form.watch('completionHoursWeight') || 60}% Hours + {form.watch('completionMilestonesWeight') || 40}% Milestones = 100%
+                  </p>
+                </div>
+
+                {/* Milestones List */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold">Project Milestones</h4>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => appendMilestone({
+                        id: `ms-${Date.now()}`,
+                        name: '',
+                        targetDate: '',
+                        completedDate: '',
+                        status: 'pending',
+                        weight: 0,
+                      })}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Milestone
+                    </Button>
+                  </div>
+
+                  {milestoneFields.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500 bg-slate-50 dark:bg-slate-900 rounded-lg border-2 border-dashed">
+                      <Target className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No milestones defined</p>
+                      <p className="text-xs mt-1">Completion will be based on hours only</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {milestoneFields.map((field, index) => (
+                        <div
+                          key={field.id}
+                          className="p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
+                              <FormField
+                                control={form.control}
+                                name={`milestones.${index}.name`}
+                                render={({ field }) => (
+                                  <FormItem className="md:col-span-2">
+                                    <FormLabel className="text-xs">Milestone Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="e.g., Project Kickoff" {...field} />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name={`milestones.${index}.targetDate`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-xs">Target Date</FormLabel>
+                                    <FormControl>
+                                      <Input type="date" {...field} />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name={`milestones.${index}.status`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-xs">Status</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Status" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="in_progress">In Progress</SelectItem>
+                                        <SelectItem value="completed">Completed</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => removeMilestone(index)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {milestoneFields.length > 0 && (
+                    <p className="text-xs text-slate-500 mt-3">
+                      {milestoneFields.filter(m => form.watch(`milestones.${milestoneFields.indexOf(m)}.status`) === 'completed').length} of {milestoneFields.length} milestones completed
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 

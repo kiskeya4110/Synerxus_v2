@@ -8,6 +8,7 @@ import {
   Home, Briefcase, Lightbulb, BarChart3, User, MessageCircle, MoreVertical, Settings, ClipboardList, LogOut
 } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -205,7 +206,7 @@ export default function DiscoverOpportunitiesPWA() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full pb-16">
       {/* PWA Header */}
       <PWAHeader />
 
@@ -213,7 +214,7 @@ export default function DiscoverOpportunitiesPWA() {
       <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-24 bg-gradient-to-b from-slate-50 to-slate-100">
+      <main className="flex-1 overflow-y-auto pb-4 bg-gradient-to-b from-slate-50 to-slate-100">
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 px-4 pt-4 pb-6">
           <h1 className="text-white text-xl font-bold flex items-center gap-2">
@@ -548,51 +549,8 @@ export default function DiscoverOpportunitiesPWA() {
         />
       )}
 
-      {/* Bottom Navigation Bar - Matching mobile PWA view */}
-      <nav className="fixed bottom-0 left-0 right-0 w-full bg-white border-t border-slate-200 z-40 px-2 py-2 shadow-xl">
-        <div className="flex justify-around items-center">
-          <button
-            onClick={() => navigate('/volunteer-dashboard')}
-            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
-            data-testid="nav-home"
-          >
-            <Home className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-medium">Home</span>
-          </button>
-          <button
-            onClick={() => navigate('/volunteer-dashboard?tab=projects')}
-            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
-            data-testid="nav-projects"
-          >
-            <Briefcase className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-medium">Projects</span>
-          </button>
-          <button
-            onClick={() => navigate('/discover-opportunities/pwa')}
-            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-blue-600 bg-blue-50"
-            data-testid="nav-discover"
-          >
-            <Sparkles className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-medium">Discover</span>
-          </button>
-          <button
-            onClick={() => navigate('/volunteer-dashboard?tab=impacts')}
-            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
-            data-testid="nav-impacts"
-          >
-            <BarChart3 className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-medium">Impacts</span>
-          </button>
-          <button
-            onClick={() => navigate('/volunteer-dashboard?tab=profile')}
-            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all text-slate-500 hover:text-blue-600 hover:bg-blue-50"
-            data-testid="nav-profile"
-          >
-            <User className="w-5 h-5 mb-0.5" />
-            <span className="text-[10px] font-medium">Profile</span>
-          </button>
-        </div>
-      </nav>
+      {/* Bottom Navigation */}
+      <VolunteerPWANav userId={userId || undefined} activeTab="insights" />
     </div>
   );
 }

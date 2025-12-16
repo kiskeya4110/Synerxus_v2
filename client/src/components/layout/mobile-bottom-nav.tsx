@@ -3,7 +3,7 @@ import { Home, FolderOpen, LayoutGrid, Users, Target } from "lucide-react";
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: Home, path: '/organization-dashboard' },
-  { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/my-work' },
+  { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/projects' },
   { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview', isCenter: true },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },

@@ -27,7 +27,7 @@ import {
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 import { runMatchmaker, getVolunteerMatches, getOrganizationMatches } from "./matchmaker-service";
-import { calculateMatchScore, findTopMatches, findTopVolunteers, deriveCategoryFromSDGs } from "./matching-algorithm";
+import { calculateMatchScore, calculateMatchScoreAsync, findTopMatches, findTopVolunteers, deriveCategoryFromSDGs } from "./matching-algorithm";
 import { getDashboardDataForOrganization, getDashboardDataForVolunteer, getProjectsForVolunteer, getSDGContributionsForOrganization, getVisibleProjectIdsForVolunteer } from "./dashboard-service";
 import { getRecommendedVolunteersForTask, getRecommendedVolunteersForProject } from "./task-matching-service";
 import { updateVolunteerProfileWithUser } from "./profile-service";
@@ -172,66 +172,89 @@ function extractUserId(req: Request): number | null {
   return isNaN(userId) ? null : userId;
 }
 
-// **AI Algorithm**: Calculate project completion percentage based on multiple factors
+/**
+ * Milestone type for project completion tracking
+ */
+interface ProjectMilestone {
+  id: string | number;
+  name: string;
+  targetDate?: string;
+  completedDate?: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  weight?: number;
+}
+
+/**
+ * **AI Algorithm**: Calculate project completion percentage based on hours + milestones
+ *
+ * Formula: (hoursWeight% × hoursProgress) + (milestonesWeight% × milestoneProgress)
+ * Default weights: 60% hours, 40% milestones (configurable per project)
+ *
+ * - Hours Progress: (hours logged / expected hours) × 100
+ * - Milestone Progress: (completed milestones / total milestones) × 100
+ *   OR weighted: Σ(completed milestone weights) / Σ(all milestone weights) × 100
+ */
 async function calculateProjectProgress(projectId: number): Promise<number> {
   try {
     const project = await storage.getProject(projectId);
     if (!project) return 0;
 
-    // Get project tasks, activities, and impacts
-    const tasks = (await storage.listTasks()).filter((t) => t.projectId === projectId);
-    const activities = (await storage.listVolunteerActivities()).filter((a) => a.projectId === projectId);
-    const impacts = await storage.listProjectImpactsByProject(projectId);
-
-    const totalHoursLogged = activities.reduce((sum: number, a) => sum + (a.hours || 0), 0);
-
-    // If project has expected hours defined, use hours-based calculation as primary
-    const expectedHours = project.projectTotalHours ||
-                          (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0); // 12 weeks = 3 months default
-
-    // Calculate three progress metrics (weighted based on available data)
-    let progressScore = 0;
-    let totalWeight = 0;
-
-    // **Weight 1: Task Completion Ratio (if tasks exist)**
-    if (tasks.length > 0) {
-      const completedTasks = tasks.filter((t) => t.status?.toLowerCase() === "completed").length;
-      const taskProgress = (completedTasks / tasks.length) * 100;
-      progressScore += taskProgress * 0.5; // 50% weight when tasks exist
-      totalWeight += 0.5;
-    }
-
-    // **Weight 2: Hours Logged vs Expected Hours**
-    if (expectedHours > 0) {
-      // Use actual expected hours from project
-      const hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
-      progressScore += hoursProgress * 0.4; // 40% weight for hours
-      totalWeight += 0.4;
-    } else if (totalHoursLogged > 0) {
-      // No target set - be very conservative: assume 200 hours as minimum reasonable project
-      const conservativeTarget = Math.max(200, totalHoursLogged * 10);
-      const hoursProgress = Math.min((totalHoursLogged / conservativeTarget) * 100, 30); // Cap at 30% without target
-      progressScore += hoursProgress * 0.4;
-      totalWeight += 0.4;
-    }
-
-    // **Weight 3: Impact Metrics Logged (if impacts exist)**
-    if (impacts.length > 0) {
-      progressScore += 100 * 0.1; // 10% bonus for having impacts logged
-      totalWeight += 0.1;
-    }
-
-    // Normalize by actual weights used
-    if (totalWeight > 0) {
-      progressScore = progressScore / totalWeight;
-    }
-
-    // Apply project status override
+    // If project is marked as completed, return 100%
     if (project.status === 'completed') {
       return 100;
     }
 
-    return Math.round(Math.min(progressScore, 100));
+    // Get configurable weights (default: 60% hours, 40% milestones)
+    const hoursWeight = (project as any).completionHoursWeight ?? 60;
+    const milestonesWeight = (project as any).completionMilestonesWeight ?? 40;
+
+    // ===== HOURS PROGRESS (default 60% weight) =====
+    const activities = (await storage.listVolunteerActivities()).filter((a) => a.projectId === projectId);
+    const totalHoursLogged = activities.reduce((sum: number, a) => sum + (a.hours || 0), 0);
+
+    const expectedHours = project.projectTotalHours ||
+                          (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0);
+
+    let hoursProgress = 0;
+    if (expectedHours > 0) {
+      hoursProgress = Math.min((totalHoursLogged / expectedHours) * 100, 100);
+    } else if (totalHoursLogged > 0) {
+      hoursProgress = Math.min((totalHoursLogged / 200) * 100, 50);
+    }
+
+    // ===== MILESTONE PROGRESS (default 40% weight) =====
+    const milestones = (project as any).milestones as ProjectMilestone[] | null | undefined;
+    let milestoneProgress = 0;
+
+    if (milestones && Array.isArray(milestones) && milestones.length > 0) {
+      const hasCustomWeights = milestones.some(m => typeof m.weight === 'number' && m.weight > 0);
+
+      if (hasCustomWeights) {
+        const totalWeight = milestones.reduce((sum, m) => sum + (m.weight || 0), 0);
+        const completedWeight = milestones
+          .filter(m => m.status === 'completed')
+          .reduce((sum, m) => sum + (m.weight || 0), 0);
+        milestoneProgress = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+      } else {
+        const completedMilestones = milestones.filter(m => m.status === 'completed').length;
+        milestoneProgress = (completedMilestones / milestones.length) * 100;
+      }
+    } else {
+      // No milestones - hours get full weight
+      const adjustedHoursWeight = hoursWeight + milestonesWeight;
+      return Math.round(Math.min((hoursProgress * adjustedHoursWeight) / 100, 100));
+    }
+
+    // ===== COMBINED PROGRESS =====
+    const totalWeight = hoursWeight + milestonesWeight;
+    const normalizedHoursWeight = (hoursWeight / totalWeight) * 100;
+    const normalizedMilestonesWeight = (milestonesWeight / totalWeight) * 100;
+
+    const combinedProgress =
+      (normalizedHoursWeight / 100) * hoursProgress +
+      (normalizedMilestonesWeight / 100) * milestoneProgress;
+
+    return Math.round(Math.min(combinedProgress, 100));
   } catch (err) {
     console.error("Error calculating project progress:", err);
     return 0;
@@ -790,13 +813,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: proj.status || 'open',
       } as any;
 
-      // Calculate match score with full breakdown
+      // Calculate match score with full breakdown using async version for consistency
+      // This includes completion rate for engagement boost calculation
       const volunteerWithProfile = {
         ...volunteer,
         profile: volunteerProfile || undefined
       } as any;
 
-      const matchResult = calculateMatchScore(volunteerWithProfile, opportunityLike);
+      const matchResult = await calculateMatchScoreAsync(volunteerWithProfile, opportunityLike);
 
       // Get organization details
       const organization = project.organizationId
@@ -989,6 +1013,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Recalculate completion percentages for all projects (admin utility)
+  // This ensures all stored completion values use the correct hours + milestones formula
+  app.post("/api/projects/recalculate-completion", async (req, res) => {
+    try {
+      const { projectId } = req.body;
+
+      let projectsToUpdate: any[] = [];
+
+      if (projectId) {
+        // Recalculate single project
+        const project = await storage.getProject(parseInt(projectId));
+        if (!project) {
+          return res.status(404).json({ message: "Project not found" });
+        }
+        projectsToUpdate = [project];
+      } else {
+        // Recalculate ALL projects
+        projectsToUpdate = await storage.listProjects();
+      }
+
+      const results: { projectId: number; name: string; oldCompletion: number; newCompletion: number }[] = [];
+
+      for (const project of projectsToUpdate) {
+        const oldCompletion = project.completionPercentage || 0;
+        const newCompletion = await calculateProjectProgress(project.id);
+
+        if (oldCompletion !== newCompletion) {
+          await storage.updateProject(project.id, { completionPercentage: newCompletion });
+          results.push({
+            projectId: project.id,
+            name: project.name,
+            oldCompletion,
+            newCompletion
+          });
+        }
+      }
+
+      res.json({
+        message: `Recalculated completion for ${projectsToUpdate.length} project(s)`,
+        updated: results.length,
+        projects: results
+      });
+    } catch (err) {
+      console.error("Error recalculating project completion:", err);
+      res.status(500).json({ message: "Failed to recalculate project completion" });
+    }
+  });
+
   // === Task Routes ===
   app.get("/api/tasks", async (req, res) => {
     try {
@@ -1106,15 +1178,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      // Recalculate project completion percentage when task is created
+      // Recalculate project completion percentage when task is created (using hours-based calculation)
       if (task.projectId) {
         const project = await storage.getProject(task.projectId);
-        const projectTasks = await storage.listTasksByProject(task.projectId);
-        const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
-        const completionPercentage = projectTasks.length > 0 
-          ? Math.round((completedTasks / projectTasks.length) * 100) 
-          : 0;
-        
+        // Use hours-based completion calculation for accurate progress tracking
+        const completionPercentage = await calculateProjectProgress(task.projectId);
+
         // Auto-update status based on completion percentage
         // Only auto-update if current status is auto-manageable (not manually set to "On Hold")
         let newStatus = project?.status;
@@ -1123,16 +1192,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             newStatus = "Planning";
           } else if (completionPercentage === 100) {
             newStatus = "Completed";
-          } else {
+          } else if (completionPercentage > 0) {
             newStatus = "In Progress";
           }
         }
-        
-        await storage.updateProject(task.projectId, { 
+
+        await storage.updateProject(task.projectId, {
           completionPercentage,
           ...(newStatus !== project?.status && { status: newStatus })
         });
-        console.log(`[Task Create] Updated project ${task.projectId}: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks), status: ${newStatus}`);
+        console.log(`[Task Create] Updated project ${task.projectId}: ${completionPercentage}% (hours-based), status: ${newStatus}`);
         
         // Broadcast project update
         const updatedProject = await storage.getProject(task.projectId);
@@ -1217,15 +1286,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
       
-      // If task status was updated and task belongs to a project, recalculate project completion
+      // If task status was updated and task belongs to a project, recalculate project completion (hours-based)
       if (taskData.status && updatedTask.projectId) {
         const project = await storage.getProject(updatedTask.projectId);
-        const projectTasks = await storage.listTasksByProject(updatedTask.projectId);
-        const completedTasks = projectTasks.filter(t => t.status?.toLowerCase() === "completed").length;
-        const completionPercentage = projectTasks.length > 0 
-          ? Math.round((completedTasks / projectTasks.length) * 100) 
-          : 0;
-        
+        // Use hours-based completion calculation for accurate progress tracking
+        const completionPercentage = await calculateProjectProgress(updatedTask.projectId);
+
         // Auto-update status based on completion percentage
         // Only auto-update if current status is auto-manageable (not manually set to "On Hold")
         let newStatus = project?.status;
@@ -1234,16 +1300,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             newStatus = "Planning";
           } else if (completionPercentage === 100) {
             newStatus = "Completed";
-          } else {
+          } else if (completionPercentage > 0) {
             newStatus = "In Progress";
           }
         }
-        
-        await storage.updateProject(updatedTask.projectId, { 
+
+        await storage.updateProject(updatedTask.projectId, {
           completionPercentage,
           ...(newStatus !== project?.status && { status: newStatus })
         });
-        console.log(`[Task Update] Updated project ${updatedTask.projectId}: ${completionPercentage}% (${completedTasks}/${projectTasks.length} tasks), status: ${newStatus}`);
+        console.log(`[Task Update] Updated project ${updatedTask.projectId}: ${completionPercentage}% (hours-based), status: ${newStatus}`);
         
         // Broadcast project update as well
         const updatedProject = await storage.getProject(updatedTask.projectId);
@@ -2531,13 +2597,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const volunteerProfile = await storage.getVolunteerProfileByUserId(userIdNum);
 
-      // Calculate match score with full breakdown
+      // Calculate match score with full breakdown using async version for consistency
+      // This includes completion rate for engagement boost calculation
       const volunteerWithProfile = {
         ...volunteer,
         profile: volunteerProfile || undefined
       } as any;
 
-      const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
+      const matchResult = await calculateMatchScoreAsync(volunteerWithProfile, opportunity);
 
       // Get organization details
       const organization = opportunity.organizationId
@@ -2963,16 +3030,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         volunteerProfile = await storage.getVolunteerByEmail(volunteer.email);
       }
       
-      // Calculate match score with breakdown
+      // Calculate match score with breakdown using async version for consistency
+      // This includes completion rate for engagement boost calculation
       const volunteerWithProfile = {
         ...volunteer,
         profile: volunteerProfile || undefined
       } as any;
-      
-      const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
-      
+
+      const matchResult = await calculateMatchScoreAsync(volunteerWithProfile, opportunity);
+
       // Normalize breakdown values to percentages (0-100) and ensure all keys exist
-      // calculateMatchScore returns 0-1 values, so multiply by 100 to get percentages
       const breakdown = matchResult.breakdown || {};
       const normalizedBreakdown = {
         skillMatch: (breakdown.skillMatch || 0),
@@ -4587,18 +4654,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const projectHours = organizationActivities
             .filter(a => a.projectId === p.id)
             .reduce((sum, a) => sum + a.hours, 0);
-          
+
           // Calculate people impacted for this project
           const projectImpacts = organizationImpacts.filter(i => i.projectId === p.id);
           const projectLivesTouched = projectImpacts
             .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
             .reduce((sum, i) => sum + (i.value || 0), 0);
-          
+
+          // Calculate completion percentage using hours + milestones formula
+          // This ensures consistent calculation across all dashboards
+          const expectedHours = (p as any).projectTotalHours ||
+                               ((p as any).ongoingHoursPerWeek ? (p as any).ongoingHoursPerWeek * 12 : 0);
+          const hoursWeight = (p as any).completionHoursWeight ?? 60;
+          const milestonesWeight = (p as any).completionMilestonesWeight ?? 40;
+          const milestones = (p as any).milestones as any[] | null | undefined;
+
+          let hoursProgress = 0;
+          if (expectedHours > 0) {
+            hoursProgress = Math.min((projectHours / expectedHours) * 100, 100);
+          } else if (projectHours > 0) {
+            hoursProgress = Math.min((projectHours / 200) * 100, 50);
+          }
+
+          let milestoneProgress = 0;
+          if (milestones && Array.isArray(milestones) && milestones.length > 0) {
+            const hasCustomWeights = milestones.some((m: any) => typeof m.weight === 'number' && m.weight > 0);
+            if (hasCustomWeights) {
+              const totalWeight = milestones.reduce((sum: number, m: any) => sum + (m.weight || 0), 0);
+              const completedWeight = milestones
+                .filter((m: any) => m.status === 'completed')
+                .reduce((sum: number, m: any) => sum + (m.weight || 0), 0);
+              milestoneProgress = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+            } else {
+              const completedMilestones = milestones.filter((m: any) => m.status === 'completed').length;
+              milestoneProgress = (completedMilestones / milestones.length) * 100;
+            }
+          }
+
+          let calculatedCompletion = 0;
+          if (p.status === 'completed') {
+            calculatedCompletion = 100;
+          } else if (!milestones || !Array.isArray(milestones) || milestones.length === 0) {
+            // No milestones - hours get full weight
+            calculatedCompletion = Math.round(hoursProgress);
+          } else {
+            // Combined progress with weights
+            const totalWeight = hoursWeight + milestonesWeight;
+            const normalizedHoursWeight = (hoursWeight / totalWeight) * 100;
+            const normalizedMilestonesWeight = (milestonesWeight / totalWeight) * 100;
+            calculatedCompletion = Math.round(Math.min(
+              (normalizedHoursWeight / 100) * hoursProgress +
+              (normalizedMilestonesWeight / 100) * milestoneProgress, 100));
+          }
+
           return {
             id: p.id,
             name: p.name,
             status: p.status,
-            completionPercentage: p.completionPercentage || 0,
+            completionPercentage: calculatedCompletion,
             sdgGoals: p.sdgGoals || [],
             location: p.location,
             totalHours: projectHours,
@@ -5247,7 +5360,7 @@ Return ONLY a JSON array of numbers, nothing else. Example: [3, 4, 10]`
       let organizationProfile = null;
       if (user.organizationId) {
         try {
-          organizationProfile = await storage.getOrganizationProfile(user.organizationId);
+          organizationProfile = await storage.getOrganizationProfileByOrgId(user.organizationId);
         } catch (err) {
           console.error("Error fetching organization profile:", err);
         }
@@ -7161,6 +7274,14 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       // Get all projects to calculate completion per SDG
       const allProjects = await storage.listProjects();
 
+      // Build hours logged per project map from all activities for accurate completion calculation
+      const hoursLoggedByProject: Record<number, number> = {};
+      volunteerActivities.forEach((activity: any) => {
+        if (activity.projectId) {
+          hoursLoggedByProject[activity.projectId] = (hoursLoggedByProject[activity.projectId] || 0) + (activity.hours || 0);
+        }
+      });
+
       // Group projects by SDG and calculate average completion
       const sdgProjectCompletion: Record<number, { completionSum: number; projectCount: number; hours: number }> = {};
 
@@ -7170,14 +7291,58 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
         sdgProjectCompletion[sdg] = { completionSum: 0, projectCount: 0, hours: orgwideSDGMetrics[sdg].totalHours || 0 };
       });
 
-      // Calculate average completion for each SDG from project data
+      // Calculate average completion for each SDG from project data with hours-based formula
       allProjects.forEach((project: any) => {
         if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
+          // Calculate completion using hours + milestones formula (consistent with other dashboards)
+          const projectHours = hoursLoggedByProject[project.id] || 0;
+          const expectedHours = project.projectTotalHours ||
+                               (project.ongoingHoursPerWeek ? project.ongoingHoursPerWeek * 12 : 0);
+          const hoursWeight = project.completionHoursWeight ?? 60;
+          const milestonesWeight = project.completionMilestonesWeight ?? 40;
+          const milestones = project.milestones as any[] | null | undefined;
+
+          let hoursProgress = 0;
+          if (expectedHours > 0) {
+            hoursProgress = Math.min((projectHours / expectedHours) * 100, 100);
+          } else if (projectHours > 0) {
+            hoursProgress = Math.min((projectHours / 200) * 100, 50);
+          }
+
+          let milestoneProgress = 0;
+          if (milestones && Array.isArray(milestones) && milestones.length > 0) {
+            const hasCustomWeights = milestones.some((m: any) => typeof m.weight === 'number' && m.weight > 0);
+            if (hasCustomWeights) {
+              const totalWeight = milestones.reduce((sum: number, m: any) => sum + (m.weight || 0), 0);
+              const completedWeight = milestones
+                .filter((m: any) => m.status === 'completed')
+                .reduce((sum: number, m: any) => sum + (m.weight || 0), 0);
+              milestoneProgress = totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0;
+            } else {
+              const completedMilestones = milestones.filter((m: any) => m.status === 'completed').length;
+              milestoneProgress = (completedMilestones / milestones.length) * 100;
+            }
+          }
+
+          let calculatedCompletion = 0;
+          if (project.status === 'completed') {
+            calculatedCompletion = 100;
+          } else if (!milestones || !Array.isArray(milestones) || milestones.length === 0) {
+            calculatedCompletion = Math.round(hoursProgress);
+          } else {
+            const totalWeight = hoursWeight + milestonesWeight;
+            const normalizedHoursWeight = (hoursWeight / totalWeight) * 100;
+            const normalizedMilestonesWeight = (milestonesWeight / totalWeight) * 100;
+            calculatedCompletion = Math.round(Math.min(
+              (normalizedHoursWeight / 100) * hoursProgress +
+              (normalizedMilestonesWeight / 100) * milestoneProgress, 100));
+          }
+
           project.sdgGoals.forEach((sdg: number) => {
             if (!sdgProjectCompletion[sdg]) {
               sdgProjectCompletion[sdg] = { completionSum: 0, projectCount: 0, hours: 0 };
             }
-            sdgProjectCompletion[sdg].completionSum += (project.completionPercentage || 0);
+            sdgProjectCompletion[sdg].completionSum += calculatedCompletion;
             sdgProjectCompletion[sdg].projectCount += 1;
           });
         }

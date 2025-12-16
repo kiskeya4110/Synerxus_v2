@@ -1,13 +1,30 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trophy, Users, Clock, TrendingUp } from "lucide-react";
+import { Trophy, Users, Clock, TrendingUp, Target, Award, Zap, Flame, Medal, ChevronRight, BarChart3 } from "lucide-react";
+import OrganizationHeader from "@/components/layout/organization-header";
+import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+
+interface LeaderboardEntry {
+  userId: number;
+  displayName: string;
+  totalHours: number;
+  tasksCompleted: number;
+  projectsCompleted: number;
+  impactsLogged: number;
+  weeklyStreak: number;
+  maxStreak: number;
+  totalPoints: number;
+  badgesEarned: number;
+}
+
+type LeaderboardType = "hours" | "impacts" | "tasks" | "points" | "streak";
 
 export default function OrganizationLeaderboard() {
-  const { user } = useAuth();
   const userId = localStorage.getItem('currentUserId');
-  const [leaderboardType, setLeaderboardType] = useState("hours");
+  const [, navigate] = useLocation();
+  const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>("hours");
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -21,13 +38,25 @@ export default function OrganizationLeaderboard() {
     enabled: !!userId,
   });
 
+  // Fetch organization
+  const { data: organization } = useQuery({
+    queryKey: ["/api/organizations", currentUser?.organizationId],
+    queryFn: async () => {
+      if (!currentUser?.organizationId) return null;
+      const response = await fetch(`/api/organizations/${currentUser.organizationId}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser?.organizationId,
+  });
+
   // Fetch organization leaderboard
-  const { data: leaderboardData = [] } = useQuery({
+  const { data: leaderboardData = [], isLoading } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/organization-leaderboard", leaderboardType, currentUser?.organizationId],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
       const response = await fetch(
-        `/api/organization-leaderboard?organizationId=${currentUser.organizationId}&type=${leaderboardType}`
+        `/api/organization-leaderboard?organizationId=${currentUser.organizationId}&type=${leaderboardType}&limit=50`
       );
       if (!response.ok) return [];
       return response.json();
@@ -35,178 +64,489 @@ export default function OrganizationLeaderboard() {
     enabled: !!currentUser?.organizationId,
   });
 
+  // Auto-import: Fetch volunteer summaries from dashboard for fallback/additional data
+  const { data: dashboardData } = useQuery<any>({
+    queryKey: ["/api/organization/dashboard", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`/api/organization/dashboard?userId=${userId}`);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!userId && leaderboardData.length === 0,
+  });
+
+  // Merge leaderboard data with volunteer summaries from dashboard (auto-import)
+  const mergedLeaderboardData: LeaderboardEntry[] = useMemo(() => {
+    if (leaderboardData.length > 0) return leaderboardData;
+
+    // Auto-import volunteers from dashboard if no leaderboard data
+    if (dashboardData?.volunteerSummaries && dashboardData.volunteerSummaries.length > 0) {
+      return dashboardData.volunteerSummaries.map((v: any): LeaderboardEntry => ({
+        userId: v.id,
+        displayName: v.name || `Volunteer ${v.id}`,
+        totalHours: v.hours || 0,
+        tasksCompleted: v.projects || 0,
+        projectsCompleted: v.projects || 0,
+        impactsLogged: 0,
+        weeklyStreak: 1,
+        maxStreak: 52,
+        totalPoints: Math.round((v.hours || 0) * 10),
+        badgesEarned: 0,
+      }));
+    }
+    return [];
+  }, [leaderboardData, dashboardData]);
+
+  // Calculate aggregate stats using merged data
+  const stats = useMemo(() => {
+    if (!mergedLeaderboardData.length) return null;
+    return {
+      totalVolunteers: mergedLeaderboardData.length,
+      totalHours: mergedLeaderboardData.reduce((sum, v) => sum + (v.totalHours || 0), 0),
+      totalImpacts: mergedLeaderboardData.reduce((sum, v) => sum + (v.impactsLogged || 0), 0),
+      totalTasks: mergedLeaderboardData.reduce((sum, v) => sum + (v.tasksCompleted || 0), 0),
+      totalPoints: mergedLeaderboardData.reduce((sum, v) => sum + (v.totalPoints || 0), 0),
+      avgHours: mergedLeaderboardData.length > 0
+        ? Math.round(mergedLeaderboardData.reduce((sum, v) => sum + (v.totalHours || 0), 0) / mergedLeaderboardData.length)
+        : 0,
+      topPerformer: mergedLeaderboardData[0],
+    };
+  }, [mergedLeaderboardData]);
+
   const getMedalIcon = (rank: number) => {
-    if (rank === 1) return "🥇";
-    if (rank === 2) return "🥈";
-    if (rank === 3) return "🥉";
+    if (rank === 1) return <Medal className="w-6 h-6 text-yellow-500" />;
+    if (rank === 2) return <Medal className="w-6 h-6 text-slate-400" />;
+    if (rank === 3) return <Medal className="w-6 h-6 text-amber-600" />;
     return null;
   };
 
-  const getLeaderboardLabel = (type: string) => {
-    const labels: Record<string, string> = {
-      hours: "Total Hours Contributed",
-      impacts: "Impacts Recorded",
+  const getLeaderboardLabel = (type: LeaderboardType) => {
+    const labels: Record<LeaderboardType, string> = {
+      hours: "Total Hours",
+      impacts: "Impacts Logged",
       tasks: "Tasks Completed",
-      points: "Gamification Points",
+      points: "Points Earned",
+      streak: "Weekly Streak",
     };
-    return labels[type] || "Rankings";
+    return labels[type];
   };
 
+  const getLeaderboardIcon = (type: LeaderboardType) => {
+    const icons: Record<LeaderboardType, any> = {
+      hours: Clock,
+      impacts: Target,
+      tasks: Award,
+      points: Zap,
+      streak: Flame,
+    };
+    return icons[type];
+  };
+
+  const getLeaderboardValue = (entry: LeaderboardEntry, type: LeaderboardType) => {
+    switch (type) {
+      case "hours": return `${entry.totalHours}h`;
+      case "impacts": return entry.impactsLogged.toString();
+      case "tasks": return entry.tasksCompleted.toString();
+      case "points": return entry.totalPoints.toLocaleString();
+      case "streak": return `${entry.weeklyStreak}w`;
+      default: return entry.totalHours.toString();
+    }
+  };
+
+  const leaderboardCategories: { type: LeaderboardType; label: string; icon: any; color: string }[] = [
+    { type: "hours", label: "Hours", icon: Clock, color: "bg-blue-500" },
+    { type: "impacts", label: "Impacts", icon: Target, color: "bg-emerald-500" },
+    { type: "tasks", label: "Tasks", icon: Award, color: "bg-purple-500" },
+    { type: "points", label: "Points", icon: Zap, color: "bg-amber-500" },
+    { type: "streak", label: "Streak", icon: Flame, color: "bg-orange-500" },
+  ];
+
   return (
-    <div className="container mx-auto max-w-5xl py-8 px-4 md:px-6">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Trophy className="h-8 w-8 text-yellow-600" />
-          <h1 className="text-3xl font-bold">Volunteer Leaderboard</h1>
+    <div className="min-h-screen bg-slate-50" style={{ paddingBottom: '80px' }}>
+      {/* Header */}
+      <OrganizationHeader activeTab="volunteers" />
+
+      {/* Mobile Header Banner */}
+      <div className="md:hidden bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 px-4 py-6 text-white">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+            <Trophy className="w-6 h-6 text-yellow-300" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold">Volunteer Leaderboard</h1>
+            <p className="text-orange-100 text-sm">{organization?.name || "Your Organization"}</p>
+          </div>
         </div>
-        <p className="text-gray-600 dark:text-gray-400">
-          Track your team's top contributors and celebrate impact
-        </p>
+
+        {/* Mobile Stats */}
+        {stats && (
+          <div className="grid grid-cols-4 gap-2">
+            <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+              <p className="text-lg font-bold">{stats.totalVolunteers}</p>
+              <p className="text-[9px] text-white/70">Volunteers</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+              <p className="text-lg font-bold">{stats.totalHours}</p>
+              <p className="text-[9px] text-white/70">Hours</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+              <p className="text-lg font-bold">{stats.totalImpacts}</p>
+              <p className="text-[9px] text-white/70">Impacts</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur rounded-lg p-2 text-center">
+              <p className="text-lg font-bold">{stats.totalPoints.toLocaleString()}</p>
+              <p className="text-[9px] text-white/70">Points</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Organization Stats Overview */}
-      {leaderboardData.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Active Volunteers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{leaderboardData.length}</div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">on your team</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Total Hours</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {leaderboardData.reduce((sum: number, v: any) => sum + (v.totalHours || 0), 0)}
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">logged by team</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Impacts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {leaderboardData.reduce((sum: number, v: any) => sum + (v.impactsLogged || 0), 0)}
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">recorded & verified</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Total Badges</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {leaderboardData.reduce((sum: number, v: any) => sum + (v.badgesEarned || 0), 0)}
-              </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">earned by team</p>
-            </CardContent>
-          </Card>
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        {/* Desktop Header */}
+        <div className="hidden md:flex items-center justify-between mb-8">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <Trophy className="h-8 w-8 text-yellow-600" />
+              <h1 className="text-3xl font-bold text-slate-900">Volunteer Leaderboard</h1>
+            </div>
+            <p className="text-slate-600">
+              Track your team's top contributors and celebrate impact at {organization?.name || "your organization"}
+            </p>
+          </div>
+          <button
+            onClick={() => navigate('/volunteers')}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2"
+          >
+            <Users className="w-4 h-4" />
+            Manage Volunteers
+          </button>
         </div>
-      )}
 
-      {/* Leaderboard Type Selector */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Leaderboard Category</CardTitle>
-          <CardDescription>
-            Choose a metric to rank your volunteers
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {["hours", "impacts", "tasks", "points"].map((type) => (
+        {/* Desktop Stats Cards */}
+        {stats && (
+          <div className="hidden md:grid grid-cols-5 gap-4 mb-8">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-blue-700 flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  Active Volunteers
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-blue-900">{stats.totalVolunteers}</p>
+                <p className="text-xs text-blue-600 mt-1">on your team</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-emerald-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-emerald-700 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Total Hours
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-emerald-900">{stats.totalHours.toLocaleString()}</p>
+                <p className="text-xs text-emerald-600 mt-1">contributed</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-purple-700 flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  Impacts Logged
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-purple-900">{stats.totalImpacts}</p>
+                <p className="text-xs text-purple-600 mt-1">recorded</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-amber-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-amber-700 flex items-center gap-2">
+                  <Award className="w-4 h-4" />
+                  Tasks Completed
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-amber-900">{stats.totalTasks}</p>
+                <p className="text-xs text-amber-600 mt-1">by team</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-orange-700 flex items-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Total Points
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold text-orange-900">{stats.totalPoints.toLocaleString()}</p>
+                <p className="text-xs text-orange-600 mt-1">earned</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Category Selector - Fits in frame */}
+        <div className="mb-4">
+          <h3 className="text-sm font-semibold text-slate-700 mb-2 md:text-base">Rank By Category</h3>
+          <div className="grid grid-cols-5 gap-1.5 md:flex md:gap-2 md:overflow-x-auto md:pb-2">
+            {leaderboardCategories.map((cat) => (
               <button
-                key={type}
-                onClick={() => setLeaderboardType(type)}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  leaderboardType === type
-                    ? "bg-green-600 text-white"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                key={cat.type}
+                onClick={() => setLeaderboardType(cat.type)}
+                className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-2 py-2 md:px-4 md:py-2.5 rounded-lg md:rounded-xl font-medium text-[10px] md:text-sm whitespace-nowrap transition-all ${
+                  leaderboardType === cat.type
+                    ? `${cat.color} text-white shadow-lg`
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
                 }`}
-                data-testid={`org-tab-${type}`}
+                data-testid={`org-tab-${cat.type}`}
               >
-                {getLeaderboardLabel(type)}
+                <cat.icon className="w-4 h-4" />
+                <span className="hidden md:inline">{cat.label}</span>
+                <span className="md:hidden text-[9px]">{cat.label}</span>
               </button>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Volunteer Rankings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{getLeaderboardLabel(leaderboardType)}</CardTitle>
-          <CardDescription>
-            Your organization's top volunteers this month
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {leaderboardData.length === 0 ? (
-              <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                No volunteer data available yet
-              </p>
+        {/* Top 3 Podium - Mobile */}
+        {mergedLeaderboardData.length >= 3 && (
+          <div className="md:hidden bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-4 border border-amber-200 mb-4">
+            <h3 className="text-sm font-semibold text-amber-800 mb-4 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-500" />
+              Top 3 - {getLeaderboardLabel(leaderboardType)}
+            </h3>
+            <div className="flex items-end justify-center gap-3">
+              {/* 2nd Place */}
+              <div className="flex flex-col items-center w-24">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-300 to-slate-400 flex items-center justify-center text-white font-bold text-lg shadow-md mb-1">
+                  {mergedLeaderboardData[1]?.displayName?.charAt(0) || "2"}
+                </div>
+                <Medal className="w-5 h-5 text-slate-400 -mt-2 relative z-10" />
+                <p className="text-[10px] font-medium text-slate-700 truncate w-full text-center mt-1">
+                  {mergedLeaderboardData[1]?.displayName || "2nd"}
+                </p>
+                <p className="text-xs font-bold text-slate-600">
+                  {getLeaderboardValue(mergedLeaderboardData[1], leaderboardType)}
+                </p>
+              </div>
+
+              {/* 1st Place */}
+              <div className="flex flex-col items-center w-28 -mb-2">
+                <div className="w-[72px] h-[72px] rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg mb-1 ring-4 ring-yellow-200">
+                  {mergedLeaderboardData[0]?.displayName?.charAt(0) || "1"}
+                </div>
+                <Medal className="w-6 h-6 text-yellow-500 -mt-3 relative z-10" />
+                <p className="text-xs font-semibold text-slate-800 truncate w-full text-center mt-1">
+                  {mergedLeaderboardData[0]?.displayName || "1st"}
+                </p>
+                <p className="text-sm font-bold text-amber-600">
+                  {getLeaderboardValue(mergedLeaderboardData[0], leaderboardType)}
+                </p>
+              </div>
+
+              {/* 3rd Place */}
+              <div className="flex flex-col items-center w-24">
+                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-600 to-amber-700 flex items-center justify-center text-white font-bold text-lg shadow-md mb-1">
+                  {mergedLeaderboardData[2]?.displayName?.charAt(0) || "3"}
+                </div>
+                <Medal className="w-5 h-5 text-amber-600 -mt-2 relative z-10" />
+                <p className="text-[10px] font-medium text-slate-700 truncate w-full text-center mt-1">
+                  {mergedLeaderboardData[2]?.displayName || "3rd"}
+                </p>
+                <p className="text-xs font-bold text-slate-600">
+                  {getLeaderboardValue(mergedLeaderboardData[2], leaderboardType)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rankings Card */}
+        <Card className="shadow-sm">
+          <CardHeader className="border-b border-slate-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  {getLeaderboardLabel(leaderboardType)} Rankings
+                </CardTitle>
+                <CardDescription>
+                  Your organization's top volunteers
+                </CardDescription>
+              </div>
+              {stats && (
+                <div className="hidden md:block text-right">
+                  <p className="text-2xl font-bold text-emerald-600">
+                    {leaderboardType === "hours" && stats.totalHours.toLocaleString()}
+                    {leaderboardType === "impacts" && stats.totalImpacts}
+                    {leaderboardType === "tasks" && stats.totalTasks}
+                    {leaderboardType === "points" && stats.totalPoints.toLocaleString()}
+                    {leaderboardType === "streak" && `${Math.max(...mergedLeaderboardData.map(v => v.weeklyStreak))}w`}
+                  </p>
+                  <p className="text-xs text-slate-500">Total {getLeaderboardLabel(leaderboardType)}</p>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <div className="animate-spin w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full mx-auto mb-2" />
+                <p className="text-slate-500">Loading leaderboard...</p>
+              </div>
+            ) : mergedLeaderboardData.length === 0 ? (
+              <div className="p-8 text-center">
+                <Trophy className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <p className="text-slate-500 font-medium">No volunteer data available yet</p>
+                <p className="text-slate-400 text-sm mt-1">Start logging activities to see rankings</p>
+                <button
+                  onClick={() => navigate('/volunteers')}
+                  className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors"
+                >
+                  Add Volunteers
+                </button>
+              </div>
             ) : (
-              leaderboardData.map((volunteer: any, index: number) => {
-                const medal = getMedalIcon(index + 1);
-                return (
-                  <div
-                    key={volunteer.userId}
-                    className="flex items-center justify-between p-4 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    data-testid={`org-leaderboard-entry-${index}`}
-                  >
-                    <div className="flex items-center gap-4 flex-1">
-                      <div className="w-12 text-center">
-                        {medal ? (
-                          <span className="text-2xl">{medal}</span>
-                        ) : (
-                          <span className="text-xl font-bold text-gray-400">
-                            #{index + 1}
-                          </span>
+              <div className="divide-y divide-slate-100">
+                {mergedLeaderboardData.map((volunteer, index) => {
+                  const rank = index + 1;
+                  const medal = getMedalIcon(rank);
+                  const isTopThree = rank <= 3;
+                  const Icon = getLeaderboardIcon(leaderboardType);
+
+                  return (
+                    <div
+                      key={volunteer.userId}
+                      className={`flex items-center gap-4 px-4 py-4 hover:bg-slate-50 transition-colors ${
+                        isTopThree ? "bg-gradient-to-r from-amber-50/50 to-transparent" : ""
+                      }`}
+                      data-testid={`org-leaderboard-entry-${index}`}
+                    >
+                      {/* Rank */}
+                      <div className="w-10 flex items-center justify-center flex-shrink-0">
+                        {medal || (
+                          <span className="text-lg font-bold text-slate-400">#{rank}</span>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <div className="font-semibold">{volunteer.displayName || "Volunteer"}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 flex gap-3 mt-1">
-                          <span>{volunteer.badgesEarned} 🏆</span>
-                          <span>·</span>
-                          <span>{volunteer.impactsLogged} 📊</span>
-                          <span>·</span>
-                          <span>{volunteer.tasksCompleted} ✓</span>
+
+                      {/* Avatar */}
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 ${
+                          isTopThree
+                            ? "bg-gradient-to-br from-amber-500 to-orange-500"
+                            : "bg-gradient-to-br from-slate-400 to-slate-500"
+                        }`}
+                      >
+                        {volunteer.displayName?.charAt(0)?.toUpperCase() || "V"}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 truncate">
+                          {volunteer.displayName || "Volunteer"}
+                        </p>
+                        <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {volunteer.totalHours}h
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Target className="w-3 h-3" />
+                            {volunteer.impactsLogged}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Award className="w-3 h-3" />
+                            {volunteer.tasksCompleted}
+                          </span>
+                          {volunteer.weeklyStreak > 0 && (
+                            <span className="flex items-center gap-1 text-orange-600">
+                              <Flame className="w-3 h-3" />
+                              {volunteer.weeklyStreak}w
+                            </span>
+                          )}
                         </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {leaderboardType === "hours" && `${volunteer.totalHours}h`}
-                        {leaderboardType === "impacts" && volunteer.impactsLogged}
-                        {leaderboardType === "tasks" && volunteer.tasksCompleted}
-                        {leaderboardType === "points" && volunteer.totalPoints}
-                      </div>
-                      {volunteer.weeklyStreak > 0 && (
-                        <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                          🔥 {volunteer.weeklyStreak} weeks
+
+                      {/* Value */}
+                      <div className="text-right flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                          <Icon className={`w-4 h-4 ${isTopThree ? "text-amber-500" : "text-slate-400"}`} />
+                          <span
+                            className={`text-xl font-bold ${
+                              isTopThree ? "text-amber-600" : "text-slate-600"
+                            }`}
+                          >
+                            {getLeaderboardValue(volunteer, leaderboardType)}
+                          </span>
                         </div>
-                      )}
+                        <p className="text-[10px] text-slate-400 uppercase mt-0.5">
+                          {getLeaderboardLabel(leaderboardType)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+              </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Point System Explanation - Matches algorithm in gamification.router.ts */}
+        <div className="mt-6 bg-gradient-to-r from-slate-100 to-slate-50 rounded-xl p-4 border border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-500" />
+            How Points Are Calculated
+          </h3>
+          <p className="text-xs text-slate-500 mb-3">
+            Points = (Hours × 10) + (Impacts × 50) + (Tasks × 5)
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white rounded-lg p-3 border border-slate-100">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-blue-500" />
+                <span className="text-xs font-medium text-slate-600">Hours</span>
+              </div>
+              <p className="text-sm font-bold text-blue-600">10 pts/hour</p>
+              <p className="text-[10px] text-slate-400 mt-1">From volunteer activities</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-slate-100">
+              <div className="flex items-center gap-2 mb-1">
+                <Target className="w-4 h-4 text-emerald-500" />
+                <span className="text-xs font-medium text-slate-600">Impacts</span>
+              </div>
+              <p className="text-sm font-bold text-emerald-600">50 pts/impact</p>
+              <p className="text-[10px] text-slate-400 mt-1">Logged impact metrics</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-slate-100">
+              <div className="flex items-center gap-2 mb-1">
+                <Award className="w-4 h-4 text-purple-500" />
+                <span className="text-xs font-medium text-slate-600">Tasks</span>
+              </div>
+              <p className="text-sm font-bold text-purple-600">5 pts/task</p>
+              <p className="text-[10px] text-slate-400 mt-1">Project assignments</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-slate-100">
+              <div className="flex items-center gap-2 mb-1">
+                <Flame className="w-4 h-4 text-orange-500" />
+                <span className="text-xs font-medium text-slate-600">Streaks</span>
+              </div>
+              <p className="text-sm font-bold text-orange-600">Weekly</p>
+              <p className="text-[10px] text-slate-400 mt-1">Active weeks count</p>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 }

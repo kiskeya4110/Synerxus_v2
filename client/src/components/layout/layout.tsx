@@ -94,12 +94,14 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex flex-1">
         <Sidebar />
         <main className="flex-1 flex flex-col bg-background">
-          <div className="flex-1 safe-area-x px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-24 md:pb-8">
+          <div className="flex-1 safe-area-x px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-8">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
           </div>
-          <Footer />
+          <div className="hidden md:block">
+            <Footer />
+          </div>
         </main>
       </div>
       <MobileNav />

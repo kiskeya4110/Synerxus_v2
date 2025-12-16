@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
 import { ArrowLeft, Clock, MapPin, Target, Briefcase, Award, MessageCircle, Sparkles } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -123,7 +124,7 @@ export default function OpportunityDetailPWA() {
   const sdgGoal = primarySdg ? SDG_GOALS[primarySdg] : null;
 
   return (
-    <div className="w-full min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 pb-24 overflow-hidden flex flex-col">
+    <div className="w-full min-h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 pb-20 flex flex-col">
       {/* PWA Header */}
       <PWAHeader />
 
@@ -278,6 +279,9 @@ export default function OpportunityDetailPWA() {
         opportunityId={opportunityId!}
         projectName={opportunity.title}
       />
+
+      {/* Bottom Navigation */}
+      <VolunteerPWANav userId={userId || undefined} activeTab="insights" />
     </div>
   );
 }

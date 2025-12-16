@@ -47,11 +47,9 @@ export default function VolunteerNav() {
     navigate('/');
   };
 
-  // Don't show on PWA routes or standalone routes - they have their own navigation
+  // Don't show on PWA routes or landing/login routes
   const isPwaRoute = location.endsWith('/pwa');
   const standaloneRoutes = [
-    '/volunteer-dashboard',
-    '/discover-opportunities',
     '/landing',
     '/login',
     '/'

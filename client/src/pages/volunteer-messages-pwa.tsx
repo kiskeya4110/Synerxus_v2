@@ -24,6 +24,7 @@ import {
   Loader2,
 } from "lucide-react";
 import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { formatDistanceToNow } from "date-fns";
 
 interface ConversationThread {
@@ -1066,50 +1067,7 @@ export default function VolunteerMessagesPWA() {
       )}
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-[#16213e] border-t border-gray-700 px-2 py-2 max-w-[428px] mx-auto z-40">
-        <div className="flex justify-around items-center">
-          <button
-            onClick={() => navigate("/volunteer-dashboard")}
-            className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200 transition-colors"
-            aria-label="Home"
-          >
-            <Home className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Home</span>
-          </button>
-          <button
-            onClick={() => navigate("/discover-opportunities/pwa")}
-            className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200 transition-colors"
-            aria-label="Projects"
-          >
-            <Briefcase className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Projects</span>
-          </button>
-          <button
-            className="flex flex-col items-center py-1 px-3 rounded-lg text-emerald-400"
-            aria-label="Messages"
-            aria-current="page"
-          >
-            <MessageSquare className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Messages</span>
-          </button>
-          <button
-            onClick={() => navigate("/volunteer-dashboard")}
-            className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200 transition-colors"
-            aria-label="Impacts"
-          >
-            <BarChart3 className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Impacts</span>
-          </button>
-          <button
-            onClick={() => navigate("/volunteer-profile-settings")}
-            className="flex flex-col items-center py-1 px-3 rounded-lg text-gray-400 hover:text-gray-200 transition-colors"
-            aria-label="Profile"
-          >
-            <User className="w-5 h-5 mb-1" />
-            <span className="text-[10px] font-medium">Profile</span>
-          </button>
-        </div>
-      </nav>
+      <VolunteerPWANav userId={userId} activeTab="home" />
     </div>
   );
 }

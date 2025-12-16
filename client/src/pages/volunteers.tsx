@@ -1070,9 +1070,9 @@ export default function Volunteers() {
       
       {/* Mobile Bottom Navigation - Organization Only */}
       {isOrganization && <MobileBottomNav />}
-      
-      {/* Footer */}
-      <Footer />
+
+      {/* Footer - Hidden when mobile navigation is shown */}
+      {!isOrganization && <Footer />}
 
       {/* Delete Volunteer Confirmation Dialog */}
       <DeleteConfirmDialog

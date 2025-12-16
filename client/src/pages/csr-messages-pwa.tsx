@@ -28,6 +28,7 @@ import {
   Briefcase,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import CSRPWANav from "@/components/layout/csr-pwa-nav";
 import { formatDistanceToNow } from "date-fns";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
@@ -703,6 +704,9 @@ export default function CSRMessagesPWA() {
           </div>
         </div>
       )}
+
+      {/* Bottom Navigation */}
+      <CSRPWANav activeTab="home" />
     </div>
   );
 }

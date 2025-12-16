@@ -694,6 +694,40 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
     staleTime: 30 * 1000, // Cache for 30 seconds only
   });
 
+  // Calculate real skill analytics based on opportunities data
+  const skillAnalytics = useMemo(() => {
+    const volunteerSkills = volunteerProfile?.skills || [];
+    const allOpportunities = discoverOpportunities || [];
+
+    if (volunteerSkills.length === 0) return {};
+
+    const analytics: Record<string, { matchingOpps: number; projects: number }> = {};
+
+    volunteerSkills.forEach((skill: string) => {
+      const skillLower = skill.toLowerCase();
+
+      // Count opportunities that require this skill
+      const matchingOpps = allOpportunities.filter((opp: any) => {
+        const requiredSkills = opp.requiredSkills || opp.skillsRequired || [];
+        return requiredSkills.some((rs: string) =>
+          rs?.toLowerCase().includes(skillLower) || skillLower.includes(rs?.toLowerCase())
+        );
+      }).length;
+
+      // Count projects where this skill was applied
+      const projectsWithSkill = projects.filter((p: any) => {
+        const projectSkills = p.requiredSkills || p.skillsRequired || p.skillsApplied || [];
+        return projectSkills.some((ps: string) =>
+          ps?.toLowerCase().includes(skillLower) || skillLower.includes(ps?.toLowerCase())
+        );
+      }).length;
+
+      analytics[skill] = { matchingOpps, projects: projectsWithSkill };
+    });
+
+    return analytics;
+  }, [volunteerProfile?.skills, discoverOpportunities, projects]);
+
   // Check if user has applied for an opportunity
   const hasAppliedToOpportunity = (opportunityId: number) => {
     return opportunityStatus?.appliedIds?.includes(opportunityId) || false;
@@ -1683,8 +1717,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                 {/* Skills Grid - Show first 4 */}
                 <div className="grid grid-cols-2 gap-2 mb-2">
                   {volunteerProfile?.skills?.slice(0, 4).map((skill: string, idx: number) => {
-                    // Use deterministic score based on skill name
-                    const demandScore = 70 + (skill.length * 3) % 25;
+                    const stats = skillAnalytics[skill] || { matchingOpps: 0, demandScore: 0, projects: 0 };
                     return (
                       <button
                         key={idx}
@@ -1692,13 +1725,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                         className="text-left bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-2 border border-amber-100/50 cursor-pointer hover:shadow-md active:scale-[0.98] transition-all"
                       >
                         <div className="text-slate-800 text-xs font-semibold truncate">{skill}</div>
-                        <div className="flex items-center gap-1 mt-1">
-                          <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" style={{ width: `${demandScore}%` }} />
-                          </div>
-                          <span className="text-[10px] text-emerald-700">{demandScore}%</span>
+                        <div className="flex items-center justify-between mt-1 text-[10px]">
+                          <span className="text-emerald-700">{stats.matchingOpps} opps</span>
+                          <span className="text-blue-600">{stats.projects} projects</span>
                         </div>
-                        <div className="text-[9px] text-blue-500 mt-0.5">Tap for insights</div>
+                        <div className="text-[9px] text-slate-400 mt-0.5">Tap for insights</div>
                       </button>
                     );
                   }) || (
@@ -1718,7 +1749,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                     </summary>
                     <div className="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-100">
                       {volunteerProfile?.skills?.slice(4).map((skill: string, idx: number) => {
-                        const demandScore = 70 + (skill.length * 3) % 25;
+                        const stats = skillAnalytics[skill] || { matchingOpps: 0, demandScore: 0, projects: 0 };
                         return (
                           <button
                             key={idx + 4}
@@ -1726,13 +1757,11 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
                             className="text-left bg-slate-50 rounded-lg p-2 border border-slate-100 hover:shadow-md active:scale-[0.98] transition-all"
                           >
                             <div className="text-slate-700 text-xs font-medium truncate">{skill}</div>
-                            <div className="flex items-center gap-1 mt-1">
-                              <div className="flex-1 h-1 bg-slate-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full" style={{ width: `${demandScore}%` }} />
-                              </div>
-                              <span className="text-[10px] text-blue-600">{demandScore}%</span>
+                            <div className="flex items-center justify-between mt-1 text-[10px]">
+                              <span className="text-emerald-600">{stats.matchingOpps} opps</span>
+                              <span className="text-blue-600">{stats.projects} projects</span>
                             </div>
-                            <div className="text-[9px] text-blue-500 mt-0.5">Tap for insights</div>
+                            <div className="text-[9px] text-slate-400 mt-0.5">Tap for insights</div>
                           </button>
                         );
                       })}
@@ -3767,74 +3796,58 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
             </div>
             <div className="p-4 space-y-4">
               {(() => {
-                const demandScore = 70 + (selectedSkill.length * 3) % 25;
-                const growthTrend = demandScore > 80 ? 'High Growth' : demandScore > 70 ? 'Steady Growth' : 'Emerging';
-                const matchingOpportunities = Math.floor(demandScore / 10);
+                const stats = skillAnalytics[selectedSkill] || { matchingOpps: 0, demandScore: 0, projects: 0 };
 
                 return (
                   <>
                     <div className="text-center py-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
                       <div className="text-2xl font-bold text-amber-700 mb-1">{selectedSkill}</div>
-                      <div className="flex items-center justify-center gap-2 text-xs">
-                        <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">{growthTrend}</span>
-                        <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{demandScore}% Demand</span>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {stats.projects > 0 ? `Applied in ${stats.projects} project${stats.projects > 1 ? 's' : ''}` : 'Not yet applied in projects'}
                       </div>
-                    </div>
-
-                    {/* Market Demand */}
-                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-slate-700 font-medium text-sm">Market Demand</span>
-                        <TrendingUp className="w-4 h-4 text-emerald-500" />
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-2">
-                        <div
-                          className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full transition-all"
-                          style={{ width: `${demandScore}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        This skill is in {demandScore >= 85 ? 'very high' : demandScore >= 75 ? 'high' : 'moderate'} demand across volunteer opportunities in your area.
-                      </p>
                     </div>
 
                     {/* Matching Opportunities */}
                     <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
-                          <Briefcase className="w-5 h-5 text-white" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center">
+                          <Briefcase className="w-6 h-6 text-white" />
                         </div>
                         <div>
-                          <div className="text-2xl font-bold text-blue-700">{matchingOpportunities}+</div>
-                          <div className="text-xs text-blue-600">Matching Opportunities</div>
+                          <div className="text-3xl font-bold text-blue-700">{stats.matchingOpps}</div>
+                          <div className="text-xs text-blue-600">Opportunities need this skill</div>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-600">
-                        Projects actively seeking volunteers with {selectedSkill} expertise.
-                      </p>
                     </div>
 
-                    {/* Skill Tips */}
-                    <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-4 h-4 text-purple-600" />
-                        <span className="text-slate-700 font-medium text-sm">Growth Tips</span>
+                    {/* Your Experience */}
+                    <div className="bg-emerald-50 rounded-xl p-4 border border-emerald-100">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center">
+                          <CheckCircle className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                          <div className="text-3xl font-bold text-emerald-700">{stats.projects}</div>
+                          <div className="text-xs text-emerald-600">Projects you've applied this skill</div>
+                        </div>
                       </div>
-                      <ul className="text-xs text-slate-600 space-y-1.5">
-                        <li className="flex items-start gap-2">
-                          <span className="text-purple-500 mt-0.5">•</span>
-                          <span>Apply this skill in different project types to build versatility</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-purple-500 mt-0.5">•</span>
-                          <span>Document your achievements to showcase impact</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-purple-500 mt-0.5">•</span>
-                          <span>Mentor others to strengthen your expertise</span>
-                        </li>
-                      </ul>
                     </div>
+
+                    {/* Quick Tips */}
+                    {stats.matchingOpps > 0 && stats.projects === 0 && (
+                      <div className="bg-amber-50 rounded-xl p-3 border border-amber-100">
+                        <p className="text-xs text-amber-700">
+                          <strong>Tip:</strong> There are {stats.matchingOpps} opportunities waiting! Apply to a project to start building experience.
+                        </p>
+                      </div>
+                    )}
+                    {stats.matchingOpps === 0 && (
+                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <p className="text-xs text-slate-600">
+                          No current opportunities require this specific skill, but your expertise is valuable across many projects.
+                        </p>
+                      </div>
+                    )}
 
                     <Button
                       onClick={() => {

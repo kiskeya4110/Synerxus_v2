@@ -14,7 +14,7 @@ const VOLUNTEER_NAV_ITEMS = [
   { href: "/projects", label: "My Projects", icon: <Briefcase className="w-4 h-4" />, description: "Your Projects" },
   { href: "/my-work", label: "My Work", icon: <ClipboardList className="w-4 h-4" />, description: "Tasks & Assignments" },
   { href: "/discover-opportunities", label: "Discover", icon: <Sparkles className="w-4 h-4" />, description: "Discover Opportunities" },
-  { href: "/impact-report", label: "My Impact", icon: <BarChart3 className="w-4 h-4" />, description: "View Your Impact" },
+  { href: "/impact-visualization", label: "My Impact", icon: <BarChart3 className="w-4 h-4" />, description: "View Your Impact" },
 ];
 
 const MENU_ITEMS = [
@@ -103,7 +103,7 @@ export default function VolunteerNav() {
                                (item.href === '/projects' && location.startsWith('/projects')) ||
                                (item.href === '/my-work' && location.startsWith('/my-work')) ||
                                (item.href === '/discover-opportunities' && location.includes('discover-opportunities')) ||
-                               (item.href === '/impact-report' && location.includes('impact-report'));
+                               (item.href === '/impact-visualization' && location.includes('impact-visualization'));
 
                 return (
                   <Link

@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import { PageTransition } from "@/components/ui/page-transition";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animated-container";
@@ -1170,6 +1170,18 @@ export default function Dashboard() {
                       <Button variant="outline" className="border-2 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 gap-2">
                         <CheckSquare className="h-4 w-4 text-emerald-600" />
                         My Tasks
+                      </Button>
+                    </Link>
+                    <Link href={`/impact-report/${userId}`}>
+                      <Button variant="outline" className="border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-2">
+                        <Globe className="h-4 w-4 text-amber-600" />
+                        SDG Impact
+                      </Button>
+                    </Link>
+                    <Link href="/impact-visualization">
+                      <Button variant="outline" className="border-2 border-cyan-200 hover:border-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 gap-2">
+                        <PieChart className="h-4 w-4 text-cyan-600" />
+                        My Impact
                       </Button>
                     </Link>
                   </div>

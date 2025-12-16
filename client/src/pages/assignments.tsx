@@ -16,6 +16,9 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AssignmentsProps {
   embedded?: boolean;
@@ -146,10 +149,14 @@ export default function Assignments(props: AssignmentsProps = {}) {
 
   const isLoading = userLoading || assignmentsLoading;
 
+  const isVolunteer = userType === 'volunteer';
+  const isMobile = useIsMobile();
+
   // Handle unauthenticated users - only check after query completes
   if (!userLoading && !currentUser) {
     return (
-      <div className={embedded ? "" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      <div className={embedded ? "" : "min-h-screen overflow-y-auto pb-24"}>
+        {!embedded && <VolunteerNav />}
         {!embedded && isOrganizationUser && <OrganizationHeader activeTab="projects" />}
         <div className={embedded ? "" : "container mx-auto p-6"}>
           <Alert variant="destructive">
@@ -160,25 +167,29 @@ export default function Assignments(props: AssignmentsProps = {}) {
             </AlertDescription>
           </Alert>
         </div>
+        {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className={embedded ? "" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+      <div className={embedded ? "" : "min-h-screen overflow-y-auto pb-24"}>
+        {!embedded && <VolunteerNav />}
         {!embedded && isOrganizationUser && <OrganizationHeader activeTab="projects" />}
         <div className={embedded ? "" : "container mx-auto p-6"}>
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">Loading assignments...</p>
           </div>
         </div>
+        {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
       </div>
     );
   }
 
   return (
-    <div className={embedded ? "" : isOrganizationUser ? "h-screen overflow-y-auto" : ""}>
+    <div className={embedded ? "" : "min-h-screen overflow-y-auto pb-24"}>
+      {!embedded && <VolunteerNav />}
       {!embedded && isOrganizationUser && <OrganizationHeader activeTab="projects" />}
       <div className={embedded ? "space-y-6" : isOrganizationUser ? "p-6 space-y-6" : "container mx-auto p-6 space-y-6"}>
         {!embedded && (
@@ -371,6 +382,9 @@ export default function Assignments(props: AssignmentsProps = {}) {
         )}
       </div>
       </div>
+
+      {/* Mobile Bottom Navigation for Volunteers */}
+      {!embedded && isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
     </div>
   );
 }

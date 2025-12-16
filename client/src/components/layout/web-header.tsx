@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import {
-  Menu, X, Home, Settings, MessageCircle, LogOut,
-  ClipboardList, Bell, User, Briefcase, BarChart3,
-  Sparkles, ChevronRight
+  Menu, X, Home, Search, Bell, Settings, LogOut,
+  User, MessageCircle, ClipboardList, Briefcase,
+  BarChart3, Sparkles, ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -11,16 +11,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 import type { User as UserType } from "@shared/schema";
 
-interface PWAHeaderProps {
-  showBackButton?: boolean;
-  onBack?: () => void;
-  onLogActivity?: () => void;
+interface WebHeaderProps {
+  showSearch?: boolean;
+  transparent?: boolean;
+  activeTab?: string;
 }
 
-export default function PWAHeader({ showBackButton = false, onBack, onLogActivity }: PWAHeaderProps) {
+export default function WebHeader({ showSearch = false, transparent = false, activeTab }: WebHeaderProps) {
   const [, navigate] = useLocation();
   const { signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
   // Fetch current user
@@ -40,50 +41,57 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     navigate('/');
   };
 
-  const handleLogActivity = () => {
-    setMenuOpen(false);
-    if (onLogActivity) {
-      onLogActivity();
-    } else {
-      navigate('/log-activity');
-    }
-  };
-
   const userInitial = (currentUser?.displayName || currentUser?.username || 'U').charAt(0).toUpperCase();
 
   const menuItems = [
-    { icon: Home, label: "Dashboard", path: "/volunteer-dashboard" },
-    { icon: Briefcase, label: "My Projects", path: "/volunteer-dashboard?tab=projects" },
-    { icon: Sparkles, label: "Discover", path: "/discover-opportunities" },
-    { icon: ClipboardList, label: "Log Activity", action: handleLogActivity, highlight: true },
-    { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts" },
+    { icon: Home, label: "Dashboard", path: "/volunteer-dashboard", active: activeTab === 'dashboard' },
+    { icon: Briefcase, label: "My Projects", path: "/volunteer-dashboard?tab=projects", active: activeTab === 'projects' },
+    { icon: Sparkles, label: "Discover", path: "/discover-opportunities", active: activeTab === 'discover' },
+    { icon: ClipboardList, label: "Log Activity", path: "/log-activity", highlight: true },
+    { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts", active: activeTab === 'impacts' },
     { icon: MessageCircle, label: "Messages", path: "/volunteer-messages/pwa" },
-    { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile" },
+    { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile", active: activeTab === 'profile' },
     { icon: Settings, label: "Settings", path: "/volunteer-profile-settings" },
   ];
 
   return (
     <>
-      {/* Main Header - Brand gradient with approved colors */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900">
+      {/* Main Header */}
+      <header className={`fixed top-0 left-0 right-0 z-50 ${
+        transparent
+          ? 'bg-transparent'
+          : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900'
+      }`}>
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
         <div className="px-4 py-3 flex items-center justify-between">
-          {/* Logo - Site approved logo */}
+          {/* Logo */}
           <button
             onClick={() => navigate('/volunteer-dashboard')}
             className="flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
-            <img
-              src={logoUrl}
-              alt="Synerxus"
-              className="h-10 w-auto object-contain"
-            />
+            <div className="relative">
+              <img
+                src={logoUrl}
+                alt="Synerxus"
+                className="h-9 w-auto object-contain brightness-0 invert"
+              />
+            </div>
           </button>
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* Search Button (optional) */}
+            {showSearch && (
+              <button
+                onClick={() => setSearchOpen(!searchOpen)}
+                className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-white/20 transition-all"
+              >
+                <Search className="w-5 h-5 text-white" />
+              </button>
+            )}
+
             {/* Notifications */}
             <button
               onClick={() => navigate('/notifications')}
@@ -99,7 +107,6 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             <button
               onClick={() => setMenuOpen(true)}
               className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all"
-              data-testid="button-pwa-menu"
             >
               <Avatar className="h-8 w-8 border-2 border-white/30">
                 <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
@@ -111,6 +118,24 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             </button>
           </div>
         </div>
+
+        {/* Search Expandable Bar */}
+        {searchOpen && (
+          <div className="px-4 pb-3 animate-in slide-in-from-top-2 duration-200">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search opportunities, projects..."
+                autoFocus
+                className="w-full pl-10 pr-4 py-3 bg-white/95 backdrop-blur-sm border-0 rounded-xl text-slate-800 placeholder-slate-400 focus:ring-2 focus:ring-white/50 outline-none shadow-lg"
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') setSearchOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Slide-out Menu */}
@@ -124,8 +149,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
           {/* Menu Panel */}
           <div className="relative ml-auto w-[85%] max-w-sm h-full bg-white dark:bg-slate-900 shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
-            {/* Menu Header - Brand gradient */}
-            <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-5 py-6 pt-[max(1.5rem,calc(env(safe-area-inset-top)+0.5rem))]">
+            {/* Menu Header */}
+            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-5 py-6 pt-[max(1.5rem,calc(env(safe-area-inset-top)+0.5rem))]">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-white/60 text-sm font-medium">Menu</span>
                 <button
@@ -161,35 +186,36 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
                 <button
                   key={index}
                   onClick={() => {
-                    if (item.action) {
-                      item.action();
-                    } else if (item.path) {
-                      setMenuOpen(false);
-                      navigate(item.path);
-                    }
+                    setMenuOpen(false);
+                    navigate(item.path);
                   }}
                   className={`w-full flex items-center gap-4 px-5 py-3.5 transition-colors text-left ${
                     item.highlight
                       ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      : item.active
+                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
-                  data-testid={`menu-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                     item.highlight
                       ? 'bg-emerald-100 dark:bg-emerald-900/40'
-                      : 'bg-slate-100 dark:bg-slate-800'
+                      : item.active
+                        ? 'bg-blue-100 dark:bg-blue-900/40'
+                        : 'bg-slate-100 dark:bg-slate-800'
                   }`}>
                     <item.icon className={`w-5 h-5 ${
                       item.highlight
                         ? 'text-emerald-600 dark:text-emerald-400'
-                        : 'text-slate-600 dark:text-slate-400'
+                        : item.active
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-slate-600 dark:text-slate-400'
                     }`} />
                   </div>
                   <span className="font-medium flex-1">{item.label}</span>
                   <ChevronRight className={`w-5 h-5 ${
-                    item.highlight
-                      ? 'text-emerald-400'
+                    item.highlight || item.active
+                      ? 'opacity-60'
                       : 'text-slate-400 dark:text-slate-500'
                   }`} />
                 </button>
@@ -201,7 +227,6 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
-                data-testid="menu-logout"
               >
                 <LogOut className="w-5 h-5" />
                 <span>Sign Out</span>
@@ -210,6 +235,9 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           </div>
         </div>
       )}
+
+      {/* Spacer for fixed header */}
+      <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
     </>
   );
 }

@@ -34,6 +34,9 @@ import {
 } from "lucide-react";
 import { SDG_GOALS } from "@shared/sdg-goals";
 import ApplicationDialog from "@/components/opportunities/application-dialog";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MatchBreakdown {
   skillMatch: number;
@@ -79,6 +82,7 @@ interface EnrichedOpportunity {
 export default function OpportunityDetail() {
   const { id } = useParams();
   const [, navigate] = useLocation();
+  const isMobile = useIsMobile();
   const opportunityId = parseInt(id!);
   const userId = localStorage.getItem('currentUserId');
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
@@ -219,21 +223,8 @@ export default function OpportunityDetail() {
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 pb-24 md:pb-8">
-      {/* Mobile Header */}
-      <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 flex items-center justify-between md:hidden shadow-lg">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-white hover:bg-white/20 -ml-2"
-          onClick={handleBack}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-base font-semibold">Opportunity Details</h1>
-        <Button variant="ghost" size="sm" className="text-white hover:bg-white/20">
-          <Share2 className="h-5 w-5" />
-        </Button>
-      </div>
+      {/* Volunteer Desktop Navigation */}
+      <VolunteerNav />
 
       {/* Desktop Back Button */}
       <div className="hidden md:block px-6 pt-6 pb-2 max-w-5xl mx-auto">
@@ -746,6 +737,9 @@ export default function OpportunityDetail() {
         open={applicationDialogOpen}
         onOpenChange={setApplicationDialogOpen}
       />
+
+      {/* Mobile Bottom Navigation */}
+      {isMobile && <WebBottomNav activeTab="discover" />}
     </div>
   );
 }

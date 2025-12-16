@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus, MoreVertical, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, Sparkles } from "lucide-react";
+import { Briefcase, ListTodo, FolderKanban, CheckSquare, TrendingUp, Clock, Share2, Lightbulb, ArrowRight, Star, BarChart3, Users as UsersIcon, FolderOpen, Search, Plus, Settings, MessageCircle, Award, Bell, HelpCircle, LogOut, Compass, Home, User as UserIcon, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,13 +21,12 @@ import ImpactVisualization from "./impact-visualization";
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 import { useIsMobile } from "@/hooks/use-mobile";
-import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
 
 export default function MyWork() {
   const [, setLocation] = useLocation();
   const isMobile = useIsMobile();
-  const [showMenu, setShowMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<string>(() => {
     // Restore from sessionStorage first, then URL hash, then default
     if (typeof window !== 'undefined') {
@@ -458,131 +457,9 @@ export default function MyWork() {
   const impactLeaderName = impactLeaderEntry ? impactLeaderEntry[1].name : 'Not set';
 
   return (
-    <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-[#FDF8F3] flex flex-col max-w-[428px] mx-auto' : 'overflow-y-auto'}`}>
-      {/* PWA Header for Volunteers on Mobile - Matching approved format */}
-      {!isOrganizationManager && isMobile && (
-        <header className="bg-gradient-to-r from-blue-500 via-sky-300 to-sky-100 text-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-          <button
-            onClick={() => setLocation("/")}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          >
-            <img src={logoUrl} alt="Synerxus Logo" className="h-12 w-auto object-contain" />
-          </button>
-          <div className="flex items-center gap-2 relative">
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 hover:bg-slate-800/10 rounded-full"
-            >
-              <MoreVertical className="w-5 h-5 text-slate-700" />
-            </button>
-
-            {/* Floating Menu */}
-            {showMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowMenu(false)}
-                />
-                <div className="absolute top-12 right-0 bg-[#16213e] border border-gray-700 rounded-lg shadow-xl w-56 z-50">
-                  <div className="py-2">
-                    <button
-                      onClick={() => {
-                        setLocation('/volunteer-dashboard');
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <Home className="w-4 h-4" />
-                      <span>Dashboard</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setLocation('/discover-opportunities');
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <Compass className="w-4 h-4" />
-                      <span>Discover Opportunities</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setLocation('/log-activity');
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <Clock className="w-4 h-4" />
-                      <span>Log Activity</span>
-                    </button>
-                    <div className="border-t border-gray-700 my-1"></div>
-                    <button
-                      onClick={() => {
-                        setLocation('/volunteer-profile-settings');
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Profile Settings</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setLocation('/volunteer-messages');
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      <span>Messages</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setLocation('/achievements');
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <Award className="w-4 h-4" />
-                      <span>Achievements</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <Bell className="w-4 h-4" />
-                      <span>Notifications</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                      <span>Help & Support</span>
-                    </button>
-                    <div className="border-t border-gray-700 my-1"></div>
-                    <button
-                      onClick={() => {
-                        localStorage.clear();
-                        setLocation('/login');
-                        setShowMenu(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-red-400"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </header>
-      )}
+    <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto'}`}>
+      {/* Volunteer Desktop Navigation */}
+      <VolunteerNav />
 
       {/* Main Content Wrapper */}
       <main className={!isOrganizationManager && isMobile ? "flex-1 overflow-y-auto pb-20" : ""}>
@@ -1005,7 +882,7 @@ export default function MyWork() {
 
       {/* PWA Bottom Navigation for Volunteers on Mobile */}
       {!isOrganizationManager && isMobile && (
-        <VolunteerPWANav userId={userId || undefined} activeTab="mywork" />
+        <WebBottomNav activeTab="projects" />
       )}
     </div>
   );

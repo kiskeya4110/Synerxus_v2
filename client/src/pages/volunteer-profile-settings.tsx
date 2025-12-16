@@ -44,7 +44,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
-import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Form,
@@ -1293,14 +1294,18 @@ export default function VolunteerProfileSettings() {
   const isSubmitting = profileMutation.isPending;
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-4xl">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
-        <p className="text-muted-foreground">
-          Create or update your volunteer profile to get matched with
-          organizations that align with your skills, interests, and goals.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24">
+      {/* Volunteer Desktop Navigation */}
+      <VolunteerNav />
+
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
+          <p className="text-muted-foreground">
+            Create or update your volunteer profile to get matched with
+            organizations that align with your skills, interests, and goals.
+          </p>
+        </div>
 
       <Card>
         <CardHeader className="text-center">
@@ -1472,12 +1477,10 @@ export default function VolunteerProfileSettings() {
         </CardContent>
       </Card>
 
-      {/* PWA Bottom Navigation for Mobile */}
-      {isMobile && (
-        <div className="pb-20">
-          <VolunteerPWANav userId={userId || undefined} activeTab="profile" />
-        </div>
-      )}
+      </div>
+
+      {/* Bottom Navigation */}
+      <WebBottomNav activeTab="profile" />
     </div>
   );
 }

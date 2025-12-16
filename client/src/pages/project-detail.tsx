@@ -18,6 +18,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const SDG_COLORS: { [key: number]: string } = {
   1: "#E5243B", 2: "#DDA63A", 3: "#4C9F38", 4: "#C5192D",
@@ -100,6 +103,7 @@ interface DBUser {
 export default function ProjectDetail() {
   const [, params] = useRoute("/projects/:id");
   const [, navigate] = useLocation();
+  const isMobile = useIsMobile();
   const projectId = params?.id ? parseInt(params.id) : null;
   const userId = localStorage.getItem('currentUserId');
   
@@ -412,8 +416,13 @@ export default function ProjectDetail() {
     setTaskToDelete(null);
   };
 
+  const isVolunteer = currentUser?.userType === 'volunteer';
+
   return (
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-900 overflow-y-auto overflow-x-hidden">
+      {/* Volunteer Desktop Navigation */}
+      <VolunteerNav />
+
       <div className="min-h-full pb-24 md:pb-0">
       {isOrganization && <OrganizationHeader activeTab="projects" />}
 
@@ -1604,7 +1613,8 @@ export default function ProjectDetail() {
       )}
 
       {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
+      {isOrganization && <MobileBottomNav />}
+      {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
 
       {/* Delete Task Confirmation Dialog */}
       <DeleteConfirmDialog

@@ -10,6 +10,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import OrganizationHeader from "@/components/layout/organization-header";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ITask {
   id: number;
@@ -66,10 +69,15 @@ export default function Tasks() {
     }
   };
 
+  const isVolunteer = userType === 'volunteer';
+  const isMobile = useIsMobile();
+
   return (
-    <div className={isOrganizationUser ? "min-h-screen overflow-y-auto" : ""} style={{ paddingBottom: isOrganizationUser ? '180px' : '0' }}>
+    <div className="min-h-screen overflow-y-auto pb-24" style={{ paddingBottom: isOrganizationUser ? '180px' : '96px' }}>
+      {/* Volunteer Desktop Navigation */}
+      <VolunteerNav />
       {isOrganizationUser && <OrganizationHeader activeTab="projects" />}
-      <div className={isOrganizationUser ? "p-6" : ""}>
+      <div className={isOrganizationUser ? "p-6" : "p-4"}>
         {/* Page Header */}
         <div className="mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-bold mb-2">Tasks</h1>
@@ -181,6 +189,9 @@ export default function Tasks() {
         </TabsContent>
       </Tabs>
       </div>
+
+      {/* Mobile Bottom Navigation for Volunteers */}
+      {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
     </div>
   );
 }

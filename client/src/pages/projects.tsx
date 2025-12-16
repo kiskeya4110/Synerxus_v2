@@ -10,8 +10,9 @@ import { CreateProjectDialog } from "@/components/projects/project-dialogs";
 import { EditOpportunityDialog, DeleteOpportunityDialog } from "@/components/opportunities/opportunity-dialogs";
 import { ProjectListCard } from "@/components/projects/project-list-card";
 import OrganizationHeader from "@/components/layout/organization-header";
-import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import WebBottomNav from "@/components/layout/web-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
@@ -245,6 +246,9 @@ export default function Projects() {
 
   return (
     <>
+      {/* Volunteer Desktop Navigation */}
+      <VolunteerNav />
+
       {isOrganization && <OrganizationHeader activeTab="projects" />}
       <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6 pb-24" : "h-screen overflow-y-auto pb-24"}>
       <div className="mb-6">
@@ -414,10 +418,8 @@ export default function Projects() {
       )}
       </div>
 
-      {/* PWA Bottom Navigation for Volunteers on Mobile */}
-      {isVolunteer && isMobile && (
-        <VolunteerPWANav userId={userId || undefined} activeTab="projects" />
-      )}
+      {/* Mobile Bottom Navigation for Volunteers */}
+      {isVolunteer && isMobile && <WebBottomNav activeTab="projects" />}
 
       {/* Mobile Bottom Navigation for Organizations */}
       {isOrganization && <MobileBottomNav />}

@@ -898,12 +898,12 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
   }, [projects, projectAssignments, applications, volunteerProfile]);
 
   return (
-    <div className="min-h-screen h-screen bg-gradient-to-r from-blue-400 via-cyan-300 to-amber-300 flex flex-col w-full overflow-hidden">
+    <div className="min-h-screen h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col w-full overflow-hidden">
       {/* PWA Header */}
       <PWAHeader onLogActivity={() => setActiveTab('log-activity')} />
 
       {/* Spacer for fixed header */}
-      <div className="h-14 flex-shrink-0 pt-[env(safe-area-inset-top)]" />
+      <div className="h-[calc(3.5rem+max(0.5rem,env(safe-area-inset-top)))]" />
 
       {/* Offline Banner */}
       {isOffline && (
@@ -914,7 +914,7 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-slate-100">
+      <main className="flex-1 overflow-y-auto pb-20">
         {activeTab === 'dashboard' && (
           <div className="space-y-4">
             {/* Welcome Header - Integrated with profile */}
@@ -3682,6 +3682,62 @@ export default function MobilePWAView({ userId, user, dashboardData }: MobilePWA
         </div>
       )}
 
+      {/*
+        IMPORTANT: PWA Bottom Tray Navigation - DO NOT REPLACE
+        This navigation uses internal setActiveTab() for tab switching within the PWA.
+        It must NOT be replaced with URL-based navigation components like WebBottomNav.
+        Tabs: Home, Projects, Potential, Impacts, Stories, More
+      */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-blue-100 px-4 py-3 flex justify-around max-w-[428px] mx-auto z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-home"
+        >
+          <Home className="w-5 h-5" />
+          <span className="text-xs font-medium">Home</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('projects')}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'projects' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-projects"
+        >
+          <Briefcase className="w-5 h-5" />
+          <span className="text-xs font-medium">Projects</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('potential')}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'potential' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-potential"
+        >
+          <Lightbulb className="w-5 h-5" />
+          <span className="text-xs font-medium">Potential</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('impacts')}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'impacts' ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-impacts"
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span className="text-xs font-medium">Impacts</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('stories')}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'stories' ? 'text-purple-600' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-stories"
+        >
+          <FileText className="w-5 h-5" />
+          <span className="text-xs font-medium">Stories</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('more')}
+          className={`flex flex-col items-center gap-1 py-2 px-3 rounded-lg transition-colors ${activeTab === 'more' ? 'text-slate-700' : 'text-slate-500 hover:text-slate-700'}`}
+          data-testid="nav-more"
+        >
+          <User className="w-5 h-5" />
+          <span className="text-xs font-medium">More</span>
+        </button>
+      </nav>
     </div>
   );
 }

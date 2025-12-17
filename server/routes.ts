@@ -4472,7 +4472,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return status === 'in progress' || status === 'active';
       }).length;
 
+      const completedProjects = organizationProjects.filter(p => {
+        const status = p.status?.toLowerCase();
+        return status === 'completed' || status === 'complete';
+      }).length;
+
       const totalHours = organizationActivities.reduce((sum, a) => sum + a.hours, 0);
+
+      // Calculate AIU earned: Base formula is hours/50 with SDG multiplier (up to 2x for 17 SDGs)
 
       const uniqueSDGs = new Set<number>();
       organizationProjects.forEach(project => {
@@ -4480,6 +4487,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           project.sdgGoals.forEach(goal => uniqueSDGs.add(goal));
         }
       });
+
+      // Calculate AIU: hours/50 * SDG multiplier (1 + sdgCount/17)
+      const sdgMultiplier = 1 + (uniqueSDGs.size / 17);
+      const aiuEarned = totalHours > 0 ? Math.round((totalHours / 50) * sdgMultiplier * 10) / 10 : 0;
 
       const totalPeopleImpacted = organizationImpacts
         .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
@@ -4635,10 +4646,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         keyMetrics: {
           activeProjects,
+          completedProjects,
           totalProjects: organizationProjects.length,
           totalHours,
           sdgsAddressed: uniqueSDGs.size,
+          aiuEarned,
           livesTouched: totalPeopleImpacted,
+          peopleImpacted: totalPeopleImpacted,
           activeVolunteers: organizationVolunteers.length,
         },
         sdgDistribution: Object.entries(sdgDistribution).map(([goal, data]) => ({

@@ -43,8 +43,8 @@ const serverState: ServerState = {
 
 /**
  * Layer 1: Pre-startup cleanup
- * Only cleans up locks from DEAD processes - NEVER kills running instances
- * Returns false if any live server process owns the lock (caller should abort)
+ * Cleans up stale locks - uses timestamp to detect PID recycling
+ * Only blocks if lock is recent (<30s) AND PID is alive
  */
 function performPreStartupCleanup(port: number): boolean {
   logger.info(`[PortManager] Pre-startup cleanup for port ${port}...`);
@@ -53,8 +53,9 @@ function performPreStartupCleanup(port: number): boolean {
   if (fs.existsSync(LOCK_FILE_PATH)) {
     try {
       const lockContent = fs.readFileSync(LOCK_FILE_PATH, 'utf-8').trim();
-      const [pidStr] = lockContent.split(':');
+      const [pidStr, timestampStr] = lockContent.split(':');
       const lockPid = parseInt(pidStr, 10);
+      const lockTimestamp = parseInt(timestampStr, 10);
 
       // Handle malformed lock file (invalid or missing PID)
       if (isNaN(lockPid)) {
@@ -64,46 +65,45 @@ function performPreStartupCleanup(port: number): boolean {
       }
 
       if (lockPid !== process.pid) {
+        const lockAge = Date.now() - (lockTimestamp || 0);
+        
         // Check if process is still alive using kill signal 0
         let processAlive = false;
         try {
           process.kill(lockPid, 0);
           processAlive = true;
         } catch (e) {
-          // Process doesn't exist - lock is stale
           processAlive = false;
         }
 
-        if (processAlive) {
-          // Process is alive - NEVER kill it, abort this startup instead
-          logger.error(`[PortManager] Active server running (PID: ${lockPid})`);
+        // Only block if BOTH: process alive AND lock is recent (<30s)
+        // This handles PID recycling - old lock + alive PID = different process
+        if (processAlive && lockAge < 30000) {
+          logger.error(`[PortManager] Active server running (PID: ${lockPid}, age: ${Math.round(lockAge/1000)}s)`);
           logger.error(`[PortManager] Cannot start - another instance is already running`);
-          return false; // Signal caller to abort
+          return false;
         } else {
-          // Process is dead - safe to remove stale lock and attempt socket cleanup
-          logger.info(`[PortManager] Removing stale lock (PID ${lockPid} not running)`);
-          fs.unlinkSync(LOCK_FILE_PATH);
+          // Either process dead OR lock is old (PID recycled)
+          logger.info(`[PortManager] Removing stale lock (PID: ${lockPid}, age: ${Math.round(lockAge/1000)}s)`);
+          try { fs.unlinkSync(LOCK_FILE_PATH); } catch (e) {}
           
-          // Attempt to clean up stale socket from dead process
+          // Attempt to clean up stale socket
           try {
             execSync(`fuser -k ${port}/tcp 2>/dev/null || true`, { 
               encoding: 'utf-8', 
               timeout: 2000 
             });
-          } catch (e) {
-            // Ignore - fuser might not be available
-          }
+          } catch (e) {}
         }
       }
     } catch (error) {
-      // Lock file unreadable/corrupt - remove it and proceed
       logger.warn(`[PortManager] Error reading lock file, removing`);
       try { fs.unlinkSync(LOCK_FILE_PATH); } catch (e) {}
     }
   }
 
   logger.info(`[PortManager] Pre-startup cleanup complete`);
-  return true; // Safe to proceed
+  return true;
 }
 
 /**
@@ -297,6 +297,12 @@ export function setupGracefulShutdown(
 
   const shutdown = async (signal: string) => {
     if (shutdownInProgress || serverState.isShuttingDown) {
+      return;
+    }
+
+    // Don't shutdown during startup - let retries complete
+    if (serverState.isStarting) {
+      logger.info(`[PortManager] ${signal} received during startup, ignoring`);
       return;
     }
 

@@ -257,6 +257,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     const completedTasks = Number(dashboardData?.completedTasks) || 0;
     const totalTasks = Number(dashboardData?.totalTasks) || 0;
 
+    // Calculate Impact ROI (lives impacted per hour volunteered)
+    const impactROI = totalHours > 0 ? Math.round((livesImpacted / totalHours) * 10) / 10 : 0;
+
     return {
       totalHours,
       projectsCompleted,
@@ -274,7 +277,8 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       pendingApplications,
       impactScore,
       completedTasks,
-      totalTasks
+      totalTasks,
+      impactROI                 // Lives impacted per hour volunteered
     };
   }, [dashboardData, projects, volunteerProfile]);
 
@@ -1086,64 +1090,58 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
             )}
 
-            {/* KPI Cards - Unique metrics that complement the SDG Impact Report below */}
+            {/* KPI Cards - Key metrics: Impact ROI, AIU Score, Hours, SDGs */}
             <div className="px-4 grid grid-cols-4 gap-2">
-              {/* Impact Score - Overall performance metric */}
+              {/* Impact ROI - Lives impacted per hour volunteered */}
               <button
                 onClick={() => setShowKpiModal('impact-score')}
                 className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
-                data-testid="kpi-impact-score"
+                data-testid="kpi-impact-roi"
               >
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-4 h-4 text-indigo-600" />
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="w-4 h-4 text-emerald-600" />
                 </div>
-                <div className="text-xl font-bold text-slate-800">{kpis.impactScore}</div>
-                <div className="text-[10px] font-medium text-slate-500">Impact</div>
+                <div className="text-xl font-bold text-slate-800">{kpis.impactROI}</div>
+                <div className="text-[10px] font-medium text-slate-500">Impact ROI</div>
+                <div className="text-[8px] text-slate-400">per hour</div>
               </button>
-              {/* Tasks Progress - Productivity metric */}
+              {/* AIU Score - Attributable Impact Units */}
               <button
-                onClick={() => setShowKpiModal('tasks')}
+                onClick={() => setShowKpiModal('aiu')}
                 className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
-                data-testid="kpi-tasks"
-              >
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <ClipboardList className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div className="text-lg font-bold text-slate-800">
-                  {kpis.totalTasks > 0 ? `${kpis.completedTasks}/${kpis.totalTasks}` : '0'}
-                </div>
-                <div className="text-[10px] font-medium text-slate-500">Tasks</div>
-              </button>
-              {/* People Reached - Social impact metric */}
-              <button
-                onClick={() => setShowKpiModal('people')}
-                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
-                data-testid="kpi-people"
-              >
-                <div className="w-8 h-8 mx-auto mb-1.5 bg-rose-100 rounded-xl flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-rose-600" />
-                </div>
-                <div className="text-xl font-bold text-slate-800">
-                  {kpis.livesImpacted > 999 ? `${(kpis.livesImpacted / 1000).toFixed(1)}k` : kpis.livesImpacted}
-                </div>
-                <div className="text-[10px] font-medium text-slate-500">Reached</div>
-              </button>
-              {/* Pending Applications - Growth/Opportunity metric */}
-              <button
-                onClick={() => setShowKpiModal('applications')}
-                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
-                data-testid="kpi-applications"
+                data-testid="kpi-aiu-score"
               >
                 <div className="w-8 h-8 mx-auto mb-1.5 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  <Award className="w-4 h-4 text-amber-600" />
                 </div>
-                <div className="text-xl font-bold text-slate-800">{kpis.pendingApplications}</div>
-                <div className="text-[10px] font-medium text-slate-500">Pending</div>
-                {kpis.pendingApplications > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] text-white font-bold flex items-center justify-center animate-pulse">
-                    !
-                  </span>
-                )}
+                <div className="text-xl font-bold text-slate-800">
+                  {formatNumber(aiuSummary?.totalAiu || 0)}
+                </div>
+                <div className="text-[10px] font-medium text-slate-500">AIU Score</div>
+              </button>
+              {/* Total Hours - Time contributed */}
+              <button
+                onClick={() => setShowKpiModal('hours')}
+                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
+                data-testid="kpi-hours"
+              >
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="text-xl font-bold text-slate-800">{kpis.totalHours}</div>
+                <div className="text-[10px] font-medium text-slate-500">Hours</div>
+              </button>
+              {/* SDG Goals - Sustainable Development Goals contributed */}
+              <button
+                onClick={() => setShowKpiModal('sdgs')}
+                className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
+                data-testid="kpi-sdgs"
+              >
+                <div className="w-8 h-8 mx-auto mb-1.5 bg-indigo-100 rounded-xl flex items-center justify-center">
+                  <Target className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div className="text-xl font-bold text-slate-800">{kpis.sdgsContributed}</div>
+                <div className="text-[10px] font-medium text-slate-500">SDGs</div>
               </button>
             </div>
 

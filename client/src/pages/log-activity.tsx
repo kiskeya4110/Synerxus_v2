@@ -273,8 +273,8 @@ export default function LogActivity() {
 
   return (
     <div className={`min-h-screen ${isMobile && isVolunteer ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24' : 'bg-background'}`}>
-      {/* Volunteer Desktop Navigation */}
-      <VolunteerNav />
+      {/* Volunteer Desktop Navigation - only for volunteers */}
+      {isVolunteer && <VolunteerNav />}
 
       {/* Back Button for Non-PWA */}
       {(!isMobile || !isVolunteer) && (

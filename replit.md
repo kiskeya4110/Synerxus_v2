@@ -30,7 +30,18 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Impacts Tab**: Global impact report with charts, SDG distribution, and full report navigation
 - **Bottom Navigation**: Home, Projects, Potential, Impacts, Profile with active state indicators
 
-### Bug Fixes & Protections (December 13, 2025)
+### Bug Fixes & Protections (December 17, 2025)
+**Port Conflict Crash Prevention**:
+- **server/index.ts**: Enhanced port binding logic to prevent EADDRINUSE crashes:
+  - Increased retry attempts from 3 to 5 with 1-second delays for better recovery
+  - Added `reuseAddr` socket option alongside `reusePort` for faster port release on OS level
+  - Improved server cleanup with forced connection closure before retry attempts
+  - Added graceful signal handlers (SIGINT/SIGTERM) to ensure proper cleanup on shutdown
+  - Added timeout fallback to force exit if server.close() hangs (prevents zombie processes)
+  - Uses `server.once()` instead of `server.on()` for error handler to prevent duplicate listeners
+  - Result: Server now recovers from port conflicts instead of crashing, improving uptime
+
+### Previous Bug Fixes (December 13, 2025)
 **React Hooks Rule Violations Fixed**:
 - **volunteer-nav.tsx**: Moved `useState(false)` hook to top of component (line 30) before early return statement on line 53-54. React requires all hooks to be called unconditionally in the same order on every render.
 - **volunteer-intake.tsx**: Added fallback arrays for `form.watch("availability")` at lines 698 and 772 to handle undefined values during form initialization with `|| []` operator.

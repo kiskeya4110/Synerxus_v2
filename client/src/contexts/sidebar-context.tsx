@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from "react";
 
 interface SidebarContextType {
   sidebarOpen: boolean;
@@ -12,12 +12,20 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   // Always start closed (autohide mode) - users can toggle it open
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const toggleSidebar = () => {
+  // Memoize callbacks to prevent unnecessary re-renders
+  const toggleSidebar = useCallback(() => {
     setSidebarOpen(prev => !prev);
-  };
+  }, []);
+
+  // Memoize the context value to prevent child re-renders when parent re-renders
+  const value = useMemo(() => ({
+    sidebarOpen,
+    setSidebarOpen,
+    toggleSidebar,
+  }), [sidebarOpen, toggleSidebar]);
 
   return (
-    <SidebarContext.Provider value={{ sidebarOpen, setSidebarOpen, toggleSidebar }}>
+    <SidebarContext.Provider value={value}>
       {children}
     </SidebarContext.Provider>
   );

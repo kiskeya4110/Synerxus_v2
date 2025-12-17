@@ -458,8 +458,8 @@ export default function MyWork() {
 
   return (
     <div className={`min-h-screen ${!isOrganizationManager && isMobile ? 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex flex-col' : 'overflow-y-auto'}`}>
-      {/* Volunteer Desktop Navigation */}
-      <VolunteerNav />
+      {/* Volunteer Desktop Navigation - only for volunteers, not organization managers */}
+      {!isOrganizationManager && <VolunteerNav />}
 
       {/* Main Content Wrapper */}
       <main className={!isOrganizationManager && isMobile ? "flex-1 overflow-y-auto pb-20" : ""}>
@@ -509,12 +509,12 @@ export default function MyWork() {
         </div>
       )}
       
-      <div className="mx-4 sm:mx-6 pt-6 pb-4 flex items-start justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-4 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold">{isOrganizationManager ? "Projects" : "My Work"}</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            {isOrganizationManager 
-              ? "Manage your organization's projects, tasks, and impact" 
+            {isOrganizationManager
+              ? "Manage your organization's projects, tasks, and impact"
               : "Manage your applications, assignments, and tasks in one place"
             }
           </p>
@@ -545,7 +545,7 @@ export default function MyWork() {
 
       {/* Organization Impact KPIs - Interactive Cards */}
       {isOrganizationManager ? (
-        <div className="mx-4 sm:mx-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 px-0 pb-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 pb-4">
           {/* Impact Score - Primary Metric */}
           <Card
             className="cursor-pointer hover:shadow-md transition-all bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 hover:scale-[1.02]"
@@ -827,7 +827,7 @@ export default function MyWork() {
           </div>
         </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mx-4 sm:mx-6 pb-20 md:pb-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full max-w-7xl mx-auto px-4 sm:px-6 pb-20 md:pb-4">
           <TabsList className="grid w-full max-w-2xl grid-cols-3 md:grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="applications" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm" data-testid="tab-applications">
               <Briefcase className="h-4 w-4" />

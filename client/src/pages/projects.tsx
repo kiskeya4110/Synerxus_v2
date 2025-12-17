@@ -246,11 +246,11 @@ export default function Projects() {
 
   return (
     <>
-      {/* Volunteer Desktop Navigation */}
-      <VolunteerNav />
+      {/* Volunteer Desktop Navigation - only for volunteers */}
+      {!isOrganization && <VolunteerNav />}
 
       {isOrganization && <OrganizationHeader activeTab="projects" />}
-      <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6 pb-24" : "h-screen overflow-y-auto pb-24"}>
+      <div className={isOrganization ? "h-screen overflow-y-auto max-w-[1400px] mx-auto p-6 pb-24" : "h-screen overflow-y-auto max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-24"}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">Projects & Tasks</h1>
         <p className="text-gray-600">Manage projects, tasks, and volunteer assignments</p>

@@ -78,13 +78,43 @@ export const queryClient = new QueryClient({
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      // OPTIMIZATION: Use realistic stale times instead of Infinity to allow periodic background updates
-      // 5 minutes for most data, 10 minutes for profile/user data which changes less frequently
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: false,
+      refetchOnReconnect: true,
+      // OPTIMIZATION: Use realistic stale times to reduce API calls
+      staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
+      gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for reuse (formerly cacheTime)
+      // Smart retry with exponential backoff for network errors only
+      retry: (failureCount, error: any) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error?.message?.startsWith('4')) return false;
+        // Retry up to 2 times for network/server errors
+        return failureCount < 2;
+      },
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
     },
     mutations: {
-      retry: false,
+      retry: (failureCount, error: any) => {
+        // Only retry on network errors, not validation errors
+        if (error?.message?.startsWith('4')) return false;
+        return failureCount < 1;
+      },
+      retryDelay: 1000,
     },
   },
 });
+
+// Prefetch common queries on app load for faster initial render
+export const prefetchCommonQueries = async (userId: string | null) => {
+  if (!userId) return;
+
+  // Prefetch in parallel for faster loading
+  await Promise.allSettled([
+    queryClient.prefetchQuery({
+      queryKey: ["/api/users/me", userId],
+      staleTime: 10 * 60 * 1000, // User data stays fresh longer
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["/api/dashboard/summary", userId],
+      staleTime: 2 * 60 * 1000, // Dashboard updates more frequently
+    }),
+  ]);
+};

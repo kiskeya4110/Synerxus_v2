@@ -9,6 +9,7 @@ import { getPoolStats } from "./db";
 import { cache } from "./cache";
 import { getCircuitBreakerStats, isSystemHealthy } from "./circuit-breaker";
 import { getQueueStats, isOverloaded, drainQueues } from "./request-queue";
+import { startMemoryMonitoring, getMemorySummary } from "./memory-monitor";
 
 // Global error handlers to prevent crashes from unhandled rejections/exceptions
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
@@ -49,6 +50,9 @@ process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 const app = express();
+
+// Trust proxy for accurate rate limiting behind reverse proxies (Replit, Heroku, etc.)
+app.set('trust proxy', 1);
 
 // Enable gzip/brotli compression for all responses (40-70% size reduction)
 app.use(compression({
@@ -100,26 +104,40 @@ app.use('/api', (req, res, next) => {
 });
 
 // Health check endpoint for load balancers and monitoring
-// sat1325upgrade: Added circuit breaker and queue stats
+// sat1325upgrade: Added circuit breaker, queue stats, and memory monitoring
 app.get('/health', (req, res) => {
   const poolStats = getPoolStats();
   const cacheStats = cache.getStats();
   const circuitBreakerStats = getCircuitBreakerStats();
   const queueStats = getQueueStats();
+  const memorySummary = getMemorySummary();
   const systemHealthy = isSystemHealthy();
   const overloaded = isOverloaded();
+  const memoryHealthy = memorySummary.isHealthy;
 
   // Return 503 if system is unhealthy (for load balancer health checks)
-  const statusCode = systemHealthy && !overloaded ? 200 : 503;
+  const statusCode = systemHealthy && !overloaded && memoryHealthy ? 200 : 503;
 
   res.status(statusCode).json({
-    status: systemHealthy && !overloaded ? 'healthy' : 'degraded',
+    status: systemHealthy && !overloaded && memoryHealthy ? 'healthy' : 'degraded',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: {
-      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
-      heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB',
-      rss: Math.round(process.memoryUsage().rss / 1024 / 1024) + 'MB',
+      current: {
+        heapUsed: `${memorySummary.current.heapUsedMB}MB`,
+        heapTotal: `${memorySummary.current.heapTotalMB}MB`,
+        rss: `${memorySummary.current.rssMB}MB`,
+        heapUsedPercent: `${memorySummary.current.heapUsedPercent}%`,
+      },
+      average: {
+        heapUsed: `${memorySummary.average.heapUsedMB}MB`,
+        heapUsedPercent: `${memorySummary.average.heapUsedPercent}%`,
+      },
+      peak: {
+        heapUsed: `${memorySummary.peak.heapUsedMB}MB`,
+      },
+      trend: memorySummary.trend,
+      healthy: memoryHealthy,
     },
     database: poolStats,
     cache: cacheStats,
@@ -128,6 +146,7 @@ app.get('/health', (req, res) => {
     flags: {
       systemHealthy,
       overloaded,
+      memoryHealthy,
     },
     pid: process.pid,
     version: 'sat1325upgrade',
@@ -184,7 +203,17 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  const server = await registerRoutes(app);
+  let server;
+  try {
+    server = await registerRoutes(app);
+  } catch (err) {
+    logger.error('Failed to register routes:', err);
+    process.exit(1);
+  }
+
+  // Start memory monitoring for health tracking
+  startMemoryMonitoring();
+  logger.info('[Server] Memory monitoring started');
 
   // Initialize digest scheduler for weekly email digests (production only, deferred)
   // In development, skip to speed up server startup
@@ -233,11 +262,80 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
-})();
+  const maxRetries = 5;
+  const retryDelay = 1000;
+
+  const startServer = (attempt: number = 1): void => {
+    // Force close any existing connections before listening
+    if (server.listening) {
+      server.close();
+    }
+
+    const listenOptions = {
+      port,
+      host: "0.0.0.0",
+      reusePort: true as const,
+      reuseAddr: true as const,
+    };
+
+    server.listen(listenOptions, () => {
+      log(`serving on port ${port}`);
+    });
+
+    server.once('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        if (attempt < maxRetries) {
+          logger.warn(`Port ${port} in use, retrying in ${retryDelay}ms (attempt ${attempt}/${maxRetries})`);
+          
+          // Force close and destroy existing handles
+          if (server.listening) {
+            server.close(() => {
+              setTimeout(() => startServer(attempt + 1), retryDelay);
+            });
+          } else {
+            setTimeout(() => startServer(attempt + 1), retryDelay);
+          }
+        } else {
+          logger.error(`Port ${port} is still in use after ${maxRetries} attempts. Force closing...`);
+          // Instead of exiting, try to clear lingering processes
+          try {
+            server.close(() => {
+              logger.error('Server closed, attempting cleanup');
+              process.exit(1);
+            });
+            // Force exit after 5 seconds if close hangs
+            setTimeout(() => {
+              logger.error('Force exiting due to port conflict');
+              process.exit(1);
+            }, 5000);
+          } catch (e) {
+            logger.error('Error closing server:', e);
+            process.exit(1);
+          }
+        }
+      } else {
+        logger.error('Server error:', err);
+        process.exit(1);
+      }
+    });
+  };
+
+  // Clean up on process termination
+  const cleanup = () => {
+    logger.info('Cleaning up server connections...');
+    if (server.listening) {
+      server.close(() => {
+        logger.info('Server closed');
+      });
+    }
+  };
+
+  process.on('exit', cleanup);
+  process.on('SIGINT', cleanup);
+  process.on('SIGTERM', cleanup);
+
+  startServer();
+})().catch((err) => {
+  logger.error('Fatal startup error:', err);
+  process.exit(1);
+});

@@ -9,6 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Plus, Heart, Eye, Search, MapPin, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import { SDG_GOALS } from "@shared/sdg-goals";
+import { useIsMobile } from "@/hooks/use-mobile";
+import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import VolunteerNav from "@/components/layout/volunteer-nav";
 import type { User as UserType } from "@shared/schema";
 
 interface StoryWithDetails {
@@ -35,6 +39,9 @@ interface StoryWithDetails {
 export default function Stories() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
+  const isMobile = useIsMobile();
+  const userType = typeof window !== 'undefined' ? localStorage.getItem('userType') : null;
+  const isVolunteerMobile = isMobile && userType === 'volunteer';
 
   const storedUserId = typeof window !== 'undefined' ? localStorage.getItem('currentUserId') : null;
   const { data: currentUser } = useQuery<UserType>({
@@ -150,26 +157,28 @@ export default function Stories() {
     </Link>
   );
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-6">
+  const content = (
+    <div className={`min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 ${isVolunteerMobile ? 'pt-16 pb-20' : ''}`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLocation("/volunteer-dashboard")}
-              data-testid="button-back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            {!isVolunteerMobile && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setLocation("/volunteer-dashboard")}
+                data-testid="button-back"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+            <h1 className={`${isVolunteerMobile ? 'text-xl' : 'text-2xl'} font-bold text-slate-900 dark:text-white`}>
               Volunteer Stories
             </h1>
           </div>
           <Button
             onClick={() => setLocation("/create-story")}
-            className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600"
+            className={`bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 ${isVolunteerMobile ? 'text-sm px-3' : ''}`}
             data-testid="button-create-story"
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -249,4 +258,27 @@ export default function Stories() {
       </div>
     </div>
   );
+
+  // Return with PWA framing for mobile volunteer users
+  if (isVolunteerMobile) {
+    return (
+      <>
+        <PWAHeader />
+        {content}
+        <VolunteerPWANav userId={storedUserId || undefined} activeTab="home" />
+      </>
+    );
+  }
+
+  // Return with VolunteerNav for desktop volunteers
+  if (userType === 'volunteer') {
+    return (
+      <>
+        <VolunteerNav />
+        {content}
+      </>
+    );
+  }
+
+  return content;
 }

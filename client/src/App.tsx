@@ -1,71 +1,82 @@
 import { Route, Router, useLocation } from "wouter";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { SidebarProvider } from "@/contexts/sidebar-context";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
 import { volunteerOnboardingSteps, organizationOnboardingSteps, csrOnboardingSteps } from "@shared/onboarding-steps";
 import OnboardingGuide from "@/components/onboarding/onboarding-guide";
 import { useAuth } from "@/hooks/use-auth";
 import Layout from "@/components/layout/layout";
+
+// Core pages - loaded immediately for fast initial render
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
-import Profile from "@/pages/profile";
-import MyWork from "@/pages/my-work";
-import Tasks from "@/pages/tasks";
-import Projects from "@/pages/projects";
-import ProjectDetail from "@/pages/project-detail";
-import ProjectDetailPWA from "@/pages/project-detail-pwa";
-import ProjectEdit from "@/pages/project-edit";
-import VolunteerIntake from "@/pages/volunteer-intake";
-import OrganizationIntake from "@/pages/organization-intake";
-import OrganizationProfileSettings from "@/pages/organization-profile-settings";
-import VolunteerProfileSettings from "@/pages/volunteer-profile-settings";
-import Opportunities from "@/pages/opportunities";
-import OpportunityDetail from "@/pages/opportunity-detail";
-import OpportunityDetailPWA from "@/pages/opportunity-detail-pwa";
-import Applications from "@/pages/applications";
-import MyApplications from "@/pages/my-applications";
-import Organizations from "@/pages/organizations";
-import Volunteers from "@/pages/volunteers";
-import Calendar from "@/pages/calendar";
-import ImpactReport from "@/pages/impact-report";
-import OrganizationImpactReport from "@/pages/organization-impact-report";
-import MobileDataCollection from "@/pages/mobile-data-collection";
-import ImpactVisualization from "@/pages/impact-visualization";
-import ImpactStorytellingPage from "@/pages/impact-storytelling";
-import Assignments from "@/pages/assignments";
-import MatchedVolunteers from "@/pages/matched-volunteers";
-import EmailDigests from "@/pages/email-digests";
-import Achievements from "@/pages/achievements";
-import LogActivity from "@/pages/log-activity";
-import Leaderboard from "@/pages/leaderboard";
-import OrganizationLeaderboard from "@/pages/organization-leaderboard";
-import DiscoverOpportunities from "@/pages/discover-opportunities";
-import DiscoverOpportunitiesPWA from "@/pages/discover-opportunities-pwa";
-import SDGMapping from "@/pages/sdg-mapping";
-import CSRDashboard from "@/pages/csr-dashboard";
-import CSRDashboardPWA from "@/pages/csr-dashboard-pwa";
 import VolunteerDashboard from "@/pages/volunteer-dashboard";
 import OrganizationDashboard from "@/pages/organization-dashboard";
-import { CSRImpactReporting } from "@/pages/csr-impact-reporting";
-import ProjectPortfolio from "@/pages/project-portfolio";
-import CSRReportsExports from "@/pages/csr-reports-exports";
-import CorporatePartnerIntake from "@/pages/corporate-partner-intake";
-import CorporatePartnerProfileSettings from "@/pages/corporate-partner-profile-settings";
-import TeamOverview from "@/pages/team-overview";
-import Overview from "@/pages/overview";
-import OrganizationMessages from "@/pages/organization-messages";
-import OrganizationMessagesPWA from "@/pages/organization-messages-pwa";
-import OrganizationDashboardPWA from "@/pages/organization-dashboard-pwa";
-import VolunteerMessages from "@/pages/volunteer-messages";
-import VolunteerMessagesPWA from "@/pages/volunteer-messages-pwa";
-import CSRMessagesPWA from "@/pages/csr-messages-pwa";
-import VolunteerLeaderboardPWA from "@/pages/volunteer-leaderboard-pwa";
-import EmployeeEngagementTabPage from "@/pages/employee-engagement-tab-page";
 import NotFound from "@/pages/not-found";
-import Stories from "@/pages/stories";
-import CreateStory from "@/pages/create-story";
-import StoryDetail from "@/pages/story-detail";
+
+// Lazy-loaded pages - loaded on demand to reduce initial bundle size
+const Profile = lazy(() => import("@/pages/profile"));
+const MyWork = lazy(() => import("@/pages/my-work"));
+const Tasks = lazy(() => import("@/pages/tasks"));
+const Projects = lazy(() => import("@/pages/projects"));
+const ProjectDetail = lazy(() => import("@/pages/project-detail"));
+const ProjectDetailPWA = lazy(() => import("@/pages/project-detail-pwa"));
+const ProjectEdit = lazy(() => import("@/pages/project-edit"));
+const VolunteerIntake = lazy(() => import("@/pages/volunteer-intake"));
+const OrganizationIntake = lazy(() => import("@/pages/organization-intake"));
+const OrganizationProfileSettings = lazy(() => import("@/pages/organization-profile-settings"));
+const VolunteerProfileSettings = lazy(() => import("@/pages/volunteer-profile-settings"));
+const Opportunities = lazy(() => import("@/pages/opportunities"));
+const OpportunityDetail = lazy(() => import("@/pages/opportunity-detail"));
+const OpportunityDetailPWA = lazy(() => import("@/pages/opportunity-detail-pwa"));
+const Applications = lazy(() => import("@/pages/applications"));
+const MyApplications = lazy(() => import("@/pages/my-applications"));
+const Organizations = lazy(() => import("@/pages/organizations"));
+const Volunteers = lazy(() => import("@/pages/volunteers"));
+const Calendar = lazy(() => import("@/pages/calendar"));
+const ImpactReport = lazy(() => import("@/pages/impact-report"));
+const OrganizationImpactReport = lazy(() => import("@/pages/organization-impact-report"));
+const MobileDataCollection = lazy(() => import("@/pages/mobile-data-collection"));
+const ImpactVisualization = lazy(() => import("@/pages/impact-visualization"));
+const ImpactStorytellingPage = lazy(() => import("@/pages/impact-storytelling"));
+const Assignments = lazy(() => import("@/pages/assignments"));
+const MatchedVolunteers = lazy(() => import("@/pages/matched-volunteers"));
+const EmailDigests = lazy(() => import("@/pages/email-digests"));
+const Achievements = lazy(() => import("@/pages/achievements"));
+const LogActivity = lazy(() => import("@/pages/log-activity"));
+const Leaderboard = lazy(() => import("@/pages/leaderboard"));
+const OrganizationLeaderboard = lazy(() => import("@/pages/organization-leaderboard"));
+const DiscoverOpportunities = lazy(() => import("@/pages/discover-opportunities"));
+const DiscoverOpportunitiesPWA = lazy(() => import("@/pages/discover-opportunities-pwa"));
+const SDGMapping = lazy(() => import("@/pages/sdg-mapping"));
+const CSRDashboard = lazy(() => import("@/pages/csr-dashboard"));
+const CSRDashboardPWA = lazy(() => import("@/pages/csr-dashboard-pwa"));
+const CSRImpactReporting = lazy(() => import("@/pages/csr-impact-reporting").then(m => ({ default: m.CSRImpactReporting })));
+const ProjectPortfolio = lazy(() => import("@/pages/project-portfolio"));
+const CSRReportsExports = lazy(() => import("@/pages/csr-reports-exports"));
+const CorporatePartnerIntake = lazy(() => import("@/pages/corporate-partner-intake"));
+const CorporatePartnerProfileSettings = lazy(() => import("@/pages/corporate-partner-profile-settings"));
+const TeamOverview = lazy(() => import("@/pages/team-overview"));
+const Overview = lazy(() => import("@/pages/overview"));
+const OrganizationMessages = lazy(() => import("@/pages/organization-messages"));
+const OrganizationMessagesPWA = lazy(() => import("@/pages/organization-messages-pwa"));
+const OrganizationDashboardPWA = lazy(() => import("@/pages/organization-dashboard-pwa"));
+const VolunteerMessages = lazy(() => import("@/pages/volunteer-messages"));
+const VolunteerMessagesPWA = lazy(() => import("@/pages/volunteer-messages-pwa"));
+const CSRMessagesPWA = lazy(() => import("@/pages/csr-messages-pwa"));
+const VolunteerLeaderboardPWA = lazy(() => import("@/pages/volunteer-leaderboard-pwa"));
+const EmployeeEngagementTabPage = lazy(() => import("@/pages/employee-engagement-tab-page"));
+const Stories = lazy(() => import("@/pages/stories"));
+const CreateStory = lazy(() => import("@/pages/create-story"));
+const StoryDetail = lazy(() => import("@/pages/story-detail"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  </div>
+);
 
 function RootRedirectRoute() {
   const { user } = useAuth();
@@ -180,6 +191,7 @@ export default function App() {
     <SidebarProvider>
       <OnboardingProvider steps={steps}>
         <OnboardingGuide />
+        <Suspense fallback={<PageLoader />}>
         <Router>
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
@@ -214,6 +226,7 @@ export default function App() {
           {/* All other routes go through Layout (includes VolunteerNav and Footer) */}
           <Route component={LayoutRoute} />
         </Router>
+        </Suspense>
       </OnboardingProvider>
     </SidebarProvider>
   );

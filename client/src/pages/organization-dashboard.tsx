@@ -376,25 +376,36 @@ export default function OrganizationDashboard() {
   const engagementScore = useMemo(() => {
     const volunteers = dashboardData?.volunteerSummaries || [];
     const totalVolunteers = volunteers.length;
-    const activeVolunteers = metrics.activeVolunteers || 0;
+
+    // Calculate truly active volunteers (activity within last 30 days) from real data
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const activeVolunteers = volunteers.filter((v: any) => {
+      if (!v.lastActive) return false;
+      return new Date(v.lastActive) >= thirtyDaysAgo;
+    }).length;
 
     // 1. Activity Score (30% weight) - Based on hours logged relative to capacity
     // Industry benchmark: 4-8 hours per volunteer per month is "engaged"
+    // Uses real totalHours from volunteer activities in database
     const avgHoursPerVolunteer = totalVolunteers > 0 ? metrics.totalHours / totalVolunteers : 0;
     const targetHoursPerVolunteer = 20; // Target 20 hours total
     const activityScore = Math.min(100, (avgHoursPerVolunteer / targetHoursPerVolunteer) * 100);
 
-    // 2. Retention Score (25% weight) - Active vs total volunteers
+    // 2. Retention Score (25% weight) - Active (last 30 days) vs total volunteers
     // Industry benchmark: 60-70% retention is good
+    // Uses real lastActive dates from volunteer activity records
     const retentionRate = totalVolunteers > 0 ? (activeVolunteers / totalVolunteers) * 100 : 0;
     const retentionScore = Math.min(100, (retentionRate / 70) * 100); // Normalize to 70% benchmark
 
     // 3. Impact Score (25% weight) - Based on project completion and SDG alignment
+    // Uses real project completion percentages and SDG goals from database
     const completionScore = avgProjectCompletion || 0;
     const sdgCoverageScore = Math.min(100, (metrics.sdgsAddressed / 5) * 100); // 5 SDGs is excellent
     const impactScore = (completionScore + sdgCoverageScore) / 2;
 
     // 4. Growth Score (20% weight) - Based on task completion rate
+    // Uses real task status from database (completed vs total tasks)
     const taskCompletionRate = taskMetrics.total > 0 ? (taskMetrics.completed / taskMetrics.total) * 100 : 0;
     const growthScore = Math.min(100, taskCompletionRate);
 
@@ -428,6 +439,8 @@ export default function OrganizationDashboard() {
         retentionRate: Math.round(retentionRate),
         completionRate: avgProjectCompletion,
         taskCompletionRate: Math.round(taskCompletionRate),
+        activeVolunteers,
+        totalVolunteers,
       }
     };
   }, [dashboardData?.volunteerSummaries, metrics, avgProjectCompletion, taskMetrics]);
@@ -2290,9 +2303,9 @@ export default function OrganizationDashboard() {
               <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#111827', marginBottom: '16px' }}>Score Breakdown</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
                 {[
-                  { label: 'Activity Score', value: engagementScore.breakdown.activity, weight: '30%', description: `${engagementScore.details.avgHoursPerVolunteer} avg hours per volunteer`, color: '#059669' },
-                  { label: 'Retention Score', value: engagementScore.breakdown.retention, weight: '25%', description: `${engagementScore.details.retentionRate}% volunteer retention rate`, color: '#0369a1' },
-                  { label: 'Impact Score', value: engagementScore.breakdown.impact, weight: '25%', description: `${engagementScore.details.completionRate}% avg project completion`, color: '#7c3aed' },
+                  { label: 'Activity Score', value: engagementScore.breakdown.activity, weight: '30%', description: `${engagementScore.details.avgHoursPerVolunteer} avg hours per volunteer (target: 20 hrs)`, color: '#059669' },
+                  { label: 'Retention Score', value: engagementScore.breakdown.retention, weight: '25%', description: `${engagementScore.details.activeVolunteers}/${engagementScore.details.totalVolunteers} volunteers active in last 30 days (${engagementScore.details.retentionRate}%)`, color: '#0369a1' },
+                  { label: 'Impact Score', value: engagementScore.breakdown.impact, weight: '25%', description: `${engagementScore.details.completionRate}% avg project completion + SDG alignment`, color: '#7c3aed' },
                   { label: 'Growth Score', value: engagementScore.breakdown.growth, weight: '20%', description: `${engagementScore.details.taskCompletionRate}% task completion rate`, color: '#d97706' },
                 ].map((item) => (
                   <div key={item.label} style={{ padding: '12px', backgroundColor: '#f9fafb', borderRadius: '8px' }}>

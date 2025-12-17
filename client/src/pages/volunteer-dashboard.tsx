@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import { extractSdgsFromProjects } from "@/lib/utils";
-import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart } from "lucide-react";
+import { Users, Clock, CheckSquare, Globe, Building2, Award, TrendingUp, Target, Briefcase, AlertCircle, Zap, FileText, BarChart3, ArrowUp, PieChart, Flame, Calendar } from "lucide-react";
 import StatsCard from "@/components/dashboard/stats-card";
 import { PageTransition } from "@/components/ui/page-transition";
 import { StaggerContainer, StaggerItem } from "@/components/ui/animated-container";
@@ -60,6 +60,16 @@ export default function Dashboard() {
 
   // Detect if on mobile device for PWA vs desktop navigation
   const isMobile = useIsMobile();
+
+  // Read tab parameter from URL for PWA navigation
+  const initialTab = useMemo(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const tab = searchParams.get('tab');
+    if (tab && ['dashboard', 'projects', 'log-activity', 'potential', 'impacts', 'stories', 'more', 'profile', 'messages'].includes(tab)) {
+      return tab as 'dashboard' | 'projects' | 'log-activity' | 'potential' | 'impacts' | 'stories' | 'more' | 'profile' | 'messages';
+    }
+    return undefined;
+  }, []);
 
   // Redirect corporate partners to CSR Dashboard using useEffect
   useEffect(() => {
@@ -515,6 +525,106 @@ export default function Dashboard() {
     };
   }, [dashboardData, filteredData, selectedProject, aiuSummary]);
 
+  // Calculate Impact Streak data
+  const impactStreakData = useMemo(() => {
+    const activities = filteredData.activities || [];
+    if (!activities || activities.length === 0) {
+      return { currentStreak: 0, bestStreak: 0, lastActivityDate: null, streakMessage: "Start your streak today!" };
+    }
+
+    // Parse dates and sort in descending order, filtering out invalid dates
+    const dateStrings: string[] = Array.from(
+      new Set(
+        activities
+          .filter((a: any) => a.date && !isNaN(new Date(a.date).getTime()))
+          .map((a: any) => {
+            const date = new Date(a.date);
+            return date.toISOString().split("T")[0];
+          })
+      )
+    ) as string[];
+    const uniqueDates = dateStrings
+      .map((dateStr) => new Date(dateStr))
+      .sort((a, b) => b.getTime() - a.getTime());
+
+    if (uniqueDates.length === 0) {
+      return { currentStreak: 0, bestStreak: 0, lastActivityDate: null, streakMessage: "Start your streak today!" };
+    }
+
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let tempStreak = 1;
+    const lastActivityDate = uniqueDates[0];
+
+    // Check if the most recent date is today or yesterday
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const mostRecentDate = new Date(uniqueDates[0]);
+    mostRecentDate.setHours(0, 0, 0, 0);
+
+    // Only count if activity was recent (today or yesterday)
+    if (
+      mostRecentDate.getTime() === today.getTime() ||
+      mostRecentDate.getTime() === yesterday.getTime()
+    ) {
+      currentStreak = 1;
+
+      // Calculate consecutive days
+      for (let i = 1; i < uniqueDates.length; i++) {
+        const prevDate = new Date(uniqueDates[i - 1]);
+        const currDate = new Date(uniqueDates[i]);
+        prevDate.setHours(0, 0, 0, 0);
+        currDate.setHours(0, 0, 0, 0);
+
+        const diffTime = prevDate.getTime() - currDate.getTime();
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+        if (diffDays === 1) {
+          tempStreak++;
+          currentStreak = tempStreak;
+        } else {
+          break;
+        }
+      }
+    }
+
+    // Calculate best streak
+    tempStreak = 1;
+    for (let i = 1; i < uniqueDates.length; i++) {
+      const prevDate = new Date(uniqueDates[i - 1]);
+      const currDate = new Date(uniqueDates[i]);
+      prevDate.setHours(0, 0, 0, 0);
+      currDate.setHours(0, 0, 0, 0);
+
+      const diffTime = prevDate.getTime() - currDate.getTime();
+      const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+      if (diffDays === 1) {
+        tempStreak++;
+      } else {
+        bestStreak = Math.max(bestStreak, tempStreak);
+        tempStreak = 1;
+      }
+    }
+    bestStreak = Math.max(bestStreak, tempStreak);
+
+    const streakMessage =
+      currentStreak === 0
+        ? "Start your streak today!"
+        : currentStreak === 1
+          ? "You're on fire! 🔥"
+          : currentStreak < 7
+            ? "Keep it up! 💪"
+            : currentStreak < 30
+              ? "Amazing streak! 🚀"
+              : "Unstoppable! ⚡";
+
+    return { currentStreak, bestStreak, lastActivityDate, streakMessage };
+  }, [filteredData.activities]);
+
   // Transform activities for the activity feed - MUST BE BEFORE EARLY RETURNS
   const formattedActivities: Activity[] = useMemo(() => {
     return (filteredData.activities || []).map((activity: any) => {
@@ -946,10 +1056,63 @@ export default function Dashboard() {
           totalScore: totalBeneficiaries,
         };
         break;
+      case "Impact Streak":
+        // Get recent activity dates for display
+        const recentActivityDates = (filteredData.activities || [])
+          .filter((a: any) => a.date && !isNaN(new Date(a.date).getTime()))
+          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 7)
+          .map((a: any) => ({
+            date: formatDate(new Date(a.date)),
+            hours: a.hours || 0,
+            project: projects.find((p: any) => p.id === a.projectId)?.name || "Unknown Project"
+          }));
+
+        detailData = {
+          title: "Impact Streak Details",
+          items: [
+            {
+              label: "Current Streak",
+              value: `${impactStreakData.currentStreak} days`,
+              icon: "🔥",
+              isHighlight: true,
+              description: impactStreakData.streakMessage
+            },
+            {
+              label: "Best Streak",
+              value: `${impactStreakData.bestStreak} days`,
+              icon: "🏆",
+              isHighlight: true,
+              description: "Your longest consecutive activity streak"
+            },
+            {
+              label: "30-Day Goal Progress",
+              value: `${Math.min(impactStreakData.currentStreak, 30)} / 30 days`,
+              icon: "🎯",
+              isHighlight: true,
+              description: impactStreakData.currentStreak >= 30
+                ? "Goal reached! Amazing dedication! 🎉"
+                : `${30 - impactStreakData.currentStreak} more days to reach your 30-day milestone`
+            },
+            ...(recentActivityDates.length > 0 ? [{
+              label: "📅 Recent Activity History",
+              value: `${recentActivityDates.length} recent activities`,
+              isCategory: true,
+              description: "Your latest volunteer activities"
+            }] : []),
+            ...recentActivityDates.map((activity: any) => ({
+              label: activity.project,
+              value: `${formatNumber(activity.hours)} hours`,
+              description: activity.date,
+              isProjectGroup: false,
+            }))
+          ],
+        };
+        break;
       default:
         detailData = { title, items: [] };
     }
-    
+
     setSelectedKPI(detailData);
   };
 
@@ -978,7 +1141,7 @@ export default function Dashboard() {
 
   // Mobile volunteers get the PWA view with bottom navigation
   if (isVolunteer && isMobile && userId && currentUser) {
-    return <MobilePWAView userId={userId} user={currentUser} dashboardData={dashboardData} />;
+    return <MobilePWAView userId={userId} user={currentUser} dashboardData={dashboardData} initialActiveTab={initialTab} />;
   }
 
   // Desktop volunteers get the web view with top navigation
@@ -1006,7 +1169,7 @@ export default function Dashboard() {
               }} />
             </div>
 
-            <div className="relative px-4 md:px-24 py-8 md:py-12">
+            <div className="relative container mx-auto px-4 sm:px-6 py-8 md:py-12">
               <div className="flex flex-col lg:flex-row items-start lg:items-center gap-8">
                 {/* Left: Welcome & Profile */}
                 <div className="flex-1">
@@ -1073,7 +1236,7 @@ export default function Dashboard() {
                         />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-xl md:text-2xl font-bold text-white">{Math.round(dashboardData?.totalHours || 0)}</span>
+                        <span className="text-xl md:text-2xl font-bold text-white">{formatNumber(dashboardData?.totalHours)}</span>
                         <span className="text-xs text-white/70">hours</span>
                       </div>
                     </div>
@@ -1148,87 +1311,45 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Quick Actions Bar - Prominent CTAs */}
-          <div className="px-4 md:px-24 -mt-6 relative z-10">
-            <Card className="bg-white dark:bg-gray-800 shadow-xl border-0 rounded-2xl">
-              <CardContent className="p-4 md:p-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex flex-wrap gap-3">
-                    <Link href="/log-activity">
-                      <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 gap-2">
-                        <Clock className="h-4 w-4" />
-                        Log Hours
-                      </Button>
-                    </Link>
-                    <Link href="/discover-opportunities">
-                      <Button variant="outline" className="border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 gap-2">
-                        <Target className="h-4 w-4 text-purple-600" />
-                        Find Opportunities
-                      </Button>
-                    </Link>
-                    <Link href="/my-work">
-                      <Button variant="outline" className="border-2 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 gap-2">
-                        <CheckSquare className="h-4 w-4 text-emerald-600" />
-                        My Tasks
-                      </Button>
-                    </Link>
-                    <Link href={`/impact-report/${userId}`}>
-                      <Button variant="outline" className="border-2 border-amber-200 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-2">
-                        <Globe className="h-4 w-4 text-amber-600" />
-                        SDG Impact
-                      </Button>
-                    </Link>
-                    <Link href="/impact-visualization">
-                      <Button variant="outline" className="border-2 border-cyan-200 hover:border-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 gap-2">
-                        <PieChart className="h-4 w-4 text-cyan-600" />
-                        My Impact
-                      </Button>
-                    </Link>
-                  </div>
-
-                  {/* Filters */}
-                  <div className="flex items-center gap-3">
-                    <Select value={selectedProject} onValueChange={setSelectedProject}>
-                      <SelectTrigger className="w-[160px] border-gray-200">
-                        <SelectValue placeholder="All Projects" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Projects</SelectItem>
-                        {projects.map((project: any) => (
-                          <SelectItem key={project.id} value={project.id.toString()}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
-                      <SelectTrigger className="w-[130px] border-gray-200">
-                        <SelectValue placeholder="All Time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Time</SelectItem>
-                        <SelectItem value="year">This Year</SelectItem>
-                        <SelectItem value="quarter">This Quarter</SelectItem>
-                        <SelectItem value="month">This Month</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Main Dashboard Content */}
-          <div className="px-4 md:px-24 mt-6 space-y-6">
+          <div className="container mx-auto px-4 sm:px-6 mt-6 space-y-6">
+
+            {/* Filters Bar - Compact */}
+            <div className="flex items-center justify-end gap-3">
+              <Select value={selectedProject} onValueChange={setSelectedProject}>
+                <SelectTrigger className="w-[160px] border-gray-200 bg-white dark:bg-gray-800">
+                  <SelectValue placeholder="All Projects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects</SelectItem>
+                  {projects.map((project: any) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={timeFilter} onValueChange={(value: any) => setTimeFilter(value)}>
+                <SelectTrigger className="w-[130px] border-gray-200 bg-white dark:bg-gray-800">
+                  <SelectValue placeholder="All Time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
+                  <SelectItem value="quarter">This Quarter</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Stats Cards - Enhanced Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("Hours Contributed", kpis.hours)}>
                 <CardContent className="p-4 md:p-5">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-blue-100 text-xs md:text-sm font-medium">Hours Logged</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{Math.round(kpis.hours)}</p>
+                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{formatNumber(kpis.hours)}</p>
                       {dashboardData?.hoursTrend && (
                         <p className="text-blue-200 text-xs mt-1 flex items-center gap-1">
                           <ArrowUp className="h-3 w-3" /> {dashboardData.hoursTrend}
@@ -1262,7 +1383,7 @@ export default function Dashboard() {
                     <div>
                       <p className="text-purple-100 text-xs md:text-sm font-medium">Tasks</p>
                       <p className="text-white text-2xl md:text-3xl font-bold mt-1">{kpis.completedTasks}/{kpis.tasks}</p>
-                      <p className="text-purple-200 text-xs mt-1">{tasksProgress.toFixed(0)}% complete</p>
+                      <p className="text-purple-200 text-xs mt-1">{formatNumber(tasksProgress)}% complete</p>
                     </div>
                     <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
                       <CheckSquare className="h-6 w-6 text-white" />
@@ -1290,7 +1411,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-cyan-100 text-xs md:text-sm font-medium">AIUs Earned</p>
-                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{typeof kpis.aiuEarned === 'number' ? kpis.aiuEarned.toFixed(1) : kpis.aiuEarned || 0}</p>
+                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{formatNumber(kpis.aiuEarned)}</p>
                     </div>
                     <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
                       <TrendingUp className="h-6 w-6 text-white" />
@@ -1298,19 +1419,27 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Impact Streak & SDG Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Impact Streak Card */}
-              <Card className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 border border-orange-200 dark:border-orange-800/50 shadow-lg overflow-hidden">
-                <CardContent className="p-5">
-                  <ImpactStreak activities={filteredData.activities || []} />
+              <Card className="bg-gradient-to-br from-orange-500 to-red-500 border-0 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30 transition-all duration-300 cursor-pointer group" onClick={() => handleKPIClick("Impact Streak", impactStreakData.currentStreak)}>
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-orange-100 text-xs md:text-sm font-medium">Impact Streak</p>
+                      <p className="text-white text-2xl md:text-3xl font-bold mt-1">{impactStreakData.currentStreak} days</p>
+                      <p className="text-orange-200 text-xs mt-1">{impactStreakData.streakMessage}</p>
+                    </div>
+                    <div className="p-3 bg-white/20 rounded-xl group-hover:scale-110 transition-transform">
+                      <Flame className="h-6 w-6 text-white" />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
+            </div>
 
-              {/* SDG Contributions */}
-              <Card className="lg:col-span-2 bg-white dark:bg-gray-800 shadow-lg border-0">
+            {/* SDG Contributions (1/3) + Impact Over Time (2/3) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* SDG Contributions - 1/3 width */}
+              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0 lg:col-span-1">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg font-semibold flex items-center gap-2">
@@ -1328,23 +1457,24 @@ export default function Dashboard() {
                   <SDGChart projects={filteredData.projects || []} />
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
+              {/* Impact Over Time - 2/3 width */}
+              <Card className="bg-white dark:bg-gray-800 shadow-lg border-0 lg:col-span-2">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg font-semibold flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-blue-600" />
-                    Impact Over Time
+                    Your Impact Over Time
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ImpactChart monthlyImpactData={filteredMonthlyImpactData} narrative={impactNarrative} userType="volunteer" />
                 </CardContent>
               </Card>
+            </div>
 
-              {/* My Projects Card */}
+            {/* My Projects, Recent Tasks, Recent Activity - 3 Column Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* My Projects */}
               <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
@@ -1368,7 +1498,7 @@ export default function Dashboard() {
                             <Building2 className="h-5 w-5 text-white" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                            <p className="font-medium text-gray-900 dark:text-white truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors text-sm">
                               {project.name}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -1379,22 +1509,16 @@ export default function Dashboard() {
                             <p className="text-sm font-semibold text-gray-900 dark:text-white">
                               {project.completionPercentage || 0}%
                             </p>
-                            <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full mt-1 overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full transition-all duration-500"
-                                style={{ width: `${project.completionPercentage || 0}%` }}
-                              />
-                            </div>
                           </div>
                         </div>
                       </Link>
                     ))}
                     {(!filteredData.projects || filteredData.projects.length === 0) && (
-                      <div className="text-center py-8">
-                        <Building2 className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                        <p className="text-gray-500 dark:text-gray-400">No projects yet</p>
+                      <div className="text-center py-6">
+                        <Building2 className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">No projects yet</p>
                         <Link href="/discover-opportunities">
-                          <Button variant="link" className="text-purple-600 mt-2">
+                          <Button variant="link" size="sm" className="text-purple-600 mt-1">
                             Find Opportunities
                           </Button>
                         </Link>
@@ -1403,10 +1527,8 @@ export default function Dashboard() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Tasks and Activities */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Tasks */}
               <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
@@ -1422,10 +1544,35 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <TaskTable tasks={filteredData.tasks?.slice(0, 5) || []} />
+                  <div className="space-y-3">
+                    {filteredData.tasks?.slice(0, 4).map((task: any) => (
+                      <div key={task.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          task.status?.toLowerCase() === 'completed' ? 'bg-green-500' :
+                          task.status?.toLowerCase() === 'in progress' || task.status?.toLowerCase() === 'in_progress' ? 'bg-blue-500' :
+                          'bg-amber-500'
+                        }`} />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 dark:text-white truncate text-sm">
+                            {task.title}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {task.status || 'Pending'} {task.dueDate && `• Due ${new Date(task.dueDate).toLocaleDateString()}`}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {(!filteredData.tasks || filteredData.tasks.length === 0) && (
+                      <div className="text-center py-6">
+                        <CheckSquare className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">No tasks yet</p>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
+              {/* Recent Activity */}
               <Card className="bg-white dark:bg-gray-800 shadow-lg border-0">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
@@ -1436,7 +1583,37 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ActivityFeed activities={filteredData.activities?.slice(0, 5) || []} />
+                  <div className="space-y-3">
+                    {filteredData.activities?.slice(0, 4).map((activity: any) => {
+                      const project = filteredData.projects?.find((p: any) => p.id === activity.projectId);
+                      return (
+                        <div key={activity.id} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                            <Clock className="h-4 w-4 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 dark:text-white text-sm">
+                              {activity.hours} hours logged
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                              {project?.name || 'Project'} • {activity.date ? new Date(activity.date).toLocaleDateString() : 'Recently'}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {(!filteredData.activities || filteredData.activities.length === 0) && (
+                      <div className="text-center py-6">
+                        <Zap className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">No activity yet</p>
+                        <Link href="/log-activity">
+                          <Button variant="link" size="sm" className="text-blue-600 mt-1">
+                            Log Hours
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -1464,6 +1641,176 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* KPI Detail Dialog for Volunteer Web View */}
+        <Dialog open={!!selectedKPI} onOpenChange={(open) => !open && setSelectedKPI(null)}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{selectedKPI?.title}</DialogTitle>
+              <DialogDescription>
+                {selectedKPI?.title?.includes("Impact Score")
+                  ? "Your impact score breakdown across multiple dimensions"
+                  : selectedKPI?.title?.includes("AIU")
+                  ? "Total beneficiaries reached and impact efficiency metrics"
+                  : `Detailed breakdown of ${selectedKPI?.title?.toLowerCase() || 'metric'}`}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Impact Score Breakdown */}
+              {selectedKPI?.totalScore !== undefined && selectedKPI?.title?.includes("Impact Score") && (
+                <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-semibold">Total Impact Score</span>
+                    <span className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {selectedKPI.totalScore} / 100
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {selectedKPI?.items?.map((item: any, index: number) => {
+                const isImpactScoreItem = item.weight !== undefined;
+                const isHighlight = item.isHighlight === true;
+                const isCategory = item.isCategory === true;
+
+                if (isImpactScoreItem) {
+                  return (
+                    <div key={index} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 dark:text-white">{item.label}</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
+                          </div>
+                          <div className="text-right ml-4">
+                            <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Weight: {item.weight}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 mt-3">
+                          <div className="flex-1">
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                              <div
+                                className="bg-primary-600 dark:bg-primary-500 h-2 rounded-full transition-all"
+                                style={{ width: `${parseInt(item.value)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                            +{item.contribution}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (isCategory) {
+                  return (
+                    <div key={index} className="p-4 bg-gradient-to-r from-blue-100 to-blue-50 dark:from-blue-900/30 dark:to-blue-800/20 rounded-lg border border-blue-200 dark:border-blue-700 mt-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{item.label}</h4>
+                        <span className="text-lg font-bold text-blue-600 dark:text-blue-400">{item.value}</span>
+                      </div>
+                      {item.description && (
+                        <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">{item.description}</p>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (isHighlight) {
+                  return (
+                    <div key={index} className="p-4 border-2 border-primary-300 dark:border-primary-700 rounded-lg bg-primary-50 dark:bg-primary-900/20">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{item.icon}</span>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{item.label}</h4>
+                      </div>
+                      <div className="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-1">
+                        {item.value}
+                      </div>
+                      {item.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{item.description}</p>
+                      )}
+                    </div>
+                  );
+                }
+
+                if (item.isProjectGroup && item.activities) {
+                  return (
+                    <Collapsible key={index}>
+                      <div className="border rounded-lg">
+                        <CollapsibleTrigger className="w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                          <div className="flex justify-between items-center gap-4">
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                                <Clock className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                              </div>
+                              <div className="flex-1 text-left">
+                                <h4 className="font-medium">{item.label}</h4>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                  {item.activities.length} activities
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+                                {item.value}
+                              </span>
+                              <ChevronDown className="h-4 w-4 text-gray-500" />
+                            </div>
+                          </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <div className="border-t p-4 space-y-2 bg-gray-50 dark:bg-gray-900/50">
+                            {item.activities.map((activity: any, aIndex: number) => (
+                              <div key={aIndex} className="p-3 bg-white dark:bg-gray-800 rounded-md border">
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <p className="text-sm font-medium">{activity.description}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.date}</p>
+                                  </div>
+                                  <span className="text-sm font-semibold text-primary-600 dark:text-primary-400 ml-2">
+                                    {activity.hours}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </div>
+                    </Collapsible>
+                  );
+                }
+
+                return (
+                  <div key={index} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.label}</h4>
+                        {item.project && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{item.project}</p>
+                        )}
+                        {item.description && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">{item.description}</p>
+                        )}
+                      </div>
+                      {item.value && (
+                        <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+                          {item.value}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {(!selectedKPI?.items || selectedKPI?.items.length === 0) && (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                  No data available
+                </p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </PageTransition>
     );
   }
@@ -2512,4 +2859,17 @@ function getEventType(eventType: string): "primary" | "success" | "info" | "warn
     training: "success",
   };
   return typeMap[eventType] || "info";
+}
+
+// Format number to 2 decimal places if decimal, otherwise show as whole number
+function formatNumber(value: number | string | undefined | null): string {
+  if (value === undefined || value === null) return '0';
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '0';
+  // Check if it's a whole number
+  if (Number.isInteger(num)) {
+    return num.toString();
+  }
+  // Format to 2 decimal places
+  return num.toFixed(2);
 }

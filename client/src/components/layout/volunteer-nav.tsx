@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, User, Settings, Menu, X, LogOut, Bell, Sparkles, BarChart3, ClipboardList } from "lucide-react";
+import { Home, Briefcase, User, Settings, Menu, X, LogOut, Bell, Sparkles, BarChart3, ClipboardList, Trophy, MessageCircle, BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { User as UserType } from "@shared/schema";
 import { useState } from "react";
@@ -17,7 +17,16 @@ const VOLUNTEER_NAV_ITEMS = [
   { href: "/impact-visualization", label: "My Impact", icon: <BarChart3 className="w-4 h-4" />, description: "View Your Impact" },
 ];
 
+// Dropdown menu items matching PWA mobile view
 const MENU_ITEMS = [
+  { href: "/volunteer-dashboard", label: "Dashboard", icon: <Home className="w-4 h-4" /> },
+  { href: "/projects", label: "My Projects", icon: <Briefcase className="w-4 h-4" /> },
+  { href: "/discover-opportunities", label: "Discover", icon: <Sparkles className="w-4 h-4" /> },
+  { href: "/log-activity", label: "Log Activity", icon: <ClipboardList className="w-4 h-4" /> },
+  { href: "/impact-report", label: "SDG Impact Report", icon: <BarChart3 className="w-4 h-4" /> },
+  { href: "/leaderboard", label: "Leaderboard", icon: <Trophy className="w-4 h-4" /> },
+  { href: "/volunteer-messages", label: "Messages", icon: <MessageCircle className="w-4 h-4" /> },
+  { href: "/stories", label: "Stories", icon: <BookOpen className="w-4 h-4" /> },
   { href: "/profile", label: "Profile", icon: <User className="w-4 h-4" /> },
   { href: "/volunteer-profile-settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
 ];
@@ -167,9 +176,9 @@ export default function VolunteerNav() {
                   />
 
                   {/* Menu Panel */}
-                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-40 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-40 overflow-hidden max-h-[80vh] flex flex-col">
                     {/* User Info Header */}
-                    <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600">
+                    <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600 flex-shrink-0">
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 border-2 border-blue-500">
                           <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
@@ -189,7 +198,7 @@ export default function VolunteerNav() {
                     </div>
 
                     {/* Menu Items */}
-                    <div className="py-1">
+                    <div className="py-1 overflow-y-auto flex-1">
                       {MENU_ITEMS.map((item) => {
                         const isActive = location === item.href;
                         return (
@@ -212,7 +221,7 @@ export default function VolunteerNav() {
                     </div>
 
                     {/* Logout Button */}
-                    <div className="border-t border-gray-200 dark:border-gray-600 py-1">
+                    <div className="border-t border-gray-200 dark:border-gray-600 py-1 flex-shrink-0">
                       <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"

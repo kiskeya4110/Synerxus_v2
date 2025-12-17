@@ -1,12 +1,19 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy, TrendingUp, Zap } from "lucide-react";
+import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import VolunteerNav from "@/components/layout/volunteer-nav";
 
 export default function Leaderboard() {
   const { user } = useAuth();
   const userId = localStorage.getItem('currentUserId');
+  const userType = localStorage.getItem('userType');
+  const isMobile = useIsMobile();
+  const isVolunteerMobile = isMobile && userType === 'volunteer';
   const [leaderboardType, setLeaderboardType] = useState("points");
 
   // Fetch current user's stats
@@ -53,14 +60,15 @@ export default function Leaderboard() {
     (v: any) => v.userId === parseInt(userId || "0")
   ) + 1 || null;
 
-  return (
-    <div className="container mx-auto max-w-6xl py-8 px-4 md:px-6">
+  // PWA wrapper for mobile volunteer users
+  const content = (
+    <div className={`${isVolunteerMobile ? 'pt-20 pb-24 px-4' : 'container mx-auto max-w-6xl py-8 px-4 md:px-6'}`}>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <Trophy className="h-8 w-8 text-yellow-600" />
-          <h1 className="text-3xl font-bold">Global Leaderboard</h1>
+          <Trophy className={`${isVolunteerMobile ? 'h-6 w-6' : 'h-8 w-8'} text-yellow-600`} />
+          <h1 className={`${isVolunteerMobile ? 'text-xl' : 'text-3xl'} font-bold`}>Global Leaderboard</h1>
         </div>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600 dark:text-gray-400 text-sm">
           Compete with volunteers worldwide and track your progress
         </p>
       </div>
@@ -204,4 +212,27 @@ export default function Leaderboard() {
       </Card>
     </div>
   );
+
+  // Return with PWA framing for mobile volunteer users
+  if (isVolunteerMobile) {
+    return (
+      <div className="min-h-screen bg-[#faf9f7]">
+        <PWAHeader />
+        {content}
+        <VolunteerPWANav userId={userId || undefined} activeTab="home" />
+      </div>
+    );
+  }
+
+  // Return with VolunteerNav for desktop volunteers
+  if (userType === 'volunteer') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <VolunteerNav />
+        {content}
+      </div>
+    );
+  }
+
+  return content;
 }

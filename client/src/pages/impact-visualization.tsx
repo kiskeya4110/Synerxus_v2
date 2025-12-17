@@ -11,6 +11,7 @@ import { Link, useLocation } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
 import { useToast } from "@/hooks/use-toast";
 import OrganizationHeader from "@/components/layout/organization-header";
+import VolunteerNav from "@/components/layout/volunteer-nav";
 import Footer from "@/components/layout/footer";
 import {
   Chart as ChartJS,
@@ -372,10 +373,8 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
     };
   }, [projects, projectImpacts, dashboardData, currentUser]);
 
-  // Redirect non-organizations - MUST be after all hooks
-  if (userType !== 'organization') {
-    return null;
-  }
+  // Allow both organizations and volunteers to view this page
+  // Volunteers see their personal impact data, organizations see aggregate data
 
   // PDF Export Function
   const handleExportPDF = () => {
@@ -511,7 +510,8 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
 
   return (
     <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }}>
-      {!embedded && <OrganizationHeader activeTab="reports" />}
+      {!embedded && currentUser?.userType === 'volunteer' && <VolunteerNav />}
+      {!embedded && currentUser?.userType === 'organization' && <OrganizationHeader activeTab="reports" />}
       <div className={`${!embedded ? 'p-6 max-w-7xl mx-auto space-y-6' : 'space-y-6'}`}>
       {/* Page Header with Action Buttons */}
       <div className={`mb-6 ${!embedded ? '' : 'px-6'}`}>

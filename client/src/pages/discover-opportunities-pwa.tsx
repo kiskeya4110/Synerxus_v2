@@ -60,16 +60,47 @@ const SDG_COLORS: { [key: number]: string } = {
 };
 
 export default function DiscoverOpportunitiesPWA() {
-  const [, navigate] = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [locationFilter, setLocationFilter] = useState<string>("all");
+  const [location, navigate] = useLocation();
+
+  // Parse URL search parameters for pre-populated filters
+  const urlParams = useMemo(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return {
+      skill: searchParams.get('skill') || '',
+      sdg: searchParams.get('sdg') || '',
+      search: searchParams.get('search') || searchParams.get('q') || '',
+      category: searchParams.get('category') || 'all',
+      location: searchParams.get('location') || 'all',
+    };
+  }, [location]);
+
+  const [searchQuery, setSearchQuery] = useState(urlParams.search || urlParams.skill);
+  const [categoryFilter, setCategoryFilter] = useState<string>(urlParams.category);
+  const [locationFilter, setLocationFilter] = useState<string>(urlParams.location);
+  const [skillFilter, setSkillFilter] = useState<string>(urlParams.skill);
+  const [sdgFilter, setSdgFilter] = useState<string>(urlParams.sdg);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<EnrichedOpportunity | null>(null);
   const [applicationDialogOpen, setApplicationDialogOpen] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const userId = localStorage.getItem('currentUserId');
+
+  // Update filters when URL params change
+  useEffect(() => {
+    if (urlParams.skill) {
+      setSearchQuery(urlParams.skill);
+      setSkillFilter(urlParams.skill);
+      setShowFilters(true);
+    }
+    if (urlParams.search) {
+      setSearchQuery(urlParams.search);
+    }
+    if (urlParams.sdg) {
+      setSdgFilter(urlParams.sdg);
+      setShowFilters(true);
+    }
+  }, [urlParams.skill, urlParams.search, urlParams.sdg]);
 
   // Scroll to top on page load
   useEffect(() => {
@@ -142,16 +173,25 @@ export default function DiscoverOpportunitiesPWA() {
 
     const matchesSearch = searchQuery
       ? (opp.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (opp.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+        (opp.description || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (opp.requiredSkills || []).some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
       : true;
 
     const matchesCategory = categoryFilter === "all" || opp.category === categoryFilter;
     const matchesLocation = locationFilter === "all" ||
       (locationFilter === "remote" ? opp.isRemote : (opp.location || '').includes(locationFilter));
 
+    // Skill filter - check if opportunity requires the specific skill
+    const matchesSkill = !skillFilter ||
+      (opp.requiredSkills || []).some(s => s.toLowerCase().includes(skillFilter.toLowerCase()));
+
+    // SDG filter - check if opportunity targets the specific SDG
+    const matchesSdg = !sdgFilter ||
+      (opp.sdgGoals || []).includes(parseInt(sdgFilter));
+
     const isNotRejected = !opportunityStatus?.rejectedIds?.includes(opp.id);
 
-    return matchesSearch && matchesCategory && matchesLocation && isNotRejected;
+    return matchesSearch && matchesCategory && matchesLocation && matchesSkill && matchesSdg && isNotRejected;
   });
 
   const topMatches = filteredOpportunities.filter(o => (o.matchScore ?? 0) >= 70).slice(0, 3);
@@ -224,6 +264,34 @@ export default function DiscoverOpportunitiesPWA() {
           <p className="text-blue-100 text-sm mt-1">
             {filteredOpportunities.length} opportunities matched to you
           </p>
+
+          {/* Active Filters Display */}
+          {(skillFilter || sdgFilter) && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {skillFilter && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                  <span>Skill: {skillFilter}</span>
+                  <button
+                    onClick={() => { setSkillFilter(''); setSearchQuery(''); }}
+                    className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center hover:bg-white/50"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+              {sdgFilter && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/20 backdrop-blur-sm rounded-full text-white text-xs font-medium">
+                  <span>SDG {sdgFilter}</span>
+                  <button
+                    onClick={() => setSdgFilter('')}
+                    className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center hover:bg-white/50"
+                  >
+                    ×
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Search Bar */}
           <div className="relative mt-4">

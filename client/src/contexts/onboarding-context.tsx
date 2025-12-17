@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from "react";
 
 export interface OnboardingStep {
   id: string;
@@ -73,44 +73,45 @@ export function OnboardingProvider({ children, steps }: { children: ReactNode; s
     }
   }, [hasCheckedFirstTime, isActive, isCompleted]);
 
-  const startOnboarding = () => {
+  // Memoized callbacks to prevent unnecessary re-renders
+  const startOnboarding = useCallback(() => {
     const userType = getUserType();
     setIsActive(true);
     setCurrentStepIndex(0);
     localStorage.setItem(`onboarding_active_${userType}`, 'true');
-  };
+  }, []);
 
-  const skipOnboarding = () => {
+  const skipOnboarding = useCallback(() => {
     const userType = getUserType();
     setIsActive(false);
     setIsCompleted(true);
     localStorage.setItem(`onboarding_completed_${userType}`, 'true');
     localStorage.setItem(`onboarding_active_${userType}`, 'false');
-  };
+  }, []);
 
-  const nextStep = () => {
+  const completeOnboarding = useCallback(() => {
+    const userType = getUserType();
+    setIsActive(false);
+    setIsCompleted(true);
+    localStorage.setItem(`onboarding_completed_${userType}`, 'true');
+    localStorage.setItem(`onboarding_active_${userType}`, 'false');
+  }, []);
+
+  const nextStep = useCallback(() => {
     if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
       completeOnboarding();
     }
-  };
+  }, [currentStepIndex, steps.length, completeOnboarding]);
 
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     }
-  };
+  }, [currentStepIndex]);
 
-  const completeOnboarding = () => {
-    const userType = getUserType();
-    setIsActive(false);
-    setIsCompleted(true);
-    localStorage.setItem(`onboarding_completed_${userType}`, 'true');
-    localStorage.setItem(`onboarding_active_${userType}`, 'false');
-  };
-
-  const resetOnboarding = () => {
+  const resetOnboarding = useCallback(() => {
     const userType = getUserType();
     setIsActive(false);
     setIsCompleted(false);
@@ -118,30 +119,45 @@ export function OnboardingProvider({ children, steps }: { children: ReactNode; s
     localStorage.removeItem(`onboarding_completed_${userType}`);
     localStorage.removeItem(`onboarding_active_${userType}`);
     localStorage.removeItem(`onboarding_seen_${userType}`);
-  };
+  }, []);
 
   const currentStep = steps[currentStepIndex] || null;
   const totalSteps = steps.length;
   const progress = totalSteps > 0 ? ((currentStepIndex + 1) / totalSteps) * 100 : 0;
 
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({
+    isActive,
+    currentStepIndex,
+    currentStep,
+    isCompleted,
+    totalSteps,
+    progress,
+    startOnboarding,
+    skipOnboarding,
+    nextStep,
+    prevStep,
+    completeOnboarding,
+    resetOnboarding,
+    steps,
+  }), [
+    isActive,
+    currentStepIndex,
+    currentStep,
+    isCompleted,
+    totalSteps,
+    progress,
+    startOnboarding,
+    skipOnboarding,
+    nextStep,
+    prevStep,
+    completeOnboarding,
+    resetOnboarding,
+    steps,
+  ]);
+
   return (
-    <OnboardingContext.Provider
-      value={{
-        isActive,
-        currentStepIndex,
-        currentStep,
-        isCompleted,
-        totalSteps,
-        progress,
-        startOnboarding,
-        skipOnboarding,
-        nextStep,
-        prevStep,
-        completeOnboarding,
-        resetOnboarding,
-        steps,
-      }}
-    >
+    <OnboardingContext.Provider value={value}>
       {children}
     </OnboardingContext.Provider>
   );

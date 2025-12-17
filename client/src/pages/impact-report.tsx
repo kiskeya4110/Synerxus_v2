@@ -17,6 +17,8 @@ import Logo from "@/components/ui/logo";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
+import VolunteerNav from "@/components/layout/volunteer-nav";
+import PWAHeader from "@/components/pwa/pwa-header";
 declare const html2pdf: { (): { set(options: any): { from(element: HTMLElement): { save(): void } } } };
 import {
   Chart as ChartJS,
@@ -140,6 +142,14 @@ export default function ImpactReport() {
     analytics: true
   });
   const chartRefs = useRef<Record<string, any>>({});
+
+  // Interactive modal states for PWA
+  const [showHoursModal, setShowHoursModal] = useState(false);
+  const [showTasksModal, setShowTasksModal] = useState(false);
+  const [showProjectsModal, setShowProjectsModal] = useState(false);
+  const [showSkillsModal, setShowSkillsModal] = useState(false);
+  const [showSdgModal, setShowSdgModal] = useState<number | null>(null);
+  const [showImpactScoreModal, setShowImpactScoreModal] = useState(false);
 
   // Extract volunteer ID from URL parameter
   const getVolunteerIdFromUrl = () => {
@@ -608,10 +618,17 @@ export default function ImpactReport() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 p-2 md:p-8">
+    <div className={`min-h-screen bg-[#faf9f7] dark:from-slate-900 dark:to-slate-800 ${isVolunteer && isMobile ? 'pt-16 pb-20' : ''}`}>
+      {/* Desktop Volunteer Navigation */}
+      {isVolunteer && !isMobile && <VolunteerNav />}
+      {/* PWA Header for mobile volunteer users */}
+      {isVolunteer && isMobile && <PWAHeader />}
+
+      <div className="p-2 md:p-8">
+
       <div className="max-w-6xl mx-auto">
-        {/* Header with Back Button */}
-        <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2">
+        {/* Header with Back Button - hidden on mobile PWA since we have the PWAHeader */}
+        <div className={`mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-2 ${isVolunteer && isMobile ? 'hidden' : ''}`}>
           <Button
             variant="ghost"
             size="sm"
@@ -823,10 +840,10 @@ export default function ImpactReport() {
                 </div>
               </div>
 
-              {/* Right: Organizations & Impact Score Box */}
+              {/* Right: Organizations & Impact Score Box - Interactive */}
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/50 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-700">
                 <p className="text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-3">Your Information</p>
-                
+
                 <div className="space-y-3">
                   {volunteerOrganizations.length > 0 && (
                     <div>
@@ -846,11 +863,15 @@ export default function ImpactReport() {
                     </div>
                   )}
 
-                  <div className="pt-2 border-t border-blue-200 dark:border-blue-700">
+                  <button
+                    onClick={() => setShowImpactScoreModal(true)}
+                    className="w-full pt-2 border-t border-blue-200 dark:border-blue-700 text-left hover:bg-blue-200/50 dark:hover:bg-blue-800/50 rounded-lg transition-all cursor-pointer active:scale-95"
+                  >
                     <p className="text-xs text-gray-600 dark:text-gray-400 font-semibold mb-1">Overall Impact Score</p>
                     <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{filteredImpactScore}</div>
                     <p className="text-xs text-gray-600 dark:text-gray-400">out of 100</p>
-                  </div>
+                    <p className="text-[10px] text-blue-500 mt-1 font-medium">Tap for breakdown →</p>
+                  </button>
                 </div>
               </div>
             </div>
@@ -879,9 +900,12 @@ export default function ImpactReport() {
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-3 md:space-y-6">
-                {/* Enhanced KPI Buttons in responsive grid */}
+                {/* Enhanced KPI Buttons in responsive grid - All Interactive */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 md:gap-3 lg:gap-4 print:gap-2">
-                  <div className="impact-report-section bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
+                  <button
+                    onClick={() => setShowHoursModal(true)}
+                    className="impact-report-section bg-blue-50 dark:bg-blue-900 p-2.5 md:p-4 rounded-lg border border-blue-200 dark:border-blue-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all print:page-break-inside-avoid print:shadow-none text-left cursor-pointer"
+                  >
                     <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 uppercase font-semibold mb-1 md:mb-2">Hours</p>
                     <p className="text-xl md:text-2xl font-bold text-blue-900 dark:text-blue-100 mb-1 md:mb-2">{Math.round(filteredTotalHours)}h</p>
                     <div className="space-y-1">
@@ -900,9 +924,13 @@ export default function ImpactReport() {
                         <span className="font-bold text-blue-600 dark:text-blue-400">{avgMonthlyHours}h</span>
                       </div>
                     </div>
-                  </div>
+                    <div className="mt-2 text-[9px] text-blue-500 font-medium">Tap for details →</div>
+                  </button>
 
-                  <div className="impact-report-section bg-green-50 dark:bg-green-900 p-2.5 md:p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-md transition-shadow print:page-break-inside-avoid print:shadow-none">
+                  <button
+                    onClick={() => setShowTasksModal(true)}
+                    className="impact-report-section bg-green-50 dark:bg-green-900 p-2.5 md:p-4 rounded-lg border border-green-200 dark:border-green-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all print:page-break-inside-avoid print:shadow-none text-left cursor-pointer"
+                  >
                     <p className="text-[10px] md:text-xs text-green-600 dark:text-green-400 uppercase font-semibold mb-1 md:mb-2">Tasks</p>
                     <p className="text-xl md:text-2xl font-bold text-green-900 dark:text-green-100 mb-1 md:mb-2">{filteredTasksCompleted}/{tasks.length}</p>
                     <div className="space-y-1">
@@ -919,9 +947,13 @@ export default function ImpactReport() {
                         <span className="font-bold text-green-600 dark:text-green-400">{tasks.length - filteredTasksCompleted}</span>
                       </div>
                     </div>
-                  </div>
+                    <div className="mt-2 text-[9px] text-green-500 font-medium">Tap for details →</div>
+                  </button>
 
-                  <div className="bg-purple-50 dark:bg-purple-900 p-2.5 md:p-4 rounded-lg border border-purple-200 dark:border-purple-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                  <button
+                    onClick={() => setShowProjectsModal(true)}
+                    className="bg-purple-50 dark:bg-purple-900 p-2.5 md:p-4 rounded-lg border border-purple-200 dark:border-purple-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all print:page-break-inside-avoid text-left cursor-pointer"
+                  >
                     <p className="text-[10px] md:text-xs text-purple-600 dark:text-purple-400 uppercase font-semibold mb-1 md:mb-2">Projects</p>
                     <p className="text-xl md:text-2xl font-bold text-purple-900 dark:text-purple-100 mb-1 md:mb-2">{filteredActiveProjects}</p>
                     <div className="space-y-1">
@@ -938,9 +970,13 @@ export default function ImpactReport() {
                         <span className="font-bold text-purple-600 dark:text-purple-400">{assignmentsCount}</span>
                       </div>
                     </div>
-                  </div>
+                    <div className="mt-2 text-[9px] text-purple-500 font-medium">Tap for details →</div>
+                  </button>
 
-                  <div className="bg-orange-50 dark:bg-orange-900 p-2.5 md:p-4 rounded-lg border border-orange-200 dark:border-orange-700 hover:shadow-md transition-shadow print:page-break-inside-avoid">
+                  <button
+                    onClick={() => setShowSkillsModal(true)}
+                    className="bg-orange-50 dark:bg-orange-900 p-2.5 md:p-4 rounded-lg border border-orange-200 dark:border-orange-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all print:page-break-inside-avoid text-left cursor-pointer"
+                  >
                     <p className="text-[10px] md:text-xs text-orange-600 dark:text-orange-400 uppercase font-semibold mb-1 md:mb-2">Skills</p>
                     <p className="text-xl md:text-2xl font-bold text-orange-900 dark:text-orange-100 mb-1 md:mb-2">{allSkills.length}</p>
                     <div className="space-y-1">
@@ -957,7 +993,8 @@ export default function ImpactReport() {
                         <span className="font-bold text-orange-600 dark:text-orange-400">{filteredImpactScore}/100</span>
                       </div>
                     </div>
-                  </div>
+                    <div className="mt-2 text-[9px] text-orange-500 font-medium">Tap for details →</div>
+                  </button>
                 </div>
 
                 {/* AIU Summary Card - Using real AIU data from /api/aiu/volunteer endpoint */}
@@ -1259,20 +1296,32 @@ export default function ImpactReport() {
                   </Card>
                 </div>
 
-                {/* SDG Impact Section - Numbered Buttons */}
+                {/* SDG Impact Section - Interactive Buttons showing only active SDGs */}
                 {sdgs.length > 0 && (
                   <Card className="border border-gray-200 dark:border-gray-700">
                     <CardContent className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                        UN Sustainable Development Goals
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                        Your Active SDG Goals
                       </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        Tap any SDG to see your contributions and related projects
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {[...sdgs].sort((a, b) => a - b).map((sdgId: number) => {
                           const title = SDG_TITLES[sdgId];
+                          // Calculate hours for this SDG from activities
+                          const sdgHours = filteredActivities
+                            .filter((a: any) => a.sdgGoals?.includes(sdgId))
+                            .reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+                          const sdgProjects = safeProjectAssignments.filter((pa: any) =>
+                            pa.project?.sdgGoals?.includes(sdgId)
+                          ).length;
+
                           return (
-                            <div
+                            <button
                               key={sdgId}
-                              className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-600 hover:shadow-md transition-all"
+                              onClick={() => setShowSdgModal(sdgId)}
+                              className="flex items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 border border-blue-200 dark:border-blue-600 hover:shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
                             >
                               <span className="text-lg flex-shrink-0">
                                 {SDG_LOGOS[sdgId]}
@@ -1283,10 +1332,31 @@ export default function ImpactReport() {
                               <span className="text-xs text-gray-700 dark:text-gray-300 font-semibold hidden sm:inline">
                                 {title}
                               </span>
-                            </div>
+                              {sdgHours > 0 && (
+                                <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                                  {Math.round(sdgHours)}h
+                                </span>
+                              )}
+                            </button>
                           );
                         })}
                       </div>
+                      {sdgs.length > 0 && (
+                        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-3 text-center">
+                          <div>
+                            <p className="text-2xl font-bold text-blue-600">{sdgs.length}</p>
+                            <p className="text-[10px] text-gray-500">Active SDGs</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-emerald-600">{Math.round(filteredTotalHours)}</p>
+                            <p className="text-[10px] text-gray-500">Total Hours</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-purple-600">{filteredActiveProjects}</p>
+                            <p className="text-[10px] text-gray-500">Projects</p>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -2098,7 +2168,354 @@ export default function ImpactReport() {
           }
         }
       `}</style>
-      
+
+      {/* Interactive Modal Dialogs */}
+
+      {/* Hours Detail Modal */}
+      <Dialog open={showHoursModal} onOpenChange={setShowHoursModal}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-600">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <Target className="h-5 w-5" />
+              </div>
+              Volunteer Hours Breakdown
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg text-center">
+              <p className="text-4xl font-bold text-blue-600">{Math.round(filteredTotalHours)}h</p>
+              <p className="text-sm text-gray-600">Total Hours Volunteered</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 p-3 rounded-lg text-center">
+                <p className="text-xl font-bold text-gray-800">{filteredActivities.length}</p>
+                <p className="text-xs text-gray-500">Activities</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg text-center">
+                <p className="text-xl font-bold text-gray-800">{avgMonthlyHours}h</p>
+                <p className="text-xs text-gray-500">Monthly Avg</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm text-gray-700">Recent Activities</h4>
+              {filteredActivities.slice(0, 5).map((activity: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                  <span className="truncate flex-1">{activity.description || 'Activity'}</span>
+                  <span className="font-bold text-blue-600 ml-2">{activity.hours || 0}h</span>
+                </div>
+              ))}
+              {filteredActivities.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No activities recorded yet</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tasks Detail Modal */}
+      <Dialog open={showTasksModal} onOpenChange={setShowTasksModal}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <div className="bg-green-100 p-2 rounded-full">
+                <Target className="h-5 w-5" />
+              </div>
+              Task Completion Details
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-green-50 p-4 rounded-lg text-center">
+              <p className="text-4xl font-bold text-green-600">{filteredTasksCompleted}/{tasks.length}</p>
+              <p className="text-sm text-gray-600">Tasks Completed</p>
+              <Progress value={tasks.length > 0 ? (filteredTasksCompleted / tasks.length) * 100 : 0} className="mt-2" />
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm text-gray-700">Your Tasks</h4>
+              {tasks.slice(0, 8).map((task: any, idx: number) => (
+                <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                  <span className="truncate flex-1">{task.title || 'Task'}</span>
+                  <Badge variant={task.status?.toLowerCase() === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                    {task.status || 'pending'}
+                  </Badge>
+                </div>
+              ))}
+              {tasks.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No tasks assigned yet</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Projects Detail Modal */}
+      <Dialog open={showProjectsModal} onOpenChange={setShowProjectsModal}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-purple-600">
+              <div className="bg-purple-100 p-2 rounded-full">
+                <Briefcase className="h-5 w-5" />
+              </div>
+              Project Assignments
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-purple-50 p-4 rounded-lg text-center">
+              <p className="text-4xl font-bold text-purple-600">{filteredActiveProjects}</p>
+              <p className="text-sm text-gray-600">Active Projects</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 p-3 rounded-lg text-center">
+                <p className="text-xl font-bold text-gray-800">{assignmentsCount}</p>
+                <p className="text-xs text-gray-500">Total Assignments</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg text-center">
+                <p className="text-xl font-bold text-gray-800">{volunteerOrganizations.length}</p>
+                <p className="text-xs text-gray-500">Organizations</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm text-gray-700">Your Projects</h4>
+              {safeProjectAssignments.slice(0, 8).map((pa: any, idx: number) => (
+                <div key={idx} className="p-2 bg-gray-50 rounded text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium truncate flex-1">{pa.project?.name || 'Project'}</span>
+                    <Badge variant={pa.status === 'active' ? 'default' : 'secondary'} className="text-xs ml-2">
+                      {pa.status || 'pending'}
+                    </Badge>
+                  </div>
+                  {pa.role && <p className="text-xs text-gray-500 mt-1">Role: {pa.role}</p>}
+                </div>
+              ))}
+              {safeProjectAssignments.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">No project assignments yet</p>
+              )}
+            </div>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setShowProjectsModal(false);
+                setLocation('/discover-opportunities/pwa');
+              }}
+            >
+              Find New Projects
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Skills Detail Modal */}
+      <Dialog open={showSkillsModal} onOpenChange={setShowSkillsModal}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-orange-600">
+              <div className="bg-orange-100 p-2 rounded-full">
+                <Lightbulb className="h-5 w-5" />
+              </div>
+              Skills & SDG Alignment
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-orange-50 p-4 rounded-lg text-center">
+              <p className="text-4xl font-bold text-orange-600">{allSkills.length}</p>
+              <p className="text-sm text-gray-600">Skills Registered</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 p-3 rounded-lg text-center">
+                <p className="text-xl font-bold text-gray-800">{sdgs.length}</p>
+                <p className="text-xs text-gray-500">SDG Goals</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg text-center">
+                <p className="text-xl font-bold text-gray-800">{filteredImpactScore}</p>
+                <p className="text-xs text-gray-500">Impact Score</p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm text-gray-700">Your Skills</h4>
+              <div className="flex flex-wrap gap-2">
+                {allSkills.map((skill: string, idx: number) => (
+                  <Badge key={idx} className={getSkillBadgeClass(idx)}>
+                    {skill}
+                  </Badge>
+                ))}
+                {allSkills.length === 0 && (
+                  <p className="text-sm text-gray-500 py-2">No skills added yet</p>
+                )}
+              </div>
+            </div>
+            {sdgs.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm text-gray-700">Selected SDGs</h4>
+                <div className="flex flex-wrap gap-2">
+                  {sdgs.map((sdgId: number) => (
+                    <span key={sdgId} className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
+                      {SDG_LOGOS[sdgId]} SDG {sdgId}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => {
+                setShowSkillsModal(false);
+                setLocation('/volunteer-profile-settings');
+              }}
+            >
+              Update Skills & SDGs
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* SDG Detail Modal */}
+      <Dialog open={showSdgModal !== null} onOpenChange={() => setShowSdgModal(null)}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          {showSdgModal && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <span className="text-3xl">{SDG_LOGOS[showSdgModal]}</span>
+                  <div>
+                    <p className="text-blue-600">SDG {showSdgModal}</p>
+                    <p className="text-sm font-normal text-gray-600">{SDG_TITLES[showSdgModal]}</p>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {(() => {
+                  const sdgHours = filteredActivities
+                    .filter((a: any) => a.sdgGoals?.includes(showSdgModal))
+                    .reduce((sum: number, a: any) => sum + (a.hours || 0), 0);
+                  const sdgActivities = filteredActivities.filter((a: any) => a.sdgGoals?.includes(showSdgModal));
+                  const sdgProjects = safeProjectAssignments.filter((pa: any) =>
+                    pa.project?.sdgGoals?.includes(showSdgModal)
+                  );
+                  return (
+                    <>
+                      <div className="bg-blue-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-3 gap-3 text-center">
+                          <div>
+                            <p className="text-2xl font-bold text-blue-600">{Math.round(sdgHours)}h</p>
+                            <p className="text-xs text-gray-500">Hours</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-emerald-600">{sdgActivities.length}</p>
+                            <p className="text-xs text-gray-500">Activities</p>
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-purple-600">{sdgProjects.length}</p>
+                            <p className="text-xs text-gray-500">Projects</p>
+                          </div>
+                        </div>
+                      </div>
+                      {sdgProjects.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm text-gray-700">Related Projects</h4>
+                          {sdgProjects.slice(0, 5).map((pa: any, idx: number) => (
+                            <div key={idx} className="p-2 bg-gray-50 rounded text-sm">
+                              <span className="font-medium">{pa.project?.name || 'Project'}</span>
+                              {pa.project?.organization?.name && (
+                                <p className="text-xs text-gray-500">{pa.project.organization.name}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {sdgActivities.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-semibold text-sm text-gray-700">Recent Activities</h4>
+                          {sdgActivities.slice(0, 5).map((activity: any, idx: number) => (
+                            <div key={idx} className="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                              <span className="truncate flex-1">{activity.description || 'Activity'}</span>
+                              <span className="font-bold text-blue-600 ml-2">{activity.hours || 0}h</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {sdgProjects.length === 0 && sdgActivities.length === 0 && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No contributions to this SDG yet. Find opportunities aligned with this goal!
+                        </p>
+                      )}
+                    </>
+                  );
+                })()}
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setShowSdgModal(null);
+                    setLocation(`/discover-opportunities/pwa?sdg=${showSdgModal}`);
+                  }}
+                >
+                  Find SDG {showSdgModal} Opportunities
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Impact Score Modal */}
+      <Dialog open={showImpactScoreModal} onOpenChange={setShowImpactScoreModal}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-emerald-600">
+              <div className="bg-emerald-100 p-2 rounded-full">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+              Impact Score Breakdown
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-4 rounded-lg text-center">
+              <p className="text-5xl font-bold text-emerald-600">{filteredImpactScore}</p>
+              <p className="text-sm text-gray-600">Overall Impact Score</p>
+            </div>
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm text-gray-700">Score Components</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Hours (35%)</span>
+                  <span className="font-bold">{Math.round(filteredTotalHours)}h</span>
+                </div>
+                <Progress value={Math.min((filteredTotalHours / 100) * 100, 100)} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Tasks (20%)</span>
+                  <span className="font-bold">{filteredTasksCompleted}/{tasks.length}</span>
+                </div>
+                <Progress value={tasks.length > 0 ? (filteredTasksCompleted / tasks.length) * 100 : 0} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Projects (30%)</span>
+                  <span className="font-bold">{filteredActiveProjects}</span>
+                </div>
+                <Progress value={Math.min(filteredActiveProjects * 20, 100)} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">SDG Alignment (10%)</span>
+                  <span className="font-bold">{sdgs.length} SDGs</span>
+                </div>
+                <Progress value={Math.min(sdgs.length * 10, 100)} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Skills Match (5%)</span>
+                  <span className="font-bold">{allSkills.length} skills</span>
+                </div>
+                <Progress value={Math.min(allSkills.length * 10, 100)} className="h-2" />
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      </div>
       {/* Mobile Bottom Navigation - Different for volunteers vs organizations */}
       {isVolunteer && isMobile ? (
         <VolunteerPWANav userId={volunteerId?.toString()} activeTab="impacts" />

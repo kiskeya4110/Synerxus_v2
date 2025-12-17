@@ -46,6 +46,8 @@ import { useAuth } from "@/hooks/use-auth";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import PWAHeader from "@/components/pwa/pwa-header";
+import VolunteerPWANav from "@/components/layout/volunteer-pwa-nav";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Form,
@@ -871,6 +873,8 @@ export default function VolunteerProfileSettings() {
   const [, setLocation] = useLocation();
   const { signOut } = useAuth();
   const isMobile = useIsMobile();
+  const userType = localStorage.getItem('userType');
+  const isVolunteerMobile = isMobile && userType === 'volunteer';
   const [skillInput, setSkillInput] = useState("");
   const [skillProficiency, setSkillProficiency] = useState(50);
   const [interestInput, setInterestInput] = useState("");
@@ -1294,9 +1298,12 @@ export default function VolunteerProfileSettings() {
   const isSubmitting = profileMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24">
+    <div className={`min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24 ${isVolunteerMobile ? 'pt-16' : ''}`}>
+      {/* PWA Header for mobile volunteer users */}
+      {isVolunteerMobile && <PWAHeader />}
+
       {/* Volunteer Desktop Navigation */}
-      <VolunteerNav />
+      {!isVolunteerMobile && <VolunteerNav />}
 
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <div className="mb-8 text-center">
@@ -1480,7 +1487,11 @@ export default function VolunteerProfileSettings() {
       </div>
 
       {/* Bottom Navigation */}
-      <WebBottomNav activeTab="profile" />
+      {isVolunteerMobile ? (
+        <VolunteerPWANav userId={userId || undefined} activeTab="more" />
+      ) : (
+        <WebBottomNav activeTab="profile" />
+      )}
     </div>
   );
 }

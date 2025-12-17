@@ -22,9 +22,11 @@ interface CacheStats {
 
 class MemoryCache {
   private cache: Map<string, CacheEntry<any>> = new Map();
+  private inflight: Map<string, Promise<any>> = new Map(); // In-flight request deduplication
   private maxSize: number;
   private defaultTTL: number;
   private stats: CacheStats = { hits: 0, misses: 0, sets: 0, evictions: 0 };
+  private dedupeCount: number = 0; // Track deduplicated requests
 
   constructor(options: { maxSize?: number; defaultTTL?: number } = {}) {
     this.maxSize = options.maxSize || 1000; // Max 1000 entries
@@ -109,32 +111,65 @@ class MemoryCache {
   /**
    * Get cache statistics
    */
-  getStats(): CacheStats & { size: number; hitRate: string } {
+  getStats(): CacheStats & { size: number; hitRate: string; inflight: number; deduplicated: number } {
     const total = this.stats.hits + this.stats.misses;
     const hitRate = total > 0 ? ((this.stats.hits / total) * 100).toFixed(2) + '%' : '0%';
     return {
       ...this.stats,
       size: this.cache.size,
       hitRate,
+      inflight: this.inflight.size,
+      deduplicated: this.dedupeCount,
     };
   }
 
   /**
    * Get or set pattern - fetch from cache or compute and cache
+   * Includes in-flight request deduplication to prevent duplicate concurrent requests
    */
   async getOrSet<T>(
     key: string,
     fetchFn: () => Promise<T>,
     ttlMs?: number
   ): Promise<T> {
+    // First check cache
     const cached = this.get<T>(key);
     if (cached !== null) {
       return cached;
     }
 
-    const data = await fetchFn();
-    this.set(key, data, ttlMs);
-    return data;
+    // Check if there's already an in-flight request for this key
+    const inflight = this.inflight.get(key);
+    if (inflight) {
+      this.dedupeCount++;
+      return inflight as Promise<T>;
+    }
+
+    // Create new promise and track it
+    const promise = (async () => {
+      try {
+        const data = await fetchFn();
+        this.set(key, data, ttlMs);
+        return data;
+      } finally {
+        // Clean up in-flight tracking
+        this.inflight.delete(key);
+      }
+    })();
+
+    this.inflight.set(key, promise);
+    return promise;
+  }
+
+  /**
+   * Get or set with deduplication - alias for getOrSet with clearer naming
+   */
+  async dedupedFetch<T>(
+    key: string,
+    fetchFn: () => Promise<T>,
+    ttlMs?: number
+  ): Promise<T> {
+    return this.getOrSet(key, fetchFn, ttlMs);
   }
 
   /**

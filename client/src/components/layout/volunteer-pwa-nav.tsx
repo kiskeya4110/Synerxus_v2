@@ -32,12 +32,14 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
     return 'home';
   })();
 
+  // All navigation goes back to volunteer-dashboard with tab parameter
+  // This maintains consistent framing with PWA header and bottom tray
   const navItems = [
     {
       id: 'home' as const,
       label: 'Home',
       icon: Home,
-      path: '/volunteer-dashboard'
+      path: '/volunteer-dashboard?tab=dashboard'
     },
     {
       id: 'projects' as const,
@@ -49,13 +51,13 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
       id: 'potentials' as const,
       label: 'Potentials',
       icon: Sparkles,
-      path: '/discover-opportunities/pwa'
+      path: '/volunteer-dashboard?tab=potential'
     },
     {
       id: 'impacts' as const,
       label: 'Impacts',
       icon: BarChart3,
-      path: userId ? `/impact-report/${userId}` : '/volunteer-dashboard?tab=impacts'
+      path: '/volunteer-dashboard?tab=impacts'
     },
     {
       id: 'more' as const,

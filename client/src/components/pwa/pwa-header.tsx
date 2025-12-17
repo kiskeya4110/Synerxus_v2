@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import {
   Menu, X, Home, Settings, MessageCircle, LogOut,
   ClipboardList, Bell, User, Briefcase, BarChart3,
-  Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown
+  Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown, Trophy
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -46,7 +46,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     if (onLogActivity) {
       onLogActivity();
     } else {
-      navigate('/log-activity');
+      navigate('/volunteer-dashboard?tab=log-activity');
     }
   };
 
@@ -57,7 +57,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     { icon: Briefcase, label: "My Projects", path: "/volunteer-dashboard?tab=projects" },
     { icon: Sparkles, label: "Discover", path: "/discover-opportunities/pwa" },
     { icon: ClipboardList, label: "Log Activity", action: handleLogActivity, highlight: true },
-    { icon: BarChart3, label: "My Impact", path: "/volunteer-dashboard?tab=impacts" },
+    { icon: BarChart3, label: "My Impact", path: "/impact-report" },
+    { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
     { icon: MessageCircle, label: "Messages", path: "/volunteer-messages/pwa" },
     { icon: BookOpen, label: "Stories", path: "/stories" },
     { icon: User, label: "Profile", path: "/volunteer-dashboard?tab=profile" },

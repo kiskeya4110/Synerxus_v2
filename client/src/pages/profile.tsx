@@ -18,6 +18,7 @@ import { Link } from "wouter";
 import { calculateProficiencyStats, getFormattedAverageProficiency, getProficiencySummary } from "@/lib/proficiency-utils";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OrganizationHeader from "@/components/layout/organization-header";
+import VolunteerNav from "@/components/layout/volunteer-nav";
 
 const SDG_LABELS = {
   1: "No Poverty",
@@ -199,6 +200,7 @@ export default function Profile() {
     return (
       <>
         {isOrganization && <OrganizationHeader activeTab="profile" />}
+        {!isOrganization && <VolunteerNav />}
         <div className="container mx-auto px-4 py-8">
           <Skeleton className="h-64 w-full" />
         </div>
@@ -220,6 +222,7 @@ export default function Profile() {
   return (
     <>
       {isOrganization && <OrganizationHeader activeTab="profile" />}
+      {isVolunteer && <VolunteerNav />}
       <div className="container mx-auto px-4 py-8 max-w-4xl">
       <div className="space-y-6">
         {/* Header Section */}

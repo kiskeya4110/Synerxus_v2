@@ -4,7 +4,7 @@ import { Home, Briefcase, Sparkles, MoreHorizontal, X, BarChart3, MessageCircle,
 
 interface VolunteerPWANavProps {
   userId?: string;
-  activeTab?: 'home' | 'projects' | 'potentials' | 'impacts' | 'more';
+  activeTab?: 'home' | 'projects' | 'potentials' | 'impacts' | 'messages' | 'more';
 }
 
 export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavProps) {
@@ -29,6 +29,7 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
     if (location.includes('/projects')) return 'projects';
     if (location.includes('discover-opportunities') || location.includes('opportunities')) return 'potentials';
     if (location.includes('impact-report') || location.includes('impacts')) return 'impacts';
+    if (location.includes('/messages') || location.includes('volunteer-messages')) return 'messages';
     return 'home';
   })();
 
@@ -54,10 +55,10 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
       path: '/volunteer-dashboard?tab=potential'
     },
     {
-      id: 'impacts' as const,
-      label: 'Impacts',
-      icon: BarChart3,
-      path: '/volunteer-dashboard?tab=impacts'
+      id: 'messages' as const,
+      label: 'Messages',
+      icon: MessageCircle,
+      path: '/volunteer-messages/pwa'
     },
     {
       id: 'more' as const,
@@ -68,8 +69,8 @@ export default function VolunteerPWANav({ userId, activeTab }: VolunteerPWANavPr
   ];
 
   const moreMenuItems = [
+    { icon: BarChart3, label: 'My Impact', path: '/volunteer-dashboard?tab=impacts' },
     { icon: ClipboardList, label: 'Log Activity', path: '/volunteer-dashboard?tab=log-activity' },
-    { icon: MessageCircle, label: 'Messages', path: '/volunteer-messages/pwa' },
     { icon: BookOpen, label: 'Stories', path: '/stories' },
     { icon: Award, label: 'Achievements', path: '/achievements' },
     { icon: User, label: 'Profile', path: '/volunteer-dashboard?tab=profile' },

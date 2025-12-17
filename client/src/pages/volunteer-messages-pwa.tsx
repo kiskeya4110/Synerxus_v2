@@ -1070,7 +1070,7 @@ export default function VolunteerMessagesPWA() {
       )}
 
       {/* Bottom Navigation */}
-      <VolunteerPWANav userId={userId} activeTab="home" />
+      <VolunteerPWANav userId={userId} activeTab="messages" />
     </div>
   );
 }

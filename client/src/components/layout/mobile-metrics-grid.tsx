@@ -1,10 +1,14 @@
-import { FolderOpen, Clock, Target, Users, TrendingUp } from "lucide-react";
+import { FolderOpen, Clock, Target, Users, TrendingUp, Award, CheckCircle, Zap } from "lucide-react";
 
 interface MobileMetricsGridProps {
   activeProjects?: number;
+  totalProjects?: number;
+  completedProjects?: number;
   totalHours?: number;
   sdgsAddressed?: number;
-  aiuEarned?: number; // Replaced livesTouched with AIU
+  aiuEarned?: number;
+  activeVolunteers?: number;
+  livesImpacted?: number;
   onActiveProjectsClick?: () => void;
   onTotalHoursClick?: () => void;
   onSdgsClick?: () => void;
@@ -13,19 +17,65 @@ interface MobileMetricsGridProps {
 
 export default function MobileMetricsGrid({
   activeProjects = 0,
+  totalProjects = 0,
+  completedProjects = 0,
   totalHours = 0,
   sdgsAddressed = 0,
   aiuEarned = 0,
+  activeVolunteers = 0,
+  livesImpacted = 0,
   onActiveProjectsClick,
   onTotalHoursClick,
   onSdgsClick,
   onAiuClick,
 }: MobileMetricsGridProps) {
+  // Calculate industry-standard KPIs
+  const successRate = totalProjects > 0 ? Math.round((completedProjects / totalProjects) * 100) : 0;
+  const sdgCoverage = Math.round((sdgsAddressed / 17) * 100);
+  const impactPerHour = totalHours > 0 ? Math.round((livesImpacted / totalHours) * 10) / 10 : 0;
+  const avgHoursPerVolunteer = activeVolunteers > 0 ? Math.round(totalHours / activeVolunteers) : 0;
+
   const metrics = [
-    { label: "Active Projects", value: activeProjects, icon: FolderOpen, color: "#667eea", onClick: onActiveProjectsClick, testId: "mobile-metric-projects" },
-    { label: "Total Hours", value: totalHours, icon: Clock, color: "#764ba2", onClick: onTotalHoursClick, testId: "mobile-metric-hours" },
-    { label: "SDGs Addressed", value: sdgsAddressed, icon: Target, color: "#f093fb", onClick: onSdgsClick, testId: "mobile-metric-sdgs" },
-    { label: "AIUs Earned", value: typeof aiuEarned === 'number' ? aiuEarned.toFixed(2) : aiuEarned, icon: TrendingUp, color: "#10b981", onClick: onAiuClick, testId: "mobile-metric-aiu", tooltip: "Attributable Impact Units" },
+    {
+      label: "Impact ROI",
+      value: `${impactPerHour}/hr`,
+      subValue: `${livesImpacted.toLocaleString()} lives`,
+      icon: TrendingUp,
+      color: "#10b981",
+      onClick: onAiuClick,
+      testId: "mobile-metric-roi",
+      tooltip: "Lives impacted per volunteer hour"
+    },
+    {
+      label: "Success Rate",
+      value: `${successRate}%`,
+      subValue: `${completedProjects}/${totalProjects}`,
+      icon: CheckCircle,
+      color: "#8b5cf6",
+      onClick: onActiveProjectsClick,
+      testId: "mobile-metric-success",
+      tooltip: "Project completion rate"
+    },
+    {
+      label: "SDG Coverage",
+      value: `${sdgCoverage}%`,
+      subValue: `${sdgsAddressed} of 17`,
+      icon: Target,
+      color: "#f59e0b",
+      onClick: onSdgsClick,
+      testId: "mobile-metric-sdgs",
+      tooltip: "UN SDGs addressed"
+    },
+    {
+      label: "AIU Score",
+      value: typeof aiuEarned === 'number' ? aiuEarned.toFixed(1) : aiuEarned,
+      subValue: `${totalHours.toLocaleString()}h total`,
+      icon: Award,
+      color: "#0ea5e9",
+      onClick: onTotalHoursClick,
+      testId: "mobile-metric-aiu",
+      tooltip: "Attributable Impact Units"
+    },
   ];
 
   return (
@@ -41,27 +91,28 @@ export default function MobileMetricsGrid({
               onTouchEnd={(e) => { if (metric.onClick) { e.preventDefault(); metric.onClick(); } }}
               aria-label={`${metric.label}: ${metric.value}`}
               data-testid={metric.testId}
-              title={(metric as any).tooltip || metric.label}
+              title={metric.tooltip || metric.label}
               style={{
                 backgroundColor: 'white',
-                borderRadius: '8px',
-                padding: '8px 6px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                borderRadius: '10px',
+                padding: '8px 4px',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.06)',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '4px',
-                border: `1px solid ${metric.color}20`,
+                gap: '2px',
+                border: `1.5px solid ${metric.color}25`,
                 cursor: 'pointer',
                 touchAction: 'manipulation',
                 WebkitTapHighlightColor: `${metric.color}30`,
-                minHeight: '70px',
+                minHeight: '76px',
+                transition: 'all 0.2s',
               }}
             >
               <div
                 style={{
-                  padding: '4px',
-                  borderRadius: '6px',
+                  padding: '5px',
+                  borderRadius: '8px',
                   backgroundColor: `${metric.color}15`,
                   display: 'flex',
                   alignItems: 'center',
@@ -70,10 +121,13 @@ export default function MobileMetricsGrid({
               >
                 <Icon size={14} style={{ color: metric.color, strokeWidth: 2.2 }} />
               </div>
-              <div style={{ fontSize: '14px', fontWeight: '700', color: '#1f2937' }}>
+              <div style={{ fontSize: '15px', fontWeight: '700', color: '#1f2937', lineHeight: 1.1 }}>
                 {metric.value}
               </div>
-              <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: '500', textAlign: 'center', lineHeight: '1.1' }}>
+              <div style={{ fontSize: '8px', color: '#9ca3af', fontWeight: '500', textAlign: 'center', lineHeight: '1.1' }}>
+                {metric.subValue}
+              </div>
+              <div style={{ fontSize: '8px', color: metric.color, fontWeight: '600', textAlign: 'center', lineHeight: '1.1' }}>
                 {metric.label}
               </div>
             </button>

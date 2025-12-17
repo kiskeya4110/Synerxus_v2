@@ -305,10 +305,10 @@ export default function OrganizationDashboard() {
   });
 
   // Memoized computed values - MUST be before any early returns
-  const rawMetrics = useMemo(() =>
-    dashboardData?.keyMetrics || { activeProjects: 0, totalHours: 0, sdgsAddressed: 0, aiuEarned: 0, activeVolunteers: 0, totalProjects: 0 },
-    [dashboardData?.keyMetrics]
-  );
+  const rawMetrics = useMemo(() => ({
+    activeProjects: 0, totalHours: 0, sdgsAddressed: 0, aiuEarned: 0, activeVolunteers: 0, totalProjects: 0, completedProjects: 0, livesTouched: 0, peopleImpacted: 0,
+    ...dashboardData?.keyMetrics
+  }), [dashboardData?.keyMetrics]);
 
   // Calculate AIU with fallback: prioritize dedicated AIU endpoint data
   // 1 AIU = 50 hours of volunteer work × SDG multiplier (up to 2x)
@@ -708,12 +708,16 @@ export default function OrganizationDashboard() {
         </div>
       </div>
 
-      {/* Mobile Metrics Grid - 2x2 at top */}
-      {metrics && <MobileMetricsGrid 
-        activeProjects={metrics.activeProjects} 
-        totalHours={metrics.totalHours} 
-        sdgsAddressed={metrics.sdgsAddressed} 
+      {/* Mobile Metrics Grid - Industry KPIs */}
+      {metrics && <MobileMetricsGrid
+        activeProjects={metrics.activeProjects}
+        totalProjects={metrics.totalProjects || (metrics.activeProjects + (metrics.completedProjects || 0))}
+        completedProjects={metrics.completedProjects || 0}
+        totalHours={metrics.totalHours}
+        sdgsAddressed={metrics.sdgsAddressed}
         aiuEarned={metrics.aiuEarned}
+        activeVolunteers={metrics.activeVolunteers || 0}
+        livesImpacted={metrics.livesTouched || metrics.peopleImpacted || 0}
         onActiveProjectsClick={() => setActiveModal('projects')}
         onTotalHoursClick={() => setActiveModal('hours')}
         onSdgsClick={() => setActiveModal('sdgs')}
@@ -866,38 +870,129 @@ export default function OrganizationDashboard() {
           </div>
         </div>
 
-        {/* Mobile Impact Metrics Card */}
+        {/* Mobile Team & Engagement Card - Complementary metrics */}
         <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-              <Award size={16} style={{ color: '#7c3aed' }} />
-              Impact Metrics
+              <Users size={16} style={{ color: '#0ea5e9' }} />
+              Team Performance
             </h3>
             <button
-              onClick={() => navigate('/impact-visualization')}
-              style={{ fontSize: '11px', color: '#7c3aed', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
+              onClick={() => navigate('/volunteers')}
+              style={{ fontSize: '11px', color: '#0ea5e9', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
             >
-              Details →
+              View Team →
             </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-            <div style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>SDGs Addressed</p>
-              <p style={{ fontSize: '20px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{metrics.sdgsAddressed}</p>
+            <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '10px' }}>
+              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Active Volunteers</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#0369a1', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
             </div>
             <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '10px' }}>
+              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Avg Hours/Volunteer</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}</p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#fef2f2', borderRadius: '10px' }}>
+              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Lives Impacted</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#dc2626', margin: 0 }}>{(metrics.livesTouched || metrics.peopleImpacted || 0).toLocaleString()}</p>
+            </div>
+            <div style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '10px' }}>
               <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Avg Completion</p>
-              <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: 0 }}>{avgProjectCompletion}%</p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#eff6ff', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Active Projects</p>
-              <p style={{ fontSize: '20px', fontWeight: '700', color: '#1e40af', margin: 0 }}>{metrics.activeProjects}</p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#fef3c7', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Total AIUs</p>
-              <p style={{ fontSize: '20px', fontWeight: '700', color: '#d97706', margin: 0 }}>{typeof metrics.aiuEarned === 'number' ? metrics.aiuEarned.toFixed(1) : metrics.aiuEarned}</p>
+              <p style={{ fontSize: '20px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{avgProjectCompletion}%</p>
             </div>
           </div>
+        </div>
+
+        {/* Mobile SDG Distribution - Moved above Impact Visualization */}
+        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+              <Target size={16} style={{ color: '#10b981' }} />
+              SDG Impact Distribution
+            </h3>
+            <button
+              onClick={() => navigate('/sdg-mapping')}
+              style={{ fontSize: '11px', color: '#10b981', fontWeight: '600', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              View All →
+            </button>
+          </div>
+          {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
+            <>
+              {/* SDG Summary Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '12px' }}>
+                <div style={{ padding: '8px', backgroundColor: '#f0fdf4', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '16px', fontWeight: '700', color: '#166534', margin: 0 }}>{dashboardData.sdgDistribution.length}</p>
+                  <p style={{ fontSize: '9px', color: '#6b7280', margin: 0 }}>SDGs Active</p>
+                </div>
+                <div style={{ padding: '8px', backgroundColor: '#eff6ff', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '16px', fontWeight: '700', color: '#1e40af', margin: 0 }}>
+                    {dashboardData.sdgDistribution.reduce((sum: number, s: any) => sum + (s.hours || 0), 0).toLocaleString()}
+                  </p>
+                  <p style={{ fontSize: '9px', color: '#6b7280', margin: 0 }}>Total Hours</p>
+                </div>
+                <div style={{ padding: '8px', backgroundColor: '#faf5ff', borderRadius: '8px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '16px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>
+                    {dashboardData.sdgDistribution.reduce((sum: number, s: any) => sum + (s.projects || 0), 0)}
+                  </p>
+                  <p style={{ fontSize: '9px', color: '#6b7280', margin: 0 }}>Projects</p>
+                </div>
+              </div>
+              {/* Top SDGs List */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {dashboardData.sdgDistribution.slice(0, 4).map((sdg: any, idx: number) => {
+                  const totalHours = dashboardData.sdgDistribution.reduce((sum: number, s: any) => sum + (s.hours || 0), 0);
+                  const percent = totalHours > 0 ? Math.round((sdg.hours / totalHours) * 100) : 0;
+                  return (
+                    <button
+                      key={sdg.goal}
+                      onClick={() => setActiveModal('sdgs')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '10px',
+                        backgroundColor: idx === 0 ? '#f0fdf4' : '#f9fafb',
+                        borderRadius: '10px',
+                        border: idx === 0 ? '1.5px solid #86efac' : '1px solid #e5e7eb',
+                        cursor: 'pointer',
+                        width: '100%',
+                        textAlign: 'left'
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '36px', height: '36px', borderRadius: '8px',
+                          backgroundColor: getSDGColor(sdg.goal),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: 'white', fontWeight: '700', fontSize: '14px', flexShrink: 0
+                        }}
+                      >
+                        {sdg.goal}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {getSDGName(sdg.goal)}
+                        </p>
+                        <p style={{ fontSize: '10px', color: '#6b7280', margin: '2px 0 0 0' }}>
+                          {sdg.hours?.toLocaleString() || 0}h • {sdg.projects || 0} projects
+                        </p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: getSDGColor(sdg.goal), margin: 0 }}>{percent}%</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div style={{ padding: '24px', textAlign: 'center', color: '#9ca3af' }}>
+              <Target size={24} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+              <p style={{ fontSize: '12px', margin: 0 }}>No SDG data available</p>
+            </div>
+          )}
         </div>
 
         {/* Mobile Impact Visualization Button */}
@@ -956,90 +1051,6 @@ export default function OrganizationDashboard() {
                 <Lightbulb size={20} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
                 <p style={{ fontSize: '12px', margin: 0 }}>No insights available yet</p>
                 <p style={{ fontSize: '10px', marginTop: '4px' }}>Insights will appear as your projects progress</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile SDG Distribution Doughnut Chart */}
-        <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '12px', textAlign: 'center' }}>SDG Impact Distribution</h3>
-          <div style={{ height: '280px', position: 'relative' }}>
-            {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 ? (
-              <>
-                {/* Center Label - SDG Coverage */}
-                <div style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -60%)',
-                  textAlign: 'center',
-                  zIndex: 0,
-                  pointerEvents: 'none'
-                }}>
-                  <div style={{ fontSize: '28px', fontWeight: '700', color: '#166534', lineHeight: 1 }}>
-                    {dashboardData.sdgDistribution?.length || 0}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#6b7280', fontWeight: '500', marginTop: '2px' }}>
-                    Active SDGs
-                  </div>
-                  <div style={{ fontSize: '9px', color: '#9ca3af', marginTop: '1px' }}>
-                    of 17 goals
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={dashboardData.sdgDistribution}
-                      cx="50%"
-                      cy="45%"
-                      innerRadius={50}
-                      outerRadius={85}
-                      paddingAngle={2}
-                      fill="#8884d8"
-                      dataKey="hours"
-                      stroke="white"
-                      strokeWidth={2}
-                    >
-                      {dashboardData.sdgDistribution.map((entry: any) => (
-                        <Cell key={`cell-${entry.goal}`} fill={getSDGColor(entry.goal)} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0].payload;
-                          const sdgInfo = SDG_GOALS[data.goal];
-                          const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                          const percent = ((data.hours / total) * 100).toFixed(1);
-                          return (
-                            <div style={{ backgroundColor: 'white', padding: '12px', borderRadius: '10px', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', border: `2px solid ${getSDGColor(data.goal)}` }}>
-                              <p style={{ fontWeight: '700', marginBottom: '6px', fontSize: '13px', color: getSDGColor(data.goal) }}>{sdgInfo?.name || `SDG ${data.goal}`}</p>
-                              <p style={{ fontSize: '12px', color: '#374151', margin: '2px 0' }}><strong>{data.hours}</strong> hours ({percent}%)</p>
-                              <p style={{ fontSize: '11px', color: '#6b7280', margin: '2px 0' }}>{data.projects} projects • {data.volunteers || 0} volunteers</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Legend 
-                      layout="horizontal" 
-                      verticalAlign="bottom"
-                      wrapperStyle={{ fontSize: '9px', paddingTop: '4px' }}
-                      formatter={(value, entry: any) => {
-                        const sdg = entry.payload;
-                        const total = dashboardData.sdgDistribution.reduce((sum: number, item: any) => sum + item.hours, 0);
-                        const percent = total > 0 ? Math.round((sdg.hours / total) * 100) : 0;
-                        return <span style={{ color: '#374151', fontSize: '9px', fontWeight: '500' }}>SDG {sdg.goal} ({percent}%)</span>;
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </>
-            ) : (
-              <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
-                No SDG data available
               </div>
             )}
           </div>
@@ -3181,6 +3192,7 @@ interface ProjectLocation {
 
 const ProjectMapComponent = memo(function ProjectMapComponent({ projectLocations }: { projectLocations: ProjectLocation[] }) {
   const mapRef = useRef<L.Map>(null);
+  const [mapKey, setMapKey] = useState(() => `project-map-${Date.now()}`);
 
   useEffect(() => {
     if (!mapRef.current || !projectLocations || projectLocations.length === 0) return;
@@ -3192,18 +3204,23 @@ const ProjectMapComponent = memo(function ProjectMapComponent({ projectLocations
     if (coords.length === 0) return;
 
     if (coords.length === 1) {
-      // Single project - zoom to that location
       mapRef.current.setView([coords[0].lat, coords[0].lng], 10);
     } else {
-      // Multiple projects - fit bounds to all
       const bounds = L.latLngBounds(coords.map(c => [c.lat, c.lng] as [number, number]));
       mapRef.current.fitBounds(bounds, { padding: [50, 50] });
     }
   }, [projectLocations]);
 
+  // Reset map key when component unmounts to prevent "already initialized" error
+  useEffect(() => {
+    return () => {
+      setMapKey(`project-map-${Date.now()}`);
+    };
+  }, []);
+
   return (
     <MapContainer
-      key="project-map"
+      key={mapKey}
       ref={mapRef}
       center={[20, 0]}
       zoom={2}

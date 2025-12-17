@@ -27,22 +27,14 @@ const SDG_NAMES: { [key: number]: string } = {
   15: "Life on Land", 16: "Peace and Justice", 17: "Partnerships"
 };
 
-function ScoreBar({ score, label, weight, color }: { score: number; label: string; weight: number; color: string }) {
+function CompactScoreBar({ score, label, color }: { score: number; label: string; color: string }) {
   return (
-    <div className="space-y-1">
-      <div className="flex justify-between text-xs">
-        <span className="text-slate-600">{label}</span>
-        <span className="text-slate-500">{weight}% weight</span>
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] text-slate-600 w-16 truncate">{label}</span>
+      <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: color }} />
       </div>
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${score}%`, backgroundColor: color }}
-          />
-        </div>
-        <span className="text-xs font-semibold w-10 text-right" style={{ color }}>{score}%</span>
-      </div>
+      <span className="text-[10px] font-semibold w-8 text-right" style={{ color }}>{score}%</span>
     </div>
   );
 }
@@ -54,15 +46,15 @@ function CollapsibleSection({ title, icon: Icon, children, defaultOpen = false }
     <div className="border border-slate-200 rounded-lg overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+        className="w-full flex items-center justify-between px-2.5 py-2 bg-slate-50 hover:bg-slate-100 transition-colors"
       >
-        <div className="flex items-center gap-2">
-          <Icon className="w-4 h-4 text-slate-600" />
-          <span className="font-medium text-sm text-slate-800">{title}</span>
+        <div className="flex items-center gap-1.5">
+          <Icon className="w-3.5 h-3.5 text-slate-600" />
+          <span className="font-medium text-xs text-slate-800">{title}</span>
         </div>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+        {isOpen ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
       </button>
-      {isOpen && <div className="p-3 bg-white">{children}</div>}
+      {isOpen && <div className="px-2.5 py-2 bg-white">{children}</div>}
     </div>
   );
 }
@@ -105,7 +97,7 @@ export default function MatchAnalysisModal({ isOpen, onClose, projectId, opportu
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pb-20 sm:pb-0">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -113,291 +105,207 @@ export default function MatchAnalysisModal({ isOpen, onClose, projectId, opportu
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg max-h-[90vh] bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-4">
+      <div className="relative w-full max-w-lg max-h-[80vh] sm:max-h-[90vh] bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom-4 duration-300 mb-[env(safe-area-inset-bottom)]">
+        {/* Header - Compact */}
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-2.5">
           <button
             onClick={onClose}
-            className="absolute right-3 top-3 p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+            className="absolute right-2 top-2 p-1 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
           >
-            <X className="w-5 h-5 text-white" />
+            <X className="w-4 h-4 text-white" />
           </button>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <Sparkles className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-white/20 rounded-lg">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">AI Match Analysis</h2>
-              <p className="text-sm text-white/80 truncate max-w-[250px]">{projectName}</p>
+              <h2 className="text-sm font-bold text-white">AI Match Analysis</h2>
+              <p className="text-[10px] text-white/80 truncate max-w-[220px]">{projectName}</p>
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-100px)] p-4 space-y-4">
+        {/* Content - Compact */}
+        <div className="overflow-y-auto max-h-[calc(80vh-60px)] sm:max-h-[calc(90vh-60px)] p-3 pb-4 space-y-2.5">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="w-12 h-12 border-4 border-emerald-200 border-t-emerald-500 rounded-full animate-spin mb-4" />
-              <p className="text-slate-600">Analyzing your match...</p>
+            <div className="flex flex-col items-center justify-center py-8">
+              <div className="w-10 h-10 border-3 border-emerald-200 border-t-emerald-500 rounded-full animate-spin mb-3" />
+              <p className="text-slate-600 text-sm">Analyzing your match...</p>
             </div>
           ) : error ? (
-            <div className="text-center py-12">
-              <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
-              <p className="text-slate-600">Failed to load analysis</p>
+            <div className="text-center py-8">
+              <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-2" />
+              <p className="text-slate-600 text-sm">Failed to load analysis</p>
             </div>
           ) : analysis ? (
             <>
-              {/* Overall Score */}
-              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-4 text-center">
-                <div className="relative inline-flex items-center justify-center mb-3">
-                  <svg className="w-28 h-28 transform -rotate-90">
-                    <circle cx="56" cy="56" r="48" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+              {/* Overall Score - Compact Horizontal Layout */}
+              <div className="bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl p-3 flex items-center gap-3">
+                <div className="relative flex-shrink-0">
+                  <svg className="w-16 h-16 transform -rotate-90">
+                    <circle cx="32" cy="32" r="26" fill="none" stroke="#e2e8f0" strokeWidth="5" />
                     <circle
-                      cx="56" cy="56" r="48" fill="none"
+                      cx="32" cy="32" r="26" fill="none"
                       stroke={getScoreColor(analysis.score)}
-                      strokeWidth="8"
+                      strokeWidth="5"
                       strokeLinecap="round"
-                      strokeDasharray={`${(analysis.score / 100) * 301.6} 301.6`}
+                      strokeDasharray={`${(analysis.score / 100) * 163.4} 163.4`}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-3xl font-bold" style={{ color: getScoreColor(analysis.score) }}>{analysis.score}%</span>
-                    <span className="text-xs text-slate-500">Match</span>
+                    <span className="text-lg font-bold" style={{ color: getScoreColor(analysis.score) }}>{analysis.score}%</span>
                   </div>
                 </div>
-                <div
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-white text-sm font-medium"
-                  style={{ backgroundColor: getMatchCategoryInfo(analysis.matchCategory).color }}
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  {getMatchCategoryInfo(analysis.matchCategory).label}
-                </div>
-                <p className="text-sm text-slate-600 mt-2">{getMatchCategoryInfo(analysis.matchCategory).description}</p>
-              </div>
-
-              {/* Score Breakdown */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-500" />
-                  Score Breakdown
-                </h3>
-                <div className="space-y-3 p-3 bg-slate-50 rounded-xl">
-                  <ScoreBar score={analysis.breakdown.skillMatch} label="Skills Match" weight={35} color="#8b5cf6" />
-                  <ScoreBar score={analysis.breakdown.sdgMatch} label="Mission Alignment (SDGs)" weight={20} color="#10b981" />
-                  <ScoreBar score={analysis.breakdown.availabilityMatch} label="Availability Fit" weight={20} color="#3b82f6" />
-                  <ScoreBar score={analysis.breakdown.interestMatch} label="Interest Match" weight={10} color="#f59e0b" />
-                  <ScoreBar score={analysis.breakdown.locationMatch} label="Location Match" weight={10} color="#ec4899" />
-                  <ScoreBar score={analysis.breakdown.experienceMatch} label="Experience Level" weight={5} color="#6366f1" />
-                  {analysis.breakdown.engagementBoost > 0 && (
-                    <div className="pt-2 border-t border-slate-200">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-emerald-600 font-medium">Engagement Bonus</span>
-                        <span className="text-emerald-600 font-semibold">+{analysis.breakdown.engagementBoost} pts</span>
-                      </div>
-                    </div>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <div
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-[10px] font-medium mb-1"
+                    style={{ backgroundColor: getMatchCategoryInfo(analysis.matchCategory).color }}
+                  >
+                    <CheckCircle className="w-3 h-3" />
+                    {getMatchCategoryInfo(analysis.matchCategory).label}
+                  </div>
+                  <p className="text-[11px] text-slate-600 leading-tight">{getMatchCategoryInfo(analysis.matchCategory).description}</p>
                 </div>
               </div>
 
-              {/* Detailed Insights */}
-              <div className="space-y-2">
-                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  Detailed Insights
-                </h3>
+              {/* Score Breakdown - Compact Grid */}
+              <div className="bg-slate-50 rounded-xl p-2.5 space-y-1.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="font-semibold text-xs text-slate-800">Score Breakdown</span>
+                </div>
+                <CompactScoreBar score={analysis.breakdown.skillMatch} label="Skills" color="#8b5cf6" />
+                <CompactScoreBar score={analysis.breakdown.sdgMatch} label="SDG Align" color="#10b981" />
+                <CompactScoreBar score={analysis.breakdown.availabilityMatch} label="Availability" color="#3b82f6" />
+                <CompactScoreBar score={analysis.breakdown.interestMatch} label="Interest" color="#f59e0b" />
+                <CompactScoreBar score={analysis.breakdown.locationMatch} label="Location" color="#ec4899" />
+                <CompactScoreBar score={analysis.breakdown.experienceMatch} label="Experience" color="#6366f1" />
+                {analysis.breakdown.engagementBoost > 0 && (
+                  <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200">
+                    <span className="text-emerald-600 font-medium">Engagement Bonus</span>
+                    <span className="text-emerald-600 font-semibold">+{analysis.breakdown.engagementBoost} pts</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Detailed Insights - Compact */}
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="font-semibold text-xs text-slate-800">Detailed Insights</span>
+                </div>
 
                 {/* Skills Analysis */}
-                <CollapsibleSection title="Skills Analysis" icon={Award} defaultOpen={true}>
-                  <div className="space-y-3">
+                <CollapsibleSection title="Skills Analysis" icon={Award} defaultOpen={false}>
+                  <div className="space-y-2">
                     {analysis.details.skills.matchingRequired.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-emerald-600 mb-1">Matching Required Skills</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.details.skills.matchingRequired.map((skill: string, i: number) => (
-                            <span key={i} className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs">{skill}</span>
+                        <p className="text-[10px] font-medium text-emerald-600 mb-1">Matching Required</p>
+                        <div className="flex flex-wrap gap-1">
+                          {analysis.details.skills.matchingRequired.slice(0, 4).map((skill: string, i: number) => (
+                            <span key={i} className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[10px]">{skill}</span>
                           ))}
-                        </div>
-                      </div>
-                    )}
-                    {analysis.details.skills.matchingOptional.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-blue-600 mb-1">Bonus Skills You Have</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.details.skills.matchingOptional.map((skill: string, i: number) => (
-                            <span key={i} className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{skill}</span>
-                          ))}
+                          {analysis.details.skills.matchingRequired.length > 4 && (
+                            <span className="text-[10px] text-slate-500">+{analysis.details.skills.matchingRequired.length - 4} more</span>
+                          )}
                         </div>
                       </div>
                     )}
                     {analysis.details.skills.missingRequired.length > 0 && (
                       <div>
-                        <p className="text-xs font-medium text-amber-600 mb-1">Skills to Develop</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.details.skills.missingRequired.map((skill: string, i: number) => (
-                            <span key={i} className="px-2 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">{skill}</span>
+                        <p className="text-[10px] font-medium text-amber-600 mb-1">Skills to Develop</p>
+                        <div className="flex flex-wrap gap-1">
+                          {analysis.details.skills.missingRequired.slice(0, 3).map((skill: string, i: number) => (
+                            <span key={i} className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-[10px]">{skill}</span>
                           ))}
                         </div>
                       </div>
                     )}
                     {analysis.details.skills.matchingRequired.length === 0 && analysis.details.skills.matchingOptional.length === 0 && (
-                      <p className="text-xs text-slate-500">No specific skill requirements listed</p>
+                      <p className="text-[10px] text-slate-500">No specific skill requirements</p>
                     )}
                   </div>
                 </CollapsibleSection>
 
                 {/* SDG Alignment */}
                 <CollapsibleSection title="SDG Alignment" icon={Target}>
-                  <div className="space-y-3">
+                  <div className="space-y-1.5">
                     {analysis.details.sdg.matchingSdgs.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-emerald-600 mb-2">Shared SDG Goals</p>
-                        <div className="flex flex-wrap gap-2">
-                          {analysis.details.sdg.matchingSdgs.map((sdg: number) => (
-                            <div
-                              key={sdg}
-                              className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-white text-xs font-medium"
-                              style={{ backgroundColor: SDG_COLORS[sdg] }}
-                            >
-                              <span>SDG {sdg}</span>
-                              <span className="opacity-80">|</span>
-                              <span className="truncate max-w-[100px]">{SDG_NAMES[sdg]}</span>
-                            </div>
-                          ))}
-                        </div>
+                      <div className="flex flex-wrap gap-1">
+                        {analysis.details.sdg.matchingSdgs.slice(0, 4).map((sdg: number) => (
+                          <div
+                            key={sdg}
+                            className="px-1.5 py-0.5 rounded text-white text-[10px] font-medium"
+                            style={{ backgroundColor: SDG_COLORS[sdg] }}
+                          >
+                            {sdg}. {SDG_NAMES[sdg]}
+                          </div>
+                        ))}
                       </div>
                     )}
                     {analysis.details.sdg.primarySdgMatch && (
-                      <div className="flex items-center gap-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
-                        <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                        <p className="text-xs text-emerald-700">Primary SDG match! (1.2x bonus applied)</p>
-                      </div>
-                    )}
-                    {analysis.details.sdg.matchingSdgs.length === 0 && (
-                      <p className="text-xs text-slate-500">Update your SDG preferences to improve matching</p>
-                    )}
-                  </div>
-                </CollapsibleSection>
-
-                {/* Availability */}
-                <CollapsibleSection title="Availability Fit" icon={Clock}>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-2 bg-slate-50 rounded-lg">
-                        <p className="text-xs text-slate-500">Your Availability</p>
-                        <p className="font-semibold text-slate-800">{analysis.details.availability.volunteerHoursPerWeek || 0} hrs/week</p>
-                      </div>
-                      <div className="p-2 bg-slate-50 rounded-lg">
-                        <p className="text-xs text-slate-500">Project Needs</p>
-                        <p className="font-semibold text-slate-800">{analysis.details.availability.projectHoursPerWeek || 0} hrs/week</p>
-                      </div>
-                    </div>
-                    {analysis.details.availability.fitPercentage > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{ width: `${Math.min(analysis.details.availability.fitPercentage, 100)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium text-blue-600">{analysis.details.availability.fitPercentage}% fit</span>
+                      <div className="flex items-center gap-1 text-[10px] text-emerald-700">
+                        <CheckCircle className="w-3 h-3" />
+                        Primary SDG match! (1.2x bonus)
                       </div>
                     )}
                   </div>
                 </CollapsibleSection>
 
-                {/* Location */}
-                <CollapsibleSection title="Location Match" icon={MapPin}>
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="p-2 bg-slate-50 rounded-lg">
-                        <p className="text-xs text-slate-500">Your Location</p>
-                        <p className="font-medium text-slate-800 text-sm truncate">{analysis.details.location.volunteerLocation || 'Not set'}</p>
-                      </div>
-                      <div className="p-2 bg-slate-50 rounded-lg">
-                        <p className="text-xs text-slate-500">Project Location</p>
-                        <p className="font-medium text-slate-800 text-sm truncate">
-                          {analysis.details.location.isRemote ? 'Remote' : (analysis.details.location.projectLocation || 'Not specified')}
-                        </p>
-                      </div>
+                {/* Availability & Location - Combined */}
+                <CollapsibleSection title="Availability & Location" icon={Clock}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-1.5 bg-slate-50 rounded-lg">
+                      <p className="text-[9px] text-slate-500">You</p>
+                      <p className="font-semibold text-slate-800 text-xs">{analysis.details.availability.volunteerHoursPerWeek || 0}h/wk</p>
                     </div>
-                    <div className={`flex items-center gap-2 p-2 rounded-lg ${
-                      analysis.details.location.matchType === 'remote' || analysis.details.location.matchType === 'exact'
-                        ? 'bg-emerald-50 border border-emerald-200'
-                        : 'bg-slate-50 border border-slate-200'
-                    }`}>
+                    <div className="p-1.5 bg-slate-50 rounded-lg">
+                      <p className="text-[9px] text-slate-500">Needed</p>
+                      <p className="font-semibold text-slate-800 text-xs">{analysis.details.availability.projectHoursPerWeek || 0}h/wk</p>
+                    </div>
+                    <div className="col-span-2 flex items-center gap-1 text-[10px]">
                       {analysis.details.location.matchType === 'remote' && (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-emerald-500" />
-                          <p className="text-xs text-emerald-700">Remote opportunity - work from anywhere!</p>
-                        </>
+                        <><CheckCircle className="w-3 h-3 text-emerald-500" /><span className="text-emerald-700">Remote work available</span></>
                       )}
                       {analysis.details.location.matchType === 'exact' && (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-emerald-500" />
-                          <p className="text-xs text-emerald-700">Perfect location match!</p>
-                        </>
+                        <><CheckCircle className="w-3 h-3 text-emerald-500" /><span className="text-emerald-700">Location match</span></>
                       )}
                       {analysis.details.location.matchType === 'same_region' && (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-blue-500" />
-                          <p className="text-xs text-blue-700">Same region - convenient commute</p>
-                        </>
+                        <><CheckCircle className="w-3 h-3 text-blue-500" /><span className="text-blue-700">Same region</span></>
                       )}
                       {analysis.details.location.matchType === 'different' && (
-                        <p className="text-xs text-slate-600">Different location - check if travel is possible</p>
+                        <span className="text-slate-600">Different location</span>
                       )}
                     </div>
-                  </div>
-                </CollapsibleSection>
-
-                {/* Interests */}
-                <CollapsibleSection title="Interest Alignment" icon={Heart}>
-                  <div className="space-y-2">
-                    {analysis.details.interests.volunteerCauses?.length > 0 && (
-                      <div>
-                        <p className="text-xs font-medium text-slate-600 mb-1">Your Causes</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {analysis.details.interests.volunteerCauses.map((cause: string, i: number) => (
-                            <span key={i} className="px-2 py-0.5 bg-rose-100 text-rose-700 rounded text-xs">{cause}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {analysis.details.interests.projectCategory && (
-                      <div>
-                        <p className="text-xs font-medium text-slate-600 mb-1">Project Category</p>
-                        <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">{analysis.details.interests.projectCategory}</span>
-                      </div>
-                    )}
                   </div>
                 </CollapsibleSection>
               </div>
 
-              {/* AI Reasons Summary */}
+              {/* AI Reasons Summary - Compact */}
               {analysis.reasons && analysis.reasons.length > 0 && (
-                <div className="p-3 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
-                  <h3 className="font-semibold text-purple-800 text-sm mb-2 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    AI Summary
-                  </h3>
-                  <ul className="space-y-1.5">
-                    {analysis.reasons.slice(0, 6).map((reason: string, i: number) => (
-                      <li key={i} className="text-xs text-purple-700 flex items-start gap-1.5">
-                        <span className="text-purple-400 mt-0.5">-</span>
-                        {reason}
+                <div className="p-2 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-100">
+                  <div className="flex items-center gap-1 mb-1.5">
+                    <Sparkles className="w-3 h-3 text-purple-600" />
+                    <span className="font-semibold text-purple-800 text-[10px]">AI Summary</span>
+                  </div>
+                  <ul className="space-y-0.5">
+                    {analysis.reasons.slice(0, 4).map((reason: string, i: number) => (
+                      <li key={i} className="text-[10px] text-purple-700 flex items-start gap-1">
+                        <span className="text-purple-400">•</span>
+                        <span className="leading-tight">{reason}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
               )}
 
-              {/* Data Quality Warnings */}
+              {/* Data Quality Warnings - Compact */}
               {analysis.dataQualityWarnings && analysis.dataQualityWarnings.length > 0 && (
-                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
-                  <p className="text-xs font-medium text-amber-700 mb-1">Tips to improve your match accuracy:</p>
-                  <ul className="space-y-1">
-                    {analysis.dataQualityWarnings.map((warning: string, i: number) => (
-                      <li key={i} className="text-xs text-amber-600">{warning}</li>
+                <div className="p-2 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-[10px] font-medium text-amber-700 mb-1">Tips to improve match:</p>
+                  <ul className="space-y-0.5">
+                    {analysis.dataQualityWarnings.slice(0, 2).map((warning: string, i: number) => (
+                      <li key={i} className="text-[10px] text-amber-600 leading-tight">• {warning}</li>
                     ))}
                   </ul>
                 </div>

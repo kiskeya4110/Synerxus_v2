@@ -3,13 +3,14 @@ import { useLocation } from "wouter";
 import {
   Menu, X, Home, Settings, MessageCircle, LogOut,
   ClipboardList, Bell, User, Briefcase, BarChart3,
-  Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown, Trophy
+  Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown, Trophy,
+  Target, Heart, FileText, Users, FolderOpen
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
-import type { User as UserType } from "@shared/schema";
+import type { User as UserType, Notification } from "@shared/schema";
 
 interface PWAHeaderProps {
   showBackButton?: boolean;
@@ -24,6 +25,8 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
+  const queryClient = useQueryClient();
+
   // Fetch current user
   const { data: currentUser } = useQuery<UserType>({
     queryKey: ["/api/users/me", userId],
@@ -34,6 +37,153 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     },
     enabled: !!userId
   });
+
+  // Fetch notifications
+  const { data: notifications = [] } = useQuery<Notification[]>({
+    queryKey: ["/api/notifications", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/notifications?userId=${userId}`);
+      return response.ok ? response.json() : [];
+    },
+    enabled: !!userId,
+    staleTime: 30000,
+    refetchInterval: 60000,
+  });
+
+  // Mark notification as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: async (notificationId: number) => {
+      const response = await fetch(`/api/notifications/${notificationId}/read`, { method: 'POST' });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications", userId] });
+    }
+  });
+
+  // Get unread notifications count
+  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
+
+  // Get notification icon based on type
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'application_approved':
+      case 'application_submitted':
+        return { icon: CheckCircle, color: 'blue', bg: 'bg-blue-500' };
+      case 'badge_earned':
+      case 'milestone':
+        return { icon: Award, color: 'amber', bg: 'bg-amber-500' };
+      case 'opportunity_match':
+      case 'sdg_match':
+        return { icon: Sparkles, color: 'emerald', bg: 'bg-emerald-500' };
+      case 'task_assigned':
+      case 'project_update':
+        return { icon: Briefcase, color: 'purple', bg: 'bg-purple-500' };
+      case 'message':
+        return { icon: MessageCircle, color: 'indigo', bg: 'bg-indigo-500' };
+      case 'volunteer_joined':
+        return { icon: Users, color: 'teal', bg: 'bg-teal-500' };
+      case 'project_completed':
+        return { icon: FolderOpen, color: 'green', bg: 'bg-green-500' };
+      case 'impact_update':
+        return { icon: Heart, color: 'rose', bg: 'bg-rose-500' };
+      case 'sdg_contribution':
+        return { icon: Target, color: 'orange', bg: 'bg-orange-500' };
+      default:
+        return { icon: Bell, color: 'slate', bg: 'bg-slate-500' };
+    }
+  };
+
+  // Get navigation path for notification
+  const getNotificationPath = (notification: Notification): string => {
+    const { type, relatedEntityType, relatedEntityId } = notification;
+
+    // Route based on type first
+    switch (type) {
+      case 'application_approved':
+      case 'application_submitted':
+        if (relatedEntityType === 'project' && relatedEntityId) {
+          return `/projects/${relatedEntityId}`;
+        }
+        return '/volunteer-dashboard?tab=projects';
+
+      case 'badge_earned':
+      case 'milestone':
+        return '/volunteer-dashboard?tab=impacts';
+
+      case 'opportunity_match':
+      case 'sdg_match':
+        if (relatedEntityType === 'opportunity' && relatedEntityId) {
+          return `/opportunities/${relatedEntityId}`;
+        }
+        return '/discover-opportunities/pwa';
+
+      case 'task_assigned':
+        if (relatedEntityType === 'project' && relatedEntityId) {
+          return `/projects/${relatedEntityId}`;
+        }
+        return '/volunteer-dashboard?tab=projects';
+
+      case 'project_update':
+      case 'project_completed':
+        if (relatedEntityId) {
+          return `/projects/${relatedEntityId}`;
+        }
+        return '/volunteer-dashboard?tab=projects';
+
+      case 'message':
+        return '/volunteer-messages/pwa';
+
+      case 'volunteer_joined':
+        if (relatedEntityType === 'project' && relatedEntityId) {
+          return `/projects/${relatedEntityId}`;
+        }
+        return '/volunteers';
+
+      case 'impact_update':
+      case 'sdg_contribution':
+        return '/volunteer-dashboard?tab=impacts';
+
+      default:
+        // Fallback based on relatedEntityType
+        if (relatedEntityType === 'project' && relatedEntityId) {
+          return `/projects/${relatedEntityId}`;
+        }
+        if (relatedEntityType === 'opportunity' && relatedEntityId) {
+          return `/opportunities/${relatedEntityId}`;
+        }
+        if (relatedEntityType === 'user' && relatedEntityId) {
+          return `/profile/${relatedEntityId}`;
+        }
+        return '/volunteer-dashboard';
+    }
+  };
+
+  // Handle notification click
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read if not already
+    if (!notification.read) {
+      markAsReadMutation.mutate(notification.id);
+    }
+    setNotificationsOpen(false);
+    navigate(getNotificationPath(notification));
+  };
+
+  // Format time ago
+  const formatTimeAgo = (date: Date | string) => {
+    const now = new Date();
+    const notifDate = new Date(date);
+    const diffMs = now.getTime() - notifDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return notifDate.toLocaleDateString();
+  };
 
   const handleLogout = async () => {
     setMenuOpen(false);
@@ -93,9 +243,11 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
               className="relative w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm"
             >
               <Bell className="w-5 h-5 text-slate-700" />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
-                3
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {/* Profile/Menu Button */}
@@ -243,127 +395,80 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
             {/* Notifications List */}
             <div className="overflow-y-auto max-h-[60vh] p-4 space-y-3">
-              {/* Notifications */}
-              <button
-                onClick={() => {
-                  setNotificationsOpen(false);
-                  navigate('/volunteer-dashboard?tab=projects');
-                }}
-                className="w-full text-left bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 border border-blue-100 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 dark:text-slate-200 font-medium text-sm">Application Approved</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">Your application for "Community Garden Project" has been approved!</p>
-                    <p className="text-blue-500 text-[10px] mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      2 hours ago
-                    </p>
-                  </div>
+              {notifications.length === 0 ? (
+                <div className="text-center py-8">
+                  <Bell className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                  <p className="text-slate-500 text-sm">No notifications yet</p>
+                  <p className="text-slate-400 text-xs mt-1">You'll see updates here when there's activity</p>
                 </div>
-              </button>
+              ) : (
+                notifications.slice(0, 10).map((notification: Notification) => {
+                  const { icon: NotifIcon, color, bg } = getNotificationIcon(notification.type);
+                  const isUnread = !notification.read;
 
-              <button
-                onClick={() => {
-                  setNotificationsOpen(false);
-                  navigate('/volunteer-dashboard?tab=impacts');
-                }}
-                className="w-full text-left bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 border border-amber-100 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
-                    <Award className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 dark:text-slate-200 font-medium text-sm">New Badge Earned!</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">You earned the "Impact Champion" badge for 50+ volunteer hours.</p>
-                    <p className="text-amber-500 text-[10px] mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Yesterday
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setNotificationsOpen(false);
-                  navigate('/discover-opportunities/pwa');
-                }}
-                className="w-full text-left bg-emerald-50 dark:bg-emerald-900/20 rounded-xl p-3 border border-emerald-100 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                    <Sparkles className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 dark:text-slate-200 font-medium text-sm">New Opportunity Match</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">3 new opportunities match your skills and interests.</p>
-                    <p className="text-emerald-500 text-[10px] mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      3 days ago
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setNotificationsOpen(false);
-                  navigate('/volunteer-dashboard?tab=projects');
-                }}
-                className="w-full text-left bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 border border-purple-100 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
-                    <Briefcase className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 dark:text-slate-200 font-medium text-sm">Task Assigned</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">You've been assigned a new task in "Youth Mentorship Program".</p>
-                    <p className="text-purple-500 text-[10px] mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      4 days ago
-                    </p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setNotificationsOpen(false);
-                  navigate('/volunteer-dashboard');
-                }}
-                className="w-full text-left bg-slate-50 dark:bg-slate-800/50 rounded-xl p-3 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-500 flex items-center justify-center flex-shrink-0">
-                    <BarChart3 className="w-4 h-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-800 dark:text-slate-200 font-medium text-sm">Weekly Summary Ready</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">Your weekly impact summary is now available.</p>
-                    <p className="text-slate-400 text-[10px] mt-1 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      1 week ago
-                    </p>
-                  </div>
-                </div>
-              </button>
+                  return (
+                    <button
+                      key={notification.id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`w-full text-left rounded-xl p-3 border transition-colors ${
+                        isUnread
+                          ? `bg-${color}-50 dark:bg-${color}-900/20 border-${color}-100 dark:border-${color}-800 hover:bg-${color}-100 dark:hover:bg-${color}-900/30`
+                          : 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/50'
+                      }`}
+                      style={{
+                        backgroundColor: isUnread ? `var(--${color}-50, #f0fdf4)` : undefined,
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-9 h-9 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
+                          <NotifIcon className="w-4 h-4 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className={`font-medium text-sm ${isUnread ? 'text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>
+                              {notification.title}
+                            </p>
+                            {isUnread && (
+                              <span className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5 line-clamp-2">
+                            {notification.message}
+                          </p>
+                          <p className={`text-${color}-500 text-[10px] mt-1 flex items-center gap-1`}>
+                            <Clock className="w-3 h-3" />
+                            {formatTimeAgo(notification.createdAt)}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0 mt-1" />
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
 
             {/* Footer */}
             <div className="border-t border-slate-200 dark:border-slate-700 p-3">
-              <button
-                onClick={() => setNotificationsOpen(false)}
-                className="w-full py-2.5 text-center text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                <span>View More Notifications</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
+              {notifications.length > 10 ? (
+                <button
+                  onClick={() => {
+                    setNotificationsOpen(false);
+                    navigate('/notifications');
+                  }}
+                  className="w-full py-2.5 text-center text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>View All {notifications.length} Notifications</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={() => setNotificationsOpen(false)}
+                  className="w-full py-2.5 text-center text-slate-600 dark:text-slate-400 font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                >
+                  Close
+                </button>
+              )}
             </div>
           </div>
         </div>

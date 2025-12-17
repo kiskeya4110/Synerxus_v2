@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import { execSync } from "child_process";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDigestScheduler } from "./digest-scheduler";
@@ -11,6 +12,25 @@ import { getCircuitBreakerStats, isSystemHealthy } from "./circuit-breaker";
 import { getQueueStats, isOverloaded, drainQueues } from "./request-queue";
 import { startMemoryMonitoring, getMemorySummary } from "./memory-monitor";
 import { bindPortWithRetry, setupGracefulShutdown } from "./port-management";
+
+// Force cleanup port 5000 before starting (prevents "port in use" errors after crashes)
+function cleanupPort(port: number): void {
+  try {
+    // Try fuser to kill process on port (most reliable on Linux)
+    execSync(`fuser -k -9 ${port}/tcp 2>/dev/null || true`, { stdio: 'ignore', timeout: 5000 });
+  } catch (e) {
+    // Ignore errors - fuser might not be available or port not in use
+  }
+  try {
+    // Fallback: kill any node process that might be using the port
+    execSync(`pkill -9 -f "express.*${port}" 2>/dev/null || true`, { stdio: 'ignore', timeout: 3000 });
+  } catch (e) {
+    // Ignore
+  }
+}
+
+// Clean up port 5000 on startup
+cleanupPort(5000);
 
 // Global error handlers to prevent crashes from unhandled rejections/exceptions
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {

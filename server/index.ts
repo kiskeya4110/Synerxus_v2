@@ -1,7 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
-import { execSync } from "child_process";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { initializeDigestScheduler } from "./digest-scheduler";
@@ -11,26 +10,16 @@ import { cache } from "./cache";
 import { getCircuitBreakerStats, isSystemHealthy } from "./circuit-breaker";
 import { getQueueStats, isOverloaded, drainQueues } from "./request-queue";
 import { startMemoryMonitoring, getMemorySummary } from "./memory-monitor";
-import { bindPortWithRetry, setupGracefulShutdown } from "./port-management";
+import { 
+  initializePortManagement, 
+  bindPortWithRetry, 
+  setupGracefulShutdown,
+  getServerState 
+} from "./port-management";
 
-// Force cleanup port 5000 before starting (prevents "port in use" errors after crashes)
-function cleanupPort(port: number): void {
-  try {
-    // Try fuser to kill process on port (most reliable on Linux)
-    execSync(`fuser -k -9 ${port}/tcp 2>/dev/null || true`, { stdio: 'ignore', timeout: 5000 });
-  } catch (e) {
-    // Ignore errors - fuser might not be available or port not in use
-  }
-  try {
-    // Fallback: kill any node process that might be using the port
-    execSync(`pkill -9 -f "express.*${port}" 2>/dev/null || true`, { stdio: 'ignore', timeout: 3000 });
-  } catch (e) {
-    // Ignore
-  }
-}
-
-// Clean up port 5000 on startup
-cleanupPort(5000);
+// Initialize port management framework FIRST (before any other code)
+// This performs pre-startup cleanup and acquires the process lock
+initializePortManagement(5000);
 
 // Global error handlers to prevent crashes from unhandled rejections/exceptions
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
@@ -284,19 +273,24 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = 5000;
 
-  // Use port management framework for resilient binding
+  // Use comprehensive port management framework for resilient binding
+  // Features: process lock, aggressive retry with exponential backoff, graceful shutdown
   bindPortWithRetry(server, {
     port,
     host: "0.0.0.0",
-    maxRetries: 5,
-    retryDelayMs: 1000,
+    maxRetries: 10,           // 10 retry attempts with exponential backoff
+    baseRetryDelayMs: 500,    // Start with 500ms delay, grows exponentially
   }, () => {
     log(`serving on port ${port}`);
+    logger.info(`[Server] Port management framework active - PID: ${process.pid}`);
   });
 
-  // Setup graceful shutdown handlers
+  // Setup comprehensive graceful shutdown handlers
+  // Handles SIGTERM, SIGINT, SIGHUP, uncaught exceptions, and exit
   setupGracefulShutdown(server, async () => {
+    logger.info('[Server] Draining request queues before shutdown...');
     await drainQueues(10000);
+    logger.info('[Server] Request queues drained');
   });
 })().catch((err) => {
   logger.error('Fatal startup error:', err);

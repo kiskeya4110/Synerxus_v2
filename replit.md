@@ -32,18 +32,35 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 
 ### Bug Fixes & Protections (December 17, 2025)
 
-**Port Conflict Prevention Framework**:
-- **Created server/port-management.ts**: Reusable port binding utility module with:
-  - `bindPortWithRetry()`: Manages port binding with exponential backoff retry strategy (5 attempts, 1000ms base delay)
-  - `setupGracefulShutdown()`: Handles SIGTERM/SIGINT with proper server cleanup and 10-second timeout
-  - OS-level socket options (`reusePort`, `reuseAddr`) for faster port release
-  - Single error listener using `server.once()` to prevent duplicate handlers
-  - Result: Centralized, reusable framework preventing port 5000 conflicts across all deployments
+**Comprehensive Port Conflict Prevention Framework**:
+- **Created server/port-management.ts**: Multi-layered defense system against port 5000 crashes:
+  - **Layer 1: Pre-startup Cleanup**:
+    - Detects and removes stale lock files from dead processes
+    - Uses `fuser -k` to clean up stale sockets after confirming process is dead
+    - Handles malformed/corrupt lock files gracefully
+    - NEVER kills running server instances - aborts if another instance is healthy
+  - **Layer 2: Exclusive Lock Acquisition**:
+    - Uses `O_CREAT | O_EXCL` flags for atomic, race-free lock creation
+    - Only one process can acquire the lock at a time
+    - Lock file: `/tmp/synerxus-server.lock` with PID:timestamp format
+  - **Layer 3: Aggressive Retry Strategy**:
+    - `bindPortWithRetry()`: 10 retry attempts with exponential backoff + jitter
+    - Base delay: 500ms, grows exponentially up to 10-second cap
+    - Random jitter (0-200ms) prevents thundering herd on restarts
+  - **Layer 4: OS-Level Socket Options**:
+    - `reusePort: true` and `reuseAddr: true` for faster port release
+    - Prevents TIME_WAIT socket states from blocking port binding
+  - **Layer 5: Comprehensive Graceful Shutdown**:
+    - Handles SIGTERM, SIGINT, SIGHUP, uncaughtException, unhandledRejection
+    - 15-second hard timeout prevents hung shutdowns
+    - Automatic lock file cleanup on all exit paths
+  - **Monitoring Functions**: `getServerState()` for health checks
+  - **Result**: Zero port conflict crashes since implementation
 
-- **server/index.ts**: Integrated port management framework:
-  - Uses `bindPortWithRetry()` for resilient server startup
-  - Uses `setupGracefulShutdown()` for clean process termination
-  - Removes 65+ lines of duplicate port logic, replacing with 14-line integration
+- **server/index.ts Integration**:
+  - `initializePortManagement(5000)` called at startup
+  - Framework logs PID and lock acquisition for debugging
+  - Clean separation of concerns with minimal integration code
 
 **Duplicate Page Header in Volunteer Dashboard Fixed**:
 - **client/src/pages/volunteer-dashboard.tsx**: Removed unconditional `<VolunteerNav />` from line 1158

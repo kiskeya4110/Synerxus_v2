@@ -10,6 +10,7 @@ import { cache } from "./cache";
 import { getCircuitBreakerStats, isSystemHealthy } from "./circuit-breaker";
 import { getQueueStats, isOverloaded, drainQueues } from "./request-queue";
 import { startMemoryMonitoring, getMemorySummary } from "./memory-monitor";
+import { bindPortWithRetry, setupGracefulShutdown } from "./port-management";
 
 // Global error handlers to prevent crashes from unhandled rejections/exceptions
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
@@ -262,79 +263,21 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  const maxRetries = 5;
-  const retryDelay = 1000;
 
-  const startServer = (attempt: number = 1): void => {
-    // Force close any existing connections before listening
-    if (server.listening) {
-      server.close();
-    }
+  // Use port management framework for resilient binding
+  bindPortWithRetry(server, {
+    port,
+    host: "0.0.0.0",
+    maxRetries: 5,
+    retryDelayMs: 1000,
+  }, () => {
+    log(`serving on port ${port}`);
+  });
 
-    const listenOptions = {
-      port,
-      host: "0.0.0.0",
-      reusePort: true as const,
-      reuseAddr: true as const,
-    };
-
-    server.listen(listenOptions, () => {
-      log(`serving on port ${port}`);
-    });
-
-    server.once('error', (err: NodeJS.ErrnoException) => {
-      if (err.code === 'EADDRINUSE') {
-        if (attempt < maxRetries) {
-          logger.warn(`Port ${port} in use, retrying in ${retryDelay}ms (attempt ${attempt}/${maxRetries})`);
-          
-          // Force close and destroy existing handles
-          if (server.listening) {
-            server.close(() => {
-              setTimeout(() => startServer(attempt + 1), retryDelay);
-            });
-          } else {
-            setTimeout(() => startServer(attempt + 1), retryDelay);
-          }
-        } else {
-          logger.error(`Port ${port} is still in use after ${maxRetries} attempts. Force closing...`);
-          // Instead of exiting, try to clear lingering processes
-          try {
-            server.close(() => {
-              logger.error('Server closed, attempting cleanup');
-              process.exit(1);
-            });
-            // Force exit after 5 seconds if close hangs
-            setTimeout(() => {
-              logger.error('Force exiting due to port conflict');
-              process.exit(1);
-            }, 5000);
-          } catch (e) {
-            logger.error('Error closing server:', e);
-            process.exit(1);
-          }
-        }
-      } else {
-        logger.error('Server error:', err);
-        process.exit(1);
-      }
-    });
-  };
-
-  // Clean up on process termination
-  const cleanup = () => {
-    logger.info('Cleaning up server connections...');
-    if (server.listening) {
-      server.close(() => {
-        logger.info('Server closed');
-      });
-    }
-  };
-
-  process.on('exit', cleanup);
-  process.on('SIGINT', cleanup);
-  process.on('SIGTERM', cleanup);
-
-  startServer();
+  // Setup graceful shutdown handlers
+  setupGracefulShutdown(server, async () => {
+    await drainQueues(10000);
+  });
 })().catch((err) => {
   logger.error('Fatal startup error:', err);
   process.exit(1);

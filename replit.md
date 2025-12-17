@@ -31,15 +31,25 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Bottom Navigation**: Home, Projects, Potential, Impacts, Profile with active state indicators
 
 ### Bug Fixes & Protections (December 17, 2025)
-**Port Conflict Crash Prevention**:
-- **server/index.ts**: Enhanced port binding logic to prevent EADDRINUSE crashes:
-  - Increased retry attempts from 3 to 5 with 1-second delays for better recovery
-  - Added `reuseAddr` socket option alongside `reusePort` for faster port release on OS level
-  - Improved server cleanup with forced connection closure before retry attempts
-  - Added graceful signal handlers (SIGINT/SIGTERM) to ensure proper cleanup on shutdown
-  - Added timeout fallback to force exit if server.close() hangs (prevents zombie processes)
-  - Uses `server.once()` instead of `server.on()` for error handler to prevent duplicate listeners
-  - Result: Server now recovers from port conflicts instead of crashing, improving uptime
+
+**Port Conflict Prevention Framework**:
+- **Created server/port-management.ts**: Reusable port binding utility module with:
+  - `bindPortWithRetry()`: Manages port binding with exponential backoff retry strategy (5 attempts, 1000ms base delay)
+  - `setupGracefulShutdown()`: Handles SIGTERM/SIGINT with proper server cleanup and 10-second timeout
+  - OS-level socket options (`reusePort`, `reuseAddr`) for faster port release
+  - Single error listener using `server.once()` to prevent duplicate handlers
+  - Result: Centralized, reusable framework preventing port 5000 conflicts across all deployments
+
+- **server/index.ts**: Integrated port management framework:
+  - Uses `bindPortWithRetry()` for resilient server startup
+  - Uses `setupGracefulShutdown()` for clean process termination
+  - Removes 65+ lines of duplicate port logic, replacing with 14-line integration
+
+**Duplicate Page Header in Volunteer Dashboard Fixed**:
+- **client/src/pages/volunteer-dashboard.tsx**: Removed unconditional `<VolunteerNav />` from line 1158
+  - VolunteerNav component has built-in mobile viewport detection (≤768px)
+  - Rendering it unconditionally in standalone dashboard caused duplication on desktop
+  - Now only mobile viewport shows navigation as intended
 
 ### Previous Bug Fixes (December 13, 2025)
 **React Hooks Rule Violations Fixed**:

@@ -1155,7 +1155,6 @@ export default function Dashboard() {
 
     return (
       <PageTransition>
-        <VolunteerNav />
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 overflow-y-auto pb-8">
 
           {/* Hero Section - Benevity-inspired Impact Summary */}

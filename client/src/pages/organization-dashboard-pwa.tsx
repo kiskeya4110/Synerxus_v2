@@ -1312,11 +1312,11 @@ export default function OrganizationDashboardPWA() {
             <span className="text-[10px] font-medium">Projects</span>
           </button>
           <button
-            onClick={() => navigate('/overview')}
+            onClick={() => navigate('/organization-messages/pwa')}
             className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
           >
-            <Eye className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Overview</span>
+            <MessageCircle className="w-5 h-5" />
+            <span className="text-[10px] font-medium">Messages</span>
           </button>
           <button
             onClick={() => navigate('/volunteers')}

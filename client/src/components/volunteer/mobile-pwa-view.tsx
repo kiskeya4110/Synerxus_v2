@@ -3235,6 +3235,53 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </button>
             </div>
 
+            {/* Impact & Analytics Section */}
+            <div className="space-y-2">
+              <h3 className="text-slate-700 font-semibold text-sm px-2 uppercase tracking-wider text-slate-600">Impact & Analytics</h3>
+              <button
+                onClick={() => setActiveTab('impacts')}
+                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                data-testid="button-my-impact"
+              >
+                <div className="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-slate-800 font-medium">My Impact</div>
+                  <div className="text-slate-500 text-xs">View your impact analytics and ROI</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
+              </button>
+              <button
+                onClick={() => setShowKpiModal('aiu')}
+                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                data-testid="button-aiu-score"
+              >
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <Award className="w-5 h-5 text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-slate-800 font-medium">AIU Score</div>
+                  <div className="text-slate-500 text-xs">Attributable Impact Units breakdown</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
+              </button>
+              <button
+                onClick={() => setShowKpiModal('impact-score')}
+                className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
+                data-testid="button-impact-roi"
+              >
+                <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-slate-800 font-medium">Impact ROI</div>
+                  <div className="text-slate-500 text-xs">Your return on investment metrics</div>
+                </div>
+                <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
+              </button>
+            </div>
+
             {/* Help & Support Section */}
             <div className="space-y-2">
               <h3 className="text-slate-700 font-semibold text-sm px-2 uppercase tracking-wider text-slate-600">Support</h3>
@@ -4603,12 +4650,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             <span className="text-[9px] font-medium">Potentials</span>
           </button>
           <button
-            onClick={() => setActiveTab('impacts')}
-            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'impacts' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
-            data-testid="nav-impacts"
+            onClick={() => navigate('/volunteer-messages/pwa')}
+            className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all ${activeTab === 'messages' ? 'text-blue-600 bg-blue-50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'}`}
+            data-testid="nav-messages"
           >
-            <BarChart3 className={`w-5 h-5 mb-0.5 ${activeTab === 'impacts' ? 'stroke-[2.5]' : ''}`} />
-            <span className="text-[9px] font-medium">Impacts</span>
+            <MessageCircle className={`w-5 h-5 mb-0.5 ${activeTab === 'messages' ? 'stroke-[2.5]' : ''}`} />
+            <span className="text-[9px] font-medium">Messages</span>
           </button>
           <button
             onClick={() => setActiveTab('more')}

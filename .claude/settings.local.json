@@ -58,7 +58,11 @@
       "Bash(timeout 15 npm run dev:*)",
       "Bash(git revert:*)",
       "Bash(/bin/sleep 8)",
-      "Bash(/bin/sleep:*)"
+      "Bash(/bin/sleep:*)",
+      "Bash(git push:*)",
+      "Bash(node --version:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []

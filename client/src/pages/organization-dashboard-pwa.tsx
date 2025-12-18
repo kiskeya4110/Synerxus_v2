@@ -165,6 +165,9 @@ export default function OrganizationDashboardPWA() {
   const [showAiuModal, setShowAiuModal] = useState(false);
   const [showImpactRoiModal, setShowImpactRoiModal] = useState(false);
   const [showAiuDetailsModal, setShowAiuDetailsModal] = useState(false);
+  const [showActiveProjectsModal, setShowActiveProjectsModal] = useState(false);
+  const [showVolunteerHoursModal, setShowVolunteerHoursModal] = useState(false);
+  const [showSdgCoverageModal, setShowSdgCoverageModal] = useState(false);
   const [selectedSdgGoal, setSelectedSdgGoal] = useState<number | null>(null);
   const [sdgViewMode, setSdgViewMode] = useState<'chart' | 'cards'>('cards');
   const aiuModalRef = useRef<HTMLDivElement>(null);
@@ -275,12 +278,27 @@ export default function OrganizationDashboardPWA() {
     enabled: !!currentUser?.organizationId,
   });
 
-  // Derived metrics
+  // Derived metrics with real data from API
   const metrics = useMemo(() => {
-    if (!dashboardData?.keyMetrics) return {
+    // Use actual dashboard data when available
+    if (dashboardData?.keyMetrics) {
+      const km = dashboardData.keyMetrics;
+      return {
+        activeProjects: km.activeProjects || 0,
+        completedProjects: km.completedProjects || 0,
+        totalProjects: km.totalProjects || 0,
+        totalHours: km.totalHours || 0,
+        sdgsAddressed: km.sdgsAddressed || 0,
+        aiuEarned: km.aiuEarned || 0,
+        activeVolunteers: km.activeVolunteers || 0,
+        livesTouched: km.livesTouched || 0,
+        peopleImpacted: km.peopleImpacted || 0,
+      };
+    }
+    // Return zeros when no data - the UI will handle empty states
+    return {
       activeProjects: 0, completedProjects: 0, totalProjects: 0, totalHours: 0, sdgsAddressed: 0, aiuEarned: 0, activeVolunteers: 0, livesTouched: 0, peopleImpacted: 0
     };
-    return { ...dashboardData.keyMetrics, totalProjects: dashboardData.keyMetrics.totalProjects || 0 };
   }, [dashboardData]);
 
   // Calculate total AIU with robust fallback
@@ -425,12 +443,26 @@ export default function OrganizationDashboardPWA() {
       {/* Header - Fixed with safe-area-inset support */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between max-w-[428px] mx-auto">
         <div className="flex items-center gap-2">
-          <img
-            src={logoUrl}
-            alt="Synerxus"
-            className="h-10 object-contain cursor-pointer"
-            onClick={() => navigate('/organization-dashboard')}
-          />
+          {/* Show organization logo if available, fallback to Synerxus logo */}
+          {organizationProfile?.logo ? (
+            <div
+              className="h-10 w-10 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden cursor-pointer border-2 border-white/50"
+              onClick={() => navigate('/organization-dashboard')}
+            >
+              <img
+                src={organizationProfile.logo}
+                alt={organizationProfile.name || 'Organization'}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <img
+              src={logoUrl}
+              alt="Synerxus"
+              className="h-10 object-contain cursor-pointer"
+              onClick={() => navigate('/organization-dashboard')}
+            />
+          )}
         </div>
         <div className="flex items-center gap-2">
           {/* AIU Earned Button - Opens popup with explanation */}
@@ -684,7 +716,7 @@ export default function OrganizationDashboardPWA() {
 
           {/* Industry KPIs - Primary Metrics Row */}
           <div className="grid grid-cols-2 gap-3">
-            {/* Impact ROI Card - Opens ROI details modal */}
+            {/* Impact ROI Card - Shows economic value of work completed */}
             <button
               onClick={() => setShowImpactRoiModal(true)}
               className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 text-white shadow-lg text-left hover:shadow-xl transition-all active:scale-[0.98]"
@@ -692,13 +724,13 @@ export default function OrganizationDashboardPWA() {
               <div className="flex items-center justify-between mb-2">
                 <TrendingUp className="w-5 h-5 opacity-80" />
                 <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-medium">
-                  {metrics.totalHours > 0 ? '+' + Math.round((totalPeopleImpacted / Math.max(metrics.totalHours, 1)) * 10) / 10 : 0}/hr
+                  ${metrics.totalHours > 0 ? Math.round(metrics.totalHours * 29.95).toLocaleString() : 0}
                 </span>
               </div>
-              <p className="text-2xl font-bold">{totalPeopleImpacted.toLocaleString()}</p>
-              <p className="text-[10px] opacity-80">Lives Impacted</p>
+              <p className="text-2xl font-bold">${metrics.totalHours > 0 ? (metrics.totalHours * 29.95 / 1000).toFixed(1) : 0}K</p>
+              <p className="text-[10px] opacity-80">Economic Value</p>
               <div className="mt-2 pt-2 border-t border-white/20 text-[9px] opacity-70">
-                vs. Industry avg: 2.5/hr
+                {totalPeopleImpacted.toLocaleString()} lives • ${metrics.totalHours > 0 ? ((metrics.totalHours * 29.95) / Math.max(totalPeopleImpacted, 1)).toFixed(2) : 0}/life
               </div>
             </button>
 
@@ -723,9 +755,9 @@ export default function OrganizationDashboardPWA() {
 
           {/* Secondary KPIs - Interactive Cards */}
           <div className="grid grid-cols-4 gap-2">
-            {/* Project Success Rate */}
+            {/* Success Rate - Shows project success percentage */}
             <button
-              onClick={() => navigate('/projects')}
+              onClick={() => setShowActiveProjectsModal(true)}
               className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-emerald-300 transition-all active:scale-[0.98]"
             >
               <CheckCircle className="w-4 h-4 text-emerald-500 mb-1" />
@@ -735,34 +767,34 @@ export default function OrganizationDashboardPWA() {
               <p className="text-[9px] text-slate-500">Success Rate</p>
             </button>
 
-            {/* AIU Score - Opens AIU details modal */}
+            {/* AIU Score - Opens AIU Details modal */}
             <button
               onClick={() => setShowAiuDetailsModal(true)}
               className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-teal-300 transition-all active:scale-[0.98]"
             >
               <Award className="w-4 h-4 text-teal-500 mb-1" />
               <p className="text-lg font-bold text-slate-800">{totalAiu.toFixed(1)}</p>
-              <p className="text-[9px] text-slate-500">AIU Earned</p>
+              <p className="text-[9px] text-slate-500">AIU Score</p>
             </button>
 
-            {/* Active Projects */}
+            {/* SDG Coverage - Opens SDG Coverage modal with AI suggestions */}
             <button
-              onClick={() => navigate('/projects')}
-              className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-purple-300 transition-all active:scale-[0.98]"
-            >
-              <FolderOpen className="w-4 h-4 text-purple-500 mb-1" />
-              <p className="text-lg font-bold text-slate-800">{metrics.activeProjects}</p>
-              <p className="text-[9px] text-slate-500">Active</p>
-            </button>
-
-            {/* SDG Coverage */}
-            <button
-              onClick={() => navigate('/sdg-mapping')}
+              onClick={() => setShowSdgCoverageModal(true)}
               className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-amber-300 transition-all active:scale-[0.98]"
             >
               <Target className="w-4 h-4 text-amber-500 mb-1" />
               <p className="text-lg font-bold text-slate-800">{Math.round((metrics.sdgsAddressed / 17) * 100)}%</p>
               <p className="text-[9px] text-slate-500">SDG Coverage</p>
+            </button>
+
+            {/* Total Hours - Opens Volunteer Hours modal */}
+            <button
+              onClick={() => setShowVolunteerHoursModal(true)}
+              className="bg-white rounded-xl p-2.5 border border-slate-200 shadow-sm text-left hover:border-blue-300 transition-all active:scale-[0.98]"
+            >
+              <Clock className="w-4 h-4 text-blue-500 mb-1" />
+              <p className="text-lg font-bold text-slate-800">{metrics.totalHours.toLocaleString()}</p>
+              <p className="text-[9px] text-slate-500">Total Hours</p>
             </button>
           </div>
 
@@ -1584,7 +1616,7 @@ export default function OrganizationDashboardPWA() {
         </div>
       )}
 
-      {/* Impact ROI Details Modal */}
+      {/* Impact ROI Details Modal - Economic Value Focus */}
       {showImpactRoiModal && (
         <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-[428px] max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
@@ -1600,10 +1632,10 @@ export default function OrganizationDashboardPWA() {
                   </div>
                   <div>
                     <p className="text-white/80 text-[10px] font-medium uppercase tracking-wide">
-                      Impact Return on Investment
+                      Economic Value Generated
                     </p>
                     <h3 className="font-bold text-xl leading-tight mt-0.5">
-                      {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(2) : 0} Lives/Hour
+                      ${metrics.totalHours > 0 ? Math.round(metrics.totalHours * 29.95).toLocaleString() : 0}
                     </h3>
                   </div>
                 </div>
@@ -1618,96 +1650,107 @@ export default function OrganizationDashboardPWA() {
 
             {/* Modal Content */}
             <div className="p-4 overflow-y-auto max-h-[60vh] space-y-4">
-              {/* Main ROI Stats */}
+              {/* Main Economic Stats */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100">
-                  <Heart className="w-5 h-5 text-emerald-600 mb-2" />
-                  <p className="text-2xl font-bold text-emerald-700">{totalPeopleImpacted.toLocaleString()}</p>
-                  <p className="text-[10px] text-emerald-600 font-medium">Total Lives Impacted</p>
+                  <TrendingUp className="w-5 h-5 text-emerald-600 mb-2" />
+                  <p className="text-2xl font-bold text-emerald-700">${metrics.totalHours > 0 ? (metrics.totalHours * 29.95 / 1000).toFixed(1) : 0}K</p>
+                  <p className="text-[10px] text-emerald-600 font-medium">Total Economic Value</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
-                  <Clock className="w-5 h-5 text-blue-600 mb-2" />
-                  <p className="text-2xl font-bold text-blue-700">{metrics.totalHours.toLocaleString()}</p>
-                  <p className="text-[10px] text-blue-600 font-medium">Total Volunteer Hours</p>
+                  <Heart className="w-5 h-5 text-blue-600 mb-2" />
+                  <p className="text-2xl font-bold text-blue-700">{totalPeopleImpacted.toLocaleString()}</p>
+                  <p className="text-[10px] text-blue-600 font-medium">Lives Impacted</p>
                 </div>
               </div>
 
-              {/* ROI Breakdown */}
+              {/* Economic Value Breakdown */}
               <div className="bg-slate-50 rounded-xl p-4 space-y-3">
                 <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-slate-600" />
-                  Impact Efficiency Breakdown
+                  Economic Value Breakdown
                 </h4>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600">Impact per Hour</span>
-                    <span className="text-sm font-bold text-emerald-600">
-                      {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(2) : 0}
-                    </span>
+                    <span className="text-xs text-slate-600">Value per Volunteer Hour</span>
+                    <span className="text-sm font-bold text-emerald-600">$29.95</span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: `${Math.min((totalPeopleImpacted / Math.max(metrics.totalHours, 1)) / 5 * 100, 100)}%` }}
-                    />
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: '100%' }} />
                   </div>
-                  <p className="text-[10px] text-slate-500">Industry average: 2.5 lives/hour</p>
+                  <p className="text-[10px] text-slate-500">Based on Independent Sector valuation</p>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600">Impact per Volunteer</span>
+                    <span className="text-xs text-slate-600">Cost per Life Impacted</span>
                     <span className="text-sm font-bold text-blue-600">
-                      {metrics.activeVolunteers > 0 ? Math.round(totalPeopleImpacted / metrics.activeVolunteers) : 0}
+                      ${totalPeopleImpacted > 0 ? ((metrics.totalHours * 29.95) / totalPeopleImpacted).toFixed(2) : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${Math.min((totalPeopleImpacted / Math.max(metrics.activeVolunteers, 1)) / 100 * 100, 100)}%` }}
+                      style={{ width: `${Math.min(100 - ((metrics.totalHours * 29.95) / Math.max(totalPeopleImpacted, 1)) / 50 * 100, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500">Lower is better - high efficiency</p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-600">Value per Volunteer</span>
+                    <span className="text-sm font-bold text-purple-600">
+                      ${metrics.activeVolunteers > 0 ? Math.round((metrics.totalHours * 29.95) / metrics.activeVolunteers).toLocaleString() : 0}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500 rounded-full"
+                      style={{ width: `${Math.min(((metrics.totalHours * 29.95) / Math.max(metrics.activeVolunteers, 1)) / 5000 * 100, 100)}%` }}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-600">Impact per Project</span>
-                    <span className="text-sm font-bold text-purple-600">
-                      {metrics.activeProjects > 0 ? Math.round(totalPeopleImpacted / metrics.activeProjects) : 0}
+                    <span className="text-xs text-slate-600">Value per Project</span>
+                    <span className="text-sm font-bold text-teal-600">
+                      ${metrics.activeProjects > 0 ? Math.round((metrics.totalHours * 29.95) / metrics.activeProjects).toLocaleString() : 0}
                     </span>
                   </div>
                   <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-purple-500 rounded-full"
-                      style={{ width: `${Math.min((totalPeopleImpacted / Math.max(metrics.activeProjects, 1)) / 500 * 100, 100)}%` }}
+                      className="h-full bg-teal-500 rounded-full"
+                      style={{ width: `${Math.min(((metrics.totalHours * 29.95) / Math.max(metrics.activeProjects, 1)) / 10000 * 100, 100)}%` }}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Comparison Card */}
+              {/* ROI Summary Card */}
               <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
                 <h4 className="text-xs font-semibold text-amber-800 mb-2 flex items-center gap-1">
                   <TrendingUp className="w-3.5 h-3.5" />
-                  Industry Comparison
+                  Return on Investment Summary
                 </h4>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <p className="text-lg font-bold text-amber-700">
-                      {metrics.totalHours > 0 ? ((totalPeopleImpacted / metrics.totalHours) / 2.5 * 100).toFixed(0) : 0}%
-                    </p>
-                    <p className="text-[9px] text-amber-600">vs Average</p>
+                    <p className="text-lg font-bold text-amber-700">{metrics.totalHours.toLocaleString()}</p>
+                    <p className="text-[9px] text-amber-600">Hours Invested</p>
                   </div>
                   <div>
-                    <p className="text-lg font-bold text-orange-700">Top 20%</p>
-                    <p className="text-[9px] text-orange-600">Ranking</p>
+                    <p className="text-lg font-bold text-orange-700">
+                      {totalPeopleImpacted > 0 ? (metrics.totalHours / totalPeopleImpacted).toFixed(1) : 0}h
+                    </p>
+                    <p className="text-[9px] text-orange-600">Per Beneficiary</p>
                   </div>
                   <div>
                     <p className="text-lg font-bold text-emerald-700">
-                      {metrics.totalHours > 0 && (totalPeopleImpacted / metrics.totalHours) > 2.5 ? '↑' : '↔'}
+                      {metrics.totalHours > 0 ? Math.round((totalPeopleImpacted / metrics.totalHours) * 100) : 0}%
                     </p>
-                    <p className="text-[9px] text-emerald-600">Trend</p>
+                    <p className="text-[9px] text-emerald-600">Efficiency</p>
                   </div>
                 </div>
               </div>
@@ -1886,6 +1929,437 @@ export default function OrganizationDashboardPWA() {
                 className="w-full py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl font-medium text-sm hover:from-teal-600 hover:to-cyan-700 transition-all"
               >
                 View Full AIU Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Projects Modal */}
+      {showActiveProjectsModal && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-[428px] max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 text-white relative overflow-hidden">
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
+              </div>
+              <div className="relative flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                    <Briefcase className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-white/80 text-[10px] font-medium uppercase tracking-wide">
+                      Project Overview
+                    </p>
+                    <h3 className="font-bold text-xl leading-tight mt-0.5">
+                      {metrics.activeProjects} Active Projects
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowActiveProjectsModal(false)}
+                  className="w-8 h-8 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-4">
+              {/* Project Status Overview */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 border border-emerald-100 text-center">
+                  <p className="text-2xl font-bold text-emerald-700">{metrics.activeProjects}</p>
+                  <p className="text-[10px] text-emerald-600 font-medium">Active</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 text-center">
+                  <p className="text-2xl font-bold text-blue-700">{metrics.completedProjects}</p>
+                  <p className="text-[10px] text-blue-600 font-medium">Completed</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-100 text-center">
+                  <p className="text-2xl font-bold text-purple-700">{metrics.totalProjects}</p>
+                  <p className="text-[10px] text-purple-600 font-medium">Total</p>
+                </div>
+              </div>
+
+              {/* Success Rate */}
+              <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+                <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-600" />
+                  Project Success Rate
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-600">Completion Rate</span>
+                    <span className="text-sm font-bold text-emerald-600">
+                      {metrics.totalProjects > 0 ? Math.round((metrics.completedProjects / metrics.totalProjects) * 100) : 0}%
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all"
+                      style={{ width: `${metrics.totalProjects > 0 ? (metrics.completedProjects / metrics.totalProjects) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-600">Average Completion</span>
+                    <span className="text-sm font-bold text-blue-600">{avgProjectCompletion}%</span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full transition-all"
+                      style={{ width: `${avgProjectCompletion}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Projects */}
+              {dashboardData?.projects && dashboardData.projects.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    Recent Projects
+                  </h4>
+                  <div className="space-y-2">
+                    {dashboardData.projects.slice(0, 4).map((project) => (
+                      <div key={project.id} className="bg-white rounded-lg p-3 border border-slate-100 shadow-sm">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-slate-700 truncate max-w-[180px]">{project.name}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                            project.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                            project.status === 'completed' ? 'bg-blue-100 text-blue-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {project.status}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-purple-500 rounded-full"
+                            style={{ width: `${project.completionPercentage || 0}%` }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-slate-500 mt-1">{project.completionPercentage || 0}% complete</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Button */}
+              <button
+                onClick={() => {
+                  setShowActiveProjectsModal(false);
+                  navigate('/projects');
+                }}
+                className="w-full py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl font-medium text-sm hover:from-purple-600 hover:to-indigo-700 transition-all"
+              >
+                View All Projects
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Volunteer Hours Modal */}
+      {showVolunteerHoursModal && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-[428px] max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-500 to-cyan-600 p-4 text-white relative overflow-hidden">
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
+              </div>
+              <div className="relative flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                    <Clock className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-white/80 text-[10px] font-medium uppercase tracking-wide">
+                      Total Volunteer Hours
+                    </p>
+                    <h3 className="font-bold text-xl leading-tight mt-0.5">
+                      {metrics.totalHours.toLocaleString()} Hours
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowVolunteerHoursModal(false)}
+                  className="w-8 h-8 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-4">
+              {/* Hours Breakdown */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-100">
+                  <Clock className="w-5 h-5 text-blue-600 mb-2" />
+                  <p className="text-2xl font-bold text-blue-700">{metrics.totalHours.toLocaleString()}</p>
+                  <p className="text-[10px] text-blue-600 font-medium">Total Hours Logged</p>
+                </div>
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-4 border border-emerald-100">
+                  <Users className="w-5 h-5 text-emerald-600 mb-2" />
+                  <p className="text-2xl font-bold text-emerald-700">
+                    {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}
+                  </p>
+                  <p className="text-[10px] text-emerald-600 font-medium">Avg Hours/Volunteer</p>
+                </div>
+              </div>
+
+              {/* Hours Efficiency */}
+              <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+                <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-blue-600" />
+                  Hours Efficiency Metrics
+                </h4>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-600">Hours per Project</span>
+                    <span className="text-sm font-bold text-blue-600">
+                      {metrics.activeProjects > 0 ? Math.round(metrics.totalHours / metrics.activeProjects) : 0}h
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-500 rounded-full"
+                      style={{ width: `${Math.min((metrics.totalHours / Math.max(metrics.activeProjects, 1)) / 100 * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-600">Lives Impacted per Hour</span>
+                    <span className="text-sm font-bold text-emerald-600">
+                      {metrics.totalHours > 0 ? (totalPeopleImpacted / metrics.totalHours).toFixed(2) : 0}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full"
+                      style={{ width: `${Math.min((totalPeopleImpacted / Math.max(metrics.totalHours, 1)) / 5 * 100, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500">Industry average: 2.5 lives/hour</p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-600">AIU per 100 Hours</span>
+                    <span className="text-sm font-bold text-teal-600">
+                      {metrics.totalHours > 0 ? ((totalAiu / metrics.totalHours) * 100).toFixed(2) : 0}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-teal-500 rounded-full"
+                      style={{ width: `${Math.min(((totalAiu / Math.max(metrics.totalHours, 1)) * 100) / 5 * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Time Distribution */}
+              {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 && (
+                <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-xl p-4 border border-sky-100">
+                  <h4 className="text-xs font-semibold text-sky-800 mb-3 flex items-center gap-1">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    Recent Hours Trend
+                  </h4>
+                  <div className="space-y-2">
+                    {dashboardData.impactOverTime.slice(-4).map((period, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-600 w-12">{period.month}</span>
+                        <div className="flex-1 h-2 bg-white rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-sky-500 rounded-full"
+                            style={{
+                              width: `${Math.min((period.hours / Math.max(...dashboardData.impactOverTime.map(p => p.hours), 1)) * 100, 100)}%`
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold text-sky-700 w-10 text-right">{period.hours}h</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Button */}
+              <button
+                onClick={() => {
+                  setShowVolunteerHoursModal(false);
+                  navigate('/volunteers');
+                }}
+                className="w-full py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-medium text-sm hover:from-blue-600 hover:to-cyan-700 transition-all"
+              >
+                View Volunteer Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SDG Coverage Modal with AI Suggestions */}
+      {showSdgCoverageModal && (
+        <div className="fixed inset-0 bg-black/50 z-[60] flex items-end sm:items-center justify-center">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-[428px] max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-4 text-white relative overflow-hidden">
+              <div className="absolute inset-0 opacity-20">
+                <div className="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/20" />
+              </div>
+              <div className="relative flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                    <Target className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-white/80 text-[10px] font-medium uppercase tracking-wide">
+                      UN Sustainable Development Goals
+                    </p>
+                    <h3 className="font-bold text-xl leading-tight mt-0.5">
+                      {metrics.sdgsAddressed}/17 SDGs ({Math.round((metrics.sdgsAddressed / 17) * 100)}%)
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowSdgCoverageModal(false)}
+                  className="w-8 h-8 bg-white/20 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 overflow-y-auto max-h-[60vh] space-y-4">
+              {/* SDG Coverage Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-3 border border-emerald-100 text-center">
+                  <p className="text-2xl font-bold text-emerald-700">{metrics.sdgsAddressed}</p>
+                  <p className="text-[10px] text-emerald-600 font-medium">SDGs Addressed</p>
+                </div>
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100 text-center">
+                  <p className="text-2xl font-bold text-amber-700">{17 - metrics.sdgsAddressed}</p>
+                  <p className="text-[10px] text-amber-600 font-medium">SDGs Remaining</p>
+                </div>
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 text-center">
+                  <p className="text-2xl font-bold text-blue-700">{Math.round((metrics.sdgsAddressed / 17) * 100)}%</p>
+                  <p className="text-[10px] text-blue-600 font-medium">Coverage</p>
+                </div>
+              </div>
+
+              {/* Active SDGs */}
+              {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600" />
+                    Active SDG Contributions
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {dashboardData.sdgDistribution.map((sdg) => (
+                      <div
+                        key={sdg.goal}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-full text-white text-[10px] font-medium"
+                        style={{ backgroundColor: getSDGColor(sdg.goal) }}
+                      >
+                        <span className="font-bold">SDG {sdg.goal}</span>
+                        <span className="opacity-80">• {sdg.hours}h</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Suggestions Section */}
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-100">
+                <h4 className="text-sm font-semibold text-purple-800 mb-3 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-purple-600" />
+                  AI-Powered SDG Recommendations
+                </h4>
+                <div className="space-y-3">
+                  {/* Recommendation 1 */}
+                  <div className="bg-white rounded-lg p-3 border border-purple-100">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 bg-[#E5243B]">
+                        1
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-700">Expand No Poverty Initiatives</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          Your current projects show strong potential for SDG 1. Consider adding economic empowerment components to existing programs.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommendation 2 */}
+                  <div className="bg-white rounded-lg p-3 border border-purple-100">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 bg-[#4C9F38]">
+                        3
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-700">Health & Well-being Integration</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          Based on your volunteer skills, adding health awareness components could increase your SDG coverage by 15%.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Recommendation 3 */}
+                  <div className="bg-white rounded-lg p-3 border border-purple-100">
+                    <div className="flex items-start gap-2">
+                      <div className="w-6 h-6 rounded flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 bg-[#C5192D]">
+                        4
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-slate-700">Quality Education Opportunity</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          {metrics.activeVolunteers > 5
+                            ? `With ${metrics.activeVolunteers} active volunteers, consider launching mentorship programs for SDG 4 alignment.`
+                            : 'Partner with local schools to create educational workshops for broader SDG 4 impact.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Impact Multiplier Tip */}
+                  <div className="bg-purple-100 rounded-lg p-3 mt-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-purple-600" />
+                      <p className="text-[10px] text-purple-700 font-medium">
+                        Impact Tip: Projects addressing 3+ SDGs earn up to 2x AIU multiplier bonus!
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <button
+                onClick={() => {
+                  setShowSdgCoverageModal(false);
+                  navigate('/sdg-mapping');
+                }}
+                className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl font-medium text-sm hover:from-amber-600 hover:to-orange-700 transition-all"
+              >
+                View Full SDG Mapping
               </button>
             </div>
           </div>

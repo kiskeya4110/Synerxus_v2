@@ -4,13 +4,13 @@ import {
   Menu, X, Home, Settings, MessageCircle, LogOut,
   ClipboardList, Bell, User, Briefcase, BarChart3,
   Sparkles, ChevronRight, CheckCircle, Clock, Award, BookOpen, ChevronDown, Trophy,
-  Target, Heart, FileText, Users, FolderOpen
+  Target, Heart, FileText, Users, FolderOpen, RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
-import type { User as UserType, Notification } from "@shared/schema";
+import type { User as UserType, Notification, VolunteerProfile } from "@shared/schema";
 
 interface PWAHeaderProps {
   showBackButton?: boolean;
@@ -23,6 +23,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
   const { signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
   const queryClient = useQueryClient();
@@ -37,6 +38,20 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     },
     enabled: !!userId
   });
+
+  // Fetch volunteer profile for profile photo (more up-to-date than user.avatar)
+  const { data: volunteerProfile } = useQuery<VolunteerProfile>({
+    queryKey: ["/api/intake/volunteer-profile", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/intake/volunteer-profile?userId=${userId}`);
+      return response.ok ? response.json() : null;
+    },
+    enabled: !!userId && currentUser?.userType === 'volunteer',
+    staleTime: 30000,
+  });
+
+  // Get the best available profile photo URL (volunteer profile photo takes priority)
+  const profilePhotoUrl = volunteerProfile?.profilePhotoUrl || currentUser?.avatar || undefined;
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<Notification[]>({
@@ -185,6 +200,24 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
     return notifDate.toLocaleDateString();
   };
 
+  // Handle refresh - invalidate all queries to get fresh data
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Invalidate all relevant queries to force fresh data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/notifications"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/volunteer/dashboard"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/volunteer/impact"] }),
+      ]);
+    } catch (error) {
+      console.error('Refresh error:', error);
+    }
+    setTimeout(() => setRefreshing(false), 500);
+  };
+
   const handleLogout = async () => {
     setMenuOpen(false);
     await signOut();
@@ -237,6 +270,16 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
+            {/* Refresh Button */}
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="w-10 h-10 rounded-full bg-white/50 backdrop-blur-sm flex items-center justify-center hover:bg-white/70 transition-all shadow-sm disabled:opacity-50"
+              aria-label="Refresh data"
+            >
+              <RefreshCw className={`w-5 h-5 text-slate-700 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
@@ -257,7 +300,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
               data-testid="button-pwa-menu"
             >
               <Avatar className="h-8 w-8 border-2 border-white/60 shadow-sm">
-                <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
+                <AvatarImage src={profilePhotoUrl} alt={currentUser?.displayName || 'User'} />
                 <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-sm font-semibold">
                   {userInitial}
                 </AvatarFallback>
@@ -294,7 +337,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
               {/* User Info */}
               <div className="flex items-center gap-3">
                 <Avatar className="h-14 w-14 border-2 border-white/30 shadow-lg">
-                  <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
+                  <AvatarImage src={profilePhotoUrl} alt={currentUser?.displayName || 'User'} />
                   <AvatarFallback className="bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xl font-semibold">
                     {userInitial}
                   </AvatarFallback>

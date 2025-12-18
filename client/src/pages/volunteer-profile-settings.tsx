@@ -1298,32 +1298,39 @@ export default function VolunteerProfileSettings() {
   const isSubmitting = profileMutation.isPending;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 pb-24 ${isVolunteerMobile ? 'pt-16' : ''}`}>
-      {/* PWA Header for mobile volunteer users */}
+    <div className={`min-h-screen pb-24 ${isVolunteerMobile ? 'bg-[#f8f7f4] pt-14' : 'bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800'}`}>
+      {/* PWA Header for mobile volunteer users - consistent with dashboard */}
       {isVolunteerMobile && <PWAHeader />}
 
       {/* Volunteer Desktop Navigation */}
       {!isVolunteerMobile && <VolunteerNav />}
 
-      <div className="container mx-auto py-8 px-4 max-w-4xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
-          <p className="text-muted-foreground">
-            Create or update your volunteer profile to get matched with
-            organizations that align with your skills, interests, and goals.
-          </p>
+      <div className={`${isVolunteerMobile ? 'px-4 py-4' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
+        {/* Page Header - Mobile optimized */}
+        <div className={`${isVolunteerMobile ? 'mb-4' : 'mb-8 text-center'}`}>
+          <h1 className={`font-bold mb-2 ${isVolunteerMobile ? 'text-xl text-slate-800' : 'text-3xl'}`}>
+            {isVolunteerMobile ? 'Profile Settings' : 'Volunteer Profile Settings'}
+          </h1>
+          {!isVolunteerMobile && (
+            <p className="text-muted-foreground">
+              Create or update your volunteer profile to get matched with
+              organizations that align with your skills, interests, and goals.
+            </p>
+          )}
         </div>
 
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center gap-2 justify-center">
+      <Card className={isVolunteerMobile ? 'border-0 shadow-sm rounded-2xl' : ''}>
+        <CardHeader className={isVolunteerMobile ? 'pb-3' : 'text-center'}>
+          <CardTitle className={`flex items-center gap-2 ${isVolunteerMobile ? 'text-base' : 'justify-center'}`}>
             <User className="h-5 w-5" />
             {existingProfile ? "Update Your Profile" : "Create Your Profile"}
           </CardTitle>
-          <CardDescription>
-            This information will be used to match you with organizations and
-            opportunities
-          </CardDescription>
+          {!isVolunteerMobile && (
+            <CardDescription>
+              This information will be used to match you with organizations and
+              opportunities
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -1453,28 +1460,30 @@ export default function VolunteerProfileSettings() {
       </Card>
 
       {/* Account Actions Section */}
-      <Card className="mt-6 border-red-200 dark:border-red-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
+      <Card className={`mt-6 border-red-200 dark:border-red-800 ${isVolunteerMobile ? 'border-0 shadow-sm rounded-2xl' : ''}`}>
+        <CardHeader className={isVolunteerMobile ? 'pb-2' : ''}>
+          <CardTitle className={`flex items-center gap-2 text-red-600 dark:text-red-400 ${isVolunteerMobile ? 'text-base' : ''}`}>
             <LogOut className="h-5 w-5" />
             Account Actions
           </CardTitle>
-          <CardDescription>
-            Sign out of your volunteer account
-          </CardDescription>
+          {!isVolunteerMobile && (
+            <CardDescription>
+              Sign out of your volunteer account
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${isVolunteerMobile ? 'p-3' : 'p-4'} bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800`}>
             <div>
-              <h4 className="font-medium text-gray-900 dark:text-white">Sign Out</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                End your current session and return to the landing page
+              <h4 className={`font-medium text-gray-900 dark:text-white ${isVolunteerMobile ? 'text-sm' : ''}`}>Sign Out</h4>
+              <p className={`text-gray-600 dark:text-gray-400 ${isVolunteerMobile ? 'text-xs' : 'text-sm'}`}>
+                End your current session
               </p>
             </div>
             <Button
               variant="destructive"
               onClick={handleLogout}
-              className="w-full sm:w-auto flex items-center gap-2"
+              className={`w-full sm:w-auto flex items-center gap-2 ${isVolunteerMobile ? 'text-sm py-2' : ''}`}
               data-testid="button-logout"
             >
               <LogOut className="h-4 w-4" />

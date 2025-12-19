@@ -57,6 +57,7 @@ import { adminRouter } from "./routes/admin.router";
 import { storageRouter } from "./routes/storage.router";
 import { miscRouter } from "./routes/misc.router";
 import { aiuRouter } from "./routes/aiu.router";
+import { calculateOrganizationAIU } from "./aiu-service";
 import { storiesRouter, setBroadcastFn as setStoriesBroadcast } from "./routes/stories.router";
 
 // ===== DEDUPLICATION HELPER FUNCTIONS =====
@@ -4479,8 +4480,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const totalHours = organizationActivities.reduce((sum, a) => sum + a.hours, 0);
 
-      // Calculate AIU earned: Base formula is hours/50 with SDG multiplier (up to 2x for 17 SDGs)
-
+      // Calculate unique SDGs addressed
       const uniqueSDGs = new Set<number>();
       organizationProjects.forEach(project => {
         if (project.sdgGoals && Array.isArray(project.sdgGoals)) {
@@ -4488,13 +4488,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
 
-      // Calculate AIU: hours/50 * SDG multiplier (1 + sdgCount/17)
-      const sdgMultiplier = 1 + (uniqueSDGs.size / 17);
-      const aiuEarned = totalHours > 0 ? Math.round((totalHours / 50) * sdgMultiplier * 10) / 10 : 0;
-
       const totalPeopleImpacted = organizationImpacts
         .filter(i => i.metricId && peopleMetricIds.has(i.metricId))
         .reduce((sum, i) => sum + (i.value || 0), 0);
+
+      // Calculate AIU earned using the proper aiu-service
+      // This aggregates all volunteer AIUs from all projects (org AIU >= sum of volunteer AIUs)
+      let aiuEarned = 0;
+      try {
+        const orgAiuSummary = await calculateOrganizationAIU(organizationId);
+        if (orgAiuSummary && orgAiuSummary.totalAiu > 0) {
+          aiuEarned = orgAiuSummary.totalAiu;
+        }
+      } catch (err) {
+        console.error('Failed to calculate organization AIU:', err);
+      }
+
+      // Fallback if aiu-service returns 0 or fails
+      if (aiuEarned === 0 && totalPeopleImpacted > 0) {
+        // Lives-based calculation with higher multiplier for organizations
+        const attributionFactor = 0.5; // Organizations get 50% attribution (higher than volunteers)
+        const sdgMultiplier = Math.min(1 + (uniqueSDGs.size * 0.1), 2.0);
+        const volumeBonus = totalHours > 0 ? Math.min(1 + (totalHours / 200), 3.0) : 1.0;
+        aiuEarned = Math.round(totalPeopleImpacted * attributionFactor * sdgMultiplier * volumeBonus * 100) / 100;
+      } else if (aiuEarned === 0 && totalHours > 0) {
+        // Hours-based fallback (1 AIU per 5 hours with SDG bonus)
+        const sdgMultiplier = Math.min(1 + (uniqueSDGs.size * 0.1), 2.0);
+        aiuEarned = Math.round((totalHours / 5) * sdgMultiplier * 100) / 100;
+      }
 
       // SDG Distribution
       const sdgDistribution: Record<number, { hours: number; projects: number; volunteers: number }> = {};

@@ -225,41 +225,51 @@ export function bindPortWithRetry(
   serverState.isStarting = true;
   serverState.retryCount = 0;
 
+  let successCallbackFired = false; // Prevent multiple callback invocations
+
   const attemptBind = () => {
     serverState.retryCount++;
     const attemptCount = serverState.retryCount;
 
     // Clean up previous error listeners
     server.removeAllListeners("error");
+    server.removeAllListeners("listening");
 
     // Force close if already listening
     if (server.listening) {
       try {
         server.close();
+        // Wait briefly for close to complete
+        server.once("close", () => {
+          attemptBindInternal();
+        });
+        return;
       } catch (e) {
         // Ignore
       }
     }
 
-    logger.info(`[PortManager] Binding to port ${port} (attempt ${attemptCount}/${maxRetries})`);
+    attemptBindInternal();
+  };
 
-    server.listen(
-      { 
-        port, 
-        host, 
-        reusePort: true,
-        // @ts-ignore
-        reuseAddr: true,
-      },
-      () => {
-        serverState.isStarting = false;
-        serverState.startTime = Date.now();
-        logger.info(`[PortManager] Successfully bound to port ${port}`);
-        onSuccess?.();
-      }
-    );
+  const attemptBindInternal = () => {
+    logger.info(`[PortManager] Binding to port ${port} (attempt ${serverState.retryCount}/${maxRetries})`);
+    const attemptCount = serverState.retryCount;
 
-    server.once("error", (err: NodeJS.ErrnoException) => {
+    const onListening = () => {
+      if (successCallbackFired) return;
+      successCallbackFired = true;
+      
+      server.removeAllListeners("error");
+      serverState.isStarting = false;
+      serverState.startTime = Date.now();
+      logger.info(`[PortManager] Successfully bound to port ${port}`);
+      onSuccess?.();
+    };
+
+    const onBindError = (err: NodeJS.ErrnoException) => {
+      server.removeListener("listening", onListening);
+      
       if (err.code === "EADDRINUSE") {
         if (attemptCount < maxRetries) {
           // Exponential backoff with jitter
@@ -280,7 +290,20 @@ export function bindPortWithRetry(
         releaseServerLock();
         process.exit(1);
       }
-    });
+    };
+
+    server.once("listening", onListening);
+    server.once("error", onBindError);
+
+    server.listen(
+      { 
+        port, 
+        host, 
+        reusePort: true,
+        // @ts-ignore
+        reuseAddr: true,
+      }
+    );
   };
 
   attemptBind();

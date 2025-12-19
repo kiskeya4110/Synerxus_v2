@@ -1335,8 +1335,11 @@ export async function getDashboardDataForVolunteer(userId: number, matchThreshol
         sdgsAddressed: uniqueSDGs.size,
         impactScore,
         totalPeopleImpacted, // Add people impacted to summary so frontend can display it
-        // Calculate total AIU from projects
-        totalAiuEarned: projectsWithOrganization.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0),
+        // Use official AIU from aiu-service for consistency with organization AIU calculations
+        // This ensures volunteer AIU uses the same formula as organization AIU (proper ΔKPI attribution)
+        totalAiuEarned: volunteerTotalAiu > 0
+          ? volunteerTotalAiu
+          : projectsWithOrganization.reduce((sum: number, p: any) => sum + (p.aiuEarned || 0), 0),
         recentActivities: volunteerActivities
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 5),

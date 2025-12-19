@@ -10,6 +10,7 @@ import {
   TrendingUp,
   MapPin,
   ChevronRight,
+  ChevronDown,
   X,
   MoreVertical,
   Bell,
@@ -34,6 +35,7 @@ import {
   ArrowUpRight,
   Eye,
   Trophy,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
@@ -155,6 +157,8 @@ export default function OrganizationDashboardPWA() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [showMenu, setShowMenu] = useState(false);
+  const [showPageDropdown, setShowPageDropdown] = useState(false);
+  const pageDropdownRef = useRef<HTMLDivElement>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [refreshing, setRefreshing] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -179,11 +183,14 @@ export default function OrganizationDashboardPWA() {
     }
   }, [userType, navigate]);
 
-  // Close menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
+      }
+      if (pageDropdownRef.current && !pageDropdownRef.current.contains(event.target as Node)) {
+        setShowPageDropdown(false);
       }
       if (aiuModalRef.current && !aiuModalRef.current.contains(event.target as Node)) {
         setShowAiuModal(false);
@@ -301,25 +308,38 @@ export default function OrganizationDashboardPWA() {
   }, [dashboardData]);
 
   // Calculate total AIU with robust fallback
-  // Priority: 1. Server aiuEarned, 2. Hours-based calculation, 3. Sum from projects
+  // Priority: 1. Server aiuEarned (from aiu-service), 2. Sum from projects, 3. Lives-based calculation
+  // Organization AIU = SUM of all volunteer AIUs on all projects (org AIU >= any volunteer's AIU)
   const totalAiu = useMemo(() => {
-    // First try server-provided AIU
+    // First try server-provided AIU (calculated by aiu-service which aggregates all volunteer AIUs)
     if (metrics.aiuEarned && metrics.aiuEarned > 0) return metrics.aiuEarned;
 
-    // Fallback: calculate from hours with SDG bonus (1 AIU per 50 hours, up to 2x SDG multiplier)
-    if (metrics.totalHours > 0) {
-      const sdgMultiplier = Math.min(1 + (metrics.sdgsAddressed * 0.1), 2.0);
-      return Math.round((metrics.totalHours / 50) * sdgMultiplier * 100) / 100;
-    }
-
-    // Last resort: sum from projects
+    // Second: sum from projects (each project AIU = sum of volunteer AIUs for that project)
     if (dashboardData?.projects && dashboardData.projects.length > 0) {
       const projectSum = dashboardData.projects.reduce((sum, p) => sum + (p.aiuEarned || 0), 0);
       if (projectSum > 0) return projectSum;
     }
 
+    // Fallback: calculate from lives impacted with higher attribution than volunteers
+    // Organizations get 50% attribution (vs 20% for individual volunteers)
+    // This ensures org AIU is always >= volunteer AIU for same impact
+    const livesImpacted = metrics.livesTouched || metrics.peopleImpacted || 0;
+    if (livesImpacted > 0) {
+      const attributionFactor = 0.5; // Organizations get 50% attribution (higher than volunteers)
+      const sdgMultiplier = Math.min(1 + (metrics.sdgsAddressed * 0.1), 2.0); // Up to 2x for SDG coverage
+      const volumeBonus = metrics.totalHours > 0 ? Math.min(1 + (metrics.totalHours / 200), 3.0) : 1.0;
+      const baseAiu = livesImpacted * attributionFactor * sdgMultiplier * volumeBonus;
+      return Math.round(baseAiu * 100) / 100;
+    }
+
+    // Last resort: hours-based (1 AIU per 5 hours with SDG bonus)
+    if (metrics.totalHours > 0) {
+      const sdgMultiplier = Math.min(1 + (metrics.sdgsAddressed * 0.1), 2.0);
+      return Math.round((metrics.totalHours / 5) * sdgMultiplier * 100) / 100;
+    }
+
     return 0;
-  }, [metrics.aiuEarned, metrics.totalHours, metrics.sdgsAddressed, dashboardData?.projects]);
+  }, [metrics.aiuEarned, metrics.totalHours, metrics.sdgsAddressed, metrics.livesTouched, metrics.peopleImpacted, dashboardData?.projects]);
 
   // Calculate total people impacted from impact over time
   const totalPeopleImpacted = useMemo(() => {
@@ -466,84 +486,6 @@ export default function OrganizationDashboardPWA() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {/* AIU Earned Button - Opens popup with explanation */}
-          <div className="relative" ref={aiuModalRef}>
-            <button
-              onClick={() => setShowAiuModal(!showAiuModal)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white transition-all"
-            >
-              <Award className="w-4 h-4 text-teal-600" />
-              <span className="text-sm font-bold text-teal-700">{totalAiu.toFixed(2)}</span>
-              <span className="text-[10px] text-teal-600 font-medium">AIU</span>
-            </button>
-
-            {/* AIU Explanation Popup */}
-            {showAiuModal && (
-              <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200 border border-teal-100">
-                <div className="bg-gradient-to-r from-teal-500 to-emerald-500 p-4 text-white">
-                  <div className="flex items-center gap-2">
-                    <Award className="w-6 h-6" />
-                    <div>
-                      <h3 className="font-bold text-lg">{totalAiu.toFixed(2)} AIU</h3>
-                      <p className="text-xs text-teal-100">Attributable Impact Units</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 space-y-4">
-                  {/* Completed Projects */}
-                  <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-                        <CheckCircle className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-sm font-medium text-slate-700">Completed Projects</span>
-                    </div>
-                    <span className="text-xl font-bold text-emerald-600">{metrics.completedProjects || 0}</span>
-                  </div>
-
-                  {/* How AIU is Calculated */}
-                  <div className="space-y-2">
-                    <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">How AIU is Calculated</h4>
-                    <div className="text-sm text-slate-600 space-y-2">
-                      <p className="leading-relaxed">
-                        <strong>AIU (Attributable Impact Units)</strong> measure your organization's real-world social impact through volunteer activities.
-                      </p>
-                      <ul className="space-y-1.5 text-xs">
-                        <li className="flex items-start gap-2">
-                          <span className="text-teal-500 mt-0.5">•</span>
-                          <span><strong>Hours Contributed:</strong> Volunteer time invested in projects</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-teal-500 mt-0.5">•</span>
-                          <span><strong>SDG Alignment:</strong> Impact across Sustainable Development Goals</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-teal-500 mt-0.5">•</span>
-                          <span><strong>Lives Touched:</strong> Direct beneficiaries of your projects</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-teal-500 mt-0.5">•</span>
-                          <span><strong>Verification:</strong> Validated impact records receive higher weight</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* View Full Report Button */}
-                  <button
-                    onClick={() => {
-                      setShowAiuModal(false);
-                      navigate('/impact-visualization');
-                    }}
-                    className="w-full py-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-xl font-medium text-sm hover:from-teal-600 hover:to-emerald-600 transition-all"
-                  >
-                    View Full Impact Report
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -551,6 +493,54 @@ export default function OrganizationDashboardPWA() {
           >
             <RefreshCw className={`w-5 h-5 text-slate-700 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
+
+          {/* Page Navigation Dropdown */}
+          <div ref={pageDropdownRef} className="relative">
+            <button
+              onClick={() => setShowPageDropdown(!showPageDropdown)}
+              className="h-10 px-3 rounded-full bg-white/80 backdrop-blur-sm flex items-center gap-1.5 shadow-sm hover:bg-white transition-all"
+            >
+              <Layers className="w-4 h-4 text-slate-700" />
+              <span className="text-sm font-medium text-slate-700">Pages</span>
+              <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showPageDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showPageDropdown && (
+              <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
+                <div className="py-1">
+                  <button
+                    onClick={() => { setShowPageDropdown(false); navigate('/projects'); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
+                  >
+                    <FolderOpen className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-slate-700">Projects</span>
+                  </button>
+                  <button
+                    onClick={() => { setShowPageDropdown(false); navigate('/impact-visualization'); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
+                  >
+                    <BarChart3 className="w-4 h-4 text-purple-600" />
+                    <span className="text-sm font-medium text-slate-700">Overview</span>
+                  </button>
+                  <button
+                    onClick={() => { setShowPageDropdown(false); navigate('/volunteers'); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
+                  >
+                    <Users className="w-4 h-4 text-teal-600" />
+                    <span className="text-sm font-medium text-slate-700">Volunteers</span>
+                  </button>
+                  <button
+                    onClick={() => { setShowPageDropdown(false); navigate('/sdg-mapping'); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
+                  >
+                    <Target className="w-4 h-4 text-emerald-600" />
+                    <span className="text-sm font-medium text-slate-700">SDGs</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <div ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
@@ -702,14 +692,40 @@ export default function OrganizationDashboardPWA() {
             </button>
           )}
 
-          {/* Welcome Banner */}
-          <div className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-4 border border-emerald-200 shadow-sm">
-            <h2 className="text-lg font-bold text-emerald-900 mb-1">
-              Welcome, {organization?.name || 'Organization'}! 👋
-            </h2>
-            <p className="text-sm text-emerald-700">
-              Your team has contributed <span className="font-bold">{metrics.totalHours.toLocaleString()} hours</span> across <span className="font-bold">{metrics.activeProjects}</span> projects
-            </p>
+          {/* Welcome Banner - Enhanced */}
+          <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 rounded-2xl p-4 text-white shadow-xl relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/30" />
+              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-white/20" />
+            </div>
+            <div className="relative">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <p className="text-emerald-100 text-[11px] font-medium uppercase tracking-wide mb-1">Dashboard Overview</p>
+                  <h2 className="text-xl font-bold">
+                    {organization?.name || 'Organization'}
+                  </h2>
+                </div>
+                <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-4">
+                <div className="bg-white/15 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold">{metrics.totalHours.toLocaleString()}</p>
+                  <p className="text-[9px] text-emerald-100 font-medium">Hours</p>
+                </div>
+                <div className="bg-white/15 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold">{metrics.activeProjects}</p>
+                  <p className="text-[9px] text-emerald-100 font-medium">Projects</p>
+                </div>
+                <div className="bg-white/15 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold">{totalPeopleImpacted.toLocaleString()}</p>
+                  <p className="text-[9px] text-emerald-100 font-medium">Lives</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Industry KPIs - Primary Metrics Row */}
@@ -870,7 +886,119 @@ export default function OrganizationDashboardPWA() {
             </div>
           </div>
 
-          {/* SDG Impact Distribution - Moved above Impact Visualization */}
+          {/* Cumulative Impact Over Time - Interactive Chart */}
+          {dashboardData?.impactOverTime && dashboardData.impactOverTime.length > 0 && (
+            <div className="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-4 border border-slate-200 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center shadow-sm">
+                    <TrendingUp className="w-4 h-4 text-white" />
+                  </div>
+                  Impact Over Time
+                </h3>
+                <button
+                  onClick={() => navigate('/impact-visualization')}
+                  className="text-[11px] text-indigo-600 font-semibold hover:text-indigo-700"
+                >
+                  View Details →
+                </button>
+              </div>
+
+              {/* Summary Stats Row */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-2.5 text-center border border-blue-100">
+                  <p className="text-lg font-bold text-blue-700">
+                    {dashboardData.impactOverTime.reduce((sum, m) => sum + (m.hours || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-[9px] text-blue-600 font-medium">Total Hours</p>
+                </div>
+                <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-2.5 text-center border border-emerald-100">
+                  <p className="text-lg font-bold text-emerald-700">
+                    {dashboardData.impactOverTime.reduce((sum, m) => sum + (m.peopleImpacted || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-[9px] text-emerald-600 font-medium">Lives Touched</p>
+                </div>
+                <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-2.5 text-center border border-purple-100">
+                  <p className="text-lg font-bold text-purple-700">
+                    {dashboardData.impactOverTime.reduce((sum, m) => sum + (m.volunteers || 0), 0).toLocaleString()}
+                  </p>
+                  <p className="text-[9px] text-purple-600 font-medium">Volunteers</p>
+                </div>
+              </div>
+
+              {/* Chart */}
+              <div className="h-40 bg-gradient-to-br from-slate-50 to-white rounded-xl p-2 border border-slate-100">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dashboardData.impactOverTime} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorPeople" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 9, fill: '#64748b' }}
+                      axisLine={{ stroke: '#e2e8f0' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 9, fill: '#64748b' }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      labelStyle={{ fontWeight: 'bold', color: '#1e293b' }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="hours"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorHours)"
+                      name="Hours"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="peopleImpacted"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorPeople)"
+                      name="People Impacted"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-4 mt-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                  <span className="text-[10px] text-slate-600 font-medium">Hours</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] text-slate-600 font-medium">People Impacted</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SDG Impact Distribution */}
           {dashboardData?.sdgDistribution && dashboardData.sdgDistribution.length > 0 && (
             <div className="bg-gradient-to-br from-slate-50 to-white rounded-2xl p-4 border border-slate-200 shadow-lg">
               {/* Header with toggle */}
@@ -1325,9 +1453,10 @@ export default function OrganizationDashboardPWA() {
         </div>
         </main>
 
-        {/* Bottom Navigation - Sticky within container */}
+        {/* Bottom Navigation Tray */}
         <nav className="sticky bottom-0 z-50 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)] w-full shadow-lg flex-shrink-0">
           <div className="flex items-center justify-around py-2 px-1">
+            {/* Home - Active */}
             <button
               onClick={() => navigate('/organization-dashboard/pwa')}
               className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-emerald-600"
@@ -1335,6 +1464,8 @@ export default function OrganizationDashboardPWA() {
               <Home className="w-5 h-5" />
               <span className="text-[10px] font-medium">Home</span>
             </button>
+
+            {/* Projects */}
             <button
               onClick={() => navigate('/projects')}
               className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
@@ -1342,13 +1473,17 @@ export default function OrganizationDashboardPWA() {
               <FolderOpen className="w-5 h-5" />
               <span className="text-[10px] font-medium">Projects</span>
             </button>
+
+            {/* Overview */}
             <button
-              onClick={() => navigate('/organization-messages/pwa')}
+              onClick={() => navigate('/impact-visualization')}
               className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
             >
-              <MessageCircle className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Messages</span>
+              <BarChart3 className="w-5 h-5" />
+              <span className="text-[10px] font-medium">Overview</span>
             </button>
+
+            {/* Volunteers */}
             <button
               onClick={() => navigate('/volunteers')}
               className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
@@ -1356,6 +1491,8 @@ export default function OrganizationDashboardPWA() {
               <Users className="w-5 h-5" />
               <span className="text-[10px] font-medium">Volunteers</span>
             </button>
+
+            {/* SDGs */}
             <button
               onClick={() => navigate('/sdg-mapping')}
               className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"

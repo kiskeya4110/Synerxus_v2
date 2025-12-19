@@ -1,20 +1,51 @@
 import { Linkedin, Facebook } from "lucide-react";
 import { SiX } from "react-icons/si";
+import { useEffect, useRef, useState } from "react";
+
+// Global registry to track footer instances and prevent duplicates
+const footerRegistry = {
+  instances: new Set<string>(),
+  counter: 0
+};
 
 export default function Footer() {
+  const instanceId = useRef<string>(`footer-${++footerRegistry.counter}`);
+  const [isRegistered, setIsRegistered] = useState(false);
   const currentYear = new Date().getFullYear();
 
+  useEffect(() => {
+    const id = instanceId.current;
+
+    // Only register if no other footer is registered
+    if (footerRegistry.instances.size === 0) {
+      footerRegistry.instances.add(id);
+      setIsRegistered(true);
+    }
+
+    return () => {
+      footerRegistry.instances.delete(id);
+    };
+  }, []);
+
+  // Don't render if this instance isn't the registered one
+  if (!isRegistered) {
+    return null;
+  }
+
   return (
-    <footer className="bg-gray-900 dark:bg-gray-950 text-gray-200 py-3 border-t border-gray-800 mt-6">
+    <footer
+      className="bg-gray-900 dark:bg-gray-950 text-gray-200 py-3 border-t border-gray-800 mt-6"
+      data-footer-id={instanceId.current}
+    >
       <div className="max-w-full mx-auto px-4 lg:px-6">
         <div className="grid grid-cols-2 gap-3 mb-3">
           {/* Brand & Links Section */}
           <div className="space-y-2">
             <div>
               <h3 className="text-sm font-bold mb-0.5">
-              <span className="text-white">SYNER</span>
-              <span style={{ color: '#FFB84D' }}>XUS</span>
-            </h3>
+                <span className="text-white">SYNER</span>
+                <span style={{ color: '#FFB84D' }}>XUS</span>
+              </h3>
               <p className="text-[11px] text-gray-400">
                 Connect. Manage. Impact Globally.
               </p>

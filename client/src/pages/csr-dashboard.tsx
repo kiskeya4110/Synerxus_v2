@@ -9,6 +9,7 @@ import {
   Settings,
   ChevronRight,
   X,
+  Menu,
   MapPin,
   Star,
   Award,
@@ -64,7 +65,6 @@ import { ConfirmDialog } from "@/components/ui/dialog-factory";
 import { safeArray, safeMap, safeFilter, safeReduce } from "@/lib/safe-array";
 import { lazy, Suspense, useMemo, useCallback, memo, Component, useRef, type ReactNode } from "react";
 import Footer from "@/components/layout/footer";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import Logo from "@/components/ui/logo";
 import { UserProfileDropdown } from "@/components/user-profile-dropdown";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
@@ -189,6 +189,7 @@ const GlobalImpactMap = memo(({ projectLocations }: GlobalMapProps) => {
 
   return (
     <MapContainer
+      key="csr-global-impact-map"
       ref={mapRef}
       center={[20, 0]}
       zoom={2}
@@ -427,6 +428,7 @@ export default function CSRDashboard() {
 
   // Mobile detection and PWA tab state
   const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarMenuOpen, setIsSidebarMenuOpen] = useState(false);
   const [mobileTab, setMobileTab] = useState<'overview' | 'employees' | 'sdgs' | 'reports' | 'settings'>('overview');
 
   // Mobile KPI modal state
@@ -3345,9 +3347,12 @@ export default function CSRDashboard() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        minHeight: "100dvh",
         backgroundColor: "#ffffff",
-        overflow: "hidden",
+        overflowX: "hidden",
+        overflowY: "auto",
+        maxWidth: "100vw",
+        width: "100%",
       }}
     >
       {/* Top Header Bar - Cream to gold gradient for organization branding */}
@@ -3367,35 +3372,210 @@ export default function CSRDashboard() {
           zIndex: 50,
         }}
       >
-        {/* Left: Synerxus Logo - Clickable to Landing Page */}
-        <button
-          onClick={() => navigate("/landing")}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            paddingRight: "16px",
-            borderRight: "1px solid rgba(180, 83, 9, 0.25)",
-            backgroundColor: "transparent",
-            border: "none",
-            cursor: "pointer",
-            transition: "opacity 0.2s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          title="Go to landing page"
-        >
-          <img
-            src={logoUrl}
-            alt="Synerxus"
-            style={{ height: "36px", width: "auto" }}
-          />
-        </button>
+        {/* Left: Logo and Hamburger Menu */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Synerxus Logo - Clickable to Landing Page */}
+          <button
+            onClick={() => navigate("/landing")}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              paddingRight: "16px",
+              borderRight: "1px solid rgba(180, 83, 9, 0.25)",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+              transition: "opacity 0.2s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.8")}
+            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+            title="Go to landing page"
+          >
+            <img
+              src={logoUrl}
+              alt="Synerxus"
+              style={{ height: "36px", width: "auto" }}
+            />
+          </button>
 
-        {/* Center: Corporation Name ESG Insights */}
+          {/* Hamburger Menu - Shows on smaller screens */}
+          <div className="lg:hidden relative">
+            <button
+              onClick={() => setIsSidebarMenuOpen(!isSidebarMenuOpen)}
+              style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(255,255,255,0.6)",
+                border: "1px solid rgba(180, 83, 9, 0.3)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#78350f",
+                transition: "all 0.2s",
+              }}
+              data-testid="csr-mobile-menu-button"
+            >
+              {isSidebarMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+
+            {/* Mobile Nav Dropdown */}
+            {isSidebarMenuOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  style={{
+                    position: "fixed",
+                    inset: 0,
+                    zIndex: 30,
+                  }}
+                  onClick={() => setIsSidebarMenuOpen(false)}
+                />
+
+                {/* Menu Panel */}
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    marginTop: "8px",
+                    width: "240px",
+                    backgroundColor: "#1f2937",
+                    border: "1px solid #374151",
+                    borderRadius: "12px",
+                    boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+                    zIndex: 40,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div style={{ padding: "8px" }}>
+                    <button
+                      onClick={() => { navigate("/csr-dashboard"); setIsSidebarMenuOpen(false); }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 16px",
+                        borderRadius: "8px",
+                        backgroundColor: "#374151",
+                        color: "#f97316",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        fontWeight: "600",
+                      }}
+                    >
+                      <Home style={{ width: "18px", height: "18px" }} />
+                      <span>Dashboard</span>
+                    </button>
+                    <button
+                      onClick={() => { navigate("/csr-impact-reporting"); setIsSidebarMenuOpen(false); }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 16px",
+                        borderRadius: "8px",
+                        backgroundColor: "transparent",
+                        color: "#d1d5db",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <BarChart3 style={{ width: "18px", height: "18px" }} />
+                      <span>Impact Reporting</span>
+                    </button>
+                    <button
+                      onClick={() => { startTransition(() => setSelectedMainTab("engagement")); setIsSidebarMenuOpen(false); }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 16px",
+                        borderRadius: "8px",
+                        backgroundColor: "transparent",
+                        color: "#d1d5db",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <Users style={{ width: "18px", height: "18px" }} />
+                      <span>Employee Engagement</span>
+                    </button>
+                    <button
+                      onClick={() => { navigate("/project-portfolio"); setIsSidebarMenuOpen(false); }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 16px",
+                        borderRadius: "8px",
+                        backgroundColor: "transparent",
+                        color: "#d1d5db",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <Briefcase style={{ width: "18px", height: "18px" }} />
+                      <span>Project Portfolio</span>
+                    </button>
+                    <button
+                      onClick={() => { navigate("/csr-reports-exports"); setIsSidebarMenuOpen(false); }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 16px",
+                        borderRadius: "8px",
+                        backgroundColor: "transparent",
+                        color: "#d1d5db",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <FileText style={{ width: "18px", height: "18px" }} />
+                      <span>Reports & Exports</span>
+                    </button>
+                    <button
+                      onClick={() => { navigate("/corporate-partner-profile-settings"); setIsSidebarMenuOpen(false); }}
+                      style={{
+                        width: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "12px 16px",
+                        borderRadius: "8px",
+                        backgroundColor: "transparent",
+                        color: "#d1d5db",
+                        border: "none",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <Settings style={{ width: "18px", height: "18px" }} />
+                      <span>Settings</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Center: Corporation Name ESG Insights - Hidden on small screens to prioritize logo */}
         <div
+          className="hidden md:flex"
           style={{
-            display: "flex",
             alignItems: "center",
             gap: "8px",
             flex: 1,
@@ -3408,6 +3588,7 @@ export default function CSRDashboard() {
             {companyName}
           </span>
           <span
+            className="hidden lg:inline"
             style={{ fontSize: "18px", fontWeight: "600", color: "#78350f" }}
           >
             ESG Insights
@@ -3433,8 +3614,9 @@ export default function CSRDashboard() {
       <div
         style={{ display: "flex", flex: 1, overflow: "hidden" }}
       >
-        {/* Left Sidebar - 1/5 width (20%), Dark Navy */}
+        {/* Left Sidebar - 1/5 width (20%), Dark Navy - Hidden on smaller screens */}
         <aside
+          className="hidden lg:block"
           style={{
             width: "20%",
             background: "var(--glass-bg-dark)",
@@ -8673,8 +8855,6 @@ export default function CSRDashboard() {
         </div>
       )}
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
 
       {/* Engagement Tips Confirmation Dialog */}
       <ConfirmDialog

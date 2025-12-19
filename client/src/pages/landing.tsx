@@ -595,7 +595,7 @@ export default function Landing() {
   const isLoggedIn = !!storedUserId && !!currentUser?.id;
 
   return (
-    <div className="h-screen bg-[#faf9f7] flex flex-col overflow-hidden">
+    <div className="min-h-screen min-h-[100dvh] bg-[#faf9f7] flex flex-col overflow-x-hidden w-full max-w-full">
       {/* Navigation - PWA optimized with glass effect */}
       <nav className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl safe-area-top shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
@@ -628,7 +628,7 @@ export default function Landing() {
       </nav>
 
       {/* Scrollable main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">
       {/* Hero Section */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-20 lg:py-28 relative overflow-hidden" data-testid="section-hero">
         {/* Animated Background Elements - Floating SDG Icons - Hidden on mobile to prevent interference */}

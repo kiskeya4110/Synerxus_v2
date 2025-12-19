@@ -1094,7 +1094,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
             <div className="px-4 grid grid-cols-4 gap-2">
               {/* Impact ROI - Lives impacted per hour volunteered */}
               <button
-                onClick={() => setShowKpiModal('impact-score')}
+                onClick={() => setShowKpiModal('impact-roi')}
                 className="bg-white rounded-2xl p-3 text-center hover:shadow-md transition-all active:scale-95 relative overflow-hidden border border-slate-100 shadow-sm"
                 data-testid="kpi-impact-roi"
               >
@@ -3265,7 +3265,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
               </button>
               <button
-                onClick={() => setShowKpiModal('impact-score')}
+                onClick={() => setShowKpiModal('impact-roi')}
                 className="w-full bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center gap-3 text-left"
                 data-testid="button-impact-roi"
               >
@@ -3733,6 +3733,63 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   </div>
                   <div className="text-xs text-slate-500 text-center">
                     Your impact score reflects your overall contribution across hours, people reached, tasks, SDGs, and skills.
+                  </div>
+                </>
+              )}
+              {showKpiModal === 'impact-roi' && (
+                <>
+                  <div className="text-center py-4">
+                    <div className="text-5xl font-bold text-emerald-600 mb-2">{kpis.impactROI}</div>
+                    <div className="text-slate-500">Lives Impacted Per Hour</div>
+                  </div>
+                  {/* ROI Visualization */}
+                  <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100 mb-4">
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-rose-600">{kpis.livesImpacted}</div>
+                        <div className="text-xs text-slate-500">Lives Impacted</div>
+                      </div>
+                      <div className="text-2xl text-slate-400">÷</div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">{kpis.totalHours}</div>
+                        <div className="text-xs text-slate-500">Hours Volunteered</div>
+                      </div>
+                      <div className="text-2xl text-slate-400">=</div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-emerald-600">{kpis.impactROI}</div>
+                        <div className="text-xs text-slate-500">Impact ROI</div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Performance Context */}
+                  <div className="bg-white rounded-lg p-4 border border-slate-200 mb-4">
+                    <h4 className="font-semibold text-slate-700 text-sm mb-3">What This Means</h4>
+                    <p className="text-sm text-slate-600 mb-3">
+                      For every hour you volunteer, you help <span className="font-bold text-emerald-600">{kpis.impactROI} {kpis.impactROI === 1 ? 'person' : 'people'}</span>.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${kpis.impactROI >= 2 ? 'bg-emerald-500' : kpis.impactROI >= 1 ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                        <span className="text-xs text-slate-600">High impact: 2+ lives/hour</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${kpis.impactROI >= 1 && kpis.impactROI < 2 ? 'bg-amber-500' : 'bg-slate-300'}`} />
+                        <span className="text-xs text-slate-600">Good impact: 1-2 lives/hour</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${kpis.impactROI < 1 && kpis.impactROI > 0 ? 'bg-blue-500' : 'bg-slate-300'}`} />
+                        <span className="text-xs text-slate-600">Building: &lt;1 life/hour (keep going!)</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Tips to Improve */}
+                  <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                    <h4 className="font-semibold text-slate-700 text-sm mb-2">Tips to Improve Your ROI</h4>
+                    <ul className="text-xs text-slate-600 space-y-1">
+                      <li>• Choose high-reach projects (education, health)</li>
+                      <li>• Focus on tasks that directly serve beneficiaries</li>
+                      <li>• Complete tasks efficiently to maximize impact</li>
+                    </ul>
                   </div>
                 </>
               )}

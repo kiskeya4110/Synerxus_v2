@@ -1434,3 +1434,87 @@ export type InsertVolunteerStory = z.infer<typeof insertVolunteerStorySchema>;
 
 export type StoryLike = typeof storyLikes.$inferSelect;
 export type InsertStoryLike = z.infer<typeof insertStoryLikeSchema>;
+
+// =====================================================
+// Claude Code Conversations Schema
+// =====================================================
+
+// Claude Conversations - Store each conversation session with Claude Code
+export const claudeConversations = pgTable("claude_conversations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id), // Optional: link to user if logged in
+  sessionId: text("session_id").notNull().unique(), // Unique identifier for the conversation session
+  title: text("title"), // Auto-generated or user-provided title
+  summary: text("summary"), // AI-generated summary of the conversation
+  status: text("status").notNull().default("active"), // active, completed, archived
+  messageCount: integer("message_count").default(0),
+  tokensUsed: integer("tokens_used").default(0), // Track token usage
+  model: text("model"), // Which Claude model was used (e.g., "claude-opus-4-5-20251101")
+  projectContext: text("project_context"), // Working directory or project name
+  tags: text("tags").array(), // User-defined tags for categorization
+  metadata: jsonb("metadata"), // Additional metadata (git branch, file context, etc.)
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  lastMessageAt: timestamp("last_message_at"),
+  endedAt: timestamp("ended_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Claude Messages - Individual messages within a conversation
+export const claudeMessages = pgTable("claude_messages", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("conversation_id").references(() => claudeConversations.id).notNull(),
+  role: text("role").notNull(), // "user", "assistant", "system"
+  content: text("content").notNull(), // The message content
+  messageIndex: integer("message_index").notNull(), // Order within conversation
+  tokensUsed: integer("tokens_used"), // Tokens for this specific message
+  toolsUsed: text("tools_used").array(), // Which tools were invoked (Read, Write, Bash, etc.)
+  filesModified: text("files_modified").array(), // Files that were created/edited
+  filesRead: text("files_read").array(), // Files that were read
+  commandsExecuted: text("commands_executed").array(), // Bash commands run
+  errorOccurred: boolean("error_occurred").default(false),
+  errorMessage: text("error_message"),
+  duration: integer("duration"), // Time taken to generate response (ms)
+  metadata: jsonb("metadata"), // Additional message-specific data
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Claude Conversation Bookmarks - Save important conversations or messages
+export const claudeBookmarks = pgTable("claude_bookmarks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
+  conversationId: integer("conversation_id").references(() => claudeConversations.id).notNull(),
+  messageId: integer("message_id").references(() => claudeMessages.id), // Optional: bookmark specific message
+  name: text("name").notNull(), // Bookmark name
+  notes: text("notes"), // User notes about why this was bookmarked
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas for Claude conversations
+export const insertClaudeConversationSchema = createInsertSchema(claudeConversations).omit({
+  id: true,
+  messageCount: true,
+  tokensUsed: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertClaudeMessageSchema = createInsertSchema(claudeMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertClaudeBookmarkSchema = createInsertSchema(claudeBookmarks).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for Claude conversations
+export type ClaudeConversation = typeof claudeConversations.$inferSelect;
+export type InsertClaudeConversation = z.infer<typeof insertClaudeConversationSchema>;
+
+export type ClaudeMessage = typeof claudeMessages.$inferSelect;
+export type InsertClaudeMessage = z.infer<typeof insertClaudeMessageSchema>;
+
+export type ClaudeBookmark = typeof claudeBookmarks.$inferSelect;
+export type InsertClaudeBookmark = z.infer<typeof insertClaudeBookmarkSchema>;

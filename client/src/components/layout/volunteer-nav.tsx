@@ -34,6 +34,7 @@ const MENU_ITEMS = [
 export default function VolunteerNav() {
   const [location, navigate] = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [navMenuOpen, setNavMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const { signOut } = useAuth();
   const userId = localStorage.getItem('currentUserId');
@@ -83,18 +84,18 @@ export default function VolunteerNav() {
     <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
-          {/* Logo and Brand */}
-          <div className="flex items-center gap-6">
+          {/* Logo and Brand - Never shrink, always visible */}
+          <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0">
             <button
               onClick={handleLogoClick}
-              className="flex items-center hover:opacity-90 transition-opacity cursor-pointer"
+              className="flex items-center hover:opacity-90 transition-opacity cursor-pointer flex-shrink-0"
               title="Go to Home"
             >
               {!imageError ? (
                 <img
                   src={logoImage}
                   alt="Synerxus Logo"
-                  className="h-12 w-auto object-contain"
+                  className="h-10 lg:h-12 w-auto object-contain"
                   onError={() => setImageError(true)}
                 />
               ) : (
@@ -104,8 +105,62 @@ export default function VolunteerNav() {
               )}
             </button>
 
-            {/* Nav Items */}
-            <div className="flex items-center gap-1 overflow-x-auto border-l border-gray-200 dark:border-gray-700 pl-6">
+            {/* Hamburger Menu for Nav Items - Shows on md-lg screens when nav items are hidden */}
+            <div className="lg:hidden relative">
+              <button
+                onClick={() => setNavMenuOpen(!navMenuOpen)}
+                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Navigation menu"
+                data-testid="nav-hamburger-menu"
+              >
+                {navMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+
+              {/* Nav Dropdown Menu */}
+              {navMenuOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setNavMenuOpen(false)}
+                  />
+
+                  {/* Menu Panel */}
+                  <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-40 overflow-hidden">
+                    <div className="py-1">
+                      {VOLUNTEER_NAV_ITEMS.map((item) => {
+                        const isActive = location === item.href ||
+                          (item.href === '/volunteer-dashboard' && (location === '/dashboard' || location.startsWith('/volunteer-dashboard'))) ||
+                          (item.href === '/projects' && location.startsWith('/projects')) ||
+                          (item.href === '/my-work' && location.startsWith('/my-work')) ||
+                          (item.href === '/discover-opportunities' && location.includes('discover-opportunities')) ||
+                          (item.href === '/impact-visualization' && location.includes('impact-visualization'));
+
+                        return (
+                          <Link key={item.href} href={item.href}>
+                            <button
+                              className={cn(
+                                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors",
+                                isActive
+                                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                                  : "text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                              )}
+                              onClick={() => setNavMenuOpen(false)}
+                            >
+                              {item.icon}
+                              <span className="font-medium">{item.label}</span>
+                            </button>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Nav Items - Hidden on smaller screens, collapse before logo */}
+            <div className="hidden lg:flex items-center gap-1 overflow-x-auto border-l border-gray-200 dark:border-gray-700 pl-4 lg:pl-6">
               {VOLUNTEER_NAV_ITEMS.map((item) => {
                 const isActive = location === item.href ||
                                (item.href === '/volunteer-dashboard' && (location === '/dashboard' || location.startsWith('/volunteer-dashboard'))) ||

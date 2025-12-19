@@ -201,20 +201,30 @@ export default function Header() {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Logo - Synerxus on left side of search bar */}
-        <button 
+        {/* Logo - Synerxus on left side of search bar - Always visible with priority */}
+        <button
           onClick={handleLogoClick}
-          className="hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none hidden sm:block"
+          className="hover:opacity-80 transition-opacity flex-shrink-0 focus:outline-none hidden md:block"
           data-testid="button-logo-header"
           title={user ? "Go to dashboard" : "Go to home"}
         >
           <Logo size="sm" showMotto={true} showIcon={true} clickable={false} />
         </button>
 
-        {/* Logo mobile version - icon only */}
-        <button 
+        {/* Logo tablet version - smaller motto */}
+        <button
           onClick={handleLogoClick}
-          className="hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 focus:outline-none sm:hidden"
+          className="hover:opacity-80 transition-opacity flex-shrink-0 focus:outline-none hidden sm:block md:hidden"
+          data-testid="button-logo-header-tablet"
+          title={user ? "Go to dashboard" : "Go to home"}
+        >
+          <Logo size="sm" showMotto={false} showIcon={true} clickable={false} />
+        </button>
+
+        {/* Logo mobile version - icon only */}
+        <button
+          onClick={handleLogoClick}
+          className="hover:opacity-80 transition-opacity flex-shrink-0 focus:outline-none sm:hidden"
           data-testid="button-logo-header-mobile"
           title={user ? "Go to dashboard" : "Go to home"}
         >
@@ -235,16 +245,16 @@ export default function Header() {
           </Button>
         )}
         
-        {/* Search Bar */}
-        <div className="hidden sm:flex flex-grow max-w-2xl mx-2">
+        {/* Search Bar - Hidden on smaller screens to prioritize logo */}
+        <div className="hidden lg:flex flex-grow max-w-2xl mx-2">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-4 w-4 text-gray-400 dark:text-gray-500" />
             </div>
-            <Input 
-              type="text" 
-              className="pl-10 pr-3 py-2 w-full text-sm" 
-              placeholder="Search projects, tasks or volunteers..." 
+            <Input
+              type="text"
+              className="pl-10 pr-3 py-2 w-full text-sm"
+              placeholder="Search projects, tasks or volunteers..."
             />
           </div>
         </div>

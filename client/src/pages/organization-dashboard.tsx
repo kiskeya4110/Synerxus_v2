@@ -71,6 +71,7 @@ import { getSDGName, SDG_GOALS, getSDGColor } from "@shared/sdg-goals";
 import OrganizationHeader from "@/components/layout/organization-header";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import { useIsMobile } from "@/hooks/use-mobile";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
@@ -150,6 +151,16 @@ export default function OrganizationDashboard() {
   const { toast } = useToast();
   const userType = localStorage.getItem('userType');
   const userId = localStorage.getItem('currentUserId');
+
+  // Mobile detection - redirect to PWA version
+  const isMobile = useIsMobile();
+
+  // Redirect mobile users to PWA version for optimized experience
+  useEffect(() => {
+    if (isMobile && userType === 'organization') {
+      navigate('/organization-dashboard/pwa');
+    }
+  }, [isMobile, userType, navigate]);
 
   const [projectFilter, setProjectFilter] = useState('all');
   const [timePeriod, setTimePeriod] = useState('all');
@@ -476,6 +487,20 @@ export default function OrganizationDashboard() {
     return null;
   }
 
+  // Show nothing while redirecting mobile users to PWA version
+  // This prevents the map from initializing before redirect
+  if (isMobile) {
+    return (
+      <div style={{ height: '100vh', backgroundColor: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: '48px', height: '48px', border: '4px solid #166534', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+          <p style={{ color: '#6b7280' }}>Loading mobile view...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div style={{ height: '100vh', backgroundColor: '#faf9f7', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -489,7 +514,7 @@ export default function OrganizationDashboard() {
   }
 
   return (
-    <div style={{ height: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb', paddingBottom: '180px' }} data-testid="organization-dashboard">
+    <div style={{ minHeight: '100dvh', overflowY: 'auto', overflowX: 'hidden', backgroundColor: '#f9fafb', paddingBottom: '180px', maxWidth: '100vw', width: '100%' }} data-testid="organization-dashboard">
       {/* Offline Banner */}
       <OfflineBanner />
       
@@ -885,22 +910,54 @@ export default function OrganizationDashboard() {
             </button>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-            <div style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Active Volunteers</p>
+            <button
+              onClick={() => navigate('/volunteers')}
+              style={{ padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '10px', border: '1px solid #bae6fd', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(14,165,233,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <p style={{ fontSize: '10px', color: '#6b7280', margin: 0 }}>Active Volunteers</p>
+                <ChevronRight size={12} style={{ color: '#0ea5e9' }} />
+              </div>
               <p style={{ fontSize: '20px', fontWeight: '700', color: '#0369a1', margin: 0 }}>{metrics.activeVolunteers || 0}</p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Avg Hours/Volunteer</p>
+            </button>
+            <button
+              onClick={() => navigate('/projects')}
+              style={{ padding: '12px', backgroundColor: '#f0fdf4', borderRadius: '10px', border: '1px solid #bbf7d0', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(22,163,74,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <p style={{ fontSize: '10px', color: '#6b7280', margin: 0 }}>Avg Hours/Volunteer</p>
+                <ChevronRight size={12} style={{ color: '#22c55e' }} />
+              </div>
               <p style={{ fontSize: '20px', fontWeight: '700', color: '#166534', margin: 0 }}>{metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}</p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#fef2f2', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Lives Impacted</p>
+            </button>
+            <button
+              onClick={() => navigate('/impact-visualization')}
+              style={{ padding: '12px', backgroundColor: '#fef2f2', borderRadius: '10px', border: '1px solid #fecaca', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(239,68,68,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <p style={{ fontSize: '10px', color: '#6b7280', margin: 0 }}>Lives Impacted</p>
+                <ChevronRight size={12} style={{ color: '#ef4444' }} />
+              </div>
               <p style={{ fontSize: '20px', fontWeight: '700', color: '#dc2626', margin: 0 }}>{(metrics.livesTouched || metrics.peopleImpacted || 0).toLocaleString()}</p>
-            </div>
-            <div style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '10px' }}>
-              <p style={{ fontSize: '10px', color: '#6b7280', margin: '0 0 4px 0' }}>Avg Completion</p>
+            </button>
+            <button
+              onClick={() => navigate('/projects')}
+              style={{ padding: '12px', backgroundColor: '#faf5ff', borderRadius: '10px', border: '1px solid #e9d5ff', cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 4px 12px rgba(139,92,246,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <p style={{ fontSize: '10px', color: '#6b7280', margin: 0 }}>Avg Completion</p>
+                <ChevronRight size={12} style={{ color: '#8b5cf6' }} />
+              </div>
               <p style={{ fontSize: '20px', fontWeight: '700', color: '#7c3aed', margin: 0 }}>{avgProjectCompletion}%</p>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -995,35 +1052,6 @@ export default function OrganizationDashboard() {
           )}
         </div>
 
-        {/* Mobile Impact Visualization Button */}
-        <button
-          className="md:hidden"
-          onClick={() => navigate('/impact-visualization')}
-          style={{
-            width: '100%',
-            background: 'linear-gradient(to right, #8b5cf6, #6366f1)',
-            borderRadius: '12px',
-            padding: '14px 16px',
-            marginBottom: '16px',
-            boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            border: 'none',
-            cursor: 'pointer'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '40px', height: '40px', backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <FileText size={20} style={{ color: 'white' }} />
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ color: 'white', fontWeight: '600', fontSize: '14px', margin: 0 }}>Impact Visualization</p>
-              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '11px', margin: 0 }}>View detailed impact analytics</p>
-            </div>
-          </div>
-          <ChevronRight size={20} style={{ color: 'white' }} />
-        </button>
 
         {/* Mobile AI Insights Section */}
         <div className="md:hidden" style={{ backgroundColor: 'white', borderRadius: '16px', padding: '16px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>

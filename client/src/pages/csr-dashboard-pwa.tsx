@@ -74,11 +74,8 @@ import {
   Legend
 } from "recharts";
 
-// Lazy load map components
-const MapContainer = lazy(() => import("react-leaflet").then(m => ({ default: m.MapContainer })));
-const TileLayer = lazy(() => import("react-leaflet").then(m => ({ default: m.TileLayer })));
-const CircleMarker = lazy(() => import("react-leaflet").then(m => ({ default: m.CircleMarker })));
-const Popup = lazy(() => import("react-leaflet").then(m => ({ default: m.Popup })));
+// Direct imports for map components (not lazy-loaded to avoid double-initialization in StrictMode)
+import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Loading fallback for charts
@@ -402,7 +399,7 @@ export default function CSRDashboardPWA() {
   const userInitials = user?.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'A';
 
   return (
-    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40 pb-16">
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto z-40 pb-16">
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-amber-500/90 text-black text-center py-1.5 px-4 text-xs font-medium">
@@ -1724,7 +1721,7 @@ function MapModal({ csrData, filter, setFilter, onClose }: { csrData: any; filte
 
       {/* Map */}
       <div className="flex-1">
-        <MapContainer ref={mapRef} center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
+        <MapContainer key="csr-pwa-map" ref={mapRef} center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }}>
           <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
           {filtered.map((p: any, idx: number) => (
             <CircleMarker

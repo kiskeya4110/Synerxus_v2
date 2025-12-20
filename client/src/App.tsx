@@ -1,6 +1,5 @@
 import { Route, Router, useLocation } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
-import { SidebarProvider } from "@/contexts/sidebar-context";
 import { OnboardingProvider } from "@/contexts/onboarding-context";
 import { volunteerOnboardingSteps, organizationOnboardingSteps, csrOnboardingSteps } from "@shared/onboarding-steps";
 import OnboardingGuide from "@/components/onboarding/onboarding-guide";
@@ -79,11 +78,18 @@ const PageLoader = () => (
 );
 
 function RootRedirectRoute() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
+  const currentUserId = localStorage.getItem('currentUserId');
 
   useEffect(() => {
-    if (user) {
+    // Wait for auth to finish loading
+    if (loading) return;
+
+    // Check both Firebase user AND localStorage userId for auth state
+    const isAuthenticated = user || currentUserId;
+
+    if (isAuthenticated) {
       // Check if user has completed intake
       const checkIntakeAndRedirect = async () => {
         const userId = localStorage.getItem('currentUserId');
@@ -173,7 +179,7 @@ function RootRedirectRoute() {
     } else {
       setLocation('/landing');
     }
-  }, [user, setLocation]);
+  }, [user, loading, setLocation, currentUserId]);
 
   return null;
 }
@@ -188,11 +194,10 @@ export default function App() {
       : volunteerOnboardingSteps;
 
   return (
-    <SidebarProvider>
-      <OnboardingProvider steps={steps}>
-        <OnboardingGuide />
-        <Suspense fallback={<PageLoader />}>
-        <Router>
+    <OnboardingProvider steps={steps}>
+      <OnboardingGuide />
+      <Suspense fallback={<PageLoader />}>
+      <Router>
           <Route path="/" component={RootRedirectRoute} />
           <Route path="/login" component={Login} />
           <Route path="/landing" component={Landing} />
@@ -227,8 +232,7 @@ export default function App() {
           <Route component={LayoutRoute} />
         </Router>
         </Suspense>
-      </OnboardingProvider>
-    </SidebarProvider>
+    </OnboardingProvider>
   );
 }
 

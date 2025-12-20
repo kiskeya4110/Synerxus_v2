@@ -63,7 +63,8 @@
       "Bash(node --version:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

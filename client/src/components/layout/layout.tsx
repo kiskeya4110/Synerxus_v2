@@ -18,6 +18,10 @@ export default function Layout({ children }: LayoutProps) {
   const { user, loading } = useAuth();
   const [location, setLocation] = useLocation();
   const { startOnboarding, isCompleted } = useOnboarding();
+  const currentUserId = localStorage.getItem('currentUserId');
+
+  // Check both Firebase user AND localStorage userId for auth state
+  const isAuthenticated = user || currentUserId;
 
   const publicRoutes = [
     "/",
@@ -35,16 +39,16 @@ export default function Layout({ children }: LayoutProps) {
   const isProtectedRoute = protectedRoutes.some(route => location.startsWith(route));
 
   useEffect(() => {
-    if (!loading && !user && isProtectedRoute) {
+    if (!loading && !isAuthenticated && isProtectedRoute) {
       setLocation("/login");
     }
-    if (!loading && user && location === "/") {
+    if (!loading && isAuthenticated && location === "/") {
       setLocation("/dashboard");
     }
-  }, [user, loading, location, setLocation, isProtectedRoute]);
+  }, [isAuthenticated, loading, location, setLocation, isProtectedRoute]);
 
   useEffect(() => {
-    if (location === "/dashboard" && !loading && user && !isCompleted) {
+    if (location === "/dashboard" && !loading && isAuthenticated && !isCompleted) {
       const hasSeenOnboarding = localStorage.getItem('onboarding_completed');
       if (!hasSeenOnboarding) {
         const timer = setTimeout(() => {
@@ -53,7 +57,7 @@ export default function Layout({ children }: LayoutProps) {
         return () => clearTimeout(timer);
       }
     }
-  }, [location, loading, user, isCompleted, startOnboarding]);
+  }, [location, loading, isAuthenticated, isCompleted, startOnboarding]);
 
   // Routes that are completely standalone (public/login pages, or pages that handle their own layout entirely)
   const fullyStandaloneRoutes = [

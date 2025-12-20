@@ -229,38 +229,16 @@ export function bindPortWithRetry(
   serverState.isStarting = true;
   serverState.retryCount = 0;
 
-  let successCallbackFired = false; // Prevent multiple callback invocations
+  let successCallbackFired = false;
 
   const attemptBind = () => {
     serverState.retryCount++;
     const attemptCount = serverState.retryCount;
 
-    // Clean up previous error listeners
-    server.removeAllListeners("error");
-    server.removeAllListeners("listening");
+    logger.info(`[PortManager] Binding to port ${port} (attempt ${attemptCount}/${maxRetries})`);
 
-    // Force close if already listening
-    if (server.listening) {
-      try {
-        server.close();
-        // Wait briefly for close to complete
-        server.once("close", () => {
-          attemptBindInternal();
-        });
-        return;
-      } catch (e) {
-        // Ignore
-      }
-    }
-
-    attemptBindInternal();
-  };
-
-  const attemptBindInternal = () => {
-    logger.info(`[PortManager] Binding to port ${port} (attempt ${serverState.retryCount}/${maxRetries})`);
-    const attemptCount = serverState.retryCount;
-
-    const onListening = () => {
+    // Create a unique handler set for this attempt
+    const onSuccess_handler = () => {
       if (successCallbackFired) return;
       successCallbackFired = true;
       
@@ -271,8 +249,9 @@ export function bindPortWithRetry(
       onSuccess?.();
     };
 
-    const onBindError = (err: NodeJS.ErrnoException) => {
-      server.removeListener("listening", onListening);
+    const onError_handler = (err: NodeJS.ErrnoException) => {
+      // Immediately remove listeners to prevent duplicate handling
+      server.removeListener("listening", onSuccess_handler);
       
       if (err.code === "EADDRINUSE") {
         if (attemptCount < maxRetries) {
@@ -296,9 +275,11 @@ export function bindPortWithRetry(
       }
     };
 
-    server.once("listening", onListening);
-    server.once("error", onBindError);
+    // Register listeners once for this attempt
+    server.once("listening", onSuccess_handler);
+    server.once("error", onError_handler);
 
+    // Attempt to bind
     server.listen(
       { 
         port, 

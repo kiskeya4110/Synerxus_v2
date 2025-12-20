@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, DuplicateAssignmentError } from "./storage";
 import { WebSocketServer } from "ws";
+import { cache, CACHE_TTL, cacheKeys } from "./cache";
 import {
   insertUserSchema,
   insertOrganizationSchema,
@@ -376,14 +377,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", async (req, res) => {
     try {
       const { userType } = req.query;
-      const users = await storage.listUsers();
-      
-      // Server-side filtering for userType
-      if (userType) {
-        const filtered = users.filter((u: any) => u.userType === userType);
-        return res.json(filtered);
-      }
-      
+      const cacheKey = userType ? `users:type:${userType}` : 'users:all';
+
+      // Use cache with 60 second TTL
+      const users = await cache.getOrSet(cacheKey, async () => {
+        const allUsers = await storage.listUsers();
+        if (userType) {
+          return allUsers.filter((u: any) => u.userType === userType);
+        }
+        return allUsers;
+      }, 60000);
+
       res.json(users);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -519,7 +523,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Organization Routes ===
   app.get("/api/organizations", async (req, res) => {
     try {
-      const organizations = await storage.listOrganizations();
+      // Use cache with 2 minute TTL for organizations list
+      const organizations = await cache.getOrSet('organizations:all', async () => {
+        return await storage.listOrganizations();
+      }, 120000);
+
       res.json(organizations);
     } catch (err) {
       console.error("Error fetching organizations:", err);
@@ -530,16 +538,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get public stats for all organizations (used by volunteers browsing organizations)
   app.get("/api/organizations/public-stats", async (req, res) => {
     try {
-      const organizations = await storage.listOrganizations();
-      const allProjects = await storage.listProjects();
-      const allOpportunities = await storage.listOpportunities();
-      const allProjectAssignments = await storage.listProjectAssignments();
-      const allActivities = await storage.listVolunteerActivities();
-      const allImpacts = await storage.listProjectImpacts();
-      const matchableOrgs = await storage.listMatchableOrganizations();
-      const allTasks = await storage.listTasks();
+      // Cache this heavy endpoint for 2 minutes
+      const orgStats = await cache.getOrSet('organizations:public-stats', async () => {
+        // Fetch all data in parallel for better performance
+        const [organizations, allProjects, allOpportunities, allProjectAssignments, allActivities, allImpacts, matchableOrgs, allTasks] = await Promise.all([
+          storage.listOrganizations(),
+          storage.listProjects(),
+          storage.listOpportunities(),
+          storage.listProjectAssignments(),
+          storage.listVolunteerActivities(),
+          storage.listProjectImpacts(),
+          storage.listMatchableOrganizations(),
+          storage.listTasks()
+        ]);
 
-      const orgStats = organizations.map((org) => {
+        return organizations.map((org) => {
         // Projects for this organization
         const orgProjects = allProjects.filter((p) => p.organizationId === org.id);
         const orgProjectIds = new Set(orgProjects.map((p) => p.id));
@@ -622,7 +635,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             mission: profile.mission
           } : null
         };
-      });
+        });
+      }, 120000); // 2 minute cache TTL
 
       res.json(orgStats);
     } catch (err) {
@@ -1066,42 +1080,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/tasks", async (req, res) => {
     try {
       const { projectId, assigneeId, userId } = req.query;
-      
-      let tasks;
-      if (projectId) {
-        tasks = await storage.listTasksByProject(parseInt(projectId as string));
-      } else if (assigneeId) {
-        tasks = await storage.listTasksByAssignee(parseInt(assigneeId as string));
-      } else if (userId) {
-        // Filter tasks for specific user based on their role
-        const userIdNum = parseInt(userId as string);
-        const user = await storage.getUser(userIdNum);
-        
-        if (!user) {
-          return res.status(404).json({ message: "User not found" });
-        }
 
-        if (user.userType === 'organization' && user.organizationId) {
-          // Organization user - return tasks from their projects
-          const orgProjects = await storage.listProjectsByOrganization(user.organizationId);
-          const orgProjectIds = new Set(orgProjects.map(p => p.id));
-          const allTasks = await storage.listTasks();
-          tasks = allTasks.filter(t => t.projectId && orgProjectIds.has(t.projectId));
-        } else if (user.userType === 'volunteer') {
-          // Volunteer user - return ONLY tasks directly assigned to them
-          // Strict data partitioning: volunteers only see tasks they're explicitly assigned to
-          tasks = await storage.listTasksByAssignee(userIdNum);
+      // Build cache key based on query params
+      const cacheKey = projectId
+        ? `tasks:project:${projectId}`
+        : assigneeId
+        ? `tasks:assignee:${assigneeId}`
+        : userId
+        ? `tasks:user:${userId}`
+        : 'tasks:all';
+
+      const tasks = await cache.getOrSet(cacheKey, async () => {
+        if (projectId) {
+          return await storage.listTasksByProject(parseInt(projectId as string));
+        } else if (assigneeId) {
+          return await storage.listTasksByAssignee(parseInt(assigneeId as string));
+        } else if (userId) {
+          // Filter tasks for specific user based on their role
+          const userIdNum = parseInt(userId as string);
+          const user = await storage.getUser(userIdNum);
+
+          if (!user) {
+            throw new Error("User not found");
+          }
+
+          if (user.userType === 'organization' && user.organizationId) {
+            // Organization user - return tasks from their projects
+            const orgProjects = await storage.listProjectsByOrganization(user.organizationId);
+            const orgProjectIds = new Set(orgProjects.map(p => p.id));
+            const allTasks = await storage.listTasks();
+            return allTasks.filter(t => t.projectId && orgProjectIds.has(t.projectId));
+          } else if (user.userType === 'volunteer') {
+            // Volunteer user - return ONLY tasks directly assigned to them
+            return await storage.listTasksByAssignee(userIdNum);
+          } else {
+            throw new Error("Invalid user type");
+          }
         } else {
-          return res.status(400).json({ message: "Invalid user type" });
+          // For backward compatibility, allow listing all tasks without userId
+          return await storage.listTasks();
         }
-      } else {
-        // For backward compatibility, allow listing all tasks without userId
-        // TODO: Require userId for proper data partitioning in future auth refactor
-        tasks = await storage.listTasks();
-      }
-      
+      }, 30000); // 30 second TTL for tasks
+
       res.json(tasks);
-    } catch (err) {
+    } catch (err: any) {
+      if (err.message === "User not found") {
+        return res.status(404).json({ message: "User not found" });
+      }
+      if (err.message === "Invalid user type") {
+        return res.status(400).json({ message: "Invalid user type" });
+      }
       console.error("Error fetching tasks:", err);
       res.status(500).json({ message: "Failed to fetch tasks" });
     }
@@ -1750,16 +1778,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/impact-metrics", async (req, res) => {
     try {
       const { category, sdgGoal } = req.query;
-      
-      let metrics;
-      if (category) {
-        metrics = await storage.listImpactMetricsByCategory(category as string);
-      } else if (sdgGoal) {
-        metrics = await storage.listImpactMetricsBySDG(parseInt(sdgGoal as string));
-      } else {
-        metrics = await storage.listImpactMetrics();
-      }
-      
+
+      // Build cache key based on query params
+      const cacheKey = category
+        ? `impact-metrics:category:${category}`
+        : sdgGoal
+        ? `impact-metrics:sdg:${sdgGoal}`
+        : 'impact-metrics:all';
+
+      // Use cache with 5 minute TTL for impact metrics (rarely change)
+      const metrics = await cache.getOrSet(cacheKey, async () => {
+        if (category) {
+          return await storage.listImpactMetricsByCategory(category as string);
+        } else if (sdgGoal) {
+          return await storage.listImpactMetricsBySDG(parseInt(sdgGoal as string));
+        } else {
+          return await storage.listImpactMetrics();
+        }
+      }, CACHE_TTL.METRICS);
+
       res.json(metrics);
     } catch (err) {
       console.error("Error fetching impact metrics:", err);
@@ -3759,7 +3796,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/volunteers", async (req, res) => {
     try {
-      const volunteers = await storage.listVolunteers();
+      // Use cache with 60 second TTL for volunteers list
+      const volunteers = await cache.getOrSet('volunteers:all', async () => {
+        return await storage.listVolunteers();
+      }, 60000);
+
       res.json(volunteers);
     } catch (err) {
       console.error("Error fetching volunteers:", err);

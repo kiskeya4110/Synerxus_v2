@@ -11,14 +11,14 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Pool configuration optimized for concurrency and stability
-// Sized to match request queue concurrency settings
+// Pool configuration optimized for high concurrency and stability
+// Increased pool size to handle 500+ concurrent users
 const POOL_CONFIG = {
-  max: parseInt(process.env.DB_POOL_MAX || '25', 10), // Slightly higher than heavy+standard concurrency
-  min: 2,                         // Keep minimum connections warm
-  idleTimeoutMillis: 30000,       // Close idle connections after 30s
-  connectionTimeoutMillis: 5000,  // Fail fast if can't connect in 5s
-  maxUses: 7500,                  // Recycle connections to prevent memory leaks
+  max: parseInt(process.env.DB_POOL_MAX || '50', 10), // Increased for high concurrency
+  min: 5,                         // Keep more connections warm
+  idleTimeoutMillis: 60000,       // Close idle connections after 60s
+  connectionTimeoutMillis: 10000, // Allow more time for connection under load
+  maxUses: 10000,                 // Recycle connections to prevent memory leaks
   allowExitOnIdle: false,         // Keep pool alive even when idle
 };
 

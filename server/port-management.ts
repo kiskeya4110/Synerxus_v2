@@ -211,8 +211,8 @@ export function initializePortManagement(port: number = DEFAULT_PORT): void {
 }
 
 /**
- * Layer 3: Enhanced port binding with aggressive retry strategy
- * Lock is already acquired by initializePortManagement
+ * Layer 3: Simplified port binding with retry
+ * Uses promise-based approach for cleaner error handling
  */
 export function bindPortWithRetry(
   server: Server,
@@ -229,69 +229,69 @@ export function bindPortWithRetry(
   serverState.isStarting = true;
   serverState.retryCount = 0;
 
-  let successCallbackFired = false;
+  function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
-  const attemptBind = () => {
-    serverState.retryCount++;
-    const attemptCount = serverState.retryCount;
+  async function tryBind(): Promise<void> {
+    while (serverState.retryCount < maxRetries) {
+      serverState.retryCount++;
+      const attempt = serverState.retryCount;
 
-    logger.info(`[PortManager] Binding to port ${port} (attempt ${attemptCount}/${maxRetries})`);
+      logger.info(`[PortManager] Binding to port ${port} (attempt ${attempt}/${maxRetries})`);
 
-    // Create a unique handler set for this attempt
-    const onSuccess_handler = () => {
-      if (successCallbackFired) return;
-      successCallbackFired = true;
-      
-      server.removeAllListeners("error");
-      serverState.isStarting = false;
-      serverState.startTime = Date.now();
-      logger.info(`[PortManager] Successfully bound to port ${port}`);
-      onSuccess?.();
-    };
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const onListening = () => {
+            server.removeAllListeners("error");
+            resolve();
+          };
 
-    const onError_handler = (err: NodeJS.ErrnoException) => {
-      // Immediately remove listeners to prevent duplicate handling
-      server.removeListener("listening", onSuccess_handler);
-      
-      if (err.code === "EADDRINUSE") {
-        if (attemptCount < maxRetries) {
-          // Exponential backoff with jitter
+          const onError = (err: any) => {
+            server.removeListener("listening", onListening);
+            reject(err);
+          };
+
+          server.once("listening", onListening);
+          server.once("error", onError);
+
+          try {
+            server.listen({ port, host, reusePort: true, reuseAddr: true });
+          } catch (err) {
+            server.removeListener("listening", onListening);
+            server.removeListener("error", onError);
+            reject(err);
+          }
+        });
+
+        // Success!
+        serverState.isStarting = false;
+        serverState.startTime = Date.now();
+        logger.info(`[PortManager] Successfully bound to port ${port}`);
+        onSuccess?.();
+        return;
+      } catch (err: any) {
+        if (err.code === "EADDRINUSE" && attempt < maxRetries) {
           const delay = Math.min(
-            baseRetryDelayMs * Math.pow(1.5, attemptCount) + Math.random() * 200,
+            baseRetryDelayMs * Math.pow(1.5, attempt) + Math.random() * 200,
             10000
           );
-
-          logger.warn(`[PortManager] Port ${port} busy, retry in ${Math.round(delay)}ms (${attemptCount}/${maxRetries})`);
-          setTimeout(attemptBind, delay);
+          logger.warn(`[PortManager] Port ${port} busy, retry in ${Math.round(delay)}ms (${attempt}/${maxRetries})`);
+          await sleep(delay);
         } else {
-          logger.error(`[PortManager] Port ${port} unavailable after ${maxRetries} attempts`);
+          logger.error(`[PortManager] Failed to bind: ${err.message}`);
           releaseServerLock();
           process.exit(1);
         }
-      } else {
-        logger.error(`[PortManager] Server error:`, err);
-        releaseServerLock();
-        process.exit(1);
       }
-    };
+    }
+  }
 
-    // Register listeners once for this attempt
-    server.once("listening", onSuccess_handler);
-    server.once("error", onError_handler);
-
-    // Attempt to bind
-    server.listen(
-      { 
-        port, 
-        host, 
-        reusePort: true,
-        // @ts-ignore
-        reuseAddr: true,
-      }
-    );
-  };
-
-  attemptBind();
+  tryBind().catch((err) => {
+    logger.error("[PortManager] Binding failed:", err);
+    releaseServerLock();
+    process.exit(1);
+  });
 }
 
 /**

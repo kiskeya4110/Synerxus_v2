@@ -16,6 +16,7 @@
     "db:push": "drizzle-kit push",
     "synerxus": "./start-synerxus.sh",
     "seed": "tsx dummy/seed-data.ts",
+    "seed:bulk": "tsx dummy/seed-bulk.ts",
     "test:python": "cd python_backend && source .venv/bin/activate && pytest test_main.py -v",
     "test:load": "npx autocannon -c 1000 -d 20 http://localhost:5000/api/users"
   },

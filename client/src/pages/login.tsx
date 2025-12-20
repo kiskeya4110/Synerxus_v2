@@ -158,7 +158,8 @@ export default function Login() {
           body: JSON.stringify({
             firebaseUid: firebaseUser.uid,
             email: firebaseUser.email,
-            displayName: firebaseUser.displayName
+            displayName: firebaseUser.displayName,
+            userType: userType || 'volunteer'
           })
         });
         

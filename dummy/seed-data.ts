@@ -2,8 +2,8 @@
 // Run with: tsx dummy/seed-data.ts
 
 import { db } from "../server/db";
-import { users, organizations, projects, tasks, volunteerActivities, impactMetrics, projectImpacts, calendarEvents, volunteers, matchableOrganizations, projectAssignments, volunteerProfiles } from "../shared/schema";
-import { eq } from "drizzle-orm";
+import { users, organizations, projects, tasks, volunteerActivities, impactMetrics, projectImpacts, calendarEvents, volunteers, matchableOrganizations, projectAssignments, volunteerProfiles, projectAiuSettings, opportunities, applications, savedOpportunities, rejectedOpportunities, feedback, badges, userBadges, leaderboardStats, volunteerSpotlights, csrPartners, employeeEngagement, uploadedImages, csrChallenges, projectBudgetLinks, verifiedOutputs, volunteerEmployerLinks, matchAnalytics, organizationProfiles, matches, notifications, conversationThreads, messages, employeeCommitments, employeeActivityLogs, employeeMilestones, csrCommitmentGoals, csrProjectPortfolios, beneficiaryRegistry, volunteerAiuRecords, aiuExportLogs, volunteerStories, storyLikes } from "../shared/schema";
+import { eq, sql } from "drizzle-orm";
 
 async function seedDatabase() {
   console.log("🌱 Starting database seed...");
@@ -12,12 +12,47 @@ async function seedDatabase() {
     await db.transaction(async (tx) => {
       // Clear existing data in correct order (children first)
       console.log("Clearing existing data...");
+
+      // Clear all dependent tables first
+      await tx.delete(storyLikes);
+      await tx.delete(volunteerStories);
+      await tx.delete(aiuExportLogs);
+      await tx.delete(volunteerAiuRecords);
+      await tx.delete(beneficiaryRegistry);
+      await tx.delete(csrProjectPortfolios);
+      await tx.delete(csrCommitmentGoals);
+      await tx.delete(employeeMilestones);
+      await tx.delete(employeeActivityLogs);
+      await tx.delete(employeeCommitments);
+      await tx.delete(messages);
+      await tx.delete(conversationThreads);
+      await tx.delete(notifications);
+      await tx.delete(matches);
+      await tx.delete(organizationProfiles);
+      await tx.delete(matchAnalytics);
+      await tx.delete(volunteerEmployerLinks);
+      await tx.delete(verifiedOutputs);
+      await tx.delete(projectBudgetLinks);
+      await tx.delete(csrChallenges);
+      await tx.delete(uploadedImages);
+      await tx.delete(employeeEngagement);
+      await tx.delete(csrPartners);
+      await tx.delete(volunteerSpotlights);
+      await tx.delete(leaderboardStats);
+      await tx.delete(userBadges);
+      await tx.delete(badges);
+      await tx.delete(feedback);
+      await tx.delete(rejectedOpportunities);
+      await tx.delete(savedOpportunities);
+      await tx.delete(applications);
+      await tx.delete(opportunities);
       await tx.delete(projectImpacts);
       await tx.delete(volunteerActivities);
       await tx.delete(projectAssignments);
       await tx.delete(volunteerProfiles);
       await tx.delete(calendarEvents);
       await tx.delete(tasks);
+      await tx.delete(projectAiuSettings);
       await tx.delete(projects);
       await tx.delete(impactMetrics);
       await tx.delete(volunteers);

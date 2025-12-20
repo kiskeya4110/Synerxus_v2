@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   MessageSquare,
@@ -18,19 +19,12 @@ import {
   Plus,
   X,
   Loader2,
-  Home,
-  Settings,
-  LogOut,
-  MoreVertical,
-  Bell,
-  Users,
-  Target,
-  Eye,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import { PWALoadingSkeleton } from "@/components/layout/pwa-page-guard";
 import { formatDistanceToNow } from "date-fns";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
 
 interface ConversationThread {
   id: number;
@@ -67,7 +61,7 @@ interface Volunteer {
 export default function OrganizationMessagesPWA() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { signOut } = useAuth();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
 
   const userType = localStorage.getItem("userType") || "";
   const userId = localStorage.getItem("currentUserId") || "";
@@ -79,8 +73,15 @@ export default function OrganizationMessagesPWA() {
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [newConversationTopic, setNewConversationTopic] = useState("");
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Redirect to desktop view when not on mobile (after viewport detection completes)
+  useEffect(() => {
+    if (!isViewportLoading && !isMobile) {
+      navigate("/organization-dashboard");
+    }
+  }, [isViewportLoading, isMobile, navigate]);
 
   // Redirect non-organization users
   useEffect(() => {
@@ -288,122 +289,79 @@ export default function OrganizationMessagesPWA() {
     );
   });
 
-  // Handle logout
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
-  };
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchThreads(), refetchMessages()]);
+      toast({ title: "Refreshed", description: "Messages updated" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to refresh", variant: "destructive" });
+    }
+    setTimeout(() => setIsRefreshing(false), 500);
+  }, [refetchThreads, refetchMessages, toast]);
+
+  // Show loading skeleton while viewport is being detected or redirecting to desktop
+  if (isViewportLoading || !isMobile) {
+    return <PWALoadingSkeleton />;
+  }
 
   // Loading state
   if (!userId) {
-    return (
-      <div className="w-full min-h-screen bg-gradient-to-b from-emerald-50 to-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-emerald-500" />
-          <p className="text-slate-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <PWALoadingSkeleton />;
   }
 
-  const menuItems = [
-    { icon: Home, label: "Dashboard", action: () => navigate('/organization-dashboard') },
-    { icon: Bell, label: "Applications", action: () => navigate('/applications') },
-    { icon: Settings, label: "Settings", action: () => navigate('/organization-profile-settings') },
-    { icon: LogOut, label: "Logout", action: handleLogout, danger: true },
-  ];
-
   return (
-    <div className="w-full min-h-screen bg-gradient-to-b from-emerald-50 to-slate-100 pb-20 max-w-[428px] mx-auto">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between max-w-[428px] mx-auto">
-        <div className="flex items-center gap-2">
-          <img
-            src={logoUrl}
-            alt="Synerxus"
-            className="h-10 object-contain cursor-pointer"
-            onClick={() => navigate('/organization-dashboard')}
-          />
-        </div>
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto z-40">
+      {/* Centered App Container */}
+      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
+        {/* Shared Header with Refresh Button */}
+        <OrganizationPWAHeader
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
 
-        <button
-          onClick={() => setMenuOpen(true)}
-          className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all"
-          data-testid="button-pwa-menu"
-        >
-          <MoreVertical className="w-5 h-5 text-slate-700" />
-        </button>
-      </header>
-
-      {/* Menu Overlay */}
-      {menuOpen && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-end">
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setMenuOpen(false)}
-          />
-          <div className="relative mt-16 mr-4 bg-white rounded-xl shadow-2xl overflow-hidden min-w-[200px] animate-in slide-in-from-top-2 duration-200">
-            <div className="p-2">
-              {menuItems.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => { setMenuOpen(false); item.action(); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                    item.danger ? 'text-red-600 hover:bg-red-50' : 'text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              ))}
+        {/* Thread Header - shows when viewing a conversation */}
+        {selectedThread && (
+          <div className="bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200 flex-shrink-0">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-800 hover:bg-slate-100 -ml-2"
+                onClick={() => setSelectedThread(null)}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <div className="flex-1 text-center min-w-0">
+                <p className="font-semibold text-sm truncate">{selectedThread.volunteerName || "Volunteer"}</p>
+                <p className="text-xs text-slate-600 truncate">{selectedThread.topic || "Conversation"}</p>
+              </div>
+              <div className="w-8" />
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Spacer for fixed header */}
-      <div className="h-16" />
-
-      {/* Thread Header - shows when viewing a conversation */}
-      {selectedThread && (
-        <div className="sticky top-16 z-10 bg-white/95 backdrop-blur-sm text-slate-800 px-4 py-2 shadow-sm border-b border-slate-200">
-          <div className="flex items-center">
+        {/* Page Title - shows in list view */}
+        {!selectedThread && (
+          <div className="px-4 py-2 bg-white/80 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+            <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
             <Button
               variant="ghost"
-              size="icon"
-              className="text-slate-800 hover:bg-slate-100 -ml-2"
-              onClick={() => setSelectedThread(null)}
+              size="sm"
+              className="text-slate-800 hover:bg-slate-100"
+              onClick={() => setShowNewConversation(true)}
             >
-              <ChevronLeft className="h-5 w-5" />
+              <Plus className="h-5 w-5" />
             </Button>
-            <div className="flex-1 text-center min-w-0">
-              <p className="font-semibold text-sm truncate">{selectedThread.volunteerName || "Volunteer"}</p>
-              <p className="text-xs text-slate-600 truncate">{selectedThread.topic || "Conversation"}</p>
-            </div>
-            <div className="w-8" />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* New Conversation Button - shows in list view */}
-      {!selectedThread && (
-        <div className="px-4 py-2 bg-white/80 border-b border-slate-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-slate-800">Messages</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-slate-800 hover:bg-slate-100"
-            onClick={() => setShowNewConversation(true)}
-          >
-            <Plus className="h-5 w-5" />
-          </Button>
-        </div>
-      )}
-
-      {/* Main Content */}
-      {selectedThread ? (
-        /* Chat View */
-        <div className="flex flex-col h-[calc(100vh-140px)]">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto pb-20">
+          {selectedThread ? (
+            /* Chat View */
+            <div className="flex flex-col h-full">
           {/* Messages */}
           <ScrollArea className="flex-1 px-4 py-3">
             {loadingMessages ? (
@@ -564,11 +522,12 @@ export default function OrganizationMessagesPWA() {
               ))}
             </div>
           )}
-        </div>
-      )}
+          </div>
+          )}
+        </main>
 
-      {/* New Conversation Modal */}
-      {showNewConversation && (
+        {/* New Conversation Modal */}
+        {showNewConversation && (
         <div
           className="fixed inset-0 bg-black/50 flex items-end z-50"
           onClick={(e) => {
@@ -675,8 +634,9 @@ export default function OrganizationMessagesPWA() {
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <OrganizationPWANav activeTab="messages" />
+        {/* Bottom Navigation */}
+        <OrganizationPWANav activeTab="messages" />
+      </div>
     </div>
   );
 }

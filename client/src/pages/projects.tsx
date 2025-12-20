@@ -13,6 +13,7 @@ import OrganizationHeader from "@/components/layout/organization-header";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import WebBottomNav from "@/components/layout/web-bottom-nav";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { Project, Task, ProjectAssignment, User, Opportunity } from "@shared/schema";
 
@@ -243,6 +244,118 @@ export default function Projects() {
   // Volunteers can only view projects, not edit them
   const canManageProjects = currentUser?.userType === 'organization';
   const isOrganization = currentUser?.userType === 'organization';
+
+  // Mobile organization PWA view
+  if (isOrganization && isMobile) {
+    return (
+      <OrganizationPWALayout activeTab="projects">
+        <div className="p-4 space-y-4">
+          <div className="mb-4">
+            <h1 className="text-xl font-bold mb-1">Projects & Tasks</h1>
+            <p className="text-sm text-gray-600">Manage projects and volunteer assignments</p>
+          </div>
+
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search projects..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-10 text-sm"
+              />
+            </div>
+            {canManageProjects && currentUser?.organizationId && (
+              <CreateProjectDialog organizationId={currentUser.organizationId} />
+            )}
+          </div>
+
+          {/* Post Opportunities - Mobile */}
+          {currentUser?.userType === "organization" && (
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2 pt-3 px-3">
+                <CardTitle className="text-sm font-semibold">Post Opportunities</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <Link href="/post-core-opportunity">
+                    <div className="p-2.5 border rounded-lg hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-medium">Core</span>
+                      </div>
+                    </div>
+                  </Link>
+                  <Link href="/post-urgent-opportunity">
+                    <div className="p-2.5 border rounded-lg hover:bg-amber-50 transition-colors border-amber-200">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-amber-600" />
+                        <span className="text-xs font-medium">Urgent</span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Posted Opportunities - Mobile */}
+          {currentUser?.userType === "organization" && opportunities.length > 0 && (
+            <Card className="border-slate-200">
+              <CardHeader className="pb-2 pt-3 px-3">
+                <CardTitle className="text-sm font-semibold">Posted ({opportunities.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3 space-y-2">
+                {opportunities.slice(0, 3).map((opp) => (
+                  <Link key={opp.id} href={`/opportunities/${opp.id}`}>
+                    <div className="p-2.5 border rounded-lg hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center gap-2">
+                        {opp.isUrgent ? (
+                          <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                        ) : (
+                          <Briefcase className="h-4 w-4 text-primary flex-shrink-0" />
+                        )}
+                        <span className="text-sm font-medium truncate">{opp.title}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Projects List - Mobile */}
+          <div className="space-y-3">
+            {filteredProjects.map((project) => {
+              const projectData = projectMetrics.get(project.id);
+              if (!projectData) return null;
+              const { tasks, progress, metrics } = projectData;
+              const isExpanded = expandedProjects.has(project.id);
+              return (
+                <ProjectListCard
+                  key={project.id}
+                  project={project}
+                  tasks={tasks}
+                  metrics={metrics}
+                  progress={progress}
+                  isExpanded={isExpanded}
+                  onToggle={() => toggleProject(project.id)}
+                  canManageProjects={canManageProjects}
+                />
+              );
+            })}
+          </div>
+
+          {filteredProjects.length === 0 && canManageProjects && currentUser?.organizationId && (
+            <Card className="p-8 text-center">
+              <p className="text-gray-500 mb-3 text-sm">No projects found</p>
+              <CreateProjectDialog organizationId={currentUser.organizationId} />
+            </Card>
+          )}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <>

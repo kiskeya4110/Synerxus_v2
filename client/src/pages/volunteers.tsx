@@ -13,10 +13,12 @@ import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import ContactVolunteerModal from "@/components/dashboard/contact-volunteer-modal";
 import { AddVolunteerModal } from "@/components/add-volunteer-modal";
 import { VolunteerPerformanceModal } from "@/components/volunteer-performance-modal";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
@@ -36,6 +38,7 @@ export default function Volunteers() {
   const [deleteVolunteerDialogOpen, setDeleteVolunteerDialogOpen] = useState(false);
   const [volunteerToDelete, setVolunteerToDelete] = useState<{ id: number; name: string } | null>(null);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Get current user to check if organization
   const userId = localStorage.getItem('currentUserId');
@@ -257,6 +260,135 @@ export default function Volunteers() {
     if (!selectedVolunteerId) return null;
     return volunteersWithStats.find((v: any) => v.id === selectedVolunteerId) || null;
   }, [selectedVolunteerId, volunteersWithStats]);
+
+  // Mobile organization PWA view
+  if (isOrganization && isMobile) {
+    return (
+      <OrganizationPWALayout activeTab="volunteers">
+        <div className="p-4">
+          {/* Page Header */}
+          <div className="mb-4">
+            <h1 className="text-xl font-bold mb-1">Volunteers</h1>
+            <p className="text-sm text-gray-600">Manage volunteer profiles</p>
+          </div>
+
+          {/* Stats Cards - Mobile */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <Card className="p-3 text-center">
+              <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{isLoading ? "..." : volunteersWithStats.length}</p>
+              <p className="text-[10px] text-gray-500">Volunteers</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <Clock className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.hours || 0), 0)}</p>
+              <p className="text-[10px] text-gray-500">Hours</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <CheckSquare className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{isLoading ? "..." : volunteersWithStats.reduce((sum: number, v: any) => sum + (v.tasksCompleted || 0), 0)}</p>
+              <p className="text-[10px] text-gray-500">Tasks</p>
+            </Card>
+          </div>
+
+          {/* Search & Add */}
+          <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search volunteers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-10 text-sm"
+              />
+            </div>
+            <Button size="sm" onClick={() => setShowAddVolunteerModal(true)} className="h-10">
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Volunteers List - Mobile */}
+          <div className="space-y-2">
+            {filteredVolunteers.map((volunteer: any) => (
+              <Card
+                key={volunteer.id}
+                className="p-3 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => {
+                  setSelectedVolunteerId(volunteer.id);
+                  setProfileDialogOpen(true);
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={volunteer.avatar} alt={volunteer.displayName} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {volunteer.displayName?.charAt(0) || <User className="h-4 w-4" />}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">{volunteer.displayName || "Anonymous"}</p>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <span>{volunteer.hours || 0}h</span>
+                      <span>•</span>
+                      <span>{volunteer.tasksCompleted || 0} tasks</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedVolunteer(volunteer);
+                      setShowContactModal(true);
+                    }}
+                  >
+                    <Mail className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {filteredVolunteers.length === 0 && !isLoading && (
+            <div className="text-center py-8">
+              <Users className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <p className="text-gray-500 text-sm">No volunteers found</p>
+            </div>
+          )}
+        </div>
+
+        {/* Modals */}
+        <ContactVolunteerModal
+          open={showContactModal}
+          onOpenChange={setShowContactModal}
+          organizationUserId={parseInt(userId || '0', 10)}
+          organizationId={currentUser?.organizationId}
+          preSelectedVolunteer={selectedVolunteer ? { id: selectedVolunteer.id, displayName: selectedVolunteer.displayName, email: selectedVolunteer.email } : null}
+        />
+        <AddVolunteerModal
+          isOpen={showAddVolunteerModal}
+          onClose={() => setShowAddVolunteerModal(false)}
+        />
+        {performanceVolunteer && (
+          <VolunteerPerformanceModal
+            isOpen={showPerformanceModal}
+            onClose={() => { setShowPerformanceModal(false); setPerformanceVolunteer(null); }}
+            volunteerId={performanceVolunteer.id}
+            volunteerName={performanceVolunteer.name}
+          />
+        )}
+        <DeleteConfirmDialog
+          isOpen={deleteVolunteerDialogOpen}
+          onClose={() => { setDeleteVolunteerDialogOpen(false); setVolunteerToDelete(null); }}
+          itemName={volunteerToDelete?.name}
+          itemType="volunteer"
+          onConfirm={() => {
+            toast({ title: "Volunteer Removed", description: `${volunteerToDelete?.name || 'Volunteer'} has been removed` });
+          }}
+        />
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <>

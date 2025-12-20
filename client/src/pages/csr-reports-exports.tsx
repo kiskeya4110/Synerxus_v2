@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Logo from "@/components/ui/logo";
 import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import {
   Home,
   BarChart3,
@@ -254,6 +255,40 @@ export default function CSRReportsExports() {
     enabled: !!userId,
   });
 
+  // Fetch current user to determine user type
+  const { data: currentUser } = useQuery<any>({
+    queryKey: ["/api/users/me", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) throw new Error("No user ID found");
+      const response = await fetch(`/api/users/me?userId=${id}`);
+      if (!response.ok) throw new Error("User not found");
+      return response.json();
+    },
+    enabled: !!userId
+  });
+
+  // Fetch organization dashboard data for organizations
+  const { data: orgDashboardData } = useQuery<any>({
+    queryKey: ["/api/dashboard/summary", userId],
+    queryFn: async () => {
+      const id = localStorage.getItem('currentUserId');
+      if (!id) return null;
+      const response = await fetch(`/api/dashboard/summary?userId=${id}`);
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!currentUser && currentUser.userType === 'organization'
+  });
+
+  const isOrganization = currentUser?.userType === 'organization';
+
+  const handleOrgRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["/api/users/me", userId] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/csr/reports-summary", userId] });
+  }, [queryClient, userId]);
+
   const companyName = csrDashboardData?.companyName || csrDashboardData?.partners?.[0]?.companyName || "Your Company";
   const adminName = user?.displayName || user?.email?.split('@')[0] || "Admin";
   const currentDate = new Date().toLocaleDateString("en-US", {
@@ -452,7 +487,179 @@ export default function CSRReportsExports() {
     );
   }
 
-  // Mobile PWA View
+  // Organization Mobile PWA View (excludes corporate CSR elements)
+  if (isOrganization && isMobile) {
+    // Filter templates to exclude corporate-specific ones
+    const orgReportTemplates = reportTemplates.filter(t =>
+      !['employee-engagement', 'bcorp-compliance', 'esg-scorecard'].includes(t.id)
+    );
+
+    const orgCategories = [
+      { id: "all", label: "All Reports", icon: "📄" },
+      { id: "impact", label: "Impact", icon: "🌍" },
+      { id: "compliance", label: "Compliance", icon: "✅" },
+      { id: "financial", label: "Financial", icon: "💰" },
+    ];
+
+    const orgFilteredTemplates = selectedCategory === "all"
+      ? orgReportTemplates
+      : orgReportTemplates.filter(t => t.category === selectedCategory);
+
+    return (
+      <OrganizationPWALayout
+        activeTab="home"
+        onRefresh={handleOrgRefresh}
+        metrics={{
+          activeProjects: orgDashboardData?.activeProjects || 0,
+          activeVolunteers: orgDashboardData?.activeVolunteers || 0,
+          totalHours: orgDashboardData?.totalHours || 0,
+          sdgsAddressed: orgDashboardData?.sdgsAddressed || 0,
+        }}
+      >
+        <div className="p-4 pb-20 space-y-4">
+          {/* Page Title */}
+          <div className="mb-4">
+            <h1 className="text-xl font-bold text-gray-900">Analytics & Reports</h1>
+            <p className="text-sm text-gray-500">Generate reports and track performance</p>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
+              <TrendingUp className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{orgDashboardData?.totalHours || 0}</p>
+              <p className="text-[10px] text-gray-500">Total Hours</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
+              <Users className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{orgDashboardData?.activeVolunteers || 0}</p>
+              <p className="text-[10px] text-gray-500">Volunteers</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
+              <Target className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{orgDashboardData?.sdgsAddressed || 0}</p>
+              <p className="text-[10px] text-gray-500">SDGs Addressed</p>
+            </div>
+            <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
+              <Briefcase className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{orgDashboardData?.activeProjects || 0}</p>
+              <p className="text-[10px] text-gray-500">Active Projects</p>
+            </div>
+          </div>
+
+          {/* Category Pills */}
+          <div className="flex gap-1.5 overflow-x-auto pb-2">
+            {orgCategories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-3 py-1.5 rounded-full text-[10px] font-semibold whitespace-nowrap flex items-center gap-1 shadow-sm ${
+                  selectedCategory === cat.id
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-white text-slate-700 border border-slate-200'
+                }`}
+              >
+                <span>{cat.icon}</span>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Report Templates */}
+          <div className="space-y-2">
+            {orgFilteredTemplates.map((template) => (
+              <div key={template.id} className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm">
+                <div className="flex items-start gap-2 mb-2">
+                  <span className="text-xl">{template.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-slate-900 text-sm font-semibold truncate">{template.name}</h3>
+                    <p className="text-slate-600 text-[10px] line-clamp-2">{template.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1">
+                    {template.formats.map((format) => (
+                      <span
+                        key={format}
+                        className={`text-[8px] font-bold px-1.5 py-0.5 rounded ${
+                          format === 'PDF' ? 'bg-red-100 text-red-700 border border-red-200' :
+                          format === 'XLSX' ? 'bg-green-100 text-green-700 border border-green-200' :
+                          'bg-blue-100 text-blue-700 border border-blue-200'
+                        }`}
+                      >
+                        {format}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-1">
+                    {template.formats.slice(0, 2).map((format) => (
+                      <button
+                        key={format}
+                        onClick={() => generateReport(template, format)}
+                        disabled={isGenerating === template.id}
+                        className={`px-2.5 py-1 rounded text-[10px] font-semibold flex items-center gap-1 shadow-sm ${
+                          format === 'PDF' ? 'bg-orange-600 text-white' : 'bg-emerald-600 text-white'
+                        } disabled:opacity-50`}
+                      >
+                        {isGenerating === template.id ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Download className="w-3 h-3" />
+                        )}
+                        {format}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick Export Section */}
+          <div className="mt-4 bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg p-3 border border-orange-200 shadow-sm">
+            <h3 className="text-slate-900 text-sm font-semibold mb-2 flex items-center gap-1.5">
+              <Download className="w-4 h-4 text-orange-600" />
+              Quick Data Export
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  toast({ title: "Exported", description: "Volunteer hours data exported." });
+                }}
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <div className="text-sm mb-0.5">⏱️</div>
+                <div className="text-slate-800 text-[10px] font-semibold">Volunteer Hours</div>
+              </button>
+              <button
+                onClick={() => toast({ title: "Exported", description: "SDG metrics data exported." })}
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <div className="text-sm mb-0.5">🌍</div>
+                <div className="text-slate-800 text-[10px] font-semibold">SDG Metrics</div>
+              </button>
+              <button
+                onClick={() => toast({ title: "Exported", description: "Project data exported." })}
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <div className="text-sm mb-0.5">📁</div>
+                <div className="text-slate-800 text-[10px] font-semibold">Projects</div>
+              </button>
+              <button
+                onClick={() => toast({ title: "Exported", description: "Impact data exported." })}
+                className="p-2 bg-white rounded-lg text-left border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
+              >
+                <div className="text-sm mb-0.5">📊</div>
+                <div className="text-slate-800 text-[10px] font-semibold">Impact Data</div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
+  // CSR Mobile PWA View (for corporate users)
   if (isMobile) {
     return (
       <div className="h-screen bg-[#faf9f7] flex flex-col max-w-[428px] mx-auto overflow-hidden">

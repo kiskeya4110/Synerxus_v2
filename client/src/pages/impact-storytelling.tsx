@@ -1,13 +1,15 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ImpactStorytelling from "@/components/impact/impact-storytelling";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
-import { Download, Share2 } from "lucide-react";
+import { Download, Share2, Users, Clock, Target, FileText } from "lucide-react";
 import Chart from "chart.js/auto";
+import { useIsMobile } from "@/hooks/use-mobile";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 
 const SDG_LABELS: Record<number, string> = {
   1: "No Poverty", 2: "Zero Hunger", 3: "Good Health", 4: "Quality Education",
@@ -31,6 +33,8 @@ export default function ImpactStorytellingPage() {
   const pieChartRef = useRef<HTMLCanvasElement>(null);
   const lineChartInstance = useRef<Chart | null>(null);
   const pieChartInstance = useRef<Chart | null>(null);
+  const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery<any>({
     queryKey: ["/api/users/me", userId],
@@ -307,6 +311,16 @@ export default function ImpactStorytellingPage() {
 
   const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
+  const isOrganization = currentUser?.userType === 'organization';
+
+  const handleRefresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: ["/api/users/me", userId] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary", userId] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/impact-metrics"] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/dashboard/sdg-contributions", userId] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/organizations", userId, "volunteers"] });
+  }, [queryClient, userId]);
+
   // PROJECT IMPACTS FOR STORYTELLING
   const projectImpactData = projectAggregations
     .filter((p: any) => p.metrics.length > 0)
@@ -318,6 +332,165 @@ export default function ImpactStorytellingPage() {
       location: p.location,
       date: p.startDate
     }));
+
+  // Mobile PWA View for Organizations
+  if (isOrganization && isMobile) {
+    return (
+      <OrganizationPWALayout
+        activeTab="home"
+        onRefresh={handleRefresh}
+        metrics={{
+          activeProjects: activeProjects,
+          activeVolunteers: totalVolunteers,
+          totalHours: totalHoursContributed,
+          sdgsAddressed: addressedSDGs.length,
+        }}
+      >
+        <div className="p-4 pb-20 space-y-4">
+          {/* Page Title */}
+          <div className="mb-4">
+            <h1 className="text-xl font-bold text-gray-900">Impact Stories</h1>
+            <p className="text-sm text-gray-500">Professional funder-ready reports</p>
+          </div>
+
+          {/* Quick Stats Cards */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <Card className="p-3 text-center">
+              <Users className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{totalVolunteers}</p>
+              <p className="text-[10px] text-gray-500">Volunteers</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <Clock className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{totalHoursContributed}</p>
+              <p className="text-[10px] text-gray-500">Hours</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <Target className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{totalBeneficiariesReached}</p>
+              <p className="text-[10px] text-gray-500">Beneficiaries</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <FileText className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{projects.length}</p>
+              <p className="text-[10px] text-gray-500">Projects</p>
+            </Card>
+          </div>
+
+          {/* Mobile Tabs */}
+          <Tabs value={reportViewTab} onValueChange={setReportViewTab} className="space-y-4">
+            <TabsList className="grid grid-cols-3 w-full h-auto">
+              <TabsTrigger value="report" className="text-xs py-2">Report</TabsTrigger>
+              <TabsTrigger value="projects" className="text-xs py-2">Projects</TabsTrigger>
+              <TabsTrigger value="stories" className="text-xs py-2">Stories</TabsTrigger>
+            </TabsList>
+
+            {/* Report Tab - Mobile */}
+            <TabsContent value="report" className="space-y-4">
+              {/* Executive Summary */}
+              <Card className="bg-blue-50 dark:bg-blue-900/20">
+                <CardContent className="p-4">
+                  <h3 className="font-bold text-sm mb-2">Executive Summary</h3>
+                  <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                    Our volunteers contributed <strong className="text-blue-600">{totalHoursContributed} hours</strong> across <strong className="text-blue-600">{projects.length} projects</strong>,
+                    impacting <strong className="text-blue-600">{totalBeneficiariesReached} beneficiaries</strong> and advancing <strong className="text-blue-600">{addressedSDGs.length} UN SDGs</strong>.
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* SDG Focus Areas */}
+              {addressedSDGs.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-sm font-semibold">SDG Focus Areas</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-3 pb-3">
+                    <div className="flex flex-wrap gap-1">
+                      {addressedSDGs.slice(0, 6).map((sdg: number) => (
+                        <Badge key={sdg} style={{ backgroundColor: SDG_COLORS[sdg] }} className="text-white text-[10px]">
+                          {sdg}: {SDG_LABELS[sdg]}
+                        </Badge>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Consolidated Impact Outcomes */}
+              {aggregatedKPIs.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2 px-3 pt-3">
+                    <CardTitle className="text-sm font-semibold">Impact Outcomes</CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-3 pb-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      {aggregatedKPIs.slice(0, 4).map((kpi, idx) => (
+                        <div key={idx} className="bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                          <p className="text-[10px] text-gray-500 uppercase">{kpi.label}</p>
+                          <p className="text-lg font-bold text-blue-600">{kpi.value.toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            {/* Projects Tab - Mobile */}
+            <TabsContent value="projects" className="space-y-3">
+              {projectAggregations.slice(0, 5).map((project: any) => (
+                <Card key={project.id} className="border-l-4 border-l-blue-500">
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-semibold text-sm">{project.name}</h4>
+                        <p className="text-[10px] text-gray-500">{project.location}</p>
+                      </div>
+                      <Badge className="text-[10px] bg-blue-100 text-blue-800">#{project.projectIndex}</Badge>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center bg-gray-50 dark:bg-gray-800 p-2 rounded">
+                      <div>
+                        <p className="text-xs font-bold text-blue-600">{project.hours}</p>
+                        <p className="text-[10px] text-gray-500">Hours</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-orange-600">{project.beneficiaries}</p>
+                        <p className="text-[10px] text-gray-500">Beneficiaries</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-green-600">{project.volunteersInvolved}</p>
+                        <p className="text-[10px] text-gray-500">Volunteers</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+
+            {/* Stories Tab - Mobile */}
+            <TabsContent value="stories" className="space-y-4">
+              <ImpactStorytelling
+                projectImpacts={projectImpactData}
+                savedStories={[]}
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* Actions */}
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" size="sm" className="flex-1">
+              <Download className="w-4 h-4 mr-2" />
+              Export PDF
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1">
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+          </div>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <>

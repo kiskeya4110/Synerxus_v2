@@ -11,41 +11,86 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+// Pool configuration optimized for concurrency and stability
+// Sized to match request queue concurrency settings
+const POOL_CONFIG = {
+  max: parseInt(process.env.DB_POOL_MAX || '25', 10), // Slightly higher than heavy+standard concurrency
+  min: 2,                         // Keep minimum connections warm
+  idleTimeoutMillis: 30000,       // Close idle connections after 30s
+  connectionTimeoutMillis: 5000,  // Fail fast if can't connect in 5s
+  maxUses: 7500,                  // Recycle connections to prevent memory leaks
+  allowExitOnIdle: false,         // Keep pool alive even when idle
+};
+
 // Optimized connection pool for high concurrency
-// These settings allow handling up to 10,000 concurrent users efficiently
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 20,                    // Maximum connections in pool (Neon free tier limit)
-  idleTimeoutMillis: 30000,   // Close idle connections after 30s
-  connectionTimeoutMillis: 5000, // Fail fast if can't connect in 5s
-  maxUses: 7500,              // Recycle connections to prevent memory leaks
+  ...POOL_CONFIG,
 });
+
+// Track pool health metrics
+let poolMetrics = {
+  totalConnections: 0,
+  errorCount: 0,
+  lastError: null as Error | null,
+  lastErrorTime: 0,
+  connectionAttempts: 0,
+  successfulConnections: 0,
+};
 
 // Log pool events for monitoring - handle errors without crashing
 pool.on('error', (err) => {
+  poolMetrics.errorCount++;
+  poolMetrics.lastError = err;
+  poolMetrics.lastErrorTime = Date.now();
   // Log but don't crash - pool errors on idle clients are often recoverable
   console.error('[DB Pool] Unexpected error on idle client:', err.message);
   // The pool will automatically handle reconnection
 });
 
 pool.on('connect', () => {
-  console.log('[DB Pool] New client connected');
+  poolMetrics.totalConnections++;
+  poolMetrics.successfulConnections++;
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[DB Pool] New client connected');
+  }
 });
 
 // Handle pool removal (connection cleanup)
 pool.on('remove', () => {
-  console.log('[DB Pool] Client removed from pool');
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[DB Pool] Client removed from pool');
+  }
 });
 
 export const db = drizzle({ client: pool, schema });
 
 // Export pool stats for monitoring
 export function getPoolStats() {
-  return {
+  const stats = {
     totalCount: pool.totalCount,
     idleCount: pool.idleCount,
     waitingCount: pool.waitingCount,
+    maxConnections: POOL_CONFIG.max,
+    utilizationPercent: Math.round((pool.totalCount / POOL_CONFIG.max) * 100),
+    metrics: {
+      totalConnections: poolMetrics.totalConnections,
+      errorCount: poolMetrics.errorCount,
+      successfulConnections: poolMetrics.successfulConnections,
+      lastErrorTime: poolMetrics.lastErrorTime ? new Date(poolMetrics.lastErrorTime).toISOString() : null,
+    },
+    health: {
+      isHealthy: pool.waitingCount < 10 && poolMetrics.errorCount < 50,
+      isNearCapacity: pool.totalCount >= POOL_CONFIG.max - 2,
+      hasRecentErrors: poolMetrics.lastErrorTime > Date.now() - 60000,
+    },
   };
+  return stats;
+}
+
+// Check if pool is under pressure (for circuit breaker integration)
+export function isPoolUnderPressure(): boolean {
+  return pool.waitingCount > 5 || pool.totalCount >= POOL_CONFIG.max - 2;
 }
 
 // Retry wrapper for database operations

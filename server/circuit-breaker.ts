@@ -102,17 +102,62 @@ export function getCircuitBreakerStats(): Record<string, any> {
   return stats;
 }
 
+// Track system-wide health indicators
+let systemHealthIndicators = {
+  dbPoolUnderPressure: false,
+  memoryPressure: false,
+  lastHealthCheck: 0,
+};
+
 /**
- * Health check - returns false if any critical circuit is open
+ * Update system health indicators (called periodically)
+ */
+export function updateSystemHealth(indicators: Partial<typeof systemHealthIndicators>): void {
+  Object.assign(systemHealthIndicators, indicators, { lastHealthCheck: Date.now() });
+}
+
+/**
+ * Health check - returns false if any critical circuit is open or system is under pressure
  */
 export function isSystemHealthy(): boolean {
-  let healthy = true;
+  // Check circuit breakers
+  let circuitHealthy = true;
   breakers.forEach((breaker, name) => {
     if (name.startsWith('db:') && breaker.opened) {
-      healthy = false;
+      circuitHealthy = false;
     }
   });
-  return healthy;
+
+  // Check system-wide indicators
+  const systemHealthy = !systemHealthIndicators.dbPoolUnderPressure &&
+                         !systemHealthIndicators.memoryPressure;
+
+  return circuitHealthy && systemHealthy;
+}
+
+/**
+ * Get detailed health status
+ */
+export function getDetailedHealthStatus(): {
+  circuitsHealthy: boolean;
+  systemHealthy: boolean;
+  indicators: typeof systemHealthIndicators;
+  openCircuits: string[];
+} {
+  const openCircuits: string[] = [];
+
+  breakers.forEach((breaker, name) => {
+    if (breaker.opened) {
+      openCircuits.push(name);
+    }
+  });
+
+  return {
+    circuitsHealthy: openCircuits.length === 0,
+    systemHealthy: !systemHealthIndicators.dbPoolUnderPressure && !systemHealthIndicators.memoryPressure,
+    indicators: { ...systemHealthIndicators },
+    openCircuits,
+  };
 }
 
 /**

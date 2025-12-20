@@ -10,10 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTheme } from "@/components/layout/theme-provider";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import MobileMetricsGrid from "@/components/layout/mobile-metrics-grid";
 import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
 import OfflineBanner from "@/components/layout/offline-banner";
 import Footer from "@/components/layout/footer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Loader2, BarChart, ExternalLink, Filter, FolderOpen, CheckCircle2, Target, TrendingUp, Sparkles, AlertCircle } from "lucide-react";
 import { UN_SDG_ICONS } from "@/assets/un-sdg-icons";
 import StatsCard from "@/components/dashboard/stats-card";
@@ -70,6 +72,7 @@ const SDG_METADATA: Record<number, { title: string; description: string }> = {
 export default function SDGMapping() {
   const { theme } = useTheme();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [selectedSDG, setSelectedSDG] = useState<number | null>(null);
   const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
   const [statsDialogOpen, setStatsDialogOpen] = useState(false);
@@ -524,6 +527,113 @@ export default function SDGMapping() {
     );
   }
   
+  const isOrganization = currentUser?.userType === 'organization';
+
+  // Mobile organization PWA view
+  if (isOrganization && isMobile) {
+    return (
+      <OrganizationPWALayout activeTab="sdgs">
+        <div className="p-4">
+          <div className="mb-4">
+            <h1 className="text-xl font-bold mb-1">SDG Mapping</h1>
+            <p className="text-sm text-gray-600">Track SDG alignment and impact</p>
+          </div>
+
+          {/* Project Filter - Mobile */}
+          {organizationProjects.length > 1 && (
+            <div className="mb-4">
+              <Select value={selectedProjectFilter} onValueChange={setSelectedProjectFilter}>
+                <SelectTrigger className="w-full h-10">
+                  <SelectValue placeholder="Filter project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Projects ({organizationProjects.length})</SelectItem>
+                  {organizationProjects.map((project: any) => (
+                    <SelectItem key={project.id} value={project.id.toString()}>
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Stats Cards - Mobile */}
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <Card className="p-3 text-center">
+              <Target className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{organizationSDGs.length}</p>
+              <p className="text-[10px] text-gray-500">SDG Focus Areas</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <FolderOpen className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{filteredProjects.length}</p>
+              <p className="text-[10px] text-gray-500">Projects</p>
+            </Card>
+          </div>
+
+          {/* SDG Grid - Mobile */}
+          <Card className="mb-4">
+            <CardHeader className="pb-2 px-3 pt-3">
+              <CardTitle className="text-sm font-semibold">UN Sustainable Development Goals</CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              <div className="grid grid-cols-6 gap-1.5">
+                {Array.from({ length: 17 }, (_, i) => i + 1).map((sdgNum) => {
+                  const isActive = organizationSDGs.includes(sdgNum);
+                  const projectCount = filteredProjects.filter((p: any) =>
+                    p.sdgGoals?.includes(sdgNum)
+                  ).length;
+
+                  return (
+                    <button
+                      key={sdgNum}
+                      onClick={() => setSelectedSDG(sdgNum === selectedSDG ? null : sdgNum)}
+                      className={`relative rounded-lg overflow-hidden transition-all ${
+                        isActive ? 'ring-2 ring-green-500' : 'opacity-40'
+                      } ${selectedSDG === sdgNum ? 'scale-110 z-10' : ''}`}
+                    >
+                      <img
+                        src={UN_SDG_ICONS[sdgNum]}
+                        alt={`SDG ${sdgNum}`}
+                        className="w-full h-full object-cover"
+                      />
+                      {projectCount > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                          {projectCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Selected SDG Details */}
+          {selectedSDG && (
+            <Card className="mb-4">
+              <CardHeader className="pb-2 px-3 pt-3">
+                <div className="flex items-center gap-2">
+                  <img src={UN_SDG_ICONS[selectedSDG]} alt={`SDG ${selectedSDG}`} className="w-10 h-10 rounded" />
+                  <div>
+                    <CardTitle className="text-sm">{SDG_METADATA[selectedSDG]?.title}</CardTitle>
+                    <p className="text-xs text-gray-500">{SDG_METADATA[selectedSDG]?.description}</p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-3 pb-3">
+                <p className="text-xs text-gray-600">
+                  {filteredProjects.filter((p: any) => p.sdgGoals?.includes(selectedSDG)).length} projects aligned
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
+
   return (
     <div className="h-screen overflow-y-auto pb-24">
       <OfflineBanner />

@@ -12,7 +12,6 @@ import {
   ChevronRight,
   ChevronDown,
   X,
-  MoreVertical,
   Bell,
   Settings,
   LogOut,
@@ -35,12 +34,13 @@ import {
   ArrowUpRight,
   Eye,
   Trophy,
-  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getSDGName, getSDGColor } from "@shared/sdg-goals";
 import { useToast } from "@/hooks/use-toast";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import { useViewportDetection } from "@/hooks/use-mobile";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import PWAPageGuard, { PWALoadingSkeleton } from "@/components/layout/pwa-page-guard";
 
 // Lazy load chart components
 const AreaChart = lazy(() => import("recharts").then(m => ({ default: m.AreaChart })));
@@ -152,13 +152,10 @@ export default function OrganizationDashboardPWA() {
   const { signOut } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
   const userId = localStorage.getItem("currentUserId");
   const userType = localStorage.getItem("userType");
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  const [showMenu, setShowMenu] = useState(false);
-  const [showPageDropdown, setShowPageDropdown] = useState(false);
-  const pageDropdownRef = useRef<HTMLDivElement>(null);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [refreshing, setRefreshing] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -176,6 +173,13 @@ export default function OrganizationDashboardPWA() {
   const aiuModalRef = useRef<HTMLDivElement>(null);
   const sdgModalRef = useRef<HTMLDivElement>(null);
 
+  // Redirect to desktop view when not on mobile (after viewport detection completes)
+  useEffect(() => {
+    if (!isViewportLoading && !isMobile) {
+      navigate("/organization-dashboard");
+    }
+  }, [isViewportLoading, isMobile, navigate]);
+
   // Redirect non-organization users
   useEffect(() => {
     if (userType && userType !== "organization") {
@@ -183,15 +187,9 @@ export default function OrganizationDashboardPWA() {
     }
   }, [userType, navigate]);
 
-  // Close menus when clicking outside
+  // Close modals when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-      if (pageDropdownRef.current && !pageDropdownRef.current.contains(event.target as Node)) {
-        setShowPageDropdown(false);
-      }
       if (aiuModalRef.current && !aiuModalRef.current.contains(event.target as Node)) {
         setShowAiuModal(false);
       }
@@ -450,6 +448,11 @@ export default function OrganizationDashboardPWA() {
   // Flatten for backward compatibility if needed
   const menuItems = menuSections.flatMap(section => section.items);
 
+  // Show loading skeleton while viewport is being detected or redirecting to desktop
+  if (isViewportLoading || !isMobile) {
+    return <PWALoadingSkeleton />;
+  }
+
   return (
     <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-x-hidden overflow-y-auto z-40">
       {/* Centered App Container */}
@@ -461,212 +464,18 @@ export default function OrganizationDashboardPWA() {
           </div>
         )}
 
-        {/* Header - Sticky within container */}
-        <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between w-full flex-shrink-0">
-        <div className="flex items-center gap-2">
-          {/* Show organization logo if available, fallback to Synerxus logo */}
-          {organizationProfile?.logo ? (
-            <div
-              className="h-10 w-10 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden cursor-pointer border-2 border-white/50"
-              onClick={() => navigate('/organization-dashboard')}
-            >
-              <img
-                src={organizationProfile.logo}
-                alt={organizationProfile.name || 'Organization'}
-                className="h-full w-full object-cover"
-              />
-            </div>
-          ) : (
-            <img
-              src={logoUrl}
-              alt="Synerxus"
-              className="h-10 object-contain cursor-pointer"
-              onClick={() => navigate('/organization-dashboard')}
-            />
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all"
-          >
-            <RefreshCw className={`w-5 h-5 text-slate-700 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
-
-          {/* Page Navigation Dropdown */}
-          <div ref={pageDropdownRef} className="relative">
-            <button
-              onClick={() => setShowPageDropdown(!showPageDropdown)}
-              className="h-10 px-3 rounded-full bg-white/80 backdrop-blur-sm flex items-center gap-1.5 shadow-sm hover:bg-white transition-all"
-            >
-              <Layers className="w-4 h-4 text-slate-700" />
-              <span className="text-sm font-medium text-slate-700">Pages</span>
-              <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${showPageDropdown ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showPageDropdown && (
-              <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
-                <div className="py-1">
-                  <button
-                    onClick={() => { setShowPageDropdown(false); navigate('/projects'); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
-                  >
-                    <FolderOpen className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-medium text-slate-700">Projects</span>
-                  </button>
-                  <button
-                    onClick={() => { setShowPageDropdown(false); navigate('/impact-visualization'); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
-                  >
-                    <BarChart3 className="w-4 h-4 text-purple-600" />
-                    <span className="text-sm font-medium text-slate-700">Overview</span>
-                  </button>
-                  <button
-                    onClick={() => { setShowPageDropdown(false); navigate('/volunteers'); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
-                  >
-                    <Users className="w-4 h-4 text-teal-600" />
-                    <span className="text-sm font-medium text-slate-700">Volunteers</span>
-                  </button>
-                  <button
-                    onClick={() => { setShowPageDropdown(false); navigate('/sdg-mapping'); }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors"
-                  >
-                    <Target className="w-4 h-4 text-emerald-600" />
-                    <span className="text-sm font-medium text-slate-700">SDGs</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all"
-            >
-              <MoreVertical className="w-5 h-5 text-slate-700" />
-            </button>
-            {showMenu && (
-              <div className="fixed inset-0 z-50" onClick={() => setShowMenu(false)}>
-                {/* Backdrop */}
-                <div className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-in fade-in duration-200" />
-
-                {/* Menu Panel */}
-                <div
-                  className="absolute right-4 top-16 w-[calc(100%-2rem)] max-w-[320px] bg-white rounded-2xl shadow-2xl overflow-hidden animate-in slide-in-from-top-2 zoom-in-95 duration-200"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Menu Header */}
-                  <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 px-4 py-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-white font-bold text-sm">{organization?.name || 'Organization'}</p>
-                        <p className="text-white/80 text-[10px]">{metrics.activeProjects} Projects • {metrics.activeVolunteers} Volunteers</p>
-                      </div>
-                      <button onClick={() => setShowMenu(false)} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                        <X className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Quick Stats Bar */}
-                  <div className="flex items-center justify-around py-2 px-3 bg-slate-50 border-b border-slate-100">
-                    <div className="text-center">
-                      <p className="text-sm font-bold text-emerald-600">{totalAiu.toFixed(1)}</p>
-                      <p className="text-[9px] text-slate-500">AIU</p>
-                    </div>
-                    <div className="w-px h-6 bg-slate-200" />
-                    <div className="text-center">
-                      <p className="text-sm font-bold text-blue-600">{metrics.totalHours.toLocaleString()}</p>
-                      <p className="text-[9px] text-slate-500">Hours</p>
-                    </div>
-                    <div className="w-px h-6 bg-slate-200" />
-                    <div className="text-center">
-                      <p className="text-sm font-bold text-purple-600">{metrics.sdgsAddressed}</p>
-                      <p className="text-[9px] text-slate-500">SDGs</p>
-                    </div>
-                  </div>
-
-                  {/* Menu Sections */}
-                  <div className="max-h-[60vh] overflow-y-auto">
-                    {menuSections.map((section, sectionIdx) => (
-                      <div key={section.title}>
-                        {/* Section Header */}
-                        <div className="px-4 py-2 bg-slate-50/50">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{section.title}</p>
-                        </div>
-
-                        {/* Section Items */}
-                        <div className="px-2 py-1">
-                          {section.items.map((item: any, index: number) => (
-                            <button
-                              key={index}
-                              onClick={() => { setShowMenu(false); item.action(); }}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left mb-1 ${
-                                item.danger
-                                  ? 'text-red-600 hover:bg-red-50 active:bg-red-100'
-                                  : 'text-slate-700 hover:bg-slate-100 active:bg-slate-200'
-                              }`}
-                            >
-                              {/* Icon with color */}
-                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                item.danger ? 'bg-red-100' : `bg-${item.color}-100`
-                              }`} style={{ backgroundColor: item.danger ? '#fef2f2' : undefined }}>
-                                <item.icon className={`w-4.5 h-4.5 ${
-                                  item.danger ? 'text-red-500' : `text-${item.color}-600`
-                                }`} style={{ color: item.danger ? '#ef4444' : undefined }} />
-                              </div>
-
-                              {/* Label & Description */}
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-semibold text-sm">{item.label}</span>
-                                  {item.isNew && (
-                                    <span className="px-1.5 py-0.5 bg-gradient-to-r from-orange-500 to-pink-500 text-white text-[8px] font-bold rounded-full">NEW</span>
-                                  )}
-                                  {item.hot && (
-                                    <span className="px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[8px] font-bold rounded-full">HOT</span>
-                                  )}
-                                </div>
-                                <p className="text-[10px] text-slate-500 truncate">{item.desc}</p>
-                              </div>
-
-                              {/* Badge or Arrow */}
-                              {item.badge !== undefined && item.badge > 0 ? (
-                                <span className={`min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold flex items-center justify-center ${
-                                  item.badge > 0 ? 'bg-red-500 text-white' : 'bg-slate-200 text-slate-600'
-                                }`}>
-                                  {item.badge > 99 ? '99+' : item.badge}
-                                </span>
-                              ) : (
-                                <ChevronRight className="w-4 h-4 text-slate-300" />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Section Divider */}
-                        {sectionIdx < menuSections.length - 1 && (
-                          <div className="h-px bg-slate-100 mx-4" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="px-4 py-3 bg-slate-50 border-t border-slate-100">
-                    <p className="text-[9px] text-slate-400 text-center">
-                      Powered by Synerxus • v2.0
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        </header>
+        {/* Shared Header with Refresh Button */}
+        <OrganizationPWAHeader
+          onRefresh={handleRefresh}
+          isRefreshing={refreshing}
+          metrics={{
+            activeProjects: metrics.activeProjects,
+            activeVolunteers: metrics.activeVolunteers,
+            totalAiu: totalAiu,
+            totalHours: metrics.totalHours,
+            sdgsAddressed: metrics.sdgsAddressed,
+          }}
+        />
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto pb-20">
@@ -693,36 +502,48 @@ export default function OrganizationDashboardPWA() {
           )}
 
           {/* Welcome Banner - Enhanced */}
-          <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-600 rounded-2xl p-4 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-200 rounded-2xl p-4 text-slate-800 shadow-xl relative overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/30" />
-              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-white/20" />
+              <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-emerald-400/30" />
+              <div className="absolute -left-5 -bottom-5 w-24 h-24 rounded-full bg-teal-400/20" />
             </div>
             <div className="relative">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="text-emerald-100 text-[11px] font-medium uppercase tracking-wide mb-1">Dashboard Overview</p>
-                  <h2 className="text-xl font-bold">
+                  <p className="text-emerald-700 text-[11px] font-medium uppercase tracking-wide mb-1">Dashboard Overview</p>
+                  <h2 className="text-xl font-bold text-slate-800">
                     {organization?.name || 'Organization'}
                   </h2>
                 </div>
-                <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-white" />
+                <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center overflow-hidden">
+                  {organization?.logo ? (
+                    <img
+                      src={organization.logo}
+                      alt={organization.name || 'Organization'}
+                      className="w-10 h-10 object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : (
+                    <Briefcase className="w-6 h-6 text-emerald-700" />
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-3 mt-4">
-                <div className="bg-white/15 backdrop-blur rounded-xl p-2.5 text-center">
-                  <p className="text-xl font-bold">{metrics.totalHours.toLocaleString()}</p>
-                  <p className="text-[9px] text-emerald-100 font-medium">Hours</p>
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{metrics.totalHours.toLocaleString()}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Hours</p>
                 </div>
-                <div className="bg-white/15 backdrop-blur rounded-xl p-2.5 text-center">
-                  <p className="text-xl font-bold">{metrics.activeProjects}</p>
-                  <p className="text-[9px] text-emerald-100 font-medium">Projects</p>
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{metrics.activeProjects}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Projects</p>
                 </div>
-                <div className="bg-white/15 backdrop-blur rounded-xl p-2.5 text-center">
-                  <p className="text-xl font-bold">{totalPeopleImpacted.toLocaleString()}</p>
-                  <p className="text-[9px] text-emerald-100 font-medium">Lives</p>
+                <div className="bg-white/40 backdrop-blur rounded-xl p-2.5 text-center">
+                  <p className="text-xl font-bold text-slate-800">{totalPeopleImpacted.toLocaleString()}</p>
+                  <p className="text-[9px] text-emerald-700 font-medium">Lives</p>
                 </div>
               </div>
             </div>
@@ -733,17 +554,17 @@ export default function OrganizationDashboardPWA() {
             {/* Economic Value Card - Shows SROI and economic value of work completed */}
             <button
               onClick={() => setShowImpactRoiModal(true)}
-              className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-3 text-white shadow-lg text-left hover:shadow-xl transition-all active:scale-[0.98]"
+              className="bg-gradient-to-br from-emerald-200 to-teal-300 rounded-xl p-3 text-slate-800 shadow-lg text-left hover:shadow-xl transition-all active:scale-[0.98]"
             >
               <div className="flex items-center justify-between mb-2">
-                <TrendingUp className="w-5 h-5 opacity-80" />
-                <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-medium">
+                <TrendingUp className="w-5 h-5 text-emerald-700" />
+                <span className="text-[9px] bg-emerald-600/20 text-emerald-800 px-1.5 py-0.5 rounded-full font-medium">
                   SROI
                 </span>
               </div>
-              <p className="text-2xl font-bold">${metrics.totalHours > 0 ? (metrics.totalHours * 29.95 / 1000).toFixed(1) : 0}K</p>
-              <p className="text-[10px] opacity-80">Economic Value</p>
-              <div className="mt-2 pt-2 border-t border-white/20 text-[9px] opacity-70">
+              <p className="text-2xl font-bold text-slate-800">${metrics.totalHours > 0 ? (metrics.totalHours * 29.95 / 1000).toFixed(1) : 0}K</p>
+              <p className="text-[10px] text-slate-600">Economic Value</p>
+              <div className="mt-2 pt-2 border-t border-emerald-400/30 text-[9px] text-slate-600">
                 {totalPeopleImpacted > 0 ? ((totalPeopleImpacted * 50) / Math.max(metrics.totalHours * 29.95, 1)).toFixed(1) : '0.0'}:1 social return
               </div>
             </button>
@@ -751,17 +572,17 @@ export default function OrganizationDashboardPWA() {
             {/* Volunteer Efficiency Card */}
             <button
               onClick={() => navigate('/volunteers')}
-              className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-3 text-white shadow-lg text-left hover:shadow-xl transition-all active:scale-[0.98]"
+              className="bg-gradient-to-br from-blue-200 to-indigo-300 rounded-xl p-3 text-slate-800 shadow-lg text-left hover:shadow-xl transition-all active:scale-[0.98]"
             >
               <div className="flex items-center justify-between mb-2">
-                <Users className="w-5 h-5 opacity-80" />
-                <span className="text-[9px] bg-white/20 px-1.5 py-0.5 rounded-full font-medium">
+                <Users className="w-5 h-5 text-blue-700" />
+                <span className="text-[9px] bg-blue-600/20 text-blue-800 px-1.5 py-0.5 rounded-full font-medium">
                   {metrics.activeVolunteers > 0 ? Math.round(metrics.totalHours / metrics.activeVolunteers) : 0}h avg
                 </span>
               </div>
-              <p className="text-2xl font-bold">{metrics.activeVolunteers}</p>
-              <p className="text-[10px] opacity-80">Active Volunteers</p>
-              <div className="mt-2 pt-2 border-t border-white/20 text-[9px] opacity-70">
+              <p className="text-2xl font-bold text-slate-800">{metrics.activeVolunteers}</p>
+              <p className="text-[10px] text-slate-600">Active Volunteers</p>
+              <div className="mt-2 pt-2 border-t border-blue-400/30 text-[9px] text-slate-600">
                 {metrics.totalHours.toLocaleString()} total hours
               </div>
             </button>
@@ -1453,52 +1274,71 @@ export default function OrganizationDashboardPWA() {
         </div>
         </main>
 
-        {/* Bottom Navigation Tray */}
-        <nav className="sticky bottom-0 z-50 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)] w-full shadow-lg flex-shrink-0">
+        {/* Bottom Navigation Tray - Off-white to Light Yellow Gradient */}
+        <nav
+          className="sticky bottom-0 z-50 pb-[env(safe-area-inset-bottom)] w-full flex-shrink-0"
+          style={{
+            background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
+            boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
+          }}
+        >
           <div className="flex items-center justify-around py-2 px-1">
             {/* Home - Active */}
             <button
               onClick={() => navigate('/organization-dashboard/pwa')}
-              className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-emerald-600"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
             >
-              <Home className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Home</span>
+              <div className="p-1.5 rounded-lg bg-emerald-100">
+                <Home className="w-[18px] h-[18px] text-emerald-600" />
+              </div>
+              <span className="text-[9px] font-semibold text-slate-800">Home</span>
             </button>
 
             {/* Projects */}
             <button
               onClick={() => navigate('/projects')}
-              className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
             >
-              <FolderOpen className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Projects</span>
+              <div className="p-1.5 rounded-lg">
+                <FolderOpen className="w-[18px] h-[18px] text-slate-500" />
+              </div>
+              <span className="text-[9px] font-medium text-slate-500">Projects</span>
             </button>
 
-            {/* Overview */}
+            {/* Potential - Center Green Button */}
             <button
-              onClick={() => navigate('/impact-visualization')}
-              className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
+              onClick={() => navigate('/overview')}
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl -translate-y-2"
+              style={{
+                background: 'linear-gradient(135deg, #166534 0%, #22c55e 100%)',
+                boxShadow: '0 2px 12px rgba(22, 101, 52, 0.5)',
+                minWidth: '60px',
+              }}
             >
-              <BarChart3 className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Overview</span>
+              <Lightbulb className="w-5 h-5 text-white" />
+              <span className="text-[8px] font-semibold text-white tracking-wide">Potential</span>
             </button>
 
             {/* Volunteers */}
             <button
               onClick={() => navigate('/volunteers')}
-              className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
             >
-              <Users className="w-5 h-5" />
-              <span className="text-[10px] font-medium">Volunteers</span>
+              <div className="p-1.5 rounded-lg">
+                <Users className="w-[18px] h-[18px] text-slate-500" />
+              </div>
+              <span className="text-[9px] font-medium text-slate-500">Volunteers</span>
             </button>
 
             {/* SDGs */}
             <button
               onClick={() => navigate('/sdg-mapping')}
-              className="flex flex-col items-center gap-0.5 min-w-[56px] py-1.5 text-slate-500 hover:text-emerald-600 transition-colors"
+              className="flex flex-col items-center gap-0.5 min-w-[48px] py-1.5"
             >
-              <Target className="w-5 h-5" />
-              <span className="text-[10px] font-medium">SDGs</span>
+              <div className="p-1.5 rounded-lg">
+                <Target className="w-[18px] h-[18px] text-slate-500" />
+              </div>
+              <span className="text-[9px] font-medium text-slate-500">SDGs</span>
             </button>
           </div>
         </nav>

@@ -522,9 +522,13 @@ export default function OrganizationDashboard() {
       <OrganizationHeader activeTab="dashboard" onCreateClick={() => setShowCreateModal(true)} />
 
       {/* Welcome Banner - Desktop Only */}
-      <div className="hidden md:block" style={{ backgroundColor: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 0' }}>
+      <div className="hidden md:block" style={{
+        background: 'linear-gradient(to right, #fffbeb 0%, #fef3c7 30%, #fcd34d 70%, #f59e0b 100%)',
+        padding: '16px 0',
+        borderBottom: '1px solid rgba(245, 158, 11, 0.2)'
+      }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', margin: 0 }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#78350f', margin: 0 }}>
             Welcome Back, {organization?.name || organizationProfile?.organizationName || 'Organization'}
           </h1>
           <button
@@ -540,7 +544,9 @@ export default function OrganizationDashboard() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px'
+              gap: '8px',
+              boxShadow: '0 2px 8px rgba(22, 101, 52, 0.3)',
+              transition: 'all 0.2s'
             }}
             data-testid="button-overview"
           >

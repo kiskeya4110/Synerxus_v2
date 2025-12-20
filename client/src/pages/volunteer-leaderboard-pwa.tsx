@@ -1,31 +1,23 @@
-import { useState, useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
-  Home,
   Trophy,
   TrendingUp,
   Clock,
   Target,
-  Users,
   Award,
   Zap,
-  ChevronRight,
-  X,
-  MoreVertical,
-  Settings,
-  LogOut,
-  FolderOpen,
-  Eye,
   Medal,
   Flame,
   Star,
-  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useViewportDetection } from "@/hooks/use-mobile";
 import OrganizationPWANav from "@/components/layout/organization-pwa-nav";
-import logoUrl from "@assets/Synerxus_Logo_1765433966690.png";
+import OrganizationPWAHeader from "@/components/layout/organization-pwa-header";
+import { PWALoadingSkeleton } from "@/components/layout/pwa-page-guard";
 
 type LeaderboardType = "points" | "hours" | "impacts" | "tasks" | "streak";
 
@@ -43,16 +35,22 @@ interface LeaderboardEntry {
 }
 
 export default function VolunteerLeaderboardPWA() {
-  const { signOut } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { isMobile, isLoading: isViewportLoading } = useViewportDetection();
+  const queryClient = useQueryClient();
   const userId = localStorage.getItem("currentUserId");
   const userType = localStorage.getItem("userType");
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  const [showMenu, setShowMenu] = useState(false);
   const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>("points");
-  const [refreshing, setRefreshing] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Redirect to desktop view when not on mobile (after viewport detection completes)
+  useEffect(() => {
+    if (!isViewportLoading && !isMobile) {
+      navigate("/volunteer-recognition");
+    }
+  }, [isViewportLoading, isMobile, navigate]);
 
   // Redirect non-organization users
   useEffect(() => {
@@ -60,17 +58,6 @@ export default function VolunteerLeaderboardPWA() {
       navigate("/volunteer-dashboard");
     }
   }, [userType, navigate]);
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Fetch current user
   const { data: currentUser } = useQuery({
@@ -96,7 +83,7 @@ export default function VolunteerLeaderboardPWA() {
   });
 
   // Fetch organization leaderboard
-  const { data: leaderboardData = [], isLoading, refetch } = useQuery<LeaderboardEntry[]>({
+  const { data: leaderboardData = [], isLoading, refetch: refetchLeaderboard } = useQuery<LeaderboardEntry[]>({
     queryKey: ["/api/organization-leaderboard", currentUser?.organizationId, leaderboardType],
     queryFn: async () => {
       if (!currentUser?.organizationId) return [];
@@ -111,18 +98,16 @@ export default function VolunteerLeaderboardPWA() {
   });
 
   // Handle refresh
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetch();
-    toast({ title: "Refreshed", description: "Leaderboard data updated" });
-    setTimeout(() => setRefreshing(false), 500);
-  };
-
-  // Handle logout
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/");
-  };
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetchLeaderboard();
+      toast({ title: "Refreshed", description: "Leaderboard updated" });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to refresh", variant: "destructive" });
+    }
+    setTimeout(() => setIsRefreshing(false), 500);
+  }, [refetchLeaderboard, toast]);
 
   const getMedalIcon = (rank: number) => {
     if (rank === 1) return <Medal className="w-6 h-6 text-yellow-500" />;
@@ -159,37 +144,14 @@ export default function VolunteerLeaderboardPWA() {
     }
   };
 
-  const menuItems = [
-    { icon: Home, label: "Dashboard", action: () => navigate("/organization-dashboard/pwa") },
-    { icon: FolderOpen, label: "Projects", action: () => navigate("/projects") },
-    { icon: Settings, label: "Settings", action: () => navigate("/organization-profile-settings") },
-    { icon: LogOut, label: "Logout", action: handleLogout, danger: true },
-  ];
+  // Show loading skeleton while viewport is being detected or redirecting to desktop
+  if (isViewportLoading || !isMobile) {
+    return <PWALoadingSkeleton />;
+  }
 
-  // Loading state
+  // Loading state for data
   if (isLoading && leaderboardData.length === 0) {
-    return (
-      <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] flex flex-col overflow-hidden z-40 max-w-[428px] mx-auto">
-        <div className="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between">
-          <div className="h-10 w-32 bg-white/20 rounded animate-pulse" />
-          <div className="h-10 w-10 bg-white/20 rounded-full animate-pulse" />
-        </div>
-        <div className="flex-1 overflow-auto p-4 space-y-4">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="bg-white rounded-xl p-4 border border-slate-200 animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-slate-200 rounded-full" />
-                <div className="flex-1">
-                  <div className="h-4 w-32 bg-slate-200 rounded mb-2" />
-                  <div className="h-3 w-24 bg-slate-200 rounded" />
-                </div>
-                <div className="h-6 w-16 bg-slate-200 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <PWALoadingSkeleton />;
   }
 
   // Calculate totals
@@ -198,88 +160,43 @@ export default function VolunteerLeaderboardPWA() {
   const totalPoints = leaderboardData.reduce((sum, v) => sum + v.totalPoints, 0);
 
   return (
-    <div className="fixed inset-0 h-screen w-screen bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40 max-w-[428px] mx-auto">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] flex items-center justify-between max-w-[428px] mx-auto">
-        <div className="flex items-center gap-2">
-          <img
-            src={logoUrl}
-            alt="Synerxus"
-            className="h-10 object-contain cursor-pointer"
-            onClick={() => navigate("/organization-dashboard/pwa")}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all"
-          >
-            <RefreshCw className={`w-5 h-5 text-slate-700 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
-          <div ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="w-10 h-10 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-white transition-all"
-            >
-              <MoreVertical className="w-5 h-5 text-slate-700" />
-            </button>
-            {showMenu && (
-              <div className="absolute right-4 top-14 bg-white rounded-xl shadow-2xl overflow-hidden min-w-[200px] z-50 animate-in slide-in-from-top-2 duration-200">
-                <div className="p-2">
-                  {menuItems.map((item, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setShowMenu(false);
-                        item.action();
-                      }}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
-                        item.danger ? "text-red-600 hover:bg-red-50" : "text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      <item.icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="fixed inset-0 h-screen h-[100dvh] w-screen max-w-full bg-[#faf9f7] text-slate-800 flex flex-col overflow-hidden z-40">
+      {/* Centered App Container */}
+      <div className="relative w-full h-full max-w-[428px] mx-auto flex flex-col">
+        {/* Shared Header with Refresh Button */}
+        <OrganizationPWAHeader
+          onRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
 
-      {/* Spacer for fixed header */}
-      <div className="h-16 flex-shrink-0" />
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto pb-24">
-        <div className="p-4 space-y-4">
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto pb-20">
+          <div className="p-4 space-y-4">
           {/* Header Banner */}
-          <div className="bg-gradient-to-br from-purple-500 via-indigo-500 to-blue-500 rounded-2xl p-4 text-white shadow-lg">
+          <div className="bg-gradient-to-br from-purple-200 via-indigo-200 to-blue-200 rounded-2xl p-4 text-slate-800 shadow-lg">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
-                <Trophy className="w-6 h-6 text-yellow-300" />
+              <div className="w-12 h-12 bg-white/40 backdrop-blur rounded-xl flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-amber-500" />
               </div>
               <div>
-                <h1 className="text-lg font-bold">Volunteer Leaderboard</h1>
-                <p className="text-white/80 text-xs">{organization?.name || "Organization"}</p>
+                <h1 className="text-lg font-bold text-slate-800">Volunteer Leaderboard</h1>
+                <p className="text-slate-600 text-xs">{organization?.name || "Organization"}</p>
               </div>
             </div>
 
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-2 mt-3">
-              <div className="bg-white/10 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-xl font-bold">{totalVolunteers}</p>
-                <p className="text-[10px] text-white/70">Volunteers</p>
+              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
+                <p className="text-xl font-bold text-slate-800">{totalVolunteers}</p>
+                <p className="text-[10px] text-purple-700">Volunteers</p>
               </div>
-              <div className="bg-white/10 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-xl font-bold">{totalHours.toLocaleString()}</p>
-                <p className="text-[10px] text-white/70">Total Hours</p>
+              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
+                <p className="text-xl font-bold text-slate-800">{totalHours.toLocaleString()}</p>
+                <p className="text-[10px] text-purple-700">Total Hours</p>
               </div>
-              <div className="bg-white/10 backdrop-blur rounded-xl p-2 text-center">
-                <p className="text-xl font-bold">{totalPoints.toLocaleString()}</p>
-                <p className="text-[10px] text-white/70">Total Points</p>
+              <div className="bg-white/40 backdrop-blur rounded-xl p-2 text-center">
+                <p className="text-xl font-bold text-slate-800">{totalPoints.toLocaleString()}</p>
+                <p className="text-[10px] text-purple-700">Total Points</p>
               </div>
             </div>
           </div>
@@ -296,7 +213,7 @@ export default function VolunteerLeaderboardPWA() {
                   onClick={() => setLeaderboardType(type)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                     leaderboardType === type
-                      ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-sm"
+                      ? "bg-gradient-to-r from-purple-300 to-indigo-300 text-purple-800 shadow-sm"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
@@ -401,10 +318,10 @@ export default function VolunteerLeaderboardPWA() {
 
                       {/* Avatar */}
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0 ${
+                        className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm flex-shrink-0 ${
                           isTopThree
-                            ? "bg-gradient-to-br from-purple-500 to-indigo-500"
-                            : "bg-gradient-to-br from-slate-400 to-slate-500"
+                            ? "bg-gradient-to-br from-purple-300 to-indigo-300 text-purple-800"
+                            : "bg-gradient-to-br from-slate-300 to-slate-400 text-slate-700"
                         }`}
                       >
                         {entry.displayName?.charAt(0)?.toUpperCase() || "V"}
@@ -481,11 +398,12 @@ export default function VolunteerLeaderboardPWA() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
+          </div>
+        </main>
 
-      {/* Bottom Navigation */}
-      <OrganizationPWANav activeTab="leaderboard" />
+        {/* Bottom Navigation */}
+        <OrganizationPWANav activeTab="leaderboard" />
+      </div>
     </div>
   );
 }

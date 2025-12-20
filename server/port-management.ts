@@ -41,6 +41,10 @@ const serverState: ServerState = {
   lockAcquired: false,
 };
 
+// Track active connections for graceful shutdown
+let activeConnections = new Set<any>();
+let connectionIdCounter = 0;
+
 /**
  * Layer 1: Pre-startup cleanup
  * Cleans up stale locks - uses timestamp to detect PID recycling
@@ -310,7 +314,49 @@ export function bindPortWithRetry(
 }
 
 /**
- * Layer 5: Comprehensive graceful shutdown
+ * Track server connections for graceful shutdown
+ */
+export function trackConnection(conn: any): void {
+  const connId = ++connectionIdCounter;
+  (conn as any).__connId = connId;
+  activeConnections.add(conn);
+
+  conn.on('close', () => {
+    activeConnections.delete(conn);
+  });
+}
+
+/**
+ * Get active connection count
+ */
+export function getActiveConnectionCount(): number {
+  return activeConnections.size;
+}
+
+/**
+ * Close all active connections gracefully
+ */
+function closeAllConnections(): void {
+  logger.info(`[PortManager] Closing ${activeConnections.size} active connections...`);
+
+  Array.from(activeConnections).forEach(conn => {
+    try {
+      // End connection gracefully
+      if (conn.end) {
+        conn.end();
+      } else if (conn.destroy) {
+        conn.destroy();
+      }
+    } catch (e) {
+      // Ignore errors during shutdown
+    }
+  });
+
+  activeConnections.clear();
+}
+
+/**
+ * Layer 5: Comprehensive graceful shutdown with connection draining
  */
 export function setupGracefulShutdown(
   server: Server,
@@ -331,38 +377,54 @@ export function setupGracefulShutdown(
 
     shutdownInProgress = true;
     serverState.isShuttingDown = true;
-    
-    logger.info(`[PortManager] ${signal} - shutting down...`);
 
-    // Hard timeout
+    logger.info(`[PortManager] ${signal} - shutting down (${activeConnections.size} active connections)...`);
+
+    // Hard timeout - increased for connection draining
     const forceExit = setTimeout(() => {
       logger.error(`[PortManager] Shutdown timeout, forcing exit`);
+      closeAllConnections();
       releaseServerLock();
       process.exit(1);
-    }, 15000);
+    }, 20000);
 
     try {
+      // Stop accepting new connections first
+      if (server.listening) {
+        server.close(() => {
+          logger.info(`[PortManager] Server stopped accepting new connections`);
+        });
+      }
+
+      // Run custom shutdown handler (queue draining, etc.)
       if (onShutdown) {
         await Promise.race([
           onShutdown(),
           new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 10000))
-        ]).catch(() => {});
+        ]).catch((err) => {
+          logger.warn(`[PortManager] Shutdown handler error:`, err);
+        });
       }
 
-      if (server.listening) {
-        await new Promise<void>((resolve) => {
-          server.close(() => {
-            logger.info(`[PortManager] Server closed`);
-            resolve();
-          });
-        });
+      // Wait for active connections to finish (max 5 seconds)
+      const connDrainStart = Date.now();
+      while (activeConnections.size > 0 && Date.now() - connDrainStart < 5000) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      if (activeConnections.size > 0) {
+        logger.warn(`[PortManager] ${activeConnections.size} connections still active, closing forcefully`);
+        closeAllConnections();
       }
 
       clearTimeout(forceExit);
       releaseServerLock();
+      logger.info(`[PortManager] Graceful shutdown complete`);
       process.exit(0);
     } catch (err) {
+      logger.error(`[PortManager] Shutdown error:`, err);
       clearTimeout(forceExit);
+      closeAllConnections();
       releaseServerLock();
       process.exit(1);
     }

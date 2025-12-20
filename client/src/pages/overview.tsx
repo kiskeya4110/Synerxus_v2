@@ -5,9 +5,10 @@ import { Trophy, Target, TrendingUp, Users, Clock, FolderOpen, Award, ChevronRig
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import OrganizationHeader from "@/components/layout/organization-header";
-import MobileBottomNav from "@/components/layout/mobile-bottom-nav";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import Footer from "@/components/layout/footer";
 import { SDG_GOALS } from "@shared/sdg-goals";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { User } from "@shared/schema";
 
 import sdg1 from "@assets/E_SDG_PRINT-01_1762550174893.jpg";
@@ -38,6 +39,7 @@ const SDG_ICONS: Record<number, string> = {
 export default function Overview() {
   const [, navigate] = useLocation();
   const userId = localStorage.getItem('currentUserId');
+  const isMobile = useIsMobile();
 
   const { data: currentUser } = useQuery<User>({
     queryKey: ["/api/users/me", userId],
@@ -102,11 +104,11 @@ export default function Overview() {
 
   const challengeProgress = Math.min(78, Math.round((metrics.totalHours / 500) * 100));
 
-  return (
-    <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
-      <OrganizationHeader activeTab="overview" />
-      
-      <div className="md:hidden" style={{ margin: '0 24px' }}>
+  // Mobile PWA View
+  if (isMobile) {
+    return (
+      <OrganizationPWALayout activeTab="potential">
+        <div style={{ margin: '0 16px', paddingTop: '16px' }}>
         <div
           style={{
             background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%)',
@@ -723,9 +725,17 @@ export default function Overview() {
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
-      <div className="hidden md:block max-w-7xl mx-auto p-6 pb-24">
+  // Desktop View
+  return (
+    <div className="h-screen overflow-y-auto bg-slate-100" style={{ paddingBottom: '180px' }}>
+      <OrganizationHeader activeTab="overview" />
+
+      <div className="max-w-7xl mx-auto p-6 pb-24">
         {/* Top Navigation Button */}
         <div className="mb-6 flex gap-2">
           <button
@@ -902,13 +912,7 @@ export default function Overview() {
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <MobileBottomNav />
-
-      {/* Footer - Hidden on mobile when navigation is shown */}
-      <div className="hidden md:block">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }

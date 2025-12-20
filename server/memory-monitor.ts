@@ -28,15 +28,25 @@ interface MemoryConfig {
 }
 
 const DEFAULT_CONFIG: MemoryConfig = {
-  warningThresholdPercent: 85,   // Warn when heap exceeds 85%
-  criticalThresholdPercent: 95,  // Critical when heap exceeds 95%
-  checkIntervalMs: 30000,  // Every 30 seconds
-  historySize: 60,         // Keep last 60 measurements (30 minutes at 30s intervals)
+  warningThresholdPercent: 80,   // Warn when heap exceeds 80% (lowered for earlier detection)
+  criticalThresholdPercent: 90,  // Critical when heap exceeds 90% (lowered for earlier action)
+  checkIntervalMs: 15000,  // Every 15 seconds (more frequent checks)
+  historySize: 120,        // Keep last 120 measurements (30 minutes at 15s intervals)
 };
 
 // Minimum heap size (MB) before percentage-based checks apply
-// Node.js starts with small heaps that grow dynamically, so high % with small heap is normal
-const MIN_HEAP_SIZE_FOR_ALERTS_MB = 200;
+// Lowered to catch issues earlier in application lifecycle
+const MIN_HEAP_SIZE_FOR_ALERTS_MB = 100;
+
+// Callback for system health updates
+let healthUpdateCallback: ((pressure: boolean) => void) | null = null;
+
+/**
+ * Register callback for health updates (circuit breaker integration)
+ */
+export function onMemoryPressureChange(callback: (pressure: boolean) => void): void {
+  healthUpdateCallback = callback;
+}
 
 class MemoryMonitor {
   private config: MemoryConfig;
@@ -188,7 +198,19 @@ class MemoryMonitor {
 
     // Skip percentage-based alerts for small heaps (normal in Node.js)
     if (stats.heapTotalMB < MIN_HEAP_SIZE_FOR_ALERTS_MB) {
+      // Still notify circuit breaker that memory is fine
+      if (healthUpdateCallback) {
+        healthUpdateCallback(false);
+      }
       return;
+    }
+
+    // Determine if under memory pressure
+    const underPressure = stats.heapUsedPercent >= this.config.warningThresholdPercent;
+
+    // Notify circuit breaker of memory pressure state
+    if (healthUpdateCallback) {
+      healthUpdateCallback(underPressure);
     }
 
     // Check thresholds

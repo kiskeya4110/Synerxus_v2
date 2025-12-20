@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BarChart, Share2, Download, Twitter, Linkedin, Facebook, Copy } from "lucide-react";
+import { BarChart, Share2, Download, Twitter, Linkedin, Facebook, Copy, TrendingUp, Users, Clock, Target } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -10,7 +10,9 @@ import BeforeAfterComparison from "@/components/impact/before-after-comparison";
 import { Link, useLocation } from "wouter";
 import { Line, Bar, Radar } from "react-chartjs-2";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import OrganizationHeader from "@/components/layout/organization-header";
+import OrganizationPWALayout from "@/components/layout/organization-pwa-layout";
 import VolunteerNav from "@/components/layout/volunteer-nav";
 import Footer from "@/components/layout/footer";
 import {
@@ -52,6 +54,7 @@ interface ImpactVisualizationProps {
 export default function ImpactVisualization({ embedded = false }: ImpactVisualizationProps) {
   const { toast } = useToast();
   const userType = localStorage.getItem('userType');
+  const isMobile = useIsMobile();
   const [, navigate] = useLocation();
   const [activeTab, setActiveTab] = useState("before-after");
   const [selectedMetric, setSelectedMetric] = useState<any>(null);
@@ -504,14 +507,92 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
   // Check if we have any data to display (use backend monthlyImpactData as primary source)
   const hasData = 
     (dashboardData?.monthlyImpactData && dashboardData.monthlyImpactData.length > 0) ||
-    projects.length > 0 || 
-    projectImpacts.length > 0 || 
+    projects.length > 0 ||
+    projectImpacts.length > 0 ||
     volunteerActivities.length > 0;
+
+  const isOrganization = currentUser?.userType === 'organization';
+
+  // Mobile organization PWA view
+  if (!embedded && isOrganization && isMobile) {
+    return (
+      <OrganizationPWALayout>
+        <div className="p-4">
+          <div className="mb-4">
+            <h1 className="text-xl font-bold mb-1">Impact Report</h1>
+            <p className="text-sm text-gray-600">Visualize your volunteer impact</p>
+          </div>
+
+          {/* Stats Cards - Mobile */}
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <Card className="p-3 text-center">
+              <Clock className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{aggregatedMetrics.totalHours.toLocaleString()}</p>
+              <p className="text-[10px] text-gray-500">Total Hours</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{aggregatedMetrics.totalPeople.toLocaleString()}</p>
+              <p className="text-[10px] text-gray-500">People Impacted</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <TrendingUp className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{aggregatedMetrics.communitiesServed}</p>
+              <p className="text-[10px] text-gray-500">Communities</p>
+            </Card>
+            <Card className="p-3 text-center">
+              <Target className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+              <p className="text-lg font-bold">{aggregatedMetrics.sdgsAddressed}</p>
+              <p className="text-[10px] text-gray-500">SDGs Addressed</p>
+            </Card>
+          </div>
+
+          {/* Before/After Section */}
+          <Card className="mb-4">
+            <CardHeader className="pb-2 px-3 pt-3">
+              <CardTitle className="text-sm font-semibold">Before & After Impact</CardTitle>
+            </CardHeader>
+            <CardContent className="px-3 pb-3">
+              {hasData ? (
+                <BeforeAfterComparison data={beforeAfterData} />
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  No impact data available yet
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportPDF}
+              className="flex-1"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export PDF
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleShareSocial('linkedin')}
+              className="flex-1"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
+            </Button>
+          </div>
+        </div>
+      </OrganizationPWALayout>
+    );
+  }
 
   return (
     <div style={{ maxHeight: '100vh', overflowY: 'auto', backgroundColor: '#f9fafb' }}>
       {!embedded && currentUser?.userType === 'volunteer' && <VolunteerNav />}
-      {!embedded && currentUser?.userType === 'organization' && <OrganizationHeader activeTab="reports" />}
+      {!embedded && isOrganization && <OrganizationHeader activeTab="reports" />}
       <div className={`${!embedded ? 'p-6 max-w-7xl mx-auto space-y-6' : 'space-y-6'}`}>
       {/* Page Header with Action Buttons */}
       <div className={`mb-6 ${!embedded ? '' : 'px-6'}`}>

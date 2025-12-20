@@ -1,10 +1,10 @@
 import { useLocation } from "wouter";
-import { Home, FolderOpen, LayoutGrid, Users, Target } from "lucide-react";
+import { Home, FolderOpen, Users, Target, Lightbulb } from "lucide-react";
 
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: Home, path: '/organization-dashboard' },
   { id: 'projects', label: 'Projects', icon: FolderOpen, path: '/projects' },
-  { id: 'overview', label: 'Overview', icon: LayoutGrid, path: '/overview', isCenter: true },
+  { id: 'overview', label: 'Potential', icon: Lightbulb, path: '/overview', isCenter: true },
   { id: 'volunteers', label: 'Volunteers', icon: Users, path: '/volunteers' },
   { id: 'sdgs', label: 'SDGs', icon: Target, path: '/sdg-mapping' },
 ];
@@ -39,8 +39,8 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
       <nav
         className="fixed bottom-0 left-0 right-0 h-14 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom,0px)] z-[1000] md:hidden"
         style={{
-          background: 'linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 75%, #d35400 100%)',
-          boxShadow: '0 -2px 16px rgba(26, 10, 46, 0.4)',
+          background: 'linear-gradient(90deg, #FAF9F7 0%, #FEF9E7 50%, #FFF8DC 100%)',
+          boxShadow: '0 -2px 16px rgba(0, 0, 0, 0.08)',
         }}
         data-testid="mobile-bottom-nav"
       >
@@ -54,23 +54,27 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 onClick={() => handleNavClick(item)}
                 data-testid={`nav-${item.id}`}
                 style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  background: active 
-                    ? 'linear-gradient(135deg, #ff9f43 0%, #d35400 100%)'
-                    : 'rgba(255, 255, 255, 0.25)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '2px',
+                  padding: '6px 12px',
+                  borderRadius: '12px',
+                  background: active
+                    ? 'linear-gradient(135deg, #14532d 0%, #166534 100%)'
+                    : 'linear-gradient(135deg, #166534 0%, #22c55e 100%)',
                   border: 'none',
                   cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: active ? '0 2px 10px rgba(211, 84, 0, 0.4)' : 'none',
-                  transform: 'translateY(-6px)',
+                  boxShadow: '0 2px 12px rgba(22, 101, 52, 0.5)',
+                  transform: 'translateY(-8px)',
                   transition: 'transform 0.2s, box-shadow 0.2s, background 0.2s',
+                  minWidth: '60px',
                 }}
               >
-                <item.icon size={18} style={{ color: '#ffffff' }} />
+                <item.icon size={20} style={{ color: '#ffffff' }} />
+                <span style={{ fontSize: '8px', fontWeight: '600', color: '#ffffff', letterSpacing: '0.3px' }}>
+                  {item.label}
+                </span>
               </button>
             );
           }
@@ -89,7 +93,7 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 backgroundColor: 'transparent',
                 border: 'none',
                 cursor: 'pointer',
-                color: active ? '#ffffff' : 'rgba(255, 255, 255, 0.8)',
+                color: active ? '#1e293b' : '#64748b',
                 transition: 'all 0.2s ease',
                 minWidth: '48px',
                 borderRadius: '8px',
@@ -99,14 +103,14 @@ export default function MobileBottomNav({ onCreateClick }: MobileBottomNavProps)
                 style={{
                   padding: '6px',
                   borderRadius: '8px',
-                  backgroundColor: active ? 'rgba(255, 255, 255, 0.35)' : 'transparent',
+                  backgroundColor: active ? 'rgba(16, 185, 129, 0.15)' : 'transparent',
                   transition: 'all 0.2s ease',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <item.icon size={18} strokeWidth={2} style={{ color: '#ffffff' }} />
+                <item.icon size={18} strokeWidth={2} style={{ color: active ? '#059669' : '#64748b' }} />
               </div>
               <span style={{ fontSize: '9px', fontWeight: active ? '600' : '500', letterSpacing: '0.2px' }}>
                 {item.label}

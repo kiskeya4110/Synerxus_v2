@@ -23,17 +23,28 @@ interface CacheStats {
 class MemoryCache {
   private cache: Map<string, CacheEntry<any>> = new Map();
   private inflight: Map<string, Promise<any>> = new Map(); // In-flight request deduplication
+  private prefixIndex: Map<string, Set<string>> = new Map(); // Index for faster pattern deletion
   private maxSize: number;
   private defaultTTL: number;
   private stats: CacheStats = { hits: 0, misses: 0, sets: 0, evictions: 0 };
   private dedupeCount: number = 0; // Track deduplicated requests
+  private cleanupInterval: NodeJS.Timeout;
 
   constructor(options: { maxSize?: number; defaultTTL?: number } = {}) {
-    this.maxSize = options.maxSize || 1000; // Max 1000 entries
+    this.maxSize = options.maxSize || 2000; // Increased to 2000 entries for better hit rate
     this.defaultTTL = options.defaultTTL || 30000; // 30 seconds default
 
-    // Periodic cleanup of expired entries
-    setInterval(() => this.cleanup(), 60000); // Every minute
+    // Periodic cleanup of expired entries - more frequent for better memory management
+    this.cleanupInterval = setInterval(() => this.cleanup(), 30000); // Every 30 seconds
+  }
+
+  /**
+   * Stop the cache cleanup interval (for graceful shutdown)
+   */
+  stop(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+    }
   }
 
   /**
@@ -73,6 +84,17 @@ class MemoryCache {
       expiresAt: Date.now() + ttl,
       createdAt: Date.now(),
     });
+
+    // Update prefix index for faster pattern deletion
+    const colonIndex = key.indexOf(':');
+    if (colonIndex > 0) {
+      const prefix = key.substring(0, colonIndex + 1);
+      if (!this.prefixIndex.has(prefix)) {
+        this.prefixIndex.set(prefix, new Set());
+      }
+      this.prefixIndex.get(prefix)!.add(key);
+    }
+
     this.stats.sets++;
   }
 
@@ -80,24 +102,75 @@ class MemoryCache {
    * Delete a specific key
    */
   delete(key: string): boolean {
-    return this.cache.delete(key);
+    const deleted = this.cache.delete(key);
+
+    // Remove from prefix index
+    if (deleted) {
+      const colonIndex = key.indexOf(':');
+      if (colonIndex > 0) {
+        const prefix = key.substring(0, colonIndex + 1);
+        const prefixSet = this.prefixIndex.get(prefix);
+        if (prefixSet) {
+          prefixSet.delete(key);
+          if (prefixSet.size === 0) {
+            this.prefixIndex.delete(prefix);
+          }
+        }
+      }
+    }
+
+    return deleted;
   }
 
   /**
    * Delete all keys matching a pattern (prefix)
+   * Uses prefix index for O(k) deletion where k is number of matching keys
    */
   deletePattern(pattern: string): number {
     let deleted = 0;
+
+    // Try to use prefix index first for exact prefix match
+    const colonIndex = pattern.indexOf(':');
+    if (colonIndex > 0 && pattern.endsWith(':')) {
+      // Exact prefix match - use index
+      const prefixSet = this.prefixIndex.get(pattern);
+      if (prefixSet) {
+        Array.from(prefixSet).forEach(key => {
+          this.cache.delete(key);
+          deleted++;
+        });
+        this.prefixIndex.delete(pattern);
+        return deleted;
+      }
+    }
+
+    // Fallback to scanning for partial patterns
     const keysToDelete: string[] = [];
     this.cache.forEach((_, key) => {
       if (key.startsWith(pattern)) {
         keysToDelete.push(key);
       }
     });
-    keysToDelete.forEach(key => {
+
+    for (const key of keysToDelete) {
       this.cache.delete(key);
+
+      // Update prefix index
+      const keyColonIndex = key.indexOf(':');
+      if (keyColonIndex > 0) {
+        const prefix = key.substring(0, keyColonIndex + 1);
+        const prefixSet = this.prefixIndex.get(prefix);
+        if (prefixSet) {
+          prefixSet.delete(key);
+          if (prefixSet.size === 0) {
+            this.prefixIndex.delete(prefix);
+          }
+        }
+      }
+
       deleted++;
-    });
+    }
+
     return deleted;
   }
 
@@ -106,6 +179,8 @@ class MemoryCache {
    */
   clear(): void {
     this.cache.clear();
+    this.prefixIndex.clear();
+    this.inflight.clear();
   }
 
   /**
@@ -273,9 +348,9 @@ export const invalidateCache = {
   },
 };
 
-// Export singleton instance
+// Export singleton instance with increased capacity for better performance
 export const cache = new MemoryCache({
-  maxSize: 500,
+  maxSize: 2000,  // Increased from 500 for better hit rate
   defaultTTL: CACHE_TTL.DASHBOARD,
 });
 

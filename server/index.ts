@@ -10,12 +10,18 @@ import { cache } from "./cache";
 import { getCircuitBreakerStats, isSystemHealthy } from "./circuit-breaker";
 import { getQueueStats, isOverloaded, drainQueues } from "./request-queue";
 import { startMemoryMonitoring, getMemorySummary } from "./memory-monitor";
-import { 
-  initializePortManagement, 
-  bindPortWithRetry, 
+import {
+  initializePortManagement,
+  bindPortWithRetry,
   setupGracefulShutdown,
-  getServerState 
+  getServerState,
+  trackConnection,
+  getActiveConnectionCount
 } from "./port-management";
+import { updateSystemHealth } from "./circuit-breaker";
+import { onMemoryPressureChange } from "./memory-monitor";
+import { isPoolUnderPressure } from "./db";
+import { randomBytes } from "crypto";
 
 // Initialize port management framework FIRST (before any other code)
 // This performs pre-startup cleanup and acquires the process lock
@@ -96,6 +102,41 @@ const apiLimiter = rateLimit({
 // Apply rate limiting to all API routes
 app.use('/api', apiLimiter);
 
+// Request ID middleware for tracing
+app.use((req, res, next) => {
+  // Generate a unique request ID
+  const requestId = req.headers['x-request-id'] as string ||
+    `req-${randomBytes(8).toString('hex')}`;
+  req.headers['x-request-id'] = requestId;
+  res.setHeader('X-Request-ID', requestId);
+  next();
+});
+
+// Request timeout middleware (30 second default for API)
+const REQUEST_TIMEOUT_MS = parseInt(process.env.REQUEST_TIMEOUT_MS || '30000', 10);
+app.use('/api', (req, res, next) => {
+  const timeout = setTimeout(() => {
+    if (!res.headersSent) {
+      logger.warn(`[Request] Timeout after ${REQUEST_TIMEOUT_MS}ms`, {
+        requestId: req.headers['x-request-id'],
+        path: req.path,
+        method: req.method,
+      });
+      res.status(504).json({
+        error: 'Gateway Timeout',
+        message: 'Request processing took too long',
+        requestId: req.headers['x-request-id'],
+      });
+    }
+  }, REQUEST_TIMEOUT_MS);
+
+  // Clear timeout when response finishes
+  res.on('finish', () => clearTimeout(timeout));
+  res.on('close', () => clearTimeout(timeout));
+
+  next();
+});
+
 // HTTP caching headers middleware for API responses
 app.use('/api', (req, res, next) => {
   // Skip caching for mutations (POST, PUT, DELETE, PATCH)
@@ -124,6 +165,8 @@ app.get('/health', (req, res) => {
   const systemHealthy = isSystemHealthy();
   const overloaded = isOverloaded();
   const memoryHealthy = memorySummary.isHealthy;
+  const serverState = getServerState();
+  const activeConnections = getActiveConnectionCount();
 
   // Return 503 if system is unhealthy (for load balancer health checks)
   const statusCode = systemHealthy && !overloaded && memoryHealthy ? 200 : 503;
@@ -153,13 +196,18 @@ app.get('/health', (req, res) => {
     cache: cacheStats,
     circuitBreakers: circuitBreakerStats,
     queues: queueStats,
+    connections: {
+      active: activeConnections,
+      serverState: serverState.isStarting ? 'starting' : serverState.isShuttingDown ? 'shutting_down' : 'running',
+    },
     flags: {
       systemHealthy,
       overloaded,
       memoryHealthy,
+      dbPoolHealthy: poolStats.health?.isHealthy ?? true,
     },
     pid: process.pid,
-    version: 'sat1325upgrade',
+    version: 'sat1325upgrade-v2',
   });
 });
 
@@ -225,6 +273,18 @@ app.use((req, res, next) => {
   startMemoryMonitoring();
   logger.info('[Server] Memory monitoring started');
 
+  // Wire up memory pressure to circuit breaker
+  onMemoryPressureChange((pressure) => {
+    updateSystemHealth({ memoryPressure: pressure });
+  });
+
+  // Periodic DB pool health check for circuit breaker
+  setInterval(() => {
+    updateSystemHealth({ dbPoolUnderPressure: isPoolUnderPressure() });
+  }, 5000);
+
+  logger.info('[Server] Health monitoring integration active');
+
   // Initialize digest scheduler for weekly email digests (production only, deferred)
   // In development, skip to speed up server startup
   if (process.env.NODE_ENV === 'production') {
@@ -283,6 +343,13 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     logger.info(`[Server] Port management framework active - PID: ${process.pid}`);
+
+    // Track connections for graceful shutdown
+    server.on('connection', (conn) => {
+      trackConnection(conn);
+    });
+
+    logger.info(`[Server] Connection tracking enabled`);
   });
 
   // Setup comprehensive graceful shutdown handlers

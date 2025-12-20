@@ -11,8 +11,6 @@ import { getCircuitBreakerStats, isSystemHealthy } from "./circuit-breaker";
 import { getQueueStats, isOverloaded, drainQueues } from "./request-queue";
 import { startMemoryMonitoring, getMemorySummary } from "./memory-monitor";
 import {
-  initializePortManagement,
-  bindPortWithRetry,
   setupGracefulShutdown,
   getServerState,
   trackConnection,
@@ -23,9 +21,8 @@ import { onMemoryPressureChange } from "./memory-monitor";
 import { isPoolUnderPressure } from "./db";
 import { randomBytes } from "crypto";
 
-// Initialize port management framework FIRST (before any other code)
-// This performs pre-startup cleanup and acquires the process lock
-initializePortManagement(5000);
+// Server PID for debugging
+const serverPid = process.pid;
 
 // Global error handlers to prevent crashes from unhandled rejections/exceptions
 process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
@@ -333,24 +330,52 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = 5000;
 
-  // Use comprehensive port management framework for resilient binding
-  // Features: process lock, aggressive retry with exponential backoff, graceful shutdown
-  bindPortWithRetry(server, {
-    port,
-    host: "0.0.0.0",
-    maxRetries: 10,           // 10 retry attempts with exponential backoff
-    baseRetryDelayMs: 500,    // Start with 500ms delay, grows exponentially
-  }, () => {
-    log(`serving on port ${port}`);
-    logger.info(`[Server] Port management framework active - PID: ${process.pid}`);
+  // Function to start listening with retry
+  const startListening = (attempt: number = 1) => {
+    logger.info(`[Server] Attempting to bind to port ${port} (attempt ${attempt}/5)`);
+    
+    const onError = (err: any) => {
+      server.removeListener('error', onError);
+      server.removeListener('listening', onListening);
+      
+      if (err.code === 'EADDRINUSE') {
+        if (attempt < 5) {
+          const delay = 2000 * attempt;
+          logger.warn(`[Server] Port ${port} busy, retry ${attempt}/5 in ${delay}ms...`);
+          // Close the server to release any partial binding
+          server.close(() => {
+            setTimeout(() => startListening(attempt + 1), delay);
+          });
+        } else {
+          logger.error(`[Server] Port ${port} unavailable after 5 attempts. Exiting...`);
+          process.exit(1);
+        }
+      } else {
+        logger.error(`[Server] Server error:`, err);
+        process.exit(1);
+      }
+    };
 
-    // Track connections for graceful shutdown
-    server.on('connection', (conn) => {
-      trackConnection(conn);
-    });
+    const onListening = () => {
+      server.removeListener('error', onError);
+      log(`serving on port ${port}`);
+      logger.info(`[Server] Server started - PID: ${process.pid}`);
 
-    logger.info(`[Server] Connection tracking enabled`);
-  });
+      // Track connections for graceful shutdown
+      server.on('connection', (conn) => {
+        trackConnection(conn);
+      });
+
+      logger.info(`[Server] Connection tracking enabled`);
+    };
+
+    server.once('error', onError);
+    server.once('listening', onListening);
+    server.listen(port, "0.0.0.0");
+  };
+
+  // Small delay before first listen attempt
+  setTimeout(() => startListening(1), 1000);
 
   // Setup comprehensive graceful shutdown handlers
   // Handles SIGTERM, SIGINT, SIGHUP, uncaught exceptions, and exit

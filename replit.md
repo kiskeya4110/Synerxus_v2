@@ -30,37 +30,22 @@ Authentication is managed via Firebase Auth with Google OAuth. Client-server com
 - **Impacts Tab**: Global impact report with charts, SDG distribution, and full report navigation
 - **Bottom Navigation**: Home, Projects, Potential, Impacts, Profile with active state indicators
 
-### Bug Fixes & Protections (December 17, 2025)
+### Bug Fixes & Protections (December 20, 2025)
 
-**Comprehensive Port Conflict Prevention Framework**:
-- **Created server/port-management.ts**: Multi-layered defense system against port 5000 crashes:
-  - **Layer 1: Pre-startup Cleanup**:
-    - Detects and removes stale lock files from dead processes
-    - Uses `fuser -k` to clean up stale sockets after confirming process is dead
-    - Handles malformed/corrupt lock files gracefully
-    - NEVER kills running server instances - aborts if another instance is healthy
-  - **Layer 2: Exclusive Lock Acquisition**:
-    - Uses `O_CREAT | O_EXCL` flags for atomic, race-free lock creation
-    - Only one process can acquire the lock at a time
-    - Lock file: `/tmp/synerxus-server.lock` with PID:timestamp format
-  - **Layer 3: Aggressive Retry Strategy**:
-    - `bindPortWithRetry()`: 10 retry attempts with exponential backoff + jitter
-    - Base delay: 500ms, grows exponentially up to 10-second cap
-    - Random jitter (0-200ms) prevents thundering herd on restarts
-  - **Layer 4: OS-Level Socket Options**:
-    - `reusePort: true` and `reuseAddr: true` for faster port release
-    - Prevents TIME_WAIT socket states from blocking port binding
-  - **Layer 5: Comprehensive Graceful Shutdown**:
-    - Handles SIGTERM, SIGINT, SIGHUP, uncaughtException, unhandledRejection
-    - 15-second hard timeout prevents hung shutdowns
-    - Automatic lock file cleanup on all exit paths
-  - **Monitoring Functions**: `getServerState()` for health checks
-  - **Result**: Zero port conflict crashes since implementation
+**Simplified Port Binding with Retry**:
+- **server/index.ts**: Streamlined port binding approach:
+  - 1-second startup delay before first bind attempt (allows system cleanup)
+  - 5 retry attempts with increasing delays (2s, 4s, 6s, 8s intervals)
+  - Proper server.close() between retry attempts to reset server state
+  - Clean listener management (once-style event handlers)
+  - Graceful shutdown via `setupGracefulShutdown()` from port-management.ts
+- **Root Cause**: Zombie Node processes from previous workflow attempts holding system resources even when not actively listening on port 5000
+- **Solution**: Force-kill all Node processes when encountering persistent EADDRINUSE errors
 
-- **server/index.ts Integration**:
-  - `initializePortManagement(5000)` called at startup
-  - Framework logs PID and lock acquisition for debugging
-  - Clean separation of concerns with minimal integration code
+**server/port-management.ts Features**:
+- `setupGracefulShutdown()`: Handles SIGTERM, SIGINT, SIGHUP, uncaughtException, unhandledRejection
+- `trackConnection()` / `getActiveConnectionCount()`: Connection tracking for graceful shutdown
+- `getServerState()`: Server state monitoring for health checks
 
 **Duplicate Page Header in Volunteer Dashboard Fixed**:
 - **client/src/pages/volunteer-dashboard.tsx**: Removed unconditional `<VolunteerNav />` from line 1158

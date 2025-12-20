@@ -233,17 +233,35 @@ export function bindPortWithRetry(
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  // Helper to close server if it's in a bad state
+  async function ensureServerClosed(): Promise<void> {
+    return new Promise((resolve) => {
+      if (server.listening) {
+        server.close(() => resolve());
+      } else {
+        // Remove all listeners to reset server state
+        server.removeAllListeners();
+        resolve();
+      }
+    });
+  }
+
   async function tryBind(): Promise<void> {
     while (serverState.retryCount < maxRetries) {
       serverState.retryCount++;
       const attempt = serverState.retryCount;
+
+      // Clean up server state before each attempt
+      if (attempt > 1) {
+        await ensureServerClosed();
+      }
 
       logger.info(`[PortManager] Binding to port ${port} (attempt ${attempt}/${maxRetries})`);
 
       try {
         await new Promise<void>((resolve, reject) => {
           const onListening = () => {
-            server.removeAllListeners("error");
+            server.removeListener("error", onError);
             resolve();
           };
 
@@ -255,13 +273,7 @@ export function bindPortWithRetry(
           server.once("listening", onListening);
           server.once("error", onError);
 
-          try {
-            server.listen({ port, host, reusePort: true, reuseAddr: true });
-          } catch (err) {
-            server.removeListener("listening", onListening);
-            server.removeListener("error", onError);
-            reject(err);
-          }
+          server.listen(port, host);
         });
 
         // Success!

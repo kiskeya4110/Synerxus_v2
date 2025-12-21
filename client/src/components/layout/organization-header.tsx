@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
   FolderOpen, Users, Plus, MessageSquare,
-  Target, BarChart3, FileText, Bell, Settings, CheckSquare, LogOut, User, Menu, X
+  Target, BarChart3, FileText, Bell, Settings, LogOut, User
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -52,7 +52,6 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const userId = localStorage.getItem('currentUserId');
 
   // Fetch notifications for organization user
@@ -177,52 +176,8 @@ export default function OrganizationHeader({ activeTab = 'dashboard', onCreateCl
             />
           </button>
 
-          {/* Hamburger Menu - Shows on smaller screens when tabs are hidden */}
-          <DropdownMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <button
-                className="lg:hidden"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '8px',
-                  backgroundColor: 'rgba(255,255,255,0.6)',
-                  border: '1px solid rgba(180, 83, 9, 0.3)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#78350f',
-                  transition: 'all 0.2s',
-                }}
-                data-testid="mobile-menu-button"
-              >
-                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              {NAV_TABS.map((tab) => (
-                <DropdownMenuItem
-                  key={tab.id}
-                  className={`cursor-pointer ${currentTab === tab.id ? 'bg-amber-50' : ''}`}
-                  onClick={() => {
-                    if (tab.id === 'create') {
-                      onCreateClick?.();
-                    } else if (tab.path) {
-                      navigate(tab.path);
-                    }
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <tab.icon className="mr-2 h-4 w-4" />
-                  <span>{tab.label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Navigation Tabs - Hidden on Mobile and Tablet, only show on large screens */}
-          <div style={{ alignItems: 'center', gap: '4px' }} className="hidden lg:flex lg:gap-1">
+          {/* Navigation Tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           {NAV_TABS.map((tab) => (
             <button
               key={tab.id}

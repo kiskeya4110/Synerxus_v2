@@ -36,6 +36,7 @@ import { notifyProjectUpdate, notifyNewAssignment, notifyTaskAssigned, notifyApp
 import { sendWeeklyDigest, sendWeeklyDigestsToAll, sendOrganizationWeeklyDigest } from "./email-digest-service";
 import OpenAI from "openai";
 import { suggestSDGsFromText } from "@shared/sdg-goals";
+import { getPaginationParams, paginateArray } from "./pagination";
 
 // ===== ROUTER MODULE IMPORTS =====
 import { usersRouter, setBroadcastFn as setUsersBroadcast } from "./routes/users.router";
@@ -376,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === User Routes ===
   app.get("/api/users", async (req, res) => {
     try {
-      const { userType } = req.query;
+      const { userType, paginate } = req.query;
       const cacheKey = userType ? `users:type:${userType}` : 'users:all';
 
       // Use cache with 60 second TTL
@@ -387,6 +388,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         return allUsers;
       }, 60000);
+
+      // Support optional pagination (backwards compatible)
+      if (paginate === 'true' || req.query.page || req.query.limit) {
+        const paginationParams = getPaginationParams(req);
+        const paginatedResult = paginateArray(users, paginationParams);
+        return res.json(paginatedResult);
+      }
 
       res.json(users);
     } catch (err) {
@@ -523,10 +531,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Organization Routes ===
   app.get("/api/organizations", async (req, res) => {
     try {
+      const { paginate } = req.query;
+
       // Use cache with 2 minute TTL for organizations list
       const organizations = await cache.getOrSet('organizations:all', async () => {
         return await storage.listOrganizations();
       }, 120000);
+
+      // Support optional pagination (backwards compatible)
+      if (paginate === 'true' || req.query.page || req.query.limit) {
+        const paginationParams = getPaginationParams(req);
+        const paginatedResult = paginateArray(organizations, paginationParams);
+        return res.json(paginatedResult);
+      }
 
       res.json(organizations);
     } catch (err) {
@@ -1121,6 +1138,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return await storage.listTasks();
         }
       }, 30000); // 30 second TTL for tasks
+
+      // Support optional pagination (backwards compatible)
+      const { paginate } = req.query;
+      if (paginate === 'true' || req.query.page || req.query.limit) {
+        const paginationParams = getPaginationParams(req);
+        const paginatedResult = paginateArray(tasks, paginationParams);
+        return res.json(paginatedResult);
+      }
 
       res.json(tasks);
     } catch (err: any) {
@@ -1796,6 +1821,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return await storage.listImpactMetrics();
         }
       }, CACHE_TTL.METRICS);
+
+      // Support optional pagination (backwards compatible)
+      const { paginate } = req.query;
+      if (paginate === 'true' || req.query.page || req.query.limit) {
+        const paginationParams = getPaginationParams(req);
+        const paginatedResult = paginateArray(metrics, paginationParams);
+        return res.json(paginatedResult);
+      }
 
       res.json(metrics);
     } catch (err) {
@@ -3796,10 +3829,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/volunteers", async (req, res) => {
     try {
+      const { paginate } = req.query;
+
       // Use cache with 60 second TTL for volunteers list
       const volunteers = await cache.getOrSet('volunteers:all', async () => {
         return await storage.listVolunteers();
       }, 60000);
+
+      // Support optional pagination (backwards compatible)
+      if (paginate === 'true' || req.query.page || req.query.limit) {
+        const paginationParams = getPaginationParams(req);
+        const paginatedResult = paginateArray(volunteers, paginationParams);
+        return res.json(paginatedResult);
+      }
 
       res.json(volunteers);
     } catch (err) {

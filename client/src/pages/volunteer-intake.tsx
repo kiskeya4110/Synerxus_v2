@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,6 +28,9 @@ import {
   Heart,
   Clock,
   Calendar,
+  Save,
+  Check,
+  Cloud,
 } from "lucide-react";
 import {
   Form,
@@ -155,6 +158,12 @@ export default function VolunteerIntake() {
   const [skillProficiency, setSkillProficiency] = useState(50); // Default 50%
   const [interestInput, setInterestInput] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
+
+  // Auto-save state
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedDataRef = useRef<string>("");
+  const isInitialLoadRef = useRef(true);
 
   // Fetch current user to get email
   const userId = localStorage.getItem("currentUserId");
@@ -313,7 +322,111 @@ export default function VolunteerIntake() {
     },
   });
 
+  // Auto-save mutation (silent, no redirect)
+  const autoSaveMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      if (!currentUser?.id) throw new Error("User not authenticated");
+
+      const skillsArray = data.skills.map((s: { name: string; proficiency: number }) => s.name);
+      const skillRatingsObj: Record<string, number> = {};
+      data.skills.forEach((s: { name: string; proficiency: number }) => {
+        skillRatingsObj[s.name] = s.proficiency;
+      });
+
+      const profileData = {
+        volunteerName: data.name,
+        skills: skillsArray,
+        skillRatings: skillRatingsObj,
+        interests: data.interests,
+        location: data.location,
+        preferredSdgs: data.sdgGoals,
+        weeklyAvailability: data.weeklyHours,
+        availability: data.availability,
+        timezone: data.timezone,
+        preferredCommitment: data.preferredCommitment,
+        preferredWorkStyle: "remote",
+        profilePhotoUrl,
+        onboardingCompleted: false, // Don't mark as completed for auto-save
+      };
+
+      return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
+    },
+    onSuccess: () => {
+      setAutoSaveStatus('saved');
+      // Reset to idle after 3 seconds
+      setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      // Silently invalidate queries without showing toast
+      const id = currentUser?.id;
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
+    },
+    onError: () => {
+      setAutoSaveStatus('error');
+      setTimeout(() => setAutoSaveStatus('idle'), 3000);
+    },
+  });
+
+  // Auto-save function with debounce
+  const performAutoSave = useCallback((data: FormData) => {
+    // Don't auto-save if no user or during initial load
+    if (!currentUser?.id || isInitialLoadRef.current) return;
+
+    // Check if data actually changed
+    const dataString = JSON.stringify(data);
+    if (dataString === lastSavedDataRef.current) return;
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set saving status immediately for feedback
+    setAutoSaveStatus('saving');
+
+    // Debounce the actual save by 2 seconds
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      lastSavedDataRef.current = dataString;
+      autoSaveMutation.mutate(data);
+    }, 2000);
+  }, [currentUser?.id, autoSaveMutation]);
+
+  // Watch form changes and trigger auto-save
+  const formValues = form.watch();
+  useEffect(() => {
+    // Skip during initial load
+    if (loadingProfile || isInitialLoadRef.current) return;
+
+    // Validate form has minimum required data before auto-saving
+    if (formValues.name && formValues.name.length > 0) {
+      performAutoSave(formValues as FormData);
+    }
+  }, [formValues, loadingProfile, performAutoSave]);
+
+  // Mark initial load as complete after profile loads
+  useEffect(() => {
+    if (!loadingProfile && profileResponse !== undefined) {
+      // Small delay to ensure form reset has completed
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+        // Set initial data reference
+        lastSavedDataRef.current = JSON.stringify(form.getValues());
+      }, 500);
+    }
+  }, [loadingProfile, profileResponse, form]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const onSubmit = (data: FormData) => {
+    // Clear any pending auto-save
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
     profileMutation.mutate(data);
   };
 
@@ -441,10 +554,36 @@ export default function VolunteerIntake() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold mb-2">Volunteer Profile Settings</h1>
+          {/* Auto-save status indicator */}
+          <div className="flex items-center gap-2 text-sm">
+            {autoSaveStatus === 'saving' && (
+              <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                <Cloud className="h-4 w-4 animate-pulse" />
+                Saving...
+              </span>
+            )}
+            {autoSaveStatus === 'saved' && (
+              <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                <Check className="h-4 w-4" />
+                Saved
+              </span>
+            )}
+            {autoSaveStatus === 'error' && (
+              <span className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                <X className="h-4 w-4" />
+                Save failed
+              </span>
+            )}
+          </div>
+        </div>
         <p className="text-muted-foreground">
           Create or update your volunteer profile to get matched with
           organizations that align with your skills, interests, and goals.
+          <span className="block mt-1 text-sm text-blue-600 dark:text-blue-400">
+            Your changes are automatically saved as you type.
+          </span>
         </p>
       </div>
 

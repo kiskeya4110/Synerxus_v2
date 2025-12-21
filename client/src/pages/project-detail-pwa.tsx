@@ -278,9 +278,22 @@ export default function ProjectDetailPWA() {
       {/* Main scrollable content */}
       <div className="flex-1 overflow-y-auto pb-20 w-full max-w-full">
         {/* Hero Image Section */}
-      <div className="relative w-full h-64 bg-gradient-to-br from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-black/10" />
-        <Briefcase className="h-20 w-20 text-white opacity-20" />
+      <div className="relative w-full h-64 flex items-center justify-center overflow-hidden">
+        {project.coverImage ? (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${project.coverImage})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/40" />
+          </>
+        ) : (
+          <>
+            {/* Dark gradient fallback for readability */}
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800" />
+            <Briefcase className="h-20 w-20 text-white/30 relative z-10" />
+          </>
+        )}
       </div>
 
       {/* Match Score Badge */}

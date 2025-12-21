@@ -144,6 +144,16 @@ export default function Header() {
     setLocation('/profile');
   };
 
+  const handleSettingsClick = () => {
+    if (currentUser?.userType === 'organization') {
+      setLocation('/organization-profile-settings');
+    } else if (currentUser?.userType === 'corporate-partner') {
+      setLocation('/corporate-partner-profile-settings');
+    } else {
+      setLocation('/volunteer-profile-settings');
+    }
+  };
+
   const handleNotificationClick = async (notification: any) => {
     try {
       // Mark notification as read on backend
@@ -365,7 +375,7 @@ export default function Header() {
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={handleProfileClick} data-testid="menu-settings">
+                <DropdownMenuItem className="cursor-pointer" onClick={handleSettingsClick} data-testid="menu-settings">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>

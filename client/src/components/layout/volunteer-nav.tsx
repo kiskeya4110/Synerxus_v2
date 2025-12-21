@@ -81,9 +81,9 @@ export default function VolunteerNav() {
   };
 
   return (
-    <nav className="hidden md:block sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
+    <nav className="hidden md:block sticky top-0 z-[100] border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm relative pointer-events-auto">
+      <div className="container mx-auto px-4 sm:px-6 pointer-events-auto">
+        <div className="flex items-center justify-between h-16 pointer-events-auto">
           {/* Logo and Brand - Never shrink, always visible */}
           <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0">
             <button
@@ -106,10 +106,10 @@ export default function VolunteerNav() {
             </button>
 
             {/* Hamburger Menu for Nav Items - Shows on md-lg screens when nav items are hidden */}
-            <div className="lg:hidden relative">
+            <div className="lg:hidden relative z-[100]">
               <button
                 onClick={() => setNavMenuOpen(!navMenuOpen)}
-                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                 aria-label="Navigation menu"
                 data-testid="nav-hamburger-menu"
               >
@@ -121,12 +121,12 @@ export default function VolunteerNav() {
                 <>
                   {/* Backdrop */}
                   <div
-                    className="fixed inset-0 z-30"
+                    className="fixed inset-0 z-[110]"
                     onClick={() => setNavMenuOpen(false)}
                   />
 
                   {/* Menu Panel */}
-                  <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-40 overflow-hidden">
+                  <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[120] overflow-hidden">
                     <div className="py-1">
                       {VOLUNTEER_NAV_ITEMS.map((item) => {
                         const isActive = location === item.href ||
@@ -203,13 +203,21 @@ export default function VolunteerNav() {
             </Link>
 
             {/* User Profile Menu */}
-            <div className="relative">
+            <div className="relative z-[100] pointer-events-auto">
               <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMenuOpen(!menuOpen);
+                }}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer active:scale-95 pointer-events-auto select-none"
                 aria-label="User menu"
+                aria-expanded={menuOpen}
+                aria-haspopup="true"
+                data-testid="volunteer-nav-profile-menu"
+                type="button"
               >
-                <Avatar className="h-8 w-8 border-2 border-blue-500">
+                <Avatar className="h-8 w-8 border-2 border-blue-500 pointer-events-none">
                   <AvatarImage src={currentUser?.avatar || undefined} alt={currentUser?.displayName || 'User'} />
                   <AvatarFallback className="bg-gradient-to-br from-blue-500 to-blue-600 text-white text-sm font-semibold">
                     {userInitial}
@@ -226,12 +234,12 @@ export default function VolunteerNav() {
                 <>
                   {/* Backdrop */}
                   <div
-                    className="fixed inset-0 z-30"
+                    className="fixed inset-0 z-[110]"
                     onClick={() => setMenuOpen(false)}
                   />
 
                   {/* Menu Panel */}
-                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-40 overflow-hidden max-h-[80vh] flex flex-col">
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl z-[120] overflow-hidden max-h-[80vh] flex flex-col">
                     {/* User Info Header */}
                     <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-700 border-b border-gray-200 dark:border-gray-600 flex-shrink-0">
                       <div className="flex items-center gap-3">

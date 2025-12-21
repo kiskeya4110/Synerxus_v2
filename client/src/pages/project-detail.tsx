@@ -61,6 +61,7 @@ interface Project {
   engagementType?: string;
   commitmentType?: string;
   experienceLevel?: string;
+  coverImage?: string;
   goals?: any;
   [key: string]: any;
 }
@@ -203,6 +204,21 @@ export default function ProjectDetail() {
     enabled: !!projectId,
   });
 
+  // Fetch applications to check if user has already applied
+  const { data: applications = [] } = useQuery({
+    queryKey: ['/api/applications'],
+    queryFn: async () => {
+      const response = await fetch('/api/applications');
+      if (!response.ok) return [];
+      return response.json();
+    }
+  });
+
+  // Check if user has applied for this project
+  const hasApplied = applications.some((app: any) =>
+    app.projectId === projectId && app.userId === parseInt(userId || '0')
+  );
+
   const { toast } = useToast();
 
   // Delete task dialog state - moved to top for React Hooks rules
@@ -290,6 +306,28 @@ export default function ProjectDetail() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to adjust and verify impact", variant: "destructive" });
+    }
+  });
+
+  // Apply to project mutation
+  const applyMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/applications", {
+        projectId,
+        userId: parseInt(userId || '0'),
+        status: 'pending',
+        message: 'I would like to volunteer for this project.'
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      toast({
+        title: "Application Submitted",
+        description: "Your application has been submitted successfully."
+      });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to submit application", variant: "destructive" });
     }
   });
 
@@ -427,15 +465,26 @@ export default function ProjectDetail() {
       {isOrganization && <OrganizationHeader activeTab="projects" />}
 
       {/* Hero Section */}
-      <div 
-        className="relative w-full"
+      <div
+        className="relative w-full overflow-hidden"
         style={{
-          background: project.primarySdg 
-            ? `linear-gradient(135deg, ${SDG_COLORS[project.primarySdg]}dd 0%, ${SDG_COLORS[project.primarySdg]}99 50%, #1a0a2e 100%)`
-            : 'linear-gradient(135deg, #1a0a2e 0%, #3d1a5c 50%, #5c2d6e 100%)'
+          background: 'linear-gradient(135deg, #1e293b 0%, #334155 50%, #1e293b 100%)'
         }}
       >
-        <div className="max-w-6xl mx-auto px-4 py-6 md:py-10">
+        {/* Cover Image Background - prioritized over gradient */}
+        {project.coverImage ? (
+          <>
+            <div
+              className="absolute inset-0 bg-cover bg-center"
+              style={{ backgroundImage: `url(${project.coverImage})` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/70" />
+          </>
+        ) : (
+          /* Fallback: subtle dark gradient for readability */
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
+        )}
+        <div className="relative max-w-6xl mx-auto px-4 py-6 md:py-10">
           {/* Back Button */}
           <Link href="/my-work">
             <Button variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 mb-4" data-testid="button-back-to-projects">
@@ -1073,9 +1122,32 @@ export default function ProjectDetail() {
                 Share Project
               </Button>
               {!isOrganization && (
-                <Button className="w-full justify-start gap-2 bg-green-600 hover:bg-green-700 text-white" data-testid="button-apply-project">
-                  <Plus className="h-4 w-4" />
-                  Apply to Volunteer
+                <Button
+                  className={`w-full justify-start gap-2 ${
+                    hasApplied
+                      ? 'bg-gray-500 hover:bg-gray-500 cursor-not-allowed'
+                      : 'bg-green-600 hover:bg-green-700'
+                  } text-white`}
+                  onClick={() => !hasApplied && applyMutation.mutate()}
+                  disabled={applyMutation.isPending || hasApplied}
+                  data-testid="button-apply-project"
+                >
+                  {hasApplied ? (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Already Applied
+                    </>
+                  ) : applyMutation.isPending ? (
+                    <>
+                      <Clock className="h-4 w-4 animate-spin" />
+                      Applying...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Apply to Volunteer
+                    </>
+                  )}
                 </Button>
               )}
               {canEditProject && (

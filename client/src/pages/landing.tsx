@@ -281,7 +281,7 @@ const WorldMapHeader = ({ selectedCountry, setSelectedCountry }: WorldMapHeaderP
   }, [setSelectedCountry]);
 
   return (
-    <div className="w-full mb-16 px-4 sm:px-6">
+    <div className="w-full mb-16 px-[8%] sm:px-[15%]">
       {/* Section Title */}
       <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 text-center mb-6 sm:mb-8">
         Active Pilot Programs
@@ -367,7 +367,7 @@ const RealTimeStatsBanner = () => {
 
   return (
     <section className="bg-gradient-to-r from-blue-900/20 via-blue-600/15 to-amber-600/20 py-6 sm:py-8 md:py-10 border-y-2 border-blue-900/30 w-full overflow-hidden shadow-lg">
-      <h3 className="text-center text-base sm:text-lg md:text-xl font-bold text-blue-900 mb-4 sm:mb-5 uppercase tracking-wide px-4 sm:px-6 drop-shadow-sm">
+      <h3 className="text-center text-base sm:text-lg md:text-xl font-bold text-blue-900 mb-4 sm:mb-5 uppercase tracking-wide px-[8%] sm:px-[15%] drop-shadow-sm">
         📊 Live Impact Dashboard
       </h3>
       <div className="relative overflow-hidden w-full bg-gradient-to-r from-white/70 via-blue-50/80 to-white/70 py-4 shadow-inner">
@@ -450,7 +450,7 @@ const VolunteerSpotlightSection = () => {
 
   return (
     <section className="bg-gradient-to-br from-blue-50 via-slate-50 to-amber-50 py-12 sm:py-16 md:py-20 border-y border-slate-200">
-      <div className="container mx-auto px-4 sm:px-6">
+      <div className="container mx-auto px-[8%] sm:px-[15%]">
         <div className="max-w-4xl mx-auto">
           {/* Section Title */}
           <div className="text-center mb-10 sm:mb-14">
@@ -598,7 +598,7 @@ export default function Landing() {
     <div className="min-h-screen min-h-[100dvh] bg-[#faf9f7] flex flex-col overflow-x-hidden w-full max-w-full">
       {/* Navigation - PWA optimized with glass effect */}
       <nav className="sticky top-0 z-50 border-b border-slate-200/50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl safe-area-top shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
+        <div className="container mx-auto px-[8%] sm:px-[15%] py-3 sm:py-4 flex justify-between items-center gap-3 sm:gap-4">
           <Link href="/">
             <div className="cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0 min-w-0 touch-feedback">
               <Logo size="sm" showMotto={true} />
@@ -630,7 +630,7 @@ export default function Landing() {
       {/* Scrollable main content */}
       <main className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-20 lg:py-28 relative overflow-hidden" data-testid="section-hero">
+      <section className="container mx-auto px-[8%] sm:px-[15%] py-8 sm:py-12 md:py-20 lg:py-28 relative overflow-hidden" data-testid="section-hero">
         {/* Animated Background Elements - Floating SDG Icons - Hidden on mobile to prevent interference */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-0 md:opacity-[0.15]">
           {/* Animated Floating Items */}
@@ -743,7 +743,7 @@ export default function Landing() {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20">
+      <section className="container mx-auto px-[8%] sm:px-[15%] py-12 sm:py-16 md:py-20">
         <div className="max-w-6xl mx-auto">
           <div className="text-center pt-8 sm:pt-12 px-4 relative z-20">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight mb-3 sm:mb-4">
@@ -812,7 +812,7 @@ export default function Landing() {
       <VolunteerSpotlightSection />
 
       {/* Profile Cards Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <section className="container mx-auto px-[8%] sm:px-[15%] py-12 sm:py-16">
         <WorldMapHeader selectedCountry={selectedCountry} setSelectedCountry={setSelectedCountry} />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto">
@@ -877,7 +877,7 @@ export default function Landing() {
       </section>
 
       {/* SDG Wheel Section */}
-      <section className="container mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-32">
+      <section className="container mx-auto px-[8%] sm:px-[15%] py-16 sm:py-20 md:py-32">
         <div className="max-w-6xl mx-auto">
           {/* Section Title */}
           <div className="text-center mb-8 sm:mb-12">

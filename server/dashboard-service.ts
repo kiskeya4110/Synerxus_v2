@@ -1,6 +1,6 @@
 import { storage } from "./storage";
 import { calculateMatchScore } from "./matching-algorithm";
-import { User, Opportunity } from "@shared/schema";
+import { User, Opportunity, Project } from "@shared/schema";
 import { isValidSdg, extractSdgsFromProjects } from "./sdg-utils";
 import { cache, cacheKeys, CACHE_TTL, invalidateCache } from "./cache";
 import { calculateVolunteerAIU, calculateOrganizationAIU } from "./aiu-service";
@@ -209,8 +209,50 @@ function calculateOrganizationImpactScore(params: {
 }
 
 /**
+ * Convert a project to an opportunity-like format for matching
+ */
+function projectToOpportunity(project: Project): Opportunity {
+  return {
+    id: project.id,
+    title: project.name,
+    description: project.description || "",
+    organizationId: project.organizationId!,
+    projectId: project.id,
+    status: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in-progress' || project.status?.toLowerCase() === 'in progress' ? 'open' : 'closed',
+    requiredSkills: project.requiredSkills || [],
+    optionalSkills: project.optionalSkills || [],
+    sdgGoals: project.sdgGoals || [],
+    location: project.location || "",
+    isRemote: project.engagementType === "remote",
+    engagementType: project.engagementType,
+    category: project.primarySdg ? `SDG ${project.primarySdg}` : "",
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+    startDate: project.startDate,
+    endDate: project.endDate,
+    commitmentType: project.commitmentType || "project-based",
+    ongoingHoursPerWeek: project.ongoingHoursPerWeek,
+    projectTotalHours: project.projectTotalHours,
+    isUrgent: false,
+    primarySdg: project.primarySdg,
+    impactMetricName: project.impactMetricName,
+    impactMetricUnit: project.impactMetricUnit,
+    // Additional required fields for Opportunity type
+    volunteersNeeded: 1,
+    volunteerRoles: null,
+    totalVolunteerContribution: 100,
+    timeCommitment: null,
+    eventDate: null,
+    eventStartTime: null,
+    eventEndTime: null,
+    benefits: null,
+    requirements: null,
+  } as Opportunity;
+}
+
+/**
  * Get projects for a volunteer filtered by AI matching algorithm
- * Only returns opportunities above the match threshold
+ * Returns both opportunities AND projects above the match threshold
  */
 export async function getProjectsForVolunteer(volunteerId: number, matchThreshold: number = DEFAULT_MATCH_THRESHOLD) {
   try {
@@ -224,17 +266,28 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
     const allProfiles = await storage.listVolunteerProfiles();
     const volunteerProfile = allProfiles.find(p => p.userId === volunteerId) || null;
 
-    // Get all opportunities
+    // Get all opportunities AND projects
     const opportunities = await storage.listOpportunities();
+    const allProjects = await storage.listProjects();
+    // Only include active projects
+    const projects = allProjects.filter(p => {
+      const status = p.status?.toLowerCase();
+      return status === 'active' || status === 'in-progress' || status === 'in progress';
+    });
 
-    // Get all organizations to enrich opportunities with organization names
+    // Get all organizations to enrich with organization names
     const allOrganizations = await storage.listOrganizations();
     const organizationMap = new Map(allOrganizations.map(org => [org.id, org]));
 
     // Combine user and profile for matching algorithm
     const volunteerWithProfile = { ...volunteer, profile: volunteerProfile };
 
-    // Calculate match scores for each opportunity and enrich with organization data
+    // Track which projects already have opportunities
+    const projectIdsWithOpportunities = new Set(
+      opportunities.filter(o => o.projectId).map(o => o.projectId)
+    );
+
+    // Calculate match scores for each opportunity
     const matchedOpportunities = opportunities
       .map((opportunity: Opportunity) => {
         const matchResult = calculateMatchScore(volunteerWithProfile, opportunity);
@@ -247,12 +300,35 @@ export async function getProjectsForVolunteer(volunteerId: number, matchThreshol
           matchPercentage: matchResult.score, // For frontend compatibility
           matchBreakdown: matchResult.breakdown,
           matchReasons: matchResult.reasons,
+          sourceType: 'opportunity' as const,
         };
-      })
-      .filter(opp => opp.matchScore >= matchThreshold)
-      .sort((a, b) => b.matchScore - a.matchScore); // Sort by match score desc
+      });
 
-    return matchedOpportunities;
+    // Calculate match scores for projects without opportunities
+    const matchedProjects = projects
+      .filter(project => !projectIdsWithOpportunities.has(project.id))
+      .map((project: Project) => {
+        const opportunityFormat = projectToOpportunity(project);
+        const matchResult = calculateMatchScore(volunteerWithProfile, opportunityFormat);
+        const organization = organizationMap.get(project.organizationId!);
+
+        return {
+          ...opportunityFormat,
+          organizationName: organization?.name || "Unknown Organization",
+          matchScore: matchResult.score,
+          matchPercentage: matchResult.score,
+          matchBreakdown: matchResult.breakdown,
+          matchReasons: matchResult.reasons,
+          sourceType: 'project' as const,
+        };
+      });
+
+    // Combine, filter by threshold, and sort by match score
+    const allItems = [...matchedOpportunities, ...matchedProjects]
+      .filter(item => item.matchScore >= matchThreshold)
+      .sort((a, b) => b.matchScore - a.matchScore);
+
+    return allItems;
   } catch (error) {
     console.error("Error getting projects for volunteer:", error);
     throw error;

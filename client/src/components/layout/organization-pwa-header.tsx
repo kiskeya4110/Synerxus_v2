@@ -4,7 +4,7 @@ import {
   MoreVertical, LogOut, RefreshCw,
   FolderOpen, Users, Target, BarChart3,
   MessageSquare, Home, Bell, Trophy, X,
-  TrendingUp, Award, Lightbulb, Flame
+  TrendingUp, Award, Lightbulb, Flame, Settings
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -91,6 +91,12 @@ export default function OrganizationPWAHeader({
         { icon: Users, label: "Volunteers", desc: "Your team members", action: () => navigate('/volunteers') },
         { icon: Lightbulb, label: "Stories", desc: "Impact storytelling", action: () => navigate('/impact-storytelling') },
         { icon: Award, label: "Recognition", desc: "Celebrate achievements", action: () => navigate('/volunteer-recognition') },
+      ]
+    },
+    {
+      title: "ACCOUNT",
+      items: [
+        { icon: Settings, label: "Settings", desc: "Organization settings", action: () => navigate('/organization-profile-settings') },
       ]
     },
   ];

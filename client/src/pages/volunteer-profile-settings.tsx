@@ -41,6 +41,9 @@ import {
   Award,
   Sliders,
   LogOut,
+  Building2,
+  Cloud,
+  Check,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
@@ -118,15 +121,47 @@ const TIME_SLOTS = [
 ];
 
 const TIMEZONES = [
-  { value: "America/New_York", label: "Eastern Time (ET)" },
-  { value: "America/Chicago", label: "Central Time (CT)" },
-  { value: "America/Denver", label: "Mountain Time (MT)" },
-  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
-  { value: "Europe/London", label: "Greenwich Mean Time (GMT)" },
-  { value: "Europe/Paris", label: "Central European Time (CET)" },
-  { value: "Asia/Kolkata", label: "India Standard Time (IST)" },
-  { value: "Asia/Tokyo", label: "Japan Standard Time (JST)" },
-  { value: "Australia/Sydney", label: "Australian Eastern Time (AET)" },
+  // Americas
+  { value: "America/New_York", label: "Eastern Time (ET) - New York" },
+  { value: "America/Chicago", label: "Central Time (CT) - Chicago" },
+  { value: "America/Denver", label: "Mountain Time (MT) - Denver" },
+  { value: "America/Los_Angeles", label: "Pacific Time (PT) - Los Angeles" },
+  { value: "America/Sao_Paulo", label: "Brasilia Time (BRT) - São Paulo" },
+  // Europe
+  { value: "Europe/London", label: "Greenwich Mean Time (GMT) - London" },
+  { value: "Europe/Paris", label: "Central European Time (CET) - Paris" },
+  { value: "Europe/Berlin", label: "Central European Time (CET) - Berlin" },
+  { value: "Europe/Istanbul", label: "Turkey Time (TRT) - Istanbul" },
+  { value: "Europe/Moscow", label: "Moscow Time (MSK) - Moscow" },
+  // Middle East / Gulf Region
+  { value: "Asia/Dubai", label: "Gulf Standard Time (GST) - Dubai, UAE" },
+  { value: "Asia/Riyadh", label: "Arabia Standard Time (AST) - Riyadh, Saudi Arabia" },
+  { value: "Asia/Qatar", label: "Arabia Standard Time (AST) - Doha, Qatar" },
+  { value: "Asia/Kuwait", label: "Arabia Standard Time (AST) - Kuwait" },
+  { value: "Asia/Bahrain", label: "Arabia Standard Time (AST) - Bahrain" },
+  { value: "Asia/Muscat", label: "Gulf Standard Time (GST) - Muscat, Oman" },
+  { value: "Asia/Tehran", label: "Iran Standard Time (IRST) - Tehran" },
+  { value: "Asia/Baghdad", label: "Arabia Standard Time (AST) - Baghdad, Iraq" },
+  { value: "Asia/Jerusalem", label: "Israel Standard Time (IST) - Jerusalem" },
+  { value: "Asia/Beirut", label: "Eastern European Time (EET) - Beirut, Lebanon" },
+  { value: "Asia/Amman", label: "Eastern European Time (EET) - Amman, Jordan" },
+  // Africa
+  { value: "Africa/Cairo", label: "Eastern European Time (EET) - Cairo, Egypt" },
+  { value: "Africa/Johannesburg", label: "South Africa Standard Time (SAST)" },
+  // South Asia
+  { value: "Asia/Karachi", label: "Pakistan Standard Time (PKT) - Karachi" },
+  { value: "Asia/Kolkata", label: "India Standard Time (IST) - Mumbai, Delhi" },
+  { value: "Asia/Dhaka", label: "Bangladesh Standard Time (BST) - Dhaka" },
+  // East Asia
+  { value: "Asia/Singapore", label: "Singapore Time (SGT) - Singapore" },
+  { value: "Asia/Hong_Kong", label: "Hong Kong Time (HKT) - Hong Kong" },
+  { value: "Asia/Shanghai", label: "China Standard Time (CST) - Shanghai, Beijing" },
+  { value: "Asia/Tokyo", label: "Japan Standard Time (JST) - Tokyo" },
+  { value: "Asia/Seoul", label: "Korea Standard Time (KST) - Seoul" },
+  // Oceania
+  { value: "Australia/Sydney", label: "Australian Eastern Time (AET) - Sydney" },
+  { value: "Australia/Perth", label: "Australian Western Time (AWT) - Perth" },
+  { value: "Pacific/Auckland", label: "New Zealand Time (NZT) - Auckland" },
 ];
 
 // Schemas
@@ -453,7 +488,7 @@ const PersonalInfoSection = ({
             </FormLabel>
             <Select
               onValueChange={field.onChange}
-              defaultValue={field.value || ""}
+              value={field.value || ""}
             >
               <FormControl>
                 <SelectTrigger data-testid="select-years-of-experience">
@@ -487,7 +522,7 @@ const PersonalInfoSection = ({
             </FormLabel>
             <Select
               onValueChange={field.onChange}
-              defaultValue={field.value || ""}
+              value={field.value || ""}
             >
               <FormControl>
                 <SelectTrigger data-testid="select-experience-level">
@@ -881,6 +916,12 @@ export default function VolunteerProfileSettings() {
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const hasInitializedRef = useRef(false); // Track if form has been initialized
 
+  // Auto-save state
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedDataRef = useRef<string>("");
+  const isInitialLoadRef = useRef(true);
+
   // Handle logout
   const handleLogout = async () => {
     await signOut();
@@ -1198,6 +1239,129 @@ export default function VolunteerProfileSettings() {
     ...mutationConfig,
   });
 
+  // Mutation to update user type
+  const userTypeMutation = useMutation({
+    mutationFn: async (newUserType: string) => {
+      if (!currentUser?.id) throw new Error("User not authenticated");
+
+      const response = await fetch(`/api/users/${currentUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userType: newUserType }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update user type");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Update localStorage
+      localStorage.setItem('userType', data.userType);
+
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+
+      toast({
+        title: "Account Type Updated",
+        description: `Your account type has been changed to ${data.userType}. Redirecting...`,
+      });
+
+      // Redirect to appropriate settings page
+      setTimeout(() => {
+        if (data.userType === 'organization') {
+          setLocation('/organization-profile-settings');
+        } else if (data.userType === 'corporate-partner') {
+          setLocation('/corporate-partner-profile-settings');
+        } else {
+          window.location.reload();
+        }
+      }, 1500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update account type",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Auto-save mutation (silent, no redirect, no toast)
+  const autoSaveMutation = useMutation({
+    mutationFn: async (data: FormData) => {
+      if (!currentUser?.id) throw new Error("User not authenticated");
+
+      const skillsArray = data.skills.map((s: { name: string; proficiency: number }) => s.name);
+      const skillRatingsObj: Record<string, number> = {};
+      data.skills.forEach((s: { name: string; proficiency: number }) => {
+        skillRatingsObj[s.name] = s.proficiency;
+      });
+
+      const profileData = {
+        email: data.email,
+        volunteerName: data.name,
+        skills: skillsArray,
+        skillRatings: skillRatingsObj,
+        interests: data.interests,
+        location: data.location,
+        yearsOfExperience: data.yearsOfExperience,
+        professionalTitle: data.professionalTitle,
+        linkedinProfile: data.linkedinProfile,
+        languages: data.languages,
+        employerId: data.employerId ? parseInt(data.employerId) : null,
+        departmentName: data.departmentName,
+        jobTitleAtCompany: data.jobTitleAtCompany,
+        preferredSdgs: data.sdgGoals,
+        weeklyAvailability: data.weeklyHours,
+        availability: data.availability,
+        timezone: data.timezone,
+        preferredCommitment: data.preferredCommitment,
+        preferredWorkStyle: data.preferredWorkStyle,
+        personalStatement: data.personalStatement,
+        matchingPriorities: data.matchingPriorities,
+        experienceLevel: data.experienceLevel,
+        profilePhotoUrl: profilePhotoUrl,
+      };
+
+      return apiRequest("POST", `/api/intake/volunteer-profile?userId=${currentUser.id}`, profileData);
+    },
+    onSuccess: () => {
+      setAutoSaveStatus('saved');
+      // Reset to idle after 3 seconds
+      setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      // Silently invalidate queries without showing toast
+      const id = currentUser?.id;
+      queryClient.invalidateQueries({ queryKey: ["/api/intake/volunteer-profile", id] });
+    },
+    onError: () => {
+      setAutoSaveStatus('error');
+      setTimeout(() => setAutoSaveStatus('idle'), 3000);
+    },
+  });
+
+  // Auto-save function with debounce
+  const performAutoSave = useCallback((data: FormData) => {
+    // Don't auto-save if no user or during initial load
+    if (!currentUser?.id || isInitialLoadRef.current) return;
+
+    // Check if data actually changed
+    const dataString = JSON.stringify(data);
+    if (dataString === lastSavedDataRef.current) return;
+
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Set saving status immediately for feedback
+    setAutoSaveStatus('saving');
+
+    // Debounce the actual save by 2 seconds
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      lastSavedDataRef.current = dataString;
+      autoSaveMutation.mutate(data);
+    }, 2000);
+  }, [currentUser?.id, autoSaveMutation, profilePhotoUrl]);
+
   // Skill operations
   const addSkill = useCallback(() => {
     if (skillInput.trim()) {
@@ -1262,7 +1426,44 @@ export default function VolunteerProfileSettings() {
   // Operations
   const availabilityOps = useAvailabilityManagement(form);
 
+  // Watch form changes and trigger auto-save
+  const formValues = form.watch();
+  useEffect(() => {
+    // Skip during initial load or while loading profile
+    if (loadingProfile || isInitialLoadRef.current) return;
+
+    // Validate form has minimum required data before auto-saving
+    if (formValues.name && formValues.name.length > 0) {
+      performAutoSave(formValues as FormData);
+    }
+  }, [formValues, loadingProfile, performAutoSave]);
+
+  // Mark initial load as complete after profile loads
+  useEffect(() => {
+    if (!loadingProfile && existingProfile !== undefined) {
+      // Small delay to ensure form reset has completed
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+        // Set initial data reference
+        lastSavedDataRef.current = JSON.stringify(form.getValues());
+      }, 500);
+    }
+  }, [loadingProfile, existingProfile, form]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const onSubmit = async (data: FormData) => {
+    // Clear any pending auto-save
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
     // Validate weeklyHours is set
     if (!data.weeklyHours || data.weeklyHours <= 0) {
       toast({
@@ -1307,14 +1508,40 @@ export default function VolunteerProfileSettings() {
 
       <div className={`${isVolunteerMobile ? 'px-4 py-4' : 'container mx-auto py-8 px-4'} max-w-4xl`}>
         {/* Page Header - Mobile optimized */}
-        <div className={`${isVolunteerMobile ? 'mb-4' : 'mb-8 text-center'}`}>
-          <h1 className={`font-bold mb-2 ${isVolunteerMobile ? 'text-xl text-slate-800' : 'text-3xl'}`}>
-            {isVolunteerMobile ? 'Profile Settings' : 'Volunteer Profile Settings'}
-          </h1>
+        <div className={`${isVolunteerMobile ? 'mb-4' : 'mb-8'}`}>
+          <div className={`flex items-center justify-between ${isVolunteerMobile ? '' : 'flex-col text-center'}`}>
+            <h1 className={`font-bold mb-2 ${isVolunteerMobile ? 'text-xl text-slate-800' : 'text-3xl'}`}>
+              {isVolunteerMobile ? 'Profile Settings' : 'Volunteer Profile Settings'}
+            </h1>
+            {/* Auto-save status indicator */}
+            <div className="flex items-center gap-2 text-sm">
+              {autoSaveStatus === 'saving' && (
+                <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                  <Cloud className="h-4 w-4 animate-pulse" />
+                  Saving...
+                </span>
+              )}
+              {autoSaveStatus === 'saved' && (
+                <span className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                  <Check className="h-4 w-4" />
+                  Saved
+                </span>
+              )}
+              {autoSaveStatus === 'error' && (
+                <span className="flex items-center gap-1.5 text-red-600 dark:text-red-400">
+                  <X className="h-4 w-4" />
+                  Save failed
+                </span>
+              )}
+            </div>
+          </div>
           {!isVolunteerMobile && (
             <p className="text-muted-foreground">
               Create or update your volunteer profile to get matched with
               organizations that align with your skills, interests, and goals.
+              <span className="block mt-1 text-sm text-blue-600 dark:text-blue-400">
+                Your changes are automatically saved as you type.
+              </span>
             </p>
           )}
         </div>
@@ -1456,6 +1683,68 @@ export default function VolunteerProfileSettings() {
               </div>
             </form>
           </Form>
+        </CardContent>
+      </Card>
+
+      {/* Account Type Section */}
+      <Card className={`mt-6 border-blue-200 dark:border-blue-800 ${isVolunteerMobile ? 'border-0 shadow-sm rounded-2xl' : ''}`}>
+        <CardHeader className={isVolunteerMobile ? 'pb-2' : ''}>
+          <CardTitle className={`flex items-center gap-2 text-blue-600 dark:text-blue-400 ${isVolunteerMobile ? 'text-base' : ''}`}>
+            <Sliders className="h-5 w-5" />
+            Account Type
+          </CardTitle>
+          {!isVolunteerMobile && (
+            <CardDescription>
+              Change your account type if you registered incorrectly
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className={`flex flex-col gap-4 ${isVolunteerMobile ? 'p-3' : 'p-4'} bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800`}>
+            <div>
+              <h4 className={`font-medium text-gray-900 dark:text-white ${isVolunteerMobile ? 'text-sm' : ''}`}>
+                Current Type: <span className="text-blue-600 dark:text-blue-400 capitalize">{currentUser?.userType || 'volunteer'}</span>
+              </h4>
+              <p className={`text-gray-600 dark:text-gray-400 ${isVolunteerMobile ? 'text-xs' : 'text-sm'} mt-1`}>
+                Select a different account type if needed
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant={currentUser?.userType === 'volunteer' ? 'default' : 'outline'}
+                onClick={() => userTypeMutation.mutate('volunteer')}
+                disabled={currentUser?.userType === 'volunteer' || userTypeMutation.isPending}
+                className="flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                Volunteer
+              </Button>
+              <Button
+                variant={currentUser?.userType === 'organization' ? 'default' : 'outline'}
+                onClick={() => userTypeMutation.mutate('organization')}
+                disabled={currentUser?.userType === 'organization' || userTypeMutation.isPending}
+                className="flex items-center gap-2"
+              >
+                <Building2 className="h-4 w-4" />
+                Organization
+              </Button>
+              <Button
+                variant={currentUser?.userType === 'corporate-partner' ? 'default' : 'outline'}
+                onClick={() => userTypeMutation.mutate('corporate-partner')}
+                disabled={currentUser?.userType === 'corporate-partner' || userTypeMutation.isPending}
+                className="flex items-center gap-2"
+              >
+                <Briefcase className="h-4 w-4" />
+                Corporate Partner
+              </Button>
+            </div>
+            {userTypeMutation.isPending && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Updating account type...</span>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 

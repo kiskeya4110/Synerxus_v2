@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import OrganizationHeader from "@/components/layout/organization-header";
+import { ProjectCoverUpload } from "@/components/project-cover-upload";
 
 // SDG options
 const SDG_OPTIONS = [
@@ -530,12 +531,16 @@ export default function ProjectEdit() {
                   name="coverImage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cover Image URL</FormLabel>
+                      <FormLabel>Cover Image</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="https://example.com/image.jpg" data-testid="input-cover-image" />
+                        <ProjectCoverUpload
+                          currentCoverUrl={field.value}
+                          onCoverChange={(url) => field.onChange(url)}
+                          projectId={String(projectId || 'new-project')}
+                        />
                       </FormControl>
                       <FormDescription>
-                        URL of the project cover image
+                        Upload a cover image for your project (recommended: 16:9 ratio)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

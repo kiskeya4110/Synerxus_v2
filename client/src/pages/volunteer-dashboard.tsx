@@ -1155,12 +1155,15 @@ export default function Dashboard() {
 
     return (
       <PageTransition>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 overflow-y-auto pb-8">
+        {/* Top Navigation for Desktop Volunteers */}
+        <VolunteerNav />
+
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 overflow-y-auto pb-8 relative z-0">
 
           {/* Hero Section - Benevity-inspired Impact Summary */}
-          <div className="relative overflow-hidden">
+          <div className="relative overflow-hidden z-0">
             {/* Background gradient with subtle pattern */}
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 opacity-95" />
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 opacity-95 z-0" />
             <div className="absolute inset-0 opacity-10">
               <div className="absolute inset-0" style={{
                 backgroundImage: 'radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 2px, transparent 2px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.2) 2px, transparent 2px)',

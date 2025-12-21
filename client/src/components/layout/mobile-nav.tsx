@@ -46,6 +46,7 @@ export default function MobileNav() {
     { href: "/discover-opportunities", icon: Search, label: "Discover", testId: "nav-opportunities" },
     { href: "/my-work", icon: ClipboardList, label: "My Work", testId: "nav-my-work" },
     { href: "/profile", icon: User, label: "Profile", testId: "nav-profile" },
+    { href: "/volunteer-profile-settings", icon: Settings, label: "Settings", testId: "nav-settings" },
   ];
 
   const organizationNavItems = [

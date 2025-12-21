@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertMatchableOrganizationSchema, type MatchableOrganization } from "@shared/schema";
-import { Loader2, Plus, X, Building2, MapPin, Target, Heart } from "lucide-react";
+import { Loader2, Plus, X, Building2, MapPin, Target, Heart, User, Briefcase, Sliders, LogOut } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import OnboardingTrigger from "@/components/onboarding/onboarding-trigger";
@@ -355,6 +355,48 @@ export default function OrganizationProfileSettings() {
     },
   });
 
+  // Mutation to update user type
+  const userTypeMutation = useMutation({
+    mutationFn: async (newUserType: string) => {
+      if (!currentUser?.id) throw new Error("User not authenticated");
+
+      const response = await fetch(`/api/users/${currentUser.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userType: newUserType }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update user type");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      localStorage.setItem('userType', data.userType);
+      queryClient.invalidateQueries({ queryKey: ["/api/users/me"] });
+
+      toast({
+        title: "Account Type Updated",
+        description: `Your account type has been changed to ${data.userType}. Redirecting...`,
+      });
+
+      setTimeout(() => {
+        if (data.userType === 'volunteer') {
+          setLocation('/volunteer-profile-settings');
+        } else if (data.userType === 'corporate-partner') {
+          setLocation('/corporate-partner-profile-settings');
+        } else {
+          window.location.reload();
+        }
+      }, 1500);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update account type",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Show loading while user data is loading
   if (userLoading || loadingProfile) {
     return (
@@ -664,6 +706,66 @@ export default function OrganizationProfileSettings() {
             </form>
           </Form>
           </CardContent>
+          </Card>
+
+          {/* Account Type Section */}
+          <Card className="mt-6 border-blue-200 dark:border-blue-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                <Sliders className="h-5 w-5" />
+                Account Type
+              </CardTitle>
+              <CardDescription>
+                Change your account type if you registered incorrectly
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    Current Type: <span className="text-blue-600 dark:text-blue-400 capitalize">{currentUser?.userType || 'organization'}</span>
+                  </h4>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                    Select a different account type if needed
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    variant={currentUser?.userType === 'volunteer' ? 'default' : 'outline'}
+                    onClick={() => userTypeMutation.mutate('volunteer')}
+                    disabled={currentUser?.userType === 'volunteer' || userTypeMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    Volunteer
+                  </Button>
+                  <Button
+                    variant={currentUser?.userType === 'organization' ? 'default' : 'outline'}
+                    onClick={() => userTypeMutation.mutate('organization')}
+                    disabled={currentUser?.userType === 'organization' || userTypeMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Organization
+                  </Button>
+                  <Button
+                    variant={currentUser?.userType === 'corporate-partner' ? 'default' : 'outline'}
+                    onClick={() => userTypeMutation.mutate('corporate-partner')}
+                    disabled={currentUser?.userType === 'corporate-partner' || userTypeMutation.isPending}
+                    className="flex items-center gap-2"
+                  >
+                    <Briefcase className="h-4 w-4" />
+                    Corporate Partner
+                  </Button>
+                </div>
+                {userTypeMutation.isPending && (
+                  <div className="flex items-center gap-2 text-blue-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">Updating account type...</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
           </Card>
         </div>
       </>

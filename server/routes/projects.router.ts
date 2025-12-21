@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import { storage } from "../storage";
-import { insertProjectSchema, updateProjectSchema, projectAiuSettings } from "@shared/schema";
+import { insertProjectSchema, updateProjectSchema, projectAiuSettings, opportunities, type Project } from "@shared/schema";
 import { handleValidationError, requireOrgUser, verifyOwnership } from "./utils";
 import { getVisibleProjectIdsForVolunteer } from "../dashboard-service";
 import { db } from "../db";
@@ -9,6 +9,69 @@ import { notifyProjectVolunteersAiuVerification } from "../notification-service"
 import { calculateProjectAIU } from "../aiu-service";
 
 export const projectsRouter = Router();
+
+/**
+ * Sync a project to the opportunities table
+ * Each project IS an opportunity for volunteers to discover
+ * Creates or updates the corresponding opportunity record
+ */
+async function syncProjectToOpportunity(project: Project): Promise<void> {
+  try {
+    // Check if opportunity already exists for this project
+    const [existingOpportunity] = await db
+      .select()
+      .from(opportunities)
+      .where(eq(opportunities.projectId, project.id))
+      .limit(1);
+
+    const opportunityData = {
+      title: project.name,
+      description: project.description || "",
+      organizationId: project.organizationId!,
+      projectId: project.id,
+      requiredSkills: project.requiredSkills || [],
+      optionalSkills: project.optionalSkills || [],
+      location: project.location || "",
+      isRemote: project.engagementType === "remote",
+      engagementType: project.engagementType || null,
+      commitmentType: project.commitmentType || "project-based",
+      ongoingHoursPerWeek: project.ongoingHoursPerWeek || null,
+      projectTotalHours: project.projectTotalHours || null,
+      startDate: project.startDate || null,
+      endDate: project.endDate || null,
+      status: project.status?.toLowerCase() === 'active' || project.status?.toLowerCase() === 'in-progress' || project.status?.toLowerCase() === 'in progress' ? 'open' : 'closed',
+      sdgGoals: project.sdgGoals || [],
+      primarySdg: project.primarySdg || null,
+      impactMetricName: project.impactMetricName || null,
+      impactMetricUnit: project.impactMetricUnit || null,
+      category: project.primarySdg ? `SDG ${project.primarySdg}` : null,
+      isUrgent: false,
+      updatedAt: new Date(),
+    };
+
+    if (existingOpportunity) {
+      // Update existing opportunity
+      await db
+        .update(opportunities)
+        .set(opportunityData)
+        .where(eq(opportunities.id, existingOpportunity.id));
+      console.log(`[Project->Opportunity] Updated opportunity ${existingOpportunity.id} for project ${project.id}`);
+    } else {
+      // Create new opportunity
+      const [newOpportunity] = await db
+        .insert(opportunities)
+        .values({
+          ...opportunityData,
+          createdAt: new Date(),
+        })
+        .returning();
+      console.log(`[Project->Opportunity] Created opportunity ${newOpportunity.id} for project ${project.id}`);
+    }
+  } catch (error) {
+    console.error(`[Project->Opportunity] Error syncing project ${project.id}:`, error);
+    // Don't throw - we don't want to fail the project operation if opportunity sync fails
+  }
+}
 
 type BroadcastFn = (type: string, data: any) => void;
 let broadcastUpdate: BroadcastFn = () => {};
@@ -105,6 +168,10 @@ projectsRouter.post("/", async (req: Request, res: Response) => {
     }
 
     const project = await storage.createProject(projectData);
+
+    // Sync project to opportunities table - each project is discoverable as an opportunity
+    await syncProjectToOpportunity(project);
+
     broadcastUpdate("project_created", project);
     res.status(201).json(project);
   } catch (err) {
@@ -236,6 +303,9 @@ projectsRouter.patch("/:id", async (req: Request, res: Response) => {
     if (!updatedProject) {
       return res.status(404).json({ message: "Project not found" });
     }
+
+    // Sync project to opportunities table - keep opportunity in sync with project
+    await syncProjectToOpportunity(updatedProject);
 
     broadcastUpdate("project_updated", updatedProject);
     res.json(updatedProject);
@@ -464,5 +534,35 @@ projectsRouter.post("/:id/verify-aiu", async (req: Request, res: Response) => {
     console.error("Error verifying AIU:", err);
     const error = handleValidationError(err);
     res.status(error.status).json({ message: error.message });
+  }
+});
+
+// POST /api/projects/sync-opportunities - Sync all existing projects to opportunities table
+// This is a one-time migration endpoint to ensure all projects are discoverable as opportunities
+projectsRouter.post("/sync-opportunities", async (req: Request, res: Response) => {
+  try {
+    const projects = await storage.listProjects();
+    let synced = 0;
+    let errors = 0;
+
+    for (const project of projects) {
+      try {
+        await syncProjectToOpportunity(project);
+        synced++;
+      } catch (err) {
+        console.error(`Failed to sync project ${project.id}:`, err);
+        errors++;
+      }
+    }
+
+    res.json({
+      message: `Synced ${synced} projects to opportunities`,
+      total: projects.length,
+      synced,
+      errors,
+    });
+  } catch (err) {
+    console.error("Error syncing projects to opportunities:", err);
+    res.status(500).json({ message: "Failed to sync projects to opportunities" });
   }
 });

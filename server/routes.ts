@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage, DuplicateAssignmentError } from "./storage";
 import { WebSocketServer } from "ws";
-import { cache, CACHE_TTL, cacheKeys } from "./cache";
+import { cache, CACHE_TTL, cacheKeys, invalidateCache } from "./cache";
 import {
   insertUserSchema,
   insertOrganizationSchema,
@@ -1273,6 +1273,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Invalidate task caches to ensure data isolation is respected
+      if (task.projectId) {
+        const project = await storage.getProject(task.projectId);
+        if (project?.organizationId) {
+          invalidateCache.forTasks(project.organizationId, task.projectId);
+        }
+      }
+
       broadcastUpdate("task_created", task);
       res.status(201).json(task);
     } catch (err) {
@@ -1380,7 +1388,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           broadcastUpdate("project_updated", updatedProject);
         }
       }
-      
+
+      // Invalidate task caches to ensure data isolation is respected
+      if (updatedTask.projectId) {
+        const taskProject = await storage.getProject(updatedTask.projectId);
+        if (taskProject?.organizationId) {
+          invalidateCache.forTasks(taskProject.organizationId, updatedTask.projectId);
+        }
+      }
+
       broadcastUpdate("task_updated", updatedTask);
       res.json(updatedTask);
     } catch (err) {

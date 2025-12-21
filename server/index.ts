@@ -264,6 +264,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Clear all caches on server startup to ensure fresh data
+  // This prevents stale cached data from causing data isolation issues
+  cache.clear();
+  logger.info('[Server] Cleared all caches on startup');
+
   let server;
   try {
     server = await registerRoutes(app);

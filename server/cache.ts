@@ -304,6 +304,9 @@ export const cacheKeys = {
   impactMetrics: () => 'impact-metrics:all',
   opportunities: (orgId?: number) => orgId ? `opportunities:org:${orgId}` : 'opportunities:all',
   aiuSummary: (userId: number) => `aiu:${userId}`,
+  tasksOrg: (orgId: number) => `tasks:org:${orgId}`,
+  tasksProject: (projectId: number) => `tasks:project:${projectId}`,
+  tasksAll: () => 'tasks:all',
 };
 
 // Invalidation helpers
@@ -323,6 +326,8 @@ export const invalidateCache = {
     cache.delete(cacheKeys.orgProfile(orgId));
     cache.delete(cacheKeys.projectsList(orgId));
     cache.delete(cacheKeys.opportunities(orgId));
+    // Also invalidate tasks cache for this organization
+    cache.delete(`tasks:org:${orgId}`);
   },
 
   // Invalidate project-related caches
@@ -330,6 +335,21 @@ export const invalidateCache = {
     cache.delete(cacheKeys.projectsList(orgId));
     cache.delete(cacheKeys.projectsList()); // All projects
     cache.deletePattern('dashboard:'); // All dashboards
+    // Also invalidate tasks caches since tasks belong to projects
+    cache.delete(`tasks:org:${orgId}`);
+    cache.deletePattern('tasks:'); // All task caches
+  },
+
+  // Invalidate task-related caches
+  forTasks: (orgId?: number, projectId?: number) => {
+    if (orgId) {
+      cache.delete(`tasks:org:${orgId}`);
+    }
+    if (projectId) {
+      cache.delete(`tasks:project:${projectId}`);
+    }
+    // Also invalidate dashboard caches since they display task metrics
+    cache.deletePattern('dashboard:');
   },
 
   // Invalidate activity-related caches (when hours logged, etc.)

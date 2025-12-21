@@ -14,12 +14,21 @@ export function setBroadcastFn(fn: BroadcastFn) {
 }
 
 // GET /api/tasks - List tasks with authorization
+// organizationId takes priority for proper data isolation
 tasksRouter.get("/", async (req: Request, res: Response) => {
   try {
-    const { projectId, assigneeId, userId } = req.query;
+    const { projectId, assigneeId, userId, organizationId } = req.query;
 
     let tasks;
-    if (projectId) {
+
+    // Handle organizationId parameter first for proper data isolation
+    if (organizationId) {
+      const orgIdNum = parseInt(organizationId as string);
+      const orgProjects = await storage.listProjectsByOrganization(orgIdNum);
+      const orgProjectIds = new Set(orgProjects.map(p => p.id));
+      const allTasks = await storage.listTasks();
+      tasks = allTasks.filter(t => t.projectId && orgProjectIds.has(t.projectId));
+    } else if (projectId) {
       tasks = await storage.listTasksByProject(parseInt(projectId as string));
     } else if (assigneeId) {
       tasks = await storage.listTasksByAssignee(parseInt(assigneeId as string));

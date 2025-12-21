@@ -1096,10 +1096,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // === Task Routes ===
   app.get("/api/tasks", async (req, res) => {
     try {
-      const { projectId, assigneeId, userId } = req.query;
+      const { projectId, assigneeId, userId, organizationId } = req.query;
 
-      // Build cache key based on query params
-      const cacheKey = projectId
+      // Build cache key based on query params - organizationId takes priority for data isolation
+      const cacheKey = organizationId
+        ? `tasks:org:${organizationId}`
+        : projectId
         ? `tasks:project:${projectId}`
         : assigneeId
         ? `tasks:assignee:${assigneeId}`
@@ -1108,7 +1110,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         : 'tasks:all';
 
       const tasks = await cache.getOrSet(cacheKey, async () => {
-        if (projectId) {
+        // Handle organizationId parameter for proper data isolation
+        if (organizationId) {
+          const orgIdNum = parseInt(organizationId as string);
+          const orgProjects = await storage.listProjectsByOrganization(orgIdNum);
+          const orgProjectIds = new Set(orgProjects.map(p => p.id));
+          const allTasks = await storage.listTasks();
+          return allTasks.filter(t => t.projectId && orgProjectIds.has(t.projectId));
+        } else if (projectId) {
           return await storage.listTasksByProject(parseInt(projectId as string));
         } else if (assigneeId) {
           return await storage.listTasksByAssignee(parseInt(assigneeId as string));

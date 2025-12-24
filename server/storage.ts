@@ -604,8 +604,7 @@ export class DatabaseStorage implements IStorage {
   async listVolunteerActivitiesByUser(userId: number): Promise<VolunteerActivity[]> {
     return await db.select().from(volunteerActivities)
       .where(eq(volunteerActivities.userId, userId))
-      .orderBy(desc(volunteerActivities.date))
-      .limit(10);
+      .orderBy(desc(volunteerActivities.date));
   }
 
   async listVolunteerActivitiesByProject(projectId: number): Promise<VolunteerActivity[]> {
